@@ -756,6 +756,20 @@ static void *map_library(int fd, struct dso *dso)
 		prot = (((ph->p_flags&PF_R) ? PROT_READ : 0) |
 			((ph->p_flags&PF_W) ? PROT_WRITE: 0) |
 			((ph->p_flags&PF_X) ? PROT_EXEC : 0));
+        if ((ph->p_flags & PF_R) && (ph->p_flags & PF_X) && (!(ph->p_flags & PF_W))) {
+            Phdr *next_ph = ph;
+            for (int j = i - 1; j > 0; j--) {
+                next_ph = (void *)((char *)next_ph+eh->e_phentsize);
+                if (next_ph->p_type != PT_LOAD) {
+                    continue;
+                }
+                size_t p_vaddr = (next_ph->p_vaddr & -(PAGE_SIZE));
+                if (p_vaddr > this_max) {
+                    mprotect(base + this_max, p_vaddr - this_max , PROT_READ);
+                }
+                break;
+            }
+        }
 		/* Reuse the existing mapping for the lowest-address LOAD */
 		if ((ph->p_vaddr & -PAGE_SIZE) != addr_min || DL_NOMMU_SUPPORT)
 			if (mmap_fixed(base+this_min, this_max-this_min, prot, MAP_PRIVATE|MAP_FIXED, fd, off_start) == MAP_FAILED)
@@ -798,7 +812,7 @@ static int path_open(const char *name, const char *s, char *buf, size_t buf_size
 		l = strcspn(s, ":\n");
 		if (l-1 >= INT_MAX) return -1;
 		if (snprintf(buf, buf_size, "%.*s/%s", (int)l, s, name) < buf_size) {
-			if ((fd = open(buf, O_RDONLY|O_CLOEXEC))>=0) return fd;
+			if ((fd = open(buf, O_RDONLY))>=0) return fd; // open(buf, O_RDONLY|O_CLOEXEC)
 			switch (errno) {
 			case ENOENT:
 			case ENOTDIR:
@@ -974,6 +988,7 @@ static void makefuncdescs(struct dso *p)
 static struct dso *load_library(const char *name, struct dso *needed_by)
 {
 	char buf[2*NAME_MAX+2];
+	char fullpath[2*NAME_MAX+2];
 	const char *pathname;
 	unsigned char *map;
 	struct dso *p, temp_dso = {0};
@@ -1025,7 +1040,7 @@ static struct dso *load_library(const char *name, struct dso *needed_by)
 	}
 	if (strchr(name, '/')) {
 		pathname = name;
-		fd = open(name, O_RDONLY|O_CLOEXEC);
+		fd = open(name, O_RDONLY); // open(name, O_RDONLY|O_CLOEXEC);
 	} else {
 		/* Search for the name to see if it's already loaded */
 		for (p=head->next; p; p=p->next) {
@@ -1074,7 +1089,7 @@ static struct dso *load_library(const char *name, struct dso *needed_by)
 					sys_path = "";
 				}
 			}
-			if (!sys_path) sys_path = "/lib:/usr/local/lib:/usr/lib";
+			if (!sys_path || sys_path[0] == 0) sys_path = "/lib:/usr/local/lib:/usr/lib";
 			fd = path_open(name, sys_path, buf, sizeof buf);
 		}
 		pathname = buf;
@@ -1084,8 +1099,12 @@ static struct dso *load_library(const char *name, struct dso *needed_by)
 		close(fd);
 		return 0;
 	}
+	if (!realpath(pathname, fullpath)) {
+		return 0;
+	}
+	pathname = fullpath;
 	for (p=head->next; p; p=p->next) {
-		if (p->dev == st.st_dev && p->ino == st.st_ino) {
+		if (!strcmp(p->name, pathname)) {
 			/* If this library was previously loaded with a
 			 * pathname but a search found the same inode,
 			 * setup its shortname so it can be found by name. */
@@ -1096,7 +1115,6 @@ static struct dso *load_library(const char *name, struct dso *needed_by)
 		}
 	}
 	map = noload ? 0 : map_library(fd, &temp_dso);
-	close(fd);
 	if (!map) return 0;
 
 	/* Avoid the danger of getting two versions of libc mapped into the
@@ -1742,11 +1760,18 @@ void __dls3(size_t *sp, size_t *auxv)
 		if (DL_FDPIC) app.loadmap = app_loadmap;
 		if (app.tls.size) app.tls.image = laddr(&app, tls_image);
 		if (interp_off) ldso.name = laddr(&app, interp_off);
+#if 0
 		if ((aux[0] & (1UL<<AT_EXECFN))
 		    && strncmp((char *)aux[AT_EXECFN], "/proc/", 6))
 			app.name = (char *)aux[AT_EXECFN];
 		else
 			app.name = argv[0];
+#else
+		if (argv[0])
+			app.name = argv[0];
+		else
+			app.name = "none";
+#endif
 		kernel_mapped_dso(&app);
 	} else {
 		int fd;
@@ -1797,7 +1822,6 @@ void __dls3(size_t *sp, size_t *auxv)
 			dprintf(2, "%s: %s: Not a valid dynamic program\n", ldname, argv[0]);
 			_exit(1);
 		}
-		close(fd);
 		ldso.name = ldname;
 		app.name = argv[0];
 		aux[AT_ENTRY] = (size_t)laddr(&app, ehdr->e_entry);
@@ -1868,7 +1892,7 @@ void __dls3(size_t *sp, size_t *auxv)
 				vdso.base = (void *)(vdso_base - phdr->p_vaddr + phdr->p_offset);
 		}
 		vdso.name = "";
-		vdso.shortname = "linux-gate.so.1";
+		vdso.shortname = "OHOS-vdso.so";
 		vdso.relocated = 1;
 		vdso.deps = (struct dso **)no_deps;
 		decode_dyn(&vdso);
@@ -1990,6 +2014,16 @@ void *dlopen(const char *file, int mode)
 	int cs;
 	jmp_buf jb;
 	struct dso **volatile ctor_queue = 0;
+
+	if (mode & ~(RTLD_LAZY | RTLD_NOW | RTLD_NOLOAD | RTLD_GLOBAL | RTLD_LOCAL | RTLD_NODELETE)) {
+		error("invalid mode parameter for dlopen().");
+		return NULL;
+	}
+
+	if ((mode & (RTLD_LAZY | RTLD_NOW)) == 0) {
+		error("invalid mode, one of RTLD_LAZY and RTLD_NOW must be set.");
+		return NULL;
+	}
 
 	if (!file) return head;
 

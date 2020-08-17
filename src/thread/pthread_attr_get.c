@@ -31,7 +31,7 @@ int pthread_attr_getschedpolicy(const pthread_attr_t *restrict a, int *restrict 
 
 int pthread_attr_getscope(const pthread_attr_t *restrict a, int *restrict scope)
 {
-	*scope = PTHREAD_SCOPE_SYSTEM;
+	*scope = PTHREAD_SCOPE_PROCESS;
 	return 0;
 }
 

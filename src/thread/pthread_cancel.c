@@ -48,23 +48,11 @@ extern hidden const char __cp_begin[1], __cp_end[1], __cp_cancel[1];
 static void cancel_handler(int sig, siginfo_t *si, void *ctx)
 {
 	pthread_t self = __pthread_self();
-	ucontext_t *uc = ctx;
-	uintptr_t pc = uc->uc_mcontext.MC_PC;
-
 	a_barrier();
 	if (!self->cancel || self->canceldisable == PTHREAD_CANCEL_DISABLE) return;
-
-	_sigaddset(&uc->uc_sigmask, SIGCANCEL);
-
-	if (self->cancelasync || pc >= (uintptr_t)__cp_begin && pc < (uintptr_t)__cp_end) {
-		uc->uc_mcontext.MC_PC = (uintptr_t)__cp_cancel;
-#ifdef CANCEL_GOT
-		uc->uc_mcontext.MC_GOT = CANCEL_GOT;
-#endif
-		return;
+	if(self->cancelasync){
+		pthread_exit(PTHREAD_CANCELED);
 	}
-
-	__syscall(SYS_tkill, self->tid, SIGCANCEL);
 }
 
 void __testcancel()
@@ -81,7 +69,8 @@ static void init_cancellation()
 		.sa_sigaction = cancel_handler
 	};
 	memset(&sa.sa_mask, -1, _NSIG/8);
-	__libc_sigaction(SIGCANCEL, &sa, 0);
+	// SIGCANCELL is 33, but signal now only support 1-32, so randomly choose a signal to replace it.
+	__libc_sigaction(SIGPWR, &sa, 0);
 }
 
 int pthread_cancel(pthread_t t)
@@ -97,5 +86,5 @@ int pthread_cancel(pthread_t t)
 			pthread_exit(PTHREAD_CANCELED);
 		return 0;
 	}
-	return pthread_kill(t, SIGCANCEL);
+	return pthread_kill(t, SIGPWR);
 }

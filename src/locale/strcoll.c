@@ -9,7 +9,7 @@ int __strcoll_l(const char *l, const char *r, locale_t loc)
 
 int strcoll(const char *l, const char *r)
 {
-	return __strcoll_l(l, r, CURRENT_LOCALE);
+	return strcmp(l, r);
 }
 
 weak_alias(__strcoll_l, strcoll_l);

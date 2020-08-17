@@ -1,3 +1,4 @@
+#if 0
 #if ((__ARM_ARCH_6K__ || __ARM_ARCH_6KZ__ || __ARM_ARCH_6ZK__) && !__thumb__) \
  || __ARM_ARCH_7A__ || __ARM_ARCH_7R__ || __ARM_ARCH >= 7
 
@@ -24,6 +25,9 @@ static inline pthread_t __pthread_self()
 	return (void *)(p-sizeof(struct pthread));
 }
 
+#endif
+#else
+extern pthread_t __pthread_self();
 #endif
 
 #define TLS_ABOVE_TP

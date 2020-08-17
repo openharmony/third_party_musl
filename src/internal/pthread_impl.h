@@ -145,6 +145,7 @@ extern hidden volatile int __aio_fut;
 extern hidden volatile int __eintr_valid_flag;
 
 hidden int __clone(int (*)(void *), void *, int, void *, ...);
+hidden int __thread_clone(int (*func)(void *), int flags, struct pthread *thread, unsigned char *sp);
 hidden int __set_thread_area(void *);
 hidden int __libc_sigaction(int, const struct sigaction *, struct sigaction *);
 hidden void __unmapself(void *, size_t);
@@ -154,16 +155,12 @@ hidden int __timedwait_cp(volatile int *, int, clockid_t, const struct timespec 
 hidden void __wait(volatile int *, volatile int *, int, int);
 static inline void __wake(volatile void *addr, int cnt, int priv)
 {
-	if (priv) priv = FUTEX_PRIVATE;
 	if (cnt<0) cnt = INT_MAX;
-	__syscall(SYS_futex, addr, FUTEX_WAKE|priv, cnt) != -ENOSYS ||
 	__syscall(SYS_futex, addr, FUTEX_WAKE, cnt);
 }
 static inline void __futexwait(volatile void *addr, int val, int priv)
 {
-	if (priv) priv = FUTEX_PRIVATE;
-	__syscall(SYS_futex, addr, FUTEX_WAIT|priv, val, 0) != -ENOSYS ||
-	__syscall(SYS_futex, addr, FUTEX_WAIT, val, 0);
+	__syscall(SYS_futex, addr, FUTEX_WAIT, val, 0xffffffffu);
 }
 
 hidden void __acquire_ptc(void);
@@ -186,5 +183,11 @@ extern hidden unsigned __default_guardsize;
 #define DEFAULT_GUARD_MAX (1<<20)
 
 #define __ATTRP_C11_THREAD ((void*)(uintptr_t)-1)
+
+#define MUSL_TYPE_THREAD    (-1)
+#define MUSL_TYPE_PROCESS   (0)
+
+#define PTHREAD_MUTEX_TYPE_MASK 3
+#define PTHREAD_PRIORITY_LOWEST 31
 
 #endif

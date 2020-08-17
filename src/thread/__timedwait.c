@@ -11,6 +11,8 @@
 static int __futex4_cp(volatile void *addr, int op, int val, const struct timespec *to)
 {
 	int r;
+	unsigned int useconds = 0xffffffffU;
+#if 0
 #ifdef SYS_futex_time64
 	time_t s = to ? to->tv_sec : 0;
 	long ns = to ? to->tv_nsec : 0;
@@ -21,9 +23,16 @@ static int __futex4_cp(volatile void *addr, int op, int val, const struct timesp
 	if (SYS_futex == SYS_futex_time64 || r!=-ENOSYS) return r;
 	to = to ? (void *)(long[]){CLAMP(s), ns} : 0;
 #endif
-	r = __syscall_cp(SYS_futex, addr, op, val, to);
-	if (r != -ENOSYS) return r;
-	return __syscall_cp(SYS_futex, addr, op & ~FUTEX_PRIVATE, val, to);
+#endif
+
+	if (to) {
+		useconds = (to->tv_sec * 1000000 + to->tv_nsec / 1000);
+		if ((useconds == 0) && (to->tv_nsec != 0)) {
+			useconds = 1;
+		}
+	}
+
+	return __syscall_cp(SYS_futex, addr, op & ~FUTEX_PRIVATE, val, useconds);
 }
 
 static volatile int dummy = 0;
@@ -34,8 +43,6 @@ int __timedwait_cp(volatile int *addr, int val,
 {
 	int r;
 	struct timespec to, *top=0;
-
-	if (priv) priv = FUTEX_PRIVATE;
 
 	if (at) {
 		if (at->tv_nsec >= 1000000000UL) return EINVAL;
@@ -49,7 +56,7 @@ int __timedwait_cp(volatile int *addr, int val,
 		top = &to;
 	}
 
-	r = -__futex4_cp(addr, FUTEX_WAIT|priv, val, top);
+	r = -__futex4_cp(addr, FUTEX_WAIT, val, top);
 	if (r != EINTR && r != ETIMEDOUT && r != ECANCELED) r = 0;
 	/* Mitigate bug in old kernels wrongly reporting EINTR for non-
 	 * interrupting (SA_RESTART) signal handlers. This is only practical

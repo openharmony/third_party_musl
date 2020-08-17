@@ -495,7 +495,7 @@ void __bin_chunk(struct chunk *self)
 	if (reclaim) {
 		uintptr_t a = (uintptr_t)self + SIZE_ALIGN+PAGE_SIZE-1 & -PAGE_SIZE;
 		uintptr_t b = (uintptr_t)next - SIZE_ALIGN & -PAGE_SIZE;
-#if 1
+#if 0
 		__madvise((void *)a, b-a, MADV_DONTNEED);
 #else
 		__mmap((void *)a, b-a, PROT_READ|PROT_WRITE,
