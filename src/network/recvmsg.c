@@ -3,6 +3,7 @@
 #include <time.h>
 #include <sys/time.h>
 #include <string.h>
+#include <errno.h>
 #include "syscall.h"
 
 hidden void __convert_scm_timestamps(struct msghdr *, socklen_t);
@@ -50,6 +51,10 @@ void __convert_scm_timestamps(struct msghdr *msg, socklen_t csize)
 ssize_t recvmsg(int fd, struct msghdr *msg, int flags)
 {
 	ssize_t r;
+	if (!msg) {
+		errno = EFAULT;
+		return -1;
+	}
 	socklen_t orig_controllen = msg->msg_controllen;
 #if LONG_MAX > INT_MAX
 	struct msghdr h, *orig = msg;
