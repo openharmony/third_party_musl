@@ -1,13 +1,14 @@
 #include <signal.h>
 #include <errno.h>
 #include <string.h>
+#include "stdbool.h"
 #include "syscall.h"
 #include "pthread_impl.h"
 #include "libc.h"
 #include "lock.h"
 #include "ksigaction.h"
 
-#define NUM_SIGNAL_ACTIONS      16
+#define DEFAULT_SIG_NUM 64
 #define SIGNO2SET(s)            ((sigset_t)1 << (s))
 #define NULL_SIGNAL_SET         ((sigset_t)0x00000000)
 #define SET_BIT(bitmap, pos)    (bitmap |= (1u << pos))
@@ -15,46 +16,23 @@
 #define CHECK_BIT(bitmap, pos)  ((bitmap & (1u << pos)) ? 1 : 0)
 #define SIG_FLAG_NOIGNORE 1
 
-#define QUEUE_INIT(q) \
-	do {\
-		(q)->head = NULL; \
-		(q)->tail = NULL; \
-	}\
-	while (0)
 
 struct sigactq {
-	struct sigactq *flink;
 	struct sigaction act;
+	bool	ign_flag;
 	unsigned char   signo;
 	unsigned char   sigmask;
 	unsigned char   reserve[2];
 };
 typedef struct sigactq sigactq_t;
 
-struct sq_entry_s {
-	struct sq_entry_s *flink;
-};
-typedef struct sq_entry_s sq_entry_t;
 
-struct sigpendq {
-	struct sigpendq *flink;
-	siginfo_t info;
-	unsigned char   type;
-};
-typedef struct sigpendq sigpendq_t;
 
-struct sq_queue_s {
-	sq_entry_t *head;
-	sq_entry_t *tail;
-};
-typedef struct sq_queue_s  sq_queue_t;
 
 typedef void (*sa_sighandler_t)(int);
 typedef struct sigaction sigaction_t;
 
-sq_queue_t sig_free_action;
-static sigactq_t *sig_action_alloc;
-sq_queue_t sig_actionq;
+static sigactq_t g_sig_arr[DEFAULT_SIG_NUM];
 static pthread_spinlock_t sig_lite_lock;
 
 struct sig_default_act {
@@ -160,63 +138,14 @@ static void __sig_ignore(int signo)
 {
     return;
 }
-static void __sig_sq_add_last(sq_entry_t *node, sq_queue_t *queue)
-{
-	node->flink = NULL;
-	if (!queue->head) {
-		queue->head = node;
-		queue->tail = node;
-	} else {
-		queue->tail->flink = node;
-		queue->tail = node;
-	}
-}
 
 static sigactq_t *__sig_find_action(int sig)
 {
-	sigactq_t *sigact = NULL;
+	int i;
 
-	for (sigact = (sigactq_t *)sig_actionq.head; ((sigact) && (sigact->signo != sig)); sigact = sigact->flink) {
-		;
-	}
-	return sigact;
-}
-
-static sq_entry_t *__sig_sq_remafter(sq_entry_t *node, sq_queue_t *queue)
-{
-	sq_entry_t *ret = node->flink;
-
-	if (queue->head && ret) {
-		if (queue->tail == ret) {
-			queue->tail = node;
-			node->flink = NULL;
-		} else {
-			node->flink = ret->flink;
-		}
-
-		ret->flink = NULL;
-	}
-
-	return ret;
-}
-
-static void __sig_sq_remove(sq_entry_t *node, sq_queue_t *queue)
-{
-	if (queue->head && node) {
-		if (node == queue->head) {
-			queue->head = node->flink;
-			if (node == queue->tail) {
-				queue->tail = NULL;
-			}
-		} else {
-			sq_entry_t *prev;
-			for (prev = (sq_entry_t *)queue->head; prev && prev->flink != node; prev = prev->flink) {
-				;
-			}
-
-			if (prev) {
-				__sig_sq_remafter(prev, queue);
-			}
+	for (i = 0; i < sizeof(sig_default_action) / sizeof(struct sig_default_act); i++) {
+		if (g_sig_arr[i].signo == sig) {
+			return (g_sig_arr + i);
 		}
 	}
 }
@@ -226,12 +155,6 @@ static void __sig_copy_sigaction(sigaction_t *src, sigaction_t *dst)
 	dst->sa_handler = src->sa_handler;
 	dst->sa_mask = src->sa_mask;
 	dst->sa_flags = src->sa_flags;
-}
-
-static void __sig_remove_sigaction(sq_entry_t *sigact)
-{
-	__sig_sq_remove(sigact, &sig_actionq);
-	__sig_sq_add_last(sigact, &sig_free_action);
 }
 
 static int __sig_cannot_catche(int sig, sa_sighandler_t handler)
@@ -247,30 +170,13 @@ static int __sig_cannot_catche(int sig, sa_sighandler_t handler)
 	return 0;
 }
 
-
-static sq_entry_t *__sig_sq_rem_first(sq_queue_t *queue)
-{
-	sq_entry_t *ret = queue->head;
-
-	if (ret) {
-		queue->head = ret->flink;
-		if (!queue->head) {
-			queue->tail = NULL;
-		}
-
-		ret->flink = NULL;
-	}
-
-	return ret;
-}
-
 static void __sig_operation(unsigned int receivedSigno)
 {
-	sigactq_t *sigact = NULL;
+	int i;
 
-	for (sigact = (sigactq_t *)sig_actionq.head; (sigact); sigact = sigact->flink) {
-		if (sigact->signo == receivedSigno && sigact->act.sa_handler) {
-			(*sigact->act.sa_handler)(sigact->signo);
+	for (i = 0; i < sizeof(sig_default_action) / sizeof(struct sig_default_act); i++) {
+		if (!g_sig_arr[i].ign_flag && g_sig_arr[i].signo == receivedSigno && g_sig_arr[i].act.sa_handler) {
+			(*g_sig_arr[i].act.sa_handler)(g_sig_arr[i].signo);
 		}
 	}
 }
@@ -280,53 +186,16 @@ void arm_signal_process(unsigned int receivedSig)
 	__sig_operation(receivedSig);
 }
 
-static void __sig_alloc_action_block()
-{
-	sigactq_t *sigact;
-	int i;
-
-	/* Allocate a block of signal actions */
-	sig_action_alloc = (sigactq_t *)calloc(NUM_SIGNAL_ACTIONS, (sizeof(sigactq_t)));
-	if (sig_action_alloc != NULL) {
-		sigact = sig_action_alloc;
-		for (i = 0; i < NUM_SIGNAL_ACTIONS; i++) {
-			__sig_sq_add_last((sq_entry_t *)sigact++, &sig_free_action);
-		}
-	}
-}
-
-static sigactq_t *__sig_alloc_action()
-{
-	sigactq_t *sigact;
-
-	/* Try to get the signal action structure from the free list */
-	sigact = (sigactq_t *)__sig_sq_rem_first(&sig_free_action);
-	/* Check if we got one. */
-	if (!sigact) {
-		/* Add another block of signal actions to the list */
-		__sig_alloc_action_block();
-
-		/* And try again */
-		sigact = (sigactq_t *)__sig_sq_rem_first(&sig_free_action);
-	}
-	return sigact;
-}
-
 static void __sig_add_def_action()
 {
 	int i;
-	sigactq_t *sigact = NULL;
 
 	for (i = 0; i < sizeof(sig_default_action) / sizeof(struct sig_default_act); i++) {
-		sigact = __sig_alloc_action();
-		if (!sigact) {
-			return;
-		}
-		sigact->signo = (unsigned char)sig_default_action[i].singNo;
-		__sig_sq_add_last((sq_entry_t *)sigact, &sig_actionq);
-		sigact->act.sa_handler = sig_default_action[i].action;
-		sigemptyset(&sigact->act.sa_mask);
-		sigact->act.sa_flags = sig_default_action[i].flag;
+		g_sig_arr[i].signo = (unsigned char)sig_default_action[i].singNo;
+		g_sig_arr[i].act.sa_handler = sig_default_action[i].action;
+		sigemptyset(&g_sig_arr[i].act.sa_mask);
+		g_sig_arr[i].act.sa_flags = sig_default_action[i].flag;
+		g_sig_arr[i].ign_flag = false;
 	}
 }
 
@@ -347,29 +216,12 @@ static int __sig_dfl_opr(int sig, sigactq_t *sigact, const sigaction_t *act)
 	sa_sighandler_t def_handler = NULL;
 
 	def_handler = __sig_find_def_action(sig);
-	if (sigact) {
-		if (def_handler == NULL) {
-			/* Remove it from signal action queue */
-			__sig_remove_sigaction((sq_entry_t *)sigact);
-		} else {
-			/* Replace it from signal action queue */
-			sigact->act.sa_handler = def_handler;
-			sigact->act.sa_mask = act->sa_mask;
-			sigact->act.sa_flags = act->sa_flags;
-		}
-	} else {
-		if (def_handler) {
-			sigact = __sig_alloc_action();
-			/* An error has occurred if we could not allocate the sigaction */
-			if (!sigact) {
-				return -ENOMEM;
-			}
-			sigact->signo = (unsigned char)sig;
-			sigact->act.sa_handler = def_handler;
-			sigact->act.sa_mask = act->sa_mask;
-			sigact->act.sa_flags = act->sa_flags;
-			__sig_sq_add_last((sq_entry_t *)sigact, &sig_actionq);
-		}
+
+	if (def_handler != NULL) {
+		/* Replace it from signal action queue */
+		sigact->act.sa_handler = def_handler;
+		sigact->act.sa_mask = act->sa_mask;
+		sigact->act.sa_flags = act->sa_flags;
 	}
 	return 0;
 }
@@ -381,6 +233,7 @@ static int __sig_action_opr(int sig, const sigaction_t *act, sigaction_t *oact)
 	sigactq_t *sigact = NULL;
 
 	if (act == NULL) return -EINVAL;
+
 	if (sig < SIGHUP || sig > (_NSIG - 1)) return -EINVAL;
 
 	handler = act->sa_handler;
@@ -391,21 +244,13 @@ static int __sig_action_opr(int sig, const sigaction_t *act, sigaction_t *oact)
 	sigact = __sig_find_action(sig);
 	if (sigact && oact) __sig_copy_sigaction(&sigact->act, oact);
 
+	sigact->ign_flag = false;
+
 	if (handler == SIG_IGN && sigact) {
-		__sig_remove_sigaction((sq_entry_t *)sigact);
+		sigact->ign_flag = true;
 	} else if (handler == SIG_DFL) {
 		ret = __sig_dfl_opr(sig, sigact, act);
 	} else {
-		if (sigact == NULL) {
-			sigact = __sig_alloc_action();
-			/* An error has occurred if we could not allocate the sigaction */
-			if (!sigact) {
-				pthread_spin_unlock(&sig_lite_lock);
-				return -ENOMEM;
-			}
-			sigact->signo = (unsigned char)sig;
-			__sig_sq_add_last((sq_entry_t *)sigact, &sig_actionq);
-		}
 		sigact->act.sa_handler = handler;
 		sigact->act.sa_mask = act->sa_mask;
 		sigact->act.sa_flags = act->sa_flags;
@@ -417,9 +262,7 @@ static int __sig_action_opr(int sig, const sigaction_t *act, sigaction_t *oact)
 void __sig_init(void)
 {
 	signal(SIGSYS, arm_do_signal);
-	QUEUE_INIT(&sig_free_action);
 	pthread_spin_init(&sig_lite_lock, 0);
-	__sig_alloc_action_block();
 	__sig_add_def_action();
 }
 
