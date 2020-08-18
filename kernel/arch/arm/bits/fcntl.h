@@ -24,6 +24,8 @@
 
 #define O_EXECVE 040000000
 
+#define O_ELFFILE 040
+
 #define F_DUPFD  0
 #define F_GETFD  1
 #define F_SETFD  2
