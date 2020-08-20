@@ -19,8 +19,6 @@
 #define O_TMPFILE 020040000
 #define O_NDELAY O_NONBLOCK
 
-#define O_ELFFILE 040
-
 #define F_DUPFD  0
 #define F_GETFD  1
 #define F_SETFD  2
