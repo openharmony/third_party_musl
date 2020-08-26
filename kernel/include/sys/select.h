@@ -17,7 +17,7 @@ extern "C" {
 #include <signal.h>
 #include "vfs_config.h"
 
-#define FD_SETSIZE 512
+/* FD_SETSIZE is defined in "vfs_config.h" */
 
 typedef unsigned long fd_mask;
 
