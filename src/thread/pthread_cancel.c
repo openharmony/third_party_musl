@@ -69,8 +69,7 @@ static void init_cancellation()
 		.sa_sigaction = cancel_handler
 	};
 	memset(&sa.sa_mask, -1, _NSIG/8);
-	// SIGCANCELL is 33, but signal now only support 1-32, so randomly choose a signal to replace it.
-	__libc_sigaction(SIGPWR, &sa, 0);
+	__libc_sigaction(SIGCANCEL, &sa, 0);
 }
 
 int pthread_cancel(pthread_t t)
@@ -86,5 +85,5 @@ int pthread_cancel(pthread_t t)
 			pthread_exit(PTHREAD_CANCELED);
 		return 0;
 	}
-	return pthread_kill(t, SIGPWR);
+	return pthread_kill(t, SIGCANCEL);
 }
