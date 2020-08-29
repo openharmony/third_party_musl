@@ -6,6 +6,7 @@
 #include <sys/stat.h>
 #include <sys/mman.h>
 #include <ctype.h>
+#include <unsupported_api.h>
 #include "locale_impl.h"
 #include "atomic.h"
 #include "pleval.h"
@@ -258,15 +259,18 @@ notrans:
 
 char *dcgettext(const char *domainname, const char *msgid, int category)
 {
+	unsupported_api(__FUNCTION__);
 	return dcngettext(domainname, msgid, 0, 1, category);
 }
 
 char *dngettext(const char *domainname, const char *msgid1, const char *msgid2, unsigned long int n)
 {
+	unsupported_api(__FUNCTION__);
 	return dcngettext(domainname, msgid1, msgid2, n, LC_MESSAGES);
 }
 
 char *dgettext(const char *domainname, const char *msgid)
 {
+	unsupported_api(__FUNCTION__);
 	return dcngettext(domainname, msgid, 0, 1, LC_MESSAGES);
 }

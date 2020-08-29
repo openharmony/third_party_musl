@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <limits.h>
+#include <unsupported_api.h>
 
 static char *current_domain;
 
@@ -13,6 +14,7 @@ char *__gettextdomain()
 
 char *textdomain(const char *domainname)
 {
+	unsupported_api(__FUNCTION__);
 	if (!domainname) return __gettextdomain();
 
 	size_t domlen = strlen(domainname);
@@ -33,10 +35,12 @@ char *textdomain(const char *domainname)
 
 char *gettext(const char *msgid)
 {
+	unsupported_api(__FUNCTION__);
 	return dgettext(0, msgid);
 }
 
 char *ngettext(const char *msgid1, const char *msgid2, unsigned long int n)
 {
+	unsupported_api(__FUNCTION__);
 	return dngettext(0, msgid1, msgid2, n);
 }

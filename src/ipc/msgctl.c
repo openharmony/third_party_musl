@@ -1,5 +1,7 @@
 #include <sys/msg.h>
 #include <endian.h>
+#include <unsupported_api.h>
+
 #include "syscall.h"
 #include "ipc.h"
 
@@ -9,6 +11,7 @@
 
 int msgctl(int q, int cmd, struct msqid_ds *buf)
 {
+	unsupported_api(__FUNCTION__);
 #ifdef SYSCALL_IPC_BROKEN_MODE
 	struct msqid_ds tmp;
 	if (cmd == IPC_SET) {

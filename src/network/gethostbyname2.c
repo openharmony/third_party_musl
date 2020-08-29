@@ -4,6 +4,7 @@
 #include <netdb.h>
 #include <errno.h>
 #include <stdlib.h>
+#include <unsupported_api.h>
 
 struct hostent *gethostbyname2(const char *name, int af)
 {
@@ -11,6 +12,7 @@ struct hostent *gethostbyname2(const char *name, int af)
 	size_t size = 63;
 	struct hostent *res;
 	int err;
+	unsupported_api(__FUNCTION__);
 	do {
 		free(h);
 		h = malloc(size+=size+1);

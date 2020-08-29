@@ -2,6 +2,8 @@
 #include <sys/time.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <unsupported_api.h>
+
 #include "syscall.h"
 
 #define IS32BIT(x) !((x)+0x80000000ULL>>32)
@@ -10,6 +12,7 @@
 int utimensat(int fd, const char *path, const struct timespec times[2], int flags)
 {
 	int r;
+	unsupported_api(__FUNCTION__);
 	if (times && times[0].tv_nsec==UTIME_NOW && times[1].tv_nsec==UTIME_NOW)
 		times = 0;
 #ifdef SYS_utimensat_time64

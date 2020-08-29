@@ -3,10 +3,12 @@
 #include <sys/timex.h>
 #include <errno.h>
 #include "syscall.h"
+#include <unsupported_api.h>
 
 int adjtime(const struct timeval *in, struct timeval *out)
 {
 	struct timex tx = { 0 };
+	unsupported_api(__FUNCTION__);
 	if (in) {
 		if (in->tv_sec > 1000 || in->tv_usec > 1000000000) {
 			errno = EINVAL;

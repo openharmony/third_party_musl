@@ -4,6 +4,7 @@
 #include <sys/resource.h>
 #include <signal.h>
 #include <sys/sysinfo.h>
+#include <unsupported_api.h>
 #include "syscall.h"
 #include "libc.h"
 
@@ -166,7 +167,7 @@ long sysconf(int name)
 		[_SC_THREAD_ROBUST_PRIO_INHERIT] = -1,
 		[_SC_THREAD_ROBUST_PRIO_PROTECT] = -1,
 	};
-
+	unsupported_api(__FUNCTION__);
 	if (name >= sizeof(values)/sizeof(values[0]) || !values[name]) {
 		errno = EINVAL;
 		return -1;

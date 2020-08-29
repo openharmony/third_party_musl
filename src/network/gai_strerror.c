@@ -1,4 +1,5 @@
 #include <netdb.h>
+#include <unsupported_api.h>
 #include "locale_impl.h"
 
 static const char msgs[] =
@@ -19,6 +20,7 @@ static const char msgs[] =
 const char *gai_strerror(int ecode)
 {
 	const char *s;
+	unsupported_api(__FUNCTION__);
 	for (s=msgs, ecode++; ecode && *s; ecode++, s++) for (; *s; s++);
 	if (!*s) s++;
 	return LCTRANS_CUR(s);

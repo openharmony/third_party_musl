@@ -1,5 +1,6 @@
 #include "pwf.h"
 #include <pthread.h>
+#include <unsupported_api.h>
 
 #define FIX(x) (gr->gr_##x = gr->gr_##x-line+buf)
 
@@ -40,10 +41,12 @@ static int getgr_r(const char *name, gid_t gid, struct group *gr, char *buf, siz
 
 int getgrnam_r(const char *name, struct group *gr, char *buf, size_t size, struct group **res)
 {
+	unsupported_api(__FUNCTION__);
 	return getgr_r(name, 0, gr, buf, size, res);
 }
 
 int getgrgid_r(gid_t gid, struct group *gr, char *buf, size_t size, struct group **res)
 {
+	unsupported_api(__FUNCTION__);
 	return getgr_r(0, gid, gr, buf, size, res);
 }

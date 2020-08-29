@@ -2,10 +2,12 @@
 #include <sys/resource.h>
 #include <limits.h>
 #include "syscall.h"
+#include <unsupported_api.h>
 
 int nice(int inc)
 {
 	int prio = inc;
+	unsupported_api(__FUNCTION__);
 	// Only query old priority if it can affect the result.
 	// This also avoids issues with integer overflow.
 	if (inc > -2*NZERO && inc < 2*NZERO)

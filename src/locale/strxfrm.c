@@ -1,10 +1,12 @@
 #include <string.h>
 #include <locale.h>
+#include <unsupported_api.h>
 #include "locale_impl.h"
 
 /* collate only by code points */
 size_t __strxfrm_l(char *restrict dest, const char *restrict src, size_t n, locale_t loc)
 {
+	unsupported_api(__FUNCTION__);
 	size_t l = strlen(src);
 	if (n > l) strcpy(dest, src);
 	return l;

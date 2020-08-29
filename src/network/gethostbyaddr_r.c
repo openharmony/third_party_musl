@@ -6,6 +6,7 @@
 #include <netinet/in.h>
 #include <errno.h>
 #include <inttypes.h>
+#include <unsupported_api.h>
 
 int gethostbyaddr_r(const void *a, socklen_t l, int af,
 	struct hostent *h, char *buf, size_t buflen,
@@ -19,7 +20,7 @@ int gethostbyaddr_r(const void *a, socklen_t l, int af,
 	int i;
 
 	*res = 0;
-
+	unsupported_api(__FUNCTION__);
 	/* Load address argument into sockaddr structure */
 	if (af==AF_INET6 && l==16) memcpy(&sa.sin6.sin6_addr, a, 16);
 	else if (af==AF_INET && l==4) memcpy(&sa.sin.sin_addr, a, 4);

@@ -6,6 +6,7 @@
 #include <sys/mman.h>
 #include "libc.h"
 #include "lock.h"
+#include <unsupported_api.h>
 
 long  __timezone = 0;
 int   __daylight = 0;
@@ -402,6 +403,7 @@ dst:
 
 static void __tzset()
 {
+	unsupported_api(__FUNCTION__);
 	LOCK(lock);
 	do_tzset();
 	UNLOCK(lock);

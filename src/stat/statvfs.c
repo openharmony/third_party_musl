@@ -1,5 +1,7 @@
 #include <sys/statvfs.h>
 #include <sys/statfs.h>
+#include <unsupported_api.h>
+
 #include "syscall.h"
 
 static int __statfs(const char *path, struct statfs *buf)
@@ -14,6 +16,7 @@ static int __statfs(const char *path, struct statfs *buf)
 
 static int __fstatfs(int fd, struct statfs *buf)
 {
+	unsupported_api(__FUNCTION__);
 	*buf = (struct statfs){0};
 #ifdef SYS_fstatfs64
 	return syscall(SYS_fstatfs64, fd, sizeof *buf, buf);
@@ -52,6 +55,8 @@ int statvfs(const char *restrict path, struct statvfs *restrict buf)
 int fstatvfs(int fd, struct statvfs *buf)
 {
 	struct statfs kbuf;
+
+	unsupported_api(__FUNCTION__);
 	if (__fstatfs(fd, &kbuf)<0) return -1;
 	fixup(buf, &kbuf);
 	return 0;

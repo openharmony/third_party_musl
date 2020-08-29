@@ -7,6 +7,7 @@
 #include <errno.h>
 #include <stdint.h>
 #include "lookup.h"
+#include <unsupported_api.h>
 
 int gethostbyname2_r(const char *name, int af,
 	struct hostent *h, char *buf, size_t buflen,
@@ -18,6 +19,7 @@ int gethostbyname2_r(const char *name, int af,
 	size_t align, need;
 
 	*res = 0;
+	unsupported_api(__FUNCTION__);
 	cnt = __lookup_name(addrs, canon, name, af, AI_CANONNAME);
 	if (cnt<0) switch (cnt) {
 	case EAI_NONAME:

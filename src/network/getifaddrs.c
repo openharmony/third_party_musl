@@ -7,6 +7,7 @@
 #include <syscall.h>
 #include <net/if.h>
 #include <netinet/in.h>
+#include <unsupported_api.h>
 #include "netlink.h"
 
 #define IFADDRS_HASH_SIZE 64
@@ -208,6 +209,7 @@ int getifaddrs(struct ifaddrs **ifap)
 {
 	struct ifaddrs_ctx _ctx, *ctx = &_ctx;
 	int r;
+	unsupported_api(__FUNCTION__);
 	memset(ctx, 0, sizeof *ctx);
 	r = __rtnetlink_enumerate(AF_UNSPEC, AF_UNSPEC, netlink_msg_to_ifaddr, ctx);
 	if (r == 0) *ifap = &ctx->first->ifa;

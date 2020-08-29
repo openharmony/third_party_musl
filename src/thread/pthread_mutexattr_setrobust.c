@@ -1,4 +1,5 @@
 #include "pthread_impl.h"
+#include <unsupported_api.h>
 #include "syscall.h"
 
 static pthread_once_t check_robust_once;
@@ -13,6 +14,7 @@ static void check_robust()
 
 int pthread_mutexattr_setrobust(pthread_mutexattr_t *a, int robust)
 {
+	unsupported_api(__FUNCTION__);
 	if (robust > 1U) return EINVAL;
 	if (robust) {
 		pthread_once(&check_robust_once, check_robust);

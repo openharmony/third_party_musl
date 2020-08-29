@@ -1,5 +1,6 @@
 #include <locale.h>
 #include <langinfo.h>
+#include <unsupported_api.h>
 #include "locale_impl.h"
 
 static const char c_time[] =
@@ -32,12 +33,14 @@ char *__nl_langinfo_l(nl_item item, locale_t loc)
 	int idx = item & 65535;
 	const char *str;
 
+	unsupported_api(__FUNCTION__);
+
 	if (item == CODESET) return loc->cat[LC_CTYPE] ? "UTF-8" : "ASCII";
 
 	/* _NL_LOCALE_NAME extension */
 	if (idx == 65535 && cat < LC_ALL)
 		return loc->cat[cat] ? (char *)loc->cat[cat]->name : "C";
-	
+
 	switch (cat) {
 	case LC_NUMERIC:
 		if (idx > 1) return "";
@@ -66,6 +69,7 @@ char *__nl_langinfo_l(nl_item item, locale_t loc)
 
 char *__nl_langinfo(nl_item item)
 {
+	unsupported_api(__FUNCTION__);
 	return __nl_langinfo_l(item, CURRENT_LOCALE);
 }
 

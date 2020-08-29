@@ -1,10 +1,12 @@
 #include <time.h>
 #include <limits.h>
+#include <unsupported_api.h>
 
 clock_t clock()
 {
 	struct timespec ts;
 
+	unsupported_api(__FUNCTION__);
 	if (__clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &ts))
 		return -1;
 

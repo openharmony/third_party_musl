@@ -1,5 +1,6 @@
 #include <strings.h>
 #include <ctype.h>
+#include <unsupported_api.h>
 
 int strcasecmp(const char *_l, const char *_r)
 {
@@ -10,6 +11,7 @@ int strcasecmp(const char *_l, const char *_r)
 
 int __strcasecmp_l(const char *l, const char *r, locale_t loc)
 {
+	unsupported_api(__FUNCTION__);
 	return strcasecmp(l, r);
 }
 

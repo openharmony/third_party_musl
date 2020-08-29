@@ -1,4 +1,5 @@
 #include "pthread_impl.h"
+#include <unsupported_api.h>
 #include "syscall.h"
 
 static pthread_once_t check_pi_once;
@@ -12,6 +13,7 @@ static void check_pi()
 
 int pthread_mutexattr_setprotocol(pthread_mutexattr_t *a, int protocol)
 {
+	unsupported_api(__FUNCTION__);
 	switch (protocol) {
 	case PTHREAD_PRIO_NONE:
 		a->__attr &= ~8;

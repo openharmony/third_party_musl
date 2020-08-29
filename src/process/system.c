@@ -4,6 +4,7 @@
 #include <sys/wait.h>
 #include <spawn.h>
 #include <errno.h>
+#include <unsupported_api.h>
 #include "pthread_impl.h"
 
 extern char **__environ;
@@ -15,6 +16,8 @@ int system(const char *cmd)
 	struct sigaction sa = { .sa_handler = SIG_IGN }, oldint, oldquit;
 	int status = -1, ret;
 	posix_spawnattr_t attr;
+
+	unsupported_api(__FUNCTION__);
 
 	pthread_testcancel();
 

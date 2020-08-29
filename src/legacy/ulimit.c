@@ -1,10 +1,12 @@
 #include <sys/resource.h>
 #include <ulimit.h>
 #include <stdarg.h>
+#include <unsupported_api.h>
 
 long ulimit(int cmd, ...)
 {
 	struct rlimit rl;
+	unsupported_api(__FUNCTION__);
 	getrlimit(RLIMIT_FSIZE, &rl);
 	if (cmd == UL_SETFSIZE) {
 		long val;

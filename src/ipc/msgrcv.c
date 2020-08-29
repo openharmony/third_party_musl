@@ -1,9 +1,12 @@
 #include <sys/msg.h>
+#include <unsupported_api.h>
+
 #include "syscall.h"
 #include "ipc.h"
 
 ssize_t msgrcv(int q, void *m, size_t len, long type, int flag)
 {
+	unsupported_api(__FUNCTION__);
 #ifndef SYS_ipc
 	return syscall_cp(SYS_msgrcv, q, m, len, type, flag);
 #else

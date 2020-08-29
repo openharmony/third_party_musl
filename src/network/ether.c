@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <netinet/ether.h>
 #include <stdio.h>
+#include <unsupported_api.h>
 
 struct ether_addr *ether_aton_r (const char *x, struct ether_addr *p_a)
 {
@@ -44,15 +45,18 @@ char *ether_ntoa (const struct ether_addr *p_a) {
 
 int ether_line(const char *l, struct ether_addr *e, char *hostname)
 {
+	unsupported_api(__FUNCTION__);
 	return -1;
 }
 
 int ether_ntohost(char *hostname, const struct ether_addr *e)
 {
+	unsupported_api(__FUNCTION__);
 	return -1;
 }
 
 int ether_hostton(const char *hostname, struct ether_addr *e)
 {
+	unsupported_api(__FUNCTION__);
 	return -1;
 }

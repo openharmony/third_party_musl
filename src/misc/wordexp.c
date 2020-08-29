@@ -9,6 +9,7 @@
 #include <signal.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <unsupported_api.h>
 #include "pthread_impl.h"
 
 static void reap(pid_t pid)
@@ -170,6 +171,7 @@ nospace:
 int wordexp(const char *restrict s, wordexp_t *restrict we, int flags)
 {
 	int r, cs;
+	unsupported_api(__FUNCTION__);
 	pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &cs);
 	r = do_wordexp(s, we, flags);
 	pthread_setcancelstate(cs, 0);

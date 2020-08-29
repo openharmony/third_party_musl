@@ -1,4 +1,5 @@
 #include <wchar.h>
+#include <unsupported_api.h>
 
 static const unsigned char table[] = {
 #include "nonspacing.h"
@@ -10,6 +11,7 @@ static const unsigned char wtable[] = {
 
 int wcwidth(wchar_t wc)
 {
+	unsupported_api(__FUNCTION__);
 	if (wc < 0xffU)
 		return (wc+1 & 0x7f) >= 0x21 ? 1 : wc ? -1 : 0;
 	if ((wc & 0xfffeffffU) < 0xfffe) {

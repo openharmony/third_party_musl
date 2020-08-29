@@ -1,5 +1,6 @@
 #include <strings.h>
 #include <ctype.h>
+#include <unsupported_api.h>
 
 int strncasecmp(const char *_l, const char *_r, size_t n)
 {
@@ -11,6 +12,7 @@ int strncasecmp(const char *_l, const char *_r, size_t n)
 
 int __strncasecmp_l(const char *l, const char *r, size_t n, locale_t loc)
 {
+	unsupported_api(__FUNCTION__);
 	return strncasecmp(l, r, n);
 }
 

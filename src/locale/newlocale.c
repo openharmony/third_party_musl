@@ -2,6 +2,7 @@
 #include <string.h>
 #include <pthread.h>
 #include "locale_impl.h"
+#include <unsupported_api.h>
 
 static pthread_once_t default_locale_once;
 static struct __locale_struct default_locale, default_ctype_locale;
@@ -23,6 +24,7 @@ locale_t __newlocale(int mask, const char *name, locale_t loc)
 {
 	struct __locale_struct tmp;
 
+	unsupported_api(__FUNCTION__);
 	for (int i=0; i<LC_ALL; i++) {
 		tmp.cat[i] = (!(mask & (1<<i)) && loc) ? loc->cat[i] :
 			__get_locale(i, (mask & (1<<i)) ? name : "");

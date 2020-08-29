@@ -1,5 +1,6 @@
 #include <netdb.h>
 #include <string.h>
+#include <unsupported_api.h>
 
 /* do we really need all these?? */
 
@@ -45,6 +46,7 @@ static const unsigned char protos[] = {
 
 void endprotoent(void)
 {
+	unsupported_api(__FUNCTION__);
 	idx = 0;
 }
 

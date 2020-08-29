@@ -1,9 +1,11 @@
 #define _GNU_SOURCE
 #include <fcntl.h>
 #include <unistd.h>
+#include <unsupported_api.h>
 
 int daemon(int nochdir, int noclose)
 {
+	unsupported_api(__FUNCTION__);
 	if (!nochdir && chdir("/"))
 		return -1;
 	if (!noclose) {

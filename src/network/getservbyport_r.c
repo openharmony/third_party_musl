@@ -6,6 +6,7 @@
 #include <errno.h>
 #include <string.h>
 #include <stdlib.h>
+#include <unsupported_api.h>
 
 int getservbyport_r(int port, const char *prots,
 	struct servent *se, char *buf, size_t buflen, struct servent **res)
@@ -15,6 +16,7 @@ int getservbyport_r(int port, const char *prots,
 		.sin_family = AF_INET,
 		.sin_port = port,
 	};
+	unsupported_api(__FUNCTION__);
 
 	if (!prots) {
 		int r = getservbyport_r(port, "tcp", se, buf, buflen, res);
