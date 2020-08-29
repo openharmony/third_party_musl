@@ -48,10 +48,6 @@ out:
 
 off_t __stdio_seek(FILE *f, off_t off, int whence)
 {
-#ifdef __NR__llseek
     off_t result = 0;
     return __stdio_lseek64(f->fd, off>>32, off, &result, whence) ? -1 : result;
-#else
-    return SysLseek(f->fd, off, whence);
-#endif
 }
