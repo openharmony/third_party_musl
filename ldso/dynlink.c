@@ -68,8 +68,6 @@ struct dso {
 	size_t *lazy, lazy_cnt;
 	unsigned char *map;
 	size_t map_len;
-	dev_t dev;
-	ino_t ino;
 	char relocated;
 	char constructed;
 	char kernel_mapped;
@@ -756,20 +754,20 @@ static void *map_library(int fd, struct dso *dso)
 		prot = (((ph->p_flags&PF_R) ? PROT_READ : 0) |
 			((ph->p_flags&PF_W) ? PROT_WRITE: 0) |
 			((ph->p_flags&PF_X) ? PROT_EXEC : 0));
-        if ((ph->p_flags & PF_R) && (ph->p_flags & PF_X) && (!(ph->p_flags & PF_W))) {
-            Phdr *next_ph = ph;
-            for (int j = i - 1; j > 0; j--) {
-                next_ph = (void *)((char *)next_ph+eh->e_phentsize);
-                if (next_ph->p_type != PT_LOAD) {
-                    continue;
-                }
-                size_t p_vaddr = (next_ph->p_vaddr & -(PAGE_SIZE));
-                if (p_vaddr > this_max) {
-                    mprotect(base + this_max, p_vaddr - this_max , PROT_READ);
-                }
-                break;
-            }
-        }
+		if ((ph->p_flags & PF_R) && (ph->p_flags & PF_X) && (!(ph->p_flags & PF_W))) {
+			Phdr *next_ph = ph;
+			for (int j = i - 1; j > 0; j--) {
+				next_ph = (void *)((char *)next_ph+eh->e_phentsize);
+				if (next_ph->p_type != PT_LOAD) {
+					continue;
+				}
+				size_t p_vaddr = (next_ph->p_vaddr & -(PAGE_SIZE));
+				if (p_vaddr > this_max) {
+					mprotect(base + this_max, p_vaddr - this_max , PROT_READ);
+				}
+				break;
+			}
+		}
 		/* Reuse the existing mapping for the lowest-address LOAD */
 		if ((ph->p_vaddr & -PAGE_SIZE) != addr_min || DL_NOMMU_SUPPORT)
 			if (mmap_fixed(base+this_min, this_max-this_min, prot, MAP_PRIVATE|MAP_FIXED, fd, off_start) == MAP_FAILED)
@@ -1089,20 +1087,21 @@ static struct dso *load_library(const char *name, struct dso *needed_by)
 					sys_path = "";
 				}
 			}
-			if (!sys_path || sys_path[0] == 0) sys_path = "/lib:/usr/local/lib:/usr/lib";
+			if (!sys_path || sys_path[0] == 0) sys_path = "/usr/lib:/lib:/usr/local/lib";
 			fd = path_open(name, sys_path, buf, sizeof buf);
 		}
 		pathname = buf;
 	}
 	if (fd < 0) return 0;
-	if (fstat(fd, &st) < 0) {
-		close(fd);
-		return 0;
+
+	if (pathname[0] != '/') {
+		if (!realpath(pathname, fullpath)) {
+			close(fd);
+			return 0;
+		}
+		pathname = fullpath;
 	}
-	if (!realpath(pathname, fullpath)) {
-		return 0;
-	}
-	pathname = fullpath;
+
 	for (p=head->next; p; p=p->next) {
 		if (!strcmp(p->name, pathname)) {
 			/* If this library was previously loaded with a
@@ -1151,8 +1150,6 @@ static struct dso *load_library(const char *name, struct dso *needed_by)
 		return 0;
 	}
 	memcpy(p, &temp_dso, sizeof temp_dso);
-	p->dev = st.st_dev;
-	p->ino = st.st_ino;
 	p->needed_by = needed_by;
 	p->name = p->buf;
 	p->runtime_loaded = runtime;
