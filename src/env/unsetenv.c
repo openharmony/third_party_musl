@@ -2,14 +2,12 @@
 #include <string.h>
 #include <errno.h>
 #include <unistd.h>
-#include <unsupported_api.h>
 
 static void dummy(char *old, char *new) {}
 weak_alias(dummy, __env_rm_add);
 
 int unsetenv(const char *name)
 {
-	unsupported_api(__FUNCTION__);
 	size_t l = __strchrnul(name, '=') - name;
 	if (!l || name[l]) {
 		errno = EINVAL;

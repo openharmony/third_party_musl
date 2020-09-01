@@ -1,4 +1,3 @@
-#include <unsupported_api.h>
 #include "pthread_impl.h"
 #include "lock.h"
 
@@ -6,7 +5,6 @@ int pthread_setschedparam(pthread_t t, int policy, const struct sched_param *par
 {
 	int r;
 
-	unsupported_api(__FUNCTION__);
 	if (policy != SCHED_RR && policy != SCHED_FIFO) {
 		return EINVAL;
 	}
