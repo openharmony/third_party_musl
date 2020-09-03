@@ -1,7 +1,7 @@
 [
     {
         "Name"                  : "musl",
-        "License"               : "BSD 2-Clause License",
+        "License"               : "MIT License",
         "License File"          : "COPYRIGHT",
         "Version Number"        : "1.2.0",
         "Owner"                 : "jianghan2@huawei.com",
