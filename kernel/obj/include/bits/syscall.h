@@ -406,7 +406,9 @@
 #define __NR_realpath           (__NR_OHOS_BEGIN + 16)
 #define __NR_format             (__NR_OHOS_BEGIN + 17)
 #define __NR_shellexec          (__NR_OHOS_BEGIN + 18)
-#define __NR_syscallend         (__NR_OHOS_BEGIN + 19)
+#define __NR_ohoscapget         (__NR_OHOS_BEGIN + 19)
+#define __NR_ohoscapset         (__NR_OHOS_BEGIN + 20)
+#define __NR_syscallend         (__NR_OHOS_BEGIN + 21)
 
 #define __ARM_NR_breakpoint    0x0f0001
 #define __ARM_NR_cacheflush    0x0f0002
