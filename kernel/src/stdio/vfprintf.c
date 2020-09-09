@@ -10,7 +10,6 @@
 #include <inttypes.h>
 #include <math.h>
 #include <float.h>
-#include <sys/ioctl.h>
 
 /* Some useful macros */
 
@@ -444,14 +443,7 @@ static int printf_core(FILE *f, const char *fmt, va_list *ap, union arg *nl_arg,
 	int t, pl;
 	wchar_t wc[2], *ws;
 	char mb[4];
-	struct winsize wsz;
 
-	if (f && (f->write == __stdout_write) && !ioctl(f->fd, TIOCGWINSZ, &wsz)) {
-		f->lbf = '\n';
-		f->write = __stdio_write;
-		f->wpos = f->wbase = f->buf;
-		f->wend = f->buf + f->buf_size;
-	}
 	for (;;) {
 		/* This error is only specified for snprintf, but since it's
 		 * unspecified for other forms, do the same. Stop immediately
