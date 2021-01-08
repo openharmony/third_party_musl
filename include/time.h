@@ -1,6 +1,10 @@
 #ifndef	_TIME_H
 #define _TIME_H
 
+#ifdef __ICCARM__ /* for iar */
+#include_next <time.h>
+#else
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -162,5 +166,5 @@ __REDIR(timegm, __timegm_time64);
 }
 #endif
 
-
+#endif /* __ICCARM__ */
 #endif
