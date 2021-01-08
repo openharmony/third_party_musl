@@ -1,6 +1,10 @@
 #ifndef _SIGNAL_H
 #define _SIGNAL_H
 
+#ifdef __ICCARM__ /* for iar */
+#include_next <signal.h>
+#else
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -283,4 +287,5 @@ __REDIR(sigtimedwait, __sigtimedwait_time64);
 }
 #endif
 
+#endif /* __ICCARM__ */
 #endif

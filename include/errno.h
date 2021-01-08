@@ -1,6 +1,13 @@
 #ifndef	_ERRNO_H
 #define _ERRNO_H
 
+#ifdef __ICCARM__ /* for iar */
+
+#include <bits/errno.h>
+#include_next <errno.h>
+
+#else
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -23,5 +30,6 @@ extern char *program_invocation_short_name, *program_invocation_name;
 }
 #endif
 
+#endif /* __ICCARM__ */
 #endif
 
