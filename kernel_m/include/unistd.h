@@ -1,6 +1,8 @@
 #ifndef	_UNISTD_H
 #define	_UNISTD_H
 
+#include <stddef.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -14,12 +16,6 @@ extern "C" {
 #define SEEK_SET 0
 #define SEEK_CUR 1
 #define SEEK_END 2
-
-#ifdef __cplusplus
-#define NULL 0L
-#else
-#define NULL ((void*)0)
-#endif
 
 #define __NEED_size_t
 #define __NEED_ssize_t

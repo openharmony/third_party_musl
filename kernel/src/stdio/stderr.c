@@ -1,7 +1,9 @@
 #include "stdio_impl.h"
+#include <pthread.h>
 
 #undef stderr
 
+static pthread_mutex_t locallock = PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
 static unsigned char buf[UNGET];
 hidden FILE __stderr_FILE = {
 	.buf = buf+UNGET,
@@ -12,7 +14,7 @@ hidden FILE __stderr_FILE = {
 	.write = __stdio_write,
 	.seek = __stdio_seek,
 	.close = __stdio_close,
-	.lock = -1,
+	.lock = &locallock,
 };
 FILE *const stderr = &__stderr_FILE;
 FILE *volatile __stderr_used = &__stderr_FILE;
