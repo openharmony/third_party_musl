@@ -267,7 +267,7 @@ static int __sig_action_opr(int sig, const sigaction_t *act, sigaction_t *oact)
 		sigact->act.sa_mask = act->sa_mask;
 		sigact->act.sa_flags = act->sa_flags;
 	}
-	sigprocmask(SIG_SETMASK, &act->sa_mask, NULL);
+	sigprocmask(SIG_BLOCK, &act->sa_mask, NULL);
 	pthread_spin_unlock(&sig_lite_lock);
 	return ret;
 }
