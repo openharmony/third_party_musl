@@ -183,7 +183,19 @@ static void __sig_operation(unsigned int receivedSigno)
 
 void arm_signal_process(unsigned int receivedSig)
 {
+	sigset_t mask, oldmask;
+
+	sigemptyset(&mask);
+	sigemptyset(&oldmask);
+
+	sigaddset(&mask, receivedSig);
+	sigprocmask(SIG_BLOCK, &mask, NULL);
+
 	__sig_operation(receivedSig);
+
+	sigprocmask(SIG_BLOCK, NULL, &oldmask);
+	sigdelset(&oldmask, receivedSig);
+	sigprocmask(SIG_SETMASK, &oldmask, NULL);
 }
 
 static void __sig_add_def_action()
@@ -255,6 +267,7 @@ static int __sig_action_opr(int sig, const sigaction_t *act, sigaction_t *oact)
 		sigact->act.sa_mask = act->sa_mask;
 		sigact->act.sa_flags = act->sa_flags;
 	}
+	sigprocmask(SIG_SETMASK, &act->sa_mask, NULL);
 	pthread_spin_unlock(&sig_lite_lock);
 	return ret;
 }
