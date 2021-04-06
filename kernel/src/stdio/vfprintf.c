@@ -1,7 +1,10 @@
 #include "stdio_impl.h"
 #include <errno.h>
 #include <ctype.h>
+/* Undef the CHAR macro definition in los_typedef.h to avoid conflicts with the following CHAR */
+#define CHAR _CHAR
 #include <limits.h>
+#undef CHAR
 #include <string.h>
 #include <stdarg.h>
 #include <stddef.h>
