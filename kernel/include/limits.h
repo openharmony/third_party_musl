@@ -5,6 +5,8 @@
 
 #include <bits/alltypes.h> /* __LONG_MAX */
 
+#include "los_config.h"
+
 #ifndef PAGE_SIZE
 #define PAGE_SIZE 4096
 #endif
