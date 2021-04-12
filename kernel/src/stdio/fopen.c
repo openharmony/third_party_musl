@@ -4,7 +4,6 @@
 #include <string.h>
 #include <errno.h>
 #include <limits.h>
-#include "menuconfig.h"
 #ifdef LOSCFG_LLTSER
 #include "gcov_ser.h"
 #endif

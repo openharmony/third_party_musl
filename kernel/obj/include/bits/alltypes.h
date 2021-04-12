@@ -1,4 +1,3 @@
-#include "menuconfig.h"
 #ifndef YES
 #define YES  1
 #endif
