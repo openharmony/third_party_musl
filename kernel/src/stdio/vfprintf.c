@@ -1,10 +1,7 @@
 #include "stdio_impl.h"
 #include <errno.h>
 #include <ctype.h>
-/* Undef the CHAR macro definition in los_typedef.h to avoid conflicts with the following CHAR */
-#define CHAR _CHAR
 #include <limits.h>
-#undef CHAR
 #include <string.h>
 #include <stdarg.h>
 #include <stddef.h>
@@ -31,6 +28,10 @@
 #define GROUPED    (1U<<('\''-' '))
 
 #define FLAGMASK (ALT_FORM|ZERO_PAD|LEFT_ADJ|PAD_POS|MARK_POS|GROUPED)
+
+/* Redefine the CHAR type that defined in los_typedef.h and introduced
+ * in by limit.h to avoid conflicts with the following enum definition. */
+#define CHAR _CHAR
 
 /* State machine to accept length modifiers + conversion specifiers.
  * Result is 0 on failure, or an argument type to pop on success. */
