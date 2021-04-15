@@ -2,7 +2,6 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include "menuconfig.h"
 #include "fs/fs.h"
 #include "fs/file.h"
 
