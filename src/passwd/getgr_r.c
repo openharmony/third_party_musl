@@ -47,6 +47,5 @@ int getgrnam_r(const char *name, struct group *gr, char *buf, size_t size, struc
 
 int getgrgid_r(gid_t gid, struct group *gr, char *buf, size_t size, struct group **res)
 {
-	unsupported_api(__FUNCTION__);
 	return getgr_r(0, gid, gr, buf, size, res);
 }

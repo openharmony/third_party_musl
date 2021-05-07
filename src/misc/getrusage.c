@@ -1,13 +1,11 @@
 #include <sys/resource.h>
 #include <string.h>
 #include <errno.h>
-#include <unsupported_api.h>
 #include "syscall.h"
 
 int getrusage(int who, struct rusage *ru)
 {
 	int r;
-	unsupported_api(__FUNCTION__);
 #ifdef SYS_getrusage_time64
 	long long kru64[18];
 	r = __syscall(SYS_getrusage_time64, who, kru64);

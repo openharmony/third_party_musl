@@ -4,15 +4,11 @@
 #include <errno.h>
 #include <stdlib.h>
 #include "__dirent.h"
-#include <unsupported_api.h>
 
 DIR *fdopendir(int fd)
 {
 	DIR *dir;
 	struct stat st;
-
-	unsupported_api(__FUNCTION__);
-
 	if (fstat(fd, &st) < 0) {
 		return 0;
 	}
