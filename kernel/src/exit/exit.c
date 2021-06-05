@@ -35,6 +35,7 @@
 void _exit(int status) {
   PRINT_ERR("%s NOT SUPPORT\n", __FUNCTION__);
   errno = ENOSYS;
+  while (1);
 }
 
 void exit(int status) {

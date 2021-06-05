@@ -2,6 +2,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <dirent.h>
+#ifdef LOSCFG_FS_VFS
 #include <fs/fs.h>
 
 static off64_t __stdio_lseek64(int fd, int offsetHigh, int offsetLow, off64_t *result, int whence)
@@ -53,3 +54,4 @@ off_t __stdio_seek(FILE *f, off_t off, int whence)
     off_t result = 0;
     return __stdio_lseek64(f->fd, off>>32, off, &result, whence) ? -1 : result;
 }
+#endif
