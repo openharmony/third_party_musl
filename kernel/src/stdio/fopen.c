@@ -7,8 +7,6 @@
 #ifdef LOSCFG_LLTSER
 #include "gcov_ser.h"
 #endif
-#include "fs/fs.h"
-#include "fs/file.h"
 
 FILE *fopen(const char *restrict filename, const char *restrict mode)
 {
