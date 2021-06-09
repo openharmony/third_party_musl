@@ -173,29 +173,26 @@ static int __sig_cannot_catche(int sig, sa_sighandler_t handler)
 static void __sig_operation(unsigned int receivedSigno)
 {
 	int i;
+	sigset_t mask, oldmask;
+
+	sigemptyset(&mask);
+	sigemptyset(&oldmask);
 
 	for (i = 0; i < sizeof(sig_default_action) / sizeof(struct sig_default_act); i++) {
 		if (!g_sig_arr[i].ign_flag && g_sig_arr[i].signo == receivedSigno && g_sig_arr[i].act.sa_handler) {
+			sigaddset(&mask, receivedSigno);
+			sigprocmask(SIG_BLOCK, &mask, &oldmask);
+			sigprocmask(SIG_BLOCK, &g_sig_arr[i].act.sa_mask, NULL);
 			(*g_sig_arr[i].act.sa_handler)(g_sig_arr[i].signo);
+			sigprocmask(SIG_SETMASK, &oldmask, NULL);
+			return;
 		}
 	}
 }
 
 void arm_signal_process(unsigned int receivedSig)
 {
-	sigset_t mask, oldmask;
-
-	sigemptyset(&mask);
-	sigemptyset(&oldmask);
-
-	sigaddset(&mask, receivedSig);
-	sigprocmask(SIG_BLOCK, &mask, NULL);
-
 	__sig_operation(receivedSig);
-
-	sigprocmask(SIG_BLOCK, NULL, &oldmask);
-	sigdelset(&oldmask, receivedSig);
-	sigprocmask(SIG_SETMASK, &oldmask, NULL);
 }
 
 static void __sig_add_def_action()
@@ -267,7 +264,7 @@ static int __sig_action_opr(int sig, const sigaction_t *act, sigaction_t *oact)
 		sigact->act.sa_mask = act->sa_mask;
 		sigact->act.sa_flags = act->sa_flags;
 	}
-	sigprocmask(SIG_BLOCK, &act->sa_mask, NULL);
+
 	pthread_spin_unlock(&sig_lite_lock);
 	return ret;
 }
