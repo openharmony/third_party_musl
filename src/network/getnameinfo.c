@@ -9,7 +9,6 @@
 #include <net/if.h>
 #include <ctype.h>
 #include <resolv.h>
-#include <unsupported_api.h>
 #include "lookup.h"
 #include "stdio_impl.h"
 
@@ -130,7 +129,6 @@ int getnameinfo(const struct sockaddr *restrict sa, socklen_t sl,
 	unsigned char *a;
 	unsigned scopeid;
 
-	unsupported_api(__FUNCTION__);
 	switch (af) {
 	case AF_INET:
 		a = (void *)&((struct sockaddr_in *)sa)->sin_addr;

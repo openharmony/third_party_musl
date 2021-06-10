@@ -4,14 +4,13 @@
 #include <sys/ioctl.h>
 #include <string.h>
 #include <errno.h>
-#include <unsupported_api.h>
 #include "syscall.h"
 
 char *if_indextoname(unsigned index, char *name)
 {
 	struct ifreq ifr;
 	int fd, r;
-	unsupported_api(__FUNCTION__);
+
 	if ((fd = socket(AF_UNIX, SOCK_DGRAM|SOCK_CLOEXEC, 0)) < 0) return 0;
 	ifr.ifr_ifindex = index;
 	r = ioctl(fd, SIOCGIFNAME, &ifr);

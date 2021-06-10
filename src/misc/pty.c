@@ -3,12 +3,10 @@
 #include <stdio.h>
 #include <fcntl.h>
 #include <errno.h>
-#include <unsupported_api.h>
 #include "syscall.h"
 
 int posix_openpt(int flags)
 {
-	unsupported_api(__FUNCTION__);
 	int r = open("/dev/ptmx", flags);
 	if (r < 0 && errno == ENOSPC) errno = EAGAIN;
 	return r;
@@ -16,7 +14,6 @@ int posix_openpt(int flags)
 
 int grantpt(int fd)
 {
-	unsupported_api(__FUNCTION__);
 	return 0;
 }
 

@@ -1,7 +1,6 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/wait.h>
-#include <unsupported_api.h>
 #include "syscall.h"
 #include "pthread_impl.h"
 
@@ -26,7 +25,6 @@ static int checker(void *p)
 
 int faccessat(int fd, const char *filename, int amode, int flag)
 {
-	unsupported_api(__FUNCTION__);
 	if (!flag || (flag==AT_EACCESS && getuid()==geteuid() && getgid()==getegid()))
 		return syscall(SYS_faccessat, fd, filename, amode, flag);
 

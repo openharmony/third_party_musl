@@ -1,10 +1,6 @@
 #ifndef _MATH_H
 #define _MATH_H
 
-#ifdef __ICCARM__ /* for iar */
-#include_next <math.h>
-#else
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -443,5 +439,4 @@ long double pow10l(long double);
 }
 #endif
 
-#endif /* __ICCARM__ */
 #endif

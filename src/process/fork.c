@@ -30,7 +30,6 @@ pid_t fork(void)
 		self->next = self->prev = self;
 		__thread_list_lock = 0;
 		libc.threads_minus_1 = 0;
-		signal(SIGSYS, arm_do_signal);
 	}
 	__restore_sigs(&set);
 	__fork_handler(!ret);

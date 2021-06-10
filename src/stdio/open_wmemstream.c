@@ -4,7 +4,6 @@
 #include <limits.h>
 #include <string.h>
 #include <stdlib.h>
-#include <unsupported_api.h>
 #include "libc.h"
 
 struct cookie {
@@ -71,7 +70,6 @@ FILE *open_wmemstream(wchar_t **bufp, size_t *sizep)
 	struct wms_FILE *f;
 	wchar_t *buf;
 
-	unsupported_api(__FUNCTION__);
 	if (!(f=malloc(sizeof *f))) return 0;
 	if (!(buf=malloc(sizeof *buf))) {
 		free(f);

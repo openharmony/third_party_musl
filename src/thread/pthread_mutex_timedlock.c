@@ -65,13 +65,15 @@ int __pthread_mutex_timedlock(pthread_mutex_t *restrict m, const struct timespec
 	r = __pthread_mutex_trylock(m);
 	if (r != EBUSY) return r;
 
+	if (type&8) return pthread_mutex_timedlock_pi(m, at);
+	
 	int spins = 100;
 	while (spins-- && m->_m_lock && !m->_m_waiters) a_spin();
 
 	while ((r=__pthread_mutex_trylock(m)) == EBUSY) {
 		r = m->_m_lock;
 		int own = r & 0x3fffffff;
-		if (!r)
+		if (!own && (!r || (type&4)))
 			continue;
 		if ((type&3) == PTHREAD_MUTEX_ERRORCHECK
 		    && own == __pthread_self()->tid)

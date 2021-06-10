@@ -3,12 +3,10 @@
 #include <netdb.h>
 #include "lookup.h"
 #include "lock.h"
-#include <unsupported_api.h>
 
 void freeaddrinfo(struct addrinfo *p)
 {
 	size_t cnt;
-	unsupported_api(__FUNCTION__);
 	for (cnt=1; p->ai_next; cnt++, p=p->ai_next);
 	struct aibuf *b = (void *)((char *)p - offsetof(struct aibuf, ai));
 	b -= b->slot;

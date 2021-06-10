@@ -1,8 +1,6 @@
 #include <signal.h>
 #include <string.h>
 #include <unistd.h>
-#include <unsupported_api.h>
-
 #include "syscall.h"
 #include "pthread_impl.h"
 
@@ -11,7 +9,6 @@ int sigqueue(pid_t pid, int sig, const union sigval value)
 	siginfo_t si;
 	sigset_t set;
 	int r;
-	unsupported_api(__FUNCTION__);
 	memset(&si, 0, sizeof si);
 	si.si_signo = sig;
 	si.si_code = SI_QUEUE;

@@ -2,11 +2,9 @@
 #include <signal.h>
 #include <errno.h>
 #include "syscall.h"
-#include <unsupported_api.h>
 
 int epoll_create(int size)
 {
-	unsupported_api(__FUNCTION__);
 	return epoll_create1(0);
 }
 
@@ -21,7 +19,6 @@ int epoll_create1(int flags)
 
 int epoll_ctl(int fd, int op, int fd2, struct epoll_event *ev)
 {
-	unsupported_api(__FUNCTION__);
 	return syscall(SYS_epoll_ctl, fd, op, fd2, ev);
 }
 
@@ -36,6 +33,5 @@ int epoll_pwait(int fd, struct epoll_event *ev, int cnt, int to, const sigset_t 
 
 int epoll_wait(int fd, struct epoll_event *ev, int cnt, int to)
 {
-	unsupported_api(__FUNCTION__);
 	return epoll_pwait(fd, ev, cnt, to, 0);
 }

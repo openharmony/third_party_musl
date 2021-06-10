@@ -3,7 +3,6 @@
 #include <stdarg.h>
 #include <monetary.h>
 #include <errno.h>
-#include <unsupported_api.h>
 #include "locale_impl.h"
 
 static ssize_t vstrfmon_l(char *s, size_t n, locale_t loc, const char *fmt, va_list ap)
@@ -81,7 +80,6 @@ ssize_t strfmon_l(char *restrict s, size_t n, locale_t loc, const char *restrict
 	va_list ap;
 	ssize_t ret;
 
-	unsupported_api(__FUNCTION__);
 	va_start(ap, fmt);
 	ret = vstrfmon_l(s, n, loc, fmt, ap);
 	va_end(ap);

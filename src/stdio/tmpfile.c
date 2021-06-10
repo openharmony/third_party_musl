@@ -1,8 +1,6 @@
 #include <stdio.h>
 #include <fcntl.h>
 #include <stdlib.h>
-#include <unsupported_api.h>
-
 #include "stdio_impl.h"
 
 #define MAXTRIES 100
@@ -13,7 +11,6 @@ FILE *tmpfile(void)
 	int fd;
 	FILE *f;
 	int try;
-	unsupported_api(__FUNCTION__);
 	for (try=0; try<MAXTRIES; try++) {
 		__randname(s+13);
 		fd = sys_open(s, O_RDWR|O_CREAT|O_EXCL, 0600);

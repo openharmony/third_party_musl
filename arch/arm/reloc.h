@@ -29,4 +29,4 @@
 #define TLSDESC_BACKWARDS
 
 #define CRTJMP(pc,sp) __asm__ __volatile__( \
-	"mov r0,%1 ; bx %0" : : "r"(pc), "r"(sp) : "memory", "r0" )
+	"mov sp,%1 ; bx %0" : : "r"(pc), "r"(sp) : "memory" )

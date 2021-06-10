@@ -5,7 +5,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <pthread.h>
-#include <unsupported_api.h>
 #include "netlink.h"
 
 #define IFADDRS_HASH_SIZE 64

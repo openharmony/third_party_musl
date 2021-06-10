@@ -9,6 +9,7 @@ DIR *fdopendir(int fd)
 {
 	DIR *dir;
 	struct stat st;
+
 	if (fstat(fd, &st) < 0) {
 		return 0;
 	}

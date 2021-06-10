@@ -1,6 +1,5 @@
 #include "pwf.h"
 #include <pthread.h>
-#include <unsupported_api.h>
 
 #define FIX(x) (pw->pw_##x = pw->pw_##x-line+buf)
 
@@ -34,7 +33,6 @@ static int getpw_r(const char *name, uid_t uid, struct passwd *pw, char *buf, si
 
 int getpwnam_r(const char *name, struct passwd *pw, char *buf, size_t size, struct passwd **res)
 {
-	unsupported_api(__FUNCTION__);
 	return getpw_r(name, 0, pw, buf, size, res);
 }
 

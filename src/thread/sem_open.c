@@ -85,6 +85,7 @@ sem_t *sem_open(const char *name, int flags, ...)
 					close(fd);
 					goto fail;
 				}
+				close(fd);
 				break;
 			}
 			if (errno != ENOENT)
@@ -119,6 +120,7 @@ sem_t *sem_open(const char *name, int flags, ...)
 			unlink(tmp);
 			goto fail;
 		}
+		close(fd);
 		e = link(tmp, name) ? errno : 0;
 		unlink(tmp);
 		if (!e) break;

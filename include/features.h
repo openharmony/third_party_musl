@@ -16,7 +16,7 @@
 #define _XOPEN_SOURCE 700
 #endif
 
-#if __STDC_VERSION__ >= 199901L && !defined(__cplusplus)
+#if __STDC_VERSION__ >= 199901L
 #define __restrict restrict
 #elif !defined(__GNUC__)
 #define __restrict
@@ -28,13 +28,7 @@
 #define __inline
 #endif
 
-#if defined(__cplusplus)
-#if __cplusplus >= 201103L
-#define _Noreturn [[ noreturn ]]
-#else
-#define _Noreturn
-#endif
-#elif __STDC_VERSION__ >= 201112L
+#if __STDC_VERSION__ >= 201112L
 #elif defined(__GNUC__)
 #define _Noreturn __attribute__((__noreturn__))
 #else

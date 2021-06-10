@@ -3,7 +3,6 @@
 #include <errno.h>
 #include <string.h>
 #include <spawn.h>
-#include <unsupported_api.h>
 #include "stdio_impl.h"
 #include "syscall.h"
 
@@ -16,7 +15,6 @@ FILE *popen(const char *cmd, const char *mode)
 	FILE *f;
 	posix_spawn_file_actions_t fa;
 
-	unsupported_api(__FUNCTION__);
 	if (*mode == 'r') {
 		op = 0;
 	} else if (*mode == 'w') {
@@ -25,7 +23,7 @@ FILE *popen(const char *cmd, const char *mode)
 		errno = EINVAL;
 		return 0;
 	}
-
+	
 	if (pipe2(p, O_CLOEXEC)) return NULL;
 	f = fdopen(p[op], mode);
 	if (!f) {

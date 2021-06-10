@@ -2,7 +2,6 @@
 #include <string.h>
 #include <mntent.h>
 #include <errno.h>
-#include <unsupported_api.h>
 
 static char *internal_buf;
 static size_t internal_bufsize;
@@ -11,7 +10,6 @@ static size_t internal_bufsize;
 
 FILE *setmntent(const char *name, const char *mode)
 {
-	unsupported_api(__FUNCTION__);
 	return fopen(name, mode);
 }
 
@@ -28,7 +26,6 @@ struct mntent *getmntent_r(FILE *f, struct mntent *mnt, char *linebuf, int bufle
 	mnt->mnt_freq = 0;
 	mnt->mnt_passno = 0;
 
-	unsupported_api(__FUNCTION__);
 	do {
 		if (use_internal) {
 			getline(&internal_buf, &internal_bufsize, f);
@@ -63,13 +60,11 @@ struct mntent *getmntent_r(FILE *f, struct mntent *mnt, char *linebuf, int bufle
 struct mntent *getmntent(FILE *f)
 {
 	static struct mntent mnt;
-	unsupported_api(__FUNCTION__);
 	return getmntent_r(f, &mnt, SENTINEL, 0);
 }
 
 int addmntent(FILE *f, const struct mntent *mnt)
 {
-	unsupported_api(__FUNCTION__);
 	if (fseek(f, 0, SEEK_END)) return 1;
 	return fprintf(f, "%s\t%s\t%s\t%s\t%d\t%d\n",
 		mnt->mnt_fsname, mnt->mnt_dir, mnt->mnt_type, mnt->mnt_opts,
@@ -78,6 +73,5 @@ int addmntent(FILE *f, const struct mntent *mnt)
 
 char *hasmntopt(const struct mntent *mnt, const char *opt)
 {
-	unsupported_api(__FUNCTION__);
 	return strstr(mnt->mnt_opts, opt);
 }

@@ -48,11 +48,23 @@ extern hidden const char __cp_begin[1], __cp_end[1], __cp_cancel[1];
 static void cancel_handler(int sig, siginfo_t *si, void *ctx)
 {
 	pthread_t self = __pthread_self();
+	ucontext_t *uc = ctx;
+	uintptr_t pc = uc->uc_mcontext.MC_PC;
+
 	a_barrier();
 	if (!self->cancel || self->canceldisable == PTHREAD_CANCEL_DISABLE) return;
-	if(self->cancelasync){
-		pthread_exit(PTHREAD_CANCELED);
+
+	_sigaddset(&uc->uc_sigmask, SIGCANCEL);
+
+	if (self->cancelasync || pc >= (uintptr_t)__cp_begin && pc < (uintptr_t)__cp_end) {
+		uc->uc_mcontext.MC_PC = (uintptr_t)__cp_cancel;
+#ifdef CANCEL_GOT
+		uc->uc_mcontext.MC_GOT = CANCEL_GOT;
+#endif
+		return;
 	}
+
+	__syscall(SYS_tkill, self->tid, SIGCANCEL);
 }
 
 void __testcancel()
