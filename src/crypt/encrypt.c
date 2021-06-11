@@ -1,7 +1,6 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <unsupported_api.h>
 
 #include "crypt_des.h"
 
@@ -12,7 +11,6 @@ void setkey(const char *key)
 	unsigned char bkey[8];
 	int i, j;
 
-	unsupported_api(__FUNCTION__);
 	for (i = 0; i < 8; i++) {
 		bkey[i] = 0;
 		for (j = 7; j >= 0; j--, key++)
@@ -29,7 +27,6 @@ void encrypt(char *block, int edflag)
 	int i, j;
 	char *p;
 
-	unsupported_api(__FUNCTION__);
 	p = block;
 	for (i = 0; i < 2; i++) {
 		b[i] = 0;

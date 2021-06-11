@@ -1,10 +1,6 @@
 #ifndef _FENV_H
 #define _FENV_H
 
-#ifdef __ICCARM__ /* for iar */
-#include_next <fenv.h>
-#else
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -28,7 +24,5 @@ int feupdateenv(const fenv_t *);
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* __ICCARM__ */
 #endif
 

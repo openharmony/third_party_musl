@@ -1,13 +1,10 @@
 #include <sys/stat.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <unsupported_api.h>
-
 #include "syscall.h"
 
 int fchmod(int fd, mode_t mode)
 {
-	unsupported_api(__FUNCTION__);
 	int ret = __syscall(SYS_fchmod, fd, mode);
 	if (ret != -EBADF || __syscall(SYS_fcntl, fd, F_GETFD) < 0)
 		return __syscall_ret(ret);

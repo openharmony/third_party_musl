@@ -9,7 +9,6 @@
 #include <pthread.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <unsupported_api.h>
 #include "lock.h"
 
 static volatile int lock[1];
@@ -21,7 +20,6 @@ static int log_fd = -1;
 
 int setlogmask(int maskpri)
 {
-	unsupported_api(__FUNCTION__);
 	LOCK(lock);
 	int ret = log_mask;
 	if (maskpri) log_mask = maskpri;
@@ -40,7 +38,6 @@ static const struct {
 void closelog(void)
 {
 	int cs;
-	unsupported_api(__FUNCTION__);
 	pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &cs);
 	LOCK(lock);
 	close(log_fd);
@@ -58,7 +55,6 @@ static void __openlog()
 void openlog(const char *ident, int opt, int facility)
 {
 	int cs;
-	unsupported_api(__FUNCTION__);
 	pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &cs);
 	LOCK(lock);
 
@@ -139,7 +135,6 @@ static void __vsyslog(int priority, const char *message, va_list ap)
 
 void syslog(int priority, const char *message, ...)
 {
-	unsupported_api(__FUNCTION__);
 	va_list ap;
 	va_start(ap, message);
 	__vsyslog(priority, message, ap);

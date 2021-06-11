@@ -5,7 +5,6 @@
 #include <signal.h>
 #include <fcntl.h>
 #include <sys/wait.h>
-#include <unsupported_api.h>
 #include "syscall.h"
 #include "pthread_impl.h"
 #include "fdop.h"
@@ -171,7 +170,6 @@ int posix_spawn(pid_t *restrict res, const char *restrict path,
 	int ec=0, cs;
 	struct args args;
 
-	unsupported_api(__FUNCTION__);
 	if (pipe2(args.p, O_CLOEXEC))
 		return errno;
 

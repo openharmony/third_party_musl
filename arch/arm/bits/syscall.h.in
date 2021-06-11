@@ -16,7 +16,6 @@
 #define __NR_lseek	19
 #define __NR_getpid	20
 #define __NR_mount	21
-#define __NR_umount	22
 #define __NR_setuid	23
 #define __NR_getuid	24
 #define __NR_ptrace	26
@@ -210,8 +209,6 @@
 #define __NR_epoll_ctl	251
 #define __NR_epoll_wait	252
 #define __NR_remap_file_pages	253
-#define __NR_set_thread_area	254
-#define __NR_get_thread_area	255
 #define __NR_set_tid_address	256
 #define __NR_timer_create	257
 #define __NR_timer_settime32	258
@@ -360,6 +357,26 @@
 #define __NR_io_pgetevents	399
 #define __NR_migrate_pages	400
 #define __NR_kexec_file_load	401
+#define __NR_clock_gettime64	403
+#define __NR_clock_settime64	404
+#define __NR_clock_adjtime64	405
+#define __NR_clock_getres_time64	406
+#define __NR_clock_nanosleep_time64	407
+#define __NR_timer_gettime64	408
+#define __NR_timer_settime64	409
+#define __NR_timerfd_gettime64	410
+#define __NR_timerfd_settime64	411
+#define __NR_utimensat_time64	412
+#define __NR_pselect6_time64	413
+#define __NR_ppoll_time64	414
+#define __NR_io_pgetevents_time64	416
+#define __NR_recvmmsg_time64	417
+#define __NR_mq_timedsend_time64	418
+#define __NR_mq_timedreceive_time64	419
+#define __NR_semtimedop_time64	420
+#define __NR_rt_sigtimedwait_time64	421
+#define __NR_futex_time64	422
+#define __NR_sched_rr_get_interval_time64	423
 #define __NR_pidfd_send_signal	424
 #define __NR_io_uring_setup	425
 #define __NR_io_uring_enter	426
@@ -373,28 +390,10 @@
 #define __NR_pidfd_open		434
 #define __NR_clone3		435
 
-/* OHOS customized syscalls, not compatible with ARM EABI */
-#define __NR_OHOS_BEGIN         500
-#define __NR_pthread_set_detach (__NR_OHOS_BEGIN + 0)
-#define __NR_pthread_join       (__NR_OHOS_BEGIN + 1)
-#define __NR_pthread_deatch     (__NR_OHOS_BEGIN + 2)
-#define __NR_creat_user_thread  (__NR_OHOS_BEGIN + 3)
-#define __NR_processcreat       (__NR_OHOS_BEGIN + 4)
-#define __NR_processtart        (__NR_OHOS_BEGIN + 5)
-#define __NR_printf             (__NR_OHOS_BEGIN + 6)
-#define __NR_dumpmemory         (__NR_OHOS_BEGIN + 13)
-#define __NR_mkfifo             (__NR_OHOS_BEGIN + 14)
-#define __NR_mqclose            (__NR_OHOS_BEGIN + 15)
-#define __NR_realpath           (__NR_OHOS_BEGIN + 16)
-#define __NR_format             (__NR_OHOS_BEGIN + 17)
-#define __NR_shellexec          (__NR_OHOS_BEGIN + 18)
-#define __NR_ohoscapget         (__NR_OHOS_BEGIN + 19)
-#define __NR_ohoscapset         (__NR_OHOS_BEGIN + 20)
-#define __NR_syscallend         (__NR_OHOS_BEGIN + 21)
-
 #define __ARM_NR_breakpoint	0x0f0001
 #define __ARM_NR_cacheflush	0x0f0002
 #define __ARM_NR_usr26		0x0f0003
 #define __ARM_NR_usr32		0x0f0004
 #define __ARM_NR_set_tls	0x0f0005
 #define __ARM_NR_get_tls	0x0f0006
+

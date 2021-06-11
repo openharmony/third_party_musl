@@ -2,7 +2,6 @@
 #include <signal.h>
 #include <stdint.h>
 #include <errno.h>
-#include <unsupported_api.h>
 #include "syscall.h"
 
 #define IS32BIT(x) !((x)+0x80000000ULL>>32)
@@ -13,7 +12,6 @@ int pselect(int n, fd_set *restrict rfds, fd_set *restrict wfds, fd_set *restric
 	syscall_arg_t data[2] = { (uintptr_t)mask, _NSIG/8 };
 	time_t s = ts ? ts->tv_sec : 0;
 	long ns = ts ? ts->tv_nsec : 0;
-	unsupported_api(__FUNCTION__);
 #ifdef SYS_pselect6_time64
 	int r = -ENOSYS;
 	if (SYS_pselect6 == SYS_pselect6_time64 || !IS32BIT(s))

@@ -8,8 +8,6 @@
 # Do not make changes here.
 #
 
-HIDE := @
-
 srcdir = .
 exec_prefix = /usr/local
 bindir = $(exec_prefix)/bin
@@ -48,7 +46,7 @@ CFLAGS_AUTO = -Os -pipe
 CFLAGS_C99FSE = -std=c99 -ffreestanding -nostdinc 
 
 CFLAGS_ALL = $(CFLAGS_C99FSE)
-CFLAGS_ALL += -D_XOPEN_SOURCE=700 -I$(srcdir)/arch/$(ARCH) -I$(srcdir)/arch/generic -Iobj/src/internal -I$(srcdir)/src/include -I$(srcdir)/src/internal -Iobj/include -I$(srcdir)/include -I$(SYSROOT)/usr/include
+CFLAGS_ALL += -D_XOPEN_SOURCE=700 -I$(srcdir)/arch/$(ARCH) -I$(srcdir)/arch/generic -Iobj/src/internal -I$(srcdir)/src/include -I$(srcdir)/src/internal -Iobj/include -I$(srcdir)/include
 CFLAGS_ALL += $(CPPFLAGS) $(CFLAGS_AUTO) $(CFLAGS)
 
 LDFLAGS_ALL = $(LDFLAGS_AUTO) $(LDFLAGS)
@@ -94,17 +92,17 @@ OBJ_DIRS = $(sort $(patsubst %/,%,$(dir $(ALL_LIBS) $(ALL_TOOLS) $(ALL_OBJS) $(G
 $(ALL_LIBS) $(ALL_TOOLS) $(ALL_OBJS) $(ALL_OBJS:%.o=%.lo) $(GENH) $(GENH_INT): | $(OBJ_DIRS)
 
 $(OBJ_DIRS):
-	$(HIDE)mkdir -p $@
+	mkdir -p $@
 
 obj/include/bits/alltypes.h: $(srcdir)/arch/$(ARCH)/bits/alltypes.h.in $(srcdir)/include/alltypes.h.in $(srcdir)/tools/mkalltypes.sed
-	$(HIDE)sed -f $(srcdir)/tools/mkalltypes.sed $(srcdir)/arch/$(ARCH)/bits/alltypes.h.in $(srcdir)/include/alltypes.h.in > $@
+	sed -f $(srcdir)/tools/mkalltypes.sed $(srcdir)/arch/$(ARCH)/bits/alltypes.h.in $(srcdir)/include/alltypes.h.in > $@
 
 obj/include/bits/syscall.h: $(srcdir)/arch/$(ARCH)/bits/syscall.h.in
-	$(HIDE)cp $< $@
-	$(HIDE)sed -n -e s/__NR_/SYS_/p < $< >> $@
+	cp $< $@
+	sed -n -e s/__NR_/SYS_/p < $< >> $@
 
 obj/src/internal/version.h: $(wildcard $(srcdir)/VERSION $(srcdir)/.git)
-	$(HIDE)printf '#define VERSION "%s"\n' "$$(cd $(srcdir); sh tools/version.sh)" > $@
+	printf '#define VERSION "%s"\n' "$$(cd $(srcdir); sh tools/version.sh)" > $@
 
 obj/src/internal/version.o obj/src/internal/version.lo: obj/src/internal/version.h
 
@@ -142,76 +140,76 @@ else
 endif
 
 obj/%.o: $(srcdir)/%.s
-	$(HIDE)$(AS_CMD)
+	$(AS_CMD)
 
 obj/%.o: $(srcdir)/%.S
-	$(HIDE)$(CC_CMD)
+	$(CC_CMD)
 
 obj/%.o: $(srcdir)/%.c $(GENH) $(IMPH)
-	$(HIDE)$(CC_CMD)
+	$(CC_CMD)
 
 obj/%.lo: $(srcdir)/%.s
-	$(HIDE)$(AS_CMD)
+	$(AS_CMD)
 
 obj/%.lo: $(srcdir)/%.S
-	$(HIDE)$(CC_CMD)
+	$(CC_CMD)
 
 obj/%.lo: $(srcdir)/%.c $(GENH) $(IMPH)
-	$(HIDE)$(CC_CMD)
+	$(CC_CMD)
 
 lib/libc.so: $(LOBJS) $(LDSO_OBJS)
-	$(HIDE)$(CC) $(CFLAGS_ALL) $(LDFLAGS_ALL) -nostdlib -shared \
+	$(CC) $(CFLAGS_ALL) $(LDFLAGS_ALL) -nostdlib -shared \
 	-Wl,-e,_dlstart -o $@ $(LOBJS) $(LDSO_OBJS) $(LIBCC)
 
 lib/libc.a: $(AOBJS)
-	$(HIDE)rm -f $@
-	$(HIDE)$(AR) rc $@ $(AOBJS)
-	$(HIDE)$(RANLIB) $@
+	rm -f $@
+	$(AR) rc $@ $(AOBJS)
+	$(RANLIB) $@
 
 $(EMPTY_LIBS):
-	$(HIDE)rm -f $@
-	$(HIDE)$(AR) rc $@
+	rm -f $@
+	$(AR) rc $@
 
 lib/%.o: obj/crt/$(ARCH)/%.o
-	$(HIDE)cp $< $@
+	cp $< $@
 
 lib/%.o: obj/crt/%.o
-	$(HIDE)cp $< $@
+	cp $< $@
 
 lib/musl-gcc.specs: $(srcdir)/tools/musl-gcc.specs.sh config.mak
-	$(HIDE)sh $< "$(includedir)" "$(libdir)" "$(LDSO_PATHNAME)" > $@
+	sh $< "$(includedir)" "$(libdir)" "$(LDSO_PATHNAME)" > $@
 
 obj/musl-gcc: config.mak
-	$(HIDE)printf '#!/bin/sh\nexec "$${REALGCC:-$(WRAPCC_GCC)}" "$$@" -specs "%s/musl-gcc.specs"\n' "$(libdir)" > $@
-	$(HIDE)chmod +x $@
+	printf '#!/bin/sh\nexec "$${REALGCC:-$(WRAPCC_GCC)}" "$$@" -specs "%s/musl-gcc.specs"\n' "$(libdir)" > $@
+	chmod +x $@
 
 obj/%-clang: $(srcdir)/tools/%-clang.in config.mak
-	$(HIDE)sed -e 's!@CC@!$(WRAPCC_CLANG)!g' -e 's!@PREFIX@!$(prefix)!g' -e 's!@INCDIR@!$(includedir)!g' -e 's!@LIBDIR@!$(libdir)!g' -e 's!@LDSO@!$(LDSO_PATHNAME)!g' $< > $@
-	$(HIDE)chmod +x $@
+	sed -e 's!@CC@!$(WRAPCC_CLANG)!g' -e 's!@PREFIX@!$(prefix)!g' -e 's!@INCDIR@!$(includedir)!g' -e 's!@LIBDIR@!$(libdir)!g' -e 's!@LDSO@!$(LDSO_PATHNAME)!g' $< > $@
+	chmod +x $@
 
 $(DESTDIR)$(bindir)/%: obj/%
-	$(HIDE)$(INSTALL) -D $< $@
+	$(INSTALL) -D $< $@
 
 $(DESTDIR)$(libdir)/%.so: lib/%.so
-	$(HIDE)$(INSTALL) -D -m 755 $< $@
+	$(INSTALL) -D -m 755 $< $@
 
 $(DESTDIR)$(libdir)/%: lib/%
-	$(HIDE)$(INSTALL) -D -m 644 $< $@
+	$(INSTALL) -D -m 644 $< $@
 
 $(DESTDIR)$(includedir)/bits/%: $(srcdir)/arch/$(ARCH)/bits/%
-	$(HIDE)$(INSTALL) -D -m 644 $< $@
+	$(INSTALL) -D -m 644 $< $@
 
 $(DESTDIR)$(includedir)/bits/%: $(srcdir)/arch/generic/bits/%
-	$(HIDE)$(INSTALL) -D -m 644 $< $@
+	$(INSTALL) -D -m 644 $< $@
 
 $(DESTDIR)$(includedir)/bits/%: obj/include/bits/%
-	$(HIDE)$(INSTALL) -D -m 644 $< $@
+	$(INSTALL) -D -m 644 $< $@
 
 $(DESTDIR)$(includedir)/%: $(srcdir)/include/%
-	$(HIDE)$(INSTALL) -D -m 644 $< $@
+	$(INSTALL) -D -m 644 $< $@
 
 $(DESTDIR)$(LDSO_PATHNAME): $(DESTDIR)$(libdir)/libc.so
-	$(HIDE)$(INSTALL) -D -l $(libdir)/libc.so $@ || true
+	$(INSTALL) -D -l $(libdir)/libc.so $@ || true
 
 install-libs: $(ALL_LIBS:lib/%=$(DESTDIR)$(libdir)/%) $(if $(SHARED_LIBS),$(DESTDIR)$(LDSO_PATHNAME),)
 
@@ -222,17 +220,17 @@ install-tools: $(ALL_TOOLS:obj/%=$(DESTDIR)$(bindir)/%)
 install: install-libs install-headers install-tools
 
 musl-git-%.tar.gz: .git
-	 $(HIDE)git --git-dir=$(srcdir)/.git archive --format=tar.gz --prefix=$(patsubst %.tar.gz,%,$@)/ -o $@ $(patsubst musl-git-%.tar.gz,%,$@)
+	 git --git-dir=$(srcdir)/.git archive --format=tar.gz --prefix=$(patsubst %.tar.gz,%,$@)/ -o $@ $(patsubst musl-git-%.tar.gz,%,$@)
 
 musl-%.tar.gz: .git
-	 $(HIDE)git --git-dir=$(srcdir)/.git archive --format=tar.gz --prefix=$(patsubst %.tar.gz,%,$@)/ -o $@ v$(patsubst musl-%.tar.gz,%,$@)
+	 git --git-dir=$(srcdir)/.git archive --format=tar.gz --prefix=$(patsubst %.tar.gz,%,$@)/ -o $@ v$(patsubst musl-%.tar.gz,%,$@)
 
 endif
 
 clean:
-	$(HIDE)rm -rf obj lib
+	rm -rf obj lib
 
 distclean: clean
-	$(HIDE)rm -f config.mak
+	rm -f config.mak
 
 .PHONY: all clean install install-libs install-headers install-tools

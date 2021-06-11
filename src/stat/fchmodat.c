@@ -1,14 +1,11 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <errno.h>
-#include <unsupported_api.h>
-
 #include "syscall.h"
 #include "kstat.h"
 
 int fchmodat(int fd, const char *path, mode_t mode, int flag)
 {
-	unsupported_api(__FUNCTION__);
 	if (!flag) return syscall(SYS_fchmodat, fd, path, mode, flag);
 
 	if (flag != AT_SYMLINK_NOFOLLOW)

@@ -4,7 +4,6 @@
 #include <sched.h>
 #include "pthread_impl.h"
 #include "syscall.h"
-#include <unsupported_api.h>
 
 int clone(int (*func)(void *), void *stack, int flags, void *arg, ...)
 {
@@ -12,7 +11,6 @@ int clone(int (*func)(void *), void *stack, int flags, void *arg, ...)
 	pid_t *ptid, *ctid;
 	void  *tls;
 
-	unsupported_api(__FUNCTION__);
 	va_start(ap, arg);
 	ptid = va_arg(ap, pid_t *);
 	tls  = va_arg(ap, void *);

@@ -7,7 +7,6 @@
 #include <unistd.h>
 #include <endian.h>
 #include <errno.h>
-#include <unsupported_api.h>
 #include "lookup.h"
 
 int getaddrinfo(const char *restrict host, const char *restrict serv, const struct addrinfo *restrict hint, struct addrinfo **restrict res)
@@ -18,8 +17,6 @@ int getaddrinfo(const char *restrict host, const char *restrict serv, const stru
 	int nservs, naddrs, nais, canon_len, i, j, k;
 	int family = AF_UNSPEC, flags = 0, proto = 0, socktype = 0;
 	struct aibuf *out;
-
-	unsupported_api(__FUNCTION__);
 
 	if (!host && !serv) return EAI_NONAME;
 

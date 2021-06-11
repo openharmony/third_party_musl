@@ -1,10 +1,8 @@
 #include <spawn.h>
 #include <errno.h>
-#include <unsupported_api.h>
 
 int posix_spawnattr_setflags(posix_spawnattr_t *attr, short flags)
 {
-	unsupported_api(__FUNCTION__);
 	const unsigned all_flags =
 		POSIX_SPAWN_RESETIDS |
 		POSIX_SPAWN_SETPGROUP |

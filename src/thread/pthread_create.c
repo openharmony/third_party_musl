@@ -15,6 +15,7 @@ weak_alias(dummy_0, __release_ptc);
 weak_alias(dummy_0, __pthread_tsd_run_dtors);
 weak_alias(dummy_0, __do_orphaned_stdio_locks);
 weak_alias(dummy_0, __dl_thread_cleanup);
+weak_alias(dummy_0, __membarrier_init);
 
 static int tl_lock_count;
 static int tl_lock_waiters;
@@ -101,7 +102,6 @@ _Noreturn void __pthread_exit(void *result)
 	/* Process robust list in userspace to handle non-pshared mutexes
 	 * and the detached thread case where the robust list head will
 	 * be invalid when the kernel would process it. */
-#if 0
 	__vm_lock();
 	volatile void *volatile *rp;
 	while ((rp=self->robust_list.head) && rp != &self->robust_list.head) {
@@ -117,7 +117,6 @@ _Noreturn void __pthread_exit(void *result)
 			__wake(&m->_m_lock, 1, priv);
 	}
 	__vm_unlock();
-#endif
 
 	__do_orphaned_stdio_locks();
 	__dl_thread_cleanup();
@@ -125,8 +124,13 @@ _Noreturn void __pthread_exit(void *result)
 	/* This atomic potentially competes with a concurrent pthread_detach
 	 * call; the loser is responsible for freeing thread resources. */
 	int state = a_cas(&self->detach_state, DT_JOINABLE, DT_EXITING);
-#if 0
+
 	if (state==DT_DETACHED && self->map_base) {
+		/* Detached threads must block even implementation-internal
+		 * signals, since they will not have a stack in their last
+		 * moments of existence. */
+		__block_all_sigs(&set);
+
 		/* Robust list will no longer be valid, and was already
 		 * processed above, so unregister it with the kernel. */
 		if (self->robust_list.off)
@@ -143,20 +147,11 @@ _Noreturn void __pthread_exit(void *result)
 
 	/* Wake any joiner. */
 	__wake(&self->detach_state, 1, 1);
-#endif
 
 	/* After the kernel thread exits, its tid may be reused. Clear it
 	 * to prevent inadvertent use and inform functions that would use
 	 * it that it's no longer available. */
-	if (self->detach_state == DT_DETACHED) {
-		/* Detached threads must block even implementation-internal
-		 * signals, since they will not have a stack in their last
-		 * moments of existence. */
-		__block_all_sigs(&set);
-		self->tid = 0;
-	}
-
-	__tl_unlock();
+	self->tid = 0;
 	UNLOCK(self->killlock);
 
 	for (;;) __syscall(SYS_exit, 0);
@@ -183,7 +178,16 @@ struct start_args {
 
 static int start(void *p)
 {
-	struct start_args *args = (struct start_args *)p;
+	struct start_args *args = p;
+	int state = args->control;
+	if (state) {
+		if (a_cas(&args->control, 1, 2)==1)
+			__wait(&args->control, 0, 2, 1);
+		if (args->control) {
+			__syscall(SYS_set_tid_address, &args->control);
+			for (;;) __syscall(SYS_exit, 0);
+		}
+	}
 	__syscall(SYS_rt_sigprocmask, SIG_SETMASK, &args->sig_mask, 0, _NSIG/8);
 	__pthread_exit(args->start_func(args->start_arg));
 	return 0;
@@ -191,7 +195,7 @@ static int start(void *p)
 
 static int start_c11(void *p)
 {
-	struct start_args *args = (struct start_args *)p;
+	struct start_args *args = p;
 	int (*start)(void*) = (int(*)(void*)) args->start_func;
 	__pthread_exit((void *)(uintptr_t)start(args->start_arg));
 	return 0;
@@ -205,35 +209,14 @@ weak_alias(dummy, __pthread_tsd_size);
 static void *dummy_tsd[1] = { 0 };
 weak_alias(dummy_tsd, __pthread_tsd_main);
 
-int __pthread_init_and_check_attr(const pthread_attr_t *restrict attrp, pthread_attr_t *attr)
+static FILE *volatile dummy_file = 0;
+weak_alias(dummy_file, __stdin_used);
+weak_alias(dummy_file, __stdout_used);
+weak_alias(dummy_file, __stderr_used);
+
+static void init_file_lock(FILE *f)
 {
-	int policy = 0;
-	struct sched_param param = { 0 };
-	int c11 = (attrp == __ATTRP_C11_THREAD);
-	int ret;
-
-	if (attrp && !c11) memcpy(attr, attrp, sizeof(pthread_attr_t));
-
-	if (!attrp || c11) {
-		pthread_attr_init(attr);
-	}
-
-	if (!attr->_a_sched) {
-		ret = pthread_getschedparam(pthread_self(), &policy, &param);
-		if (ret) return ret;
-		attr->_a_policy = policy;
-		attr->_a_prio = param.sched_priority;
-	}
-
-	if (attr->_a_policy != SCHED_RR && attr->_a_policy != SCHED_FIFO) {
-		return EINVAL;
-	}
-
-	if (attr->_a_prio < 0 || attr->_a_prio > PTHREAD_PRIORITY_LOWEST) {
-		return EINVAL;
-	}
-
-	return 0;
+	if (f && f->lock<0) f->lock = 0;
 }
 
 int __pthread_create(pthread_t *restrict res, const pthread_attr_t *restrict attrp, void *(*entry)(void *), void *restrict arg)
@@ -249,14 +232,25 @@ int __pthread_create(pthread_t *restrict res, const pthread_attr_t *restrict att
 	sigset_t set;
 
 	if (!libc.can_do_threads) return ENOSYS;
-	if (!entry) return EINVAL;
 	self = __pthread_self();
-	__acquire_ptc();
+	if (!libc.threaded) {
+		for (FILE *f=*__ofl_lock(); f; f=f->next)
+			init_file_lock(f);
+		__ofl_unlock();
+		init_file_lock(__stdin_used);
+		init_file_lock(__stdout_used);
+		init_file_lock(__stderr_used);
+		__syscall(SYS_rt_sigprocmask, SIG_UNBLOCK, SIGPT_SET, 0, _NSIG/8);
+		self->tsd = (void **)__pthread_tsd_main;
+		__membarrier_init();
+		libc.threaded = 1;
+	}
+	if (attrp && !c11) attr = *attrp;
 
-	ret = __pthread_init_and_check_attr(attrp, &attr);
-	if (ret) {
-		__release_ptc();
-		return ret;
+	__acquire_ptc();
+	if (!attrp || c11) {
+		attr._a_stacksize = __default_stacksize;
+		attr._a_guardsize = __default_guardsize;
 	}
 
 	if (attr._a_stackaddr) {
@@ -283,7 +277,7 @@ int __pthread_create(pthread_t *restrict res, const pthread_attr_t *restrict att
 
 	if (!tsd) {
 		if (guard) {
-			map = __mmap(0, size, PROT_READ|PROT_WRITE|PROT_NONE, MAP_PRIVATE|MAP_ANON, -1, 0);
+			map = __mmap(0, size, PROT_NONE, MAP_PRIVATE|MAP_ANON, -1, 0);
 			if (map == MAP_FAILED) goto fail;
 			if (__mprotect(map+guard, size-guard, PROT_READ|PROT_WRITE)
 			    && errno != ENOSYS) {
@@ -343,7 +337,7 @@ int __pthread_create(pthread_t *restrict res, const pthread_attr_t *restrict att
 
 	__tl_lock();
 	libc.threads_minus_1++;
-	ret = __thread_clone((c11 ? start_c11 : start), flags, new, stack);
+	ret = __clone((c11 ? start_c11 : start), stack, flags, args, &new->tid, TP_ADJ(new), &__thread_list_lock);
 
 	/* All clone failures translate to EAGAIN. If explicit scheduling
 	 * was requested, attempt it before unlocking the thread list so
@@ -351,29 +345,33 @@ int __pthread_create(pthread_t *restrict res, const pthread_attr_t *restrict att
 	 * clean up all transient resource usage before returning. */
 	if (ret < 0) {
 		ret = -EAGAIN;
-	} else {
+	} else if (attr._a_sched) {
+		ret = __syscall(SYS_sched_setscheduler,
+			new->tid, attr._a_policy, &attr._a_prio);
+		if (a_swap(&args->control, ret ? 3 : 0)==2)
+			__wake(&args->control, 1, 1);
+		if (ret)
+			__wait(&args->control, 0, 3, 0);
+	}
+
+	if (ret >= 0) {
 		new->next = self->next;
 		new->prev = self;
 		new->next->prev = new;
 		new->prev->next = new;
-
-		*res = new;
-		__tl_unlock();
-		__restore_sigs(&set);
-		__release_ptc();
-		ret = __syscall(SYS_sched_setscheduler,
-			new->tid, attr._a_policy, attr._a_prio, MUSL_TYPE_THREAD);
+	} else {
+		libc.threads_minus_1--;
 	}
+	__tl_unlock();
+	__restore_sigs(&set);
+	__release_ptc();
 
 	if (ret < 0) {
-		libc.threads_minus_1--;
-		__tl_unlock();
-		__restore_sigs(&set);
-		__release_ptc();
 		if (map) __munmap(map, size);
 		return -ret;
 	}
 
+	*res = new;
 	return 0;
 fail:
 	__release_ptc();

@@ -1,6 +1,5 @@
 #include <sys/resource.h>
 #include <errno.h>
-#include <unsupported_api.h>
 #include "syscall.h"
 #include "libc.h"
 
@@ -39,7 +38,6 @@ static void do_setrlimit(void *p)
 
 int setrlimit(int resource, const struct rlimit *rlim)
 {
-	unsupported_api(__FUNCTION__);
 	struct ctx c = { .res = resource, .rlim = rlim, .err = -1 };
 	__synccall(do_setrlimit, &c);
 	if (c.err) {

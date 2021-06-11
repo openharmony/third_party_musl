@@ -1,4 +1,3 @@
-#include <unsupported_api.h>
 #include "pthread_impl.h"
 
 int pthread_attr_getdetachstate(const pthread_attr_t *a, int *state)
@@ -32,7 +31,7 @@ int pthread_attr_getschedpolicy(const pthread_attr_t *restrict a, int *restrict 
 
 int pthread_attr_getscope(const pthread_attr_t *restrict a, int *restrict scope)
 {
-	*scope = PTHREAD_SCOPE_PROCESS;
+	*scope = PTHREAD_SCOPE_SYSTEM;
 	return 0;
 }
 
@@ -71,7 +70,6 @@ int pthread_condattr_getpshared(const pthread_condattr_t *restrict a, int *restr
 
 int pthread_mutexattr_getprotocol(const pthread_mutexattr_t *restrict a, int *restrict protocol)
 {
-	unsupported_api(__FUNCTION__);
 	*protocol = PTHREAD_PRIO_NONE;
 	return 0;
 }
@@ -83,7 +81,6 @@ int pthread_mutexattr_getpshared(const pthread_mutexattr_t *restrict a, int *res
 
 int pthread_mutexattr_getrobust(const pthread_mutexattr_t *restrict a, int *restrict robust)
 {
-	unsupported_api(__FUNCTION__);
 	*robust = a->__attr / 4U % 2;
 	return 0;
 }

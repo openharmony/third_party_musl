@@ -1,8 +1,6 @@
 #include <sys/sem.h>
 #include <stdarg.h>
 #include <endian.h>
-#include <unsupported_api.h>
-
 #include "syscall.h"
 #include "ipc.h"
 
@@ -18,7 +16,6 @@ union semun {
 
 int semctl(int id, int num, int cmd, ...)
 {
-	unsupported_api(__FUNCTION__);
 	union semun arg = {0};
 	va_list ap;
 	switch (cmd & ~IPC_TIME64) {

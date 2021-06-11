@@ -2,11 +2,9 @@
 #include <stdlib.h>
 #include <errno.h>
 #include "fdop.h"
-#include <unsupported_api.h>
 
 int posix_spawn_file_actions_addclose(posix_spawn_file_actions_t *fa, int fd)
 {
-	unsupported_api(__FUNCTION__);
 	struct fdop *op = malloc(sizeof *op);
 	if (!op) return ENOMEM;
 	op->cmd = FDOP_CLOSE;

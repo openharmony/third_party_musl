@@ -1,6 +1,5 @@
 #include <locale.h>
 #include <langinfo.h>
-#include <unsupported_api.h>
 #include "locale_impl.h"
 
 static const char c_time[] =
@@ -32,8 +31,6 @@ char *__nl_langinfo_l(nl_item item, locale_t loc)
 	int cat = item >> 16;
 	int idx = item & 65535;
 	const char *str;
-
-	unsupported_api(__FUNCTION__);
 
 	if (item == CODESET) return loc->cat[LC_CTYPE] ? "UTF-8" : "ASCII";
 
@@ -69,7 +66,6 @@ char *__nl_langinfo_l(nl_item item, locale_t loc)
 
 char *__nl_langinfo(nl_item item)
 {
-	unsupported_api(__FUNCTION__);
 	return __nl_langinfo_l(item, CURRENT_LOCALE);
 }
 

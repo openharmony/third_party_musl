@@ -1,10 +1,6 @@
 #ifndef	_CTYPE_H
 #define	_CTYPE_H
 
-#ifdef __ICCARM__ /* for iar */
-#include_next <ctype.h>
-#else
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -76,5 +72,4 @@ int   toascii(int);
 }
 #endif
 
-#endif /* __ICCARM__ */
 #endif

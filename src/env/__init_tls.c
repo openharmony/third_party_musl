@@ -8,55 +8,22 @@
 #include "libc.h"
 #include "atomic.h"
 #include "syscall.h"
-#include "stdio_impl.h"
-#include "lock.h"
 
 volatile int __thread_list_lock;
-
-static void *dummy_tsd[1] = { 0 };
-weak_alias(dummy_tsd, __pthread_tsd_main);
-static FILE *volatile dummy_file = 0;
-weak_alias(dummy_file, __stdin_used);
-weak_alias(dummy_file, __stdout_used);
-weak_alias(dummy_file, __stderr_used);
-
-static void dummy_0()
-{
-}
-weak_alias(dummy_0, __membarrier_init);
-
-static void init_file_lock(FILE *f)
-{
-	if (f && f->lock<0) f->lock = 0;
-}
 
 int __init_tp(void *p)
 {
 	pthread_t td = p;
+	td->self = td;
 	int r = __set_thread_area(TP_ADJ(p));
 	if (r < 0) return -1;
 	if (!r) libc.can_do_threads = 1;
-	libc.threads_minus_1 = 1;
-	libc.threaded = 0;
-	td->self = td;
 	td->detach_state = DT_JOINABLE;
-	td->tid = __syscall(SYS_gettid);
+	td->tid = __syscall(SYS_set_tid_address, &__thread_list_lock);
 	td->locale = &libc.global_locale;
 	td->robust_list.head = &td->robust_list.head;
 	td->sysinfo = __sysinfo;
 	td->next = td->prev = td;
-	td->tsd = (void **)__pthread_tsd_main;
-	for (FILE *f=*__ofl_lock(); f; f=f->next)
-		init_file_lock(f);
-	__ofl_unlock();
-	init_file_lock(__stdin_used);
-	init_file_lock(__stdout_used);
-	init_file_lock(__stderr_used);
-	__syscall(SYS_rt_sigprocmask, SIG_UNBLOCK, SIGPT_SET, 0, _NSIG/8);
-#if 0
-	__membarrier_init();
-#endif
-	libc.threaded = 1;
 	return 0;
 }
 

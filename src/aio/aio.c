@@ -6,7 +6,6 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <sys/auxv.h>
-#include <unsupported_api.h>
 #include "syscall.h"
 #include "atomic.h"
 #include "pthread_impl.h"
@@ -320,19 +319,16 @@ static int submit(struct aiocb *cb, int op)
 
 int aio_read(struct aiocb *cb)
 {
-	unsupported_api(__FUNCTION__);
 	return submit(cb, LIO_READ);
 }
 
 int aio_write(struct aiocb *cb)
 {
-	unsupported_api(__FUNCTION__);
 	return submit(cb, LIO_WRITE);
 }
 
 int aio_fsync(int op, struct aiocb *cb)
 {
-	unsupported_api(__FUNCTION__);
 	if (op != O_SYNC && op != O_DSYNC) {
 		errno = EINVAL;
 		return -1;
@@ -342,13 +338,11 @@ int aio_fsync(int op, struct aiocb *cb)
 
 ssize_t aio_return(struct aiocb *cb)
 {
-	unsupported_api(__FUNCTION__);
 	return cb->__ret;
 }
 
 int aio_error(const struct aiocb *cb)
 {
-	unsupported_api(__FUNCTION__);
 	a_barrier();
 	return cb->__err & 0x7fffffff;
 }
@@ -360,7 +354,6 @@ int aio_cancel(int fd, struct aiocb *cb)
 	struct aio_thread *p;
 	struct aio_queue *q;
 
-	unsupported_api(__FUNCTION__);
 	/* Unspecified behavior case. Report an error. */
 	if (cb && fd != cb->aio_fildes) {
 		errno = EINVAL;

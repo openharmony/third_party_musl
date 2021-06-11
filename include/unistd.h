@@ -73,30 +73,6 @@ int ftruncate(int, off_t);
 int access(const char *, int);
 int faccessat(int, const char *, int, int);
 
-
-/* Format options */
-#define FMT_FAT      0x01
-#define FMT_FAT32    0x02
-#define FMT_ANY      0x07
-#define FMT_ERASE    0x08
-
-/** 
-  * @brief format FAT device (SD card, U disk, and MMC card), this function is OHOS-specific
-  * @param dev device name.
-  * @param sectors sectors per cluster, can be 0 OR power of 2. The sector size for standard FAT volumes is 512 bytes.
-  *    -- sector number is 0 OR >128: automatically choose the appropriate cluster size.
-  *    -- sector number is 1 ~ 128: cluster size = sectors per cluster * 512B.
-  * @param option file system type.
-  *    -- FMT_FAT
-  *    -- FMT_FAT32
-  *    -- FMT_ANY
-  *    -- FMT_ERASE (USB not supported)
-  * @return format result
-  * @retval -1 format error
-  * @retval 0 format successful
-  */
-int format(const char *dev, int sectors, int option);
-
 int chdir(const char *);
 int fchdir(int);
 char *getcwd(char *, size_t);
