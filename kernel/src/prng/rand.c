@@ -1,11 +1,9 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-static uint64_t seed;
-
 void srand(unsigned s)
 {
-    return srandom(seed);
+    return srandom(s);
 }
 
 int rand(void)
