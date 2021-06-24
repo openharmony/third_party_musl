@@ -46,3 +46,9 @@ int __fflush(FILE *f)
 
 weak_alias(fflush, fflush_unlocked);
 weak_alias(__fflush, fflush);
+
+int __wrap_fflush(FILE *f)
+{
+    return __fflush(f);
+}
+

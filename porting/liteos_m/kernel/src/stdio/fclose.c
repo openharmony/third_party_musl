@@ -35,3 +35,9 @@ int __fclose(FILE *f)
 	return r;
 }
 weak_alias(__fclose, fclose);
+
+int __wrap_fclose(FILE *f)
+{
+    return __fclose(f);
+}
+
