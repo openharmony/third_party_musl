@@ -101,7 +101,6 @@ _Noreturn void __pthread_exit(void *result)
 	/* Process robust list in userspace to handle non-pshared mutexes
 	 * and the detached thread case where the robust list head will
 	 * be invalid when the kernel would process it. */
-#if 0
 	__vm_lock();
 	volatile void *volatile *rp;
 	while ((rp=self->robust_list.head) && rp != &self->robust_list.head) {
@@ -117,7 +116,6 @@ _Noreturn void __pthread_exit(void *result)
 			__wake(&m->_m_lock, 1, priv);
 	}
 	__vm_unlock();
-#endif
 
 	__do_orphaned_stdio_locks();
 	__dl_thread_cleanup();
