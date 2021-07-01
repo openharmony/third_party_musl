@@ -105,7 +105,7 @@ typedef struct __pthread_attr_s {
   void* stackaddr;
   unsigned int stacksize_set;
   size_t stacksize;
-#if (LOSCFG_KERNEL_SMP == YES)
+#ifdef LOSCFG_KERNEL_SMP
   cpu_set_t cpuset;
 #endif
 } pthread_attr_t;
