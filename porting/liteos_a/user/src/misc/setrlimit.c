@@ -1,6 +1,5 @@
 #include <sys/resource.h>
 #include <errno.h>
-#include <unsupported_api.h>
 #include "syscall.h"
 #include "libc.h"
 
@@ -9,7 +8,7 @@
 
 static int __setrlimit(int resource, const struct rlimit *rlim)
 {
-	unsigned long k_rlim[2];
+	unsigned long long k_rlim[2];
 	struct rlimit tmp;
 	if (SYSCALL_RLIM_INFINITY != RLIM_INFINITY) {
 		tmp = *rlim;
@@ -17,10 +16,9 @@ static int __setrlimit(int resource, const struct rlimit *rlim)
 		FIX(tmp.rlim_max);
 		rlim = &tmp;
 	}
-	int ret = __syscall(SYS_prlimit64, 0, resource, rlim, 0);
-	if (ret != -ENOSYS) return ret;
-	k_rlim[0] = MIN(rlim->rlim_cur, MIN(-1UL, SYSCALL_RLIM_INFINITY));
-	k_rlim[1] = MIN(rlim->rlim_max, MIN(-1UL, SYSCALL_RLIM_INFINITY));
+
+	k_rlim[0] = rlim->rlim_cur;
+	k_rlim[1] = rlim->rlim_max;
 	return __syscall(SYS_setrlimit, resource, k_rlim);
 }
 
@@ -39,7 +37,6 @@ static void do_setrlimit(void *p)
 
 int setrlimit(int resource, const struct rlimit *rlim)
 {
-	unsupported_api(__FUNCTION__);
 	struct ctx c = { .res = resource, .rlim = rlim, .err = -1 };
 	__synccall(do_setrlimit, &c);
 	if (c.err) {
