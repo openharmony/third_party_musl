@@ -463,19 +463,6 @@ pid_t gettid(void);
 #define _CS_V6_ENV	1148
 #define _CS_V7_ENV	1149
 
-#ifdef _GNU_SOURCE
-#ifndef TEMP_FAILURE_RETRY
-#define MUSL_TEMP_FAILURE_RETRY(expression) \  
-    (__extension__ \
-        ({ long int __result; \
-            do __result = (long int)(expression); \
-            while(__result == -1L&& errno == EINTR); \
-        __result;}))
-
-#define TEMP_FAILURE_RETRY(expression) MUSL_TEMP_FAILURE_RETRY(expression)
-#endif
-#endif
-
 #ifdef __cplusplus
 }
 #endif
