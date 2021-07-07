@@ -1,0 +1,293 @@
+import("//build/ohos.gni")
+import("musl_src.gni")
+
+template("musl_libs") {
+
+  no_default_deps = true
+
+  forward_variables_from(invoker, ["target_abi"])
+  template_prefix = "${target_name}"
+  
+  porting_deps = [
+    "//third_party/musl:create_porting_src",
+    "//third_party/musl:create_alltypes_h",
+    "//third_party/musl:create_syscall_h",
+    "//third_party/musl:create_version_h",
+  ]
+
+  if (target_abi == "soft") {
+    static_lib_out_dir = "usr/lib/${musl_target_triple}"
+    shared_lib_out_dir = "."
+  } else {
+    static_lib_out_dir = "usr/lib/${musl_target_triple}/${target_abi}"
+    shared_lib_out_dir = "${target_abi}"
+  }
+
+  group("${template_prefix}_libs") {
+    deps = [
+      ":${template_prefix}_libc_musl_shared",
+      ":${template_prefix}_libc_musl_static",
+      ":${template_prefix}_libcrypt",
+      ":${template_prefix}_libdl",
+      ":${template_prefix}_libm",
+      ":${template_prefix}_libpthread",
+      ":${template_prefix}_libresolv",
+      ":${template_prefix}_librt",
+      ":${template_prefix}_libutil",
+      ":${template_prefix}_libxnet",
+      ":${template_prefix}_musl_crt_install_action",
+      ":${template_prefix}_create_linker",
+    ]
+  }
+
+  musl_inherited_configs = [
+    "//build/config/compiler:afdo",
+    "//build/config/compiler:afdo_optimize_size",
+    "//build/config/compiler:compiler",
+    "//build/config/compiler:compiler_arm_fpu",
+    "//build/config/compiler:compiler_arm_thumb",
+    "//build/config/compiler:chromium_code",
+    "//build/config/compiler:default_include_dirs",
+    "//build/config/compiler:default_optimization",
+    "//build/config/compiler:default_stack_frames",
+    "//build/config/compiler:default_symbols",
+    "//build/config/compiler:export_dynamic",
+    "//build/config/compiler:no_exceptions",
+    "//build/config/compiler:no_rtti",
+    "//build/config/compiler:runtime_library",
+    "//build/config/sanitizers:default_sanitizer_flags",
+  ]
+
+  config("${template_prefix}_musl_abi_config") {
+    if (target_abi == "soft") {
+      cflags = [ "-mfloat-abi=soft" ]
+    } else if (target_abi == "a7_soft") {
+      cflags = [
+        "-mcpu=cortex-a7",
+        "-mfloat-abi=soft",
+      ]
+    } else if (target_abi == "a7_softfp_neon-vfpv4") {
+      cflags = [
+        "-mcpu=cortex-a7",
+        "-mfloat-abi=softfp",
+        "-mfpu=neon-vfpv4",
+      ]
+    } else if (target_abi == "a7_hard_neon-vfpv4") {
+      cflags = [
+        "-mcpu=cortex-a7",
+        "-mfloat-abi=hard",
+        "-mfpu=neon-vfpv4",
+      ]
+    }
+  }
+
+  config("${template_prefix}_musl_config") {
+    configs = [ ":${template_prefix}_musl_abi_config" ]
+
+    include_dirs = [
+      "${target_out_dir}/${musl_ported_dir}/arch/${musl_arch}",
+      "${target_out_dir}/${musl_ported_dir}/arch/generic",
+      "${target_out_dir}/${musl_ported_dir}/src/internal",
+      "${target_out_dir}/${musl_ported_dir}/src/include",
+      "${target_out_dir}/${musl_ported_dir}/include",
+      "${target_out_dir}/${musl_inc_out_dir}",
+    ]
+
+    cflags = [
+      "--target=${musl_target_triple}",
+      "-std=c99",
+      "-nostdinc",
+      "-ffreestanding",
+      "-Wa,--noexecstack",
+      "-D_XOPEN_SOURCE=700",
+      "-Os",
+      "-pipe",
+      "-fno-omit-frame-pointer",
+      "-funwind-tables",
+      "-fasynchronous-unwind-tables",
+      "-ffunction-sections",
+      "-fdata-sections",
+      "-Werror=implicit-function-declaration",
+      "-Werror=implicit-int",
+      "-Werror=pointer-sign",
+      "-Werror=pointer-arith",
+      "-Wno-bitwise-op-parentheses",
+      "-Wno-shift-op-parentheses",
+    ]
+
+    if (musl_arch == "aarch64") {
+      cflags += [ "-Qunused-arguments" ]
+    }
+
+    ldflags = [
+      "--target=${musl_target_triple}",
+      "-fuse-ld=lld",
+    ]
+    asmflags = cflags
+  }
+
+  source_set("${template_prefix}_musl_crt") {
+    cflags = []
+    sources = [
+      "${target_out_dir}/${musl_ported_dir}/crt/${musl_arch}/crti.s",
+      "${target_out_dir}/${musl_ported_dir}/crt/${musl_arch}/crtn.s",
+      "${target_out_dir}/${musl_ported_dir}/crt/Scrt1.c",
+      "${target_out_dir}/${musl_ported_dir}/crt/crt1.c",
+      "${target_out_dir}/${musl_ported_dir}/crt/rcrt1.c",
+    ]
+
+    cflags += [
+      "-fPIC",
+      "-fno-stack-protector",
+    ]
+
+    defines = [ "CRT" ]
+
+    configs -= musl_inherited_configs
+    configs += [ ":${template_prefix}_musl_config" ]
+
+    deps = porting_deps
+
+    asmflags = cflags
+  }
+
+  source_set("${template_prefix}_musl_src") {
+    cflags = []
+    sources_orig = []
+    sources = []
+    set_sources_assignment_filter([])
+
+    sources_orig = musl_src_arch_file + musl_src_file
+    sources_orig -= musl_src_filterout
+
+    foreach(s, sources_orig) {
+      sources += [ "${target_out_dir}/${musl_ported_dir}/${s}" ]
+    }
+
+    cflags += [
+      "-fPIC",
+      "-fno-stack-protector",
+    ]
+
+    configs -= musl_inherited_configs
+    configs += [ ":${template_prefix}_musl_config" ]
+
+    deps = porting_deps
+  }
+
+  source_set("${template_prefix}_musl_ldso") {
+    cflags = []
+    cflags = [ "-fPIC" ]
+    sources = []
+    sources_orig = musl_src_ldso
+
+    foreach(s, sources_orig) {
+      sources += [ "${target_out_dir}/${musl_ported_dir}/${s}" ]
+    }
+
+    configs -= musl_inherited_configs
+    configs += [ ":${template_prefix}_musl_config" ]
+
+    deps = porting_deps
+  }
+
+  static_library("${template_prefix}_libc_musl_static") {
+    output_name = "libc"
+    complete_static_lib = true
+
+    output_dir = "${target_out_dir}/${static_lib_out_dir}"
+    deps = [ ":${template_prefix}_musl_src" ]
+  }
+
+  static_library("${template_prefix}_libm") {
+    output_dir = "${target_out_dir}/${static_lib_out_dir}"
+  }
+
+  static_library("${template_prefix}_librt") {
+    output_dir = "${target_out_dir}/${static_lib_out_dir}"
+  }
+
+  static_library("${template_prefix}_libpthread") {
+    output_dir = "${target_out_dir}/${static_lib_out_dir}"
+  }
+
+  static_library("${template_prefix}_libcrypt") {
+    output_dir = "${target_out_dir}/${static_lib_out_dir}"
+  }
+
+  static_library("${template_prefix}_libutil") {
+    output_dir = "${target_out_dir}/${static_lib_out_dir}"
+  }
+
+  static_library("${template_prefix}_libresolv") {
+    output_dir = "${target_out_dir}/${static_lib_out_dir}"
+  }
+
+  static_library("${template_prefix}_libxnet") {
+    output_dir = "${target_out_dir}/${static_lib_out_dir}"
+  }
+
+  static_library("${template_prefix}_libdl") {
+    output_dir = "${target_out_dir}/${static_lib_out_dir}"
+  }
+
+  ohos_shared_library("${template_prefix}_libc_musl_shared") {
+    output_name = "libc/${shared_lib_out_dir}/libc"
+    output_extension = "so"
+
+    ldflags = [
+      "-nostdlib",
+      "-Wl,-e,_dlstart",
+    ]
+
+    remove_configs = musl_inherited_configs
+    remove_configs += [ "//build/config:default_libs" ]
+
+    configs = [ ":${template_prefix}_musl_config" ]
+
+    deps = [
+      ":${template_prefix}_musl_ldso",
+      ":${template_prefix}_musl_src",
+    ]
+  }
+
+  action_foreach("${template_prefix}_musl_crt_install_action") {
+    redir = "${root_out_dir}/obj"
+    script = "${target_out_dir}/${musl_ported_dir}/scripts/install.py"
+    sources = [
+      "${redir}/${target_out_dir}/${musl_ported_dir}/crt/${musl_arch}/${template_prefix}_musl_crt/crti.o",
+      "${redir}/${target_out_dir}/${musl_ported_dir}/crt/${musl_arch}/${template_prefix}_musl_crt/crtn.o",
+      "${redir}/${target_out_dir}/${musl_ported_dir}/crt/${template_prefix}_musl_crt/Scrt1.o",
+      "${redir}/${target_out_dir}/${musl_ported_dir}/crt/${template_prefix}_musl_crt/crt1.o",
+      "${redir}/${target_out_dir}/${musl_ported_dir}/crt/${template_prefix}_musl_crt/rcrt1.o",
+     ]
+
+    outputs = [ "${target_out_dir}/${static_lib_out_dir}/{{source_file_part}}" ]
+
+    args = [
+      "--input",
+      "{{source}}",
+    ]
+    args += [ "--output" ] + rebase_path(outputs, root_build_dir)
+
+    deps = [ ":${template_prefix}_musl_crt" ]
+  }
+
+  action("${template_prefix}_create_linker") {
+    script = "${target_out_dir}/${musl_ported_dir}/tools/install.sh"
+    
+    sources = [ "${root_out_dir}/common/common/libc/${shared_lib_out_dir}/libc.so" ]
+
+    outputs = [ "${root_out_dir}/common/common/libc/${shared_lib_out_dir}/ld-musl-${musl_arch}.so.1" ]
+
+    args = [ 
+      "-D",
+      "-r",
+    ]
+    args +=  rebase_path(sources)
+    args +=  rebase_path(outputs)
+
+    deps = [ ":${template_prefix}_libc_musl_shared" ]
+  }
+
+}
