@@ -6,7 +6,7 @@ group("musl_all") {
     ":soft_libs",
     ":a7_soft_libs",
     ":a7_softfp_neon_libs",
-    # ":a7_hard_neon_libs",
+    ":a7_hard_neon_libs",
   ]
 }
 

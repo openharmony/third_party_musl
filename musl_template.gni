@@ -93,35 +93,64 @@ template("musl_libs") {
       "${target_out_dir}/${musl_inc_out_dir}",
     ]
 
-    cflags = [
+    cflags_basic = [
       "--target=${musl_target_triple}",
-      "-std=c99",
-      "-nostdinc",
-      "-ffreestanding",
-      "-Wa,--noexecstack",
+      "-march=armv7-a",
+      "-O2",
+      "-Wall",
+      "-fstack-protector-strong",
+      "-D_FORTIFY_SOURCE=2",
+      "-Wl,-z,relro,-z,now,-z,noexecstack",
+    ]
+
+    cflags_auto = [
       "-D_XOPEN_SOURCE=700",
       "-Os",
       "-pipe",
-      "-fno-omit-frame-pointer",
-      "-funwind-tables",
-      "-fasynchronous-unwind-tables",
+      "-fomit-frame-pointer",
+      "-fno-unwind-tables",
+      "-fno-asynchronous-unwind-tables",
       "-ffunction-sections",
       "-fdata-sections",
       "-Werror=implicit-function-declaration",
       "-Werror=implicit-int",
       "-Werror=pointer-sign",
       "-Werror=pointer-arith",
-      "-Wno-bitwise-op-parentheses",
-      "-Wno-shift-op-parentheses",
+      "-Qunused-arguments",
     ]
 
-    if (musl_arch == "aarch64") {
-      cflags += [ "-Qunused-arguments" ]
+    cflags_c99fse = [
+      "-std=c99",
+      "-nostdinc",  
+      "-ffreestanding",
+      "-frounding-math",
+      "-Wa,--noexecstack",
+    ]
+
+    # cflags_nossp = [ "-fno-stack-protector" ]
+
+    cflags_all = cflags_basic +
+                 cflags_c99fse +
+                 cflags_auto         
+
+    cflags = cflags_all
+
+    if ("${target_abi}" != "a7_hard_neon-vfpv4") {
+      defines = [ "BROKEN_VFP_ASM" ]
     }
+
+    dynamic_list = rebase_path("${target_out_dir}/${musl_ported_dir}/dynamic.list")
 
     ldflags = [
       "--target=${musl_target_triple}",
       "-fuse-ld=lld",
+      "-Wl,--sort-section,alignment",
+      "-Wl,--sort-common",
+      "-Wl,--gc-sections",
+      "-Wl,--hash-style=both",
+      "-Wl,--no-undefined",
+      "-Wl,--exclude-libs=ALL",
+      "-Wl,--dynamic-list=${dynamic_list}",
     ]
     asmflags = cflags
   }
@@ -159,12 +188,53 @@ template("musl_libs") {
 
     sources_orig = musl_src_arch_file + musl_src_file
     sources_orig -= musl_src_filterout
+    sources_orig -= [
+      "src/string/mempcpy.c",
+      "src/string/memset.c",
+      "src/env/__init_tls.c",
+      "src/env/__libc_start_main.c",
+      "src/env/__stack_chk_fail.c",
+      "src/thread/${musl_arch}/__set_thread_area.c",
+    ]
+
+    if ("${target_abi}" == "a7_hard_neon-vfpv4") {
+      defines = [ "__ARM_PCS_VFP" ]
+    }
 
     foreach(s, sources_orig) {
       sources += [ "${target_out_dir}/${musl_ported_dir}/${s}" ]
     }
 
     cflags += [
+      "-O3",
+      "-fPIC",
+    ]
+
+    configs -= musl_inherited_configs
+    configs += [ ":${template_prefix}_musl_config" ]
+
+    deps = porting_deps
+  }
+
+  source_set("${template_prefix}_musl_src_nossp") {
+    cflags = []
+    sources = []
+
+    sources_orig = [
+      "src/string/mempcpy.c",
+      "src/string/memset.c",
+      "src/env/__init_tls.c",
+      "src/env/__libc_start_main.c",
+      "src/env/__stack_chk_fail.c",
+      "src/thread/${musl_arch}/__set_thread_area.c",
+    ]
+
+    foreach(s, sources_orig) {
+      sources += [ "${target_out_dir}/${musl_ported_dir}/${s}" ]
+    }
+
+    cflags += [
+      "-O3",
       "-fPIC",
       "-fno-stack-protector",
     ]
@@ -196,7 +266,10 @@ template("musl_libs") {
     complete_static_lib = true
 
     output_dir = "${target_out_dir}/${static_lib_out_dir}"
-    deps = [ ":${template_prefix}_musl_src" ]
+    deps = [
+      ":${template_prefix}_musl_src",
+      ":${template_prefix}_musl_src_nossp",
+    ]
   }
 
   static_library("${template_prefix}_libm") {
@@ -235,9 +308,13 @@ template("musl_libs") {
     output_name = "libc/${shared_lib_out_dir}/libc"
     output_extension = "so"
 
+    libclang_rt_path = rebase_path("${runtime_lib_path}/${musl_target_triple}/${shared_lib_out_dir}")
+
     ldflags = [
       "-nostdlib",
       "-Wl,-e,_dlstart",
+      "-L${libclang_rt_path}",
+      "-lclang_rt.builtins",
     ]
 
     remove_configs = musl_inherited_configs
@@ -248,6 +325,7 @@ template("musl_libs") {
     deps = [
       ":${template_prefix}_musl_ldso",
       ":${template_prefix}_musl_src",
+      ":${template_prefix}_musl_src_nossp",
     ]
   }
 
