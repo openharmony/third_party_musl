@@ -54,4 +54,9 @@ off_t __stdio_seek(FILE *f, off_t off, int whence)
     off_t result = 0;
     return __stdio_lseek64(f->fd, off>>32, off, &result, whence) ? -1 : result;
 }
+#else
+off_t __stdio_seek(FILE *f, off_t off, int whence)
+{
+    return 0;
+}
 #endif
