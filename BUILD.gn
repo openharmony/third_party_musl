@@ -39,6 +39,7 @@ group("musl_headers") {
     ":musl_copy_inc_root",
     ":musl_copy_inc_scsi",
     ":musl_copy_inc_sys",
+    ":copy_uapi",
   ]
 }
 
@@ -136,6 +137,13 @@ action("create_syscall_h") {
   args += rebase_path(outputs, root_build_dir)
 
   deps = [ ":create_porting_src" ]
+}
+
+action("copy_uapi") {
+  outputs = [ "${target_out_dir}/${musl_inc_out_dir}/linux" ]
+  script = "scripts/copy_uapi.sh"
+  args = [ "-i" ] + [ rebase_path("${uapi_dir}") ]
+  args += [ "-o" ] + [ rebase_path("${target_out_dir}/${musl_inc_out_dir}") ]
 }
 
 copy("musl_copy_inc_bits") {
