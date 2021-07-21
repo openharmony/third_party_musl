@@ -29,6 +29,8 @@ int __fclose(FILE *f)
 	if (*head == f) *head = f->next;
 	__ofl_unlock();
 
+	pthread_mutex_destroy(f->lock);
+
 	free(f->getln_buf);
 	free(f);
 
