@@ -38,7 +38,6 @@ struct group *getgrnam(const char *name)
 {
 	struct group *res;
 	size_t size=0, nmem=0;
-	unsupported_api(__FUNCTION__);
 	__getgr_a(name, 0, &gr, &line, &size, &mem, &nmem, &res);
 	return res;
 }

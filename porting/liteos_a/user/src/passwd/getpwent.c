@@ -36,7 +36,6 @@ struct passwd *getpwuid(uid_t uid)
 struct passwd *getpwnam(const char *name)
 {
 	struct passwd *res;
-	unsupported_api(__FUNCTION__);
 	__getpw_a(name, 0, &pw, &line, &size, &res);
 	return res;
 }
