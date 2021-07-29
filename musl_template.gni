@@ -2,25 +2,17 @@ import("//build/ohos.gni")
 import("musl_src.gni")
 
 template("musl_libs") {
-
   no_default_deps = true
 
-  forward_variables_from(invoker, ["target_abi"])
-  abi_prefix = "${target_name}"
-  
-  porting_deps = [
-    "//third_party/musl:create_porting_src",
-    "//third_party/musl:create_alltypes_h",
-    "//third_party/musl:create_syscall_h",
-    "//third_party/musl:create_version_h",
-  ]
+  forward_variables_from(invoker, [ "target_abi" ])
+  abi_prefix = target_abi
 
   if (target_abi == "soft") {
-    static_lib_out_dir = "usr/lib/${musl_target_triple}"
-    shared_lib_out_dir = "."
+    _libs_path_prefix = "."
+    _libs_out_dir = "usr/lib/${musl_target_triple}"
   } else {
-    static_lib_out_dir = "usr/lib/${musl_target_triple}/${target_abi}"
-    shared_lib_out_dir = "${target_abi}"
+    _libs_path_prefix = "${target_abi}"
+    _libs_out_dir = "usr/lib/${musl_target_triple}/${target_abi}"
   }
 
   musl_subarch = ""
@@ -28,9 +20,40 @@ template("musl_libs") {
     musl_subarch = "hf"
   }
 
-  group("${abi_prefix}_libs") {
+  porting_deps = [
+    "//third_party/musl:create_alltypes_h",
+    "//third_party/musl:create_porting_src",
+    "//third_party/musl:create_syscall_h",
+    "//third_party/musl:create_version_h",
+  ]
+
+  group(target_name) {
+    deps = [
+      ":${abi_prefix}_create_linker",
+      ":${abi_prefix}_libc_musl_shared",
+      ":${abi_prefix}_libc_musl_static",
+      ":${abi_prefix}_musl_crt_libs",
+    ]
+  }
+
+  group("${abi_prefix}_shared_libs") {
     deps = [
       ":${abi_prefix}_libc_musl_shared",
+      ":${abi_prefix}_libcrypt",
+      ":${abi_prefix}_libdl",
+      ":${abi_prefix}_libm",
+      ":${abi_prefix}_libpthread",
+      ":${abi_prefix}_libresolv",
+      ":${abi_prefix}_librt",
+      ":${abi_prefix}_libutil",
+      ":${abi_prefix}_libxnet",
+      ":${abi_prefix}_musl_crt_libs",
+      ":musl_headers",
+    ]
+  }
+
+  group("${abi_prefix}_static_libs") {
+    deps = [
       ":${abi_prefix}_libc_musl_static",
       ":${abi_prefix}_libcrypt",
       ":${abi_prefix}_libdl",
@@ -40,9 +63,13 @@ template("musl_libs") {
       ":${abi_prefix}_librt",
       ":${abi_prefix}_libutil",
       ":${abi_prefix}_libxnet",
-      ":${abi_prefix}_musl_crt_install_action",
-      ":${abi_prefix}_create_linker",
+      ":${abi_prefix}_musl_crt_libs",
+      ":musl_headers",
     ]
+  }
+
+  group("${abi_prefix}_musl_crt_libs") {
+    deps = [ ":${abi_prefix}_musl_crt_install_action" ]
   }
 
   # part of default_compiler_configs from build/config/BUILDCONFIG.gn
@@ -126,15 +153,13 @@ template("musl_libs") {
 
     cflags_c99fse = [
       "-std=c99",
-      "-nostdinc",  
+      "-nostdinc",
       "-ffreestanding",
       "-frounding-math",
       "-Wa,--noexecstack",
     ]
 
-    cflags_all = cflags_basic +
-                 cflags_c99fse +
-                 cflags_auto         
+    cflags_all = cflags_basic + cflags_c99fse + cflags_auto
 
     cflags = cflags_all
 
@@ -142,7 +167,8 @@ template("musl_libs") {
       defines = [ "BROKEN_VFP_ASM" ]
     }
 
-    dynamic_list = rebase_path("${target_out_dir}/${musl_ported_dir}/dynamic.list")
+    dynamic_list =
+        rebase_path("${target_out_dir}/${musl_ported_dir}/dynamic.list")
 
     ldflags = cflags_all
     ldflags += [
@@ -268,7 +294,7 @@ template("musl_libs") {
 
     configs -= musl_inherited_configs
 
-    output_dir = "${target_out_dir}/${static_lib_out_dir}"
+    output_dir = "${target_out_dir}/${_libs_out_dir}"
     deps = [
       ":${abi_prefix}_musl_src",
       ":${abi_prefix}_musl_src_nossp",
@@ -279,64 +305,65 @@ template("musl_libs") {
     complete_static_lib = true
     configs -= musl_inherited_configs
     output_name = "libm"
-    output_dir = "${target_out_dir}/${static_lib_out_dir}"
+    output_dir = "${target_out_dir}/${_libs_out_dir}"
   }
 
   static_library("${abi_prefix}_librt") {
     complete_static_lib = true
     configs -= musl_inherited_configs
     output_name = "librt"
-    output_dir = "${target_out_dir}/${static_lib_out_dir}"
+    output_dir = "${target_out_dir}/${_libs_out_dir}"
   }
 
   static_library("${abi_prefix}_libpthread") {
     complete_static_lib = true
     configs -= musl_inherited_configs
     output_name = "libpthread"
-    output_dir = "${target_out_dir}/${static_lib_out_dir}"
+    output_dir = "${target_out_dir}/${_libs_out_dir}"
   }
 
   static_library("${abi_prefix}_libcrypt") {
     complete_static_lib = true
     configs -= musl_inherited_configs
     output_name = "libcrypt"
-    output_dir = "${target_out_dir}/${static_lib_out_dir}"
+    output_dir = "${target_out_dir}/${_libs_out_dir}"
   }
 
   static_library("${abi_prefix}_libutil") {
     complete_static_lib = true
     configs -= musl_inherited_configs
     output_name = "libutil"
-    output_dir = "${target_out_dir}/${static_lib_out_dir}"
+    output_dir = "${target_out_dir}/${_libs_out_dir}"
   }
 
   static_library("${abi_prefix}_libresolv") {
     complete_static_lib = true
     configs -= musl_inherited_configs
     output_name = "libresolv"
-    output_dir = "${target_out_dir}/${static_lib_out_dir}"
+    output_dir = "${target_out_dir}/${_libs_out_dir}"
   }
 
   static_library("${abi_prefix}_libxnet") {
     complete_static_lib = true
     configs -= musl_inherited_configs
     output_name = "libxnet"
-    output_dir = "${target_out_dir}/${static_lib_out_dir}"
+    output_dir = "${target_out_dir}/${_libs_out_dir}"
   }
 
   static_library("${abi_prefix}_libdl") {
     complete_static_lib = true
     configs -= musl_inherited_configs
     output_name = "libdl"
-    output_dir = "${target_out_dir}/${static_lib_out_dir}"
+    output_dir = "${target_out_dir}/${_libs_out_dir}"
   }
 
   shared_library("${abi_prefix}_libc_musl_shared") {
-    output_dir = "${root_out_dir}/common/common/libc/${shared_lib_out_dir}"
+    output_dir = "${target_out_dir}/${_libs_out_dir}"
     output_name = "libc"
     output_extension = "so"
 
-    libclang_rt_path = rebase_path("${runtime_lib_path}/${musl_target_triple}/${shared_lib_out_dir}")
+    libclang_rt_path = rebase_path(
+            "${runtime_lib_path}/${musl_target_triple}/${_libs_path_prefix}")
 
     ldflags = [
       "-nostdlib",
@@ -344,9 +371,6 @@ template("musl_libs") {
       "-L${libclang_rt_path}",
       "-lclang_rt.builtins",
     ]
-
-    remove_configs = musl_inherited_configs
-    remove_configs += [ "//build/config:default_libs" ]
 
     configs -= musl_inherited_configs
     configs -= [ "//build/config:default_libs" ]
@@ -363,39 +387,28 @@ template("musl_libs") {
     redir = "${root_out_dir}/obj"
     script = "${target_out_dir}/${musl_ported_dir}/scripts/install.py"
     sources = [
-      "${redir}/${target_out_dir}/${musl_ported_dir}/crt/${musl_arch}/${abi_prefix}_musl_crt/crti.o",
-      "${redir}/${target_out_dir}/${musl_ported_dir}/crt/${musl_arch}/${abi_prefix}_musl_crt/crtn.o",
       "${redir}/${target_out_dir}/${musl_ported_dir}/crt/${abi_prefix}_musl_crt/Scrt1.o",
       "${redir}/${target_out_dir}/${musl_ported_dir}/crt/${abi_prefix}_musl_crt/crt1.o",
       "${redir}/${target_out_dir}/${musl_ported_dir}/crt/${abi_prefix}_musl_crt/rcrt1.o",
-     ]
-
-    outputs = [ "${target_out_dir}/${static_lib_out_dir}/{{source_file_part}}" ]
-
+      "${redir}/${target_out_dir}/${musl_ported_dir}/crt/${musl_arch}/${abi_prefix}_musl_crt/crti.o",
+      "${redir}/${target_out_dir}/${musl_ported_dir}/crt/${musl_arch}/${abi_prefix}_musl_crt/crtn.o",
+    ]
+    outputs = [ "${target_out_dir}/${_libs_out_dir}/{{source_file_part}}" ]
     args = [
       "--input",
       "{{source}}",
     ]
     args += [ "--output" ] + rebase_path(outputs, root_build_dir)
-
     deps = [ ":${abi_prefix}_musl_crt" ]
   }
 
-  action("${abi_prefix}_create_linker") {
-    script = "${target_out_dir}/${musl_ported_dir}/tools/install.sh"
-    
-    sources = [ "${root_out_dir}/common/common/libc/${shared_lib_out_dir}/libc.so" ]
-
-    outputs = [ "${root_out_dir}/common/common/libc/${shared_lib_out_dir}/ld-musl-${musl_arch}${musl_subarch}.so.1" ]
-
-    args = [ 
-      "-D",
-      "-r",
-    ]
-    args +=  rebase_path(sources)
-    args +=  rebase_path(outputs)
-
+  copy("${abi_prefix}_create_linker") {
     deps = [ ":${abi_prefix}_libc_musl_shared" ]
-  }
 
+    # _libc_shared_outputs = get_target_outputs(":${abi_prefix}_libc_musl_shared")
+    _libc_shared_so = "${target_out_dir}/${_libs_out_dir}/libc.so"
+    sources = [ _libc_shared_so ]
+    _muls_linker_so = "${root_out_dir}/common/common/libc/${_libs_path_prefix}/ld-musl-${musl_arch}${musl_subarch}.so.1"
+    outputs = [ _muls_linker_so ]
+  }
 }
