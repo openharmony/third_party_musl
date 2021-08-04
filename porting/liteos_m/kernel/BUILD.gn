@@ -52,7 +52,7 @@ static_library(libc) {
     "src/network/ntohl.c",
     "src/network/ntohs.c",
     "src/exit/abort.c",
-    #"src/exit/assert.c",
+    "src/exit/assert.c",
     "src/ctype/isascii.c",
     "src/ctype/isxdigit.c",
     "src/ctype/isdigit.c",
