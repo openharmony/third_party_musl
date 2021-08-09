@@ -129,7 +129,6 @@ template("musl_libs") {
     cflags_basic = [
       "--target=${musl_target_triple}",
       "-march=armv7-a",
-      "-O2",
       "-Wall",
       "-D_FORTIFY_SOURCE=2",
       "-Wl,-z,relro,-z,now,-z,noexecstack",
@@ -137,11 +136,11 @@ template("musl_libs") {
 
     cflags_auto = [
       "-D_XOPEN_SOURCE=700",
-      "-Os",
+      "-g",
       "-pipe",
-      "-fomit-frame-pointer",
-      "-fno-unwind-tables",
-      "-fno-asynchronous-unwind-tables",
+      "-fno-omit-frame-pointer",
+      "-funwind-tables",
+      "-fasynchronous-unwind-tables",
       "-ffunction-sections",
       "-fdata-sections",
       "-Werror=implicit-function-declaration",
@@ -365,11 +364,17 @@ template("musl_libs") {
     libclang_rt_path = rebase_path(
             "${runtime_lib_path}/${musl_target_triple}/${_libs_path_prefix}")
 
+    musl_lib_path = rebase_path("${target_out_dir}/${_libs_out_dir}")
+
     ldflags = [
       "-nostdlib",
       "-Wl,-e,_dlstart",
       "-L${libclang_rt_path}",
       "-lclang_rt.builtins",
+      "-lunwind",
+      "-L${musl_lib_path}",
+      "-ldl",
+      "-lpthread",
     ]
 
     configs -= musl_inherited_configs
