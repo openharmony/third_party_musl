@@ -92,25 +92,27 @@ template("musl_libs") {
   ]
 
   config("${abi_prefix}_musl_abi_config") {
-    if (target_abi == "soft") {
-      cflags = [ "-mfloat-abi=soft" ]
-    } else if (target_abi == "a7_soft") {
-      cflags = [
-        "-mcpu=cortex-a7",
-        "-mfloat-abi=soft",
-      ]
-    } else if (target_abi == "a7_softfp_neon-vfpv4") {
-      cflags = [
-        "-mcpu=cortex-a7",
-        "-mfloat-abi=softfp",
-        "-mfpu=neon-vfpv4",
-      ]
-    } else if (target_abi == "a7_hard_neon-vfpv4") {
-      cflags = [
-        "-mcpu=cortex-a7",
-        "-mfloat-abi=hard",
-        "-mfpu=neon-vfpv4",
-      ]
+    if (musl_arch == "arm") {
+      if (target_abi == "soft") {
+        cflags = [ "-mfloat-abi=soft" ]
+      } else if (target_abi == "a7_soft") {
+        cflags = [
+          "-mcpu=cortex-a7",
+          "-mfloat-abi=soft",
+        ]
+      } else if (target_abi == "a7_softfp_neon-vfpv4") {
+        cflags = [
+          "-mcpu=cortex-a7",
+          "-mfloat-abi=softfp",
+          "-mfpu=neon-vfpv4",
+        ]
+      } else if (target_abi == "a7_hard_neon-vfpv4") {
+        cflags = [
+          "-mcpu=cortex-a7",
+          "-mfloat-abi=hard",
+          "-mfpu=neon-vfpv4",
+        ]
+      }
     }
   }
 
@@ -128,11 +130,16 @@ template("musl_libs") {
 
     cflags_basic = [
       "--target=${musl_target_triple}",
-      "-march=armv7-a",
       "-Wall",
       "-D_FORTIFY_SOURCE=2",
       "-Wl,-z,relro,-z,now,-z,noexecstack",
     ]
+
+    if (musl_arch == "arm") {
+      cflags_basic += [ "-march=armv7-a", ]
+    } else if (musl_arch == "aarch64") {
+      cflags_basic += [ "-march=armv8", ]
+    }
 
     cflags_auto = [
       "-D_XOPEN_SOURCE=700",
@@ -220,8 +227,13 @@ template("musl_libs") {
       "src/env/__init_tls.c",
       "src/env/__libc_start_main.c",
       "src/env/__stack_chk_fail.c",
-      "src/thread/${musl_arch}/__set_thread_area.c",
     ]
+
+    if (musl_arch == "arm") {
+      sources_orig -= [ "src/thread/${musl_arch}/__set_thread_area.c" ]
+    } else if (musl_arch == "aarch64") {
+      sources_orig -= [ "src/thread/${musl_arch}/__set_thread_area.s" ]
+    }
 
     if ("${target_abi}" == "a7_hard_neon-vfpv4") {
       defines = [ "__ARM_PCS_VFP" ]
@@ -251,8 +263,13 @@ template("musl_libs") {
       "src/env/__init_tls.c",
       "src/env/__libc_start_main.c",
       "src/env/__stack_chk_fail.c",
-      "src/thread/${musl_arch}/__set_thread_area.c",
     ]
+
+    if (musl_arch == "arm") {
+      sources_orig += [ "src/thread/${musl_arch}/__set_thread_area.c" ]
+    } else if (musl_arch == "aarch64") {
+      sources_orig += [ "src/thread/${musl_arch}/__set_thread_area.s" ]
+    }
 
     foreach(s, sources_orig) {
       sources += [ "${target_out_dir}/${musl_ported_dir}/${s}" ]
@@ -385,6 +402,8 @@ template("musl_libs") {
       ":${abi_prefix}_musl_ldso",
       ":${abi_prefix}_musl_src",
       ":${abi_prefix}_musl_src_nossp",
+      ":${abi_prefix}_libdl",
+      ":${abi_prefix}_libpthread",
     ]
   }
 

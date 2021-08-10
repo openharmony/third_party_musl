@@ -1595,9 +1595,6 @@ if (musl_arch == "arm") {
 
     "arch/generic/bits/dirent.h",
     "arch/generic/bits/errno.h",
-    "arch/generic/bits/fcntl.h",
-    "arch/generic/bits/fenv.h",
-    "arch/generic/bits/hwcap.h",
     "arch/generic/bits/ioctl_fix.h",
     "arch/generic/bits/ioctl.h",
     "arch/generic/bits/io.h",
