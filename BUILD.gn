@@ -153,6 +153,7 @@ action("copy_uapi") {
   script = "scripts/copy_uapi.sh"
   args = [ "-i" ] + [ rebase_path("${uapi_dir}") ]
   args += [ "-o" ] + [ rebase_path("${target_out_dir}/${musl_inc_out_dir}") ]
+  args += [ "-t" ] + [ "${musl_arch}" ]
 }
 
 copy("musl_copy_inc_bits") {
