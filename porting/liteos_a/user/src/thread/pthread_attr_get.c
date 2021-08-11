@@ -83,7 +83,6 @@ int pthread_mutexattr_getpshared(const pthread_mutexattr_t *restrict a, int *res
 
 int pthread_mutexattr_getrobust(const pthread_mutexattr_t *restrict a, int *restrict robust)
 {
-	unsupported_api(__FUNCTION__);
 	*robust = a->__attr / 4U % 2;
 	return 0;
 }
