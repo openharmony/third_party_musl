@@ -810,7 +810,7 @@ static int path_open(const char *name, const char *s, char *buf, size_t buf_size
 		l = strcspn(s, ":\n");
 		if (l-1 >= INT_MAX) return -1;
 		if (snprintf(buf, buf_size, "%.*s/%s", (int)l, s, name) < buf_size) {
-			if ((fd = open(buf, O_RDONLY))>=0) return fd; // open(buf, O_RDONLY|O_CLOEXEC)
+			if ((fd = open(buf, O_RDONLY|O_CLOEXEC))>=0) return fd;
 			switch (errno) {
 			case ENOENT:
 			case ENOTDIR:
@@ -1038,7 +1038,7 @@ static struct dso *load_library(const char *name, struct dso *needed_by)
 	}
 	if (strchr(name, '/')) {
 		pathname = name;
-		fd = open(name, O_RDONLY); // open(name, O_RDONLY|O_CLOEXEC);
+		fd = open(name, O_RDONLY|O_CLOEXEC);
 	} else {
 		/* Search for the name to see if it's already loaded */
 		for (p=head->next; p; p=p->next) {
