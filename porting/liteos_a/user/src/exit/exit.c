@@ -1,14 +1,8 @@
 #include <stdlib.h>
 #include <stdint.h>
-#include <stdbool.h>
-#include <debug.h>
 #include <signal.h>
 #include <atomic.h>
 #include "libc.h"
-
-extern bool g_enable_check;
-extern void mem_check_deinit(void);
-extern void clean_recycle_list(bool clean_all);
 
 static void dummy()
 {
@@ -39,12 +33,6 @@ _Noreturn void exit(int code)
 		return;
 	}
 	__block_app_sigs(&set);
-	if (g_enable_check) {
-		check_leak();
-		check_heap_integrity();
-		mem_check_deinit();
-		clean_recycle_list(true);
-	}
 	__funcs_on_exit();
 	__libc_exit_fini();
 	__stdio_exit();

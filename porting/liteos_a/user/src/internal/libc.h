@@ -27,6 +27,7 @@ struct __libc {
 	size_t tls_size, tls_align, tls_cnt;
 	size_t page_size;
 	struct __locale_struct global_locale;
+	int exit;
 };
 
 #ifndef PAGE_SIZE
