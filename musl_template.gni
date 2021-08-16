@@ -89,6 +89,7 @@ template("musl_libs") {
     "//build/config/compiler:no_rtti",
     "//build/config/compiler:runtime_library",
     "//build/config/compiler:thin_archive",
+    "//build/config/sanitizers:default_sanitizer_flags",
   ]
 
   config("${abi_prefix}_musl_abi_config") {
@@ -136,9 +137,9 @@ template("musl_libs") {
     ]
 
     if (musl_arch == "arm") {
-      cflags_basic += [ "-march=armv7-a", ]
+      cflags_basic += [ "-march=armv7-a" ]
     } else if (musl_arch == "aarch64") {
-      cflags_basic += [ "-march=armv8", ]
+      cflags_basic += [ "-march=armv8" ]
     }
 
     cflags_auto = [
@@ -399,11 +400,11 @@ template("musl_libs") {
     configs += [ ":${abi_prefix}_musl_config" ]
 
     deps = [
+      ":${abi_prefix}_libdl",
+      ":${abi_prefix}_libpthread",
       ":${abi_prefix}_musl_ldso",
       ":${abi_prefix}_musl_src",
       ":${abi_prefix}_musl_src_nossp",
-      ":${abi_prefix}_libdl",
-      ":${abi_prefix}_libpthread",
     ]
   }
 
