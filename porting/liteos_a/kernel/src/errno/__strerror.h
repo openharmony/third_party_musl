@@ -103,5 +103,3 @@ E(EMEDIUMTYPE,  "Wrong medium type")
 E(EMULTIHOP,    "Multihop attempted")
 
 E(0,            "No error information")
-
-E(ENOSUPP,      "Operation not supported")

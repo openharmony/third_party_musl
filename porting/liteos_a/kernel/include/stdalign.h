@@ -5,9 +5,7 @@
 
 /* this whole header only works in C11 or with compiler extensions */
 #if __STDC_VERSION__ < 201112L && defined( __GNUC__)
-#undef _Alignas
 #define _Alignas(t) __attribute__((__aligned__(t)))
-#undef _Alignof
 #define _Alignof(t) __alignof__(t)
 #endif
 

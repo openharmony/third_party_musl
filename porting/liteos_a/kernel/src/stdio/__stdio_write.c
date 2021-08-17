@@ -1,10 +1,6 @@
 #include "stdio_impl.h"
 #include <sys/uio.h>
 
-#ifndef LOSCFG_FS_VFS
-#define writev(...) (-1)
-#endif
-
 size_t __stdio_write(FILE *f, const unsigned char *buf, size_t len)
 {
 	struct iovec iovs[2] = {

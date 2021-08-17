@@ -6,11 +6,6 @@ extern "C" {
 
 #include <features.h>
 
-#define __NEED_uint16_t
-#define __NEED_uint32_t
-#define __NEED_uint64_t
-#define __NEED_int32_t
-#define __NEED_int64_t
 #define __NEED_dev_t
 #define __NEED_ino_t
 #define __NEED_mode_t
@@ -19,7 +14,6 @@ extern "C" {
 #define __NEED_gid_t
 #define __NEED_off_t
 #define __NEED_time_t
-#define __NEED_suseconds_t
 #define __NEED_blksize_t
 #define __NEED_blkcnt_t
 #define __NEED_struct_timespec
@@ -106,13 +100,13 @@ int lchmod(const char *, mode_t);
 
 #if defined(_LARGEFILE64_SOURCE) || defined(_GNU_SOURCE)
 #define stat64 stat
+int fstat64(int, struct stat64 *);
 #define lstat64 lstat
 #define fstatat64 fstatat
 #define blkcnt64_t blkcnt_t
 #define fsblkcnt64_t fsblkcnt_t
 #define fsfilcnt64_t fsfilcnt_t
 #define ino64_t ino_t
-int fstat64(int, struct stat64 *);
 #endif
 
 #if _REDIR_TIME64

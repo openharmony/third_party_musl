@@ -133,5 +133,3 @@
 #define ENOTRECOVERABLE 131
 #define ERFKILL         132
 #define EHWPOISON       133
-
-#define ENOSUPP         201

@@ -1,8 +1,6 @@
 #ifndef _FEATURES_H
 #define _FEATURES_H
 
-#define _DEFAULT_SOURCE
-#define _LARGEFILE64_SOURCE
 #define _GNU_SOURCE
 
 #if defined(_ALL_SOURCE) && !defined(_GNU_SOURCE)
@@ -40,7 +38,5 @@
 #endif
 
 #define __REDIR(x,y) __typeof__(x) x __asm__(#y)
-
-#include "../src/include/features.h"
 
 #endif

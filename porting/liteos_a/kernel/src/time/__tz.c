@@ -219,7 +219,7 @@ weak_alias(__tzset, tzset);
 
 const char *__tm_to_tzname(const struct tm *tm)
 {
-	const void *p = tm->tm_zone;
+	const void *p = tm->__tm_zone;
 	LOCK();
 	do_tzset();
 	if (p != __utc && p != __tzname[0] && p != __tzname[1] &&

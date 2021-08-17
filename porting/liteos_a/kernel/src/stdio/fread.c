@@ -1,8 +1,5 @@
 #include "stdio_impl.h"
 #include <string.h>
-#ifdef LOSCFG_LLTSER
-#include "gcov_ser.h"
-#endif
 
 #define MIN(a,b) ((a)<(b) ? (a) : (b))
 
@@ -13,9 +10,7 @@ size_t fread(void *restrict destv, size_t size, size_t nmemb, FILE *restrict f)
 	if (!size) nmemb = 0;
 
 	FLOCK(f);
-#ifdef LOSCFG_LLTSER
-	GCOV_FREAD(f, destv, size, nmemb);
-#endif
+
 	f->mode |= f->mode-1;
 
 	if (f->rpos != f->rend) {

@@ -172,8 +172,6 @@ __REDIR(timegm, __timegm_time64);
 #endif
 #endif
 
-#include "../src/include/time.h"
-
 #ifdef __cplusplus
 }
 #endif
