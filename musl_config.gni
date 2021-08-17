@@ -27,9 +27,10 @@ declare_args() {
 }
 
 declare_args() {
-  runtime_lib_path = "//prebuilts/clang/ohos/linux-x86_64/llvm/lib/clang/10.0.1/lib"
+  runtime_lib_path =
+      "//prebuilts/clang/ohos/linux-x86_64/llvm/lib/clang/10.0.1/lib"
   user_custom_libc = true
-  musl_ported_dir = "intermidiates/${musl_target_os}/musl_src_ported" 
+  musl_ported_dir = "intermidiates/${musl_target_os}/musl_src_ported"
   musl_inc_out_dir = "usr/include/${musl_target_triple}"
   uapi_dir = "//kernel/linux/patches/linux-4.19/prebuilts/usr/include"
 
