@@ -146,6 +146,7 @@ template("musl_libs") {
       "-D_XOPEN_SOURCE=700",
       "-g",
       "-pipe",
+      "-mtp=cp15",
       "-fno-omit-frame-pointer",
       "-funwind-tables",
       "-fasynchronous-unwind-tables",
