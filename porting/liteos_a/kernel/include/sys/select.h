@@ -20,7 +20,7 @@ extern "C" {
 
 /* FD_SETSIZE is defined in "vfs_config.h" */
 #else
-#define FD_SETSIZE 512
+#define FD_SETSIZE 1024
 #define FD_SET_TOTAL_SIZE FD_SETSIZE
 #endif
 

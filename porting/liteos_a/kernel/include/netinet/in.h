@@ -311,7 +311,6 @@ struct ip6_mtuinfo {
 	struct sockaddr_in6 ip6m_addr;
 	uint32_t ip6m_mtu;
 };
-
 #endif
 
 #define IPV6_ADDRFORM           1

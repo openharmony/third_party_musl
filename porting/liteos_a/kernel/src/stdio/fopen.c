@@ -4,15 +4,9 @@
 #include <string.h>
 #include <errno.h>
 #include <limits.h>
-#ifdef LOSCFG_LLTSER
-#include "gcov_ser.h"
-#endif
 
 FILE *fopen(const char *restrict filename, const char *restrict mode)
 {
-#ifdef LOSCFG_LLTSER
-	GCOV_FOPEN(filename);
-#endif
 	FILE *f;
 	int fd;
 	int flags;

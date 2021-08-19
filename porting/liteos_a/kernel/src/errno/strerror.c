@@ -2,10 +2,6 @@
 #include <string.h>
 #include "locale_impl.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #define E(a,b) ((unsigned char)a),
 static const unsigned char errid[] = {
 #include "__strerror.h"
@@ -33,7 +29,3 @@ char *strerror(int e)
 }
 
 weak_alias(__strerror_l, strerror_l);
-
-#ifdef __cplusplus
-}
-#endif

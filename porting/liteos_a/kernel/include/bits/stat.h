@@ -24,6 +24,12 @@ struct stat {
 	struct timespec st_ctim;
 };
 
+#define __NEED_uint16_t
+#define __NEED_uint32_t
+#define __NEED_uint64_t
+#define __NEED_int32_t
+#define __NEED_int64_t
+#include <bits/alltypes.h>
 struct statx {
 	uint32_t stx_mask;
 	uint32_t stx_blksize;

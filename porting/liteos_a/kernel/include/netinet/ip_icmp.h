@@ -69,7 +69,6 @@ struct icmphdr {
 #define ICMP_EXC_TTL		0
 #define ICMP_EXC_FRAGTIME	1
 
-#define ICMP_FILTER 1
 
 struct icmp_ra_addr {
 	uint32_t ira_addr;
@@ -113,10 +112,6 @@ struct icmp {
 		uint32_t   id_mask;
 		uint8_t    id_data[1];
 	} icmp_dun;
-};
-
-struct icmp_filter {
-	uint32_t data;
 };
 
 #define	icmp_pptr	icmp_hun.ih_pptr

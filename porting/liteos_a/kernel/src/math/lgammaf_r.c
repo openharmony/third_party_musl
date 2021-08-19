@@ -105,8 +105,7 @@ static float sin_pi(float x)
 float __lgammaf_r(float x, int *signgamp)
 {
 	union {float f; uint32_t i;} u = {x};
-	float nadj = 0;
-	float t,y,z,p,p1,p2,p3,q,r,w;
+	float t,y,z,nadj,p,p1,p2,p3,q,r,w;
 	uint32_t ix;
 	int i,sign;
 

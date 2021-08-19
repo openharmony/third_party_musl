@@ -6,7 +6,7 @@
 #define ALIGN (sizeof(size_t)-1)
 #define ONES ((size_t)-1/UCHAR_MAX)
 #define HIGHS (ONES * (UCHAR_MAX/2+1))
-#define HASZERO(x) (((x)-ONES) & ~(x) & HIGHS)
+#define HASZERO(x) ((x)-ONES & ~(x) & HIGHS)
 
 void *memchr(const void *src, int c, size_t n)
 {
@@ -18,7 +18,7 @@ void *memchr(const void *src, int c, size_t n)
 		typedef size_t __attribute__((__may_alias__)) word;
 		const word *w;
 		size_t k = ONES * c;
-		for (w = (const void *)s; (n>=SS) && !HASZERO(*w^k); w++, n-=SS);
+		for (w = (const void *)s; n>=SS && !HASZERO(*w^k); w++, n-=SS);
 		s = (const void *)w;
 	}
 #endif

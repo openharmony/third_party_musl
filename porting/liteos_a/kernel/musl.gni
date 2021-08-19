@@ -39,12 +39,8 @@ MUSL_SRC_COMMON = [
   "$MUSLPORTINGDIR/src/ctype/isxdigit.c",
   "$MUSLPORTINGDIR/src/ctype/tolower.c",
   "$MUSLPORTINGDIR/src/ctype/toupper.c",
-  "$MUSLPORTINGDIR/src/env/getenv.c",
-  "$MUSLPORTINGDIR/src/errno/errno.c",
   "$MUSLPORTINGDIR/src/errno/strerror.c",
-  "$MUSLPORTINGDIR/src/exit/abort.c",
   "$MUSLPORTINGDIR/src/exit/assert.c",
-  "$MUSLPORTINGDIR/src/exit/exit.c",
   "$MUSLPORTINGDIR/src/fenv/fenv.c",
   "$MUSLPORTINGDIR/src/internal/floatscan.c",
   "$MUSLPORTINGDIR/src/internal/intscan.c",
@@ -55,7 +51,6 @@ MUSL_SRC_COMMON = [
   "$MUSLPORTINGDIR/src/locale/c_locale.c",
   "$MUSLPORTINGDIR/src/locale/langinfo.c",
   "$MUSLPORTINGDIR/src/locale/locale_map.c",
-  "$MUSLPORTINGDIR/src/malloc/malloc.c",
   "$MUSLPORTINGDIR/src/math/__cos.c",
   "$MUSLPORTINGDIR/src/math/__cosdf.c",
   "$MUSLPORTINGDIR/src/math/__cosl.c",
@@ -294,9 +289,7 @@ MUSL_SRC_COMMON = [
   "$MUSLPORTINGDIR/src/network/htons.c",
   "$MUSLPORTINGDIR/src/network/ntohl.c",
   "$MUSLPORTINGDIR/src/network/ntohs.c",
-  "$MUSLPORTINGDIR/src/prng/rand.c",
   "$MUSLPORTINGDIR/src/prng/random.c",
-  "$MUSLPORTINGDIR/src/sched/sched_yield.c",
   "$MUSLPORTINGDIR/src/stdio/__fdopen.c",
   "$MUSLPORTINGDIR/src/stdio/__fmodeflags.c",
   "$MUSLPORTINGDIR/src/stdio/__lockfile.c",
@@ -390,7 +383,6 @@ MUSL_SRC_COMMON = [
   "$MUSLPORTINGDIR/src/time/mktime.c",
   "$MUSLPORTINGDIR/src/time/strftime.c",
   "$MUSLPORTINGDIR/src/time/strptime.c",
-  "$MUSLPORTINGDIR/src/time/time.c",
 ]
 
 MUSL_SRC_ARM = [

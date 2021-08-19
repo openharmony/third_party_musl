@@ -185,7 +185,7 @@ static long double decfloat(FILE *f, int c, int bits, int emin, int sign, int po
 			x[k] = x[k]/p10 + carry;
 			carry = 1000000000/p10 * tmp;
 			if (k==a && !x[k]) {
-				a = ((a+1) & MASK);
+				a = (a+1 & MASK);
 				rp -= 9;
 			}
 		}
@@ -197,7 +197,7 @@ static long double decfloat(FILE *f, int c, int bits, int emin, int sign, int po
 	while (rp < 9*LD_B1B_DIG || (rp == 9*LD_B1B_DIG && x[a]<th[0])) {
 		uint32_t carry = 0;
 		e2 -= 29;
-		for (k=((z-1) & MASK); ; k=((k-1) & MASK)) {
+		for (k=(z-1 & MASK); ; k=(k-1 & MASK)) {
 			uint64_t tmp = ((uint64_t)x[k] << 29) + carry;
 			if (tmp > 1000000000) {
 				carry = tmp / 1000000000;
@@ -206,15 +206,15 @@ static long double decfloat(FILE *f, int c, int bits, int emin, int sign, int po
 				carry = 0;
 				x[k] = tmp;
 			}
-			if (k==((z-1) & MASK) && k!=a && !x[k]) z = k;
+			if (k==(z-1 & MASK) && k!=a && !x[k]) z = k;
 			if (k==a) break;
 		}
 		if (carry) {
 			rp += 9;
-			a = ((a-1) & MASK);
+			a = (a-1 & MASK);
 			if (a == z) {
-				z = ((z-1) & MASK);
-				x[(z-1) & MASK] |= x[z];
+				z = (z-1 & MASK);
+				x[z-1 & MASK] |= x[z];
 			}
 			x[a] = carry;
 		}
@@ -225,39 +225,39 @@ static long double decfloat(FILE *f, int c, int bits, int emin, int sign, int po
 		uint32_t carry = 0;
 		int sh = 1;
 		for (i=0; i<LD_B1B_DIG; i++) {
-			k = ((a+i) & MASK);
+			k = (a+i & MASK);
 			if (k == z || x[k] < th[i]) {
 				i=LD_B1B_DIG;
 				break;
 			}
-			if (x[(a+i) & MASK] > th[i]) break;
+			if (x[a+i & MASK] > th[i]) break;
 		}
 		if (i==LD_B1B_DIG && rp==9*LD_B1B_DIG) break;
 		/* FIXME: find a way to compute optimal sh */
 		if (rp > 9+9*LD_B1B_DIG) sh = 9;
 		e2 += sh;
-		for (k=a; k!=z; k=((k+1) & MASK)) {
-			uint32_t tmp = x[k] & ((1<<sh)-1);
+		for (k=a; k!=z; k=(k+1 & MASK)) {
+			uint32_t tmp = x[k] & (1<<sh)-1;
 			x[k] = (x[k]>>sh) + carry;
 			carry = (1000000000>>sh) * tmp;
 			if (k==a && !x[k]) {
-				a = ((a+1) & MASK);
+				a = (a+1 & MASK);
 				i--;
 				rp -= 9;
 			}
 		}
 		if (carry) {
-			if (((z+1) & MASK) != a) {
+			if ((z+1 & MASK) != a) {
 				x[z] = carry;
-				z = ((z+1) & MASK);
-			} else x[(z-1) & MASK] |= 1;
+				z = (z+1 & MASK);
+			} else x[z-1 & MASK] |= 1;
 		}
 	}
 
 	/* Assemble desired bits into floating point variable */
 	for (y=i=0; i<LD_B1B_DIG; i++) {
-		if (((a+i) & MASK)==z) x[(z=((z+1) & MASK))-1] = 0;
-		y = 1000000000.0L * y + x[(a+i) & MASK];
+		if ((a+i & MASK)==z) x[(z=(z+1 & MASK))-1] = 0;
+		y = 1000000000.0L * y + x[a+i & MASK];
 	}
 
 	y *= sign;
@@ -278,14 +278,14 @@ static long double decfloat(FILE *f, int c, int bits, int emin, int sign, int po
 	}
 
 	/* Process tail of decimal input so it can affect rounding */
-	if (((a+i) & MASK) != z) {
-		uint32_t t = x[(a+i) & MASK];
-		if (t < 500000000 && (t || ((a+i+1) & MASK) != z))
+	if ((a+i & MASK) != z) {
+		uint32_t t = x[a+i & MASK];
+		if (t < 500000000 && (t || (a+i+1 & MASK) != z))
 			frac += 0.25*sign;
 		else if (t > 500000000)
 			frac += 0.75*sign;
 		else if (t == 500000000) {
-			if (((a+i+1) & MASK) == z)
+			if ((a+i+1 & MASK) == z)
 				frac += 0.5*sign;
 			else
 				frac += 0.75*sign;
@@ -297,7 +297,7 @@ static long double decfloat(FILE *f, int c, int bits, int emin, int sign, int po
 	y += frac;
 	y -= bias;
 
-	if (((e2+LDBL_MANT_DIG) & INT_MAX) > emax-5) {
+	if ((e2+LDBL_MANT_DIG & INT_MAX) > emax-5) {
 		if (fabsl(y) >= 2/LDBL_EPSILON) {
 			if (denormal && bits==LDBL_MANT_DIG+e2-emin)
 				denormal = 0;

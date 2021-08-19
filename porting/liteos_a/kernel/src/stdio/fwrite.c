@@ -1,8 +1,5 @@
 #include "stdio_impl.h"
 #include <string.h>
-#ifdef LOSCFG_LLTSER
-#include "gcov_ser.h"
-#endif
 
 size_t __fwritex(const unsigned char *restrict s, size_t l, FILE *restrict f)
 {
@@ -30,9 +27,6 @@ size_t __fwritex(const unsigned char *restrict s, size_t l, FILE *restrict f)
 
 size_t fwrite(const void *restrict src, size_t size, size_t nmemb, FILE *restrict f)
 {
-#ifdef LOSCFG_LLTSER
-	GCOV_FWRITE(f, src, size, nmemb);
-#endif
 	size_t k, l = size*nmemb;
 	if (!size) nmemb = 0;
 	FLOCK(f);

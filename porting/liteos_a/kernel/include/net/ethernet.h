@@ -32,7 +32,7 @@ struct ether_header {
 #define ETHERTYPE_LOOPBACK	0x9000
 
 
-#define	ETHER_ADDR_LEN	6
+#define	ETHER_ADDR_LEN	ETH_ALEN
 #define	ETHER_TYPE_LEN	2
 #define	ETHER_CRC_LEN	4
 #define	ETHER_HDR_LEN	ETH_HLEN

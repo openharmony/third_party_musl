@@ -146,8 +146,6 @@ int shm_unlink (const char *);
 #define mmap64 mmap
 #endif
 
-#include "../src/include/sys/mman.h"
-
 #ifdef __cplusplus
 }
 #endif

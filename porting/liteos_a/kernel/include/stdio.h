@@ -12,7 +12,6 @@ extern "C" {
 #define __NEED_size_t
 
 #if __STDC_VERSION__ < 201112L
-#define __NEED_off_t
 #define __NEED_struct__IO_FILE
 #endif
 

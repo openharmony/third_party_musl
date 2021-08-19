@@ -1,17 +1,11 @@
 #include "stdio_impl.h"
 #include <stdlib.h>
-#ifdef LOSCFG_LLTSER
-#include "gcov_ser.h"
-#endif
 
 static void dummy(FILE *f) { }
 weak_alias(dummy, __unlist_locked_file);
 
 int fclose(FILE *f)
 {
-#ifdef LOSCFG_LLTSER
-	GCOV_FCLOSE(fp);
-#endif
 	int r;
 	
 	FLOCK(f);

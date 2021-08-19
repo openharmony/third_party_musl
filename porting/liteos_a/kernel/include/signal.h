@@ -94,34 +94,34 @@ typedef struct sigaltstack stack_t;
 #define CLD_CONTINUED 6
 
 union sigval {
-    int sival_int;
-    void *sival_ptr;
+	int sival_int;
+	void *sival_ptr;
 };
 
 typedef struct {
-    int si_signo, si_errno, si_code;
-    union {
-        char __pad[128 - 2*sizeof(int) - sizeof(long)];
-        struct {
-            union {
-                struct {
-                    pid_t si_pid;
-                    uid_t si_uid;
-                } __piduid;
-                struct {
-                    int si_timerid;
-                    int si_overrun;
-                } __timer;
-            } __first;
-            union {
-                union sigval si_value;
-                struct {
-                    int si_status;
-                    clock_t si_utime, si_stime;
-                } __sigchld;
-            } __second;
-        } __si_common;
-    } __si_fields;
+	int si_signo, si_errno, si_code;
+	union {
+		char __pad[128 - 2*sizeof(int) - sizeof(long)];
+		struct {
+			union {
+				struct {
+					pid_t si_pid;
+					uid_t si_uid;
+				} __piduid;
+				struct {
+					int si_timerid;
+					int si_overrun;
+				} __timer;
+			} __first;
+			union {
+				union sigval si_value;
+				struct {
+					int si_status;
+					clock_t si_utime, si_stime;
+				} __sigchld;
+			} __second;
+		} __si_common;
+	} __si_fields;
 } siginfo_t;
 #define si_pid     __si_fields.__si_common.__first.__piduid.si_pid
 #define si_uid     __si_fields.__si_common.__first.__piduid.si_uid
@@ -133,22 +133,22 @@ typedef struct {
 #define si_overrun __si_fields.__si_common.__first.__timer.si_overrun
 
 struct sigaction {
-    union {
-        void (*sa_handler)(int);
-        void (*sa_sigaction)(int, siginfo_t *, void *);
-    } sa_sigactionhandler;
-    sigset_t sa_mask;
-    int sa_flags;
-    void (*sa_restorer)(void);
+	union {
+		void (*sa_handler)(int);
+		void (*sa_sigaction)(int, siginfo_t *, void *);
+	} sa_sigactionhandler;
+	sigset_t sa_mask;
+	int sa_flags;
+	void (*sa_restorer)(void);
 };
 #define sa_handler   sa_sigactionhandler.sa_handler
 #define sa_sigaction sa_sigactionhandler.sa_sigaction
 
 struct sigevent {
-    union sigval sigev_value;
-    int sigev_signo;
-    int sigev_notify;
-    void (*sigev_notify_function)(union sigval);
+	union sigval sigev_value;
+	int sigev_signo;
+	int sigev_notify;
+	void (*sigev_notify_function)(union sigval);
     void *sigev_notify_attributes;
 };
 

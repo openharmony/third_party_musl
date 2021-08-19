@@ -98,8 +98,6 @@ char *basename(const char *);
 #endif
 #endif
 
-#include "../src/include/string.h"
-
 #ifdef __cplusplus
 }
 #endif

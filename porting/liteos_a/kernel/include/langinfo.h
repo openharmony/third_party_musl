@@ -91,8 +91,6 @@ extern "C" {
 char *nl_langinfo(nl_item);
 char *nl_langinfo_l(nl_item, locale_t);
 
-#include "../src/include/langinfo.h"
-
 #ifdef __cplusplus
 }
 #endif

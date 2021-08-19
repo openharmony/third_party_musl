@@ -9,15 +9,14 @@ extern "C" {
 
 #include <bits/errno.h>
 
-void set_errno(int err_code);
-int get_errno(void);
-int *__errno_location(void);
-
 #ifdef __GNUC__
 __attribute__((const))
 #endif
-extern volatile int* __errno(void);
-#define errno (*__errno())
+int *__errno_location(void);
+#define errno (*__errno_location())
+
+#define set_errno(err) do { if (err) { errno = (err); } } while(0)
+#define get_errno() errno
 
 #ifdef _GNU_SOURCE
 extern char *program_invocation_short_name, *program_invocation_name;

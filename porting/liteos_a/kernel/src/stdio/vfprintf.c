@@ -20,12 +20,12 @@
 /* Convenient bit representation for modifier flags, which all fall
  * within 31 codepoints of the space character. */
 
-#define ALT_FORM   (1U<<('#'-' '))
-#define ZERO_PAD   (1U<<('0'-' '))
-#define LEFT_ADJ   (1U<<('-'-' '))
-#define PAD_POS    (1U<<(' '-' '))
-#define MARK_POS   (1U<<('+'-' '))
-#define GROUPED    (1U<<('\''-' '))
+#define ALT_FORM   (1U<<'#'-' ')
+#define ZERO_PAD   (1U<<'0'-' ')
+#define LEFT_ADJ   (1U<<'-'-' ')
+#define PAD_POS    (1U<<' '-' ')
+#define MARK_POS   (1U<<'+'-' ')
+#define GROUPED    (1U<<'\''-' ')
 
 #define FLAGMASK (ALT_FORM|ZERO_PAD|LEFT_ADJ|PAD_POS|MARK_POS|GROUPED)
 
@@ -191,8 +191,7 @@ static int fmt_fp(FILE *f, long double y, int w, int p, int fl, int t)
 	char buf[9+LDBL_MANT_DIG/4], *s;
 	const char *prefix="-0X+0X 0X-0x+0x 0x";
 	int pl;
-	char ebuf0[3*sizeof(int)], *ebuf=&ebuf0[3*sizeof(int)];
-	char *estr = NULL;
+	char ebuf0[3*sizeof(int)], *ebuf=&ebuf0[3*sizeof(int)], *estr;
 
 	pl=1;
 	if (signbit(y)) {
@@ -297,7 +296,7 @@ static int fmt_fp(FILE *f, long double y, int w, int p, int fl, int t)
 		uint32_t carry=0, *b;
 		int sh=MIN(9,-e2), need=1+(p+LDBL_MANT_DIG/3U+8)/9;
 		for (d=a; d<z; d++) {
-			uint32_t rm = *d & ((1<<sh)-1);
+			uint32_t rm = *d & (1<<sh)-1;
 			*d = (*d>>sh) + carry;
 			carry = (1000000000>>sh) * rm;
 		}
@@ -486,8 +485,8 @@ static int printf_core(FILE *f, const char *fmt, va_list *ap, union arg *nl_arg,
 		}
 
 		/* Read modifier flags */
-		for (fl=0; (unsigned)*s-' '<32 && (FLAGMASK&(1U<<(*s-' '))); s++)
-			fl |= 1U<<(*s-' ');
+		for (fl=0; (unsigned)*s-' '<32 && (FLAGMASK&(1U<<*s-' ')); s++)
+			fl |= 1U<<*s-' ';
 
 		/* Read field width */
 		if (*s=='*') {
