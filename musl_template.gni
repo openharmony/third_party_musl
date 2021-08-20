@@ -138,6 +138,7 @@ template("musl_libs") {
 
     if (musl_arch == "arm") {
       cflags_basic += [ "-march=armv7-a" ]
+      cflags_basic += [ "-mtp=cp15" ]
     } else if (musl_arch == "aarch64") {
       cflags_basic += [ "-march=armv8" ]
     }
@@ -146,7 +147,6 @@ template("musl_libs") {
       "-D_XOPEN_SOURCE=700",
       "-g",
       "-pipe",
-      "-mtp=cp15",
       "-fno-omit-frame-pointer",
       "-funwind-tables",
       "-fasynchronous-unwind-tables",
