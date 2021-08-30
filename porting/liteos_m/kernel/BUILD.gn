@@ -126,6 +126,7 @@ static_library(libc) {
     "src/string/memset.c",
     "src/string/strlen.c",
     "src/string/wcschr.c",
+    "src/locale/iconv.c",
   ]
 
   include_dirs = [
