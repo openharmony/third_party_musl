@@ -6,10 +6,10 @@ __attribute__((__noinline__))
 #endif
 static int locking_getc(FILE *f)
 {
-    FLOCK(f);
-    int c = getc_unlocked(f);
-    FUNLOCK(f);
-    return c;
+	FLOCK(f);
+	int c = getc_unlocked(f);
+	FUNLOCK(f);
+	return c;
 }
 
 static inline int do_getc(FILE *f)
