@@ -19,16 +19,16 @@
 struct _IO_FILE {
 	unsigned flags;
 	unsigned char *rpos, *rend;
-	int (*close)(struct _IO_FILE *);
+	int (*close)(FILE *);
 	unsigned char *wend, *wpos;
 	unsigned char *mustbezero_1;
 	unsigned char *wbase;
-	size_t (*read)(struct _IO_FILE *, unsigned char *, size_t);
-	size_t (*write)(struct _IO_FILE *, const unsigned char *, size_t);
-	off_t (*seek)(struct _IO_FILE *, off_t, int);
+	size_t (*read)(FILE *, unsigned char *, size_t);
+	size_t (*write)(FILE *, const unsigned char *, size_t);
+	off_t (*seek)(FILE *, off_t, int);
 	unsigned char *buf;
 	size_t buf_size;
-	struct _IO_FILE *prev, *next;
+	FILE *prev, *next;
 	int fd;
 	int pipe_pid;
 	int mode;
