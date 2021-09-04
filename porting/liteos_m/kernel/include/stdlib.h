@@ -63,7 +63,6 @@ int abs (int);
 long labs (long);
 long long llabs (long long);
 
-#ifndef ARM_NONE_EABI
 typedef struct { int quot, rem; } div_t;
 typedef struct { long quot, rem; } ldiv_t;
 typedef struct { long long quot, rem; } lldiv_t;
@@ -71,7 +70,6 @@ typedef struct { long long quot, rem; } lldiv_t;
 div_t div (int, int);
 ldiv_t ldiv (long, long);
 lldiv_t lldiv (long long, long long);
-#endif
 
 int mblen (const char *, size_t);
 int mbtowc (wchar_t *__restrict, const char *__restrict, size_t);
