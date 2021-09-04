@@ -11,7 +11,7 @@ size_t __stdio_read(FILE *f, unsigned char *buf, size_t len)
 	ssize_t cnt;
 
 	cnt = read(f->fd, iov[0].iov_base, iov[0].iov_len);
-	if (iov[1].iov_len - iov[0].iov_len > 0) cnt += read(f->fd, iov[1].iov_base, iov[1].iov_len - iov[0].iov_len);
+	if (iov[1].iov_len > iov[0].iov_len) cnt += read(f->fd, iov[1].iov_base, iov[1].iov_len - iov[0].iov_len);
 	if (cnt <= 0) {
 		f->flags |= cnt ? F_ERR : F_EOF;
 		return 0;
