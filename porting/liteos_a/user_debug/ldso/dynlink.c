@@ -1114,6 +1114,7 @@ static struct dso *load_library(const char *name, struct dso *needed_by)
 		}
 	}
 	map = noload ? 0 : map_library(fd, &temp_dso);
+	close(fd);
 	if (!map) return 0;
 
 	/* Avoid the danger of getting two versions of libc mapped into the
@@ -1819,6 +1820,7 @@ void __dls3(size_t *sp, size_t *auxv)
 			dprintf(2, "%s: %s: Not a valid dynamic program\n", ldname, argv[0]);
 			_exit(1);
 		}
+		close(fd);
 		ldso.name = ldname;
 		app.name = argv[0];
 		aux[AT_ENTRY] = (size_t)laddr(&app, ehdr->e_entry);
