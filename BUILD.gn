@@ -97,6 +97,23 @@ action("create_porting_src") {
   args = [ "-i" ] + rebase_path(sources)
   args += [ "-o" ] + rebase_path(outdir)
   args += [ "-p" ] + [ "${musl_target_os}" ]
+
+  foreach(i, src_files) {
+    foreach(s, musl_src_porting_file) {
+      if (i == s) {
+        src_files -= [ "${s}" ]
+      }
+    }
+  }
+
+  inputs = []
+  foreach(s, src_files) {
+    inputs += [ "${musl_dir}/${s}" ]
+  }
+
+  foreach(s, musl_src_porting_file) {
+    inputs += [ "${musl_porting_dir}/${s}" ]
+  }
 }
 
 action("create_alltypes_h") {

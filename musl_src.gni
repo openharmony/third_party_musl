@@ -1820,3 +1820,22 @@ musl_inc_root_files = [
   "include/wctype.h",
   "include/wordexp.h",
 ]
+
+musl_src_porting_file = [
+  "arch/arm/bits/fenv.h",
+  "arch/generic/bits/shm.h",
+  "include/ctype.h",
+  "include/pthread.h",
+  "include/sys/capability.h",
+  "include/sys/socket.h",
+  "include/sys/sysinfo.h",
+  "include/unistd.h",
+  "src/internal/pthread_impl.h",
+  "src/internal/syscall.h",
+  "src/legacy/ulimit.c",
+  "src/linux/gettid.c",
+  "src/malloc/malloc.c",
+  "src/multibyte/wcsnrtombs.c",
+  "src/network/inet_legacy.c",
+  "src/passwd/getspnam_r.c",
+]

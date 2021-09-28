@@ -33,6 +33,8 @@ declare_args() {
   musl_ported_dir = "intermidiates/${musl_target_os}/musl_src_ported"
   musl_inc_out_dir = "usr/include/${musl_target_triple}"
   uapi_dir = "//kernel/linux/patches/linux-5.10/prebuilts/usr/include"
+  musl_dir = "//third_party/musl"
+  musl_porting_dir = "//third_party/musl/porting/linux/user"
 
   # if (is_asan) {
   #   musl_linker_asan_name =
