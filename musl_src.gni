@@ -1838,4 +1838,6 @@ musl_src_porting_file = [
   "src/multibyte/wcsnrtombs.c",
   "src/network/inet_legacy.c",
   "src/passwd/getspnam_r.c",
+  "src/thread/arm/clone.s",
+  "src/thread/arm/syscall_cp.s",
 ]
