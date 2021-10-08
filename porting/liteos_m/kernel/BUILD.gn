@@ -47,6 +47,7 @@ static_library(libc) {
     "src/ctype/isxdigit.c",
     "src/ctype/tolower.c",
     "src/ctype/toupper.c",
+    "src/env/__stack_chk_fail.c",
     "src/errno/strerror.c",
     "src/exit/abort.c",
     "src/exit/assert.c",
