@@ -73,6 +73,8 @@
 		<filteritem type="filepath" name="src/crypt/crypt_blowfish.c" desc="No License specified while permission to use, copy, modify, and distribute are granted"/>
                 <filteritem type="filepath" name="src/math/.*" desc="No License specified while permission to use, copy, modify, and distribute are granted"/>
 		<filteritem type="filepath" name="src/string/arm/memcpy_le.S" desc="No License specified while requirements for receving permission to use, copy, modify, and distribute are satisfied"/>
+                <filteritem type="filepath" name="libc-test/src/math/crlibm/.*" desc="No License specified while permission to use, copy, modify, and distribute are granted"/>
+                <filteritem type="filepath" name="libc-test/src/math/ucb/.*" desc="No License specified while permission to use, copy, modify, and distribute are granted"/>
             </filefilter>
             <filefilter name="copyrightPolicyFilter" desc="Filters for copyright header policies">
             </filefilter>
