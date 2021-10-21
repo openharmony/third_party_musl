@@ -421,7 +421,7 @@ typedef struct { unsigned __attr; } pthread_mutexattr_t;
 #endif
 
 #if defined(__NEED_pthread_condattr_t) && !defined(__DEFINED_pthread_condattr_t)
-typedef struct { unsigned __attr; } pthread_condattr_t;
+typedef struct { int clock; } pthread_condattr_t;
 #define __DEFINED_pthread_condattr_t
 #endif
 
@@ -566,6 +566,7 @@ typedef struct pthread_cond {
   EVENT_CB_S event;        /**< Event object*/
   pthread_mutex_t* mutex;  /**< Mutex locker for condition variable protection */
   volatile int value;      /**< Condition variable state value*/
+  int clock;
 } pthread_cond_t;
 #define __DEFINED_pthread_cond_t
 #endif
