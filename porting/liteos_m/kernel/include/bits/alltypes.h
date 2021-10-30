@@ -416,7 +416,7 @@ typedef int pthread_spinlock_t;
 #endif
 
 #if defined(__NEED_pthread_mutexattr_t) && !defined(__DEFINED_pthread_mutexattr_t)
-typedef struct { unsigned __attr; } pthread_mutexattr_t;
+typedef struct { unsigned type; } pthread_mutexattr_t;
 #define __DEFINED_pthread_mutexattr_t
 #endif
 
