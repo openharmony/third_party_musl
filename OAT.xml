@@ -73,9 +73,12 @@
 		<filteritem type="filepath" name="src/crypt/crypt_blowfish.c" desc="No License specified while permission to use, copy, modify, and distribute are granted"/>
                 <filteritem type="filepath" name="src/math/.*" desc="No License specified while permission to use, copy, modify, and distribute are granted"/>
 		<filteritem type="filepath" name="src/string/arm/memcpy_le.S" desc="No License specified while requirements for receving permission to use, copy, modify, and distribute are satisfied"/>
+                <filteritem type="filepath" name="libc-test/src/math/crlibm/.*" desc="GPLV2协议，测试代码，进程独立，不会造成GPL协议污染"/>
+		<filteritem type="filepath" name="libc-test/src/math/ucb/.*" desc="GPLV2协议，测试代码，进程独立，不会造成GPL协议污染"/>
+		<filteritem type="filepath" name="libc-test/COPYRIGHT" desc="License本身"/>
             </filefilter>
             <filefilter name="copyrightPolicyFilter" desc="Filters for copyright header policies">
-            </filefilter>
+	    </filefilter>
             <filefilter name="licenseFileNamePolicyFilter" desc="Filters for LICENSE file policies">
             </filefilter>
             <filefilter name="readmeFileNamePolicyFilter" desc="Filters for README file policies">

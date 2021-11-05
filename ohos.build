@@ -1,0 +1,12 @@
+{
+  "subsystem": "musl",
+  "parts": {
+    "libc-test": {
+      "module_list":[
+      ],
+      "test_list": [
+        "//third_party/musl/libc-test:musl_libc_test"
+      ]
+    }
+  }
+}
