@@ -4,9 +4,9 @@
 import("//build/config/sanitizers/sanitizers.gni")
 
 declare_args() {
-  if (target_cpu == "arm") {
+  if (current_cpu == "arm") {
     musl_arch = "arm"
-  } else if (target_cpu == "arm64") {
+  } else if (current_cpu == "arm64") {
     musl_arch = "aarch64"
   }
   # musl_root = "$root_out_dir/obj/third_party/musl"
