@@ -10,6 +10,8 @@ set LOCAL=\\wsl$\ubuntu-20.04\home\OHOS\out\ohos-arm-release\tests\unittest\libc
 set REMOTE=/data/tests/libc-test/src
 @REM runtest脚本所在目录
 set SHDIR=\\wsl$\Ubuntu-20.04\home\OHOS\third_party\musl\scripts
+@REM 动态链接库所在目录
+set DYNLIB=\\wsl$\Ubuntu-18.04\root\openhramony2\out\ohos-arm-release\musl\libc-test\lib
 
 @REM 检查设备是否连接
 echo HDC device checking...
@@ -31,6 +33,14 @@ hdc shell mkdir %REMOTE%/functional
 hdc shell mkdir %REMOTE%/math
 hdc shell mkdir %REMOTE%/musl
 hdc shell mkdir %REMOTE%/regression
+
+@REM 创建临时文件夹
+hdc shell mkdir /tmp
+hdc shell mkdir /dev/shm
+
+@REM 创建存放动态库文件夹
+hdc shell mkdir %REMOTE%/functional/src
+hdc shell mkdir %REMOTE%/functional/src/functional
 echo Done.
 goto hdcSend
 
@@ -40,14 +50,26 @@ for /F %%i in ('dir %LOCAL% /S /B') do (
     for %%b in ("%%i\..") do (
         echo Sending %%~nb/%%~nxi
         hdc file send -sync %%i %REMOTE%/%%~nb/%%~nxi
-        hdc shell chmod 777 %REMOTE%/%%~nb/%%~nxi
+        hdc shell chmod a+x %REMOTE%/%%~nb/%%~nxi
     )
 )
+
+@REM 动态库传输
+hdc file send %DYNLIB%\libdlopen_dso.so %REMOTE%/functional
+hdc file send %DYNLIB%\libtls_get_new-dtv_dso.so %REMOTE%/regression
+hdc file send %DYNLIB%\libtls_align_dso.so %REMOTE%/functional/src/functional
+hdc file send %DYNLIB%\libtls_init_dso.so %REMOTE%/functional/src/functional
+
+@REM 修改动态库权限
+hdc shell chmod a+x	%REMOTE%/functional/libdlopen_dso.so
+hdc shell chmod a+x %REMOTE%/regression/libtls_get_new-dtv_dso.so
+hdc shell chmod a+x	%REMOTE%/functional/src/functional/libtls_align_dso.so
+hdc shell chmod a+x	%REMOTE%/functional/src/functional/libtls_init_dso.so
 echo Done.
 echo.
 echo Sending run.sh
 hdc file send %SHDIR%\run.sh %REMOTE%/runtest.sh
-hdc shell chmod 777 %REMOTE%/runtest.sh
+hdc shell chmod a+x %REMOTE%/runtest.sh
 echo.
 echo ============================
 echo ALL files send finished.
@@ -71,6 +93,11 @@ set /a endM=%time:~3,2%
 set /a diffS_=%endS%-%startS%
 set /a diffM_=%endM%-%startM%
 echo All Done. Time cost:%diffM_%m%diffS_%s
+
+@REM 删除临时文件夹
+hdc shell rm /tmp -rf
+hdc shell rm /dev/shm -rf
+
 @REM 完成所用时间
 echo.
 pause

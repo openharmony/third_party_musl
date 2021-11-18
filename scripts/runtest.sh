@@ -6,8 +6,12 @@ do
     cd /data/tests/libc-test/src/$filelist
     for file in $(ls)
     do
-        /data/tests/libc-test/src/common/runtest -w '' $file >>../REPORT 
-        echo $filelist/$file
+        if [ "$file" = "runtest" ] || [ "$file" = "libdlopen_dso.so" ] || [ "$file" = "libtls_get_new-dtv_dso.so" ] || [ "$file" = "src" ]; then 
+            continue
+        else
+            /data/tests/libc-test/src/common/runtest -w '' $file >>../REPORT 
+            echo $filelist/$file
+        fi
     done
     cd ..
 done
