@@ -97,11 +97,13 @@ template("test_unittest") {
         #libs += [ "//${root_out_dir}/${test_lib_dir}/libdlopen_dso.so" ]
       }
 
-      if (target_name == "tls_align" || target_name == "tls_align_dlopen") {
+      if (target_name == "tls_align") {
+        ldflags += [ "-Wl,-rpath=src/functional" ]
         libs += [ "//${root_out_dir}/${test_lib_dir}/libtls_align_dso.so" ]
       }
 
-      if (target_name == "tls_init" || target_name == "tls_init_dlopen") {
+      if (target_name == "tls_init") {
+        ldflags += [ "-Wl,-rpath=src/functional" ]
         libs += [ "//${root_out_dir}/${test_lib_dir}/libtls_init_dso.so" ]
       }
     }
@@ -134,7 +136,7 @@ template("test_unittest") {
       ]
 
       if (target_name == "tls_get_new-dtv") {
-        ldflags += [ "-Wl,-rpath='\$ORIGIN'" ]
+        ldflags += [ "-Wl,-rpath=./" ]
         libs +=
             [ "//${root_out_dir}/${test_lib_dir}/libtls_get_new-dtv_dso.so" ]
       }
