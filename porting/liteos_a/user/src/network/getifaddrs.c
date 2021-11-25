@@ -7,10 +7,12 @@
 #include <syscall.h>
 #include <net/if.h>
 #include <netinet/in.h>
-#include <unsupported_api.h>
+#include <sys/ioctl.h>
 #include "netlink.h"
+#include<stdio.h>
 
 #define IFADDRS_HASH_SIZE 64
+#define MAX_IF_NO 10
 
 /* getifaddrs() reports hardware addresses with PF_PACKET that implies
  * struct sockaddr_ll.  But e.g. Infiniband socket address length is
@@ -47,11 +49,17 @@ struct ifaddrs_ctx {
 
 void freeifaddrs(struct ifaddrs *ifp)
 {
-	struct ifaddrs *n;
+	struct ifaddrs *tmp = NULL;
 	while (ifp) {
-		n = ifp->ifa_next;
+		if (!ifp->ifa_name)
+			free(ifp);
+		if (!ifp->ifa_addr)
+			free(ifp->ifa_addr);
+		if (!ifp->ifa_netmask)
+			free(ifp->ifa_netmask);
+		tmp = ifp->ifa_next;
 		free(ifp);
-		ifp = n;
+		ifp = tmp;
 	}
 }
 
@@ -205,14 +213,85 @@ static int netlink_msg_to_ifaddr(void *pctx, struct nlmsghdr *h)
 	return 0;
 }
 
+
+static struct ifaddrs* ifaddrs_init()
+{
+	struct ifaddrs *ifa = NULL;
+	ifa = malloc(sizeof(struct ifaddrs));
+	if (!ifa)
+		return NULL;
+	ifa->ifa_name = malloc(sizeof(char) *(IF_NAMESIZE + 1));
+	ifa->ifa_addr = malloc(sizeof(struct sockaddr));
+	ifa->ifa_netmask = malloc(sizeof(struct sockaddr));
+	ifa->ifa_next = NULL;
+	if (!ifa->ifa_name || !ifa->ifa_addr || !ifa->ifa_netmask) {
+		free(ifa->ifa_name);
+		free(ifa->ifa_addr);
+		free(ifa->ifa_netmask);
+		free(ifa);
+		return NULL;
+	}
+	return ifa;
+}
+
 int getifaddrs(struct ifaddrs **ifap)
 {
-	struct ifaddrs_ctx _ctx, *ctx = &_ctx;
-	int r;
-	unsupported_api(__FUNCTION__);
-	memset(ctx, 0, sizeof *ctx);
-	r = __rtnetlink_enumerate(AF_UNSPEC, AF_UNSPEC, netlink_msg_to_ifaddr, ctx);
-	if (r == 0) *ifap = &ctx->first->ifa;
-	else freeifaddrs(&ctx->first->ifa);
-	return r;
+	if (ifap == NULL) {
+		errno = EINVAL;
+		return -1;
+	}
+	
+	int fd, ifno, ret;
+	struct ifreq ifr[MAX_IF_NO];
+	struct ifconf ifconfig;
+	struct ifaddrs *ifstart = NULL;
+
+	ifconfig.ifc_buf = ifr;
+	ifconfig.ifc_len = sizeof(ifr);
+	if ((fd = socket(AF_INET, SOCK_DGRAM | SOCK_CLOEXEC, 0)) < 0) 
+		return -1;
+	if (ioctl(fd, SIOCGIFCONF, &ifconfig) < 0)
+		goto error;
+	if (ifconfig.ifc_len % sizeof(struct ifreq)) {
+		errno = EINVAL;
+		goto error;
+	}
+	ifno = ifconfig.ifc_len / sizeof(struct ifreq);
+
+	if (!(ifstart = ifaddrs_init())) {
+		errno = ENOMEM;
+		goto error;
+	}
+	struct ifaddrs *ifa = ifstart;
+
+	for (int i = 0; i < ifno; i++) {
+		memcpy(ifa->ifa_name, ifr[i].ifr_name, IF_NAMESIZE);
+		ifa->ifa_name[IF_NAMESIZE] = '\0';
+		memcpy(ifa->ifa_addr, &ifr[i].ifr_addr, sizeof(struct sockaddr));
+		if (ioctl(fd, SIOCGIFNETMASK, &ifr[i]) < 0)
+			goto error;
+		memcpy(ifa->ifa_netmask, &ifr[i].ifr_netmask, sizeof(struct sockaddr));
+
+		if (ioctl(fd, SIOCGIFFLAGS, &ifr[i]) < 0) 
+			goto error;
+		ifa->ifa_flags = ifr[i].ifr_flags;
+
+		if (i < ifno - 1) {
+			ifa->ifa_next = ifaddrs_init();
+			if (!ifa->ifa_next)	{
+				errno = ENOMEM;
+				goto error;
+			}
+			ifa = ifa->ifa_next;
+		}
+	}
+
+	*ifap = ifstart;
+	return 0;
+
+error:	
+	freeifaddrs(ifstart);
+	__syscall(SYS_close, fd);
+	return -1;
 }
+
