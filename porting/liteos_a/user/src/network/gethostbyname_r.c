@@ -2,12 +2,10 @@
 
 #include <sys/socket.h>
 #include <netdb.h>
-#include <unsupported_api.h>
 
 int gethostbyname_r(const char *name,
 	struct hostent *h, char *buf, size_t buflen,
 	struct hostent **res, int *err)
 {
-	unsupported_api(__FUNCTION__);
 	return gethostbyname2_r(name, AF_INET, h, buf, buflen, res, err);
 }
