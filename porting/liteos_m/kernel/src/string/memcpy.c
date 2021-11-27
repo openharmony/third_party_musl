@@ -2,7 +2,11 @@
 #include <stdint.h>
 #include <endian.h>
 
+#ifdef LOSCFG_KERNEL_LMS
+__attribute__((no_sanitize_address)) void *__memcpy(void *restrict dest, const void *restrict src, size_t n)
+#else
 void *memcpy(void *restrict dest, const void *restrict src, size_t n)
+#endif
 {
 	unsigned char *d = dest;
 	const unsigned char *s = src;

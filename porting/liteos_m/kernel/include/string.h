@@ -102,6 +102,41 @@ char *basename();
 #endif
 #endif
 
+#ifdef LOSCFG_KERNEL_LMS
+void *__memset (void *, int, size_t);
+void *__memcpy (void *__restrict, const void *__restrict, size_t);
+void *__memmove (void *, const void *, size_t);
+char *__strcat (char *__restrict, const char *__restrict);
+char *__strncat (char *__restrict, const char *__restrict, size_t);
+char *__strcpy (char *__restrict, const char *__restrict);
+char *__strncpy (char *__restrict, const char *__restrict, size_t);
+
+#if defined(__has_feature) /* clang */
+
+#if !__has_feature(address_sanitizer)
+#define memset(s, c, n) __memset(s, c, n)
+#define memcpy(dst, src, len) __memcpy(dst, src, len)
+#define memmove(dst, src, len) __memmove(dst, src, len)
+#define strcat(dst, src) __strcat(dst, src)
+#define strcpy(dst, src) __strcpy(dst, src)
+#define strncat(dst, src, n) __strncat(dst, src, n)
+#define strncpy(dst, src, n) __strncpy(dst, src, n)
+#endif
+
+#else /* gcc */
+#if !defined(__SANITIZE_ADDRESS__)
+#define memset(s, c, n) __memset(s, c, n)
+#define memcpy(dst, src, len) __memcpy(dst, src, len)
+#define memmove(dst, src, len) __memmove(dst, src, len)
+#define strcat(dst, src) __strcat(dst, src)
+#define strcpy(dst, src) __strcpy(dst, src)
+#define strncat(dst, src, n) __strncat(dst, src, n)
+#define strncpy(dst, src, n) __strncpy(dst, src, n)
+#endif
+#endif /* __has_feature */
+
+#endif /* LOSCFG_KERNEL_LMS */
+
 #ifdef __cplusplus
 }
 #endif
