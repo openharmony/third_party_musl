@@ -6,7 +6,11 @@ typedef __attribute__((__may_alias__)) size_t WT;
 #define WS (sizeof(WT))
 #endif
 
+#ifdef LOSCFG_KERNEL_LMS
+__attribute__((no_sanitize_address)) void *__memmove(void *dest, const void *src, size_t n)
+#else
 void *memmove(void *dest, const void *src, size_t n)
+#endif
 {
 	char *d = dest;
 	const char *s = src;
