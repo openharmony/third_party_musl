@@ -1,7 +1,11 @@
 #include <string.h>
 #include <stdint.h>
 
+#ifdef LOSCFG_KERNEL_LMS
+__attribute__((no_sanitize_address)) void *__memset(void *dest, int c, size_t n)
+#else
 void *memset(void *dest, int c, size_t n)
+#endif
 {
 	unsigned char *s = dest;
 	size_t k;

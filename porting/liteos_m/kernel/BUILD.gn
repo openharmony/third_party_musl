@@ -30,6 +30,8 @@
 libc = "musl-c"
 libm = "musl-m"
 
+LITEOS_MENUCONFIG_H = rebase_path("$root_out_dir/config.h")
+
 config("include") {
   include_dirs = [ "include" ]
 }
@@ -129,15 +131,18 @@ static_library(libc) {
     "src/string/memrchr.c",
     "src/string/memset.c",
     "src/string/stpcpy.c",
+    "src/string/stpncpy.c",
     "src/string/strcasecmp.c",
     "src/string/strcat.c",
     "src/string/strchr.c",
     "src/string/strchrnul.c",
     "src/string/strcmp.c",
+    "src/string/strcpy.c",
     "src/string/strcspn.c",
     "src/string/strdup.c",
     "src/string/strlen.c",
     "src/string/strncasecmp.c",
+    "src/string/strncat.c",
     "src/string/strncmp.c",
     "src/string/strncpy.c",
     "src/string/strnlen.c",
@@ -168,6 +173,11 @@ static_library(libc) {
     "//kernel/liteos_m/kernel/arch/include",
     "//kernel/liteos_m/kernel/include",
     "//kernel/liteos_m/utils",
+  ]
+
+  cflags = [
+    "-imacros",
+    "$LITEOS_MENUCONFIG_H",
   ]
 
   public_configs = [ ":include" ]
