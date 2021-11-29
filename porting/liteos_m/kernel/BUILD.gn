@@ -59,6 +59,7 @@ static_library(libc) {
     "src/locale/c_locale.c",
     "src/locale/langinfo.c",
     "src/misc/dirname.c",
+    "src/misc/realpath.c",
     "src/multibyte/internal.c",
     "src/multibyte/mbtowc.c",
     "src/multibyte/wcrtomb.c",
