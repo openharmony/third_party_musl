@@ -257,3 +257,8 @@ copy("musl_copy_inc_root") {
   outputs = [ "${target_out_dir}/${musl_inc_out_dir}/{{source_file_part}}" ]
   deps = [ ":create_porting_src" ]
 }
+
+group("libctest") {
+  testonly = true
+  deps = [ "libc-test:musl_libc_test" ]
+}

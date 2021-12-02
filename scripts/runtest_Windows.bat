@@ -1,17 +1,23 @@
 @echo off
 
-@REM 开始时间
-set /a startS=%time:~6,2%
-set /a startM=%time:~3,2%
+@REM 本地OpenHarmony源码目录,请根据实际环境修改！！
+set LOCAL=\\wsl$\ubuntu-20.04\home\OHOS\
+@REM 本地编译out目录
+set OUTDIR=out\hi3516dv300
 
-@REM 本地文件所在目录
-set LOCAL=\\wsl$\ubuntu-20.04\home\OHOS\out\ohos-arm-release\tests\unittest\libc-test\src
+@REM 本地用例生成目录
+set TESTDIR=%LOCAL%\%OUTDIR%\tests\unittest\libc-test\src
+@REM 动态链接库生成目录
+set DYNLIB=%LOCAL%\%OUTDIR%\musl\libc-test\lib
 @REM 远程传输目标目录
 set REMOTE=/data/tests/libc-test/src
 @REM runtest脚本所在目录
-set SHDIR=\\wsl$\Ubuntu-20.04\home\OHOS\third_party\musl\scripts
-@REM 动态链接库所在目录
-set DYNLIB=\\wsl$\Ubuntu-18.04\root\openhramony2\out\ohos-arm-release\musl\libc-test\lib
+set SHDIR=%LOCAL%\third_party\musl\scripts
+
+@REM Do not modify the following code unless necessary
+@REM 开始时间
+set /a startS=%time:~6,2%
+set /a startM=%time:~3,2%
 
 @REM 检查设备是否连接
 echo HDC device checking...
@@ -34,71 +40,72 @@ hdc shell mkdir %REMOTE%/math
 hdc shell mkdir %REMOTE%/musl
 hdc shell mkdir %REMOTE%/regression
 
-@REM 创建临时文件夹
+@REM 创建临时文件夹,用于存放用例生成的临时文件
 hdc shell mkdir /tmp
 hdc shell mkdir /dev/shm
-
-@REM 创建存放动态库文件夹
-hdc shell mkdir %REMOTE%/functional/src
-hdc shell mkdir %REMOTE%/functional/src/functional
-echo Done.
+echo Mkdir done.
 goto hdcSend
 
 @REM 传输文件,单板上执行runtest.sh，将结果REPORT返回到.bat所在目录
 :hdcSend
-for /F %%i in ('dir %LOCAL% /S /B') do (
+for /F %%i in ('dir %TESTDIR% /S /B') do (
     for %%b in ("%%i\..") do (
         echo Sending %%~nb/%%~nxi
         hdc file send -sync %%i %REMOTE%/%%~nb/%%~nxi
         hdc shell chmod a+x %REMOTE%/%%~nb/%%~nxi
     )
 )
-
 @REM 动态库传输
-hdc file send %DYNLIB%\libdlopen_dso.so %REMOTE%/functional
-hdc file send %DYNLIB%\libtls_get_new-dtv_dso.so %REMOTE%/regression
-hdc file send %DYNLIB%\libtls_align_dso.so %REMOTE%/functional/src/functional
-hdc file send %DYNLIB%\libtls_init_dso.so %REMOTE%/functional/src/functional
+hdc file send %DYNLIB%\libdlopen_dso.so %REMOTE%/functional/libdlopen_dso.so
+hdc file send %DYNLIB%\libtls_align_dso.so %REMOTE%/functional/libtls_align_dso.so
+hdc file send %DYNLIB%\libtls_init_dso.so %REMOTE%/functional/libtls_init_dso.so
+hdc file send %DYNLIB%\libtls_get_new-dtv_dso.so %REMOTE%/regression/libtls_get_new-dtv_dso.so
 
 @REM 修改动态库权限
 hdc shell chmod a+x	%REMOTE%/functional/libdlopen_dso.so
+hdc shell chmod a+x	%REMOTE%/functional/libtls_align_dso.so
+hdc shell chmod a+x	%REMOTE%/functional/libtls_init_dso.so
 hdc shell chmod a+x %REMOTE%/regression/libtls_get_new-dtv_dso.so
-hdc shell chmod a+x	%REMOTE%/functional/src/functional/libtls_align_dso.so
-hdc shell chmod a+x	%REMOTE%/functional/src/functional/libtls_init_dso.so
-echo Done.
+echo Test cases sending finished.
 echo.
-echo Sending run.sh
-hdc file send %SHDIR%\run.sh %REMOTE%/runtest.sh
+goto sendSH
+
+
+@REM 发送脚本并执行用例
+:sendSH
+echo Sending runtest.sh
+hdc file send %SHDIR%\runtest.sh %REMOTE%/runtest.sh
 hdc shell chmod a+x %REMOTE%/runtest.sh
-echo.
-echo ============================
-echo ALL files send finished.
+echo runtest.sh has been transported.
 echo.
 echo hdc shell .%REMOTE%/runtest.sh
 hdc shell .%REMOTE%/runtest.sh
+echo.
+echo ================================
+echo The test cases have been executed.
+
+@REM 删除临时文件夹
+hdc shell rm /tmp -rf
+hdc shell rm /dev/shm -rf
 echo.
 echo hdc file recv %REMOTE%/REPORT %~dp0REPORT
 hdc file recv %REMOTE%/REPORT %~dp0REPORT
 goto end
 
-@REM 若检查无设备连接，提示检查设备。
+@REM 提示检查设备连接。
 :noDevice
 echo Device not found,please check your device.
 goto end
 
+@REM 完成所用时间
 :end
 echo.
 set /a endS=%time:~6,2%
 set /a endM=%time:~3,2%
 set /a diffS_=%endS%-%startS%
 set /a diffM_=%endM%-%startM%
-echo All Done. Time cost:%diffM_%m%diffS_%s
-
-@REM 删除临时文件夹
-hdc shell rm /tmp -rf
-hdc shell rm /dev/shm -rf
-
-@REM 完成所用时间
+echo All items finished.
+echo Time cost:%diffM_%m%diffS_%s .
 echo.
 pause
 exit
