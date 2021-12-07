@@ -1,7 +1,6 @@
 #include <sched.h>
 #include <errno.h>
 #include "syscall.h"
-#include "pthread_impl.h"
 
 int sched_setscheduler(pid_t pid, int sched, const struct sched_param *param)
 {
