@@ -10,11 +10,7 @@ int sched_setscheduler(pid_t pid, int sched, const struct sched_param *param)
 		r = -EINVAL;
 		goto exit;
 	}
-
-	r = __syscall(SYS_sched_setscheduler, pid , sched , param->sched_priority);
-;
+	r = __syscall(SYS_sched_setscheduler, pid , sched , param);
 exit:
-
-
 	return __syscall_ret(r);
 }
