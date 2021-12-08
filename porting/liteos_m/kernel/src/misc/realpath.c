@@ -71,7 +71,7 @@ char *realpath(const char *__restrict path, char *__restrict resolved_path)
 
     // LiteOS-M file system uses abs path, so we just stat path and strcpy it.
     if (stat(path, &st) < 0) {
-        errno = EINVAL;
+        errno = ENOENT;
         return NULL;
     }
 
