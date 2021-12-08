@@ -1838,7 +1838,10 @@ musl_src_porting_file = [
   "src/multibyte/wcsnrtombs.c",
   "src/network/inet_legacy.c",
   "src/passwd/getspnam_r.c",
+  "src/sched/sched_setparam.c",
+  "src/sched/sched_getparam.c",
   "src/sched/sched_setscheduler.c",
+  "src/sched/sched_getscheduler.c",
   "src/thread/arm/clone.s",
   "src/thread/arm/syscall_cp.s",
 ]
