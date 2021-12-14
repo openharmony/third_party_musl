@@ -104,6 +104,16 @@ set /a endS=%time:~6,2%
 set /a endM=%time:~3,2%
 set /a diffS_=%endS%-%startS%
 set /a diffM_=%endM%-%startM%
+
+@REM REPORT文件比较 
+start python %LOCAL%\third_party\musl\scripts\compare.py
+if exist "%LOCAL%\third_party\musl\scripts\\result.html" (
+  echo Test failed,please checking result.html!
+) else (
+  echo Test successful!
+)  
+echo file compareing finished
+
 echo All items finished.
 echo Time cost:%diffM_%m%diffS_%s .
 echo.
