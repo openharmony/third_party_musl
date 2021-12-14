@@ -18,7 +18,7 @@ void *__mmap(void *start, size_t len, int prot, int flags, int fd, off_t off)
 		errno = EINVAL;
 		return MAP_FAILED;
 	}
-	if (len >= PTRDIFF_MAX) {
+	if ((len >= PTRDIFF_MAX) || (len == 0)) {
 		errno = ENOMEM;
 		return MAP_FAILED;
 	}
