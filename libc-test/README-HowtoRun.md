@@ -33,12 +33,13 @@
 
    此bat将从WSL映射目录传输文件到单板目录下，由于WSL无法直接访问windows端口，所以在WSL中直接使用可能无法传输用例。
 
-5. 若要单独执行测试用例，需要先将common目录下的`runtest`与用例传输到单板，再通过命令执行，结果将打印出来
+4. 若要单独执行测试用例，需要先将common目录下的`runtest`与用例传输到单板，再通过命令执行，结果将打印出来
 
    ```shell
    ./runtest -w '' {filename}
    ```
-
+5. runtest.bat执行结束前会将输出的REPORT与在libc-test/report_base下的REPORT相比较，如果比较出不同将会在scripts下
+   生成一个result.html文件，否则不生成。
    
 
 ### 三、增加用例
