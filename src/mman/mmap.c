@@ -22,6 +22,10 @@ void *__mmap(void *start, size_t len, int prot, int flags, int fd, off_t off)
 		errno = ENOMEM;
 		return MAP_FAILED;
 	}
+	if (len == 0) {
+                errno = EINVAL;
+                return MAP_FAILED;
+	}
 	if (flags & MAP_FIXED) {
 		__vm_wait();
 	}
