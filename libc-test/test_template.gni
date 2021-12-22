@@ -15,7 +15,7 @@ musl_include_dir =
 musl_lib_dir =
     "${root_out_dir}/obj/${musl_dir}/usr/lib/${musl_arch}-linux-ohosmusl"
 
-test_lib_dir = "musl/libc-test/lib"
+test_lib_dir = "musl/libc-test-lib"
 
 template("test_unittest") {
   assert(defined(invoker.target_name),
@@ -191,6 +191,6 @@ template("test_sharedlib") {
     output_extension = "so"
 
     subsystem_name = "musl"
-    part_name = "libc-test/lib"
+    part_name = "libc-test-lib"
   }
 }

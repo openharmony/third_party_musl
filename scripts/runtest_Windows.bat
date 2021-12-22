@@ -8,7 +8,7 @@ set OUTDIR=out\hi3516dv300
 @REM 本地用例生成目录
 set TESTDIR=%LOCAL%\%OUTDIR%\tests\unittest\libc-test\src
 @REM 动态链接库生成目录
-set DYNLIB=%LOCAL%\%OUTDIR%\musl\libc-test\lib
+set DYNLIB=%LOCAL%\%OUTDIR%\musl\libc-test-lib
 @REM 远程传输目标目录
 set REMOTE=/data/tests/libc-test/src
 @REM runtest脚本所在目录
