@@ -157,6 +157,7 @@ template("musl_libs") {
       "-Werror=pointer-sign",
       "-Werror=pointer-arith",
       "-Qunused-arguments",
+      "-DHOOK_ENABLE",
     ]
 
     cflags_c99fse = [
@@ -191,6 +192,36 @@ template("musl_libs") {
       "-Wl,--dynamic-list=${dynamic_list}",
     ]
     asmflags = cflags
+  }
+
+  config("${abi_prefix}_hook") {
+    defines = []
+    configs = []
+
+    if (is_posix) {
+      configs += [ "//build/config/posix:runtime_library" ]
+    }
+
+    cflags_cc = []
+
+    defines = [
+      "__GNU_SOURCE=1",  # Necessary for clone().
+      "CHROMIUM_CXX_TWEAK_INLINES",  # Saves binary size.
+    ]
+
+    defines += [
+      "__MUSL__",
+      "_LIBCPP_HAS_MUSL_LIBC",
+      "__BUILD_LINUX_WITH_CLANG",
+      "HOOK_ENABLE",
+    ]
+    ldflags = [ "-nostdlib" ]
+
+    libs = []
+
+    if (is_component_build) {
+      defines += [ "COMPONENT_BUILD" ]
+    }
   }
 
   source_set("${abi_prefix}_musl_crt") {
@@ -306,6 +337,30 @@ template("musl_libs") {
     deps = porting_deps
   }
 
+  source_set("${abi_prefix}_musl_hook") {
+    sources = [
+      "./porting/linux/user/src/hook/malloc_common.c",
+      "./porting/linux/user/src/hook/musl_preinit.c",
+      "./porting/linux/user/src/hook/musl_preinit_common.c",
+    ]
+
+    deps = [
+      "//third_party/musl:create_alltypes_h",
+      "//third_party/musl:create_porting_src",
+      "//third_party/musl:create_syscall_h",
+      "//third_party/musl:create_version_h",
+      "//third_party/musl:musl_copy_inc_bits",
+      "//third_party/musl:musl_copy_inc_root",
+    ]
+
+    configs -= musl_inherited_configs
+
+    configs += [
+      "//build/config/compiler:compiler",
+      ":${abi_prefix}_hook",
+    ]
+  }
+
   static_library("${abi_prefix}_libc_musl_static") {
     output_name = "libc"
     complete_static_lib = true
@@ -403,6 +458,7 @@ template("musl_libs") {
     deps = [
       ":${abi_prefix}_libdl",
       ":${abi_prefix}_libpthread",
+      ":${abi_prefix}_musl_hook",
       ":${abi_prefix}_musl_ldso",
       ":${abi_prefix}_musl_src",
       ":${abi_prefix}_musl_src_nossp",
