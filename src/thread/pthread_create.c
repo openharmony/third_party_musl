@@ -6,6 +6,15 @@
 #include <sys/mman.h>
 #include <string.h>
 #include <stddef.h>
+#include <stdarg.h>
+
+void log_print(const char* info,...)
+{
+    va_list ap;
+    va_start(ap, info);
+    vfprintf(stdout,info, ap);
+    va_end(ap);
+}
 
 static void dummy_0()
 {
@@ -380,3 +389,33 @@ fail:
 
 weak_alias(__pthread_exit, pthread_exit);
 weak_alias(__pthread_create, pthread_create);
+
+struct pthread* __pthread_list_find(pthread_t thread_id, const char* info)
+{
+    struct pthread *thread = (struct pthread *)thread_id; 
+    if (NULL == thread) {
+        log_print("invalid pthread_t (0) passed to %s\n", info);
+        return NULL;
+    }
+
+    struct pthread *self = __pthread_self();
+    if (thread == self) {
+        return thread;
+    }
+    struct pthread *t = self;
+    t = t->next ;
+    while (t != self) {
+        if (t == thread) return thread;
+        t = t->next ;
+    } 
+    return NULL;
+}
+
+pid_t __pthread_gettid(pthread_t t)
+{
+    __tl_lock();
+    struct pthread* thread = __pthread_list_find(t, "pthread_gettid");
+    __tl_unlock();
+    return thread ? thread->tid : -1;
+}
+weak_alias(__pthread_gettid, pthread_gettid);
