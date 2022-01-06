@@ -96,6 +96,7 @@ int pthread_create(pthread_t *__restrict, const pthread_attr_t *__restrict, void
 int pthread_detach(pthread_t);
 _Noreturn void pthread_exit(void *);
 int pthread_join(pthread_t, void **);
+pid_t pthread_gettid(pthread_t);
 
 #ifdef __GNUC__
 __attribute__((const))
