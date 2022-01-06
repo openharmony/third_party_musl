@@ -84,12 +84,12 @@ struct __timer {
  * the open source society has made to these original macros,
  * because patching will fail if the value of the _m_* are
  * changed by musl society */
-#define _m_type MUTEX_TYPE
-#define _m_lock MUTEX_LOCK
-#define _m_waiters MUTEX_WAITERS
-#define _m_prev MUTEX_PREV
-#define _m_next MUTEX_NEXT
-#define _m_count MUTEX_COUNT
+#define _m_type __u.__i[0]
+#define _m_lock __u.__vi[1]
+#define _m_waiters __u.__vi[2]
+#define _m_prev __u.__p[3]
+#define _m_next __u.__p[4]
+#define _m_count __u.__i[5]
 
 #define _c_shared __u.__p[0]
 #define _c_seq __u.__vi[2]
