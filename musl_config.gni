@@ -19,10 +19,10 @@ declare_args() {
   if ((defined(target_os) && target_os == "ohos") ||
       (defined(ohos_kernel_type) && ohos_kernel_type == "linux")) {
     musl_target_os = "linux"
-    musl_target_triple = "${musl_arch}-linux-ohosmusl"
+    musl_target_triple = "${musl_arch}-linux-ohos"
   } else if (defined(ohos_kernel_type) && ohos_kernel_type == "liteos_a") {
     musl_target_os = "liteos_a"
-    musl_target_triple = "arm-liteos"
+    musl_target_triple = "arm-liteos-ohos"
   }
 }
 
