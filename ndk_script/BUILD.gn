@@ -22,40 +22,6 @@ musl_target_out_dir = "${root_out_dir}/obj/third_party/musl"
 
 if (host_os == "mac") {
   darwin_x86_64_toolchains_dir = "${toolchains_dir}/darwin-x86_64"
-} else {
-  linux_x86_64_toolchains_dir = "${toolchains_dir}/linux-x86_64"
-  windows_x86_64_toolchain_dir = "${toolchains_dir}/windows-x86_64"
-}
-
-ohos_ndk_toolchains("linux_x86_64") {
-  dest_dir = "$ndk_linux_toolchains_out_dir"
-  sources = [
-    "${linux_x86_64_toolchains_dir}/llvm/NOTICE",
-    "${linux_x86_64_toolchains_dir}/llvm/bin",
-    "${linux_x86_64_toolchains_dir}/llvm/include",
-    "${linux_x86_64_toolchains_dir}/llvm/lib",
-    "${linux_x86_64_toolchains_dir}/llvm/libexec",
-    "${linux_x86_64_toolchains_dir}/llvm/share",
-  ]
-  license_file = "${linux_x86_64_toolchains_dir}/llvm/NOTICE"
-}
-
-ohos_ndk_toolchains("windows_x86_64") {
-  dest_dir = "$ndk_windows_toolchains_out_dir"
-  sources = [
-    "${windows_x86_64_toolchain_dir}/llvm/NOTICE",
-    "${windows_x86_64_toolchain_dir}/llvm/bin",
-    "${windows_x86_64_toolchain_dir}/llvm/include",
-    "${windows_x86_64_toolchain_dir}/llvm/lib",
-    "${windows_x86_64_toolchain_dir}/llvm/libexec",
-    "${windows_x86_64_toolchain_dir}/llvm/share",
-  ]
-  args = [ "--follow-all-symlinks" ]
-  license_file = "${windows_x86_64_toolchain_dir}/llvm/NOTICE"
-}
-
-if (host_os == "mac") {
-  darwin_x86_64_toolchains_dir = "${toolchains_dir}/darwin-x86_64"
   ohos_ndk_toolchains("darwin_x86_64") {
     dest_dir = "$ndk_darwin_toolchains_out_dir"
     sources = [
@@ -68,14 +34,72 @@ if (host_os == "mac") {
     ]
     license_file = "${darwin_x86_64_toolchains_dir}/llvm/NOTICE"
   }
+  action("darwin_toolchain") {
+    outputs = [ "${ndk_darwin_toolchains_out_dir}" ]
+    script = "toolchain.sh"
+    args =
+        [ "-i" ] + [ rebase_path("${darwin_x86_64_toolchains_dir}/libcxx-ndk") ]
+    args += [ "-o" ] + [ rebase_path("${ndk_darwin_toolchains_out_dir}") ]
+    deps = [ ":darwin_x86_64" ]
+  }
+} else {
+  linux_x86_64_toolchains_dir = "${toolchains_dir}/linux-x86_64"
+  windows_x86_64_toolchain_dir = "${toolchains_dir}/windows-x86_64"
+
+  ohos_ndk_toolchains("linux_x86_64") {
+    dest_dir = "$ndk_linux_toolchains_out_dir"
+    sources = [
+      "${linux_x86_64_toolchains_dir}/llvm/NOTICE",
+      "${linux_x86_64_toolchains_dir}/llvm/bin",
+      "${linux_x86_64_toolchains_dir}/llvm/include",
+      "${linux_x86_64_toolchains_dir}/llvm/lib",
+      "${linux_x86_64_toolchains_dir}/llvm/libexec",
+      "${linux_x86_64_toolchains_dir}/llvm/share",
+    ]
+    license_file = "${linux_x86_64_toolchains_dir}/llvm/NOTICE"
+  }
+
+  ohos_ndk_toolchains("windows_x86_64") {
+    dest_dir = "$ndk_windows_toolchains_out_dir"
+    sources = [
+      "${windows_x86_64_toolchain_dir}/llvm/NOTICE",
+      "${windows_x86_64_toolchain_dir}/llvm/bin",
+      "${windows_x86_64_toolchain_dir}/llvm/include",
+      "${windows_x86_64_toolchain_dir}/llvm/lib",
+      "${windows_x86_64_toolchain_dir}/llvm/libexec",
+      "${windows_x86_64_toolchain_dir}/llvm/share",
+    ]
+    args = [ "--follow-all-symlinks" ]
+    license_file = "${windows_x86_64_toolchain_dir}/llvm/NOTICE"
+  }
+  action("linux_toolchain") {
+    outputs = [ "${ndk_linux_toolchains_out_dir}" ]
+    script = "toolchain.sh"
+    args =
+        [ "-i" ] + [ rebase_path("${linux_x86_64_toolchains_dir}/libcxx-ndk") ]
+    args += [ "-o" ] + [ rebase_path("${ndk_linux_toolchains_out_dir}") ]
+    deps = [ ":linux_x86_64" ]
+  }
+
+  action("windows_toolchain") {
+    outputs = [ "${ndk_windows_toolchains_out_dir}" ]
+    script = "toolchain.sh"
+    args =
+        [ "-i" ] + [ rebase_path("${windows_x86_64_toolchain_dir}/libcxx-ndk") ]
+    args += [ "-o" ] + [ rebase_path("${ndk_windows_toolchains_out_dir}") ]
+    deps = [ ":windows_x86_64" ]
+  }
 }
 
-action("ndk_toolchain") {
-  outputs = [ "${ndk_linux_toolchains_out_dir}" ]
-  script = "toolchain.sh"
-  args = [ "-i" ] + [ rebase_path("${linux_x86_64_toolchains_dir}/libcxx-ndk") ]
-  args += [ "-o" ] + [ rebase_path("${ndk_linux_toolchains_out_dir}") ]
-  deps = [ ":linux_x86_64" ]
+group("ndk_toolchain") {
+  if (host_os == "mac") {
+    deps = [ ":darwin_toolchain" ]
+  } else {
+    deps = [
+      ":linux_toolchain",
+      ":windows_toolchain",
+    ]
+  }
 }
 
 group("musl_sysroot") {
