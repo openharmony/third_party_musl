@@ -23,6 +23,7 @@ functional_list = [
   "pthread_cancel-points",
   "pthread_cancel",
   "pthread_cond",
+  "pthread_gettid",
   "pthread_mutex",
   "pthread_mutex_pi",
   "pthread_robust",
