@@ -183,6 +183,7 @@ hidden void __inhibit_ptc(void);
 hidden void __tl_lock(void);
 hidden void __tl_unlock(void);
 hidden void __tl_sync(pthread_t);
+hidden struct pthread* __pthread_list_find(pthread_t, const char*);
 
 extern hidden volatile int __thread_list_lock;
 
