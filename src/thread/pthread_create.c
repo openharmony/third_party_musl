@@ -407,15 +407,16 @@ struct pthread* __pthread_list_find(pthread_t thread_id, const char* info)
     while (t != self) {
         if (t == thread) return thread;
         t = t->next ;
-    } 
+    }
+	log_print("invalid pthread_t %p passed to %s\n", thread, info); 
     return NULL;
 }
 
-pid_t __pthread_gettid(pthread_t t)
+pid_t __pthread_gettid_np(pthread_t t)
 {
     __tl_lock();
     struct pthread* thread = __pthread_list_find(t, "pthread_gettid");
     __tl_unlock();
     return thread ? thread->tid : -1;
 }
-weak_alias(__pthread_gettid, pthread_gettid);
+weak_alias(__pthread_gettid_np, pthread_gettid_np);
