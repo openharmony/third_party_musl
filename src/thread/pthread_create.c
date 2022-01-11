@@ -408,7 +408,7 @@ struct pthread* __pthread_list_find(pthread_t thread_id, const char* info)
         if (t == thread) return thread;
         t = t->next ;
     }
-	log_print("invalid pthread_t %p passed to %s\n", thread, info); 
+    log_print("invalid pthread_t %p passed to %s\n", thread, info); 
     return NULL;
 }
 
