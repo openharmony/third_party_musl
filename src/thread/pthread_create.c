@@ -415,7 +415,7 @@ struct pthread* __pthread_list_find(pthread_t thread_id, const char* info)
 pid_t __pthread_gettid_np(pthread_t t)
 {
     __tl_lock();
-    struct pthread* thread = __pthread_list_find(t, "pthread_gettid");
+    struct pthread* thread = __pthread_list_find(t, "pthread_gettid_np");
     __tl_unlock();
     return thread ? thread->tid : -1;
 }
