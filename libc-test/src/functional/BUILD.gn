@@ -29,10 +29,9 @@ group("dso_shared") {
   testonly = true
 
   deps = [
-    ":dlopen_dso",
     ":dlclose_reset_dso",
+    ":dlopen_dso",
     ":tls_align_dso",
     ":tls_init_dso",
-    
   ]
 }
