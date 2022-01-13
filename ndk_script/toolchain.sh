@@ -26,8 +26,8 @@ ndk_dir=$(ls ${SOURCE_DIR}/lib/|more |awk '{print $NF}')
 
 for i in $ndk_dir
 do
-	find ${OUT_DIR}/lib/$i -name 'libc++.a' -exec rm -f {} \;
-	find ${OUT_DIR}/lib/$i -name 'libc++.so' -exec rm -f {} \;
+	find ${OUT_DIR}/lib/$i -name 'libc++.a' -type f  -exec bash -c 'echo "INPUT(-lc++_static -lc++abi)" > $1' _ {}  \;
+	find ${OUT_DIR}/lib/$i -name 'libc++.so' -type f -exec bash -c 'echo "INPUT(-lc++_shared)" > $1'  _ {}  \;
 done
 
 cp -rfp ${SOURCE_DIR}/lib   ${OUT_DIR}
