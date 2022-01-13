@@ -891,7 +891,6 @@
     { "name": "pthread_getcpuclockid" },
     { "name": "pthread_getschedparam" },
     { "name": "pthread_getspecific" },
-    { "name": "pthread_gettid" },
     { "name": "pthread_gettid_np" },
     { "name": "pthread_join" },
     { "name": "pthread_key_create" },
