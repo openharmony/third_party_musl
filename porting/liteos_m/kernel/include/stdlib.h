@@ -44,6 +44,7 @@ void *calloc (size_t, size_t);
 void *realloc (void *, size_t);
 void free (void *);
 void *aligned_alloc(size_t, size_t);
+void *zalloc(size_t size);
 
 _Noreturn void abort (void);
 int atexit (void (*) (void));
