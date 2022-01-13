@@ -4,11 +4,13 @@
 #include <debug.h>
 #include <signal.h>
 #include <atomic.h>
+#include <pthread.h>
 #include "libc.h"
 
 extern bool g_enable_check;
 extern void mem_check_deinit(void);
 extern void clean_recycle_list(bool clean_all);
+pthread_mutex_t __exit_mutex = PTHREAD_MUTEX_INITIALIZER; 
 
 static void dummy()
 {
@@ -35,9 +37,9 @@ weak_alias(libc_exit_fini, __libc_exit_fini);
 _Noreturn void exit(int code)
 {
 	sigset_t set;
-	if (a_cas(&libc.exit, 0, 1) != 0) {
-		return;
-	}
+
+	pthread_mutex_lock(&__exit_mutex);
+
 	__block_app_sigs(&set);
 	if (g_enable_check) {
 		check_leak();
