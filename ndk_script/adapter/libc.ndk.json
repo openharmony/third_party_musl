@@ -82,6 +82,7 @@
     { "name": "atol" },
     { "name": "atoll" },
     { "name": "basename" },
+    { "name": "bcmp" },
     { "name": "bind" },
     { "name": "brk" },
     { "name": "bsearch" },
