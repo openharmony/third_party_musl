@@ -43,6 +43,7 @@ group("musl_headers") {
     ":create_version_h",
     ":musl_copy_inc_arpa",
     ":musl_copy_inc_bits",
+    ":musl_copy_inc_hook",
     ":musl_copy_inc_net",
     ":musl_copy_inc_netinet",
     ":musl_copy_inc_netpacket",
@@ -256,6 +257,11 @@ copy("musl_copy_inc_root") {
   }
   outputs = [ "${target_out_dir}/${musl_inc_out_dir}/{{source_file_part}}" ]
   deps = [ ":create_porting_src" ]
+}
+
+copy("musl_copy_inc_hook") {
+  sources = musl_inc_hook_files
+  outputs = [ "${target_out_dir}/${musl_inc_out_dir}/{{source_file_part}}" ]
 }
 
 group("libctest") {

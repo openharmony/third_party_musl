@@ -1845,3 +1845,9 @@ musl_src_porting_file = [
   "src/thread/arm/clone.s",
   "src/thread/arm/syscall_cp.s",
 ]
+
+musl_inc_hook_files = [
+  "porting/linux/user/src/hook/musl_malloc_dispatch_table.h",
+  "porting/linux/user/src/hook/musl_malloc_dispatch.h",
+  "porting/linux/user/src/hook/musl_preinit_common.h",
+]

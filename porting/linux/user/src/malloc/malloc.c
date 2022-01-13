@@ -14,6 +14,11 @@
 #define inline inline __attribute__((always_inline))
 #endif
 
+#ifdef HOOK_ENABLE
+void *__libc_malloc(size_t);
+void __libc_free(void *p);
+#endif
+
 static struct {
 	volatile uint64_t binmap;
 	struct bin bins[64];
@@ -281,7 +286,11 @@ static void trim(struct chunk *self, size_t n)
 	__bin_chunk(split);
 }
 
+#ifdef HOOK_ENABLE
+void *__libc_malloc(size_t n)
+#else
 void *malloc(size_t n)
+#endif
 {
 	struct chunk *c;
 	int i, j;
@@ -520,7 +529,11 @@ static void unmap_chunk(struct chunk *self)
 	__munmap(base, len);
 }
 
+#ifdef HOOK_ENABLE
+void __libc_free(void *p)
+#else
 void free(void *p)
+#endif
 {
 	if (!p) return;
 
