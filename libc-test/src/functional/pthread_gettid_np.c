@@ -20,16 +20,16 @@ void* pthread_test(void* arg)
 int main(int argc, char const *argv[])
 {
     pthread_mutex_init(&mutex, NULL);
-    TEST(gettid() == pthread_gettid(pthread_self()),"pthread_gettid() is failed\n");
+    TEST(gettid() == pthread_gettid_np(pthread_self()),"pthread_gettid_np() is failed\n");
 
     pthread_mutex_lock(&mutex);
     pid_t tid;
     pthread_t t;
     pthread_create(&t,NULL,pthread_test,&tid);
-    pid_t recv_result = pthread_gettid(t);
+    pid_t recv_result = pthread_gettid_np(t);
     TEST(0 == pthread_join(t,NULL),"pthread_join is failed\n");
 
     pthread_mutex_unlock(&mutex);
-    TEST(tid == recv_result,"the tid of pthread or tid of pthread_gettid is wrong\n");
+    TEST(tid == recv_result,"the tid of pthread or tid of pthread_gettid_np() is wrong\n");
     return 0;
 }
