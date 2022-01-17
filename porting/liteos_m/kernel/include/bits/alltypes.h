@@ -496,7 +496,7 @@ typedef struct __locale_struct * locale_t;
 
 
 #if defined(__NEED_sigset_t) && !defined(__DEFINED_sigset_t)
-typedef struct __sigset_t { unsigned long __bits[128/sizeof(long)]; } sigset_t;
+typedef unsigned long sigset_t;
 #define __DEFINED_sigset_t
 #endif
 
