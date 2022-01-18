@@ -6,6 +6,8 @@
 #include "syscall.h"
 #include "malloc_impl.h"
 
+#include <sys/prctl.h>
+
 /* This function returns true if the interval [old,new]
  * intersects the 'len'-sized interval below &libc.auxv
  * (interpreted as the main-thread stack) or below &b
@@ -65,6 +67,9 @@ void *__expand_heap(size_t *pn)
 	void *area = __mmap(0, n, PROT_READ|PROT_WRITE,
 		MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
 	if (area == MAP_FAILED) return 0;
+	if(prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, area, n, "native_heap:musl"))
+		printf("prctl error");
+
 	*pn = n;
 	mmap_step++;
 	return area;

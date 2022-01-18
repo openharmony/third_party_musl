@@ -9,6 +9,7 @@
 #include "atomic.h"
 #include "pthread_impl.h"
 #include "malloc_impl.h"
+#include <sys/prctl.h>
 
 #if defined(__GNUC__) && defined(__PIC__)
 #define inline inline __attribute__((always_inline))
@@ -302,6 +303,10 @@ void *malloc(size_t n)
 		char *base = __mmap(0, len, PROT_READ|PROT_WRITE,
 			MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
 		if (base == (void *)-1) return 0;
+
+		if(prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, base, len, "native_heap:musl"))
+			printf("prctl error");
+
 		c = (void *)(base + SIZE_ALIGN - OVERHEAD);
 		c->csize = len - (SIZE_ALIGN - OVERHEAD);
 		c->psize = SIZE_ALIGN - OVERHEAD;
