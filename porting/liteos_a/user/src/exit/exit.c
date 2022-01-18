@@ -2,7 +2,10 @@
 #include <stdint.h>
 #include <signal.h>
 #include <atomic.h>
+#include <pthread.h>
 #include "libc.h"
+
+pthread_mutex_t __exit_mutex = PTHREAD_MUTEX_INITIALIZER; 
 
 static void dummy()
 {
@@ -29,9 +32,9 @@ weak_alias(libc_exit_fini, __libc_exit_fini);
 _Noreturn void exit(int code)
 {
 	sigset_t set;
-	if (a_cas(&libc.exit, 0, 1) != 0) {
-		return;
-	}
+
+	pthread_mutex_lock(&__exit_mutex);
+
 	__block_app_sigs(&set);
 	__funcs_on_exit();
 	__libc_exit_fini();
