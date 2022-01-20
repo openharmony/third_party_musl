@@ -449,6 +449,7 @@ musl_src_file = [
   "src/malloc/lite_malloc.c",
   "src/malloc/malloc.c",
   "src/malloc/malloc_usable_size.c",
+  "src/malloc/mallocng/mallinfo.c",
   "src/malloc/memalign.c",
   "src/malloc/posix_memalign.c",
   "src/math/__cos.c",
