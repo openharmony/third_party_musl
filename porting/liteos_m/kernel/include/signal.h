@@ -197,11 +197,11 @@ int __libc_current_sigrtmax(void);
 
 int kill(pid_t, int);
 
-int sigemptyset(sigset_t *);
-int sigfillset(sigset_t *);
-int sigaddset(sigset_t *, int);
-int sigdelset(sigset_t *, int);
-int sigismember(const sigset_t *, int);
+#define sigaddset(what, sig)   (*(what) |= (1U << (sig)), 0)
+#define sigdelset(what, sig)   (*(what) &= ~(1U << (sig)), 0)
+#define sigemptyset(what)      (*(what) = 0, 0)
+#define sigfillset(what)       (*(what) = ~(0), 0)
+#define sigismember(what, sig) (((*(what)) & (1U << (sig))) != 0)
 
 int sigprocmask(int, const sigset_t *__restrict, sigset_t *__restrict);
 int sigsuspend(const sigset_t *);
