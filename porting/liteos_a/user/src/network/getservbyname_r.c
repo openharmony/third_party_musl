@@ -7,7 +7,6 @@
 #include <string.h>
 #include <stdlib.h>
 #include "lookup.h"
-#include <unsupported_api.h>
 
 #define ALIGN (sizeof(struct { char a; char *b; }) - sizeof(char *))
 
@@ -18,7 +17,6 @@ int getservbyname_r(const char *name, const char *prots,
 	int cnt, proto, align;
 
 	*res = 0;
-	unsupported_api(__FUNCTION__);
 
 	/* Don't treat numeric port number strings as service records. */
 	char *end = "";
