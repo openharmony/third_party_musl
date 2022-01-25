@@ -15,6 +15,7 @@ posix_memalign;
 aligned_alloc;
 malloc_usable_size;
 mallinfo;
+mallinfo2;
 
 timezone;
 daylight;
