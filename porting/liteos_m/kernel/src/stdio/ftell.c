@@ -4,7 +4,7 @@
 
 off_t __ftello_unlocked(FILE *f)
 {
-	off_t pos = lseek(f->fd, 0,
+	off_t pos = lseek(f->fd, (off_t)0,
 		(f->flags & F_APP) && f->wpos != f->wbase
 		? SEEK_END : SEEK_CUR);
 	if (pos < 0) return pos;
