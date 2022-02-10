@@ -550,7 +550,7 @@ typedef struct {
 #endif
 
 #if defined(__NEED_pthread_mutex_t) && !defined(__DEFINED_pthread_mutex_t)
-typedef struct { unsigned int magic; unsigned int handle; } pthread_mutex_t;
+typedef struct { unsigned int magic; unsigned int handle; pthread_mutexattr_t stAttr;} pthread_mutex_t;
 #define __DEFINED_pthread_mutex_t
 #endif
 

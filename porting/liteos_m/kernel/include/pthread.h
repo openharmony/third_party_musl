@@ -57,9 +57,10 @@ extern "C" {
 #define _MUX_MAGIC 0xEBCFDEA0
 #define _MUX_INVALID_HANDLE 0xEEEEEEEF
 
-#define PTHREAD_MUTEX_INITIALIZER  { _MUX_MAGIC, _MUX_INVALID_HANDLE }
+#define PTHREAD_MUTEXATTR_INITIALIZER { PTHREAD_MUTEX_RECURSIVE }
+#define PTHREAD_MUTEX_INITIALIZER  { _MUX_MAGIC, _MUX_INVALID_HANDLE, PTHREAD_MUTEXATTR_INITIALIZER }
 #ifdef _GNU_SOURCE
-#define PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP { _MUX_MAGIC, _MUX_INVALID_HANDLE }
+#define PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP { _MUX_MAGIC, _MUX_INVALID_HANDLE, PTHREAD_MUTEXATTR_INITIALIZER }
 #endif
 #define PTHREAD_RWLOCK_INITIALIZER {{{0}}}
 #define PTHREAD_COND_INITIALIZER {{{0}}}
@@ -90,9 +91,6 @@ __attribute__((const))
 pthread_t pthread_self(void);
 
 int pthread_equal(pthread_t, pthread_t);
-#ifndef __cplusplus
-#define pthread_equal(x,y) ((x)==(y))
-#endif
 
 int pthread_setcancelstate(int, int *);
 int pthread_setcanceltype(int, int *);
