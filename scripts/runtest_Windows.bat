@@ -14,7 +14,7 @@ set REMOTE=/data/tests/libc-test/src
 @REM runtest脚本所在目录
 set SHDIR=%LOCAL%\third_party\musl\scripts
 
-@REM Do not modify the following code unless necessary
+@REM 非必要情况下不要修改以下代码
 @REM 开始时间
 set /a startS=%time:~6,2%
 set /a startM=%time:~3,2%
@@ -51,8 +51,12 @@ goto hdcSend
 for /F %%i in ('dir %TESTDIR% /S /B') do (
     for %%b in ("%%i\..") do (
         echo Sending %%~nb/%%~nxi
-        hdc file send -sync %%i %REMOTE%/%%~nb/%%~nxi
-        hdc shell chmod a+x %REMOTE%/%%~nb/%%~nxi
+        if "%%~nb" == "src" (
+        hdc shell chmod a+x %REMOTE%/%%~nxi	
+        ) else (
+          hdc file send -sync %%i %REMOTE%/%%~nb/%%~nxi
+          hdc shell chmod a+x %REMOTE%/%%~nb/%%~nxi
+        )
     )
 )
 @REM 动态库传输
