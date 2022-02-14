@@ -1083,7 +1083,7 @@ static struct dso *load_library(const char *name, struct dso *needed_by)
 					sys_path = "";
 				}
 			}
-			if (!sys_path) sys_path = "/lib:/usr/local/lib:/usr/lib";
+			if (!sys_path) sys_path = strdup("/lib:/usr/local/lib:/usr/lib");
 			fd = path_open(name, sys_path, buf, sizeof buf);
 		}
 		pathname = buf;
@@ -2426,4 +2426,47 @@ static void error(const char *fmt, ...)
 	}
 	__dl_vseterr(fmt, ap);
 	va_end(ap);
+}
+void dlns_init(Dl_namespace *ns, const char *name)
+{
+	*ns = name;
+}
+
+void *dlopen_ns(Dl_namespace *ns, const char *file, int mode)
+{
+	if (!ns) return NULL;
+
+	return dlopen(file, mode);
+}
+
+int dlns_create(Dl_namespace *ns,const char *search_path)
+{
+	int sys_length = 0;
+	int search_length =  0;
+	char * new_path = NULL;
+
+	if (!search_path || !ns) return EINVAL;
+
+	sys_length = strlen(sys_path);
+	search_length = strlen(search_path);
+
+	if (search_path[0] != ':'){
+		sys_length += search_length + 1;
+	} else  {
+		sys_length += search_length;
+	}
+
+	new_path = malloc(sys_length + 1);
+	if (!new_path) return ENOMEM;
+
+	strcat(new_path, sys_path);
+	if (search_path[0] != ':') {
+		strcat(new_path, ":");
+	}
+	strcat(new_path, search_path);
+
+	free(sys_path);
+	sys_path = new_path;
+
+	return 0;
 }
