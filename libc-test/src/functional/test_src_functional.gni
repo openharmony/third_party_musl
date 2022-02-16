@@ -73,4 +73,5 @@ functional_list = [
   "vfork",
   "wcsstr",
   "wcstol",
+  "dlclose_reset",
 ]
