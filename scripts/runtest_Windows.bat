@@ -61,12 +61,14 @@ for /F %%i in ('dir %TESTDIR% /S /B') do (
 )
 @REM 动态库传输
 hdc file send %DYNLIB%\libdlopen_dso.so %REMOTE%/functional/libdlopen_dso.so
+hdc file send %DYNLIB%\libdlclose_reset_dso.so %REMOTE%/functional/libdlclose_reset_dso.so
 hdc file send %DYNLIB%\libtls_align_dso.so %REMOTE%/functional/libtls_align_dso.so
 hdc file send %DYNLIB%\libtls_init_dso.so %REMOTE%/functional/libtls_init_dso.so
 hdc file send %DYNLIB%\libtls_get_new-dtv_dso.so %REMOTE%/regression/libtls_get_new-dtv_dso.so
 
 @REM 修改动态库权限
 hdc shell chmod a+x	%REMOTE%/functional/libdlopen_dso.so
+hdc shell chmod a+x %REMOTE%/functional/libdlclose_reset_dso.so
 hdc shell chmod a+x	%REMOTE%/functional/libtls_align_dso.so
 hdc shell chmod a+x	%REMOTE%/functional/libtls_init_dso.so
 hdc shell chmod a+x %REMOTE%/regression/libtls_get_new-dtv_dso.so
