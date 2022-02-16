@@ -18,6 +18,8 @@ group("functional_test") {
 
 test_sharedlib("dlopen_dso") {
 }
+test_sharedlib("dlclose_reset_dso") {
+}
 test_sharedlib("tls_init_dso") {
 }
 test_sharedlib("tls_align_dso") {
@@ -27,6 +29,7 @@ group("dso_shared") {
   testonly = true
 
   deps = [
+    ":dlclose_reset_dso",
     ":dlopen_dso",
     ":tls_align_dso",
     ":tls_init_dso",
