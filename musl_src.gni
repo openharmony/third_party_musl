@@ -1830,6 +1830,7 @@ musl_src_porting_file = [
   "include/sys/capability.h",
   "include/sys/socket.h",
   "include/sys/sysinfo.h",
+  "src/internal/dynlink.h",
   "include/unistd.h",
   "src/internal/pthread_impl.h",
   "src/internal/syscall.h",
@@ -1845,6 +1846,8 @@ musl_src_porting_file = [
   "src/sched/sched_getscheduler.c",
   "src/thread/arm/clone.s",
   "src/thread/arm/syscall_cp.s",
+  "src/ldso/dlclose.c",
+  "ldso/dynlink.c",
 ]
 
 musl_inc_hook_files = [
