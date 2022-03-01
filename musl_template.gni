@@ -127,6 +127,7 @@ template("musl_libs") {
       "${target_out_dir}/${musl_ported_dir}/src/include",
       "${target_out_dir}/${musl_ported_dir}/include",
       "${target_out_dir}/${musl_inc_out_dir}",
+      "${target_out_dir}/${musl_ported_dir}/crt",
     ]
 
     cflags_basic = [
