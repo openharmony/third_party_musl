@@ -1849,6 +1849,9 @@ musl_src_porting_file = [
   "src/thread/arm/syscall_cp.s",
   "src/ldso/dlclose.c",
   "ldso/dynlink.c",
+  "crt/crtbrand.s",
+  "crt/arm/crti.s",
+  "crt/aarch64/crti.s",
 ]
 
 musl_inc_hook_files = [
