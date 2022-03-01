@@ -1,4 +1,3 @@
-.include "crtbrand.s"
 .syntax unified
 
 .section .init
