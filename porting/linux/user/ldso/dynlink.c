@@ -2456,10 +2456,10 @@ int dlns_create(Dl_namespace *ns,const char *search_path)
 		sys_length += search_length;
 	}
 
-	new_path = malloc(sys_length + 1);
+	new_path = (char *)malloc(sys_length + 1);
 	if (!new_path) return ENOMEM;
 
-	strcat(new_path, sys_path);
+	strcpy(new_path, sys_path);
 	if (search_path[0] != ':') {
 		strcat(new_path, ":");
 	}
