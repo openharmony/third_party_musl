@@ -90,11 +90,6 @@ action("create_porting_src") {
     "scripts/create_syscall.sh",
   ]
 
-  outputs = []
-  foreach(s, src_files) {
-    outputs += [ "${target_out_dir}/${musl_ported_dir}/${s}" ]
-  }
-
   args = [ "-i" ] + rebase_path(sources)
   args += [ "-o" ] + rebase_path(outdir)
   args += [ "-p" ] + [ "${musl_target_os}" ]
@@ -105,6 +100,15 @@ action("create_porting_src") {
         src_files -= [ "${s}" ]
       }
     }
+  }
+
+  outputs = []
+  foreach(s, src_files) {
+    outputs += [ "${target_out_dir}/${musl_ported_dir}/${s}" ]
+  }
+
+  foreach(s, musl_src_porting_file) {
+    outputs += [ "${target_out_dir}/${musl_ported_dir}/${s}" ]
   }
 
   inputs = []
