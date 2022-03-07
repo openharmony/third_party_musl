@@ -497,7 +497,12 @@ template("musl_libs") {
     # _libc_shared_outputs = get_target_outputs(":${abi_prefix}_libc_musl_shared")
     _libc_shared_so = "${target_out_dir}/${_libs_out_dir}/libc.so"
     sources = [ _libc_shared_so ]
-    _muls_linker_so = "${root_out_dir}/common/common/libc/${_libs_path_prefix}/ld-musl-${musl_arch}${musl_subarch}.so.1"
+    if (is_asan) {
+      asan = "-asan"
+    } else {
+      asan = ""
+    }
+    _muls_linker_so = "${root_out_dir}/common/common/libc/${_libs_path_prefix}/ld-musl-${musl_arch}${musl_subarch}${asan}.so.1"
     outputs = [ _muls_linker_so ]
   }
 }
