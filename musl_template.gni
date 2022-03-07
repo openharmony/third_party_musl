@@ -465,6 +465,7 @@ template("musl_libs") {
     deps = [
       ":${abi_prefix}_libdl",
       ":${abi_prefix}_libpthread",
+      ":${abi_prefix}_musl_crt_install_action",
       ":${abi_prefix}_musl_hook",
       ":${abi_prefix}_musl_ldso",
       ":${abi_prefix}_musl_src",
