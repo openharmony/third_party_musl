@@ -1055,11 +1055,13 @@ static struct dso *load_library(const char *name, struct dso *needed_by)
 			if (!sys_path) {
 				char *prefix = 0;
 				size_t prefix_len;
+				char *filename = ldso.name;
 				if (ldso.name[0]=='/') {
 					char *s, *t, *z;
 					for (s=t=z=ldso.name; *s; s++)
 						if (*s=='/') z=t, t=s;
 					prefix_len = z-ldso.name;
+					filename = t+1;
 					if (prefix_len < PATH_MAX)
 						prefix = ldso.name;
 				}
@@ -1067,11 +1069,12 @@ static struct dso *load_library(const char *name, struct dso *needed_by)
 					prefix = "";
 					prefix_len = 0;
 				}
+				size_t name_len = strchrnul(filename, '.') - filename;
 				char etc_ldso_path[prefix_len + 1
-					+ sizeof "/etc/ld-musl-" LDSO_ARCH ".path"];
+					+ sizeof "/etc/.path" + name_len];
 				snprintf(etc_ldso_path, sizeof etc_ldso_path,
-					"%.*s/etc/ld-musl-" LDSO_ARCH ".path",
-					(int)prefix_len, prefix);
+					"%.*s/etc/%.*s.path",
+					(int)prefix_len, prefix, (int)name_len, filename);
 				FILE *f = fopen(etc_ldso_path, "rbe");
 				if (f) {
 					if (getdelim(&sys_path, (size_t[1]){0}, 0, f) <= 0) {
