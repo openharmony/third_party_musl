@@ -1541,6 +1541,9 @@ if (musl_arch == "arm") {
 musl_src_ldso = [
   "ldso/dlstart.c",
   "ldso/dynlink.c",
+  "ldso/namespace.c",
+  "ldso/ns_config.c",
+  "ldso/strops.c",
 ]
 
 if (musl_arch == "arm") {
@@ -1836,6 +1839,9 @@ musl_src_porting_file = [
   "include/dlfcn.h",
   "src/internal/pthread_impl.h",
   "src/internal/syscall.h",
+  "ldso/namespace.h",
+  "ldso/ns_config.h",
+  "ldso/strops.h",
   "src/legacy/ulimit.c",
   "src/linux/gettid.c",
   "src/malloc/malloc.c",
@@ -1852,6 +1858,9 @@ musl_src_porting_file = [
   "ldso/dynlink.c",
   "crt/arm/crti.s",
   "crt/aarch64/crti.s",
+  "ldso/namespace.c",
+  "ldso/ns_config.c",
+  "ldso/strops.c",
 ]
 
 musl_inc_hook_files = [
