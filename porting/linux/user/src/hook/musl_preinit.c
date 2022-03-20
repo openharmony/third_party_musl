@@ -40,7 +40,7 @@ static struct MallocDispatchType __ohos_malloc_hook_init_dispatch = {
 static char *__malloc_hook_shared_lib = "libnative_hook.z.so";
 static char *__malloc_hook_function_prefix = "ohos_malloc_hook";
 static char *__get_param_shared_Lib = "libparam_client.z.so";
-volatile atomic_llong ohos_malloc_hook_shared_liibrary;
+volatile atomic_llong ohos_malloc_hook_shared_library;
 void* function_of_shared_lib[LAST_FUNCTION];
 static enum EnumHookMode __hook_mode = STEP_HOOK_MODE;
 static char __hook_process_path[PATH_MAX+ 1] = {0};
@@ -270,7 +270,7 @@ static bool is_empty_string(const char* str)
 
 static void install_ohos_malloc_hook(struct musl_libc_globals* globals)
 {
-	volatile void* shared_library_handle = (volatile void *)atomic_load_explicit(&ohos_malloc_hook_shared_liibrary, memory_order_acquire);
+	volatile void* shared_library_handle = (volatile void *)atomic_load_explicit(&ohos_malloc_hook_shared_library, memory_order_acquire);
 	assert(shared_library_handle == NULL || shared_library_handle == (volatile void*)-1);
 	shared_library_handle = (volatile void*)load_malloc_hook_shared_library(__malloc_hook_shared_lib, __malloc_hook_function_prefix, &globals->malloc_dispatch_table);
 	if (shared_library_handle == NULL) {
@@ -279,11 +279,11 @@ static void install_ohos_malloc_hook(struct musl_libc_globals* globals)
 	}
 
 	if (finish_install_ohos_malloc_hooks(globals, NULL, __malloc_hook_function_prefix)) {
-		atomic_store_explicit(&ohos_malloc_hook_shared_liibrary, (volatile long long)shared_library_handle, memory_order_seq_cst);
+		atomic_store_explicit(&ohos_malloc_hook_shared_library, (volatile long long)shared_library_handle, memory_order_seq_cst);
 	} else {
 		// __musl_log(__MUSL_LOG_ERROR, "finish_install_ohos_malloc_hooks failed\n");
 		dlclose((void *)shared_library_handle);
-		atomic_store_explicit(&ohos_malloc_hook_shared_liibrary, (volatile long long)0, memory_order_seq_cst);
+		atomic_store_explicit(&ohos_malloc_hook_shared_library, (volatile long long)0, memory_order_seq_cst);
 	}
 }
 
@@ -319,11 +319,11 @@ static void __install_malloc_hook()
 {
 	atomic_store_explicit(&__hook_enable_hook_flag, (volatile bool)true, memory_order_seq_cst);
 
-	volatile void* shared_library_handle = (volatile void* )atomic_load_explicit(&ohos_malloc_hook_shared_liibrary, memory_order_acquire);
+	volatile void* shared_library_handle = (volatile void* )atomic_load_explicit(&ohos_malloc_hook_shared_library, memory_order_acquire);
 	if (shared_library_handle == NULL) {
 		if (__hook_mode == STEP_HOOK_MODE) {
 			atomic_store_explicit(&__musl_libc_globals.current_dispatch_table, (volatile const long long)&__ohos_malloc_hook_init_dispatch, memory_order_seq_cst);
-			atomic_store_explicit(&ohos_malloc_hook_shared_liibrary, (volatile long long)-1, memory_order_seq_cst);
+			atomic_store_explicit(&ohos_malloc_hook_shared_library, (volatile long long)-1, memory_order_seq_cst);
 		} else {
 			init_ohos_malloc_hook();
 		}
