@@ -63,11 +63,11 @@ static char* get_native_hook_param()
 	}
 	const char *key =  MUSL_HOOK_PARAM_NAME;
 	char *value = (char *)malloc(OHOS_PARAM_MAX_SIZE);
-	memset(value, 0, OHOS_PARAM_MAX_SIZE);
 	if (value == NULL) {
 		dlclose(shared_library_handle);
 		return NULL;
 	}
+	memset(value, 0, OHOS_PARAM_MAX_SIZE);
 	unsigned int len = OHOS_PARAM_MAX_SIZE;
 	getFunction(key, value, &len);
 	dlclose(shared_library_handle);
