@@ -23,6 +23,11 @@ unsigned long long strtoull(const char *restrict s, char **restrict p, int base)
 	return strtox(s, p, base, ULLONG_MAX);
 }
 
+long long strtoll(const char *restrict s, char **restrict p, int base)
+{
+	return strtox(s, p, base, LLONG_MIN);
+}
+
 unsigned long strtoul(const char *restrict s, char **restrict p, int base)
 {
 	return strtox(s, p, base, ULONG_MAX);
@@ -34,5 +39,6 @@ long strtol(const char *restrict s, char **restrict p, int base)
 }
 
 weak_alias(strtol, __strtol_internal);
+weak_alias(strtoll, __strtoll_internal);
 weak_alias(strtoul, __strtoul_internal);
 weak_alias(strtoull, __strtoull_internal);
