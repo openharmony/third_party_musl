@@ -116,7 +116,7 @@ struct symdef {
 typedef void (*stage3_func)(size_t *, size_t *);
 
 static struct builtin_tls {
-	char c;
+	char c[8];
 	struct pthread pt;
 	void *space[16];
 } builtin_tls[1];

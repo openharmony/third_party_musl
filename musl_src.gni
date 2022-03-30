@@ -1834,6 +1834,7 @@ musl_src_porting_file = [
   "src/internal/dynlink.h",
   "include/unistd.h",
   "include/dlfcn.h",
+  "src/env/__init_tls.c",
   "src/internal/pthread_impl.h",
   "src/internal/syscall.h",
   "src/legacy/ulimit.c",
