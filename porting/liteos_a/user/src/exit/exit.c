@@ -3,7 +3,9 @@
 #include <signal.h>
 #include <atomic.h>
 #include <pthread.h>
+#include "syscall.h"
 #include "libc.h"
+#include <bits/errno.h>
 
 pthread_mutex_t __exit_mutex = PTHREAD_MUTEX_INITIALIZER; 
 
@@ -33,9 +35,13 @@ _Noreturn void exit(int code)
 {
 	sigset_t set;
 
-	pthread_mutex_lock(&__exit_mutex);
-
 	__block_app_sigs(&set);
+
+	int ret = pthread_mutex_trylock(&__exit_mutex);
+	if (ret == EBUSY) {
+		pthread_exit(NULL);
+	}
+
 	__funcs_on_exit();
 	__libc_exit_fini();
 	__stdio_exit();
