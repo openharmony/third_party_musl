@@ -5,7 +5,9 @@
 #include <signal.h>
 #include <atomic.h>
 #include <pthread.h>
+#include "syscall.h"
 #include "libc.h"
+#include <bits/errno.h>
 
 extern bool g_enable_check;
 extern void mem_check_deinit(void);
@@ -38,9 +40,13 @@ _Noreturn void exit(int code)
 {
 	sigset_t set;
 
-	pthread_mutex_lock(&__exit_mutex);
-
 	__block_app_sigs(&set);
+
+	int ret = pthread_mutex_trylock(&__exit_mutex);
+	if (ret == EBUSY) {
+		pthread_exit(NULL);
+	}
+
 	if (g_enable_check) {
 		check_leak();
 		check_heap_integrity();
