@@ -376,6 +376,7 @@ template("musl_libs") {
 
     output_dir = "${target_out_dir}/${_libs_out_dir}"
     deps = [
+      ":${abi_prefix}_musl_hook",
       ":${abi_prefix}_musl_src",
       ":${abi_prefix}_musl_src_nossp",
     ]
