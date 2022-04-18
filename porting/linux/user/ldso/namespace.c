@@ -110,6 +110,7 @@ void ns_add_dso(ns_t *ns, struct dso *dso)
     }
     if (!ns->ns_dsos) return;
     if (ns->ns_dsos->num == ns->ns_dsos->size) {
+        /* if list is full, realloc size to double*/
         dsolist_realloc(ns->ns_dsos);
     }
     if (ns->ns_dsos->num < ns->ns_dsos->size) {
@@ -149,6 +150,7 @@ void nslist_add_ns(ns_t *ns)
     if (!ns) return;
    
     if (g_ns_list.num == g_ns_list.size) {
+        /* if list is full, realloc size to double*/
         nslist_realloc();
     }
     if (g_ns_list.num < g_ns_list.size) {
@@ -285,6 +287,7 @@ void ns_add_inherit(ns_t *ns, ns_t *ns_inherited, const char *shared_libs)
     }
 
     if (ns->ns_inherits->num == ns->ns_inherits->size) {
+        /* if list is full, realloc size to double*/
         nsinherits_realloc(ns->ns_inherits);
     }
 
