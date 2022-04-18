@@ -1250,7 +1250,7 @@ struct dso *load_library(const char *name, struct dso *needed_by, ns_t *namespac
 		if (strlen(name) > NAME_MAX) return 0;
 		fd = -1;
 		if (namespace->env_paths) fd = path_open(name, namespace->env_paths, buf, sizeof buf);
-		for (p=needed_by; fd == -1 && p; p=p->needed_by) {
+		for (p = needed_by; fd == -1 && p; p = p->needed_by) {
 			if (fixup_rpath(p, buf, sizeof buf) < 0)
 				fd = -2; /* Inhibit further search. */
 			if (p->rpath)
