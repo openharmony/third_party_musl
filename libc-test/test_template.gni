@@ -96,6 +96,11 @@ template("test_unittest") {
         #libs += [ "//${root_out_dir}/${test_lib_dir}/libdlopen_dso.so" ]
       }
 
+      if (target_name == "dlopen_ns") {
+        ldflags += [ "-rdynamic" ]
+        #libs += [ "//${root_out_dir}/${test_lib_dir}/libdlopen_ns_dso.so" ]
+      }
+
       if (target_name == "dlclose_reset") {
         ldflags += [ "-rdynamic" ]
         #libs += [ "//${root_out_dir}/${test_lib_dir}/libdlclose_reset_dso.so" ]
