@@ -16,8 +16,6 @@ group("functional_test") {
   }
 }
 
-test_sharedlib("dlopen_ns_dso") {
-}
 test_sharedlib("dlopen_dso") {
 }
 test_sharedlib("dlclose_reset_dso") {
@@ -33,7 +31,6 @@ group("dso_shared") {
   deps = [
     ":dlclose_reset_dso",
     ":dlopen_dso",
-    ":dlopen_ns_dso",
     ":tls_align_dso",
     ":tls_init_dso",
   ]
