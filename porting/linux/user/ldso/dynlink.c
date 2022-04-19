@@ -24,9 +24,6 @@
 #include "libc.h"
 #include "dynlink.h"
 #include "malloc_impl.h"
-/* add namespace function */
-#include "namespace.h" 
-#include "ns_config.h"
 
 static void error(const char *, ...);
 
@@ -59,8 +56,7 @@ struct dso {
 	char *name;
 	size_t *dynv;
 	struct dso *next, *prev;
-	/* add namespace */
-	ns_t *namespace;
+
 	/* mark the dso status */
 	unsigned int flags;
 
@@ -163,115 +159,6 @@ extern hidden void (*const __init_array_end)(void), (*const __fini_array_end)(vo
 
 weak_alias(__init_array_start, __init_array_end);
 weak_alias(__fini_array_start, __fini_array_end);
-
-/* add namespace function */
-static void *addr2dso(size_t a);
-static void get_sys_path();
-static void dlclose_ns(struct dso *p);
-static bool get_app_path(char *path, size_t size)
-{
-	int l = 0;
-	l = readlink("/proc/self/exe", path, size);
-	if (l < 0 || l >= size) {
-		return false;
-	}
-	path[l] = 0;
-	return true;
-}
-
-static void init_default_namespace(struct dso *app)
-{
-    ns_t *default_ns = get_default_ns();
-    memset(default_ns, 0, sizeof *default_ns);
-	ns_set_name(default_ns, NS_DEFAULT_NAME);
-    if (env_path) ns_set_env_paths(default_ns, env_path);
-    if (!sys_path) get_sys_path(); 
-	ns_set_lib_paths(default_ns, sys_path);
-    ns_set_separated(default_ns, false);
-	app->namespace = default_ns; 
-	ns_add_dso(default_ns, app);  
-    return;
-}
-
-static void set_ns_attrs(ns_t *ns, ns_configor *conf)
-{
-	char *lib_paths, *permitted_paths, *allowed_libs;
-
-	ns_set_separated(ns, conf->get_separated(ns->ns_name));
-
-	lib_paths = conf->get_lib_paths(ns->ns_name);
-	if (lib_paths) ns_set_lib_paths(ns, lib_paths);
-
-	permitted_paths = conf->get_permitted_paths(ns->ns_name);
-	if (permitted_paths) ns_set_permitted_paths(ns, permitted_paths);
-
-	allowed_libs = conf->get_allowed_libs(ns->ns_name);
-	if (allowed_libs) ns_set_allowed_libs(ns, allowed_libs);
-}
-
-static void set_ns_inherits(ns_t *ns, ns_configor *conf)
-{
-	strlist *inherits = conf->get_inherits(ns->ns_name);
-	if (inherits) {
-		for (size_t i=0; i<inherits->num; i++) {
-            ns_t *inherited_ns = find_ns_by_name(inherits->strs[i]);
-			if (inherited_ns) {
-				char *shared_libs = conf->get_inherit_shared_libs(ns->ns_name, inherited_ns->ns_name);
-				ns_add_inherit(ns, inherited_ns, shared_libs);
-			}
-        }
-		strlist_free(inherits);
-	}
-}
-
-static void init_namespace(struct dso *app)
-{
-    char app_path[PATH_MAX+1];
-	if (!get_app_path(app_path, sizeof app_path)) {
-		strcpy(app_path, app->name);
-	}
-	char *t = strrchr(app_path, '/');
-	if (t) {
-		*t = 0;
-	} else {
-		app_path[0] = '.';
-		app_path[1] = 0;
-	}
-	init_default_namespace(app);
-    ns_configor *conf = configor_init();
-    int ret = conf->parse(NULL, app_path);
-    if (ret < 0) {
-        configor_free();
-        return;
-    }
-    /* Init default namespace */
-    ns_t *d_ns = get_default_ns();
-	set_ns_attrs(d_ns, conf);
-    /* Init other namespace */
-	nslist *nsl = nslist_init();
-	if (!nsl) {
-		configor_free();
-		return;
-	}
-    strlist *s_ns = conf->get_namespaces();
-    if (s_ns) {
-        for (size_t i=0; i<s_ns->num; i++) {
-            ns_t *ns = ns_alloc();
-			ns_set_name(ns, s_ns->strs[i]);
-			set_ns_attrs(ns, conf);
-			ns_add_dso(ns, app);
-            nslist_add_ns(ns);
-        }
-        strlist_free(s_ns);
-    } 
-    /* Set inherited namespace */
-	set_ns_inherits(d_ns, conf);
-	for (size_t i=0; i<nsl->num; i++) {
-		set_ns_inherits(nsl->nss[i], conf);
-	}
-    configor_free();
-    return;
-}
 
 static int dl_strcmp(const char *l, const char *r)
 {
@@ -1090,94 +977,9 @@ static void makefuncdescs(struct dso *p)
 	}
 }
 
-static void get_sys_path()
+static struct dso *load_library(const char *name, struct dso *needed_by)
 {
-	char *prefix = 0;
-	size_t prefix_len;
-	char *filename = ldso.name;
-	if (ldso.name[0] == '/') {
-		char *s, *t, *z;
-		for (s=t=z=ldso.name; *s; s++)
-			if (*s=='/') z=t, t=s;
-		prefix_len = z-ldso.name;
-		filename = t+1;
-		if (prefix_len < PATH_MAX)
-			prefix = ldso.name;
-	}
-	if (!prefix) {
-		prefix = "";
-		prefix_len = 0;
-	}
-	size_t name_len = strchrnul(filename, '.') - filename;
-	char etc_ldso_path[prefix_len + 1
-		+ sizeof "/etc/.path" + name_len];
-	snprintf(etc_ldso_path, sizeof etc_ldso_path,
-		"%.*s/etc/%.*s.path",
-		(int)prefix_len, prefix, (int)name_len, filename);
-	FILE *f = fopen(etc_ldso_path, "rbe");
-	if (f) {
-		if (getdelim(&sys_path, (size_t[1]){0}, 0, f) <= 0) {
-			free(sys_path);
-			sys_path = "";
-		}
-		fclose(f);
-	} else if (errno != ENOENT) {
-		sys_path = "";
-	}
-	
-	if (!sys_path) sys_path = "/lib:/usr/local/lib:/usr/lib";
-}
-
-static struct dso *search_dso_by_name(const char *name, const ns_t *ns) {
-	for (size_t i = 0; i < ns->ns_dsos->num; i++){
-		struct dso *p = ns->ns_dsos->dsos[i];
-		if (p->shortname && !strcmp(p->shortname, name)) {
-			return p;
-		}
-	}
-	return NULL;
-}
-
-static struct dso *search_dso_by_fstat(const struct stat *st, const ns_t *ns) {
-	for (size_t i = 0; i < ns->ns_dsos->num; i++){
-		struct dso *p = ns->ns_dsos->dsos[i];
-		if (p->dev == st->st_dev && p->ino == st->st_ino) {
-			return p;
-		}
-	}
-	return NULL;
-}
-/* Find loaded so by name */
-static struct dso *find_library_by_name(const char *name, const ns_t *ns, bool check_inherited)
-{	
-	struct dso *p = search_dso_by_name(name, ns);
-	if (p) return p;
-	if (check_inherited && ns->ns_inherits) {
-		for (size_t i = 0; i < ns->ns_inherits->num; i++){
-			ns_inherit * inherit = ns->ns_inherits->inherits[i];
-			p = search_dso_by_name(name, inherit->inherited_ns);
-			if (p && is_sharable(inherit, name)) return p;
-		}
-	}
-	return NULL;
-}
-/* Find loaded so by file stat */
-static struct dso *find_library_by_fstat(const struct stat *st, const ns_t *ns, bool check_inherited) {
-	struct dso *p = search_dso_by_fstat(st, ns);
-	if (p) return p;
-	if (check_inherited && ns->ns_inherits) {
-		for (size_t i = 0; i < ns->ns_inherits->num; i++){
-			ns_inherit *inherit = ns->ns_inherits->inherits[i];
-			p = search_dso_by_fstat(st, inherit->inherited_ns);
-			if (p && is_sharable(inherit, p->shortname)) return p;
-		}
-	}
-	return NULL;
-}
-/* add namespace function */
-struct dso *load_library(const char *name, struct dso *needed_by, ns_t *namespace, bool check_inherited)
-{
-	char buf[PATH_MAX+1];
+	char buf[2*NAME_MAX+2];
 	const char *pathname;
 	unsigned char *map;
 	struct dso *p, temp_dso = {0};
@@ -1224,8 +1026,6 @@ struct dso *load_library(const char *name, struct dso *needed_by, ns_t *namespac
 			tail->next = &ldso;
 			ldso.prev = tail;
 			tail = &ldso;
-			ldso.namespace = namespace;
-			ns_add_dso(namespace, &ldso);
 		}
 		/* increase libc dlopen refcnt */
 		a_inc(&ldso.nr_dlopen);
@@ -1233,61 +1033,81 @@ struct dso *load_library(const char *name, struct dso *needed_by, ns_t *namespac
 	}
 	if (strchr(name, '/')) {
 		pathname = name;
-		if (!is_accessible(namespace, pathname)) {
-			fd = -1;
-		} else {
-			fd = open(name, O_RDONLY|O_CLOEXEC);
-		}
+		fd = open(name, O_RDONLY|O_CLOEXEC);
 	} else {
 		/* Search for the name to see if it's already loaded */
-		/* Search in namespace */
-		p = find_library_by_name(name, namespace, check_inherited);
-		if (p) {
-			/* increase dlopen refcnt */
-			a_inc(&p->nr_dlopen);
-			return p;
+		for (p=head->next; p; p=p->next) {
+			if (p->shortname && !strcmp(p->shortname, name)) {
+				a_inc(&p->nr_dlopen);
+				return p;
+			}
 		}
 		if (strlen(name) > NAME_MAX) return 0;
 		fd = -1;
-		if (namespace->env_paths) fd = path_open(name, namespace->env_paths, buf, sizeof buf);
-		for (p = needed_by; fd == -1 && p; p = p->needed_by) {
+		if (env_path) fd = path_open(name, env_path, buf, sizeof buf);
+		for (p=needed_by; fd == -1 && p; p=p->needed_by) {
 			if (fixup_rpath(p, buf, sizeof buf) < 0)
 				fd = -2; /* Inhibit further search. */
 			if (p->rpath)
 				fd = path_open(name, p->rpath, buf, sizeof buf);
 		}
-		if (fd == -1 && namespace->lib_paths) {
-			fd = path_open(name, namespace->lib_paths, buf, sizeof buf);
+		if (fd == -1) {
+			if (!sys_path) {
+				char *prefix = 0;
+				size_t prefix_len;
+				char *filename = ldso.name;
+				if (ldso.name[0]=='/') {
+					char *s, *t, *z;
+					for (s=t=z=ldso.name; *s; s++)
+						if (*s=='/') z=t, t=s;
+					prefix_len = z-ldso.name;
+					filename = t+1;
+					if (prefix_len < PATH_MAX)
+						prefix = ldso.name;
+				}
+				if (!prefix) {
+					prefix = "";
+					prefix_len = 0;
+				}
+				size_t name_len = strchrnul(filename, '.') - filename;
+				char etc_ldso_path[prefix_len + 1
+					+ sizeof "/etc/.path" + name_len];
+				snprintf(etc_ldso_path, sizeof etc_ldso_path,
+					"%.*s/etc/%.*s.path",
+					(int)prefix_len, prefix, (int)name_len, filename);
+				FILE *f = fopen(etc_ldso_path, "rbe");
+				if (f) {
+					if (getdelim(&sys_path, (size_t[1]){0}, 0, f) <= 0) {
+						free(sys_path);
+						sys_path = "";
+					}
+					fclose(f);
+				} else if (errno != ENOENT) {
+					sys_path = "";
+				}
+			}
+			if (!sys_path) sys_path = strdup("/lib:/usr/local/lib:/usr/lib");
+			fd = path_open(name, sys_path, buf, sizeof buf);
 		}
 		pathname = buf;
 	}
-	if (fd < 0) {
-		if (!check_inherited || !namespace->ns_inherits) return 0;
-		/* Load lib in inherited namespace. Do not check inherited again.*/
-		for (size_t i = 0; i < namespace->ns_inherits->num; i++) {
-			ns_inherit *inherit = namespace->ns_inherits->inherits[i];
-			if (strchr(name, '/')==0 && !is_sharable(inherit, name)) continue;
-			p = load_library(name, needed_by, inherit->inherited_ns, false);
-			if (p) return p;
-		}
-		return 0;
-	}
+	if (fd < 0) return 0;
 	if (fstat(fd, &st) < 0) {
 		close(fd);
 		return 0;
 	}
-	/* Search in namespace */
-	p = find_library_by_fstat(&st, namespace, check_inherited);
-	if (p) {
-		/* If this library was previously loaded with a
-		* pathname but a search found the same inode,
-		* setup its shortname so it can be found by name. */
-		if (!p->shortname && pathname != name)
-			p->shortname = strrchr(p->name, '/')+1;
-		close(fd);
-		/* increase dlopen refcnt */
-		a_inc(&p->nr_dlopen);
-		return p;
+	for (p=head->next; p; p=p->next) {
+		if (p->dev == st.st_dev && p->ino == st.st_ino) {
+			/* If this library was previously loaded with a
+			 * pathname but a search found the same inode,
+			 * setup its shortname so it can be found by name. */
+			if (!p->shortname && pathname != name)
+				p->shortname = strrchr(p->name, '/')+1;
+			close(fd);
+			/* increase dlopen refcnt */
+			a_inc(&p->nr_dlopen);
+			return p;
+		}
 	}
 	map = noload ? 0 : map_library(fd, &temp_dso);
 	close(fd);
@@ -1301,7 +1121,7 @@ struct dso *load_library(const char *name, struct dso *needed_by, ns_t *namespac
 	if (find_sym(&temp_dso, "__libc_start_main", 1).sym &&
 	    find_sym(&temp_dso, "stdin", 1).sym) {
 		unmap_library(&temp_dso);
-		return load_library("libc.so", needed_by, namespace, true);
+		return load_library("libc.so", needed_by);
 	}
 	/* Past this point, if we haven't reached runtime yet, ldso has
 	 * committed either to use the mapped library or to abort execution.
@@ -1361,9 +1181,6 @@ struct dso *load_library(const char *name, struct dso *needed_by, ns_t *namespac
 	p->prev = tail;
 	tail = p;
 
-	/* Add dso to namespace */
-	p->namespace = namespace;
-	ns_add_dso(namespace, p);
 	if (runtime)
 		p->by_dlopen = 1;
 
@@ -1374,7 +1191,7 @@ struct dso *load_library(const char *name, struct dso *needed_by, ns_t *namespac
 	return p;
 }
 
-static void load_direct_deps(struct dso *p, ns_t *namespace)
+static void load_direct_deps(struct dso *p)
 {
 	size_t i, cnt=0;
 
@@ -1398,7 +1215,7 @@ static void load_direct_deps(struct dso *p, ns_t *namespace)
 		p->deps[cnt++] = q;
 	for (i=0; p->dynv[i]; i+=2) {
 		if (p->dynv[i] != DT_NEEDED) continue;
-		struct dso *dep = load_library(p->strings + p->dynv[i+1], p, namespace, true);
+		struct dso *dep = load_library(p->strings + p->dynv[i+1], p);
 		if (!dep) {
 			error("Error loading shared library %s: %m (needed by %s)",
 				p->strings + p->dynv[i+1], p->name);
@@ -1411,11 +1228,11 @@ static void load_direct_deps(struct dso *p, ns_t *namespace)
 	p->ndeps_direct = cnt;
 }
 
-static void load_deps(struct dso *p, ns_t *ns)
+static void load_deps(struct dso *p)
 {
 	if (p->deps) return;
 	for (; p; p=p->next)
-		load_direct_deps(p, ns);
+		load_direct_deps(p);
 }
 
 static void extend_bfs_deps(struct dso *p)
@@ -1469,7 +1286,7 @@ static void extend_bfs_deps(struct dso *p)
 		p->mark = 0;
 }
 
-static void load_preload(char *s, ns_t *ns)
+static void load_preload(char *s)
 {
 	int tmp;
 	char *z;
@@ -1478,7 +1295,7 @@ static void load_preload(char *s, ns_t *ns)
 		for (z=s; *z && !isspace(*z) && *z!=':'; z++);
 		tmp = *z;
 		*z = 0;
-		load_library(s, 0, ns, true);
+		load_library(s, 0);
 		*z = tmp;
 	}
 }
@@ -2050,10 +1867,8 @@ void __dls3(size_t *sp, size_t *auxv)
 
 	/* Load preload/needed libraries, add symbols to global namespace. */
 	ldso.deps = (struct dso **)no_deps;
-	/* Init all namespaces by config file. there is a default namespace always*/
-	init_namespace(&app);
-	if (env_preload) load_preload(env_preload, get_default_ns());
- 	load_deps(&app, get_default_ns());
+	if (env_preload) load_preload(env_preload);
+ 	load_deps(&app);
 	for (struct dso *p=head; p; p=p->next)
 		add_syms(p);
 
@@ -2078,8 +1893,6 @@ void __dls3(size_t *sp, size_t *auxv)
 		vdso.prev = tail;
 		tail->next = &vdso;
 		tail = &vdso;
-		vdso.namespace = get_default_ns();
-		ns_add_dso(vdso.namespace, &vdso);
 	}
 
 	for (i=0; app.dynv[i]; i+=2) {
@@ -2186,8 +1999,7 @@ static void prepare_lazy(struct dso *p)
 	lazy_head = p;
 }
 
-/* add namespace function */
-static void *dlopen_impl(const char *file, int mode, const char *namespace, const void *caller_addr)
+void *dlopen(const char *file, int mode)
 {
 	struct dso *volatile p, *orig_tail, *orig_syms_tail, *orig_lazy_head, *next;
 	struct tls_module *orig_tls_tail;
@@ -2196,20 +2008,12 @@ static void *dlopen_impl(const char *file, int mode, const char *namespace, cons
 	int cs;
 	jmp_buf jb;
 	struct dso **volatile ctor_queue = 0;
-	ns_t *ns;
-	struct dso *caller;
 
 	if (!file) return head;
 
 	pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &cs);
 	pthread_rwlock_wrlock(&lock);
 	__inhibit_ptc();
-	
-	/* When namespace does not exist, use caller's namespce
-	 * and when caller does not exist, use default namespce. */
-	caller = (struct dso *)addr2dso((size_t)caller_addr);
-	ns = find_ns_by_name(namespace);
-	if (!ns) ns = ((caller && caller->namespace) ? caller->namespace : get_default_ns());
 
 	p = 0;
 	if (shutting_down) {
@@ -2240,7 +2044,6 @@ static void *dlopen_impl(const char *file, int mode, const char *namespace, cons
 			if (p->rpath != p->rpath_orig)
 				free(p->rpath);
 			free(p->deps);
-			dlclose_ns(p);
 			unmap_library(p);
 			free(p);
 		}
@@ -2257,7 +2060,7 @@ static void *dlopen_impl(const char *file, int mode, const char *namespace, cons
 		tail->next = 0;
 		p = 0;
 		goto end;
-	} else p = load_library(file, head, ns, true);
+	} else p = load_library(file, head);
 
 	if (!p) {
 		error(noload ?
@@ -2268,7 +2071,7 @@ static void *dlopen_impl(const char *file, int mode, const char *namespace, cons
 	}
 
 	/* First load handling */
-	load_deps(p, ns);
+	load_deps(p);
 	extend_bfs_deps(p);
 	pthread_mutex_lock(&init_fini_lock);
 	if (!p->constructed) ctor_queue = queue_ctors(p);
@@ -2320,87 +2123,6 @@ end:
 	}
 	pthread_setcancelstate(cs, 0);
 	return p;
-}
-
-void *dlopen(const char *file, int mode)
-{
-	const void *caller_addr = __builtin_return_address(0);
-  	return dlopen_impl(file, mode, NULL, caller_addr);
-}
-
-void dlns_init(Dl_namespace *dlns, const char *name)
-{
-	if (!dlns) return;
-	if (!name) {
-		dlns->name[0] = 0;
-		return;
-	}
-	snprintf(dlns->name, sizeof dlns->name, name);
-}
-
-void *dlopen_ns(Dl_namespace *dlns, const char *file, int mode)
-{
-	const void *caller_addr = __builtin_return_address(0);
-  	return dlopen_impl(file, mode, dlns->name, caller_addr);
-}
-
-int dlns_create(Dl_namespace *dlns, const char *lib_path)
-{
-	if (!dlns) return EINVAL;
-	ns_t *ns;
-
-	pthread_rwlock_wrlock(&lock);
-	ns = find_ns_by_name(dlns->name);
-	if (ns) {
-		pthread_rwlock_unlock(&lock);
-		return EEXIST;
-	}
-	ns = ns_alloc();
-	if (!ns) {
-		pthread_rwlock_unlock(&lock);
-		return ENOMEM;
-	}
-	ns_set_name(ns, dlns->name);
-	ns_add_dso(ns, get_default_ns()->ns_dsos->dsos[0]); /* add main app to this namespace*/
-	nslist_add_ns(ns); /* add ns to list*/
-	ns_set_lib_paths(ns, lib_path);
-	ns_add_inherit(ns, get_default_ns(), NULL);
-	pthread_rwlock_unlock(&lock);
-
-	return 0;
-}
-
-int dlns_inherit(Dl_namespace *dlns, Dl_namespace *inherited, const char *shared_libs)
-{
-	if (!dlns || !inherited) return EINVAL;
-
-	pthread_rwlock_wrlock(&lock);
-	ns_t* ns = find_ns_by_name(dlns->name);
-	ns_t* ns_inherited = find_ns_by_name(inherited->name);
-	if (!ns || !ns_inherited) {
-		pthread_rwlock_unlock(&lock);
-		return ENOKEY;
-	}
-	ns_add_inherit(ns, ns_inherited, shared_libs);
-	pthread_rwlock_unlock(&lock);
-
-	return 0;
-}
-
-static void dlclose_ns(struct dso *p)
-{
-	if (!p) return;
-	ns_t * ns = p->namespace;
-	if (!ns||!ns->ns_dsos) return;
-	for (size_t i=0; i<ns->ns_dsos->num; i++) {
-		if (p == ns->ns_dsos->dsos[i]) {
-			for (size_t j=i+1; j<ns->ns_dsos->num; j++) {
-				ns->ns_dsos->dsos[j-1] = ns->ns_dsos->dsos[j];
-			}
-			ns->ns_dsos->num--;
-			return;
-		}
-	}
 }
 
 hidden int __dl_invalid_handle(void *h)
@@ -2544,9 +2266,6 @@ static int do_dlclose(struct dso *p)
 		p->prev->next = p->next;
 	}
 
-	/* remove dso from namespace */
-	dlclose_ns(p);
-	
 	if (p->lazy != NULL)
 		free(p->lazy);
 	if (p->deps != no_deps)
@@ -2710,4 +2429,47 @@ static void error(const char *fmt, ...)
 	}
 	__dl_vseterr(fmt, ap);
 	va_end(ap);
+}
+void dlns_init(Dl_namespace *ns, const char *name)
+{
+	*ns = name;
+}
+
+void *dlopen_ns(Dl_namespace *ns, const char *file, int mode)
+{
+	if (!ns) return NULL;
+
+	return dlopen(file, mode);
+}
+
+int dlns_create(Dl_namespace *ns,const char *search_path)
+{
+	int sys_length = 0;
+	int search_length =  0;
+	char * new_path = NULL;
+
+	if (!search_path || !ns) return EINVAL;
+
+	sys_length = strlen(sys_path);
+	search_length = strlen(search_path);
+
+	if (search_path[0] != ':'){
+		sys_length += search_length + 1;
+	} else  {
+		sys_length += search_length;
+	}
+
+	new_path = (char *)malloc(sys_length + 1);
+	if (!new_path) return ENOMEM;
+
+	strcpy(new_path, sys_path);
+	if (search_path[0] != ':') {
+		strcat(new_path, ":");
+	}
+	strcat(new_path, search_path);
+
+	free(sys_path);
+	sys_path = new_path;
+
+	return 0;
 }
