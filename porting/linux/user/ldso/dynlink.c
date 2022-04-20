@@ -1086,7 +1086,7 @@ static struct dso *load_library(const char *name, struct dso *needed_by)
 					sys_path = "";
 				}
 			}
-			if (!sys_path) sys_path = strdup("/lib:/usr/local/lib:/usr/lib");
+			if (!sys_path) sys_path = strdup("/lib:/usr/local/lib:/usr/lib:/lib64");
 			fd = path_open(name, sys_path, buf, sizeof buf);
 		}
 		pathname = buf;
