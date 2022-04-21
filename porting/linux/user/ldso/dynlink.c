@@ -238,6 +238,7 @@ static void init_namespace(struct dso *app)
 		app_path[1] = 0;
 	}
 	init_default_namespace(app);
+	nslist *nsl = nslist_init();
     ns_configor *conf = configor_init();
     int ret = conf->parse(NULL, app_path);
     if (ret < 0) {
@@ -248,7 +249,6 @@ static void init_namespace(struct dso *app)
     ns_t *d_ns = get_default_ns();
 	set_ns_attrs(d_ns, conf);
     /* Init other namespace */
-	nslist *nsl = nslist_init();
 	if (!nsl) {
 		configor_free();
 		return;
