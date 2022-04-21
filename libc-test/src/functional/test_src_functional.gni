@@ -6,6 +6,7 @@ functional_list = [
   "crypt",
   "dirname",
   "dlopen",
+  "dlopen_ns",
   "env",
   "fcntl",
   "fdopen",
