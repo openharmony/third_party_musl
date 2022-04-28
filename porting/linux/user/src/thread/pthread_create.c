@@ -1,9 +1,11 @@
 #define _GNU_SOURCE
+#define ANON_STACK_NAME_SIZE 50
 #include "pthread_impl.h"
 #include "stdio_impl.h"
 #include "libc.h"
 #include "lock.h"
 #include <sys/mman.h>
+#include <sys/prctl.h>
 #include <string.h>
 #include <stddef.h>
 #include <stdarg.h>
@@ -17,7 +19,6 @@ void log_print(const char* info,...)
 }
 
 #ifdef RESERVE_SIGNAL_STACK
-#include <sys/prctl.h>
 #if defined (__LF64__)
 #define RESERVE_SIGNAL_STACK_SIZE (32 * 1024)
 #else
@@ -285,9 +286,9 @@ static void init_file_lock(FILE *f)
 int __pthread_create(pthread_t *restrict res, const pthread_attr_t *restrict attrp, void *(*entry)(void *), void *restrict arg)
 {
 	int ret, c11 = (attrp == __ATTRP_C11_THREAD);
-	size_t size, guard;
+	size_t size, guard, size_len;
 	struct pthread *self, *new;
-	unsigned char *map = 0, *stack = 0, *tsd = 0, *stack_limit;
+	unsigned char *map = 0, *stack = 0, *tsd = 0, *stack_limit, *start_addr;
 	unsigned flags = CLONE_VM | CLONE_FS | CLONE_FILES | CLONE_SIGHAND
 		| CLONE_THREAD | CLONE_SYSVSEM | CLONE_SETTLS
 		| CLONE_PARENT_SETTID | CLONE_CHILD_CLEARTID | CLONE_DETACHED;
@@ -347,15 +348,25 @@ int __pthread_create(pthread_t *restrict res, const pthread_attr_t *restrict att
 				__munmap(map, size);
 				goto fail;
 			}
+			char guard_name[ANON_STACK_NAME_SIZE];
+			snprintf(guard_name, ANON_STACK_NAME_SIZE, "guard:%d", __pthread_self()->tid);
+			prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, map, guard, guard_name);
+			start_addr = map + guard;
+			size_len = size - guard;
 		} else {
 			map = __mmap(0, size, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANON, -1, 0);
 			if (map == MAP_FAILED) goto fail;
+			start_addr = map;
+			size_len = size;
 		}
 		tsd = map + size - __pthread_tsd_size;
 		if (!stack) {
 			stack = tsd - libc.tls_size;
 			stack_limit = map + guard;
 		}
+		char name[ANON_STACK_NAME_SIZE];
+		snprintf(name, ANON_STACK_NAME_SIZE, "stack:%d", __pthread_self()->tid);
+		prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, start_addr, size_len, name);
 	}
 
 	new = __copy_tls(tsd - libc.tls_size);
