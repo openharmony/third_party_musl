@@ -5,10 +5,10 @@
 #include "libc.h"
 #include "lock.h"
 #include <sys/mman.h>
+#include <sys/prctl.h>
 #include <string.h>
 #include <stddef.h>
 #include <stdarg.h>
-#include <sys/prctl.h>
 
 void log_print(const char* info,...)
 {
@@ -17,6 +17,50 @@ void log_print(const char* info,...)
     vfprintf(stdout,info, ap);
     va_end(ap);
 }
+
+#ifdef RESERVE_SIGNAL_STACK
+#if defined (__LF64__)
+#define RESERVE_SIGNAL_STACK_SIZE (32 * 1024)
+#else
+#define RESERVE_SIGNAL_STACK_SIZE (20 * 1024)
+#endif
+static void __pthread_reserve_signal_stack()
+{
+	void* stack = mmap(NULL, RESERVE_SIGNAL_STACK_SIZE, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1 , 0);
+	if (stack != MAP_FAILED) {
+		if (mprotect(stack, __default_guardsize, PROT_NONE) == -1) {
+			munmap(stack, RESERVE_SIGNAL_STACK_SIZE);
+			return;
+		}
+	}
+
+	stack_t signal_stack;
+	signal_stack.ss_sp = (uint8_t*)stack + __default_guardsize;
+	signal_stack.ss_size = RESERVE_SIGNAL_STACK_SIZE - __default_guardsize;
+	signal_stack.ss_flags = 0;
+	sigaltstack(&signal_stack, NULL);
+
+	pthread_t self = __pthread_self();
+	self->signal_stack = stack;
+	prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, signal_stack.ss_sp, signal_stack.ss_size, "signal_stack:musl");
+	return;
+}
+
+static void __pthread_release_signal_stack()
+{
+	pthread_t self = __pthread_self();
+	if (self->signal_stack == NULL) {
+		return;
+	}
+
+	stack_t signal_stack;
+	memset(&signal_stack, 0, sizeof(signal_stack));
+	signal_stack.ss_flags = SS_DISABLE;
+	sigaltstack(&signal_stack, NULL);
+	munmap(self->signal_stack, RESERVE_SIGNAL_STACK_SIZE);
+	self->signal_stack = NULL;
+}
+#endif
 
 static void dummy_0()
 {
@@ -91,6 +135,9 @@ _Noreturn void __pthread_exit(void *result)
 	__block_app_sigs(&set);
 	__tl_lock();
 
+#ifdef RESERVE_SIGNAL_STACK
+	__pthread_release_signal_stack();
+#endif
 	/* If this is the only thread in the list, don't proceed with
 	 * termination of the thread, but restore the previous lock and
 	 * signal state to prepare for exit to call atexit handlers. */
@@ -200,12 +247,18 @@ static int start(void *p)
 		}
 	}
 	__syscall(SYS_rt_sigprocmask, SIG_SETMASK, &args->sig_mask, 0, _NSIG/8);
+#ifdef RESERVE_SIGNAL_STACK
+	__pthread_reserve_signal_stack();
+#endif
 	__pthread_exit(args->start_func(args->start_arg));
 	return 0;
 }
 
 static int start_c11(void *p)
 {
+#ifdef RESERVE_SIGNAL_STACK
+	__pthread_reserve_signal_stack();
+#endif
 	struct start_args *args = p;
 	int (*start)(void*) = (int(*)(void*)) args->start_func;
 	__pthread_exit((void *)(uintptr_t)start(args->start_arg));
