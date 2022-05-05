@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from distutils.command.build import build
 import os
 import fnmatch
@@ -7,13 +9,14 @@ import datetime
 
 compiler_list = [
     'ndk-test',
-    #'sanitize',
+    'sanitize',
+    'arm-neon',
 ]
 
 # Check the output directory
 def check_target_dir():
     target_dir = os.path.join(os.getcwd(),os.path.pardir,'target')
-    print(target_dir)
+    # print(target_dir)
     if os.path.exists(target_dir) and os.path.isdir(target_dir):
         # print('target directory exist')
         for filename in os.listdir(target_dir):
@@ -58,18 +61,24 @@ def copy_target():
         for curdir, dirs, files in os.walk(file_path):
             for dirname in dirs:
                 if dirname == 'output':
-                    copy_tar_out = os.path.join(find_dir,'target',name,os.path.basename(curdir))
-                    # print(copy_tar_out)
-                    if not os.path.isdir(copy_tar_out):
-                        os.makedirs(copy_tar_out)
-                    tar_out = os.path.join(curdir,dirname)
-                    # print(tar_out)
-                    print(tar_out + '----->' + copy_tar_out)
-                    for filename in os.listdir(tar_out):
-                        src = os.path.join(tar_out, filename)
-                        dst = os.path.join(copy_tar_out, filename)
-                        print(src + '----->' + dst)
-                        shutil.copy(src, dst)
+                    if name == 'sanitize':
+                        src = os.path.join(file_path,dirname)
+                        copy_tar_out = os.path.join(find_dir,'target',name)
+                        shutil.copytree(src,copy_tar_out)
+                        shutil.rmtree(src)
+                    else:                    
+                        copy_tar_out = os.path.join(find_dir,'target',name,os.path.basename(curdir))
+                        # print(copy_tar_out)
+                        if not os.path.isdir(copy_tar_out):
+                            os.makedirs(copy_tar_out)
+                        tar_out = os.path.join(curdir,dirname)
+                        # print(tar_out)
+                        # print(tar_out + '----->' + copy_tar_out)
+                        for filename in os.listdir(tar_out):
+                            src = os.path.join(tar_out, filename)
+                            dst = os.path.join(copy_tar_out, filename)
+                            # print(src + '----->' + dst)
+                            shutil.copy(src, dst)
                         
     copy_end = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     print('copy_target_end:' + copy_end)

@@ -1863,6 +1863,7 @@ musl_src_porting_file = [
   "ldso/namespace.c",
   "ldso/ns_config.c",
   "ldso/strops.c",
+  "src/thread/pthread_create.c",
 ]
 
 musl_inc_hook_files = [
