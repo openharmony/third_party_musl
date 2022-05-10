@@ -1095,6 +1095,8 @@ static void get_sys_path()
 	char *prefix = 0;
 	size_t prefix_len;
 	char *filename = ldso.name;
+	int is_asan = 0;
+	if(strstr(ldso.name,"-asan")) is_asan = 1;
 	if (ldso.name[0] == '/') {
 		char *s, *t, *z;
 		for (s=t=z=ldso.name; *s; s++)
@@ -1124,7 +1126,38 @@ static void get_sys_path()
 	} else if (errno != ENOENT) {
 		sys_path = "";
 	}
-	
+	if (is_asan) {
+		char *sys_path_default = NULL;
+
+		snprintf(etc_ldso_path, sizeof etc_ldso_path,
+				 "%.*s/etc/ld-musl-" LDSO_ARCH ".path",
+				 (int)prefix_len, prefix);
+
+		FILE *f = fopen(etc_ldso_path, "rbe");
+		if (f) {
+			if (getdelim(&sys_path_default, (size_t[1]){0}, 0, f) <= 0) {
+				free(sys_path_default);
+				sys_path_default = "";
+			}
+			fclose(f);
+		} else if (errno != ENOENT) {
+			sys_path_default = "";
+		}
+
+		if (!sys_path) {
+			sys_path = sys_path_default;
+		} else if (sys_path_default) {
+			size_t newlen = strlen(sys_path) + strlen(sys_path_default) + 2;
+			char *new_syspath = malloc(newlen);
+			memset(new_syspath, 0, newlen);
+			strcpy(new_syspath, sys_path);
+			strcat(new_syspath, ":");
+			strcat(new_syspath, sys_path_default);
+			free(sys_path);
+			free(sys_path_default);
+			sys_path = new_syspath;
+		}
+	}
 	if (!sys_path) sys_path = "/lib:/usr/local/lib:/usr/lib:/lib64";
 }
 
