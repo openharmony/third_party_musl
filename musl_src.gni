@@ -1825,6 +1825,7 @@ musl_inc_root_files = [
 musl_src_porting_file = [
   "arch/arm/bits/fenv.h",
   "arch/generic/bits/shm.h",
+  "arch/generic/crtbrand.s",
   "include/ctype.h",
   "include/pthread.h",
   "include/sys/capability.h",
@@ -1849,6 +1850,8 @@ musl_src_porting_file = [
   "src/thread/arm/syscall_cp.s",
   "src/ldso/dlclose.c",
   "ldso/dynlink.c",
+  "crt/arm/crti.s",
+  "crt/aarch64/crti.s",
 ]
 
 musl_inc_hook_files = [
