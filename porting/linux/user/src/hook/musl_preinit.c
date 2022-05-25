@@ -378,23 +378,6 @@ __attribute__((constructor(1))) static void __musl_initialize()
 	atomic_store_explicit(&__hook_enable_hook_flag, (volatile bool)false, memory_order_seq_cst);
 	__set_default_malloc();
 	//__init_musl_log();
-	parse_hook_variable(&__hook_mode, __hook_process_path, sizeof(__hook_process_path));
-	if (__hook_mode == STATRUP_HOOK_MODE) {
-		readlink("/proc/self/exe", __progname, sizeof(__progname) - 1);
-		const char *pos = strrchr(__progname, '/');
-		const char* filename;
-		if (pos) {
-			filename = pos + 1;
-		} else {
-			filename = __progname;
-		}
-		if (strcmp(filename, __hook_process_path) == 0) {
-			atomic_store_explicit(&__hook_enable_hook_flag, (volatile bool)true, memory_order_seq_cst);
-			init_ohos_malloc_hook();
-		} else {
-			__hook_mode = STEP_HOOK_MODE;
-		}
-	}
 	__initialize_malloc();
 }
 #endif
