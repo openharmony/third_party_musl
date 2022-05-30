@@ -14,8 +14,8 @@
         "en": "README"
     },
     "component": {
-        "name": "thirdparty_musl",
-        "subsystem": "",
+        "name": "musl",
+        "subsystem": "thirdparty",
         "syscap": [],
         "features": [],
         "adapted_system_type": [],
@@ -28,7 +28,9 @@
         "build": {
             "sub_component": [],
             "inner_kits": [],
-            "test": []
+            "test": [
+                "//third_party/musl/fuzztest:fuzztest"
+            ]
         }
     }
 }
