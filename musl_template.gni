@@ -1,4 +1,5 @@
 import("//build/ohos.gni")
+import("//third_party/optimized-routines/optimized-routines.gni")
 import("musl_src.gni")
 
 template("musl_libs") {
@@ -271,9 +272,15 @@ template("musl_libs") {
     ]
 
     if (musl_arch == "arm") {
-      sources_orig -= [ "src/thread/${musl_arch}/__set_thread_area.c" ]
+      sources_orig -= [
+        "src/thread/${musl_arch}/__set_thread_area.c",
+        "src/string/arm/memcpy_le.S",
+      ]
     } else if (musl_arch == "aarch64") {
-      sources_orig -= [ "src/thread/${musl_arch}/__set_thread_area.s" ]
+      sources_orig -= [
+        "src/thread/${musl_arch}/__set_thread_area.s",
+        "src/string/memcpy.c",
+      ]
     }
 
     if ("${target_abi}" == "a7_hard_neon-vfpv4") {
@@ -282,6 +289,14 @@ template("musl_libs") {
 
     foreach(s, sources_orig) {
       sources += [ "${target_out_dir}/${musl_ported_dir}/${s}" ]
+    }
+    
+    if (musl_arch == "arm") {
+      sources += [ "$OPTRTDIR/string/arm/memcpy.S" ]
+      asmflags = [ "-D__memcpy_arm = memcpy" ]
+    } else if (musl_arch == "aarch64") {
+      sources += [ "$OPTRTDIR/string/aarch64/memcpy.S" ]
+      asmflags = [ "-D__memcpy_aarch64 = memcpy" ]
     }
 
     cflags = [
