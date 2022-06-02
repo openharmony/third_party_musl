@@ -61,6 +61,8 @@ functional_list = [
   "strtold",
   "swprintf",
   "sched_setscheduler",
+  "sched_cpualloc",
+  "tgkill",
   "tgmath",
   "time",
   "tls_align",
