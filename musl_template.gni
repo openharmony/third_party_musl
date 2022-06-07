@@ -196,6 +196,10 @@ template("musl_libs") {
       "-Wl,--exclude-libs=ALL",
       "-Wl,--dynamic-list=${dynamic_list}",
     ]
+    if (is_asan) {
+      ldflags -= [ "-Wl,--dynamic-list=${dynamic_list}" ]
+      ldflags += [ "-Wl,-Bsymbolic-functions" ]
+    }
     asmflags = cflags
   }
 
