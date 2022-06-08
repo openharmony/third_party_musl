@@ -35,6 +35,9 @@ MUSL_LIBC_OPT_SRC_FOR_ARMV8_M = [
   "$MUSLPORTINGDIR/src/string/arch/arm/memset_armv8m.S",
 ]
 
+MUSL_LIBC_OPT_SRC_FOR_ARM =
+    [ "$MUSLPORTINGDIR/src/string/arch/arm/memcpy_le.S" ]
+
 MUSL_LIBC_SRC = [
   "$MUSLPORTINGDIR/src/ctype/__ctype_get_mb_cur_max.c",
   "$MUSLPORTINGDIR/src/ctype/isalnum.c",
