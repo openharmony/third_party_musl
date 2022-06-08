@@ -911,6 +911,7 @@ musl_src_file = [
   "src/regex/regerror.c",
   "src/regex/regexec.c",
   "src/regex/tre-mem.c",
+  "src/sched/sched_cpualloc.c",
   "src/sched/affinity.c",
   "src/sched/sched_cpucount.c",
   "src/sched/sched_get_priority_max.c",
@@ -1834,6 +1835,8 @@ musl_src_porting_file = [
   "include/sys/capability.h",
   "include/sys/socket.h",
   "include/sys/sysinfo.h",
+  "include/signal.h",
+  "include/sched.h",
   "src/internal/dynlink.h",
   "include/unistd.h",
   "include/dlfcn.h",
@@ -1864,6 +1867,8 @@ musl_src_porting_file = [
   "ldso/ns_config.c",
   "ldso/strops.c",
   "src/thread/pthread_create.c",
+  "src/sched/sched_cpualloc.c",
+  "src/signal/signal.c",
 ]
 
 musl_inc_hook_files = [
