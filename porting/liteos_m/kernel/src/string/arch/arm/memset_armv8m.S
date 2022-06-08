@@ -39,7 +39,7 @@
 x:
 
 #if defined(LOSCFG_KERNEL_LMS)
-FUNCTION(_memset)
+FUNCTION(__memset)
 #else
 FUNCTION(memset)
 #endif
