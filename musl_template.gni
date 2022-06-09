@@ -504,7 +504,7 @@ template("musl_libs") {
       "${redir}/${target_out_dir}/${musl_ported_dir}/crt/${musl_arch}/${abi_prefix}_musl_crt/crti.o",
       "${redir}/${target_out_dir}/${musl_ported_dir}/crt/${musl_arch}/${abi_prefix}_musl_crt/crtn.o",
     ]
-    outputs = [ "${target_out_dir}/${_libs_out_dir}/{{source_file_part}}" ]
+    outputs = [ "${root_build_dir}/obj/third_party/musl/${_libs_out_dir}/{{source_file_part}}" ]
     args = [
       "--input",
       "{{source}}",
