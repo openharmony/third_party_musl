@@ -183,16 +183,14 @@ ohos_copy("musl_arm_bits_arm32") {
 
 ohos_copy("musl_ndk_libs_arm32") {
   deps = musl_lib_arm32
-  sources = [ get_label_info(deps[0], "target_out_dir") +
-              "/usr/lib/arm-linux-ohos/Scrt1.o" ]
-  sources += [ get_label_info(deps[0], "target_out_dir") +
-               "/usr/lib/arm-linux-ohos/crt1.o" ]
-  sources += [ get_label_info(deps[0], "target_out_dir") +
-               "/usr/lib/arm-linux-ohos/crti.o" ]
-  sources += [ get_label_info(deps[0], "target_out_dir") +
-               "/usr/lib/arm-linux-ohos/crtn.o" ]
-  sources += [ get_label_info(deps[0], "target_out_dir") +
-               "/usr/lib/arm-linux-ohos/rcrt1.o" ]
+  crt_dir = "${root_build_dir}/obj/third_party/musl/usr/lib/arm-linux-ohos"
+  sources = [
+    "${crt_dir}/Scrt1.o",
+    "${crt_dir}/crt1.o",
+    "${crt_dir}/crti.o",
+    "${crt_dir}/crtn.o",
+    "${crt_dir}/rcrt1.o",
+  ]
   sources += [ get_label_info(deps[0], "target_out_dir") +
                "/usr/lib/arm-linux-ohos/libm.a" ]
   sources += [ get_label_info(deps[0], "target_out_dir") +
