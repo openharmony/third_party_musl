@@ -1,4 +1,4 @@
-#if __ARMEB__
+#if !__ARMEL__
 #include <string.h>
 #include <stdint.h>
 #include <endian.h>
