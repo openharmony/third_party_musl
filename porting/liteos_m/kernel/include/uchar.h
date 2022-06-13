@@ -1,10 +1,6 @@
 #ifndef _UCHAR_H
 #define _UCHAR_H
 
-#ifdef __ICCARM__ /* for iar */
-#include_next <uchar.h>
-#else
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -30,5 +26,4 @@ size_t mbrtoc32(char32_t *__restrict, const char *__restrict, size_t, mbstate_t 
 }
 #endif
 
-#endif /* __ICCARM__ */
 #endif

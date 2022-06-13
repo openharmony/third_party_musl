@@ -1,10 +1,6 @@
 #ifndef _STDLIB_H
 #define _STDLIB_H
 
-#ifdef __ICCARM__ /* for iar */
-#include_next <stdlib.h>
-#else
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -177,5 +173,4 @@ long double strtold_l(const char *__restrict, char **__restrict, struct __locale
 }
 #endif
 
-#endif /* __ICCARM__ */
 #endif
