@@ -30,6 +30,7 @@ template("test_unittest") {
     include_dirs = [
       "//${test_dir}/src/common",
       "//${musl_include_dir}",
+      "//${test_dir}/src/functionalext/common",
     ]
 
     cflags = []
