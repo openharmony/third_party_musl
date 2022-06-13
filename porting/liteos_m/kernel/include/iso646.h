@@ -1,10 +1,6 @@
 #ifndef _ISO646_H
 #define _ISO646_H
 
-#ifdef __ICCARM__ /* for iar */
-#include_next <iso646.h>
-#else
-
 #ifndef __cplusplus
 
 #define and    &&
@@ -21,5 +17,4 @@
 
 #endif
 
-#endif /* __ICCARM__ */
 #endif
