@@ -18,6 +18,24 @@ void log_print(const char* info,...)
     va_end(ap);
 }
 
+void stack_naming(struct pthread *new){
+	size_t size_len;
+	unsigned char *start_addr;
+	char name[ANON_STACK_NAME_SIZE];
+	if (new->guard_size) {
+		snprintf(name, ANON_STACK_NAME_SIZE, "guard:%d", new->tid);
+		prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, new->map_base, new->guard_size, name);
+		start_addr = new->map_base + new->guard_size;
+		size_len = new->map_size - new->guard_size;
+		memset(name, 0, ANON_STACK_NAME_SIZE);
+	} else {
+		start_addr = new->map_base;
+		size_len = new->map_size;
+	}
+	snprintf(name, ANON_STACK_NAME_SIZE, "stack:%d", new->tid);
+	prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, start_addr, size_len, name);
+};
+
 #ifdef RESERVE_SIGNAL_STACK
 #if defined (__LF64__)
 #define RESERVE_SIGNAL_STACK_SIZE (32 * 1024)
@@ -348,25 +366,15 @@ int __pthread_create(pthread_t *restrict res, const pthread_attr_t *restrict att
 				__munmap(map, size);
 				goto fail;
 			}
-			char guard_name[ANON_STACK_NAME_SIZE];
-			snprintf(guard_name, ANON_STACK_NAME_SIZE, "guard:%d", __pthread_self()->tid);
-			prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, map, guard, guard_name);
-			start_addr = map + guard;
-			size_len = size - guard;
 		} else {
 			map = __mmap(0, size, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANON, -1, 0);
 			if (map == MAP_FAILED) goto fail;
-			start_addr = map;
-			size_len = size;
 		}
 		tsd = map + size - __pthread_tsd_size;
 		if (!stack) {
 			stack = tsd - libc.tls_size;
 			stack_limit = map + guard;
 		}
-		char name[ANON_STACK_NAME_SIZE];
-		snprintf(name, ANON_STACK_NAME_SIZE, "stack:%d", __pthread_self()->tid);
-		prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, start_addr, size_len, name);
 	}
 
 	new = __copy_tls(tsd - libc.tls_size);
@@ -429,6 +437,8 @@ int __pthread_create(pthread_t *restrict res, const pthread_attr_t *restrict att
 	}
 
 	if (ret >= 0) {
+		stack_naming(new);
+
 		new->next = self->next;
 		new->prev = self;
 		new->next->prev = new;
