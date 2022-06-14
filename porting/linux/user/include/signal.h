@@ -40,6 +40,8 @@ extern "C" {
 #define SI_QUEUE (-1)
 #define SI_USER 0
 #define SI_KERNEL 128
+#define SIGHOOK   36
+#define SIGUNHOOK 37
 
 typedef struct sigaltstack stack_t;
 

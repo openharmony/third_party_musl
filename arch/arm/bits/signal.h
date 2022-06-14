@@ -82,7 +82,6 @@ typedef struct __ucontext {
 #define SIGPWR    30
 #define SIGSYS    31
 #define SIGUNUSED SIGSYS
-#define SIGHOOK   36
-#define SIGUNHOOK 37
+
 
 #define _NSIG 65
