@@ -40,8 +40,7 @@ extern "C" {
 #define SI_QUEUE (-1)
 #define SI_USER 0
 #define SI_KERNEL 128
-#define SIGHOOK   36
-#define SIGUNHOOK 37
+
 
 typedef struct sigaltstack stack_t;
 
@@ -198,9 +197,11 @@ int __libc_current_sigrtmax(void);
 #define SIGRTMAX  (__libc_current_sigrtmax())
 
 #define MUSL_SIGNAL_NATIVE_REMOTE (SIGRTMIN + 0)
-#define MUSL_SIGNAL_NATIVE_LOCAL (SIGRTMIN + 1)
-#define MUSL_SIGNAL_JSHEAP (SIGRTMIN + 2)
-#define MUSL_SIGNAL_JSHEAP_PRIV (SIGRTMIN + 3)
+#define MUSL_SIGNAL_HOOK (SIGRTMIN + 1)
+#define MUSL_SIGNAL_UNHOOK (SIGRTMIN + 2)
+#define MUSL_SIGNAL_NATIVE_LOCAL (SIGRTMIN + 3)
+#define MUSL_SIGNAL_JSHEAP (SIGRTMIN + 4)
+#define MUSL_SIGNAL_JSHEAP_PRIV (SIGRTMIN + 5)
 
 int kill(pid_t, int);
 int tgkill(int __tgid, int __tid, int __signal);
