@@ -357,14 +357,14 @@ static void __install_malloc_hook_signal_handler()
 	struct sigaction actionInstallHook = {};
 	actionInstallHook.sa_handler = __install_malloc_hook;
 	sigemptyset(&actionInstallHook.sa_mask);
-	sigaddset(&actionInstallHook.sa_mask, SIGUNHOOK);
-	sigaction(SIGHOOK, &actionInstallHook, NULL);
+	sigaddset(&actionInstallHook.sa_mask, MUSL_SIGNAL_UNHOOK);
+	sigaction(MUSL_SIGNAL_HOOK, &actionInstallHook, NULL);
 
 	struct sigaction actionDef = {};
 	actionDef.sa_handler = __uninstal_malloc_hook;
 	sigemptyset(&actionDef.sa_mask);
-	sigaddset(&actionDef.sa_mask, SIGHOOK);
-	sigaction(SIGUNHOOK, &actionDef, NULL);
+	sigaddset(&actionDef.sa_mask, MUSL_SIGNAL_HOOK);
+	sigaction(MUSL_SIGNAL_UNHOOK, &actionDef, NULL);
 }
 
 static void __initialize_malloc()
