@@ -1,10 +1,6 @@
 #ifndef _WCTYPE_H
 #define _WCTYPE_H
 
-#ifdef __ICCARM__ /* for iar */
-#include_next <wctype.h>
-#else
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -80,5 +76,4 @@ wctype_t  wctype_l(const char *, locale_t);
 }
 #endif
 
-#endif /* __ICCARM__ */
 #endif

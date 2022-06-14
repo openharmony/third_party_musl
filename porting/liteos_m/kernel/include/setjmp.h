@@ -1,10 +1,6 @@
 #ifndef	_SETJMP_H
 #define	_SETJMP_H
 
-#ifdef __ICCARM__ /* for iar */
-#include_next <setjmp.h>
-#else
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -42,5 +38,4 @@ _Noreturn void longjmp (jmp_buf, int);
 }
 #endif
 
-#endif /* __ICCARM__ */
 #endif

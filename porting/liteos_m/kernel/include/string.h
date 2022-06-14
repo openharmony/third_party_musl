@@ -1,10 +1,6 @@
 #ifndef	_STRING_H
 #define	_STRING_H
 
-#ifdef __ICCARM__ /* for iar */
-#include_next <string.h>
-#else
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -141,5 +137,4 @@ char *__strncpy (char *__restrict, const char *__restrict, size_t);
 }
 #endif
 
-#endif /* __ICCARM__ */
 #endif
