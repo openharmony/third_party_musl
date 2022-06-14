@@ -1,10 +1,6 @@
 #ifndef	_LOCALE_H
 #define	_LOCALE_H
 
-#ifdef __ICCARM__ /* for iar */
-#include_next <locale.h>
-#else
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -87,5 +83,4 @@ locale_t uselocale(locale_t);
 }
 #endif
 
-#endif /* __ICCARM__ */
 #endif
