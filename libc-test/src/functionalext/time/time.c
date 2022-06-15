@@ -16,6 +16,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include "functionalext.h"
+#include "timegm_data.h"
 
 #define __TEST_DATA_YEAR__ 121
 #define __TEST_DATA_MONTH__ 9
@@ -43,18 +44,12 @@ static const struct time_struct gResultData[] = {
 void time_0100(void)
 {
     for (int32_t i = 0; i < (int32_t)(sizeof(gResultData) / sizeof(gResultData[0])); i++) {
-        const char *tz = gResultData[i].tz;
-        const char *handlerChar;
-#ifdef TIME_ZONE_SUB_TAG
-        char *str = strrchr(tz, TIME_ZONE_SUB_TAG);
-        if (str) {
-            handlerChar = ++str;
-        } else {
-            handlerChar = tz;
+        const char *handlerChar = test_handle_path(gResultData[i].tz);
+        if (!handlerChar) {
+            t_error("time_0100 failed: handlerChar is NULL\n");
+            continue;
         }
-#else
-        handlerChar = tz;
-#endif
+
         setenv("TZ", handlerChar, 1);
         tzset();
         system("date '2021-10-3 9:12:12' > /dev/NULL");
