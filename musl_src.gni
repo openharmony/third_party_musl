@@ -1869,6 +1869,17 @@ musl_src_porting_file = [
   "src/thread/pthread_create.c",
   "src/sched/sched_cpualloc.c",
   "src/signal/signal.c",
+  "include/langinfo.h",
+  "include/locale.h",
+  "src/internal/libc.h",
+  "src/locale/dcngettext.c",
+  "src/locale/locale_map.c",
+  "src/locale/langinfo.c",
+  "src/time/__tz.c",
+  "src/time/gmtime_r.c",
+  "src/time/strftime.c",
+  "src/time/strptime.c",
+  "src/time/time_impl.h",
 ]
 
 musl_inc_hook_files = [

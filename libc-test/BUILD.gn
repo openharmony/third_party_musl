@@ -7,6 +7,7 @@ group("musl_libc_test") {
     "src/api:main",
     "src/common:runtest",
     "src/functional:functional_test",
+    "src/functionalext:functionalext_test",
     "src/math:math_test",
     "src/musl:pleval",
     "src/nativehook:nativehook_test",
