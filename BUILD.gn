@@ -44,12 +44,14 @@ group("musl_headers") {
     ":musl_copy_inc_arpa",
     ":musl_copy_inc_bits",
     ":musl_copy_inc_hook",
+    ":musl_copy_inc_info",
     ":musl_copy_inc_net",
     ":musl_copy_inc_netinet",
     ":musl_copy_inc_netpacket",
     ":musl_copy_inc_root",
     ":musl_copy_inc_scsi",
     ":musl_copy_inc_sys",
+    ":musl_copy_inc_trace",
   ]
 }
 
@@ -250,6 +252,28 @@ copy("musl_copy_inc_sys") {
     sources += [ "${target_out_dir}/${musl_ported_dir}/${s}" ]
   }
   outputs = [ "${target_out_dir}/${musl_inc_out_dir}/sys/{{source_file_part}}" ]
+  deps = [ ":create_porting_src" ]
+}
+
+copy("musl_copy_inc_trace") {
+  sources = []
+  sources_orig = musl_inc_trace_files
+  foreach(s, sources_orig) {
+    sources += [ "${target_out_dir}/${musl_ported_dir}/${s}" ]
+  }
+  outputs =
+      [ "${target_out_dir}/${musl_inc_out_dir}/trace/{{source_file_part}}" ]
+  deps = [ ":create_porting_src" ]
+}
+
+copy("musl_copy_inc_info") {
+  sources = []
+  sources_orig = musl_inc_info_files
+  foreach(s, sources_orig) {
+    sources += [ "${target_out_dir}/${musl_ported_dir}/${s}" ]
+  }
+  outputs =
+      [ "${target_out_dir}/${musl_inc_out_dir}/info/{{source_file_part}}" ]
   deps = [ ":create_porting_src" ]
 }
 

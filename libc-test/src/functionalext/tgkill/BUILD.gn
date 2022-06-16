@@ -10,13 +10,19 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import("../../../test_template.gni")
+import("test_src_functionalext_tgkill.gni")
 
-functionalext_list = [
-  "locale:functionalext_locale_test",
-  "time:functionalext_time_test",
-  "reboot:functionalext_reboot_test",
-  "tgkill:functionalext_tgkill_test",
-  "thread:functionalext_thread_test",
-  "trace:functionalext_trace_test",
-  "info:functionalext_info_test",
-]
+foreach(s, functionalext_tgkill_list) {
+  test_unittest(s) {
+    target_dir = "functionalext/tgkill"
+  }
+}
+
+group("functionalext_tgkill_test") {
+  testonly = true
+  deps = []
+  foreach(s, functionalext_tgkill_list) {
+    deps += [ ":${s}" ]
+  }
+}

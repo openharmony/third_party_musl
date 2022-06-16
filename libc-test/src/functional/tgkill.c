@@ -1,8 +1,10 @@
-#include <stdio.h>
 #include <errno.h>
-#include "test.h"
-#include <stdlib.h>
 #include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/tgkill.h>
+#include "test.h"
+
 int main(int argc, char *argv[]){
 
     int tgid, tid;

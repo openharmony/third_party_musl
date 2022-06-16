@@ -1,3 +1,18 @@
+/*
+ * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 #ifndef _PTHREAD_H
 #define _PTHREAD_H
 #ifdef __cplusplus
@@ -119,6 +134,49 @@ int pthread_mutex_trylock(pthread_mutex_t *);
 int pthread_mutex_timedlock(pthread_mutex_t *__restrict, const struct timespec *__restrict);
 int pthread_mutex_destroy(pthread_mutex_t *);
 int pthread_mutex_consistent(pthread_mutex_t *);
+/**
+  * @brief lock the mutex object referenced by mutex. If the mutex is already locked,
+  *        the calling thread shall block until the mutex becomes available as in the
+  *        pthread_mutex_lock() function. If the mutex cannot be locked without waiting for
+  *        another thread to unlock the mutex, this wait shall be terminated when the specified
+  *        timeout expires. The timeout shall be based on the CLOCK_REALTIME or CLOCK_MONOTONIC clock.
+  *        The resolution of the timeout shall be the resolution of the clock on which it is based.
+  * @param mutex a robust mutex and the process containing the owning thread terminated while holding the mutex lock.
+  * @param clock_id specified CLOCK_REALTIME or CLOCK_MONOTONIC clock.
+  * @param timespec the timeout shall expire specified by abstime passes.
+  * @return clocklock result.
+  * @retval 0 is returned on success.
+  * @retval -1 is returned on failure, and errno is set to indicate the error.
+  */
+int pthread_mutex_clocklock(pthread_mutex_t *__restrict, clockid_t, const struct timespec *__restrict);
+/**
+  * @brief lock the mutex object referenced by mutex. If the mutex is already locked,
+  *        the calling thread shall block until the mutex becomes available as in the
+  *        pthread_mutex_lock() function. If the mutex cannot be locked without waiting for
+  *        another thread to unlock the mutex, this wait shall be terminated when the specified
+  *        timeout expires. The timeout shall be based on the CLOCK_MONOTONIC clock.
+  *        The resolution of the timeout shall be the resolution of the clock on which it is based.
+  * @param mutex a robust mutex and the process containing the owning thread terminated while holding the mutex lock.
+  * @param timespec the timeout shall expire specified by abstime passes.
+  * @return clocklock result.
+  * @retval 0 is returned on success.
+  * @retval -1 is returned on failure, and errno is set to indicate the error.
+  */
+int pthread_mutex_timedlock_monotonic_np(pthread_mutex_t *__restrict, const struct timespec *__restrict);
+/**
+  * @brief lock the mutex object referenced by mutex. If the mutex is already locked,
+  *        the calling thread shall block until the mutex becomes available as in the
+  *        pthread_mutex_lock() function. If the mutex cannot be locked without waiting for
+  *        another thread to unlock the mutex, this wait shall be terminated when the specified
+  *        timeout expires. The timeout shall be based on the CLOCK_MONOTONIC clock.
+  *        The resolution of the timeout shall be the resolution of the clock on which it is based.
+  * @param mutex a robust mutex and the process containing the owning thread terminated while holding the mutex lock.
+  * @param ms the timeout shall expire specified by relative time(ms) passes.
+  * @return clocklock result.
+  * @retval 0 is returned on success.
+  * @retval -1 is returned on failure, and errno is set to indicate the error.
+  */
+int pthread_mutex_lock_timeout_np(pthread_mutex_t *__restrict, unsigned int);
 
 int pthread_mutex_getprioceiling(const pthread_mutex_t *__restrict, int *__restrict);
 int pthread_mutex_setprioceiling(pthread_mutex_t *__restrict, int, int *__restrict);
@@ -127,6 +185,49 @@ int pthread_cond_init(pthread_cond_t *__restrict, const pthread_condattr_t *__re
 int pthread_cond_destroy(pthread_cond_t *);
 int pthread_cond_wait(pthread_cond_t *__restrict, pthread_mutex_t *__restrict);
 int pthread_cond_timedwait(pthread_cond_t *__restrict, pthread_mutex_t *__restrict, const struct timespec *__restrict);
+/**
+  * @brief The thread waits for a signal to trigger, and if timeout or signal is triggered,
+  *        the thread wakes up.
+  * @param pthread_cond_t Condition variables for multithreading.
+  * @param pthread_mutex_t Thread mutex variable.
+  * @param clockid_t Clock ID used in clock and timer functions.
+  * @param timespec The timeout shall expire specified by abstime passes.
+  * @return pthread_cond_clockwait result.
+  * @retval 0 pthread_cond_clockwait successful.
+  * @retval ETIMEDOUT pthread_cond_clockwait Connection timed out.
+  * @retval EINVAL pthread_cond_clockwait error.
+  */
+int pthread_cond_clockwait(pthread_cond_t *__restrict, pthread_mutex_t *__restrict,
+                           clockid_t, const struct timespec *__restrict);
+
+/**
+  * @brief Condition variables have an initialization option to use CLOCK_MONOTONIC.
+  *        The thread waits for a signal to trigger, and if timeout or signal is triggered,
+  *        the thread wakes up.
+  * @param pthread_cond_t Condition variables for multithreading.
+  * @param pthread_mutex_t Thread mutex variable.
+  * @param timespec The timeout shall expire specified by abstime passes.
+  * @return pthread_cond_timedwait_monotonic_np result.
+  * @retval 0 pthread_cond_timedwait_monotonic_np successful.
+  * @retval ETIMEDOUT pthread_cond_timedwait_monotonic_np Connection timed out.
+  * @retval EINVAL pthread_cond_timedwait_monotonic_np error.
+  */
+int pthread_cond_timedwait_monotonic_np(pthread_cond_t *__restrict, pthread_mutex_t *__restrict,
+                                        const struct timespec *__restrict);
+
+/**
+  * @brief Condition variables have an initialization option to use CLOCK_MONOTONIC and The time
+  *        parameter is in milliseconds. The thread waits for a signal to trigger, and if timeout or
+  *        signal is triggered, the thread wakes up.
+  * @param pthread_cond_t Condition variables for multithreading.
+  * @param pthread_mutex_t Thread mutex variable.
+  * @param unsigned Timeout, in milliseconds.
+  * @return pthread_cond_timeout_np result.
+  * @retval 0 pthread_cond_timeout_np successful.
+  * @retval ETIMEDOUT pthread_cond_timeout_np Connection timed out.
+  * @retval EINVAL pthread_cond_timeout_np error.
+  */
+int pthread_cond_timeout_np(pthread_cond_t* __restrict, pthread_mutex_t* __restrict, unsigned int);
 int pthread_cond_broadcast(pthread_cond_t *);
 int pthread_cond_signal(pthread_cond_t *);
 
@@ -135,10 +236,74 @@ int pthread_rwlock_destroy(pthread_rwlock_t *);
 int pthread_rwlock_rdlock(pthread_rwlock_t *);
 int pthread_rwlock_tryrdlock(pthread_rwlock_t *);
 int pthread_rwlock_timedrdlock(pthread_rwlock_t *__restrict, const struct timespec *__restrict);
+/**
+  * @brief Apply a read lock to the read-write lock referenced by rwlock as in the
+  *        pthread_rwlock_rdlock() function. However, if the lock cannot be acquired without
+  *        waiting for other threads to unlock the lock, this wait shall be terminated when
+  *        the specified timeout expires. The timeout shall expire when the absolute time specified by
+  *        abstime passes, as measured by the clock on which timeouts are based, or if the absolute time
+  *        specified by abstime has already been passed at the time of the call.
+  *        The timeout shall be based on the CLOCK_REALTIME or CLOCK_MONOTONIC clock.
+  * @param rw a read lock to the read-write lock referenced.
+  * @param clock_id specified CLOCK_REALTIME or CLOCK_MONOTONIC clock.
+  * @param timespec the timeout shall expire specified by abstime passes.
+  * @return clockrdlock result.
+  * @retval 0 is returned on success.
+  * @retval -1 is returned on failure, and errno is set to indicate the error.
+  */
+int pthread_rwlock_clockrdlock(pthread_rwlock_t *__restrict, clockid_t, const struct timespec *__restrict);
+/**
+  * @brief Apply a read lock to the read-write lock referenced by rwlock as in the
+  *        pthread_rwlock_rdlock() function. However, if the lock cannot be acquired without
+  *        waiting for other threads to unlock the lock, this wait shall be terminated when
+  *        the specified timeout expires. The timeout shall expire when the absolute time specified by
+  *        abstime passes, as measured by the clock on which timeouts are based, or if the absolute time
+  *        specified by abstime has already been passed at the time of the call.
+  *        The timeout shall be based on the CLOCK_MONOTONIC clock.
+  * @param rw a read lock to the read-write lock referenced.
+  * @param timespec the timeout shall expire specified by abstime passes.
+  * @return clockrdlock result.
+  * @retval 0 is returned on success.
+  * @retval -1 is returned on failure, and errno is set to indicate the error.
+  */
+int pthread_rwlock_timedrdlock_monotonic_np(pthread_rwlock_t *__restrict, const struct timespec *__restrict);
 int pthread_rwlock_wrlock(pthread_rwlock_t *);
 int pthread_rwlock_trywrlock(pthread_rwlock_t *);
 int pthread_rwlock_timedwrlock(pthread_rwlock_t *__restrict, const struct timespec *__restrict);
 int pthread_rwlock_unlock(pthread_rwlock_t *);
+/**
+  * @brief Read-write lock variables have an initialization option to use CLOCK_MONOTONIC.
+  *        apply a read lock to the read-write lock referenced by rwlock as in the
+  *        pthread_rwlock_wrlock() function. However, if the lock cannot be acquired without
+  *        waiting for other threads to unlock the lock, this wait shall be terminated when
+  *        the specified timeout expires. The timeout shall expire when the absolute time specified by
+  *        abstime passes, as measured by the clock on which timeouts are based, or if the absolute time
+  *        specified by abstime has already been passed at the time of the call.
+  *        The timeout shall be based on the CLOCK_MONOTONIC clock.
+  * @param rw a read lock to the read-write lock referenced.
+  * @param timespec the timeout shall expire specified by abstime passes.
+  * @return clockrdlock result.
+  * @retval 0 is returned on success.
+  * @retval -1 is returned on failure, and errno is set to indicate the error.
+  */
+int pthread_rwlock_timedwrlock_monotonic_np(pthread_rwlock_t *__restrict, const struct timespec *__restrict);
+
+/**
+  * @brief Apply a read lock to the read-write lock referenced by rwlock as in the
+  *        pthread_rwlock_wrlock() function. However, if the lock cannot be acquired without
+  *        waiting for other threads to unlock the lock, this wait shall be terminated when
+  *        the specified timeout expires. The timeout shall expire when the absolute time specified by
+  *        abstime passes, as measured by the clock on which timeouts are based, or if the absolute time
+  *        specified by abstime has already been passed at the time of the call.
+  *        The timeout shall be based on the CLOCK_REALTIME or CLOCK_MONOTONIC clock.
+  * @param rw a read lock to the read-write lock referenced.
+  * @param clock_id specified CLOCK_REALTIME or CLOCK_MONOTONIC clock.
+  * @param timespec the timeout shall expire specified by abstime passes.
+  * @return clockrdlock result.
+  * @retval 0 is returned on success.
+  * @retval -1 is returned on failure, and errno is set to indicate the error.
+  */
+int pthread_rwlock_clockwrlock(pthread_rwlock_t *__restrict, clockid_t, const struct timespec *__restrict);
 
 int pthread_spin_init(pthread_spinlock_t *, int);
 int pthread_spin_destroy(pthread_spinlock_t *);
