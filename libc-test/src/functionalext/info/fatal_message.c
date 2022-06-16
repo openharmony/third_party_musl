@@ -1,0 +1,242 @@
+/*
+ * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#include <info/fatal_message.h>
+
+#include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <test.h>
+#include <pthread.h>
+#include <unistd.h>
+
+#define EXPECT_TRUE(c)                \
+    do                                \
+    {                                 \
+        if (!(c))                     \
+            t_error("[%s] failed\n"); \
+    } while (0)
+// val1 == val2
+#define EXPECT_EQ(a, b)                          \
+    do                                           \
+    {                                            \
+        if ((a) != (b))                          \
+            t_error("failed %d != %d \n", a, b); \
+    } while (0)
+
+typedef void (*TEST_FUN)(void);
+static const int WAIT_TIME = 1;
+
+/**
+ * @tc.name      : get_fatal_message
+ * @tc.desc      : Test the function of get_fatal_message.
+ * @tc.level     : Level 0
+ */
+static void fatal_message_0010(void)
+{
+    fatal_msg_t *fatal_message = get_fatal_message();
+    EXPECT_TRUE(fatal_message == NULL);
+}
+
+/**
+ * @tc.name      : set_fatal_message
+ * @tc.desc      : Test the function of set_fatal_message.
+ * @tc.level     : Level 0
+ */
+static void fatal_message_0020(void)
+{
+    const char msg[1024] = {"abcdefghijklmnopqrstuvwxyz1234567890"};
+    fatal_msg_t *fatal_message = NULL;
+
+    int pidParent = 0;
+    int pidChild = 0;
+
+    pid_t fpid;
+    fpid = fork();
+    if (fpid < 0) {
+        t_printf("error in fork!");
+    } else if (fpid == 0) {
+        pidChild = getpid();
+        set_fatal_message(msg);
+        fatal_message = get_fatal_message();
+        EXPECT_TRUE(strcmp(fatal_message->msg, msg) == 0);
+        exit(pidChild);
+    }
+}
+
+/**
+ * @tc.name      : set_fatal_message
+ * @tc.desc      : Test the multiple processes of set_fatal_message.
+ * @tc.level     : Level 0
+ */
+static void fatal_message_0030(void)
+{
+    fatal_msg_t *fatal_message = NULL;
+
+    const char msgChild[1024] = {"msgChild"};
+    const char msgParent[1024] = {"msgParent"};
+
+    int pidChild = 0;
+    int pidParent = 0;
+    int pidCParent = 0;
+    int pidCChild = 0;
+
+    pid_t fpid;
+
+    // start process
+    fpid = fork();
+    if (fpid < 0) {
+        t_printf("error in fork!");
+    } else if (fpid == 0) {
+        pidChild = getpid();
+    } else {
+        pidParent = getpid();
+        pid_t fpidChild;
+
+        // start process again
+        fpidChild = fork();
+        if (fpidChild < 0) {
+            t_printf("error in fork!");
+        } else if (fpidChild == 0) {
+            pidCChild = getpid();
+            set_fatal_message(msgParent);
+            fatal_message = get_fatal_message();
+            EXPECT_TRUE(strcmp(fatal_message->msg, msgParent) == 0);
+            exit(pidCChild);
+        } else {
+            pidCParent = getpid();
+            set_fatal_message(msgChild);
+            fatal_message = get_fatal_message();
+            EXPECT_TRUE(strcmp(fatal_message->msg, msgChild) == 0);
+            exit(pidCParent);
+        }
+    }
+}
+
+/**
+ * @tc.name      : set_fatal_message
+ * @tc.desc      : Test the multiple processes of set_fatal_message,
+*                  One of the threads crashed.
+ * @tc.level     : Level 0
+ */
+static void fatal_message_0040(void)
+{
+    fatal_msg_t *fatal_message = NULL;
+
+    const char msgChild[1024] = {"msgChild004"};
+    const char msgParent[1024] = {"msgParent004"};
+
+    int pidChild = 0;
+    int pidParent = 0;
+    int pidCParent = 0;
+    int pidCChild = 0;
+
+    pid_t fpid;
+
+    // start process
+    fpid = fork();
+    if (fpid < 0) {
+        t_printf("error in fork!");
+    } else if (fpid == 0) {
+        pidChild = getpid();
+    } else {
+        pidParent = getpid();
+        pid_t fpidChild;
+
+        // start process again
+        fpidChild = fork();
+        if (fpidChild < 0) {
+            t_printf("error in fork!");
+        } else if (fpidChild == 0) {
+            pidCChild = getpid();
+            char *str = NULL;
+            str[0] = 0;
+            // Process crash. Unable to continue calling the set_fatal_message interface
+        } else {
+            pidCParent = getpid();
+            set_fatal_message(msgParent);
+            fatal_message = get_fatal_message();
+            EXPECT_TRUE(strcmp(fatal_message->msg, msgParent) == 0);
+            exit(pidCParent);
+        }
+    }
+}
+
+void *ThreadFun1(void *arg)
+{
+    if (arg == NULL) {
+        t_printf("ThreadFun1 arg is NULL");
+    }
+    fatal_msg_t *fatal_message = get_fatal_message();
+    EXPECT_TRUE(strcmp(fatal_message->msg, (char *)arg) == 0);
+    return NULL;
+}
+
+void *ThreadFun2(void *arg)
+{
+    if (arg == NULL) {
+        t_printf("ThreadFun2 arg is NULL");
+    }
+    fatal_msg_t *fatal_message = get_fatal_message();
+    EXPECT_TRUE(fatal_message->msg != (char *)arg);
+    pthread_exit("ThreadFun2 Exit");
+}
+
+/**
+ * @tc.name      : set_fatal_message
+ * @tc.desc      : Test the multithreading of set_fatal_message.
+ * @tc.level     : Level 0
+ */
+static void fatal_message_0050(void)
+{
+    const char msgThread[1024] = {"msgThread"};
+    int res;
+    pthread_t fatalMessageThread1, fatalMessageThread2;
+
+    set_fatal_message(msgThread);
+    res = pthread_create(&fatalMessageThread1, NULL, ThreadFun1, (void *)msgThread);
+    if (res != 0) {
+        t_printf("pthread_create1 error.");
+    }
+    sleep(WAIT_TIME);
+
+    res = pthread_create(&fatalMessageThread2, NULL, ThreadFun2, (void *)msgThread);
+    if (res != 0) {
+        t_printf("pthread_create2 error.");
+    }
+    pthread_join(fatalMessageThread1, NULL);
+    pthread_join(fatalMessageThread2, NULL);
+}
+
+TEST_FUN G_Fun_Array[] = {
+    fatal_message_0010,
+    fatal_message_0020,
+    fatal_message_0030,
+    fatal_message_0040,
+    fatal_message_0050,
+};
+
+int main(void)
+{
+    int num = sizeof(G_Fun_Array) / sizeof(TEST_FUN);
+    for (int pos = 0; pos < num; ++pos) {
+        t_printf("fatal_message test ( %d ) start \n", pos + 1);
+        G_Fun_Array[pos]();
+        t_printf("fatal_message test ( %d ) finish \n", pos + 1);
+    }
+
+    return t_status;
+}
