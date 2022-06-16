@@ -204,7 +204,6 @@ int __libc_current_sigrtmax(void);
 #define MUSL_SIGNAL_JSHEAP_PRIV (SIGRTMIN + 5)
 
 int kill(pid_t, int);
-int tgkill(int __tgid, int __tid, int __signal);
 int sigemptyset(sigset_t *);
 int sigfillset(sigset_t *);
 int sigaddset(sigset_t *, int);
