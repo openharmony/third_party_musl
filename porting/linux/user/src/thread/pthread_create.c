@@ -24,7 +24,7 @@ void log_print(const char* info,...)
 #else
 #define RESERVE_SIGNAL_STACK_SIZE (20 * 1024)
 #endif
-static void __pthread_reserve_signal_stack()
+void __pthread_reserve_signal_stack()
 {
 	void* stack = mmap(NULL, RESERVE_SIGNAL_STACK_SIZE, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1 , 0);
 	if (stack != MAP_FAILED) {
@@ -42,11 +42,13 @@ static void __pthread_reserve_signal_stack()
 
 	pthread_t self = __pthread_self();
 	self->signal_stack = stack;
-	prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, signal_stack.ss_sp, signal_stack.ss_size, "signal_stack:musl");
+	char name[ANON_STACK_NAME_SIZE];
+	snprintf(name, ANON_STACK_NAME_SIZE, "signal_stack:%d", __pthread_self()->tid);
+	prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, signal_stack.ss_sp, signal_stack.ss_size, name);
 	return;
 }
 
-static void __pthread_release_signal_stack()
+void __pthread_release_signal_stack()
 {
 	pthread_t self = __pthread_self();
 	if (self->signal_stack == NULL) {
@@ -60,6 +62,9 @@ static void __pthread_release_signal_stack()
 	munmap(self->signal_stack, RESERVE_SIGNAL_STACK_SIZE);
 	self->signal_stack = NULL;
 }
+
+weak_alias(__pthread_reserve_signal_stack, pthread_reserve_signal_stack);
+weak_alias(__pthread_release_signal_stack, pthread_release_signal_stack);
 #endif
 
 static void dummy_0()

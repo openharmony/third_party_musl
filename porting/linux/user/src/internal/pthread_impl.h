@@ -223,6 +223,11 @@ static inline void __absolute_timespec_from_timespec(struct timespec *abs_ts,
     }
 }
 
+#ifdef RESERVE_SIGNAL_STACK
+hidden void pthread_reserve_signal_stack();
+hidden void pthread_release_signal_stack();
+#endif
+
 hidden void __acquire_ptc(void);
 hidden void __release_ptc(void);
 hidden void __inhibit_ptc(void);
