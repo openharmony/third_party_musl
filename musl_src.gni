@@ -1876,6 +1876,7 @@ musl_src_porting_file = [
   "src/info/device_api_version.c",
   "src/info/fatal_message.c",
   "src/env/__init_tls.c",
+  "src/env/__libc_start_main.c",
   "src/internal/pthread_impl.h",
   "src/internal/syscall.h",
   "ldso/namespace.h",
