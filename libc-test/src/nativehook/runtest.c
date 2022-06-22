@@ -3,6 +3,7 @@
 #include <stdatomic.h>
 #include <memory.h>
 #include "test.h"
+#define HOOK_ENABLE
 #include "musl_preinit_common.h"
 
 #define TEST(c, ...) \
@@ -38,14 +39,14 @@ int main(int argc, char **argv)
 	printf("Start 7 scenes testing...\n");
 
 	printf("Case 1: client shared library has not been loaded.\n");
-	atomic_store_explicit(&ohos_malloc_hook_shared_liibrary, (volatile long long)0, memory_order_seq_cst);
+	atomic_store_explicit(&ohos_malloc_hook_shared_library, (volatile long long)0, memory_order_seq_cst);
 	bool hook_flag = __get_hook_flag();
 	TEST(hook_flag == false, "hook_flag shoud be false\n");
 	volatile const struct MallocDispatchType* malloc_dispatch_table = get_current_dispatch_table();
 	TEST(malloc_dispatch_table == NULL, "malloc_dispatch_table shoud be NULL\n");
 
 	printf("Case 2: client shared library is loading, no uninstall signal raising, but the functions hasn't been loaded, using the temporary malloc table.\n");
-	atomic_store_explicit(&ohos_malloc_hook_shared_liibrary, (volatile long long)-1, memory_order_seq_cst);
+	atomic_store_explicit(&ohos_malloc_hook_shared_library, (volatile long long)-1, memory_order_seq_cst);
 	atomic_store_explicit(&__musl_libc_globals.current_dispatch_table, (volatile const long long)0x95919591, memory_order_seq_cst);
 	atomic_store_explicit(&__hook_enable_hook_flag, (volatile bool)true, memory_order_seq_cst);
 	hook_flag = __get_hook_flag();
@@ -54,7 +55,7 @@ int main(int argc, char **argv)
 	TEST(malloc_dispatch_table != NULL, "malloc_dispatch_table shoud be not NULL\n");
 
 	printf("Case 3: client shared library is loading, uninstall signal raising, but the functions hasn't been loaded, using the temporary malloc table.\n");
-	atomic_store_explicit(&ohos_malloc_hook_shared_liibrary, (volatile long long)-1, memory_order_seq_cst);
+	atomic_store_explicit(&ohos_malloc_hook_shared_library, (volatile long long)-1, memory_order_seq_cst);
 	atomic_store_explicit(&__musl_libc_globals.current_dispatch_table, (volatile const long long)0x95919591, memory_order_seq_cst);
 	atomic_store_explicit(&__hook_enable_hook_flag, (volatile bool)false, memory_order_seq_cst);
 	hook_flag = __get_hook_flag();
@@ -63,7 +64,7 @@ int main(int argc, char **argv)
 	TEST(malloc_dispatch_table == NULL, "malloc_dispatch_table shoud be NULL\n");
 
 	printf("Case 4: client shared library is loaded, no uninstall signal raising, outside client malloc.\n");
-	atomic_store_explicit(&ohos_malloc_hook_shared_liibrary, (volatile long long)0x10319090, memory_order_seq_cst);
+	atomic_store_explicit(&ohos_malloc_hook_shared_library, (volatile long long)0x10319090, memory_order_seq_cst);
 	atomic_store_explicit(&__hook_enable_hook_flag, (volatile bool)true, memory_order_seq_cst);
 	set_hook_flag(true);
 	hook_flag = __get_hook_flag();
@@ -72,7 +73,7 @@ int main(int argc, char **argv)
 	TEST(malloc_dispatch_table != NULL, "malloc_dispatch_table shoud be not NULL\n");
 
 	printf("Case 5: client shared library is loaded, no uninstall signal raising, inside client malloc.\n");
-	atomic_store_explicit(&ohos_malloc_hook_shared_liibrary, (volatile long long)0x10319090, memory_order_seq_cst);
+	atomic_store_explicit(&ohos_malloc_hook_shared_library, (volatile long long)0x10319090, memory_order_seq_cst);
 	atomic_store_explicit(&__hook_enable_hook_flag, (volatile bool)true, memory_order_seq_cst);
 	set_hook_flag(false);
 	hook_flag = __get_hook_flag();
@@ -81,7 +82,7 @@ int main(int argc, char **argv)
 	TEST(malloc_dispatch_table == NULL, "malloc_dispatch_table shoud be NULL\n");
 
 	printf("Case 6: client shared library is loaded, uninstall signal raising, outside client malloc.\n");
-	atomic_store_explicit(&ohos_malloc_hook_shared_liibrary, (volatile long long)0x10319090, memory_order_seq_cst);
+	atomic_store_explicit(&ohos_malloc_hook_shared_library, (volatile long long)0x10319090, memory_order_seq_cst);
 	atomic_store_explicit(&__hook_enable_hook_flag, (volatile bool)false, memory_order_seq_cst);
 	set_hook_flag(true);
 	hook_flag = __get_hook_flag();
@@ -90,7 +91,7 @@ int main(int argc, char **argv)
 	TEST(malloc_dispatch_table == NULL, "malloc_dispatch_table shoud be NULL\n");
 
 	printf("Case 7: client shared library is loaded, uninstall signal raising, inside client malloc.\n");
-	atomic_store_explicit(&ohos_malloc_hook_shared_liibrary, (volatile long long)0x10319090, memory_order_seq_cst);
+	atomic_store_explicit(&ohos_malloc_hook_shared_library, (volatile long long)0x10319090, memory_order_seq_cst);
 	atomic_store_explicit(&__hook_enable_hook_flag, (volatile bool)false, memory_order_seq_cst);
 	set_hook_flag(false);
 	hook_flag = __get_hook_flag();
