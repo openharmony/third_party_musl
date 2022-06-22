@@ -12,6 +12,21 @@ group("musl_all") {
   ]
 }
 
+ohos_prebuilt_etc("ld-musl-namespace-${musl_arch}-test.ini") {
+  source = "${musl_porting_dir}/config/ld-musl-namespace-${musl_arch}-test.ini"
+}
+
+ohos_prebuilt_etc("ld-musl-namespace-${musl_arch}.ini") {
+  source = "${musl_porting_dir}/config/ld-musl-namespace-${musl_arch}.ini"
+}
+
+group("musl_ns_config") {
+  deps = [
+    ":ld-musl-namespace-${musl_arch}-test.ini",
+    ":ld-musl-namespace-${musl_arch}.ini",
+  ]
+}
+
 group("musl_libs") {
   deps = [
     ":${musl_abi_target}_libs",
@@ -52,6 +67,7 @@ group("musl_headers") {
     ":musl_copy_inc_scsi",
     ":musl_copy_inc_sys",
     ":musl_copy_inc_trace",
+    ":musl_ns_config",
   ]
 }
 

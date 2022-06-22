@@ -1,0 +1,85 @@
+# Copyright (c) 2022 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("../../../test_template.gni")
+
+group("dlns_test") {
+  testonly = true
+  deps = [
+    ":dlns_dlopen_test",
+    ":dlns_inherit_test",
+    ":dlns_separated_test",
+    ":dlns_set_fun_test",
+    ":dlns_special_scene_test",
+  ]
+}
+
+ohos_unittest("dlns_dlopen_test") {
+  module_out_path = "libc-test/src/functionalext/dlns"
+  include_dirs = [
+    "../common",
+    "//third_party/musl/porting/linux/user/include",
+    "//third_party/musl/libc-test/src/common",
+  ]
+
+  sources = [ "dlns_dlopen.c" ]
+  configs = [ "//third_party/musl/libc-test/src/common:config_runtest" ]
+}
+
+ohos_unittest("dlns_set_fun_test") {
+  module_out_path = "libc-test/src/functionalext/dlns"
+  include_dirs = [
+    "../common",
+    "//third_party/musl/porting/linux/user/include",
+    "//third_party/musl/libc-test/src/common",
+  ]
+
+  sources = [ "dlns_set_fun.c" ]
+  configs = [ "//third_party/musl/libc-test/src/common:config_runtest" ]
+}
+
+ohos_unittest("dlns_inherit_test") {
+  module_out_path = "libc-test/src/functionalext/dlns"
+  include_dirs = [
+    "../common",
+    "//third_party/musl/porting/linux/user/include",
+    "//third_party/musl/libc-test/src/common",
+  ]
+
+  sources = [ "dlns_inherit.c" ]
+  configs = [ "//third_party/musl/libc-test/src/common:config_runtest" ]
+}
+
+ohos_unittest("dlns_separated_test") {
+  module_out_path = "libc-test/src/functionalext/dlns"
+  include_dirs = [
+    "../common",
+    "//third_party/musl/porting/linux/user/include",
+    "//third_party/musl/libc-test/src/common",
+  ]
+
+  sources = [ "dlns_separated.c" ]
+  configs = [ "//third_party/musl/libc-test/src/common:config_runtest" ]
+}
+
+ohos_unittest("dlns_special_scene_test") {
+  module_out_path = "libc-test/src/functionalext/dlns"
+  include_dirs = [
+    "../common",
+    "//third_party/musl/porting/linux/user/include",
+    "//third_party/musl/libc-test/src/common",
+  ]
+
+  sources = [ "dlns_special_scene.c" ]
+  configs = [ "//third_party/musl/libc-test/src/common:config_runtest" ]
+}
