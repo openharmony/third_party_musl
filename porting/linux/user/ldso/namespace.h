@@ -22,7 +22,10 @@ typedef struct _namespace_t_ {
     char *ns_name;            /* namespace name */
     char *env_paths;          /* value of LD_LIBRARY_PATH. splited by ':'. */
     char *lib_paths;          /* library search paths splited by ':'. */
+
+    char *asan_lib_paths;          /* when asan is enable, library search paths splited by ':'. */
     strlist *permitted_paths;    /* when separated, permitted search paths splited by ':', including sub dirs. */
+    strlist *asan_permitted_paths;    /* when asan is enable and separated,the same as above.  */
 
     bool separated;           /* if separated */
     strlist *allowed_libs;       /* when separated, allowed library names splited by ':'. */
@@ -56,10 +59,11 @@ void ns_free(ns_t *ns);
 void ns_set_name(ns_t *ns, const char *name);
 void ns_set_env_paths(ns_t *ns, const char *env_paths);
 void ns_set_lib_paths(ns_t *ns, const char *lib_paths);
+void ns_set_asan_lib_paths(ns_t *ns, const char *asan_lib_paths);
 void ns_set_permitted_paths(ns_t *ns, const char *permitted_paths);
+void ns_set_asan_permitted_paths(ns_t *ns, const char *asan_permitted_paths);
 void ns_set_separated(ns_t *ns, bool separated);
 void ns_set_allowed_libs(ns_t *ns, const char *allowed_libs);
-
 void ns_add_dso(ns_t *ns, struct dso *dso);
 void nslist_add_ns(ns_t *ns);
 void ns_add_inherit(ns_t *ns,ns_t *inherited, const char *shared_libs);
@@ -68,7 +72,10 @@ void ns_add_inherit(ns_t *ns,ns_t *inherited, const char *shared_libs);
 ns_t *get_default_ns();
 
 /* check if library pathname is accessible in the namespace */
-bool is_accessible(ns_t *ns, const char *lib_pathname);
+bool is_accessible(ns_t *ns, const char *lib_pathname, bool is_asan, bool check_inherited);
+
+/* check if asan_lib_paths or asan_permitted_paths pathname is accessible in the namespace */
+bool check_asan_path(ns_t *ns, const char *lib_pathname);
 
 /* check if library is sharable in the inherited namespace */
 bool is_sharable(ns_inherit *inherit, const char *lib_name);

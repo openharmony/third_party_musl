@@ -34,6 +34,8 @@ typedef struct _section_list_ {
 typedef struct _ns_configor_ {
   char *file_path;
   char *exe_path;
+  char *config_sys_path;
+  char *config_asan_sys_path;
   section_list *sections;
   kvlist *kvs;
 
@@ -41,11 +43,15 @@ typedef struct _ns_configor_ {
   int (*parse)(const char *file_path, const char *exe_path);
   strlist *(*get_namespaces)(void);
   char *(*get_lib_paths)(const char *ns_name);
+  char *(*get_asan_lib_paths)(const char *ns_name);
   char *(*get_permitted_paths)(const char *ns_name);
+  char *(*get_asan_permitted_paths)(const char *ns_name);
   bool (*get_separated)(const char *ns_name);
   strlist *(*get_inherits)(const char *ns_name);
   char *(*get_allowed_libs)(const char *ns_name);
   char *(*get_inherit_shared_libs)(const char *ns_name, const char *inherited_ns_name);
+  char *(*get_sys_paths)(void);
+  char *(*get_asan_sys_paths)(void);
 } ns_configor;
 
 ns_configor *configor_init();

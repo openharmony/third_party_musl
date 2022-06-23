@@ -11,13 +11,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-functionalext_list = [
-  "locale:functionalext_locale_test",
-  "time:functionalext_time_test",
-  "reboot:functionalext_reboot_test",
-  "tgkill:functionalext_tgkill_test",
-  "thread:functionalext_thread_test",
-  "trace:functionalext_trace_test",
-  "dlns:dlns_test",
-  "info:functionalext_info_test",
+functionalext_complex_list = [
+  "dlns_dlopen",
+  "dlns_set_fun",
+  "dlns_inherit",
+  "dlns_separated",
+  "dlns_special_scene",
 ]
