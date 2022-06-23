@@ -106,7 +106,7 @@ void dlns_inherit_0400(void)
     EXPECT_EQ("dlns_inherit_0400", dlns_inherit(&dlnsA, &dlnsB, dllName), EOK);
 
     void* handle = dlopen_ns(&dlnsA, dllName, RTLD_LAZY);
-    EXPECT_NE("dlns_inherit_0300", handle, NULL);
+    EXPECT_PTRNE("dlns_inherit_0400", handle, NULL);
     dlclose(handle);
 
     EXPECT_EQ("dlns_inherit_0400", dlns_inherit(&dlnsAA, &dlnsA, NULL), EOK);
