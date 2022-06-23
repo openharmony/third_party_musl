@@ -1,5 +1,8 @@
 #define _GNU_SOURCE
 #define SYSCALL_NO_TLS 1
+
+#include "dynlink.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -20,13 +23,13 @@
 #include <dlfcn.h>
 #include <semaphore.h>
 #include <sys/membarrier.h>
-#include "pthread_impl.h"
+
+#include "ld_log.h"
 #include "libc.h"
-#include "dynlink.h"
 #include "malloc_impl.h"
-/* add namespace function */
-#include "namespace.h" 
+#include "namespace.h"
 #include "ns_config.h"
+#include "pthread_impl.h"
 
 static void error(const char *, ...);
 
@@ -128,7 +131,7 @@ static struct builtin_tls {
 
 #define ADDEND_LIMIT 4096
 static size_t *saved_addends, *apply_addends_to;
-
+static bool g_is_asan;
 static struct dso ldso;
 static struct dso *head, *tail, *fini_head, *syms_tail, *lazy_head;
 static char *env_path, *sys_path;
@@ -164,69 +167,121 @@ extern hidden void (*const __init_array_end)(void), (*const __fini_array_end)(vo
 weak_alias(__init_array_start, __init_array_end);
 weak_alias(__fini_array_start, __fini_array_end);
 
+/* asan path open */
+int handle_asan_path_open(int fd, const char *name, ns_t *namespace, char *buf);
+
 /* add namespace function */
 static void *addr2dso(size_t a);
-static void get_sys_path();
+static void get_sys_path(ns_configor *conf);
 static void dlclose_ns(struct dso *p);
 static bool get_app_path(char *path, size_t size)
 {
 	int l = 0;
 	l = readlink("/proc/self/exe", path, size);
 	if (l < 0 || l >= size) {
+		LD_LOGE("get_app_path readlink failed!\n");
 		return false;
 	}
 	path[l] = 0;
+	LD_LOGD("get_app_path path:%s.\n", path);
 	return true;
 }
 
 static void init_default_namespace(struct dso *app)
 {
-    ns_t *default_ns = get_default_ns();
-    memset(default_ns, 0, sizeof *default_ns);
+	ns_t *default_ns = get_default_ns();
+	memset(default_ns, 0, sizeof *default_ns);
 	ns_set_name(default_ns, NS_DEFAULT_NAME);
-    if (env_path) ns_set_env_paths(default_ns, env_path);
-    if (!sys_path) get_sys_path(); 
+	if (env_path) ns_set_env_paths(default_ns, env_path);
 	ns_set_lib_paths(default_ns, sys_path);
-    ns_set_separated(default_ns, false);
-	app->namespace = default_ns; 
-	ns_add_dso(default_ns, app);  
-    return;
+	ns_set_separated(default_ns, false);
+	app->namespace = default_ns;
+	ns_add_dso(default_ns, app);
+	LD_LOGD("init_default_namespace default_namespace:"
+			"nsname: default ,"
+			"lib_paths:%s ,"
+			"env_path:%s ,"
+			"separated: false.\n",
+			sys_path, env_path);
+	return;
 }
 
 static void set_ns_attrs(ns_t *ns, ns_configor *conf)
 {
-	char *lib_paths, *permitted_paths, *allowed_libs;
+	if(!ns || !conf) {
+		LD_LOGW("set_ns_attrs failed,ns or conf is null!\n");
+		return;
+	}
+
+	char *lib_paths, *asan_lib_paths, *permitted_paths, *asan_permitted_paths, *allowed_libs;
 
 	ns_set_separated(ns, conf->get_separated(ns->ns_name));
 
 	lib_paths = conf->get_lib_paths(ns->ns_name);
 	if (lib_paths) ns_set_lib_paths(ns, lib_paths);
 
+	asan_lib_paths = conf->get_asan_lib_paths(ns->ns_name);
+	if (asan_lib_paths) ns_set_asan_lib_paths(ns, asan_lib_paths);
+
 	permitted_paths = conf->get_permitted_paths(ns->ns_name);
 	if (permitted_paths) ns_set_permitted_paths(ns, permitted_paths);
 
+	asan_permitted_paths = conf->get_asan_permitted_paths(ns->ns_name);
+	if (asan_permitted_paths) ns_set_asan_permitted_paths(ns, asan_permitted_paths);
+
 	allowed_libs = conf->get_allowed_libs(ns->ns_name);
 	if (allowed_libs) ns_set_allowed_libs(ns, allowed_libs);
+
+	LD_LOGD("set_ns_attrs :"
+			"ns: %p ,"
+			"ns_name: %s ,"
+			"separated:%d ,"
+			"lib_paths:%s ,"
+			"asan_lib_paths:%s ,"
+			"permitted_paths:%s ,"
+			"asan_permitted_paths:%s ,"
+			"allowed_libs: %s .\n",
+			ns, ns->ns_name, ns->separated, ns->lib_paths, ns->asan_lib_paths, ns->permitted_paths,
+			ns->asan_permitted_paths, ns->allowed_libs);
 }
 
 static void set_ns_inherits(ns_t *ns, ns_configor *conf)
 {
+	if(!ns || !conf) {
+		LD_LOGW("set_ns_inherits failed,ns or conf is null!\n");
+		return;
+	}
+
 	strlist *inherits = conf->get_inherits(ns->ns_name);
 	if (inherits) {
 		for (size_t i=0; i<inherits->num; i++) {
-            ns_t *inherited_ns = find_ns_by_name(inherits->strs[i]);
+			ns_t *inherited_ns = find_ns_by_name(inherits->strs[i]);
 			if (inherited_ns) {
 				char *shared_libs = conf->get_inherit_shared_libs(ns->ns_name, inherited_ns->ns_name);
 				ns_add_inherit(ns, inherited_ns, shared_libs);
+				LD_LOGD("set_ns_inherits :"
+						"inherited_ns: %p ,"
+						"ns_name: %s ,"
+						"separated:%d ,"
+						"lib_paths:%s ,"
+						"asan_lib_paths:%s ,"
+						"permitted_paths:%s ,"
+						"asan_permitted_paths:%s ,"
+						"allowed_libs: %s .\n",
+						inherited_ns, inherited_ns->ns_name, inherited_ns->separated, inherited_ns->lib_paths,
+						inherited_ns->asan_lib_paths, inherited_ns->permitted_paths,
+						inherited_ns->asan_permitted_paths, inherited_ns->allowed_libs);
 			}
-        }
+		}
 		strlist_free(inherits);
+	} else {
+		LD_LOGW("set_ns_inherits inherits is NULL!\n");
 	}
 }
 
 static void init_namespace(struct dso *app)
 {
-    char app_path[PATH_MAX+1];
+	char app_path[PATH_MAX+1];
 	if (!get_app_path(app_path, sizeof app_path)) {
 		strcpy(app_path, app->name);
 	}
@@ -237,40 +292,54 @@ static void init_namespace(struct dso *app)
 		app_path[0] = '.';
 		app_path[1] = 0;
 	}
-	init_default_namespace(app);
+
 	nslist *nsl = nslist_init();
-    ns_configor *conf = configor_init();
-    int ret = conf->parse(NULL, app_path);
-    if (ret < 0) {
-        configor_free();
-        return;
-    }
-    /* Init default namespace */
-    ns_t *d_ns = get_default_ns();
-	set_ns_attrs(d_ns, conf);
-    /* Init other namespace */
-	if (!nsl) {
+	ns_configor *conf = configor_init();
+	char file_path[sizeof "/etc/ld-musl-namespace-" + sizeof (LDSO_ARCH) + sizeof ".ini" + 1];
+	(void)snprintf(file_path, sizeof file_path, "/etc/ld-musl-namespace-%s.ini", LDSO_ARCH);
+	LD_LOGI("init_namespace file_path:%s", file_path);
+	int ret = conf->parse(file_path, app_path);
+	if (ret < 0) {
+		LD_LOGE("init_namespace ini file parse failed!\n");
+		/* Init_default_namespace is required even if the ini file parsing fails */
+		if (!sys_path) get_sys_path(conf);
+		init_default_namespace(app);
 		configor_free();
 		return;
 	}
-    strlist *s_ns = conf->get_namespaces();
-    if (s_ns) {
-        for (size_t i=0; i<s_ns->num; i++) {
-            ns_t *ns = ns_alloc();
+
+	/* sys_path needs to be parsed through ini file */
+	if (!sys_path) get_sys_path(conf);
+	init_default_namespace(app);
+
+	/* Init default namespace */
+	ns_t *d_ns = get_default_ns();
+	set_ns_attrs(d_ns, conf);
+
+	/* Init other namespace */
+	if (!nsl) {
+		LD_LOGE("init nslist fail!\n");
+		configor_free();
+		return;
+	}
+	strlist *s_ns = conf->get_namespaces();
+	if (s_ns) {
+		for (size_t i=0; i<s_ns->num; i++) {
+			ns_t *ns = ns_alloc();
 			ns_set_name(ns, s_ns->strs[i]);
 			set_ns_attrs(ns, conf);
 			ns_add_dso(ns, app);
-            nslist_add_ns(ns);
-        }
-        strlist_free(s_ns);
-    } 
-    /* Set inherited namespace */
+			nslist_add_ns(ns);
+		}
+		strlist_free(s_ns);
+	} 
+	/* Set inherited namespace */
 	set_ns_inherits(d_ns, conf);
-	for (size_t i=0; i<nsl->num; i++) {
+	for (size_t i = 0; i < nsl->num; i++) {
 		set_ns_inherits(nsl->nss[i], conf);
 	}
-    configor_free();
-    return;
+	configor_free();
+	return;
 }
 
 static int dl_strcmp(const char *l, const char *r)
@@ -364,7 +433,7 @@ static Sym *sysv_lookup(const char *s, uint32_t h, struct dso *dso)
 	char *strings = dso->strings;
 	for (i=hashtab[2+h%hashtab[0]]; i; i=hashtab[2+hashtab[0]+i]) {
 		if ((!dso->versym || dso->versym[i] >= 0)
-		    && (!strcmp(s, strings+syms[i].st_name)))
+			&& (!strcmp(s, strings+syms[i].st_name)))
 			return syms+i;
 	}
 	return 0;
@@ -383,7 +452,7 @@ static Sym *gnu_lookup(uint32_t h1, uint32_t *hashtab, struct dso *dso, const ch
 	for (h1 |= 1; ; i++) {
 		uint32_t h2 = *hashval++;
 		if ((h1 == (h2|1)) && (!dso->versym || dso->versym[i] >= 0)
-		    && !strcmp(s, dso->strings + dso->syms[i].st_name))
+			&& !strcmp(s, dso->strings + dso->syms[i].st_name))
 			return dso->syms+i;
 		if (h2 & 1) break;
 	}
@@ -430,7 +499,7 @@ static inline struct symdef find_sym2(struct dso *dso, const char *s, int need_d
 		if (!sym) continue;
 		if (!sym->st_shndx)
 			if (need_def || (sym->st_info&0xf) == STT_TLS
-			    || ARCH_SYM_REJECT_UND(sym))
+				|| ARCH_SYM_REJECT_UND(sym))
 				continue;
 		if (!sym->st_value)
 			if ((sym->st_info&0xf) != STT_TLS)
@@ -503,7 +572,7 @@ static void do_relocs(struct dso *dso, size_t *rel, size_t rel_size, size_t stri
 				? (struct symdef){ .dso = dso, .sym = sym }
 				: find_sym(ctx, name, type==REL_PLT);
 			if (!def.sym && (sym->st_shndx != SHN_UNDEF
-			    || sym->st_info>>4 != STB_WEAK)) {
+				|| sym->st_info>>4 != STB_WEAK)) {
 				if (dso->lazy && (type==REL_PLT || type==REL_GOT)) {
 					dso->lazy[3*dso->lazy_cnt+0] = rel[0];
 					dso->lazy[3*dso->lazy_cnt+1] = rel[1];
@@ -526,7 +595,7 @@ static void do_relocs(struct dso *dso, size_t *rel, size_t rel_size, size_t stri
 		tls_val = def.sym ? def.sym->st_value : 0;
 
 		if ((type == REL_TPOFF || type == REL_TPOFF_NEG)
-		    && def.dso->tls_id > static_tls_cnt) {
+			&& def.dso->tls_id > static_tls_cnt) {
 			error("Error relocating %s: %s: initial-exec TLS "
 				"resolves to dynamic definition in %s",
 				dso->name, name, def.dso->name);
@@ -863,7 +932,7 @@ static void *map_library(int fd, struct dso *dso)
 		/* Check if the programs headers are in this load segment, and
 		 * if so, record the address for use by dl_iterate_phdr. */
 		if (!dso->phdr && eh->e_phoff >= ph->p_offset
-		    && eh->e_phoff+phsize <= ph->p_offset+ph->p_filesz) {
+			&& eh->e_phoff+phsize <= ph->p_offset+ph->p_filesz) {
 			dso->phdr = (void *)(base + ph->p_vaddr
 				+ (eh->e_phoff-ph->p_offset));
 			dso->phnum = eh->e_phnum;
@@ -890,7 +959,7 @@ static void *map_library(int fd, struct dso *dso)
 	for (i=0; ((size_t *)(base+dyn))[i]; i+=2)
 		if (((size_t *)(base+dyn))[i]==DT_TEXTREL) {
 			if (mprotect(map, map_len, PROT_READ|PROT_WRITE|PROT_EXEC)
-			    && errno != ENOSYS)
+				&& errno != ENOSYS)
 				goto error;
 			break;
 		}
@@ -1090,60 +1159,17 @@ static void makefuncdescs(struct dso *p)
 	}
 }
 
-static void get_sys_path()
-{
-	char *prefix = 0;
-	size_t prefix_len;
-	char *filename = ldso.name;
-	int is_asan = 0;
-	if(strstr(ldso.name,"-asan")) is_asan = 1;
-	if (ldso.name[0] == '/') {
-		char *s, *t, *z;
-		for (s=t=z=ldso.name; *s; s++)
-			if (*s=='/') z=t, t=s;
-		prefix_len = z-ldso.name;
-		filename = t+1;
-		if (prefix_len < PATH_MAX)
-			prefix = ldso.name;
-	}
-	if (!prefix) {
-		prefix = "";
-		prefix_len = 0;
-	}
-	size_t name_len = strchrnul(filename, '.') - filename;
-	char etc_ldso_path[prefix_len + 1
-		+ sizeof "/etc/.path" + name_len];
-	snprintf(etc_ldso_path, sizeof etc_ldso_path,
-		"%.*s/etc/%.*s.path",
-		(int)prefix_len, prefix, (int)name_len, filename);
-	FILE *f = fopen(etc_ldso_path, "rbe");
-	if (f) {
-		if (getdelim(&sys_path, (size_t[1]){0}, 0, f) <= 0) {
-			free(sys_path);
-			sys_path = "";
-		}
-		fclose(f);
-	} else if (errno != ENOENT) {
-		sys_path = "";
-	}
-	if (is_asan) {
-		char *sys_path_default = NULL;
-
-		snprintf(etc_ldso_path, sizeof etc_ldso_path,
-				 "%.*s/etc/ld-musl-" LDSO_ARCH ".path",
-				 (int)prefix_len, prefix);
-
-		FILE *f = fopen(etc_ldso_path, "rbe");
-		if (f) {
-			if (getdelim(&sys_path_default, (size_t[1]){0}, 0, f) <= 0) {
-				free(sys_path_default);
-				sys_path_default = "";
-			}
-			fclose(f);
-		} else if (errno != ENOENT) {
-			sys_path_default = "";
-		}
-
+static void get_sys_path(ns_configor *conf)
+{ 
+	LD_LOGD("get_sys_path g_is_asan:%d\n", g_is_asan);
+	/* Use ini file's system paths when Asan is not enabled */
+	if (!g_is_asan) {
+		sys_path = conf->get_sys_paths();
+	} else {
+		/* Use ini file's asan system paths when the Asan is enabled
+		 * Merge two strings when both sys_paths and asan_sys_paths are valid */
+		sys_path = conf->get_asan_sys_paths();
+		char *sys_path_default = conf->get_sys_paths();
 		if (!sys_path) {
 			sys_path = sys_path_default;
 		} else if (sys_path_default) {
@@ -1153,15 +1179,15 @@ static void get_sys_path()
 			strcpy(new_syspath, sys_path);
 			strcat(new_syspath, ":");
 			strcat(new_syspath, sys_path_default);
-			free(sys_path);
-			free(sys_path_default);
 			sys_path = new_syspath;
 		}
 	}
 	if (!sys_path) sys_path = "/lib:/usr/local/lib:/usr/lib:/lib64";
+	LD_LOGD("get_sys_path sys_path:%s\n", sys_path);
 }
 
 static struct dso *search_dso_by_name(const char *name, const ns_t *ns) {
+	LD_LOGD("search_dso_by_name name:%s, ns:%p\n", name, ns);
 	for (size_t i = 0; i < ns->ns_dsos->num; i++){
 		struct dso *p = ns->ns_dsos->dsos[i];
 		if (p->shortname && !strcmp(p->shortname, name)) {
@@ -1172,6 +1198,7 @@ static struct dso *search_dso_by_name(const char *name, const ns_t *ns) {
 }
 
 static struct dso *search_dso_by_fstat(const struct stat *st, const ns_t *ns) {
+	LD_LOGD("search_dso_by_fstat st->st_dev:%lu, st->st_ino:%lu, ns:%p\n", st->st_dev, st->st_ino, ns);
 	for (size_t i = 0; i < ns->ns_dsos->num; i++){
 		struct dso *p = ns->ns_dsos->dsos[i];
 		if (p->dev == st->st_dev && p->ino == st->st_ino) {
@@ -1183,6 +1210,7 @@ static struct dso *search_dso_by_fstat(const struct stat *st, const ns_t *ns) {
 /* Find loaded so by name */
 static struct dso *find_library_by_name(const char *name, const ns_t *ns, bool check_inherited)
 {	
+	LD_LOGD("find_library_by_name name:%s, ns:%p, check_inherited:%d\n", name, ns, check_inherited);
 	struct dso *p = search_dso_by_name(name, ns);
 	if (p) return p;
 	if (check_inherited && ns->ns_inherits) {
@@ -1196,6 +1224,7 @@ static struct dso *find_library_by_name(const char *name, const ns_t *ns, bool c
 }
 /* Find loaded so by file stat */
 static struct dso *find_library_by_fstat(const struct stat *st, const ns_t *ns, bool check_inherited) {
+	LD_LOGD("find_library_by_fstat st->st_dev:%lu, st->st_ino:%lu, ns:%p, check_inherited:%d\n", st->st_dev, st->st_ino, ns, check_inherited);
 	struct dso *p = search_dso_by_fstat(st, ns);
 	if (p) return p;
 	if (check_inherited && ns->ns_inherits) {
@@ -1222,6 +1251,7 @@ struct dso *load_library(const char *name, struct dso *needed_by, ns_t *namespac
 
 	if (!*name) {
 		errno = EINVAL;
+		LD_LOGW("load_library name is null!\n");
 		return 0;
 	}
 
@@ -1266,33 +1296,52 @@ struct dso *load_library(const char *name, struct dso *needed_by, ns_t *namespac
 	}
 	if (strchr(name, '/')) {
 		pathname = name;
-		if (!is_accessible(namespace, pathname)) {
+
+		if (!is_accessible(namespace, pathname, g_is_asan, check_inherited)) {
 			fd = -1;
+			LD_LOGD("load_library is_accessible return false,fd = -1!\n");
 		} else {
 			fd = open(name, O_RDONLY|O_CLOEXEC);
+			LD_LOGD("load_library is_accessible return true, open file fd:%d .\n", fd);
 		}
 	} else {
 		/* Search for the name to see if it's already loaded */
 		/* Search in namespace */
 		p = find_library_by_name(name, namespace, check_inherited);
 		if (p) {
+			LD_LOGD("load_library find_library_by_name found p, return it!\n");
 			/* increase dlopen refcnt */
 			a_inc(&p->nr_dlopen);
 			return p;
 		}
-		if (strlen(name) > NAME_MAX) return 0;
+		if (strlen(name) > NAME_MAX) {
+			LD_LOGW("load_library name exceeding the maximum length, return 0!\n");
+			return 0;
+		}
 		fd = -1;
 		if (namespace->env_paths) fd = path_open(name, namespace->env_paths, buf, sizeof buf);
 		for (p = needed_by; fd == -1 && p; p = p->needed_by) {
-			if (fixup_rpath(p, buf, sizeof buf) < 0)
+			if (fixup_rpath(p, buf, sizeof buf) < 0) {
+				LD_LOGD("load_library Inhibit further search,fd = -2.\n");
 				fd = -2; /* Inhibit further search. */
-			if (p->rpath)
+			}
+			if (p->rpath) {
 				fd = path_open(name, p->rpath, buf, sizeof buf);
+				LD_LOGD("load_library  p->rpath path_open fd:%d.\n", fd);
+			}
+
 		}
-		if (fd == -1 && namespace->lib_paths) {
-			fd = path_open(name, namespace->lib_paths, buf, sizeof buf);
+		if (g_is_asan) {
+			fd = handle_asan_path_open(fd, name, namespace, buf);
+			LD_LOGD("load_library handle_asan_path_open fd:%d.\n", fd);
+		} else {
+			if (fd == -1 && namespace->lib_paths) {
+				fd = path_open(name, namespace->lib_paths, buf, sizeof buf);
+				LD_LOGD("load_library no asan lib_paths path_open fd:%d.\n", fd);
+			}
 		}
 		pathname = buf;
+		LD_LOGD("load_library lib_paths pathname:%s.\n", pathname);
 	}
 	if (fd < 0) {
 		if (!check_inherited || !namespace->ns_inherits) return 0;
@@ -1301,12 +1350,17 @@ struct dso *load_library(const char *name, struct dso *needed_by, ns_t *namespac
 			ns_inherit *inherit = namespace->ns_inherits->inherits[i];
 			if (strchr(name, '/')==0 && !is_sharable(inherit, name)) continue;
 			p = load_library(name, needed_by, inherit->inherited_ns, false);
-			if (p) return p;
+			if (p) {
+				LD_LOGD("load_library search in inherited, found p ,inherited_ns name:%s\n",
+						inherit->inherited_ns->ns_name);
+				return p;
+			}
 		}
 		return 0;
 	}
 	if (fstat(fd, &st) < 0) {
 		close(fd);
+		LD_LOGD("load_library fstat < 0,return 0!\n");
 		return 0;
 	}
 	/* Search in namespace */
@@ -1320,6 +1374,7 @@ struct dso *load_library(const char *name, struct dso *needed_by, ns_t *namespac
 		close(fd);
 		/* increase dlopen refcnt */
 		a_inc(&p->nr_dlopen);
+		LD_LOGD("load_library find_library_by_fstat, found p and return it!\n");
 		return p;
 	}
 	map = noload ? 0 : map_library(fd, &temp_dso);
@@ -1332,7 +1387,7 @@ struct dso *load_library(const char *name, struct dso *needed_by, ns_t *namespac
 	 * false positives from interposition-hack libraries. */
 	decode_dyn(&temp_dso);
 	if (find_sym(&temp_dso, "__libc_start_main", 1).sym &&
-	    find_sym(&temp_dso, "stdin", 1).sym) {
+		find_sym(&temp_dso, "stdin", 1).sym) {
 		unmap_library(&temp_dso);
 		return load_library("libc.so", needed_by, namespace, true);
 	}
@@ -1570,8 +1625,8 @@ static void reloc_all(struct dso *p)
 		do_relocs(p, laddr(p, dyn[DT_RELA]), dyn[DT_RELASZ], 3);
 
 		if (head != &ldso && p->relro_start != p->relro_end &&
-		    mprotect(laddr(p, p->relro_start), p->relro_end-p->relro_start, PROT_READ)
-		    && errno != ENOSYS) {
+			mprotect(laddr(p, p->relro_start), p->relro_end-p->relro_start, PROT_READ)
+			&& errno != ENOSYS) {
 			error("Error relocating %s: RELRO protection failed: %m",
 				p->name);
 			if (runtime) longjmp(*rtld_fail, 1);
@@ -1977,7 +2032,7 @@ void __dls3(size_t *sp, size_t *auxv)
 		if (app.tls.size) app.tls.image = laddr(&app, tls_image);
 		if (interp_off) ldso.name = laddr(&app, interp_off);
 		if ((aux[0] & (1UL<<AT_EXECFN))
-		    && strncmp((char *)aux[AT_EXECFN], "/proc/", 6))
+			&& strncmp((char *)aux[AT_EXECFN], "/proc/", 6))
 			app.name = (char *)aux[AT_EXECFN];
 		else
 			app.name = argv[0];
@@ -2083,6 +2138,14 @@ void __dls3(size_t *sp, size_t *auxv)
 
 	/* Load preload/needed libraries, add symbols to global namespace. */
 	ldso.deps = (struct dso **)no_deps;
+	/* Init g_is_asan */
+	g_is_asan = false;
+	LD_LOGI("__dls3 ldso.name:%s.\n", ldso.name);
+	/* Through ldso Name to judge whether the Asan function is enabled */
+	if (strstr(ldso.name, "-asan")) {
+		g_is_asan = true;
+		LD_LOGI("__dls3 g_is_asan is true.\n");
+	}
 	/* Init all namespaces by config file. there is a default namespace always*/
 	init_namespace(&app);
 	if (env_preload) load_preload(env_preload, get_default_ns());
@@ -2232,7 +2295,10 @@ static void *dlopen_impl(const char *file, int mode, const char *namespace, cons
 	ns_t *ns;
 	struct dso *caller;
 
-	if (!file) return head;
+	if (!file) {
+		LD_LOGD("dlopen_impl file is null,return head.\n");
+		return head;
+	}
 
 	pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &cs);
 	pthread_rwlock_wrlock(&lock);
@@ -2358,38 +2424,50 @@ end:
 void *dlopen(const char *file, int mode)
 {
 	const void *caller_addr = __builtin_return_address(0);
-  	return dlopen_impl(file, mode, NULL, caller_addr);
+	LD_LOGI("dlopen file:%s, mode:%d ,caller_addr:%p .\n", file, mode, caller_addr);
+	return dlopen_impl(file, mode, NULL, caller_addr);
 }
 
 void dlns_init(Dl_namespace *dlns, const char *name)
 {
-	if (!dlns) return;
+	if (!dlns) {
+		LD_LOGW("dlns_init dlns is null.\n");
+		return;
+	}
 	if (!name) {
+		LD_LOGE("dlns_init name is null.\n");
 		dlns->name[0] = 0;
 		return;
 	}
 	snprintf(dlns->name, sizeof dlns->name, name);
+	LD_LOGI("dlns_init dlns->name:%s .\n", dlns->name);
 }
 
 void *dlopen_ns(Dl_namespace *dlns, const char *file, int mode)
 {
 	const void *caller_addr = __builtin_return_address(0);
-  	return dlopen_impl(file, mode, dlns->name, caller_addr);
+	LD_LOGI("dlopen_ns file:%s, mode:%d , caller_addr:%p , dlns->name:%s.\n", file, mode, caller_addr, dlns->name);
+	return dlopen_impl(file, mode, dlns->name, caller_addr);
 }
 
 int dlns_create(Dl_namespace *dlns, const char *lib_path)
 {
-	if (!dlns) return EINVAL;
+	if (!dlns) {
+		LD_LOGW("dlns_create dlns is null.\n");
+		return EINVAL;
+	}
 	ns_t *ns;
 
 	pthread_rwlock_wrlock(&lock);
 	ns = find_ns_by_name(dlns->name);
 	if (ns) {
+		LD_LOGE("dlns_create ns is exist.\n");
 		pthread_rwlock_unlock(&lock);
 		return EEXIST;
 	}
 	ns = ns_alloc();
 	if (!ns) {
+		LD_LOGE("dlns_create no memery.\n");
 		pthread_rwlock_unlock(&lock);
 		return ENOMEM;
 	}
@@ -2398,6 +2476,12 @@ int dlns_create(Dl_namespace *dlns, const char *lib_path)
 	nslist_add_ns(ns); /* add ns to list*/
 	ns_set_lib_paths(ns, lib_path);
 	ns_add_inherit(ns, get_default_ns(), NULL);
+	LD_LOGI("dlns_create :"
+			"ns: %p ,"
+			"ns_name: %s ,"
+			"separated:%d ,"
+			"lib_paths:%s ",
+			ns, ns->ns_name, ns->separated, ns->lib_paths);
 	pthread_rwlock_unlock(&lock);
 
 	return 0;
@@ -2405,12 +2489,16 @@ int dlns_create(Dl_namespace *dlns, const char *lib_path)
 
 int dlns_inherit(Dl_namespace *dlns, Dl_namespace *inherited, const char *shared_libs)
 {
-	if (!dlns || !inherited) return EINVAL;
+	if (!dlns || !inherited) {
+		LD_LOGW("dlns_inherit dlns or inherited is null.\n");
+		return EINVAL;
+	}
 
 	pthread_rwlock_wrlock(&lock);
 	ns_t* ns = find_ns_by_name(dlns->name);
 	ns_t* ns_inherited = find_ns_by_name(inherited->name);
 	if (!ns || !ns_inherited) {
+		LD_LOGW("dlns_inherit ns or ns_inherited is not found.\n");
 		pthread_rwlock_unlock(&lock);
 		return ENOKEY;
 	}
@@ -2457,7 +2545,7 @@ static void *addr2dso(size_t a)
 		if (DL_FDPIC && p->loadmap) {
 			for (i=0; i<p->loadmap->nsegs; i++) {
 				if (a-p->loadmap->segs[i].p_vaddr
-				    < p->loadmap->segs[i].p_memsz)
+					< p->loadmap->segs[i].p_memsz)
 					return p;
 			}
 		} else {
@@ -2743,4 +2831,110 @@ static void error(const char *fmt, ...)
 	}
 	__dl_vseterr(fmt, ap);
 	va_end(ap);
+}
+
+int dlns_set_namespace_lib_path(const char * name, const char * lib_path)
+{
+	if (!name || !lib_path) {
+		LD_LOGW("dlns_set_namespace_lib_path name or lib_path is null.\n");
+		return EINVAL;
+	}
+
+	pthread_rwlock_wrlock(&lock);
+	ns_t* ns = find_ns_by_name(name);
+	if (!ns) {
+		pthread_rwlock_unlock(&lock);
+		LD_LOGW("dlns_set_namespace_lib_path fail, input ns name : [%s] is not found.\n", name);
+		return ENOKEY;
+	}
+
+	ns_set_lib_paths(ns, lib_path);
+	pthread_rwlock_unlock(&lock);
+	return 0;
+}
+
+int dlns_set_namespace_separated(const char * name, const bool separated)
+{
+	if (!name) {
+		LD_LOGW("dlns_set_namespace_separated name  is null.\n");
+		return EINVAL;
+	}
+
+	pthread_rwlock_wrlock(&lock);
+	ns_t* ns = find_ns_by_name(name);
+	if (!ns) {
+		pthread_rwlock_unlock(&lock);
+		LD_LOGW("dlns_set_namespace_separated fail, input ns name : [%s] is not found.\n", name);
+		return ENOKEY;
+	}
+
+	ns_set_separated(ns, separated);
+	pthread_rwlock_unlock(&lock);
+	return 0;
+}
+
+int dlns_set_namespace_permitted_paths(const char * name, const char * permitted_paths)
+{
+	if (!name || !permitted_paths) {
+		LD_LOGW("dlns_set_namespace_permitted_paths name or permitted_paths is null.\n");
+		return EINVAL;
+	}
+
+	pthread_rwlock_wrlock(&lock);
+	ns_t* ns = find_ns_by_name(name);
+	if (!ns) {
+		pthread_rwlock_unlock(&lock);
+		LD_LOGW("dlns_set_namespace_permitted_paths fail, input ns name : [%s] is not found.\n", name);
+		return ENOKEY;
+	}
+
+	ns_set_permitted_paths(ns, permitted_paths);
+	pthread_rwlock_unlock(&lock);
+	return 0;
+}
+
+int dlns_set_namespace_allowed_libs(const char * name, const char * allowed_libs)
+{
+	if (!name || !allowed_libs) {
+		LD_LOGW("dlns_set_namespace_allowed_libs name or allowed_libs is null.\n");
+		return EINVAL;
+	}
+
+	pthread_rwlock_wrlock(&lock);
+	ns_t* ns = find_ns_by_name(name);
+	if (!ns) {
+		pthread_rwlock_unlock(&lock);
+		LD_LOGW("dlns_set_namespace_allowed_libs fail, input ns name : [%s] is not found.\n", name);
+		return ENOKEY;
+	}
+
+	ns_set_allowed_libs(ns, allowed_libs);
+	pthread_rwlock_unlock(&lock);
+	return 0;
+}
+
+int handle_asan_path_open(int fd, const char *name, ns_t *namespace, char *buf)
+{
+	LD_LOGD("handle_asan_path_open fd:%d, name:%s , namespace:%p , buf:%s.\n", fd, name, namespace, buf);
+	int fd_tmp = fd;
+	if (fd == -1 && (namespace->asan_lib_paths || namespace->lib_paths)) {
+		if (namespace->lib_paths && namespace->asan_lib_paths) {
+			size_t newlen = strlen(namespace->asan_lib_paths) + strlen(namespace->lib_paths) + 2;
+			char *new_lib_paths = malloc(newlen);
+			memset(new_lib_paths, 0, newlen);
+			strcpy(new_lib_paths, namespace->asan_lib_paths);
+			strcat(new_lib_paths, ":");
+			strcat(new_lib_paths, namespace->lib_paths);
+			fd_tmp = path_open(name, new_lib_paths, buf, sizeof buf);
+			LD_LOGD("handle_asan_path_open path_open new_lib_paths:%s ,fd: %d.\n", new_lib_paths, fd_tmp);
+			free(new_lib_paths);
+		} else if (namespace->asan_lib_paths) {
+			fd_tmp = path_open(name, namespace->asan_lib_paths, buf, sizeof buf);
+			LD_LOGD("handle_asan_path_open path_open asan_lib_paths:%s ,fd: %d.\n", namespace->asan_lib_paths, fd_tmp);
+		} else {
+			fd_tmp = path_open(name, namespace->lib_paths, buf, sizeof buf);
+			LD_LOGD("handle_asan_path_open path_open lib_paths:%s ,fd: %d.\n", namespace->lib_paths, fd_tmp);
+		}
+	}
+	return fd_tmp;
 }
