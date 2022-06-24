@@ -20,4 +20,6 @@ functionalext_list = [
   "trace:functionalext_trace_test",
   "dlns:dlns_test",
   "info:functionalext_info_test",
+  "ldso_randomization:functionalext_ldso_randomization_test",
+  "relro:functionalext_relro_test",
 ]

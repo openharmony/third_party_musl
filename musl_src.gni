@@ -1561,6 +1561,7 @@ musl_src_ldso = [
   "ldso/namespace.c",
   "ldso/ns_config.c",
   "ldso/strops.c",
+  "ldso/dynlink_rand.c",
 ]
 
 if (musl_arch == "arm") {
@@ -1769,6 +1770,7 @@ musl_inc_root_files = [
   "include/ctype.h",
   "include/dirent.h",
   "include/dlfcn.h",
+  "include/dlfcn_ext.h",
   "include/elf.h",
   "include/endian.h",
   "include/err.h",
@@ -1871,6 +1873,7 @@ musl_src_porting_file = [
   "include/trace/trace_marker.h",
   "include/unistd.h",
   "include/dlfcn.h",
+  "include/dlfcn_ext.h",
   "src/internal/musl_log.h",
   "src/info/application_target_sdk_version.c",
   "src/info/device_api_version.c",
@@ -1919,6 +1922,8 @@ musl_src_porting_file = [
   "ldso/namespace.c",
   "ldso/ns_config.c",
   "ldso/strops.c",
+  "ldso/dynlink_rand.c",
+  "ldso/dynlink_rand.h",
   "src/thread/pthread_create.c",
   "src/sched/sched_cpualloc.c",
   "src/signal/signal.c",

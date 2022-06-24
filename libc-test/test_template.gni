@@ -118,6 +118,18 @@ template("test_unittest") {
       }
     }
 
+    if (target_dir == "functionalext/ldso_randomization") {
+      if (target_name == "ldso_randomization_test") {
+        ldflags += [ "-Wl,--export-dynamic,-rpath=./" ]
+      }
+
+      if (target_name == "ldso_randomization_manual") {
+        ldflags += [ "-Wl,-rpath=./" ]
+      }
+
+      include_dirs += [ "//${test_dir}/src/functionalext/common" ]
+    }
+
     if (target_dir == "musl") {
       cflags_c += [ "-w" ]
 
@@ -149,6 +161,14 @@ template("test_unittest") {
         ldflags += [ "-Wl,-rpath=./" ]
         libs +=
             [ "//${root_out_dir}/${test_lib_dir}/libtls_get_new-dtv_dso.so" ]
+      }
+    }
+
+    if (target_dir == "functionalext/relro") {
+      if (target_name == "dlopen_ext_relro_test") {
+        include_dirs += [ "//${test_dir}/src/functionalext/common" ]
+
+        ldflags += [ "-Wl,-rpath=./" ]
       }
     }
   }
