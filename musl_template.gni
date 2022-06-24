@@ -177,8 +177,12 @@ template("musl_libs") {
 
     cflags = cflags_all
 
+    defines = []
     if ("${target_abi}" != "a7_hard_neon-vfpv4") {
-      defines = [ "BROKEN_VFP_ASM" ]
+      defines += [ "BROKEN_VFP_ASM" ]
+    }
+    if (is_standard_system) {
+      defines += [ "OHOS_DNS_PROXY_BY_NETSYS=1" ]
     }
 
     dynamic_list =
