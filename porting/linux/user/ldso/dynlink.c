@@ -3,6 +3,7 @@
 
 #include "dynlink.h"
 
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -24,6 +25,8 @@
 #include <semaphore.h>
 #include <sys/membarrier.h>
 
+#include "dlfcn_ext.h"
+#include "dynlink_rand.h"
 #include "ld_log.h"
 #include "libc.h"
 #include "malloc_impl.h"
@@ -33,12 +36,27 @@
 
 static void error(const char *, ...);
 
+// address randomization definition
+#define HANDLE_RANDOMIZATION
+#define LOAD_ORDER_RANDOMIZATION
+
 #define MAXP2(a,b) (-(-(a)&-(b)))
 #define ALIGN(x,y) ((x)+(y)-1 & -(y))
 
 #define container_of(p,t,m) ((t*)((char *)(p)-offsetof(t,m)))
 #define countof(a) ((sizeof (a))/(sizeof (a)[0]))
 #define DSO_FLAGS_NODELETE 0x1
+
+#ifdef HANDLE_RANDOMIZATION
+#define NEXT_DYNAMIC_INDEX 2
+#define MIN_DEPS_COUNT 2
+#define NAME_INDEX_ZERO 0
+#define NAME_INDEX_ONE 1
+#define NAME_INDEX_TWO 2
+#define NAME_INDEX_THREE 3
+#define TLS_CNT_INCREASE 3
+#define INVALID_FD_INHIBIT_FURTHER_SEARCH (-2)
+#endif
 
 struct debug {
 	int ver;
@@ -166,6 +184,26 @@ extern hidden void (*const __init_array_end)(void), (*const __fini_array_end)(vo
 
 weak_alias(__init_array_start, __init_array_end);
 weak_alias(__fini_array_start, __fini_array_end);
+
+#ifdef HANDLE_RANDOMIZATION
+static int do_dlclose(struct dso *p);
+#endif
+
+#ifdef LOAD_ORDER_RANDOMIZATION
+static bool map_library_header(struct loadtask *task);
+static bool task_map_library(struct loadtask *task);
+static bool load_library_header(struct loadtask *task);
+static void task_load_library(struct loadtask *task);
+static void preload_direct_deps(struct dso *p, ns_t *namespace, struct loadtasks *tasks);
+static void unmap_preloaded_sections(struct loadtasks *tasks);
+static void preload_deps(struct dso *p, ns_t *ns, struct loadtasks *tasks);
+static void run_loadtasks(struct loadtasks *tasks);
+static void assign_tls(struct dso *p);
+static void load_preload(char *s, ns_t *ns, struct loadtasks *tasks);
+#endif
+
+/* Sharing relro */
+static void handle_relro_sharing(struct dso *p, const dl_extinfo *extinfo, ssize_t *relro_fd_offset);
 
 /* asan path open */
 int handle_asan_path_open(int fd, const char *name, ns_t *namespace, char *buf);
@@ -1236,8 +1274,11 @@ static struct dso *find_library_by_fstat(const struct stat *st, const ns_t *ns, 
 	}
 	return NULL;
 }
+
+#ifndef LOAD_ORDER_RANDOMIZATION
 /* add namespace function */
-struct dso *load_library(const char *name, struct dso *needed_by, ns_t *namespace, bool check_inherited)
+struct dso *load_library(
+	const char *name, struct dso *needed_by, ns_t *namespace, bool check_inherited)
 {
 	char buf[PATH_MAX+1];
 	const char *pathname;
@@ -1505,6 +1546,7 @@ static void load_deps(struct dso *p, ns_t *ns)
 	for (; p; p=p->next)
 		load_direct_deps(p, ns);
 }
+#endif
 
 static void extend_bfs_deps(struct dso *p)
 {
@@ -1557,6 +1599,7 @@ static void extend_bfs_deps(struct dso *p)
 		p->mark = 0;
 }
 
+#ifndef LOAD_ORDER_RANDOMIZATION
 static void load_preload(char *s, ns_t *ns)
 {
 	int tmp;
@@ -1566,10 +1609,11 @@ static void load_preload(char *s, ns_t *ns)
 		for (z=s; *z && !isspace(*z) && *z!=':'; z++);
 		tmp = *z;
 		*z = 0;
-		load_library(s, 0, ns, true);
+		load_library(s, 0, ns, true, NULL);
 		*z = tmp;
 	}
 }
+#endif
 
 static void add_syms(struct dso *p)
 {
@@ -1611,8 +1655,9 @@ static void do_mips_relocs(struct dso *p, size_t *got)
 	}
 }
 
-static void reloc_all(struct dso *p)
+static void reloc_all(struct dso *p, const dl_extinfo *extinfo)
 {
+	ssize_t relro_fd_offset = 0;
 	size_t dyn[DYN_CNT];
 	for (; p; p=p->next) {
 		if (p->relocated) continue;
@@ -1631,6 +1676,8 @@ static void reloc_all(struct dso *p)
 				p->name);
 			if (runtime) longjmp(*rtld_fail, 1);
 		}
+		/* Handle serializing/mapping the RELRO segment */
+		handle_relro_sharing(p, extinfo, &relro_fd_offset);
 
 		p->relocated = 1;
 	}
@@ -1936,7 +1983,7 @@ hidden void __dls2(unsigned char *base, size_t *sp)
 	saved_addends = addends;
 
 	head = &ldso;
-	reloc_all(&ldso);
+	reloc_all(&ldso, NULL);
 
 	ldso.relocated = 0;
 
@@ -2148,8 +2195,26 @@ void __dls3(size_t *sp, size_t *auxv)
 	}
 	/* Init all namespaces by config file. there is a default namespace always*/
 	init_namespace(&app);
+
+#ifdef LOAD_ORDER_RANDOMIZATION
+	struct loadtasks *tasks = create_loadtasks();
+	if (!tasks) {
+		_exit(1);
+	}
+	if (env_preload) {
+		load_preload(env_preload, get_default_ns(), tasks);
+	}
+	preload_deps(&app, get_default_ns(), tasks);
+	unmap_preloaded_sections(tasks);
+	shuffle_loadtasks(tasks);
+	run_loadtasks(tasks);
+	free_loadtasks(tasks);
+	assign_tls(app.next);
+#else
 	if (env_preload) load_preload(env_preload, get_default_ns());
  	load_deps(&app, get_default_ns());
+#endif
+
 	for (struct dso *p=head; p; p=p->next)
 		add_syms(p);
 
@@ -2211,8 +2276,8 @@ void __dls3(size_t *sp, size_t *auxv)
 
 	/* The main program must be relocated LAST since it may contain
 	 * copy relocations which depend on libraries' relocations. */
-	reloc_all(app.next);
-	reloc_all(&app);
+	reloc_all(app.next, NULL);
+	reloc_all(&app, NULL);
 
 	/* Actual copying to new TLS needs to happen after relocations,
 	 * since the TLS images might have contained relocated addresses. */
@@ -2283,7 +2348,8 @@ static void prepare_lazy(struct dso *p)
 }
 
 /* add namespace function */
-static void *dlopen_impl(const char *file, int mode, const char *namespace, const void *caller_addr)
+static void *dlopen_impl(
+	const char *file, int mode, const char *namespace, const void *caller_addr, const dl_extinfo *extinfo)
 {
 	struct dso *volatile p, *orig_tail, *orig_syms_tail, *orig_lazy_head, *next;
 	struct tls_module *orig_tls_tail;
@@ -2294,16 +2360,28 @@ static void *dlopen_impl(const char *file, int mode, const char *namespace, cons
 	struct dso **volatile ctor_queue = 0;
 	ns_t *ns;
 	struct dso *caller;
+#ifdef HANDLE_RANDOMIZATION
+	void *handle = 0;
+#endif
+#ifdef LOAD_ORDER_RANDOMIZATION
+	struct loadtasks *tasks = NULL;
+	struct loadtask *task = NULL;
+	bool reserved_address_recursive = false;
+#endif
 
 	if (!file) {
-		LD_LOGD("dlopen_impl file is null,return head.\n");
+		LD_LOGD("dlopen_impl file is null, return head.\n");
+#ifdef HANDLE_RANDOMIZATION
+		return assign_valid_handle(head);
+#else
 		return head;
+#endif
 	}
 
 	pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &cs);
 	pthread_rwlock_wrlock(&lock);
 	__inhibit_ptc();
-	
+
 	/* When namespace does not exist, use caller's namespce
 	 * and when caller does not exist, use default namespce. */
 	caller = (struct dso *)addr2dso((size_t)caller_addr);
@@ -2356,7 +2434,28 @@ static void *dlopen_impl(const char *file, int mode, const char *namespace, cons
 		tail->next = 0;
 		p = 0;
 		goto end;
-	} else p = load_library(file, head, ns, true);
+	} else {
+#ifdef LOAD_ORDER_RANDOMIZATION
+		tasks = create_loadtasks();
+		if (!tasks) {
+			goto end;
+		}
+		task = create_loadtask(file, head, ns, true);
+		if (!task) {
+			goto end;
+		}
+		if (!load_library_header(task)) {
+			error(noload ?
+			"Library %s is not already loaded" :
+			"Error loading shared library %s: %m",
+			file);
+			goto end;
+		}
+		p = task->p;
+#else
+		p = load_library(file, head, ns, true, extinfo);
+#endif
+	}
 
 	if (!p) {
 		error(noload ?
@@ -2366,8 +2465,31 @@ static void *dlopen_impl(const char *file, int mode, const char *namespace, cons
 		goto end;
 	}
 
+#ifdef LOAD_ORDER_RANDOMIZATION
+	if (!task->isloaded) {
+		append_loadtasks(tasks, task);
+	}
+	preload_deps(p, ns, tasks);
+	unmap_preloaded_sections(tasks);
+	if (extinfo) {
+		reserved_address_recursive = extinfo->flag & DL_EXT_RESERVED_ADDRESS_RECURSIVE;
+	}
+	if (!reserved_address_recursive) {
+		shuffle_loadtasks(tasks);
+	}
+	run_loadtasks(tasks);
+	if (!task->isloaded) {
+		assign_tls(p);
+	} else {
+		free_task(task);
+		task = NULL;
+	}
+	free_loadtasks(tasks);
+	tasks = NULL;
+#else
 	/* First load handling */
-	load_deps(p, ns);
+	load_deps(p, ns, extinfo);
+#endif
 	extend_bfs_deps(p);
 	pthread_mutex_lock(&init_fini_lock);
 	if (!p->constructed) ctor_queue = queue_ctors(p);
@@ -2386,7 +2508,7 @@ static void *dlopen_impl(const char *file, int mode, const char *namespace, cons
 			add_syms(p->deps[i]);
 	}
 	if (!p->relocated) {
-		reloc_all(p);
+		reloc_all(p, extinfo);
 	}
 
 	/* If RTLD_GLOBAL was not specified, undo any new additions
@@ -2409,7 +2531,20 @@ static void *dlopen_impl(const char *file, int mode, const char *namespace, cons
 		install_new_tls();
 	_dl_debug_state();
 	orig_tail = tail;
+
+#ifdef HANDLE_RANDOMIZATION
+	handle = assign_valid_handle(p);
+	if (handle == 0) {
+		do_dlclose(p);
+		p = 0;
+	}
+	LD_LOGD("dlopen %s: realpath=%s, handle=%p", name, p->rpath, handle);
+#endif
 end:
+#ifdef LOAD_ORDER_RANDOMIZATION
+	free_loadtasks(tasks);
+	tasks = NULL;
+#endif
 	__release_ptc();
 	if (p) gencnt++;
 	pthread_rwlock_unlock(&lock);
@@ -2418,14 +2553,18 @@ end:
 		free(ctor_queue);
 	}
 	pthread_setcancelstate(cs, 0);
+#ifdef HANDLE_RANDOMIZATION
+	return handle;
+#else
 	return p;
+#endif
 }
 
 void *dlopen(const char *file, int mode)
 {
 	const void *caller_addr = __builtin_return_address(0);
 	LD_LOGI("dlopen file:%s, mode:%d ,caller_addr:%p .\n", file, mode, caller_addr);
-	return dlopen_impl(file, mode, NULL, caller_addr);
+	return dlopen_impl(file, mode, NULL, caller_addr, NULL);
 }
 
 void dlns_init(Dl_namespace *dlns, const char *name)
@@ -2447,7 +2586,7 @@ void *dlopen_ns(Dl_namespace *dlns, const char *file, int mode)
 {
 	const void *caller_addr = __builtin_return_address(0);
 	LD_LOGI("dlopen_ns file:%s, mode:%d , caller_addr:%p , dlns->name:%s.\n", file, mode, caller_addr, dlns->name);
-	return dlopen_impl(file, mode, dlns->name, caller_addr);
+	return dlopen_impl(file, mode, dlns->name, caller_addr, NULL);
 }
 
 int dlns_create(Dl_namespace *dlns, const char *lib_path)
@@ -2683,7 +2822,27 @@ hidden int __dlclose(void *p)
 	int rc;
 	pthread_rwlock_wrlock(&lock);
 	__inhibit_ptc();
+#ifdef HANDLE_RANDOMIZATION
+	struct dso *dso = find_dso_by_handle(p);
+	if (dso == NULL) {
+		error("Handle is not find");
+		__release_ptc();
+		pthread_rwlock_unlock(&lock);
+		return -1;
+	}
+	rc = do_dlclose(dso);
+	if (!rc) {
+		struct dso *t = head;
+		for (; t && t != dso; t = t->next) {
+			;
+		}
+		if (t == NULL) {
+			remove_handle_node(p);
+		}
+	}
+#else
 	rc = do_dlclose(p);
+#endif
 	__release_ptc();
 	pthread_rwlock_unlock(&lock);
 	return rc;
@@ -2760,7 +2919,16 @@ hidden void *__dlsym(void *restrict p, const char *restrict s, void *restrict ra
 {
 	void *res;
 	pthread_rwlock_rdlock(&lock);
+#ifdef HANDLE_RANDOMIZATION
+	struct dso *dso = find_dso_by_handle(p);
+	if (dso == NULL) {
+		pthread_rwlock_unlock(&lock);
+		return 0;
+	}
+	res = do_dlsym(dso, s, ra);
+#else
 	res = do_dlsym(p, s, ra);
+#endif
 	pthread_rwlock_unlock(&lock);
 	return res;
 }
@@ -2937,4 +3105,854 @@ int handle_asan_path_open(int fd, const char *name, ns_t *namespace, char *buf)
 		}
 	}
 	return fd_tmp;
+}
+
+void* dlopen_ext(const char *file, int mode, const dl_extinfo *extinfo)
+{
+	if (extinfo != NULL) {
+		if ((extinfo->flag & ~(DL_EXT_VALID_FLAG_BITS)) != 0) {
+			LD_LOGE("Error dlopen_ext %s: invalid flag %x", file, extinfo->flag);
+			return NULL;
+		}
+	}
+	const void *caller_addr = __builtin_return_address(0);
+  	return dlopen_impl(file, mode, NULL, caller_addr, extinfo);
+}
+
+#ifdef LOAD_ORDER_RANDOMIZATION
+static bool map_library_header(struct loadtask *task)
+{
+	off_t off_start;
+	Phdr *ph;
+	size_t i;
+
+	ssize_t l = read(task->fd, task->ehdr_buf, sizeof task->ehdr_buf);
+	task->eh = task->ehdr_buf;
+	if (l < 0) {
+		LD_LOGE("Error mapping header %s: failed to read fd", task->name);
+		return false;
+	}
+	if (l < sizeof(Ehdr) || (task->eh->e_type != ET_DYN && task->eh->e_type != ET_EXEC)) {
+		LD_LOGE("Error mapping header %s: invaliled Ehdr", task->name);
+		goto noexec;
+	}
+	task->phsize = task->eh->e_phentsize * task->eh->e_phnum;
+	if (task->phsize > sizeof task->ehdr_buf - sizeof(Ehdr)) {
+		task->allocated_buf = malloc(task->phsize);
+		if (!task->allocated_buf) {
+			LD_LOGE("Error mapping header %s: failed to alloc memory", task->name);
+			return false;
+		}
+		l = pread(task->fd, task->allocated_buf, task->phsize, task->eh->e_phoff);
+		if (l < 0) {
+			LD_LOGE("Error mapping header %s: failed to pread", task->name);
+			goto error;
+		}
+		if (l != task->phsize) {
+			LD_LOGE("Error mapping header %s: unmatched phsize", task->name);
+			goto noexec;
+		}
+		ph = task->ph0 = task->allocated_buf;
+	} else if (task->eh->e_phoff + task->phsize > l) {
+		l = pread(task->fd, task->ehdr_buf + 1, task->phsize, task->eh->e_phoff);
+		if (l < 0) {
+			LD_LOGE("Error mapping header %s: failed to pread", task->name);
+			goto error;
+		}
+		if (l != task->phsize) {
+			LD_LOGE("Error mapping header %s: unmatched phsize", task->name);
+			goto noexec;
+		}
+		ph = task->ph0 = (void *)(task->ehdr_buf + 1);
+	} else {
+		ph = task->ph0 = (void *)((char *)task->ehdr_buf + task->eh->e_phoff);
+	}
+	for (i = task->eh->e_phnum; i; i--, ph = (void *)((char *)ph + task->eh->e_phentsize)) {
+		if (ph->p_type == PT_DYNAMIC) {
+			task->dyn = ph->p_vaddr;
+		} else if (ph->p_type == PT_TLS) {
+			task->tls_image = ph->p_vaddr;
+			task->tls.align = ph->p_align;
+			task->tls.len = ph->p_filesz;
+			task->tls.size = ph->p_memsz;
+		}
+
+		if (ph->p_type != PT_DYNAMIC) {
+			continue;
+		}
+		// map the dynamic segment and the string table of the library
+		off_start = ph->p_offset;
+		off_start &= -PAGE_SIZE;
+		task->dyn_map_len = ph->p_memsz + (ph->p_offset - off_start);
+		task->dyn_map = mmap(0, task->dyn_map_len, PROT_READ, MAP_PRIVATE, task->fd, off_start);
+		if (task->dyn_map == MAP_FAILED) {
+			LD_LOGE("Error mapping header %s: failed to map dynamic section", task->name);
+			goto error;
+		}
+		task->dyn_addr = (size_t *)((unsigned char *)task->dyn_map + (ph->p_offset - off_start));
+		size_t dyn_tmp;
+		off_t str_table;
+		size_t str_size;
+		if (search_vec(task->dyn_addr, &dyn_tmp, DT_STRTAB)) {
+			str_table = dyn_tmp;
+		} else {
+			LD_LOGE("Error mapping header %s: DT_STRTAB not found", task->name);
+			goto error;
+		}
+		if (search_vec(task->dyn_addr, &dyn_tmp, DT_STRSZ)) {
+			str_size = dyn_tmp;
+		} else {
+			LD_LOGE("Error mapping header %s: DT_STRSZ not found", task->name);
+			goto error;
+		}
+		off_start = str_table;
+		off_start &= -PAGE_SIZE;
+		task->str_map_len = str_size + (str_table - off_start);
+		task->str_map = mmap(0, task->str_map_len, PROT_READ, MAP_PRIVATE, task->fd, off_start);
+		if (task->str_map == MAP_FAILED) {
+			LD_LOGE("Error mapping header %s: failed to map string section", task->name);
+			goto error;
+		}
+		task->str_addr = (char *)task->str_map + str_table - off_start;
+	}
+	if (!task->dyn) {
+		LD_LOGE("Error mapping header %s: dynamic section not found", task->name);
+		goto noexec;
+	}
+	return true;
+noexec:
+	errno = ENOEXEC;
+error:
+	free(task->allocated_buf);
+	task->allocated_buf = NULL;
+	return false;
+}
+
+static bool task_map_library(struct loadtask *task)
+{
+	size_t addr_min = SIZE_MAX, addr_max = 0, map_len;
+	size_t this_min, this_max;
+	size_t nsegs = 0;
+	off_t off_start;
+	Phdr *ph = task->ph0;
+	unsigned prot;
+	unsigned char *map = MAP_FAILED, *base;
+	size_t i;
+
+	for (i = task->eh->e_phnum; i; i--, ph = (void *)((char *)ph + task->eh->e_phentsize)) {
+		if (ph->p_type == PT_GNU_RELRO) {
+			task->p->relro_start = ph->p_vaddr & -PAGE_SIZE;
+			task->p->relro_end = (ph->p_vaddr + ph->p_memsz) & -PAGE_SIZE;
+		} else if (ph->p_type == PT_GNU_STACK) {
+			if (!runtime && ph->p_memsz > __default_stacksize) {
+				__default_stacksize =
+					ph->p_memsz < DEFAULT_STACK_MAX ?
+					ph->p_memsz : DEFAULT_STACK_MAX;
+			}
+		}
+		if (ph->p_type != PT_LOAD) {
+			continue;
+		}
+		nsegs++;
+		if (ph->p_vaddr < addr_min) {
+			addr_min = ph->p_vaddr;
+			off_start = ph->p_offset;
+			prot = (((ph->p_flags & PF_R) ? PROT_READ : 0) |
+				((ph->p_flags & PF_W) ? PROT_WRITE : 0) |
+				((ph->p_flags & PF_X) ? PROT_EXEC : 0));
+		}
+		if (ph->p_vaddr + ph->p_memsz > addr_max) {
+			addr_max = ph->p_vaddr + ph->p_memsz;
+		}
+	}
+	if (!task->dyn) {
+		LD_LOGE("Error mapping library %s: dynamic section not found", task->name);
+		goto noexec;
+	}
+	if (DL_FDPIC && !(task->eh->e_flags & FDPIC_CONSTDISP_FLAG)) {
+		task->p->loadmap = calloc(1, sizeof(struct fdpic_loadmap) + nsegs * sizeof(struct fdpic_loadseg));
+		if (!task->p->loadmap) {
+			goto error;
+		}
+		task->p->loadmap->nsegs = nsegs;
+		for (ph = task->ph0, i = 0; i < nsegs; ph = (void *)((char *)ph + task->eh->e_phentsize)) {
+			if (ph->p_type != PT_LOAD) {
+				continue;
+			}
+			prot = (((ph->p_flags & PF_R) ? PROT_READ : 0) |
+				((ph->p_flags & PF_W) ? PROT_WRITE : 0) |
+				((ph->p_flags & PF_X) ? PROT_EXEC : 0));
+			map = mmap(0, ph->p_memsz + (ph->p_vaddr & PAGE_SIZE - 1),
+				prot, MAP_PRIVATE,
+				task->fd, ph->p_offset & -PAGE_SIZE);
+			if (map == MAP_FAILED) {
+				unmap_library(task->p);
+				goto error;
+			}
+			task->p->loadmap->segs[i].addr = (size_t)map +
+				(ph->p_vaddr & PAGE_SIZE - 1);
+			task->p->loadmap->segs[i].p_vaddr = ph->p_vaddr;
+			task->p->loadmap->segs[i].p_memsz = ph->p_memsz;
+			i++;
+			if (prot & PROT_WRITE) {
+				size_t brk = (ph->p_vaddr & PAGE_SIZE - 1) + ph->p_filesz;
+				size_t pgbrk = (brk + PAGE_SIZE - 1) & -PAGE_SIZE;
+				size_t pgend = (brk + ph->p_memsz - ph->p_filesz + PAGE_SIZE - 1) & -PAGE_SIZE;
+				if (pgend > pgbrk && mmap_fixed(map + pgbrk,
+					pgend - pgbrk, prot,
+					MAP_PRIVATE | MAP_FIXED | MAP_ANONYMOUS,
+					-1, off_start) == MAP_FAILED)
+					goto error;
+				memset(map + brk, 0, pgbrk - brk);
+			}
+		}
+		map = (void *)task->p->loadmap->segs[0].addr;
+		map_len = 0;
+		goto done_mapping;
+	}
+	addr_max += PAGE_SIZE - 1;
+	addr_max &= -PAGE_SIZE;
+	addr_min &= -PAGE_SIZE;
+	off_start &= -PAGE_SIZE;
+	map_len = addr_max - addr_min + off_start;
+	/* The first time, we map too much, possibly even more than
+	 * the length of the file. This is okay because we will not
+	 * use the invalid part; we just need to reserve the right
+	 * amount of virtual address space to map over later. */
+	map = DL_NOMMU_SUPPORT
+		? mmap((void *)addr_min, map_len, PROT_READ | PROT_WRITE | PROT_EXEC,
+			MAP_PRIVATE | MAP_ANONYMOUS, -1, 0)
+		: mmap((void *)addr_min, map_len, prot,
+			MAP_PRIVATE, task->fd, off_start);
+	if (map == MAP_FAILED) {
+		LD_LOGE("Error mapping library %s: failed to map fd", task->name);
+		goto error;
+	}
+	task->p->map = map;
+	task->p->map_len = map_len;
+	/* If the loaded file is not relocatable and the requested address is
+	 * not available, then the load operation must fail. */
+	if (task->eh->e_type != ET_DYN && addr_min && map != (void *)addr_min) {
+		errno = EBUSY;
+		goto error;
+	}
+	base = map - addr_min;
+	task->p->phdr = 0;
+	task->p->phnum = 0;
+	for (ph = task->ph0, i = task->eh->e_phnum; i; i--, ph = (void *)((char *)ph + task->eh->e_phentsize)) {
+		if (ph->p_type != PT_LOAD) {
+			continue;
+		}
+		/* Check if the programs headers are in this load segment, and
+		 * if so, record the address for use by dl_iterate_phdr. */
+		if (!task->p->phdr && task->eh->e_phoff >= ph->p_offset
+			&& task->eh->e_phoff + task->phsize <= ph->p_offset + ph->p_filesz) {
+			task->p->phdr = (void *)(base + ph->p_vaddr + (task->eh->e_phoff - ph->p_offset));
+			task->p->phnum = task->eh->e_phnum;
+			task->p->phentsize = task->eh->e_phentsize;
+		}
+		this_min = ph->p_vaddr & -PAGE_SIZE;
+		this_max = ph->p_vaddr + ph->p_memsz + PAGE_SIZE - 1 & -PAGE_SIZE;
+		off_start = ph->p_offset & -PAGE_SIZE;
+		prot = (((ph->p_flags & PF_R) ? PROT_READ : 0) |
+			((ph->p_flags & PF_W) ? PROT_WRITE : 0) |
+			((ph->p_flags & PF_X) ? PROT_EXEC : 0));
+		/* Reuse the existing mapping for the lowest-address LOAD */
+		if ((ph->p_vaddr & -PAGE_SIZE) != addr_min || DL_NOMMU_SUPPORT)
+			if (mmap_fixed(
+					base + this_min,
+					this_max - this_min,
+					prot, MAP_PRIVATE | MAP_FIXED,
+					task->fd,
+					off_start) == MAP_FAILED) {
+				goto error;
+		}
+		if (ph->p_memsz > ph->p_filesz && (ph->p_flags & PF_W)) {
+			size_t brk = (size_t)base + ph->p_vaddr + ph->p_filesz;
+			size_t pgbrk = brk + PAGE_SIZE - 1 & -PAGE_SIZE;
+			memset((void *)brk, 0, pgbrk - brk & PAGE_SIZE - 1);
+			if (pgbrk - (size_t)base < this_max && mmap_fixed(
+				(void *)pgbrk,
+				(size_t)base + this_max - pgbrk,
+				prot,
+				MAP_PRIVATE | MAP_FIXED | MAP_ANONYMOUS,
+				-1,
+				0) == MAP_FAILED) {
+				goto error;
+			}
+		}
+	}
+	for (i = 0; ((size_t *)(base + task->dyn))[i]; i += NEXT_DYNAMIC_INDEX) {
+		if (((size_t *)(base + task->dyn))[i] == DT_TEXTREL) {
+			if (mprotect(map, map_len, PROT_READ | PROT_WRITE | PROT_EXEC) && errno != ENOSYS) {
+				goto error;
+			}
+			break;
+		}
+	}
+done_mapping:
+	task->p->base = base;
+	task->p->dynv = laddr(task->p, task->dyn);
+	if (task->p->tls.size) {
+		task->p->tls.image = laddr(task->p, task->tls_image);
+	}
+	free(task->allocated_buf);
+	task->allocated_buf = NULL;
+	return true;
+noexec:
+	errno = ENOEXEC;
+error:
+	if (map != MAP_FAILED) {
+		unmap_library(task->p);
+	}
+	free(task->allocated_buf);
+	task->allocated_buf = NULL;
+	return false;
+}
+
+static bool load_library_header(struct loadtask *task)
+{
+	const char *name = task->name;
+	struct dso *needed_by = task->needed_by;
+	ns_t *namespace = task->namespace;
+	bool check_inherited = task->check_inherited;
+
+	bool map = false;
+	struct stat st;
+	size_t alloc_size;
+	int n_th = 0;
+	int is_self = 0;
+
+	if (!*name) {
+		errno = EINVAL;
+		return false;
+	}
+
+	/* Catch and block attempts to reload the implementation itself */
+	if (name[NAME_INDEX_ZERO] == 'l' && name[NAME_INDEX_ONE] == 'i' && name[NAME_INDEX_TWO] == 'b') {
+		static const char reserved[] =
+			"c.pthread.rt.m.dl.util.xnet.";
+		const char *rp, *next;
+		for (rp = reserved; *rp; rp = next) {
+			next = strchr(rp, '.') + 1;
+			if (strncmp(name + NAME_INDEX_THREE, rp, next - rp) == 0) {
+				break;
+			}
+		}
+		if (*rp) {
+			if (ldd_mode) {
+				/* Track which names have been resolved
+				 * and only report each one once. */
+				static unsigned reported;
+				unsigned mask = 1U << (rp - reserved);
+				if (!(reported & mask)) {
+					reported |= mask;
+					dprintf(1, "\t%s => %s (%p)\n",
+						name, ldso.name,
+						ldso.base);
+				}
+			}
+			is_self = 1;
+		}
+	}
+	if (!strcmp(name, ldso.name)) {
+		is_self = 1;
+	}
+	if (is_self) {
+		if (!ldso.prev) {
+			tail->next = &ldso;
+			ldso.prev = tail;
+			tail = &ldso;
+			ldso.namespace = namespace;
+			ns_add_dso(namespace, &ldso);
+		}
+		task->isloaded = true;
+		/* increase libc dlopen refcnt */
+		a_inc(&ldso.nr_dlopen);
+		task->p = &ldso;
+		return true;
+	}
+	if (strchr(name, '/')) {
+		task->pathname = name;
+		if (!is_accessible(namespace, task->pathname, g_is_asan, check_inherited)) {
+			task->fd = -1;
+		} else {
+			task->fd = open(name, O_RDONLY | O_CLOEXEC);
+		}
+	} else {
+		/* Search for the name to see if it's already loaded */
+		/* Search in namespace */
+		task->p = find_library_by_name(name, namespace, check_inherited);
+		if (task->p) {
+			/* increase dlopen refcnt */
+			task->isloaded = true;
+			a_inc(&task->p->nr_dlopen);
+			return true;
+		}
+		if (strlen(name) > NAME_MAX) {
+			return false;
+		}
+		task->fd = -1;
+		if (namespace->env_paths) {
+			task->fd = path_open(name, namespace->env_paths, task->buf, sizeof task->buf);
+		}
+		for (task->p = needed_by; task->fd == -1 && task->p; task->p = task->p->needed_by) {
+			if (fixup_rpath(task->p, task->buf, sizeof task->buf) < 0) {
+				task->fd = INVALID_FD_INHIBIT_FURTHER_SEARCH; /* Inhibit further search. */
+			}
+			if (task->p->rpath) {
+				task->fd = path_open(name, task->p->rpath, task->buf, sizeof task->buf);
+			}
+		}
+		if (g_is_asan) {
+			task->fd = handle_asan_path_open(task->fd, name, namespace, task->buf);
+			LD_LOGD("load_library handle_asan_path_open fd:%d.\n", task->fd);
+		} else {
+			if (task->fd == -1 && namespace->lib_paths) {
+				task->fd = path_open(name, namespace->lib_paths, task->buf, sizeof task->buf);
+				LD_LOGD("load_library no asan lib_paths path_open fd:%d.\n", task->fd);
+			}
+		}
+		task->pathname = task->buf;
+	}
+	if (task->fd < 0) {
+		if (!check_inherited || !namespace->ns_inherits) {
+			return false;
+		}
+		/* Load lib in inherited namespace. Do not check inherited again.*/
+		for (size_t i = 0; i < namespace->ns_inherits->num; i++) {
+			ns_inherit *inherit = namespace->ns_inherits->inherits[i];
+			if (strchr(name, '/') == 0 && !is_sharable(inherit, name)) {
+				continue;
+			}
+			task->namespace = inherit->inherited_ns;
+			task->check_inherited = false;
+			if (load_library_header(task)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	if (fstat(task->fd, &st) < 0) {
+		LD_LOGE("Error loading header %s: failed to get file state", task->name);
+		close(task->fd);
+		task->fd = -1;
+		return false;
+	}
+	/* Search in namespace */
+	task->p = find_library_by_fstat(&st, namespace, check_inherited);
+	if (task->p) {
+		/* If this library was previously loaded with a
+		* pathname but a search found the same inode,
+		* setup its shortname so it can be found by name. */
+		if (!task->p->shortname && task->pathname != name) {
+			task->p->shortname = strrchr(task->p->name, '/') + 1;
+		}
+		close(task->fd);
+		task->fd = -1;
+		/* increase dlopen refcnt */
+		task->isloaded = true;
+		a_inc(&task->p->nr_dlopen);
+		return true;
+	}
+
+	map = noload ? 0 : map_library_header(task);
+	if (!map) {
+		LD_LOGE("Error loading header %s: failed to map header", task->name);
+		close(task->fd);
+		task->fd = -1;
+		return false;
+	}
+
+	/* Allocate storage for the new DSO. When there is TLS, this
+	 * storage must include a reservation for all pre-existing
+	 * threads to obtain copies of both the new TLS, and an
+	 * extended DTV capable of storing an additional slot for
+	 * the newly-loaded DSO. */
+	alloc_size = sizeof(struct dso) + strlen(task->pathname) + 1;
+	if (runtime && task->tls.size) {
+		size_t per_th = task->tls.size + task->tls.align + sizeof(void *) * (tls_cnt + TLS_CNT_INCREASE);
+		n_th = libc.threads_minus_1 + 1;
+		if (n_th > SSIZE_MAX / per_th) {
+			alloc_size = SIZE_MAX;
+		} else {
+			alloc_size += n_th * per_th;
+		}
+	}
+	task->p = calloc(1, alloc_size);
+	if (!task->p) {
+		LD_LOGE("Error loading header %s: failed to allocate dso", task->name);
+		close(task->fd);
+		task->fd = -1;
+		return false;
+	}
+	task->p->dev = st.st_dev;
+	task->p->ino = st.st_ino;
+	task->p->needed_by = needed_by;
+	task->p->name = task->p->buf;
+	strcpy(task->p->name, task->pathname);
+	task->p->tls = task->tls;
+	task->p->dynv = task->dyn_addr;
+	task->p->strings = task->str_addr;
+
+	/* Add a shortname only if name arg was not an explicit pathname. */
+	if (task->pathname != name) {
+		task->p->shortname = strrchr(task->p->name, '/') + 1;
+	}
+
+	if (task->p->tls.size) {
+		task->p->tls_id = ++tls_cnt;
+		task->p->new_dtv = (void *)(-sizeof(size_t) &
+			(uintptr_t)(task->p->name + strlen(task->p->name) + sizeof(size_t)));
+		task->p->new_tls = (void *)(task->p->new_dtv + n_th * (tls_cnt + 1));
+	}
+
+	tail->next = task->p;
+	task->p->prev = tail;
+	tail = task->p;
+
+	/* Add dso to namespace */
+	task->p->namespace = namespace;
+	ns_add_dso(namespace, task->p);
+	return true;
+}
+
+static void task_load_library(struct loadtask *task)
+{
+	bool map = noload ? 0 : task_map_library(task);
+	close(task->fd);
+	task->fd = -1;
+	if (!map) {
+		LD_LOGE("Error loading library %s: failed to map library", task->name);
+		error("Error loading library %s: failed to map library", task->name);
+		if (runtime) {
+			longjmp(*rtld_fail, 1);
+		}
+		return;
+	};
+
+	/* Avoid the danger of getting two versions of libc mapped into the
+	 * same process when an absolute pathname was used. The symbols
+	 * checked are chosen to catch both musl and glibc, and to avoid
+	 * false positives from interposition-hack libraries. */
+	decode_dyn(task->p);
+	if (find_sym(task->p, "__libc_start_main", 1).sym &&
+		find_sym(task->p, "stdin", 1).sym) {
+		unmap_library(task->p);
+		task->name = "libc.so";
+		task->check_inherited = true;
+		load_library_header(task);
+		return;
+	}
+	/* Past this point, if we haven't reached runtime yet, ldso has
+	 * committed either to use the mapped library or to abort execution.
+	 * Unmapping is not possible, so we can safely reclaim gaps. */
+	if (!runtime) {
+		reclaim_gaps(task->p);
+	}
+	task->p->nr_dlopen = 1;
+	task->p->runtime_loaded = runtime;
+	if (runtime)
+		task->p->by_dlopen = 1;
+
+	if (DL_FDPIC) {
+		makefuncdescs(task->p);
+	}
+
+	if (ldd_mode) {
+		dprintf(1, "\t%s => %s (%p)\n", task->name, task->pathname, task->p->base);
+	}
+}
+
+static void preload_direct_deps(struct dso *p, ns_t *namespace, struct loadtasks *tasks)
+{
+	size_t i, cnt = 0;
+	if (p->deps) {
+		return;
+	}
+	/* For head, all preloads are direct pseudo-dependencies.
+	 * Count and include them now to avoid realloc later. */
+	if (p == head) {
+		for (struct dso *q = p->next; q; q = q->next) {
+			cnt++;
+		}
+	}
+	for (i = 0; p->dynv[i]; i += NEXT_DYNAMIC_INDEX) {
+		if (p->dynv[i] == DT_NEEDED) {
+			cnt++;
+		}
+	}
+	/* Use builtin buffer for apps with no external deps, to
+	 * preserve property of no runtime failure paths. */
+	p->deps = (p == head && cnt < MIN_DEPS_COUNT) ? builtin_deps :
+		calloc(cnt + 1, sizeof *p->deps);
+	if (!p->deps) {
+		error("Error loading dependencies for %s", p->name);
+		if (runtime) {
+			longjmp(*rtld_fail, 1);
+		}
+	}
+	cnt = 0;
+	if (p == head) {
+		for (struct dso *q = p->next; q; q = q->next) {
+			p->deps[cnt++] = q;
+		}
+	}
+	for (i = 0; p->dynv[i]; i += NEXT_DYNAMIC_INDEX) {
+		if (p->dynv[i] != DT_NEEDED) {
+			continue;
+		}
+		struct loadtask *task = create_loadtask(p->strings + p->dynv[i + 1], p, namespace, true);
+		if (!task) {
+			error("Error loading dependencies for %s", p->name);
+			if (runtime) {
+				longjmp(*rtld_fail, 1);
+			}
+			continue;
+		}
+		if (!load_library_header(task)) {
+			free_task(task);
+			task = NULL;
+			error("Error loading shared library %s: %m (needed by %s)",
+				p->strings + p->dynv[i + 1], p->name);
+			if (runtime) {
+				longjmp(*rtld_fail, 1);
+			}
+			continue;
+		}
+		p->deps[cnt++] = task->p;
+		if (task->isloaded) {
+			free_task(task);
+			task = NULL;
+		} else {
+			append_loadtasks(tasks, task);
+		}
+	}
+	p->deps[cnt] = 0;
+	p->ndeps_direct = cnt;
+}
+
+static void unmap_preloaded_sections(struct loadtasks *tasks)
+{
+	struct loadtask *task = NULL;
+	for (size_t i = 0; i < tasks->length; i++) {
+		task = get_loadtask(tasks, i);
+		if (!task) {
+			continue;
+		}
+		if (task->dyn_map_len) {
+			munmap(task->dyn_map, task->dyn_map_len);
+			task->dyn_map = NULL;
+			task->dyn_map_len = 0;
+			if (task->p) {
+				task->p->dynv = NULL;
+			}
+		}
+		if (task->str_map_len) {
+			munmap(task->str_map, task->str_map_len);
+			task->str_map = NULL;
+			task->str_map_len = 0;
+			if (task->p) {
+				task->p->strings = NULL;
+			}
+		}
+	}
+}
+
+static void preload_deps(struct dso *p, ns_t *ns, struct loadtasks *tasks)
+{
+	if (p->deps) {
+		return;
+	}
+	for (; p; p = p->next) {
+		preload_direct_deps(p, ns, tasks);
+	}
+}
+
+static void run_loadtasks(struct loadtasks *tasks)
+{
+	struct loadtask *task = NULL;
+	for (size_t i = 0; i < tasks->length; i++) {
+		task = get_loadtask(tasks, i);
+		if (task) {
+			task_load_library(task);
+		}
+	}
+}
+
+static void assign_tls(struct dso *p)
+{
+	while (p) {
+		if (p->tls.image) {
+			tls_align = MAXP2(tls_align, p->tls.align);
+#ifdef TLS_ABOVE_TP
+			p->tls.offset = tls_offset + ((p->tls.align - 1) &
+				(-tls_offset + (uintptr_t)p->tls.image));
+			tls_offset = p->tls.offset + p->tls.size;
+#else
+			tls_offset += p->tls.size + p->tls.align - 1;
+			tls_offset -= (tls_offset + (uintptr_t)p->tls.image)
+				& (p->tls.align - 1);
+			p->tls.offset = tls_offset;
+#endif
+			if (tls_tail) {
+				tls_tail->next = &p->tls;
+			} else {
+				libc.tls_head = &p->tls;
+			}
+			tls_tail = &p->tls;
+		}
+
+		p = p->next;
+	}
+}
+
+static void load_preload(char *s, ns_t *ns, struct loadtasks *tasks)
+{
+	int tmp;
+	char *z;
+
+	struct loadtask *task = NULL;
+	for (z = s; *z; s = z) {
+		for (; *s && (isspace(*s) || *s == ':'); s++) {
+			;
+		}
+		for (z = s; *z && !isspace(*z) && *z != ':'; z++) {
+			;
+		}
+		tmp = *z;
+		*z = 0;
+		task = create_loadtask(s, NULL, ns, true);
+		if (!task) {
+			continue;
+		}
+		if (load_library_header(task)) {
+			if (!task->isloaded) {
+				append_loadtasks(tasks, task);
+				task = NULL;
+			}
+		}
+		if (task) {
+			free_task(task);
+		}
+		*z = tmp;
+	}
+}
+#endif
+
+static int serialize_gnu_relro(int fd, struct dso *dso, ssize_t *file_offset)
+{
+	ssize_t count = dso->relro_end - dso->relro_start;
+	ssize_t offset = 0;
+	while (count > 0) {
+		ssize_t write_size = TEMP_FAILURE_RETRY(write(fd, laddr(dso, dso->relro_start + offset), count));
+		if (-1 == write_size) {
+			LD_LOGE("Error serializing relro %s: failed to write GNU_RELRO", dso->name);
+			return -1;
+		}
+		offset += write_size;
+		count -= write_size;
+	}
+
+	ssize_t size = dso->relro_end - dso->relro_start;
+	void *map = mmap(
+		laddr(dso, dso->relro_start),
+		size,
+		PROT_READ,
+		MAP_PRIVATE | MAP_FIXED,
+		fd,
+		*file_offset);
+	if (map == MAP_FAILED) {
+		LD_LOGE("Error serializing relro %s: failed to map GNU_RELRO", dso->name);
+		return -1;
+	}
+	*file_offset += size;
+	return 0;
+}
+
+static int map_gnu_relro(int fd, struct dso *dso, ssize_t *file_offset)
+{
+	ssize_t ext_fd_file_size = 0;
+	struct stat ext_fd_file_stat;
+	if (TEMP_FAILURE_RETRY(fstat(fd, &ext_fd_file_stat)) != 0) {
+		LD_LOGE("Error mapping relro %s: failed to get file state", dso->name);
+		return -1;
+	}
+	ext_fd_file_size = ext_fd_file_stat.st_size;
+
+	void *ext_temp_map = MAP_FAILED;
+	ext_temp_map = mmap(NULL, ext_fd_file_size, PROT_READ, MAP_PRIVATE, fd, 0);
+	if (ext_temp_map == MAP_FAILED) {
+		LD_LOGE("Error mapping relro %s: failed to map fd", dso->name);
+		return -1;
+	}
+
+	char *file_base = (char *)(ext_temp_map) + *file_offset;
+	char *mem_base = (char *)(laddr(dso, dso->relro_start));
+	ssize_t start_offset = 0;
+	ssize_t size = dso->relro_end - dso->relro_start;
+
+	if (size > ext_fd_file_size - *file_offset) {
+		LD_LOGE("Error mapping relro %s: invalid file size", dso->name);
+		return -1;
+	}
+	while (start_offset < size) {
+		// Find start location.
+		while (start_offset < size) {
+			if (memcmp(mem_base + start_offset, file_base + start_offset, PAGE_SIZE) == 0) {
+				break;
+			}
+			start_offset += PAGE_SIZE;
+		}
+
+		// Find end location.
+		ssize_t end_offset = start_offset;
+		while (end_offset < size) {
+			if (memcmp(mem_base + end_offset, file_base + end_offset, PAGE_SIZE) != 0) {
+				break;
+			}
+			end_offset += PAGE_SIZE;
+		}
+
+		// Map pages.
+		ssize_t map_length = end_offset - start_offset;
+		ssize_t map_offset = *file_offset + start_offset;
+		if (map_length > 0) {
+			void *map = mmap(
+				mem_base + start_offset, map_length, PROT_READ, MAP_PRIVATE | MAP_FIXED, fd, map_offset);
+			if (map == MAP_FAILED) {
+				LD_LOGE("Error mapping relro %s: failed to map GNU_RELRO", dso->name);
+				munmap(ext_temp_map, ext_fd_file_size);
+				return -1;
+			}
+		}
+
+		start_offset = end_offset;
+	}
+	*file_offset += size;
+	munmap(ext_temp_map, ext_fd_file_size);
+	return 0;
+}
+
+static void handle_relro_sharing(struct dso *p, const dl_extinfo *extinfo, ssize_t *relro_fd_offset)
+{
+	if (extinfo == NULL) {
+		return;
+	}
+	if (extinfo->flag & DL_EXT_WIRTE_INFO) {
+		LD_LOGD("Serializing GNU_RELRO %s", p->name);
+		if (serialize_gnu_relro(extinfo->relro_fd, p, relro_fd_offset) < 0) {
+			LD_LOGE("Error serializing GNU_RELRO %s", p->name);
+			error("Error serializing GNU_RELRO");
+			if (runtime) longjmp(*rtld_fail, 1);
+		}
+	} else if (extinfo->flag & DL_EXT_USE_INFO) {
+		LD_LOGD("Mapping GNU_RELRO %s", p->name);
+		if (map_gnu_relro(extinfo->relro_fd, p, relro_fd_offset) < 0) {
+			LD_LOGE("Error mapping GNU_RELRO %s", p->name);
+			error("Error mapping GNU_RELRO");
+			if (runtime) longjmp(*rtld_fail, 1);
+		}
+	}
 }

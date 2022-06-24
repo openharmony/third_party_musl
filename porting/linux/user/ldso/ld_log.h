@@ -13,10 +13,10 @@
  * limitations under the License.
  */
 
-#include <musl_log.h>
-
 #ifndef LD_LOG_H
 #define LD_LOG_H
+
+#include <musl_log.h>
 
 #define LD_LOG_ERROR 1
 #define LD_LOG_WARNING 2
