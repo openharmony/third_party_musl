@@ -7,6 +7,19 @@
 #include <netinet/in.h>
 #include <netdb.h>
 
+#if OHOS_DNS_PROXY_BY_NETSYS
+
+#include <stdio.h>
+
+#if DNS_CONFIG_DEBUG
+#ifndef DNS_CONFIG_PRINT
+#define DNS_CONFIG_PRINT(fmt, ...) printf("DNS " fmt "\n", ##__VA_ARGS__)
+#endif
+#else
+#define DNS_CONFIG_PRINT(fmt, ...)
+#endif
+#endif
+
 struct aibuf {
 	struct addrinfo ai;
 	union sa {
@@ -51,5 +64,63 @@ hidden int __get_resolv_conf(struct resolvconf *, char *, size_t);
 hidden int __res_msend_rc(int, const unsigned char *const *, const int *, unsigned char *const *, int *, int, const struct resolvconf *);
 
 hidden int __dns_parse(const unsigned char *, int, int (*)(void *, int, const void *, int, const void *), void *);
+
+#if OHOS_DNS_PROXY_BY_NETSYS
+#define DNS_SO_PATH "libnetsys_client.z.so"
+#define MAX_SERVER_NUM 4
+#define MAX_SERVER_LENGTH 50
+#define OHOS_GET_CONFIG_FUNC_NAME "NetSysGetResolvConf"
+#define OHOS_GET_CACHE_FUNC_NAME "NetSysGetResolvCache"
+#define OHOS_SET_CACHE_FUNC_NAME "NetSysSetResolvCache"
+#define MAX_RESULTS 32
+#define MAX_CANON_NAME 256
+#define MACRO_MIN(a, b) ((a) < (b) ? (a) : (b))
+
+struct resolv_config {
+	int32_t error;
+	int32_t timeout_ms;
+	uint32_t retry_count;
+	char nameservers[MAX_SERVER_NUM][MAX_SERVER_LENGTH + 1];
+};
+
+typedef union {
+	struct sockaddr sa;
+	struct sockaddr_in6 sin6;
+	struct sockaddr_in sin;
+} aligned_sockAddr;
+
+struct addr_info_wrapper {
+	uint32_t ai_flags;
+	uint32_t ai_family;
+	uint32_t ai_sockType;
+	uint32_t ai_protocol;
+	uint32_t ai_addrLen;
+	aligned_sockAddr ai_addr;
+	char ai_canonName[MAX_CANON_NAME + 1];
+};
+
+struct param_wrapper {
+	char *host;
+	char *serv;
+	struct addrinfo *hint;
+};
+
+typedef int32_t (*GetConfig)(uint16_t netId, struct resolv_config *config);
+
+typedef int32_t (*GetCache)(uint16_t netId, struct param_wrapper param,
+							struct addr_info_wrapper addr_info[static MAX_RESULTS],
+							uint32_t *num);
+
+typedef int32_t (*SetCache)(uint16_t netId, struct param_wrapper param, struct addrinfo *res);
+
+void
+dns_set_addr_info_to_netsys_cache(const char *__restrict host, const char *__restrict serv,
+								  const struct addrinfo *__restrict
+								  hint, struct addrinfo *res);
+
+int dns_get_addr_info_from_netsys_cache(const char *__restrict host, const char *__restrict serv,
+										const struct addrinfo *__restrict hint, struct addrinfo **__restrict res);
+
+#endif
 
 #endif
