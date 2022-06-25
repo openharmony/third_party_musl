@@ -834,6 +834,7 @@ musl_src_file = [
   "src/network/recvfrom.c",
   "src/network/recvmmsg.c",
   "src/network/recvmsg.c",
+  "src/network/res_cache.c",
   "src/network/res_init.c",
   "src/network/res_mkquery.c",
   "src/network/res_msend.c",

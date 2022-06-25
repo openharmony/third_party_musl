@@ -11,6 +11,13 @@
 
 int getaddrinfo(const char *restrict host, const char *restrict serv, const struct addrinfo *restrict hint, struct addrinfo **restrict res)
 {
+#if OHOS_DNS_PROXY_BY_NETSYS
+	if (dns_get_addr_info_from_netsys_cache(host, serv, hint, res) == 0) {
+		DNS_CONFIG_PRINT("get from netsys cache OK\n");
+		return 0;
+	}
+#endif
+
 	struct service ports[MAXSERVS];
 	struct address addrs[MAXADDRS];
 	char canon[256], *outcanon;
@@ -131,5 +138,8 @@ int getaddrinfo(const char *restrict host, const char *restrict serv, const stru
 	}
 	out[0].ref = nais;
 	*res = &out->ai;
+#if OHOS_DNS_PROXY_BY_NETSYS
+	dns_set_addr_info_to_netsys_cache(host, serv, hint, *res);
+#endif
 	return 0;
 }

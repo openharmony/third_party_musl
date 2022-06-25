@@ -5,6 +5,9 @@
 #include <string.h>
 #include <stdlib.h>
 #include <netinet/in.h>
+#if OHOS_DNS_PROXY_BY_NETSYS
+#include <dlfcn.h>
+#endif
 
 int __get_resolv_conf(struct resolvconf *conf, char *search, size_t search_sz)
 {
@@ -18,6 +21,57 @@ int __get_resolv_conf(struct resolvconf *conf, char *search, size_t search_sz)
 	conf->attempts = 2;
 	if (search) *search = 0;
 
+#if OHOS_DNS_PROXY_BY_NETSYS
+	void *handle = dlopen(DNS_SO_PATH, RTLD_LAZY);
+	if (handle == NULL) {
+		DNS_CONFIG_PRINT("__get_resolv_conf dlopen err %s\n", dlerror());
+		goto etc_resolv_conf;
+	}
+
+	GetConfig func = dlsym(handle, OHOS_GET_CONFIG_FUNC_NAME);
+	if (func == NULL) {
+		DNS_CONFIG_PRINT("__get_resolv_conf dlsym err %s\n", dlerror());
+		dlclose(handle);
+		goto etc_resolv_conf;
+	}
+
+	struct resolv_config config = {0};
+	int ret = func(0, &config);
+	dlclose(handle);
+	if (ret < 0) {
+		DNS_CONFIG_PRINT("__get_resolv_conf OHOS_GET_CONFIG_FUNC_NAME err %d\n", ret);
+		goto etc_resolv_conf;
+	}
+	int32_t timeout_second = config.timeout_ms / 1000;
+#endif
+
+#if OHOS_DNS_PROXY_BY_NETSYS
+netsys_conf:
+	if (timeout_second > 0) {
+		if (timeout_second >= 60) {
+			conf->timeout = 60;
+		} else {
+			conf->timeout = timeout_second;
+		}
+	}
+	if (config.retry_count > 0) {
+		if (config.retry_count >= 10) {
+			conf->attempts = 10;
+		} else {
+			conf->attempts = config.retry_count;
+		}
+	}
+	for (int i = 0; i < MAX_SERVER_NUM; ++i) {
+		if (config.nameservers[i] == NULL || config.nameservers[i][0] == 0 || nns >= MAXNS) {
+			continue;
+		}
+		if (__lookup_ipliteral(conf->ns + nns, config.nameservers[i], AF_UNSPEC) > 0) {
+			nns++;
+		}
+	}
+
+etc_resolv_conf:
+#endif
 	f = __fopen_rb_ca("/etc/resolv.conf", &_f, _buf, sizeof _buf);
 	if (!f) switch (errno) {
 	case ENOENT:
