@@ -19,6 +19,7 @@ which need be escaped.
 #include <signal.h>
 #include "musl_malloc_dispatch_table.h"
 #include "musl_malloc.h"
+#include "memory_tag.h"
 #include "musl_preinit_common.h"
 #include <pthread.h>
 #include <stdlib.h>
@@ -35,6 +36,8 @@ void* ohos_malloc_hook_init_function(size_t bytes);
 static struct MallocDispatchType __ohos_malloc_hook_init_dispatch = {
 	.malloc = ohos_malloc_hook_init_function,
 	.free = MuslMalloc(free),
+	.mmap = MuslMalloc(mmap),
+	.munmap = MuslMalloc(munmap),
 };
 #define MAX_SYM_NAME_SIZE 1000
 static char *__malloc_hook_shared_lib = "libnative_hook.z.so";
@@ -152,12 +155,55 @@ static bool init_free_function(void* malloc_shared_library_handler, MallocFreeTy
 	return true;
 }
 
+static bool init_mmap_function(void* malloc_shared_library_handler, MallocMmapType* func, const char* prefix)
+{
+	char symbol[MAX_SYM_NAME_SIZE];
+	snprintf(symbol, sizeof(symbol), "%s_%s", prefix, "mmap");
+	*func = (MallocMmapType)(dlsym(malloc_shared_library_handler, symbol));
+	if (*func == NULL) {
+		return false;
+	}
+	return true;
+}
+
+static bool init_munmap_function(void* malloc_shared_library_handler, MallocMunmapType* func, const char* prefix)
+{
+	char symbol[MAX_SYM_NAME_SIZE];
+	snprintf(symbol, sizeof(symbol), "%s_%s", prefix, "munmap");
+	*func = (MallocMunmapType)(dlsym(malloc_shared_library_handler, symbol));
+	if (*func == NULL) {
+		return false;
+	}
+	return true;
+}
+
+static bool init_memorytag_function(void* malloc_shared_library_handler, const char* prefix)
+{
+	char symbol[MAX_SYM_NAME_SIZE];
+	snprintf(symbol, sizeof(symbol), "%s_%s", prefix, "memtag");
+	__mem_typeset = (mtypeset)(dlsym(malloc_shared_library_handler, symbol));
+
+	if (__mem_typeset == NULL) {
+		return false;
+	}
+	return true;
+}
+
 static bool init_hook_functions(void* shared_library_handler, struct MallocDispatchType* table, const char* prefix)
 {
 	if (!init_malloc_function(shared_library_handler, &table->malloc, prefix)) {
 		return false;
 	}
 	if (!init_free_function(shared_library_handler, &table->free, prefix)) {
+		return false;
+	}
+	if (!init_mmap_function(shared_library_handler, &table->mmap, prefix)) {
+		return false;
+	}
+	if (!init_munmap_function(shared_library_handler, &table->munmap, prefix)) {
+		return false;
+	}
+	if (!init_memorytag_function(shared_library_handler, prefix)) {
 		return false;
 	}
 	return true;

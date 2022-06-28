@@ -10,4 +10,9 @@ int __munmap(void *start, size_t len)
 	return syscall(SYS_munmap, start, len);
 }
 
+#ifdef HOOK_ENABLE
+int __libc_munmap(void*, size_t);
+weak_alias(__munmap, __libc_munmap);
+#else
 weak_alias(__munmap, munmap);
+#endif

@@ -9,6 +9,8 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+typedef void* (*MallocMmapType) (void*, size_t, int, int, int, off_t);
+typedef int (*MallocMunmapType) (void*, size_t);
 typedef void* (*MallocMallocType)(size_t);
 typedef void* (*MallocReallocType)(void*, size_t);
 typedef void* (*MallocCallocType)(size_t, size_t);
@@ -20,6 +22,8 @@ typedef bool (*GetHookFlagType)();
 typedef bool (*SetHookFlagType)(bool);
 
 struct MallocDispatchType {
+	MallocMmapType mmap;
+	MallocMunmapType munmap;
 	MallocMallocType malloc;
 	MallocCallocType calloc;
 	MallocReallocType realloc;

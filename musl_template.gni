@@ -370,6 +370,7 @@ template("musl_libs") {
   source_set("${abi_prefix}_musl_hook") {
     sources = [
       "./porting/linux/user/src/hook/malloc_common.c",
+      "./porting/linux/user/src/hook/memory_tag.c",
       "./porting/linux/user/src/hook/musl_preinit.c",
       "./porting/linux/user/src/hook/musl_preinit_common.c",
     ]
