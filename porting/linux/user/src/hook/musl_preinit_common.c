@@ -10,6 +10,8 @@ struct musl_libc_globals __musl_libc_globals;
 struct MallocDispatchType __libc_malloc_default_dispatch = {
 	.malloc = MuslMalloc(malloc),
 	.free = MuslMalloc(free),
+	.mmap = MuslMalloc(mmap),
+	.munmap = MuslMalloc(munmap),
 };
 
 volatile atomic_bool __hook_enable_hook_flag;

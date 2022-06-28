@@ -11,6 +11,8 @@ extern "C" {
 #define MuslMalloc(func) func
 #endif
 
+void *__libc_mmap(void*, size_t, int, int, int, off_t);
+int __libc_munmap(void*, size_t);
 void *__libc_malloc(size_t);
 void *__libc_calloc(size_t, size_t);
 void *__libc_realloc(void *, size_t);

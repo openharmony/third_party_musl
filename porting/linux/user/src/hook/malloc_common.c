@@ -30,4 +30,24 @@ void free(void* mem)
 		MuslMalloc(free)(mem);
 	}
 }
+
+void* mmap(void* addr, size_t length, int prot, int flags, int fd, off_t offset)
+{
+	volatile const struct MallocDispatchType* dispatch_table = get_current_dispatch_table();
+	if (__predict_false(dispatch_table != NULL)) {
+		return dispatch_table->mmap(addr, length, prot, flags, fd, offset);
+	} else {
+		return MuslMalloc(mmap)(addr, length, prot, flags, fd, offset);
+	}
+}
+
+int munmap(void* addr, size_t length)
+{
+	volatile const struct MallocDispatchType* dispatch_table = get_current_dispatch_table();
+	if (__predict_false(dispatch_table != NULL)) {
+		return dispatch_table->munmap(addr, length);
+	} else {
+		return MuslMalloc(munmap)(addr, length);
+	}
+}
 #endif
