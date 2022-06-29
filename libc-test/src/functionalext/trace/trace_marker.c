@@ -67,7 +67,7 @@ static void trace_marker_0010(void)
     char buf_begin[BUFFER_LEN] = {0};
     char buf_end[BUFFER_LEN] = {0};
 
-    int buf_begin_fd = snprintf(buf_begin, BUFFER_LEN, "B|%d %s", getpid(), "Musl_Trace_Marker_0100");
+    int buf_begin_fd = snprintf(buf_begin, BUFFER_LEN, "B|%d|%s", getpid(), "Musl_Trace_Marker_0100");
     if (buf_begin_fd < 0) {
         close(trace_fd);
         return;
@@ -101,8 +101,8 @@ static void trace_marker_0010(void)
 static void trace_marker_0020(void)
 {
     system("cd /sys/kernel/debug/tracing;echo 1 > tracing_on");
-    trace_marker_async_begin("Musl_Trace_Marker_0200", "trace_marker_async");
-    trace_marker_async_end("Musl_Trace_Marker_0200", "trace_marker_async");
+    trace_marker_async_begin("async_begin_0200", "trace_async",1);
+    trace_marker_async_end("async_end_0200", "trace_async",1);
     system("cd /sys/kernel/debug/tracing;echo 0 > tracing_on");
 
     int trace_fd = open("/sys/kernel/tracing/trace", O_CLOEXEC | O_RDONLY);
@@ -117,13 +117,13 @@ static void trace_marker_0020(void)
     char buffer[BUFFER_LEN] = {0};
     char buf_async_begin[BUFFER_LEN] = {0};
     char buf_async_end[BUFFER_LEN] = {0};
-    int buf_async_begin_fd = snprintf(buf_async_begin, BUFFER_LEN, "S|%d %s", getpid(), "Musl_Trace_Marker_0200");
+    int buf_async_begin_fd = snprintf(buf_async_begin, BUFFER_LEN, "S|%d|%s|%s %d", getpid(), "async_begin_0200", "trace_async" , 1);
     if (buf_async_begin_fd < 0) {
         close(trace_fd);
         return;
     }
 
-    int buf_async_end_fd = snprintf(buf_async_end, BUFFER_LEN, "F|");
+    int buf_async_end_fd = snprintf(buf_async_end, BUFFER_LEN, "F|%d|%s|%s %d", getpid(), "async_end_0200", "trace_async" , 1);
     if (buf_async_end_fd < 0) {
         close(trace_fd);
         return;
@@ -167,7 +167,7 @@ static void trace_marker_0030(void)
     char buffer[BUFFER_LEN] = {0};
     char buf_count[BUFFER_LEN] = {0};
 
-    int buf_begin_fd = snprintf(buf_count, BUFFER_LEN, "C|%d %s %d", getpid(), "traceCount", traceCount);
+    int buf_begin_fd = snprintf(buf_count, BUFFER_LEN, "C|%d|%s %d", getpid(), "traceCount", traceCount);
     if (buf_begin_fd < 0) {
         close(trace_fd);
         return;
@@ -219,7 +219,7 @@ static void trace_marker_0040(void)
                 return;
             }
         }
-        int buf_begin_fd = snprintf(buf_begin, BUFFER_LEN, "B|%d %s", getpid(), "Trace_Marker0400_Forkfir");
+        int buf_begin_fd = snprintf(buf_begin, BUFFER_LEN, "B|%d|%s", getpid(), "Trace_Marker0400_Forkfir");
         if (buf_begin_fd < 0) {
             close(trace_fd);
             return;
@@ -257,7 +257,7 @@ static void trace_marker_0040(void)
                 return;
             }
         }
-        int buf_begin_fd = snprintf(buf_begin, BUFFER_LEN, "B|%d %s", getpid(), "Trace_Marker0400_Forksec");
+        int buf_begin_fd = snprintf(buf_begin, BUFFER_LEN, "B|%d|%s", getpid(), "Trace_Marker0400_Forksec");
         if (buf_begin_fd < 0) {
             close(trace_fd);
             return;
@@ -304,8 +304,8 @@ static void trace_marker_0050(void)
     } else if (fpid == 0) {
         int pidChild = getpid();
         system("cd /sys/kernel/debug/tracing;echo 1 > tracing_on");
-        trace_marker_async_begin("Trace_Marker0500_Forkfir", "trace_marker_async");
-        trace_marker_async_end("Trace_Marker0500_Forkfir", "trace_marker_async");
+        trace_marker_async_begin("async0500_Forkfir", "begin_fir", 2);
+        trace_marker_async_end("async0500_Forkfir", "end_fir", 2);
         system("cd /sys/kernel/debug/tracing;echo 0 > tracing_on");
 
         int trace_fd = open("/sys/kernel/tracing/trace", O_CLOEXEC | O_RDONLY | O_APPEND);
@@ -315,13 +315,13 @@ static void trace_marker_0050(void)
                 return;
             }
         }
-        int buf_async_begin_fd = snprintf(buf_async_begin, BUFFER_LEN, "S|%d %s", getpid(), "Trace_Marker0500_Forkfir");
+        int buf_async_begin_fd = snprintf(buf_async_begin, BUFFER_LEN, "S|%d|%s|%s %d", getpid(), "async0500_Forkfir", "begin_fir", 2);
         if (buf_async_begin_fd < 0) {
             close(trace_fd);
             return;
         }
 
-        int buf_async_end_fd = snprintf(buf_async_end, BUFFER_LEN, "F|");
+        int buf_async_end_fd = snprintf(buf_async_end, BUFFER_LEN, "F|%d|%s|%s %d", getpid(), "async0500_Forkfir", "end_fir", 2);
         if (buf_async_end_fd < 0) {
             close(trace_fd);
             return;
@@ -342,8 +342,8 @@ static void trace_marker_0050(void)
         exit(pidChild);
     } else {
         system("cd /sys/kernel/debug/tracing;echo 1 > tracing_on");
-        trace_marker_async_begin("Trace_Marker0500_Forksec", "trace_marker_async");
-        trace_marker_async_end("Trace_Marker0500_Forksec", "trace_marker_async");
+        trace_marker_async_begin("async0500_Forksec", "begin_sec", 3);
+        trace_marker_async_end("async0500_Forksec", "end_sec", 3);
         system("cd /sys/kernel/debug/tracing;echo 0 > tracing_on");
 
         int trace_fd = open("/sys/kernel/tracing/trace", O_CLOEXEC | O_RDONLY | O_APPEND);
@@ -353,13 +353,13 @@ static void trace_marker_0050(void)
                 return;
             }
         }
-        int buf_async_begin_fd = snprintf(buf_async_begin, BUFFER_LEN, "S|%d %s", getpid(), "Trace_Marker0500_Forksec");
+        int buf_async_begin_fd = snprintf(buf_async_begin, BUFFER_LEN, "S|%d|%s|%s %d", getpid(), "async0500_Forksec", "begin_sec", 3);
         if (buf_async_begin_fd < 0) {
             close(trace_fd);
             return;
         }
 
-        int buf_async_end_fd = snprintf(buf_async_end, BUFFER_LEN, "F|");
+        int buf_async_end_fd = snprintf(buf_async_end, BUFFER_LEN, "F|%d|%s|%s %d", getpid(), "async0500_Forksec", "end_sec", 3);
         if (buf_async_end_fd < 0) {
             close(trace_fd);
             return;
@@ -411,7 +411,7 @@ static void trace_marker_0060(void)
                 return;
             }
         }
-        int buf_count_fd = snprintf(buf_count, BUFFER_LEN, "C|%d %s %d", getpid(), "traceCount_forkfir", traceCount);
+        int buf_count_fd = snprintf(buf_count, BUFFER_LEN, "C|%d|%s %d", getpid(), "traceCount_forkfir", traceCount);
         if (buf_count_fd < 0) {
             close(trace_fd);
             return;
@@ -442,7 +442,7 @@ static void trace_marker_0060(void)
                 return;
             }
         }
-        int buf_count_fd = snprintf(buf_count, BUFFER_LEN, "C|%d %s %d", getpid(), "traceCount_forksec", traceCount);
+        int buf_count_fd = snprintf(buf_count, BUFFER_LEN, "C|%d|%s %d", getpid(), "traceCount_forksec", traceCount);
         if (buf_count_fd < 0) {
             close(trace_fd);
             return;
@@ -482,7 +482,7 @@ static void *ThreadTraceMarkerFir(void *arg)
     char buf_begin[BUFFER_LEN] = {0};
     char buf_end[BUFFER_LEN] = {0};
 
-    int buf_begin_fd = snprintf(buf_begin, BUFFER_LEN, "B|%d %s", getpid(), "Trace_Marker_Threadfir");
+    int buf_begin_fd = snprintf(buf_begin, BUFFER_LEN, "B|%d|%s", getpid(), "Trace_Marker_Threadfir");
     if (buf_begin_fd < 0) {
         close(trace_fd);
         return NULL;
@@ -528,7 +528,7 @@ static void *ThreadTraceMarkerSec(void *arg)
     char buf_begin[BUFFER_LEN] = {0};
     char buf_end[BUFFER_LEN] = {0};
 
-    int buf_begin_fd = snprintf(buf_begin, BUFFER_LEN, "B|%d %s", getpid(), "Trace_Marker_Threadsec");
+    int buf_begin_fd = snprintf(buf_begin, BUFFER_LEN, "B|%d|%s", getpid(), "Trace_Marker_Threadsec");
     if (buf_begin_fd < 0) {
         close(trace_fd);
         return NULL;
@@ -582,8 +582,8 @@ static void trace_marker_0070(void)
 static void *ThreadTraceMarkerAsyncFir(void *arg)
 {
     system("cd /sys/kernel/debug/tracing;echo 1 > tracing_on");
-    trace_marker_async_begin("Trace_Marker_Async_Threadfir", "trace_marker_async_thread");
-    trace_marker_async_end("Trace_Marker_Async_Threadfir", "trace_marker_async_thread");
+    trace_marker_async_begin("Async_Threadfir", "begin_threadfir",4);
+    trace_marker_async_end("Async_Threadfir", "end_threadfir", 4);
     system("cd /sys/kernel/debug/tracing;echo 0 > tracing_on");
 
     int trace_fd = open("/sys/kernel/tracing/trace", O_CLOEXEC | O_RDONLY);
@@ -598,13 +598,13 @@ static void *ThreadTraceMarkerAsyncFir(void *arg)
     char buffer[BUFFER_LEN] = {0};
     char buf_async_begin[BUFFER_LEN] = {0};
     char buf_async_end[BUFFER_LEN] = {0};
-    int buf_async_begin_fd = snprintf(buf_async_begin, BUFFER_LEN, "S|%d %s", getpid(), "Trace_Marker_Async_Threadfir");
+    int buf_async_begin_fd = snprintf(buf_async_begin, BUFFER_LEN, "S|%d|%s|%s %d", getpid(), "Async_Threadfir", "begin_threadfir", 4);
     if (buf_async_begin_fd < 0) {
         close(trace_fd);
         return NULL;
     }
 
-    int buf_async_end_fd = snprintf(buf_async_end, BUFFER_LEN, "F|");
+    int buf_async_end_fd = snprintf(buf_async_end, BUFFER_LEN, "F|%d|%s|%s %d", getpid(), "Async_Threadfir", "end_threadfir", 4);
     if (buf_async_end_fd < 0) {
         close(trace_fd);
         return NULL;
@@ -628,8 +628,8 @@ static void *ThreadTraceMarkerAsyncFir(void *arg)
 static void *ThreadTraceMarkerAsyncSec(void *arg)
 {
     system("cd /sys/kernel/debug/tracing;echo 1 > tracing_on");
-    trace_marker_async_begin("Trace_Marker_Async_Threadsec", "trace_marker_async_thread");
-    trace_marker_async_end("Trace_Marker_Async_Threadsec", "trace_marker_async_thread");
+    trace_marker_async_begin("Async_Threadsec", "begin_threadsec",5);
+    trace_marker_async_end("Async_Threadsec", "end_threadsec",5);
     system("cd /sys/kernel/debug/tracing;echo 0 > tracing_on");
 
     int trace_fd = open("/sys/kernel/tracing/trace", O_CLOEXEC | O_RDONLY);
@@ -644,13 +644,13 @@ static void *ThreadTraceMarkerAsyncSec(void *arg)
     char buffer[BUFFER_LEN] = {0};
     char buf_async_begin[BUFFER_LEN] = {0};
     char buf_async_end[BUFFER_LEN] = {0};
-    int buf_async_begin_fd = snprintf(buf_async_begin, BUFFER_LEN, "S|%d %s", getpid(), "Trace_Marker_Async_Threadsec");
+    int buf_async_begin_fd = snprintf(buf_async_begin, BUFFER_LEN, "S|%d|%s|%s %d", getpid(), "Async_Threadsec", "begin_threadsec", 5);
     if (buf_async_begin_fd < 0) {
         close(trace_fd);
         return NULL;
     }
 
-    int buf_async_end_fd = snprintf(buf_async_end, BUFFER_LEN, "F|");
+    int buf_async_end_fd = snprintf(buf_async_end, BUFFER_LEN, "F|%d|%s|%s %d", getpid(), "Async_Threadsec", "end_threadsec", 5);
     if (buf_async_end_fd < 0) {
         close(trace_fd);
         return NULL;
@@ -714,7 +714,7 @@ static void *ThreadTraceMarkerCountFir(void *arg)
     char buffer[BUFFER_LEN] = {0};
     char buf_count[BUFFER_LEN] = {0};
 
-    int buf_begin_fd = snprintf(buf_count, BUFFER_LEN, "C|%d %s %d", getpid(), "traceCount_Threadfir", traceCount);
+    int buf_begin_fd = snprintf(buf_count, BUFFER_LEN, "C|%d|%s %d", getpid(), "traceCount_Threadfir", traceCount);
     if (buf_begin_fd < 0) {
         close(trace_fd);
         return NULL;
@@ -755,7 +755,7 @@ static void *ThreadTraceMarkerCountSec(void *arg)
     char buffer[BUFFER_LEN] = {0};
     char buf_count[BUFFER_LEN] = {0};
 
-    int buf_begin_fd = snprintf(buf_count, BUFFER_LEN, "C|%d %s %d", getpid(), "traceCount_Threadsec", traceCount);
+    int buf_begin_fd = snprintf(buf_count, BUFFER_LEN, "C|%d|%s %d", getpid(), "traceCount_Threadsec", traceCount);
     if (buf_begin_fd < 0) {
         close(trace_fd);
         return NULL;
@@ -816,9 +816,7 @@ int main(void)
 {
     int num = sizeof(G_Fun_Array) / sizeof(TEST_FUN);
     for (int pos = 0; pos < num; ++pos) {
-        t_printf("trace_marker test ( %d ) start \n", pos + 1);
         G_Fun_Array[pos]();
-        t_printf("trace_marker test ( %d ) finish \n", pos + 1);
     }
 
     return t_status;

@@ -732,9 +732,7 @@ int main(void)
 {
     int num = sizeof(G_Fun_Array) / sizeof(TEST_FUN);
     for (int pos = 0; pos < num; ++pos)     {
-        t_printf("pthread_cond_timedwait test ( %d ) start \n", pos + 1);
         G_Fun_Array[pos]();
-        t_printf("pthread_cond_timedwait test ( %d ) finish \n", pos + 1);
     }
     return t_status;
 }

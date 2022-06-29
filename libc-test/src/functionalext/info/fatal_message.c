@@ -182,7 +182,7 @@ void *ThreadFun1(void *arg)
     }
     fatal_msg_t *fatal_message = get_fatal_message();
     EXPECT_TRUE(strcmp(fatal_message->msg, (char *)arg) == 0);
-    return NULL;
+    pthread_exit("ThreadFun1 Exit");
 }
 
 void *ThreadFun2(void *arg)
@@ -191,7 +191,7 @@ void *ThreadFun2(void *arg)
         t_printf("ThreadFun2 arg is NULL");
     }
     fatal_msg_t *fatal_message = get_fatal_message();
-    EXPECT_TRUE(fatal_message->msg != (char *)arg);
+    EXPECT_TRUE(strcmp(fatal_message->msg, (char *)arg) == 0);
     pthread_exit("ThreadFun2 Exit");
 }
 
@@ -233,9 +233,7 @@ int main(void)
 {
     int num = sizeof(G_Fun_Array) / sizeof(TEST_FUN);
     for (int pos = 0; pos < num; ++pos) {
-        t_printf("fatal_message test ( %d ) start \n", pos + 1);
         G_Fun_Array[pos]();
-        t_printf("fatal_message test ( %d ) finish \n", pos + 1);
     }
 
     return t_status;
