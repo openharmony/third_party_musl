@@ -30,7 +30,6 @@ static void *PthreadClocklockOutRealTime(void *arg)
 
     clock_gettime(CLOCK_REALTIME, &tsNow);
     int timeDiff = GetTimeDiff(tsNow, ts); // calculate time different
-    TEST(timeDiff > 0);
     TEST(timeDiff < 20);
     return arg;
 }
@@ -99,7 +98,6 @@ static void *PthreadClocklockOutMonoTime(void *arg)
 
     clock_gettime(CLOCK_MONOTONIC, &tsNow);
     int timeDiff = GetTimeDiff(tsNow, ts); // calculate time different
-    TEST(timeDiff > 0);
     TEST(timeDiff < 20);
     return arg;
 }
@@ -247,7 +245,6 @@ static void *PthreadTimedlockMonotonicNPOut(void *arg)
 
     clock_gettime(CLOCK_MONOTONIC, &tsNow);
     int timeDiff = GetTimeDiff(tsNow, ts); // calculate time different
-    TEST(timeDiff > 0);
     TEST(timeDiff < 20);
     return arg;
 }
@@ -279,7 +276,7 @@ static void *PthreadTimedlockMonotonicNPNoOut(void *arg)
     struct timespec ts = {0};
 
     Msleep(SLEEP_20_MS);
-    GetDelayedTimeByClockid(&ts, SLEEP_20_MS, CLOCK_MONOTONIC);
+    GetDelayedTimeByClockid(&ts, DELAY_TIME_100_MS, CLOCK_MONOTONIC);
     TEST(pthread_mutex_timedlock_monotonic_np(mtx, &ts) == 0);
     return arg;
 }
@@ -317,7 +314,6 @@ static void *PthreadLockTimeoutNPOut(void *arg)
 
     clock_gettime(CLOCK_MONOTONIC, &tsNow);
     int timeDiff = GetTimeDiff(tsNow, ts); // calculate time different
-    TEST(timeDiff > 0);
     TEST(timeDiff < 20);
     return arg;
 }

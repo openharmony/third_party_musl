@@ -43,7 +43,7 @@ void trace_marker_end(void);
   * @param message The function of information.
   * @param value The value which want to trace.
   */
-void trace_marker_async_begin(const char *message, const char *value);
+void trace_marker_async_begin(const char *message, const char *value, int taskId);
 
 /**
   * @brief Write the terminator to the trace_marker node in kernel space,
@@ -51,7 +51,7 @@ void trace_marker_async_begin(const char *message, const char *value);
   * @param message The function of information.
   * @param value The value which want to trace.
   */
-void trace_marker_async_end(const char *message, const char *value);
+void trace_marker_async_end(const char *message, const char *value, int taskId);
 
 /**
   * @brief Marks a pre-traced numeric variable,with the symbol "C".

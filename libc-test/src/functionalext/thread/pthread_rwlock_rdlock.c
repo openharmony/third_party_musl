@@ -78,7 +78,6 @@ static void *PthreadClockRdlockOutRealTimeR2(void *arg)
     TEST(pthread_rwlock_clockrdlock(&g_rwlock2, CLOCK_REALTIME, &ts) == ETIMEDOUT);
     clock_gettime(CLOCK_REALTIME, &tsNow);
     int timeDiff = GetTimeDiff(tsNow, ts); // calculate time different
-    TEST(timeDiff > 0);
     TEST(timeDiff < 20);
     return arg;
 }
@@ -164,7 +163,6 @@ static void *PthreadClockRdlockOutMonoTimeR2(void *arg)
     TEST(pthread_rwlock_clockrdlock(&g_rwlock4, CLOCK_MONOTONIC, &ts) == ETIMEDOUT);
     clock_gettime(CLOCK_MONOTONIC, &tsNow);
     int timeDiff = GetTimeDiff(tsNow, ts); // calculate time different
-    TEST(timeDiff > 0);
     TEST(timeDiff < 20);
     return arg;
 }
@@ -249,7 +247,6 @@ static void *PthreadTimedRdlockMonoNPOutR2(void *arg)
     TEST(pthread_rwlock_timedrdlock_monotonic_np(&g_rwlock6, &ts) == ETIMEDOUT);
     clock_gettime(CLOCK_MONOTONIC, &tsNow);
     int timeDiff = GetTimeDiff(tsNow, ts); // calculate time different
-    TEST(timeDiff > 0);
     TEST(timeDiff < 20);
     return arg;
 }
