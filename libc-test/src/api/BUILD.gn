@@ -26,6 +26,7 @@ config("config_main") {
     "-Wno-unused",
     "-Wno-overflow",
     "-Wno-unknown-pragmas",
+    "-Wno-unsupported-floating-point-opt",
     "-fno-builtin",
     "-frounding-math",
     "-Werror=implicit-function-declaration",
