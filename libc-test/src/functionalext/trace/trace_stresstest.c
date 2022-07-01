@@ -50,8 +50,8 @@ static void trace_marker_stresstest_0010(void)
         while (1) {
             snprintf(buf, BUFFER_LEN, "%d", traceCount);
             system("cd /sys/kernel/debug/tracing;echo 1 > tracing_on");
-            trace_marker_async_begin("Trace_Marker_Async_Begin", buf);
-            trace_marker_async_end("Trace_Marker_Async_End", buf);
+            trace_marker_async_begin("Trace_Marker_Async_Begin", buf, 1);
+            trace_marker_async_end("Trace_Marker_Async_End", buf, 1);
             system("cd /sys/kernel/debug/tracing;echo 0 > tracing_on");
 
             if (traceCount % RUNNUM == 0) {
@@ -105,9 +105,7 @@ static void trace_marker_stresstest_0010(void)
 
 int main(void)
 {
-    t_printf("trace_marker_stresstest_0010 start \n");
     trace_marker_stresstest_0010();
-    t_printf("trace_marker_stresstest_0010 finish \n");
 
     return t_status;
 }
