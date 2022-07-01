@@ -37,9 +37,7 @@ static void get_device_api_version_0010(void)
 }
 int main(void)
 {
-    t_printf("get_device_api_version_0010 test start \n");
     get_device_api_version_0010();
-    t_printf("get_device_api_version_0010 test finish \n");
 
     return t_status;
 }

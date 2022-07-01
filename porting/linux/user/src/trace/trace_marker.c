@@ -70,7 +70,7 @@ void trace_marker_begin(const char *message, const char *value)
     if (value == NULL) {
         len = snprintf(buf, TRACE_MARKER_MESSAGE_LEN, "B|%d %s", getpid(), message);
     } else {
-        len = snprintf(buf, TRACE_MARKER_MESSAGE_LEN, "B|%d %s %s", getpid(), message, value);
+        len = snprintf(buf, TRACE_MARKER_MESSAGE_LEN, "B|%d|%s %s", getpid(), message, value);
     }
     if (len > 0 && len < sizeof(buf)) {
         int ret = MUSL_TEMP_FAILURE_RETRY(write(trace_marker_fd, buf, len));
@@ -115,7 +115,7 @@ void trace_marker_end(void)
 
 /* Write the function call information to the trace_marker node in kernel space,
 used in a different thread than trace_marker_async_end(),with the symbol "S". */
-void trace_marker_async_begin(const char *message, const char *value)
+void trace_marker_async_begin(const char *message, const char *value, int taskId)
 {
     if (!is_enable_trace() || message == NULL) {
         return;
@@ -129,9 +129,9 @@ void trace_marker_async_begin(const char *message, const char *value)
     char buf[TRACE_MARKER_MESSAGE_LEN] = {0};
     int len = 0;
     if (value == NULL) {
-        len = snprintf(buf, TRACE_MARKER_MESSAGE_LEN, "S|%d %s", getpid(), message);
+        len = snprintf(buf, TRACE_MARKER_MESSAGE_LEN, "S|%d|%s %d", getpid(), message, taskId);
     } else {
-        len = snprintf(buf, TRACE_MARKER_MESSAGE_LEN, "S|%d %s %s", getpid(), message, value);
+        len = snprintf(buf, TRACE_MARKER_MESSAGE_LEN, "S|%d|%s|%s %d", getpid(), message, value, taskId);
     }
     if (len > 0 && len < sizeof(buf)) {
         int ret = MUSL_TEMP_FAILURE_RETRY(write(trace_marker_fd, buf, len));
@@ -148,7 +148,7 @@ void trace_marker_async_begin(const char *message, const char *value)
 
 /* Write the terminator to the trace_marker node in kernel space,
 used in a different thread than trace_marker_async_begin(),with the symbol "F". */
-void trace_marker_async_end(const char *message, const char *value)
+void trace_marker_async_end(const char *message, const char *value, int taskId)
 {
     if (!is_enable_trace() || message == NULL) {
         return;
@@ -162,9 +162,9 @@ void trace_marker_async_end(const char *message, const char *value)
     char buf[TRACE_MARKER_MESSAGE_LEN] = {0};
     int len = 0;
     if (value == NULL) {
-        len = snprintf(buf, TRACE_MARKER_MESSAGE_LEN, "F|%d %s", getpid(), message);
+        len = snprintf(buf, TRACE_MARKER_MESSAGE_LEN, "F|%d|%s %d", getpid(), message, taskId);
     } else {
-        len = snprintf(buf, TRACE_MARKER_MESSAGE_LEN, "F|%d %s %s", getpid(), message, value);
+        len = snprintf(buf, TRACE_MARKER_MESSAGE_LEN, "F|%d|%s|%s %d", getpid(), message, value, taskId);
     }
     if (len > 0 && len < sizeof(buf)) {
         int ret = MUSL_TEMP_FAILURE_RETRY(write(trace_marker_fd, buf, len));
@@ -192,7 +192,7 @@ void trace_marker_count(const char *message, int value)
     }
 
     char buf[TRACE_MARKER_MESSAGE_LEN] = {0};
-    int len = snprintf(buf, TRACE_MARKER_MESSAGE_LEN, "C|%d %s %d", getpid(), message, value);
+    int len = snprintf(buf, TRACE_MARKER_MESSAGE_LEN, "C|%d|%s %d", getpid(), message, value);
     if (len > 0 && len < sizeof(buf)) {
         int ret = MUSL_TEMP_FAILURE_RETRY(write(trace_marker_fd, buf, len));
         if (ret == -1) {
