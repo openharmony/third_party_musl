@@ -21,26 +21,39 @@ toolchains_dir = "//prebuilts/clang/ohos"
 musl_target_out_dir = "${root_out_dir}/obj/third_party/musl"
 
 if (host_os == "mac") {
-  darwin_x86_64_toolchains_dir = "${toolchains_dir}/darwin-x86_64"
-  ohos_ndk_toolchains("darwin_x86_64") {
+  if (host_cpu == "arm64") {
+    toolchains_file_name = "darwin-arm64"
+    deps_name = "darwin_arm64"
+  } else {
+    toolchains_file_name = "darwin-x86_64"
+    deps_name = "darwin_x86_64"
+  }
+
+  darwin_system_toolchains_dir = "${toolchains_dir}/${toolchains_file_name}"
+  ohos_ndk_toolchains("${deps_name}") {
     dest_dir = "$ndk_darwin_toolchains_out_dir"
     sources = [
-      "${darwin_x86_64_toolchains_dir}/llvm/NOTICE",
-      "${darwin_x86_64_toolchains_dir}/llvm/bin",
-      "${darwin_x86_64_toolchains_dir}/llvm/include",
-      "${darwin_x86_64_toolchains_dir}/llvm/lib",
-      "${darwin_x86_64_toolchains_dir}/llvm/libexec",
-      "${darwin_x86_64_toolchains_dir}/llvm/share",
+      "${darwin_system_toolchains_dir}/llvm/NOTICE",
+      "${darwin_system_toolchains_dir}/llvm/bin",
+      "${darwin_system_toolchains_dir}/llvm/include",
+      "${darwin_system_toolchains_dir}/llvm/lib",
+      "${darwin_system_toolchains_dir}/llvm/libexec",
+      "${darwin_system_toolchains_dir}/llvm/share",
     ]
-    license_file = "${darwin_x86_64_toolchains_dir}/llvm/NOTICE"
+    license_file = "${darwin_system_toolchains_dir}/llvm/NOTICE"
   }
+
   action("darwin_toolchain") {
     outputs = [ "${ndk_darwin_toolchains_out_dir}" ]
     script = "toolchain.sh"
     args =
-        [ "-i" ] + [ rebase_path("${darwin_x86_64_toolchains_dir}/libcxx-ndk") ]
+        [ "-i" ] + [ rebase_path("${darwin_system_toolchains_dir}/libcxx-ndk") ]
     args += [ "-o" ] + [ rebase_path("${ndk_darwin_toolchains_out_dir}") ]
-    deps = [ ":darwin_x86_64" ]
+    if (host_cpu == "arm64") {
+      deps = [ ":darwin_arm64" ]
+    } else {
+      deps = [ ":darwin_x86_64" ]
+    }
   }
 } else {
   linux_x86_64_toolchains_dir = "${toolchains_dir}/linux-x86_64"
