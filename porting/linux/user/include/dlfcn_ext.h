@@ -23,12 +23,12 @@ extern "C" {
 #endif
 
 /* for dl_extinfo flag */
-#define DL_EXT_WIRTE_INFO 0x1
-#define DL_EXT_USE_INFO 0x2
+#define DL_EXT_WRITE_RELRO 0x1
+#define DL_EXT_USE_RELRO 0x2
 #define DL_EXT_RESERVED_ADDRESS_RECURSIVE 0x4
 
 /** Mask of valid bits. */
-#define DL_EXT_VALID_FLAG_BITS (DL_EXT_WIRTE_INFO | DL_EXT_USE_INFO | DL_EXT_RESERVED_ADDRESS_RECURSIVE)
+#define DL_EXT_VALID_FLAG_BITS (DL_EXT_WRITE_RELRO | DL_EXT_USE_RELRO | DL_EXT_RESERVED_ADDRESS_RECURSIVE)
 
 typedef struct {
     int flag;
@@ -38,9 +38,9 @@ typedef struct {
 /**
  * @brief Loads the dynamic shared object (shared library) file with the extended feature.
  *        If extinfo is NULL, it is equivalent to dlopen.
- *        If DL_EXT_WIRTE_INFO is set in extinfo, the GNU RELRO section will be written to relro_fd and allowed to
+ *        If DL_EXT_WRITE_RELRO is set in extinfo, the GNU RELRO section will be written to relro_fd and allowed to
  *        reused by other process loading the same library at the same address.
- *        IF DL_EXT_USE_INFO is set in extinfo, the GNU RELRO section written in relro_fd will be reused.
+ *        IF DL_EXT_USE_RELRO is set in extinfo, the GNU RELRO section written in relro_fd will be reused.
  * @param file Equivalent to the argument of dlopen.
  * @param mode Equivalent to the argument of dlopen.
  * @param extinfo Indicates the dl_extinfo struct.
