@@ -29,6 +29,7 @@ functional_list = [
   "pthread_mutex_pi",
   "pthread_robust",
   "pthread_tsd",
+  "pthread_getname_np",
   "qsort",
   "random",
   "search_hsearch",
