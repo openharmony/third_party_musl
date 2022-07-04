@@ -162,6 +162,10 @@ void free_task(struct loadtask *task)
     if (task == NULL) {
         return;
     }
+    if (task->name) {
+        free(task->name);
+        task->name = NULL;
+    }
     if (task->allocated_buf) {
         free(task->allocated_buf);
         task->allocated_buf = NULL;
@@ -228,11 +232,17 @@ void shuffle_loadtasks(struct loadtasks *tasks)
 
 struct loadtask *create_loadtask(const char *name, struct dso *needed_by, ns_t *ns, bool check_inherited)
 {
+    size_t name_len = strlen(name);
+    char *name_buf = (char *)malloc(name_len + 1);
+    if (!name_buf) {
+        return NULL;
+    }
     struct loadtask *task = calloc(1, sizeof(struct loadtask));
     if (!task) {
         return NULL;
     }
-    task->name = name;
+    strcpy(name_buf, name);
+    task->name = name_buf;
     task->needed_by = needed_by;
     task->namespace = ns;
     task->check_inherited = check_inherited;

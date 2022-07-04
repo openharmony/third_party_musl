@@ -3940,14 +3940,14 @@ static void handle_relro_sharing(struct dso *p, const dl_extinfo *extinfo, ssize
 	if (extinfo == NULL) {
 		return;
 	}
-	if (extinfo->flag & DL_EXT_WIRTE_INFO) {
+	if (extinfo->flag & DL_EXT_WRITE_RELRO) {
 		LD_LOGD("Serializing GNU_RELRO %s", p->name);
 		if (serialize_gnu_relro(extinfo->relro_fd, p, relro_fd_offset) < 0) {
 			LD_LOGE("Error serializing GNU_RELRO %s", p->name);
 			error("Error serializing GNU_RELRO");
 			if (runtime) longjmp(*rtld_fail, 1);
 		}
-	} else if (extinfo->flag & DL_EXT_USE_INFO) {
+	} else if (extinfo->flag & DL_EXT_USE_RELRO) {
 		LD_LOGD("Mapping GNU_RELRO %s", p->name);
 		if (map_gnu_relro(extinfo->relro_fd, p, relro_fd_offset) < 0) {
 			LD_LOGE("Error mapping GNU_RELRO %s", p->name);
