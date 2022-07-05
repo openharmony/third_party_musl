@@ -63,12 +63,12 @@ static void clear_handle(void *handle)
     }
 }
 
-static void test_wirte_relro_file(const char* lib, const int relro_fd)
+static void test_write_relro_file(const char* lib, const int relro_fd)
 {
     pid_t pid = fork();
     if (pid == 0) {
         dl_extinfo extinfo = {
-            .flag = DL_EXT_WIRTE_INFO,
+            .flag = DL_EXT_WRITE_RELRO,
             .relro_fd = relro_fd,
         };
         void* handle = dlopen_ext(lib, RTLD_NOW, &extinfo);
@@ -126,7 +126,7 @@ static void dlopen_ext_relro_0300(void)
 
 /**
  * @tc.name      : dlopen_ext_relro_0400
- * @tc.desc      : extinfo flag is DL_EXT_WIRTE_INFO, relro_fd is valid, call dlopen_ext, return handle is not NULL.
+ * @tc.desc      : extinfo flag is DL_EXT_WRITE_RELRO, relro_fd is valid, call dlopen_ext, return handle is not NULL.
  * @tc.level     : Level 1
  */
 static void dlopen_ext_relro_0400(void)
@@ -141,7 +141,7 @@ static void dlopen_ext_relro_0400(void)
         return;
     }
     dl_extinfo extinfo = {
-        .flag = DL_EXT_WIRTE_INFO,
+        .flag = DL_EXT_WRITE_RELRO,
         .relro_fd = relro_fd,
     };
     void* handle = dlopen_ext(LIB_NAME, RTLD_NOW, &extinfo);
@@ -152,13 +152,13 @@ static void dlopen_ext_relro_0400(void)
 
 /**
  * @tc.name      : dlopen_ext_relro_0500
- * @tc.desc      : extinfo flag is DL_EXT_WIRTE_INFO, relro_fd is not valid, call dlopen_ext, return handle is NULL.
+ * @tc.desc      : extinfo flag is DL_EXT_WRITE_RELRO, relro_fd is not valid, call dlopen_ext, return handle is NULL.
  * @tc.level     : Level 2
  */
 static void dlopen_ext_relro_0500(void)
 {
     dl_extinfo extinfo = {
-        .flag = DL_EXT_WIRTE_INFO,
+        .flag = DL_EXT_WRITE_RELRO,
         .relro_fd = -1,
     };
     void* handle = dlopen_ext(LIB_NAME, RTLD_NOW, &extinfo);
@@ -168,7 +168,7 @@ static void dlopen_ext_relro_0500(void)
 
 /**
  * @tc.name      : dlopen_ext_relro_0600
- * @tc.desc      : extinfo flag is DL_EXT_USE_INFO, relro_fd is valid, call dlopen_ext, return handle is not NULL.
+ * @tc.desc      : extinfo flag is DL_EXT_USE_RELRO, relro_fd is valid, call dlopen_ext, return handle is not NULL.
  * @tc.level     : Level 1
  */
 static void dlopen_ext_relro_0600(void)
@@ -182,9 +182,9 @@ static void dlopen_ext_relro_0600(void)
         t_error("%s relro file %s open failed error is : %s \n", __FUNCTION__, relro_file, dlerror());
         return;
     }
-    test_wirte_relro_file(LIB_NAME, relro_fd);
+    test_write_relro_file(LIB_NAME, relro_fd);
     dl_extinfo extinfo = {
-        .flag = DL_EXT_USE_INFO,
+        .flag = DL_EXT_USE_RELRO,
         .relro_fd = relro_fd,
     };
     void* handle = dlopen_ext(LIB_NAME, RTLD_NOW, &extinfo);
@@ -195,7 +195,7 @@ static void dlopen_ext_relro_0600(void)
 
 /**
  * @tc.name      : dlopen_ext_relro_0700
- * @tc.desc      : extinfo flag is DL_EXT_USE_INFO, relro_fd is not valid, call dlopen_ext, return handle is NULL.
+ * @tc.desc      : extinfo flag is DL_EXT_USE_RELRO, relro_fd is not valid, call dlopen_ext, return handle is NULL.
  * @tc.level     : Level 2
  */
 static void dlopen_ext_relro_0700(void)
@@ -209,9 +209,9 @@ static void dlopen_ext_relro_0700(void)
         t_error("%s relro file %s open failed error is : %s \n", __FUNCTION__, relro_file, dlerror());
         return;
     }
-    test_wirte_relro_file(LIB_NAME, relro_fd);
+    test_write_relro_file(LIB_NAME, relro_fd);
     dl_extinfo extinfo = {
-        .flag = DL_EXT_USE_INFO,
+        .flag = DL_EXT_USE_RELRO,
         .relro_fd = -1,
     };
     void* handle = dlopen_ext(LIB_NAME, RTLD_NOW, &extinfo);
@@ -222,7 +222,7 @@ static void dlopen_ext_relro_0700(void)
 
 /**
  * @tc.name      : dlopen_ext_relro_0800
- * @tc.desc      : extinfo flag is DL_EXT_WIRTE_INFO | DL_EXT_RESERVED_ADDRESS_RECURSIVE, relro_fd is valid,
+ * @tc.desc      : extinfo flag is DL_EXT_WRITE_RELRO | DL_EXT_RESERVED_ADDRESS_RECURSIVE, relro_fd is valid,
  *                 call dlopen_ext, return handle is not NULL.
  * @tc.level     : Level 1
  */
@@ -238,7 +238,7 @@ static void dlopen_ext_relro_0800(void)
         return;
     }
     dl_extinfo extinfo = {
-        .flag = DL_EXT_WIRTE_INFO | DL_EXT_RESERVED_ADDRESS_RECURSIVE,
+        .flag = DL_EXT_WRITE_RELRO | DL_EXT_RESERVED_ADDRESS_RECURSIVE,
         .relro_fd = relro_fd,
     };
     void* handle = dlopen_ext(LIB_NAME, RTLD_NOW, &extinfo);
@@ -249,13 +249,13 @@ static void dlopen_ext_relro_0800(void)
 
 /**
  * @tc.name      : dlopen_ext_relro_0900
- * @tc.desc      : extinfo flag is DL_EXT_WIRTE_INFO, relro_fd is not valid, call dlopen_ext, return handle is NULL.
+ * @tc.desc      : extinfo flag is DL_EXT_WRITE_RELRO, relro_fd is not valid, call dlopen_ext, return handle is NULL.
  * @tc.level     : Level 2
  */
 static void dlopen_ext_relro_0900(void)
 {
     dl_extinfo extinfo = {
-        .flag = DL_EXT_WIRTE_INFO | DL_EXT_RESERVED_ADDRESS_RECURSIVE,
+        .flag = DL_EXT_WRITE_RELRO | DL_EXT_RESERVED_ADDRESS_RECURSIVE,
         .relro_fd = -1,
     };
     void* handle = dlopen_ext(LIB_NAME, RTLD_NOW, &extinfo);
@@ -266,7 +266,7 @@ static void dlopen_ext_relro_0900(void)
 
 /**
  * @tc.name      : dlopen_ext_relro_1000
- * @tc.desc      : extinfo flag is DL_EXT_USE_INFO | DL_EXT_RESERVED_ADDRESS_RECURSIVE, relro_fd is valid,
+ * @tc.desc      : extinfo flag is DL_EXT_USE_RELRO | DL_EXT_RESERVED_ADDRESS_RECURSIVE, relro_fd is valid,
  *                 call dlopen_ext, return handle is not NULL.
  * @tc.level     : Level 1
  */
@@ -281,9 +281,9 @@ static void dlopen_ext_relro_1000(void)
         t_error("%s relro file %s open failed error is : %s \n", __FUNCTION__, relro_file, dlerror());
         return;
     }
-    test_wirte_relro_file(LIB_NAME, relro_fd);
+    test_write_relro_file(LIB_NAME, relro_fd);
     dl_extinfo extinfo = {
-        .flag = DL_EXT_USE_INFO | DL_EXT_RESERVED_ADDRESS_RECURSIVE,
+        .flag = DL_EXT_USE_RELRO | DL_EXT_RESERVED_ADDRESS_RECURSIVE,
         .relro_fd = relro_fd,
     };
     void* handle = dlopen_ext(LIB_NAME, RTLD_NOW, &extinfo);
@@ -294,7 +294,7 @@ static void dlopen_ext_relro_1000(void)
 
 /**
  * @tc.name      : dlopen_ext_relro_1100
- * @tc.desc      : extinfo flag is DL_EXT_USE_INFO | DL_EXT_RESERVED_ADDRESS_RECURSIVE, relro_fd is not valid,
+ * @tc.desc      : extinfo flag is DL_EXT_USE_RELRO | DL_EXT_RESERVED_ADDRESS_RECURSIVE, relro_fd is not valid,
  *                 call dlopen_ext, return handle is NULL.
  * @tc.level     : Level 2
  */
@@ -309,9 +309,9 @@ static void dlopen_ext_relro_1100(void)
         t_error("%s relro file %s open failed error is : %s \n", __FUNCTION__, relro_file, dlerror());
         return;
     }
-    test_wirte_relro_file(LIB_NAME, relro_fd);
+    test_write_relro_file(LIB_NAME, relro_fd);
     dl_extinfo extinfo = {
-        .flag = DL_EXT_USE_INFO | DL_EXT_RESERVED_ADDRESS_RECURSIVE,
+        .flag = DL_EXT_USE_RELRO | DL_EXT_RESERVED_ADDRESS_RECURSIVE,
         .relro_fd = -1,
     };
     void* handle = dlopen_ext(LIB_NAME, RTLD_NOW, &extinfo);
@@ -322,7 +322,7 @@ static void dlopen_ext_relro_1100(void)
 
 /**
  * @tc.name      : dlopen_ext_relro_1200
- * @tc.desc      : extinfo flag is DL_EXT_USE_INFO when relro file do not wirte,
+ * @tc.desc      : extinfo flag is DL_EXT_USE_RELRO when relro file do not write,
  *                 when call dlopen_ext, return handle is NULL.
  * @tc.level     : Level 2
  */
@@ -338,7 +338,7 @@ static void dlopen_ext_relro_1200(void)
         return;
     }
     dl_extinfo extinfo = {
-        .flag = DL_EXT_USE_INFO,
+        .flag = DL_EXT_USE_RELRO,
         .relro_fd = relro_fd,
     };
     void* handle = dlopen_ext(LIB_NAME, RTLD_NOW, &extinfo);
@@ -349,7 +349,7 @@ static void dlopen_ext_relro_1200(void)
 
 /**
  * @tc.name      : dlopen_ext_relro_1500
- * @tc.desc      : extinfo flag is DL_EXT_USE_INFO | DL_EXT_WIRTE_INFO, relro_fd is valid,
+ * @tc.desc      : extinfo flag is DL_EXT_USE_RELRO | DL_EXT_WRITE_RELRO, relro_fd is valid,
  *                 call dlopen_ext, return handle is not NULL.
  * @tc.level     : Level 1
  */
@@ -364,9 +364,9 @@ static void dlopen_ext_relro_1500(void)
         t_error("%s relro file %s open failed error is : %s \n", __FUNCTION__, relro_file, dlerror());
         return;
     }
-    test_wirte_relro_file(LIB_NAME, relro_fd);
+    test_write_relro_file(LIB_NAME, relro_fd);
     dl_extinfo extinfo = {
-        .flag = DL_EXT_WIRTE_INFO | DL_EXT_USE_INFO,
+        .flag = DL_EXT_WRITE_RELRO | DL_EXT_USE_RELRO,
         .relro_fd = relro_fd,
     };
     void* handle = dlopen_ext(LIB_NAME, RTLD_NOW, &extinfo);

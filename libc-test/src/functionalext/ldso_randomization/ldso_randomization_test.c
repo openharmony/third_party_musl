@@ -24,6 +24,7 @@
 
 #include "functionalext.h"
 
+#define PIPE_FD 2
 #define NUM_OF_BYTE 8
 #define BASE_NUM 11
 #define TEST_COUNTS 32
@@ -313,6 +314,55 @@ static void dlopen_ext_randomization_0800(void)
 }
 
 /**
+ * @tc.name      : dlopen_ext_randomization_0900
+ * @tc.desc      : Different processes call the dlopen_ext interface to load a dynamic library,
+ *                 the flag of dl_extinfo is set to DL_EXT_RESERVED_ADDRESS_RECURSIVE,
+ *                 and then call the dlsym interface to get symbol address
+ * @tc.level     : Level1
+ */
+static void dlopen_ext_randomization_0900(void)
+{
+    void *parent_handle = 0;
+    void *child_handle = 0;
+    void *parent_sym = 0;
+    void *child_sym = 0;
+    void *get_child_sym = 0;
+    int fd[PIPE_FD];
+    if (pipe(fd) < 0) {
+        EXPECT_FALSE(__FUNCTION__, true);
+        return;
+    }
+    dl_extinfo extinfo = {
+        .flag = DL_EXT_RESERVED_ADDRESS_RECURSIVE,
+    };
+    pid_t pid = fork();
+    if (pid == 0) {
+        child_handle = dlopen_ext(LIB_NAME_A, RTLD_NOW, &extinfo);
+        EXPECT_PTRNE(__FUNCTION__, child_handle, 0);
+        if (!child_handle) {
+            exit(-1);
+        }
+        child_sym = dlsym(child_handle, "test");
+        write(fd[1], &child_sym, sizeof(void *));
+        dlclose(child_handle);
+        exit(0);
+    }
+    parent_handle = dlopen_ext(LIB_NAME_A, RTLD_NOW, &extinfo);
+    EXPECT_PTRNE(__FUNCTION__, parent_handle, 0);
+    if (!parent_handle) {
+        return;
+    };
+    parent_sym = dlsym(parent_handle, "test");
+    dlclose(parent_handle);
+    int status;
+    waitpid(pid, &status, 0);
+    read(fd[0], &get_child_sym, sizeof(void *));
+    EXPECT_PTREQ(__FUNCTION__, parent_sym, get_child_sym);
+    close(fd[0]);
+    close(fd[1]);
+}
+
+/**
  * @tc.name      : dlopen_ns_randomization_0100
  * @tc.desc      : Call the dlopen_ns interface to load a valid dynamic library
  * @tc.level     : Level0
@@ -479,6 +529,7 @@ TEST_FUNC test_cases[] = {
     dlopen_ext_randomization_0400,
     dlopen_ext_randomization_0600,
     dlopen_ext_randomization_0800,
+    dlopen_ext_randomization_0900,
     dlopen_ns_randomization_0100,
     dlopen_ns_randomization_0200,
     dlopen_ns_randomization_0300,
