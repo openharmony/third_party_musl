@@ -496,13 +496,58 @@ static void dlopen_ns_randomization_0600(void)
 
 /**
  * @tc.name      : dlsym_randomization_0300
- * @tc.desc      : Call the dlsym interface to get symbol address
+ * @tc.desc      : Call the dlsym interface to get symbol address, handle is invalid
  * @tc.level     : Level2
  */
 static void dlsym_randomization_0300(void)
 {
-    void *sym = dlsym(NULL, "test");
-    EXPECT_FALSE(__FUNCTION__, sym);
+    void *sym = dlsym((void *)0xFFFF, "invalid_function");
+    EXPECT_PTREQ(__FUNCTION__, sym, NULL);
+}
+
+/**
+ * @tc.name      : dlsym_randomization_0400
+ * @tc.desc      : Call the dlsym interface to get symbol address, handle is setted to RTLD_DEFAULT, and name is valid
+ * @tc.level     : Level1
+ */
+static void dlsym_randomization_0400(void)
+{
+    void *sym = dlsym(RTLD_DEFAULT, "fopen");
+    EXPECT_PTRNE(__FUNCTION__, sym, NULL);
+}
+
+/**
+ * @tc.name      : dlsym_randomization_0500
+ * @tc.desc      : Call the dlsym interface to get symbol address, handle is setted to RTLD_DEFAULT, and name is invalid
+ * @tc.level     : Level2
+ */
+static void dlsym_randomization_0500(void)
+{
+    void *sym = dlsym(RTLD_DEFAULT, "invalid_func");
+    EXPECT_PTREQ(__FUNCTION__, sym, NULL);
+}
+
+
+/**
+ * @tc.name      : dlsym_randomization_0600
+ * @tc.desc      : Call the dlsym interface to get symbol address, handle is setted to RTLD_NEXT, and name is valid
+ * @tc.level     : Level1
+ */
+static void dlsym_randomization_0600(void)
+{
+    void *sym = dlsym(RTLD_NEXT, "fopen");
+    EXPECT_PTRNE(__FUNCTION__, sym, NULL);
+}
+
+/**
+ * @tc.name      : dlsym_randomization_0700
+ * @tc.desc      : Call the dlsym interface to get symbol address, handle is setted to RTLD_NEXT, and name is invalid
+ * @tc.level     : Level2
+ */
+static void dlsym_randomization_0700(void)
+{
+    void *sym = dlsym(RTLD_NEXT, "invalid_func");
+    EXPECT_PTREQ(__FUNCTION__, sym, NULL);
 }
 
 /**
@@ -536,6 +581,10 @@ TEST_FUNC test_cases[] = {
     dlopen_ns_randomization_0400,
     dlopen_ns_randomization_0600,
     dlsym_randomization_0300,
+    dlsym_randomization_0400,
+    dlsym_randomization_0500,
+    dlsym_randomization_0600,
+    dlsym_randomization_0700,
     dlclose_randomization_0100,
 };
 
