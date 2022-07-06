@@ -20,12 +20,6 @@
 extern "C" {
 #endif
 
-/**
-  * @brief Get the api version number of the device.
-  * @return The api version number of the device.
-  */
-int get_device_api_version(void);
-
 #ifdef __cplusplus
 }
 #endif

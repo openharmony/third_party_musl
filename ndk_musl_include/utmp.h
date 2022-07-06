@@ -27,12 +27,9 @@ struct lastlog {
 
 void         endutent(void);
 struct utmp *getutent(void);
-struct utmp *getutid(const struct utmp *);
-struct utmp *getutline(const struct utmp *);
 struct utmp *pututline(const struct utmp *);
 void         setutent(void);
 
-void updwtmp(const char *, const struct utmp *);
 int utmpname(const char *);
 
 int login_tty(int);

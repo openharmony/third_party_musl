@@ -121,12 +121,10 @@ char *strptime (const char *__restrict, const char *__restrict, struct tm *__res
 extern int daylight;
 extern long timezone;
 extern int getdate_err;
-struct tm *getdate (const char *);
 #endif
 
 
 #if defined(_GNU_SOURCE) || defined(_BSD_SOURCE)
-int stime(const time_t *);
 time_t timegm(struct tm *);
 #endif
 
@@ -153,7 +151,6 @@ __REDIR(timer_settime, __timer_settime64);
 __REDIR(timer_gettime, __timer_gettime64);
 #endif
 #if defined(_GNU_SOURCE) || defined(_BSD_SOURCE)
-__REDIR(stime, __stime64);
 __REDIR(timegm, __timegm_time64);
 #endif
 #endif

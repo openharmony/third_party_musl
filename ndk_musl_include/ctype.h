@@ -68,9 +68,6 @@ int   toascii(int);
 
 #include <stdint.h>
 
-const int32_t **__ctype_tolower_loc(void);
-const int32_t **__ctype_toupper_loc(void);
-
 #endif
 
 #ifdef __cplusplus

@@ -33,7 +33,6 @@ FILE *setmntent(const char *, const char *);
 int endmntent(FILE *);
 struct mntent *getmntent(FILE *);
 struct mntent *getmntent_r(FILE *, struct mntent *, char *, int);
-int addmntent(FILE *, const struct mntent *);
 char *hasmntopt(const struct mntent *, const char *);
 
 #ifdef __cplusplus

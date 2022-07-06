@@ -134,8 +134,6 @@ int gethostbyname_r(const char *, struct hostent *, char *, size_t, struct hoste
 int gethostbyname2_r(const char *, int, struct hostent *, char *, size_t, struct hostent **, int *);
 struct hostent *gethostbyname2(const char *, int);
 int gethostbyaddr_r(const void *, socklen_t, int, struct hostent *, char *, size_t, struct hostent **, int *);
-int getservbyport_r(int, const char *, struct servent *, char *, size_t, struct servent **);
-int getservbyname_r(const char *, const char *, struct servent *, char *, size_t, struct servent **);
 #define EAI_NODATA     -5
 #define EAI_ADDRFAMILY -9
 #define EAI_INPROGRESS -100

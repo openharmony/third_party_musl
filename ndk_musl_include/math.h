@@ -426,13 +426,6 @@ void        sincos(double, double*, double*);
 void        sincosf(float, float*, float*);
 void        sincosl(long double, long double*, long double*);
 
-double      exp10(double);
-float       exp10f(float);
-long double exp10l(long double);
-
-double      pow10(double);
-float       pow10f(float);
-long double pow10l(long double);
 #endif
 
 #ifdef __cplusplus

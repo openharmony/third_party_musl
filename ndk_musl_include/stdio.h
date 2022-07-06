@@ -165,7 +165,6 @@ char *tempnam(const char *, const char *);
 
 #if defined(_GNU_SOURCE) || defined(_BSD_SOURCE)
 #define L_cuserid 20
-char *cuserid(char *);
 void setlinebuf(FILE *);
 void setbuffer(FILE *, char *, size_t);
 int fgetc_unlocked(FILE *);
@@ -177,7 +176,6 @@ void clearerr_unlocked(FILE *);
 int feof_unlocked(FILE *);
 int ferror_unlocked(FILE *);
 int fileno_unlocked(FILE *);
-int getw(FILE *);
 int putw(int, FILE *);
 char *fgetln(FILE *, size_t *);
 int asprintf(char **, const char *, ...);
@@ -200,7 +198,6 @@ typedef struct _IO_cookie_io_functions_t {
 	cookie_close_function_t *close;
 } cookie_io_functions_t;
 
-FILE *fopencookie(void *, const char *, cookie_io_functions_t);
 #endif
 
 #if defined(_LARGEFILE64_SOURCE) || defined(_GNU_SOURCE)

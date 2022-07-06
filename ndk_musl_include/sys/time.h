@@ -32,7 +32,6 @@ int futimes(int, const struct timeval [2]);
 int futimesat(int, const char *, const struct timeval [2]);
 int lutimes(const char *, const struct timeval [2]);
 int settimeofday(const struct timeval *, const struct timezone *);
-int adjtime (const struct timeval *, struct timeval *);
 #define timerisset(t) ((t)->tv_sec || (t)->tv_usec)
 #define timerclear(t) ((t)->tv_sec = (t)->tv_usec = 0)
 #define timercmp(s,t,op) ((s)->tv_sec == (t)->tv_sec ? \
@@ -66,7 +65,6 @@ __REDIR(futimes, __futimes_time64);
 __REDIR(futimesat, __futimesat_time64);
 __REDIR(lutimes, __lutimes_time64);
 __REDIR(settimeofday, __settimeofday_time64);
-__REDIR(adjtime, __adjtime64);
 #endif
 #endif
 

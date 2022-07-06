@@ -31,8 +31,6 @@ struct mallinfo {
   int keepcost;
 };
 
-struct mallinfo mallinfo(void);
-
 struct mallinfo2 {
   size_t arena;
   size_t ordblks;
@@ -45,8 +43,6 @@ struct mallinfo2 {
   size_t fordblks;
   size_t keepcost;
 };
-
-struct mallinfo2 mallinfo2(void);
 
 #ifdef __cplusplus
 }

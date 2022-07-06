@@ -38,11 +38,6 @@ struct passwd *getpwnam (const char *);
 int getpwuid_r (uid_t, struct passwd *, char *, size_t, struct passwd **);
 int getpwnam_r (const char *, struct passwd *, char *, size_t, struct passwd **);
 
-#ifdef _GNU_SOURCE
-struct passwd *fgetpwent(FILE *);
-int putpwent(const struct passwd *, FILE *);
-#endif
-
 #ifdef __cplusplus
 }
 #endif

@@ -28,18 +28,6 @@ typedef struct fatal_msg {
     char msg[0];
 } fatal_msg_t;
 
-/**
-  * @brief Set up fatal message
-  * @param msg The fatal message
-  */
-void set_fatal_message(const char *msg);
-
-/**
-  * @brief Get the set fatal message
-  * @return Address of fatal message
-  */
-fatal_msg_t *get_fatal_message(void);
-
 #ifdef __cplusplus
 }
 #endif

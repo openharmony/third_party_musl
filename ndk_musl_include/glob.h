@@ -40,8 +40,6 @@ void globfree(glob_t *);
 #define GLOB_NOSYS   4
 
 #if defined(_LARGEFILE64_SOURCE) || defined(_GNU_SOURCE)
-#define glob64 glob
-#define globfree64 globfree
 #define glob64_t glob_t
 #endif
 
