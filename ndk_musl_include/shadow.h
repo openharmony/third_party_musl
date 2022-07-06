@@ -24,19 +24,6 @@ struct spwd {
 	unsigned long sp_flag;
 };
 
-void setspent(void);
-void endspent(void);
-struct spwd *getspent(void);
-struct spwd *fgetspent(FILE *);
-struct spwd *sgetspent(const char *);
-int putspent(const struct spwd *, FILE *);
-
-struct spwd *getspnam(const char *);
-int getspnam_r(const char *, struct spwd *, char *, size_t, struct spwd **);
-
-int lckpwdf(void);
-int ulckpwdf(void);
-
 #ifdef __cplusplus
 }
 #endif

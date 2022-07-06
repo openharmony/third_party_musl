@@ -35,7 +35,6 @@ extern "C" {
 int pipe(int [2]);
 int pipe2(int [2], int);
 int close(int);
-int posix_close(int, int);
 int dup(int);
 int dup2(int, int);
 int dup3(int, int, int);
@@ -126,7 +125,6 @@ extern int optind, opterr, optopt;
 long pathconf(const char *, int);
 long fpathconf(int, int);
 long sysconf(int);
-size_t confstr(int, char *, size_t);
 
 #if defined(_XOPEN_SOURCE) || defined(_GNU_SOURCE) || defined(_BSD_SOURCE)
 #define F_ULOCK 0
@@ -136,19 +134,15 @@ size_t confstr(int, char *, size_t);
 int setreuid(uid_t, uid_t);
 int setregid(gid_t, gid_t);
 int lockf(int, int, off_t);
-long gethostid(void);
 int nice(int);
 void sync(void);
 pid_t setpgrp(void);
-char *crypt(const char *, const char *);
-void encrypt(char *, int);
 void swab(const void *__restrict, void *__restrict, ssize_t);
 #endif
 
 #if defined(_GNU_SOURCE) || defined(_BSD_SOURCE) \
  || (defined(_XOPEN_SOURCE) && _XOPEN_SOURCE+0 < 700)
 int usleep(unsigned);
-unsigned ualarm(unsigned, unsigned);
 #endif
 
 #if defined(_GNU_SOURCE) || defined(_BSD_SOURCE)
@@ -158,7 +152,6 @@ unsigned ualarm(unsigned, unsigned);
 int brk(void *);
 void *sbrk(intptr_t);
 pid_t vfork(void);
-int vhangup(void);
 int chroot(const char *);
 int getpagesize(void);
 int getdtablesize(void);
@@ -166,11 +159,7 @@ int sethostname(const char *, size_t);
 int getdomainname(char *, size_t);
 int setdomainname(const char *, size_t);
 int setgroups(size_t, const gid_t *);
-char *getpass(const char *);
 int daemon(int, int);
-void setusershell(void);
-void endusershell(void);
-char *getusershell(void);
 int acct(const char *);
 long syscall(long, ...);
 int execvpe(const char *, char *const [], char *const []);
@@ -185,10 +174,7 @@ int setresuid(uid_t, uid_t, uid_t);
 int setresgid(gid_t, gid_t, gid_t);
 int getresuid(uid_t *, uid_t *, uid_t *);
 int getresgid(gid_t *, gid_t *, gid_t *);
-char *get_current_dir_name(void);
 int syncfs(int);
-int euidaccess(const char *, int);
-int eaccess(const char *, int);
 ssize_t copy_file_range(int, off_t *, int, off_t *, size_t, unsigned);
 pid_t gettid(void);
 #endif

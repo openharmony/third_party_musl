@@ -120,9 +120,6 @@ int posix_openpt (int);
 int grantpt (int);
 int unlockpt (int);
 char *ptsname (int);
-char *l64a (long);
-long a64l (const char *);
-void setkey (const char *);
 double drand48 (void);
 double erand48 (unsigned short [3]);
 long int lrand48 (void);
@@ -149,10 +146,6 @@ int clearenv(void);
 
 #ifdef _GNU_SOURCE
 int ptsname_r(int, char *, size_t);
-char *ecvt(double, int, int *, int *);
-char *fcvt(double, int, int *, int *);
-char *gcvt(double, int, char *);
-char *secure_getenv(const char *);
 struct __locale_struct;
 float strtof_l(const char *__restrict, char **__restrict, struct __locale_struct *);
 double strtod_l(const char *__restrict, char **__restrict, struct __locale_struct *);
