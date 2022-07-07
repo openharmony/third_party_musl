@@ -2920,12 +2920,16 @@ hidden void *__dlsym(void *restrict p, const char *restrict s, void *restrict ra
 	void *res;
 	pthread_rwlock_rdlock(&lock);
 #ifdef HANDLE_RANDOMIZATION
-	struct dso *dso = find_dso_by_handle(p);
-	if (dso == NULL) {
-		pthread_rwlock_unlock(&lock);
-		return 0;
+	if ((p != RTLD_DEFAULT) && (p != RTLD_NEXT)) {
+		struct dso *dso = find_dso_by_handle(p);
+		if (dso == NULL) {
+			pthread_rwlock_unlock(&lock);
+			return 0;
+		}
+		res = do_dlsym(dso, s, ra);
+	} else {
+		res = do_dlsym(p, s, ra);
 	}
-	res = do_dlsym(dso, s, ra);
 #else
 	res = do_dlsym(p, s, ra);
 #endif
