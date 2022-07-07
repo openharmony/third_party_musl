@@ -22,7 +22,7 @@ void __funcs_on_exit()
 	void (*func)(void *), *arg;
 	LOCK(lock);
 	for (; head; head=head->next, slot=COUNT) while(slot-->0) {
-		if (head->dso[slot] != NULL) {
+		if (head->f[slot] != NULL) {
 			func = head->f[slot];
 			arg = head->a[slot];
 			UNLOCK(lock);
@@ -36,16 +36,20 @@ void __funcs_on_exit()
 void __cxa_finalize(void *dso)
 {
 	void (*func)(void *), *arg;
+	struct fl *head_tmp = head;
+	int slot_tmp = slot;
+
 	LOCK(lock);
-	for (; head; head=head->next, slot=COUNT) while(slot-->0) {
-		if (dso == head->dso[slot]) {
-			func = head->f[slot];
-			arg = head->a[slot];
+	for (; head_tmp; head_tmp=head_tmp->next, slot_tmp=COUNT) while(slot_tmp-->0) {
+		if (dso == head_tmp->dso[slot_tmp]) {
+			func = head_tmp->f[slot_tmp];
+			arg = head_tmp->a[slot_tmp];
 			UNLOCK(lock);
 			func(arg);
 			LOCK(lock);
 
-			head->dso[slot] = NULL;
+			head_tmp->dso[slot_tmp] = NULL;
+			head_tmp->f[slot_tmp] = NULL;
 		}
 	}
 	UNLOCK(lock);
