@@ -18,6 +18,10 @@ ohos_prebuilt_etc("ld-musl-namespace-${musl_arch}-test.ini") {
 
 ohos_prebuilt_etc("ld-musl-namespace-${musl_arch}.ini") {
   source = "${musl_porting_dir}/config/ld-musl-namespace-${musl_arch}.ini"
+  install_images = [
+    "system",
+    "updater",
+  ]
 }
 
 group("musl_ns_config") {
