@@ -33,19 +33,8 @@ libc = "iccarm-c"
 
 LITEOS_MENUCONFIG_H = rebase_path("$root_out_dir/config.h")
 
-config("include") {
-  include_dirs = [ "include" ]
-}
-
 static_library(libc) {
   sources = ICCARM_ADAPT_SRC_COMMON
-
-  cflags = [
-    "-imacros",
-    "$LITEOS_MENUCONFIG_H",
-  ]
-
-  public_configs = [ ":include" ]
 }
 
 group("kernel") {
