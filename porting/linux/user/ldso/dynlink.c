@@ -66,6 +66,16 @@ struct debug {
 	void *base;
 };
 
+struct reserved_address_params {
+	void* start_addr;
+	size_t reserved_size;
+	bool must_use_reserved;
+	bool reserved_address_recursive;
+#ifdef LOAD_ORDER_RANDOMIZATION
+	struct dso *target;
+#endif
+};
+
 struct td_index {
 	size_t args[2];
 	struct td_index *next;
@@ -191,13 +201,13 @@ static int do_dlclose(struct dso *p);
 
 #ifdef LOAD_ORDER_RANDOMIZATION
 static bool map_library_header(struct loadtask *task);
-static bool task_map_library(struct loadtask *task);
+static bool task_map_library(struct loadtask *task, struct reserved_address_params *reserved_params);
 static bool load_library_header(struct loadtask *task);
-static void task_load_library(struct loadtask *task);
+static void task_load_library(struct loadtask *task, struct reserved_address_params *reserved_params);
 static void preload_direct_deps(struct dso *p, ns_t *namespace, struct loadtasks *tasks);
 static void unmap_preloaded_sections(struct loadtasks *tasks);
 static void preload_deps(struct dso *p, ns_t *ns, struct loadtasks *tasks);
-static void run_loadtasks(struct loadtasks *tasks);
+static void run_loadtasks(struct loadtasks *tasks, struct reserved_address_params *reserved_params);
 static void assign_tls(struct dso *p);
 static void load_preload(char *s, ns_t *ns, struct loadtasks *tasks);
 #endif
@@ -279,8 +289,8 @@ static void set_ns_attrs(ns_t *ns, ns_configor *conf)
 			"permitted_paths:%s ,"
 			"asan_permitted_paths:%s ,"
 			"allowed_libs: %s .\n",
-			ns, ns->ns_name, ns->separated, ns->lib_paths, ns->asan_lib_paths, ns->permitted_paths,
-			ns->asan_permitted_paths, ns->allowed_libs);
+			ns, ns->ns_name, ns->separated, ns->lib_paths, ns->asan_lib_paths, permitted_paths,
+			asan_permitted_paths, allowed_libs);
 }
 
 static void set_ns_inherits(ns_t *ns, ns_configor *conf)
@@ -829,7 +839,7 @@ static void unmap_library(struct dso *dso)
 	}
 }
 
-static void *map_library(int fd, struct dso *dso)
+static void *map_library(int fd, struct dso *dso, struct reserved_address_params *reserved_params)
 {
 	Ehdr buf[(896+sizeof(Ehdr))/sizeof(Ehdr)];
 	void *allocated_buf=0;
@@ -845,6 +855,8 @@ static void *map_library(int fd, struct dso *dso)
 	size_t dyn=0;
 	size_t tls_image=0;
 	size_t i;
+	int map_flags = MAP_PRIVATE;
+	size_t start_addr;
 
 	ssize_t l = read(fd, buf, sizeof buf);
 	eh = buf;
@@ -944,16 +956,31 @@ static void *map_library(int fd, struct dso *dso)
 	addr_min &= -PAGE_SIZE;
 	off_start &= -PAGE_SIZE;
 	map_len = addr_max - addr_min + off_start;
+	start_addr = addr_min;
+	if (reserved_params) {
+		if (map_len > reserved_params->reserved_size) {
+			if (reserved_params->must_use_reserved) {
+				goto error;
+			}
+		} else {
+			start_addr = ((size_t)reserved_params->start_addr - 1 + PAGE_SIZE) & -PAGE_SIZE;
+			map_flags |= MAP_FIXED;
+		}
+	}
 	/* The first time, we map too much, possibly even more than
 	 * the length of the file. This is okay because we will not
 	 * use the invalid part; we just need to reserve the right
 	 * amount of virtual address space to map over later. */
 	map = DL_NOMMU_SUPPORT
-		? mmap((void *)addr_min, map_len, PROT_READ|PROT_WRITE|PROT_EXEC,
+		? mmap((void *)start_addr, map_len, PROT_READ|PROT_WRITE|PROT_EXEC,
 			MAP_PRIVATE|MAP_ANONYMOUS, -1, 0)
-		: mmap((void *)addr_min, map_len, prot,
-			MAP_PRIVATE, fd, off_start);
+		: mmap((void *)start_addr, map_len, prot,
+			map_flags, fd, off_start);
 	if (map==MAP_FAILED) goto error;
+	if (reserved_params && map_len < reserved_params->reserved_size) {
+		reserved_params->reserved_size -= (map_len + (start_addr - (size_t)reserved_params->start_addr));
+		reserved_params->start_addr = (void *)((uint8_t *)map + map_len);
+	}
 	dso->map = map;
 	dso->map_len = map_len;
 	/* If the loaded file is not relocatable and the requested address is
@@ -1278,7 +1305,7 @@ static struct dso *find_library_by_fstat(const struct stat *st, const ns_t *ns, 
 #ifndef LOAD_ORDER_RANDOMIZATION
 /* add namespace function */
 struct dso *load_library(
-	const char *name, struct dso *needed_by, ns_t *namespace, bool check_inherited)
+	const char *name, struct dso *needed_by, ns_t *namespace, bool check_inherited, struct reserved_address_params *reserved_params)
 {
 	char buf[PATH_MAX+1];
 	const char *pathname;
@@ -1390,7 +1417,7 @@ struct dso *load_library(
 		for (size_t i = 0; i < namespace->ns_inherits->num; i++) {
 			ns_inherit *inherit = namespace->ns_inherits->inherits[i];
 			if (strchr(name, '/')==0 && !is_sharable(inherit, name)) continue;
-			p = load_library(name, needed_by, inherit->inherited_ns, false);
+			p = load_library(name, needed_by, inherit->inherited_ns, false, reserved_params);
 			if (p) {
 				LD_LOGD("load_library search in inherited, found p ,inherited_ns name:%s\n",
 						inherit->inherited_ns->ns_name);
@@ -1418,7 +1445,7 @@ struct dso *load_library(
 		LD_LOGD("load_library find_library_by_fstat, found p and return it!\n");
 		return p;
 	}
-	map = noload ? 0 : map_library(fd, &temp_dso);
+	map = noload ? 0 : map_library(fd, &temp_dso, reserved_params);
 	close(fd);
 	if (!map) return 0;
 
@@ -1430,7 +1457,7 @@ struct dso *load_library(
 	if (find_sym(&temp_dso, "__libc_start_main", 1).sym &&
 		find_sym(&temp_dso, "stdin", 1).sym) {
 		unmap_library(&temp_dso);
-		return load_library("libc.so", needed_by, namespace, true);
+		return load_library("libc.so", needed_by, namespace, true, reserved_params);
 	}
 	/* Past this point, if we haven't reached runtime yet, ldso has
 	 * committed either to use the mapped library or to abort execution.
@@ -1503,7 +1530,7 @@ struct dso *load_library(
 	return p;
 }
 
-static void load_direct_deps(struct dso *p, ns_t *namespace)
+static void load_direct_deps(struct dso *p, ns_t *namespace, struct reserved_address_params *reserved_params)
 {
 	size_t i, cnt=0;
 
@@ -1527,7 +1554,7 @@ static void load_direct_deps(struct dso *p, ns_t *namespace)
 		p->deps[cnt++] = q;
 	for (i=0; p->dynv[i]; i+=2) {
 		if (p->dynv[i] != DT_NEEDED) continue;
-		struct dso *dep = load_library(p->strings + p->dynv[i+1], p, namespace, true);
+		struct dso *dep = load_library(p->strings + p->dynv[i+1], p, namespace, true, reserved_params);
 		if (!dep) {
 			error("Error loading shared library %s: %m (needed by %s)",
 				p->strings + p->dynv[i+1], p->name);
@@ -1540,11 +1567,11 @@ static void load_direct_deps(struct dso *p, ns_t *namespace)
 	p->ndeps_direct = cnt;
 }
 
-static void load_deps(struct dso *p, ns_t *ns)
+static void load_deps(struct dso *p, ns_t *ns, struct reserved_address_params *reserved_params)
 {
 	if (p->deps) return;
 	for (; p; p=p->next)
-		load_direct_deps(p, ns);
+		load_direct_deps(p, ns, reserved_params);
 }
 #endif
 
@@ -2128,7 +2155,7 @@ void __dls3(size_t *sp, size_t *auxv)
 			dprintf(2, "%s: cannot load %s: %s\n", ldname, argv[0], strerror(errno));
 			_exit(1);
 		}
-		Ehdr *ehdr = (void *)map_library(fd, &app);
+		Ehdr *ehdr = (void *)map_library(fd, &app, NULL);
 		if (!ehdr) {
 			dprintf(2, "%s: %s: Not a valid dynamic program\n", ldname, argv[0]);
 			_exit(1);
@@ -2207,12 +2234,12 @@ void __dls3(size_t *sp, size_t *auxv)
 	preload_deps(&app, get_default_ns(), tasks);
 	unmap_preloaded_sections(tasks);
 	shuffle_loadtasks(tasks);
-	run_loadtasks(tasks);
+	run_loadtasks(tasks, NULL);
 	free_loadtasks(tasks);
 	assign_tls(app.next);
 #else
 	if (env_preload) load_preload(env_preload, get_default_ns());
- 	load_deps(&app, get_default_ns());
+ 	load_deps(&app, get_default_ns(), NULL);
 #endif
 
 	for (struct dso *p=head; p; p=p->next)
@@ -2360,13 +2387,15 @@ static void *dlopen_impl(
 	struct dso **volatile ctor_queue = 0;
 	ns_t *ns;
 	struct dso *caller;
+	bool reserved_address = false;
+	bool reserved_address_recursive = false;
+	struct reserved_address_params reserved_params = {0};
 #ifdef HANDLE_RANDOMIZATION
 	void *handle = 0;
 #endif
 #ifdef LOAD_ORDER_RANDOMIZATION
 	struct loadtasks *tasks = NULL;
 	struct loadtask *task = NULL;
-	bool reserved_address_recursive = false;
 #endif
 
 	if (!file) {
@@ -2376,6 +2405,23 @@ static void *dlopen_impl(
 #else
 		return head;
 #endif
+	}
+
+	if (extinfo) {
+		reserved_address_recursive = extinfo->flag & DL_EXT_RESERVED_ADDRESS_RECURSIVE;
+		if (extinfo->flag & DL_EXT_RESERVED_ADDRESS) {
+			reserved_address = true;
+			reserved_params.start_addr = extinfo->reserved_addr;
+			reserved_params.reserved_size = extinfo->reserved_size;
+			reserved_params.must_use_reserved = true;
+			reserved_params.reserved_address_recursive = reserved_address_recursive;
+		} else if (extinfo->flag & DL_EXT_RESERVED_ADDRESS_HINT) {
+			reserved_address = true;
+			reserved_params.start_addr = extinfo->reserved_addr;
+			reserved_params.reserved_size = extinfo->reserved_size;
+			reserved_params.must_use_reserved = false;
+			reserved_params.reserved_address_recursive = reserved_address_recursive;
+		}
 	}
 
 	pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &cs);
@@ -2452,8 +2498,11 @@ static void *dlopen_impl(
 			goto end;
 		}
 		p = task->p;
+		if (reserved_address) {
+			reserved_params.target = p;
+		}
 #else
-		p = load_library(file, head, ns, true, extinfo);
+		p = load_library(file, head, ns, true, reserved_address ? &reserved_params : NULL);
 #endif
 	}
 
@@ -2471,13 +2520,10 @@ static void *dlopen_impl(
 	}
 	preload_deps(p, ns, tasks);
 	unmap_preloaded_sections(tasks);
-	if (extinfo) {
-		reserved_address_recursive = extinfo->flag & DL_EXT_RESERVED_ADDRESS_RECURSIVE;
-	}
 	if (!reserved_address_recursive) {
 		shuffle_loadtasks(tasks);
 	}
-	run_loadtasks(tasks);
+	run_loadtasks(tasks, reserved_address ? &reserved_params : NULL);
 	if (!task->isloaded) {
 		assign_tls(p);
 	} else {
@@ -2488,7 +2534,7 @@ static void *dlopen_impl(
 	tasks = NULL;
 #else
 	/* First load handling */
-	load_deps(p, ns, extinfo);
+	load_deps(p, ns, reserved_address && reserved_address_recursive ? &reserved_params : NULL);
 #endif
 	extend_bfs_deps(p);
 	pthread_mutex_lock(&init_fini_lock);
@@ -2538,7 +2584,6 @@ static void *dlopen_impl(
 		do_dlclose(p);
 		p = 0;
 	}
-	LD_LOGD("dlopen %s: realpath=%s, handle=%p", name, p->rpath, handle);
 #endif
 end:
 #ifdef LOAD_ORDER_RANDOMIZATION
@@ -3115,7 +3160,7 @@ void* dlopen_ext(const char *file, int mode, const dl_extinfo *extinfo)
 {
 	if (extinfo != NULL) {
 		if ((extinfo->flag & ~(DL_EXT_VALID_FLAG_BITS)) != 0) {
-			LD_LOGE("Error dlopen_ext %s: invalid flag %x", file, extinfo->flag);
+			LD_LOGE("Error dlopen_ext %s: invalid flag %x\n", file, extinfo->flag);
 			return NULL;
 		}
 	}
@@ -3133,38 +3178,38 @@ static bool map_library_header(struct loadtask *task)
 	ssize_t l = read(task->fd, task->ehdr_buf, sizeof task->ehdr_buf);
 	task->eh = task->ehdr_buf;
 	if (l < 0) {
-		LD_LOGE("Error mapping header %s: failed to read fd", task->name);
+		LD_LOGE("Error mapping header %s: failed to read fd\n", task->name);
 		return false;
 	}
 	if (l < sizeof(Ehdr) || (task->eh->e_type != ET_DYN && task->eh->e_type != ET_EXEC)) {
-		LD_LOGE("Error mapping header %s: invaliled Ehdr", task->name);
+		LD_LOGE("Error mapping header %s: invaliled Ehdr\n", task->name);
 		goto noexec;
 	}
 	task->phsize = task->eh->e_phentsize * task->eh->e_phnum;
 	if (task->phsize > sizeof task->ehdr_buf - sizeof(Ehdr)) {
 		task->allocated_buf = malloc(task->phsize);
 		if (!task->allocated_buf) {
-			LD_LOGE("Error mapping header %s: failed to alloc memory", task->name);
+			LD_LOGE("Error mapping header %s: failed to alloc memory\n", task->name);
 			return false;
 		}
 		l = pread(task->fd, task->allocated_buf, task->phsize, task->eh->e_phoff);
 		if (l < 0) {
-			LD_LOGE("Error mapping header %s: failed to pread", task->name);
+			LD_LOGE("Error mapping header %s: failed to pread\n", task->name);
 			goto error;
 		}
 		if (l != task->phsize) {
-			LD_LOGE("Error mapping header %s: unmatched phsize", task->name);
+			LD_LOGE("Error mapping header %s: unmatched phsize\n", task->name);
 			goto noexec;
 		}
 		ph = task->ph0 = task->allocated_buf;
 	} else if (task->eh->e_phoff + task->phsize > l) {
 		l = pread(task->fd, task->ehdr_buf + 1, task->phsize, task->eh->e_phoff);
 		if (l < 0) {
-			LD_LOGE("Error mapping header %s: failed to pread", task->name);
+			LD_LOGE("Error mapping header %s: failed to pread\n", task->name);
 			goto error;
 		}
 		if (l != task->phsize) {
-			LD_LOGE("Error mapping header %s: unmatched phsize", task->name);
+			LD_LOGE("Error mapping header %s: unmatched phsize\n", task->name);
 			goto noexec;
 		}
 		ph = task->ph0 = (void *)(task->ehdr_buf + 1);
@@ -3190,7 +3235,7 @@ static bool map_library_header(struct loadtask *task)
 		task->dyn_map_len = ph->p_memsz + (ph->p_offset - off_start);
 		task->dyn_map = mmap(0, task->dyn_map_len, PROT_READ, MAP_PRIVATE, task->fd, off_start);
 		if (task->dyn_map == MAP_FAILED) {
-			LD_LOGE("Error mapping header %s: failed to map dynamic section", task->name);
+			LD_LOGE("Error mapping header %s: failed to map dynamic section\n", task->name);
 			goto error;
 		}
 		task->dyn_addr = (size_t *)((unsigned char *)task->dyn_map + (ph->p_offset - off_start));
@@ -3200,13 +3245,13 @@ static bool map_library_header(struct loadtask *task)
 		if (search_vec(task->dyn_addr, &dyn_tmp, DT_STRTAB)) {
 			str_table = dyn_tmp;
 		} else {
-			LD_LOGE("Error mapping header %s: DT_STRTAB not found", task->name);
+			LD_LOGE("Error mapping header %s: DT_STRTAB not found\n", task->name);
 			goto error;
 		}
 		if (search_vec(task->dyn_addr, &dyn_tmp, DT_STRSZ)) {
 			str_size = dyn_tmp;
 		} else {
-			LD_LOGE("Error mapping header %s: DT_STRSZ not found", task->name);
+			LD_LOGE("Error mapping header %s: DT_STRSZ not found\n", task->name);
 			goto error;
 		}
 		off_start = str_table;
@@ -3214,13 +3259,13 @@ static bool map_library_header(struct loadtask *task)
 		task->str_map_len = str_size + (str_table - off_start);
 		task->str_map = mmap(0, task->str_map_len, PROT_READ, MAP_PRIVATE, task->fd, off_start);
 		if (task->str_map == MAP_FAILED) {
-			LD_LOGE("Error mapping header %s: failed to map string section", task->name);
+			LD_LOGE("Error mapping header %s: failed to map string section\n", task->name);
 			goto error;
 		}
 		task->str_addr = (char *)task->str_map + str_table - off_start;
 	}
 	if (!task->dyn) {
-		LD_LOGE("Error mapping header %s: dynamic section not found", task->name);
+		LD_LOGE("Error mapping header %s: dynamic section not found\n", task->name);
 		goto noexec;
 	}
 	return true;
@@ -3232,7 +3277,7 @@ error:
 	return false;
 }
 
-static bool task_map_library(struct loadtask *task)
+static bool task_map_library(struct loadtask *task, struct reserved_address_params *reserved_params)
 {
 	size_t addr_min = SIZE_MAX, addr_max = 0, map_len;
 	size_t this_min, this_max;
@@ -3242,6 +3287,8 @@ static bool task_map_library(struct loadtask *task)
 	unsigned prot;
 	unsigned char *map = MAP_FAILED, *base;
 	size_t i;
+	int map_flags = MAP_PRIVATE;
+	size_t start_addr;
 
 	for (i = task->eh->e_phnum; i; i--, ph = (void *)((char *)ph + task->eh->e_phentsize)) {
 		if (ph->p_type == PT_GNU_RELRO) {
@@ -3270,7 +3317,7 @@ static bool task_map_library(struct loadtask *task)
 		}
 	}
 	if (!task->dyn) {
-		LD_LOGE("Error mapping library %s: dynamic section not found", task->name);
+		LD_LOGE("Error mapping library %s: dynamic section not found\n", task->name);
 		goto noexec;
 	}
 	if (DL_FDPIC && !(task->eh->e_flags & FDPIC_CONSTDISP_FLAG)) {
@@ -3319,18 +3366,31 @@ static bool task_map_library(struct loadtask *task)
 	addr_min &= -PAGE_SIZE;
 	off_start &= -PAGE_SIZE;
 	map_len = addr_max - addr_min + off_start;
+	start_addr = addr_min;
+	if (reserved_params) {
+		if (map_len > reserved_params->reserved_size) {
+			if (reserved_params->must_use_reserved) {
+				goto error;
+			}
+		} else {
+			start_addr = ((size_t)reserved_params->start_addr - 1 + PAGE_SIZE) & -PAGE_SIZE;
+			map_flags |= MAP_FIXED;
+		}
+	}
 	/* The first time, we map too much, possibly even more than
 	 * the length of the file. This is okay because we will not
 	 * use the invalid part; we just need to reserve the right
 	 * amount of virtual address space to map over later. */
 	map = DL_NOMMU_SUPPORT
-		? mmap((void *)addr_min, map_len, PROT_READ | PROT_WRITE | PROT_EXEC,
-			MAP_PRIVATE | MAP_ANONYMOUS, -1, 0)
-		: mmap((void *)addr_min, map_len, prot,
-			MAP_PRIVATE, task->fd, off_start);
+			? mmap((void *)start_addr, map_len, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0)
+			: mmap((void *)start_addr, map_len, prot, map_flags, task->fd, off_start);
 	if (map == MAP_FAILED) {
-		LD_LOGE("Error mapping library %s: failed to map fd", task->name);
+		LD_LOGE("Error mapping library %s: failed to map fd\n", task->name);
 		goto error;
+	}
+	if (reserved_params && map_len < reserved_params->reserved_size) {
+		reserved_params->reserved_size -= (map_len + (start_addr - (size_t)reserved_params->start_addr));
+		reserved_params->start_addr = (void *)((uint8_t *)map + map_len);
 	}
 	task->p->map = map;
 	task->p->map_len = map_len;
@@ -3539,7 +3599,7 @@ static bool load_library_header(struct loadtask *task)
 	}
 
 	if (fstat(task->fd, &st) < 0) {
-		LD_LOGE("Error loading header %s: failed to get file state", task->name);
+		LD_LOGE("Error loading header %s: failed to get file state\n", task->name);
 		close(task->fd);
 		task->fd = -1;
 		return false;
@@ -3563,7 +3623,7 @@ static bool load_library_header(struct loadtask *task)
 
 	map = noload ? 0 : map_library_header(task);
 	if (!map) {
-		LD_LOGE("Error loading header %s: failed to map header", task->name);
+		LD_LOGE("Error loading header %s: failed to map header\n", task->name);
 		close(task->fd);
 		task->fd = -1;
 		return false;
@@ -3586,7 +3646,7 @@ static bool load_library_header(struct loadtask *task)
 	}
 	task->p = calloc(1, alloc_size);
 	if (!task->p) {
-		LD_LOGE("Error loading header %s: failed to allocate dso", task->name);
+		LD_LOGE("Error loading header %s: failed to allocate dso\n", task->name);
 		close(task->fd);
 		task->fd = -1;
 		return false;
@@ -3622,13 +3682,13 @@ static bool load_library_header(struct loadtask *task)
 	return true;
 }
 
-static void task_load_library(struct loadtask *task)
+static void task_load_library(struct loadtask *task, struct reserved_address_params *reserved_params)
 {
-	bool map = noload ? 0 : task_map_library(task);
+	bool map = noload ? 0 : task_map_library(task, reserved_params);
 	close(task->fd);
 	task->fd = -1;
 	if (!map) {
-		LD_LOGE("Error loading library %s: failed to map library", task->name);
+		LD_LOGE("Error loading library %s: failed to map library\n", task->name);
 		error("Error loading library %s: failed to map library", task->name);
 		if (runtime) {
 			longjmp(*rtld_fail, 1);
@@ -3644,7 +3704,8 @@ static void task_load_library(struct loadtask *task)
 	if (find_sym(task->p, "__libc_start_main", 1).sym &&
 		find_sym(task->p, "stdin", 1).sym) {
 		unmap_library(task->p);
-		task->name = "libc.so";
+		free((void*)task->name);
+		task->name = strdup("libc.so");
 		task->check_inherited = true;
 		load_library_header(task);
 		return;
@@ -3774,13 +3835,17 @@ static void preload_deps(struct dso *p, ns_t *ns, struct loadtasks *tasks)
 	}
 }
 
-static void run_loadtasks(struct loadtasks *tasks)
+static void run_loadtasks(struct loadtasks *tasks, struct reserved_address_params *reserved_params)
 {
 	struct loadtask *task = NULL;
+	bool reserved_address = false;
 	for (size_t i = 0; i < tasks->length; i++) {
 		task = get_loadtask(tasks, i);
 		if (task) {
-			task_load_library(task);
+			if (reserved_params) {
+				reserved_address = reserved_params->reserved_address_recursive || (reserved_params->target == task->p);
+			}
+			task_load_library(task, reserved_address ? reserved_params : NULL);
 		}
 	}
 }
@@ -3852,7 +3917,7 @@ static int serialize_gnu_relro(int fd, struct dso *dso, ssize_t *file_offset)
 	while (count > 0) {
 		ssize_t write_size = TEMP_FAILURE_RETRY(write(fd, laddr(dso, dso->relro_start + offset), count));
 		if (-1 == write_size) {
-			LD_LOGE("Error serializing relro %s: failed to write GNU_RELRO", dso->name);
+			LD_LOGE("Error serializing relro %s: failed to write GNU_RELRO\n", dso->name);
 			return -1;
 		}
 		offset += write_size;
@@ -3868,7 +3933,7 @@ static int serialize_gnu_relro(int fd, struct dso *dso, ssize_t *file_offset)
 		fd,
 		*file_offset);
 	if (map == MAP_FAILED) {
-		LD_LOGE("Error serializing relro %s: failed to map GNU_RELRO", dso->name);
+		LD_LOGE("Error serializing relro %s: failed to map GNU_RELRO\n", dso->name);
 		return -1;
 	}
 	*file_offset += size;
@@ -3880,7 +3945,7 @@ static int map_gnu_relro(int fd, struct dso *dso, ssize_t *file_offset)
 	ssize_t ext_fd_file_size = 0;
 	struct stat ext_fd_file_stat;
 	if (TEMP_FAILURE_RETRY(fstat(fd, &ext_fd_file_stat)) != 0) {
-		LD_LOGE("Error mapping relro %s: failed to get file state", dso->name);
+		LD_LOGE("Error mapping relro %s: failed to get file state\n", dso->name);
 		return -1;
 	}
 	ext_fd_file_size = ext_fd_file_stat.st_size;
@@ -3888,7 +3953,7 @@ static int map_gnu_relro(int fd, struct dso *dso, ssize_t *file_offset)
 	void *ext_temp_map = MAP_FAILED;
 	ext_temp_map = mmap(NULL, ext_fd_file_size, PROT_READ, MAP_PRIVATE, fd, 0);
 	if (ext_temp_map == MAP_FAILED) {
-		LD_LOGE("Error mapping relro %s: failed to map fd", dso->name);
+		LD_LOGE("Error mapping relro %s: failed to map fd\n", dso->name);
 		return -1;
 	}
 
@@ -3898,7 +3963,7 @@ static int map_gnu_relro(int fd, struct dso *dso, ssize_t *file_offset)
 	ssize_t size = dso->relro_end - dso->relro_start;
 
 	if (size > ext_fd_file_size - *file_offset) {
-		LD_LOGE("Error mapping relro %s: invalid file size", dso->name);
+		LD_LOGE("Error mapping relro %s: invalid file size\n", dso->name);
 		return -1;
 	}
 	while (start_offset < size) {
@@ -3926,7 +3991,7 @@ static int map_gnu_relro(int fd, struct dso *dso, ssize_t *file_offset)
 			void *map = mmap(
 				mem_base + start_offset, map_length, PROT_READ, MAP_PRIVATE | MAP_FIXED, fd, map_offset);
 			if (map == MAP_FAILED) {
-				LD_LOGE("Error mapping relro %s: failed to map GNU_RELRO", dso->name);
+				LD_LOGE("Error mapping relro %s: failed to map GNU_RELRO\n", dso->name);
 				munmap(ext_temp_map, ext_fd_file_size);
 				return -1;
 			}
@@ -3947,14 +4012,14 @@ static void handle_relro_sharing(struct dso *p, const dl_extinfo *extinfo, ssize
 	if (extinfo->flag & DL_EXT_WRITE_RELRO) {
 		LD_LOGD("Serializing GNU_RELRO %s", p->name);
 		if (serialize_gnu_relro(extinfo->relro_fd, p, relro_fd_offset) < 0) {
-			LD_LOGE("Error serializing GNU_RELRO %s", p->name);
+			LD_LOGE("Error serializing GNU_RELRO %s\n", p->name);
 			error("Error serializing GNU_RELRO");
 			if (runtime) longjmp(*rtld_fail, 1);
 		}
 	} else if (extinfo->flag & DL_EXT_USE_RELRO) {
 		LD_LOGD("Mapping GNU_RELRO %s", p->name);
 		if (map_gnu_relro(extinfo->relro_fd, p, relro_fd_offset) < 0) {
-			LD_LOGE("Error mapping GNU_RELRO %s", p->name);
+			LD_LOGE("Error mapping GNU_RELRO %s\n", p->name);
 			error("Error mapping GNU_RELRO");
 			if (runtime) longjmp(*rtld_fail, 1);
 		}

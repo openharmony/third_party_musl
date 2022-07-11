@@ -17,6 +17,7 @@
 #include <fcntl.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <sys/mman.h>
 #include <sys/wait.h>
 #include <stdbool.h>
 
@@ -25,11 +26,13 @@
 
 #define LIB_NAME "./libdlopen_ext_relro_dso.so"
 #define RELRO_FILE_PATH "./TemporaryFile-XXXXXX"
+#define RESERVED_ADDRESS_SIZE (64 * 1024 * 1024)
+#define MIN_RESERVED_ADDRESS_SIZE 4096
 
-const char* RELRO_NS_PATH = "./";
+const char *RELRO_NS_PATH = "./";
 const int RELRO_INVALID_FLAG = 0x20;
 const int LIB_PATH_SIZE = 512;
-typedef void(*TEST_FUN)(void);
+typedef void (*TEST_FUN)(void);
 
 static int create_temp_relro_file(char *path)
 {
@@ -45,7 +48,7 @@ static int create_temp_relro_file(char *path)
     return 0;
 }
 
-static void tear_down(const int fd, const char* relro_path)
+static void tear_down(const int fd, const char *relro_path)
 {
     if (fd != -1) {
         close(fd);
@@ -63,7 +66,7 @@ static void clear_handle(void *handle)
     }
 }
 
-static void test_write_relro_file(const char* lib, const int relro_fd)
+static void test_write_relro_file(const char *lib, const int relro_fd)
 {
     pid_t pid = fork();
     if (pid == 0) {
@@ -71,7 +74,27 @@ static void test_write_relro_file(const char* lib, const int relro_fd)
             .flag = DL_EXT_WRITE_RELRO,
             .relro_fd = relro_fd,
         };
-        void* handle = dlopen_ext(lib, RTLD_NOW, &extinfo);
+        void *handle = dlopen_ext(lib, RTLD_NOW, &extinfo);
+        EXPECT_PTRNE(__FUNCTION__, handle, NULL);
+        clear_handle(handle);
+        exit(-1);
+    }
+    int status = 0;
+    waitpid(pid, &status, 0);
+}
+
+static void test_write_relro_file_ext(
+    const char *lib, const int relro_fd, const int flag, void *addr, const size_t map_size)
+{
+    pid_t pid = fork();
+    if (pid == 0) {
+        dl_extinfo extinfo = {
+            .flag = flag,
+            .relro_fd = relro_fd,
+            .reserved_addr = addr,
+            .reserved_size = map_size,
+        };
+        void *handle = dlopen_ext(lib, RTLD_NOW, &extinfo);
         EXPECT_PTRNE(__FUNCTION__, handle, NULL);
         clear_handle(handle);
         exit(-1);
@@ -87,7 +110,7 @@ static void test_write_relro_file(const char* lib, const int relro_fd)
  */
 static void dlopen_ext_relro_0100(void)
 {
-    void* handle = dlopen_ext(LIB_NAME, RTLD_NOW, NULL);
+    void *handle = dlopen_ext(LIB_NAME, RTLD_NOW, NULL);
     EXPECT_PTRNE(__FUNCTION__, handle, NULL);
     clear_handle(handle);
 }
@@ -103,7 +126,7 @@ static void dlopen_ext_relro_0200(void)
         .flag = 0,
         .relro_fd = -1,
     };
-    void* handle = dlopen_ext(LIB_NAME, RTLD_NOW, &extinfo);
+    void *handle = dlopen_ext(LIB_NAME, RTLD_NOW, &extinfo);
     EXPECT_PTRNE(__FUNCTION__, handle, NULL);
     clear_handle(handle);
 }
@@ -119,7 +142,7 @@ static void dlopen_ext_relro_0300(void)
         .flag = RELRO_INVALID_FLAG,
         .relro_fd = -1,
     };
-    void* handle = dlopen_ext(LIB_NAME, RTLD_NOW, &extinfo);
+    void *handle = dlopen_ext(LIB_NAME, RTLD_NOW, &extinfo);
     EXPECT_EQ(__FUNCTION__, handle, NULL);
     clear_handle(handle);
 }
@@ -144,7 +167,7 @@ static void dlopen_ext_relro_0400(void)
         .flag = DL_EXT_WRITE_RELRO,
         .relro_fd = relro_fd,
     };
-    void* handle = dlopen_ext(LIB_NAME, RTLD_NOW, &extinfo);
+    void *handle = dlopen_ext(LIB_NAME, RTLD_NOW, &extinfo);
     EXPECT_PTRNE(__FUNCTION__, handle, NULL);
     tear_down(relro_fd, relro_file);
     clear_handle(handle);
@@ -161,7 +184,7 @@ static void dlopen_ext_relro_0500(void)
         .flag = DL_EXT_WRITE_RELRO,
         .relro_fd = -1,
     };
-    void* handle = dlopen_ext(LIB_NAME, RTLD_NOW, &extinfo);
+    void *handle = dlopen_ext(LIB_NAME, RTLD_NOW, &extinfo);
     EXPECT_EQ(__FUNCTION__, handle, NULL);
     clear_handle(handle);
 }
@@ -187,7 +210,7 @@ static void dlopen_ext_relro_0600(void)
         .flag = DL_EXT_USE_RELRO,
         .relro_fd = relro_fd,
     };
-    void* handle = dlopen_ext(LIB_NAME, RTLD_NOW, &extinfo);
+    void *handle = dlopen_ext(LIB_NAME, RTLD_NOW, &extinfo);
     EXPECT_PTRNE(__FUNCTION__, handle, NULL);
     tear_down(relro_fd, relro_file);
     clear_handle(handle);
@@ -214,7 +237,7 @@ static void dlopen_ext_relro_0700(void)
         .flag = DL_EXT_USE_RELRO,
         .relro_fd = -1,
     };
-    void* handle = dlopen_ext(LIB_NAME, RTLD_NOW, &extinfo);
+    void *handle = dlopen_ext(LIB_NAME, RTLD_NOW, &extinfo);
     EXPECT_EQ(__FUNCTION__, handle, NULL);
     tear_down(relro_fd, relro_file);
     clear_handle(handle);
@@ -241,7 +264,7 @@ static void dlopen_ext_relro_0800(void)
         .flag = DL_EXT_WRITE_RELRO | DL_EXT_RESERVED_ADDRESS_RECURSIVE,
         .relro_fd = relro_fd,
     };
-    void* handle = dlopen_ext(LIB_NAME, RTLD_NOW, &extinfo);
+    void *handle = dlopen_ext(LIB_NAME, RTLD_NOW, &extinfo);
     EXPECT_PTRNE(__FUNCTION__, handle, NULL);
     tear_down(relro_fd, relro_file);
     clear_handle(handle);
@@ -258,11 +281,10 @@ static void dlopen_ext_relro_0900(void)
         .flag = DL_EXT_WRITE_RELRO | DL_EXT_RESERVED_ADDRESS_RECURSIVE,
         .relro_fd = -1,
     };
-    void* handle = dlopen_ext(LIB_NAME, RTLD_NOW, &extinfo);
+    void *handle = dlopen_ext(LIB_NAME, RTLD_NOW, &extinfo);
     EXPECT_EQ(__FUNCTION__, handle, NULL);
     clear_handle(handle);
 }
-
 
 /**
  * @tc.name      : dlopen_ext_relro_1000
@@ -286,7 +308,7 @@ static void dlopen_ext_relro_1000(void)
         .flag = DL_EXT_USE_RELRO | DL_EXT_RESERVED_ADDRESS_RECURSIVE,
         .relro_fd = relro_fd,
     };
-    void* handle = dlopen_ext(LIB_NAME, RTLD_NOW, &extinfo);
+    void *handle = dlopen_ext(LIB_NAME, RTLD_NOW, &extinfo);
     EXPECT_PTRNE(__FUNCTION__, handle, NULL);
     tear_down(relro_fd, relro_file);
     clear_handle(handle);
@@ -314,7 +336,7 @@ static void dlopen_ext_relro_1100(void)
         .flag = DL_EXT_USE_RELRO | DL_EXT_RESERVED_ADDRESS_RECURSIVE,
         .relro_fd = -1,
     };
-    void* handle = dlopen_ext(LIB_NAME, RTLD_NOW, &extinfo);
+    void *handle = dlopen_ext(LIB_NAME, RTLD_NOW, &extinfo);
     EXPECT_EQ(__FUNCTION__, handle, NULL);
     tear_down(relro_fd, relro_file);
     clear_handle(handle);
@@ -341,7 +363,7 @@ static void dlopen_ext_relro_1200(void)
         .flag = DL_EXT_USE_RELRO,
         .relro_fd = relro_fd,
     };
-    void* handle = dlopen_ext(LIB_NAME, RTLD_NOW, &extinfo);
+    void *handle = dlopen_ext(LIB_NAME, RTLD_NOW, &extinfo);
     EXPECT_EQ(__FUNCTION__, handle, NULL);
     tear_down(relro_fd, relro_file);
     clear_handle(handle);
@@ -369,10 +391,346 @@ static void dlopen_ext_relro_1500(void)
         .flag = DL_EXT_WRITE_RELRO | DL_EXT_USE_RELRO,
         .relro_fd = relro_fd,
     };
-    void* handle = dlopen_ext(LIB_NAME, RTLD_NOW, &extinfo);
+    void *handle = dlopen_ext(LIB_NAME, RTLD_NOW, &extinfo);
     EXPECT_PTRNE(__FUNCTION__, handle, NULL);
     tear_down(relro_fd, relro_file);
     clear_handle(handle);
+}
+
+/**
+ * @tc.name      : dlopen_ext_relro_1600
+ * @tc.desc      : extinfo flag is DL_EXT_RESERVED_ADDRESS, relro_fd is valid, reserved address size is enough,
+ *                 call dlopen_ext, return handle is not NULL.
+ * @tc.level     : Level 1
+ */
+static void dlopen_ext_relro_1600(void)
+{
+    char relro_file[] = RELRO_FILE_PATH;
+    if (create_temp_relro_file(relro_file) < 0) {
+        return;
+    }
+    int relro_fd = open(relro_file, O_RDWR | O_TRUNC | O_CLOEXEC);
+    if (relro_fd < 0) {
+        t_error("%s relro file %s open failed error is : %s \n", __FUNCTION__, relro_file, dlerror());
+        return;
+    }
+    size_t map_size = RESERVED_ADDRESS_SIZE;
+    void *map = mmap(NULL, map_size, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    if (map == MAP_FAILED) {
+        t_error("%s map reserved address failed.\n", __FUNCTION__);
+        tear_down(relro_fd, relro_file);
+        return;
+    }
+    dl_extinfo extinfo = {
+        .flag = DL_EXT_RESERVED_ADDRESS,
+        .relro_fd = relro_fd,
+        .reserved_addr = map,
+        .reserved_size = map_size,
+    };
+    void *handle = dlopen_ext(LIB_NAME, RTLD_NOW, &extinfo);
+    EXPECT_PTRNE(__FUNCTION__, handle, NULL);
+    tear_down(relro_fd, relro_file);
+    clear_handle(handle);
+    munmap(map, map_size);
+}
+
+/**
+ * @tc.name      : dlopen_ext_relro_1700
+ * @tc.desc      : extinfo flag is DL_EXT_RESERVED_ADDRESS_HINT, relro_fd is valid, reserved address size is enough,
+ *                 call dlopen_ext, return handle is not NULL.
+ * @tc.level     : Level 1
+ */
+static void dlopen_ext_relro_1700(void)
+{
+    char relro_file[] = RELRO_FILE_PATH;
+    if (create_temp_relro_file(relro_file) < 0) {
+        return;
+    }
+    int relro_fd = open(relro_file, O_RDWR | O_TRUNC | O_CLOEXEC);
+    if (relro_fd < 0) {
+        t_error("%s relro file %s open failed error is : %s \n", __FUNCTION__, relro_file, dlerror());
+        return;
+    }
+    size_t map_size = RESERVED_ADDRESS_SIZE;
+    void *map = mmap(NULL, map_size, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    if (map == MAP_FAILED) {
+        t_error("%s map reserved address failed.\n", __FUNCTION__);
+        tear_down(relro_fd, relro_file);
+        return;
+    }
+    dl_extinfo extinfo = {
+        .flag = DL_EXT_RESERVED_ADDRESS_HINT,
+        .relro_fd = relro_fd,
+        .reserved_addr = map,
+        .reserved_size = map_size,
+    };
+    void *handle = dlopen_ext(LIB_NAME, RTLD_NOW, &extinfo);
+    EXPECT_PTRNE(__FUNCTION__, handle, NULL);
+    tear_down(relro_fd, relro_file);
+    clear_handle(handle);
+    munmap(map, map_size);
+}
+
+/**
+ * @tc.name      : dlopen_ext_relro_1800
+ * @tc.desc      : extinfo flag is DL_EXT_RESERVED_ADDRESS | DL_EXT_RESERVED_ADDRESS_RECURSIVE, relro_fd is valid,
+ *                 reserved address size is enough, call dlopen_ext, return handle is not NULL.
+ * @tc.level     : Level 1
+ */
+static void dlopen_ext_relro_1800(void)
+{
+    char relro_file[] = RELRO_FILE_PATH;
+    if (create_temp_relro_file(relro_file) < 0) {
+        return;
+    }
+    int relro_fd = open(relro_file, O_RDWR | O_TRUNC | O_CLOEXEC);
+    if (relro_fd < 0) {
+        t_error("%s relro file %s open failed error is : %s \n", __FUNCTION__, relro_file, dlerror());
+        return;
+    }
+    size_t map_size = RESERVED_ADDRESS_SIZE;
+    void *map = mmap(NULL, map_size, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    if (map == MAP_FAILED) {
+        t_error("%s map reserved address failed.\n", __FUNCTION__);
+        tear_down(relro_fd, relro_file);
+        return;
+    }
+    dl_extinfo extinfo = {.flag = DL_EXT_RESERVED_ADDRESS | DL_EXT_RESERVED_ADDRESS_RECURSIVE,
+        .relro_fd = relro_fd,
+        .reserved_addr = map,
+        .reserved_size = map_size
+
+    };
+    void *handle = dlopen_ext(LIB_NAME, RTLD_NOW, &extinfo);
+    EXPECT_PTRNE(__FUNCTION__, handle, NULL);
+    tear_down(relro_fd, relro_file);
+    clear_handle(handle);
+    munmap(map, map_size);
+}
+
+/**
+ * @tc.name      : dlopen_ext_relro_1900
+ * @tc.desc      : extinfo flag is DL_EXT_RESERVED_ADDRESS_HINT | DL_EXT_RESERVED_ADDRESS_RECURSIVE, relro_fd is valid,
+ *                 reserved address size is enough, call dlopen_ext, return handle is not NULL.
+ * @tc.level     : Level 1
+ */
+static void dlopen_ext_relro_1900(void)
+{
+    char relro_file[] = RELRO_FILE_PATH;
+    if (create_temp_relro_file(relro_file) < 0) {
+        return;
+    }
+    int relro_fd = open(relro_file, O_RDWR | O_TRUNC | O_CLOEXEC);
+    if (relro_fd < 0) {
+        t_error("%s relro file %s open failed error is : %s \n", __FUNCTION__, relro_file, dlerror());
+        return;
+    }
+    size_t map_size = RESERVED_ADDRESS_SIZE;
+    void *map = mmap(NULL, map_size, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    if (map == MAP_FAILED) {
+        t_error("%s map reserved address failed.\n", __FUNCTION__);
+        tear_down(relro_fd, relro_file);
+        return;
+    }
+    dl_extinfo extinfo = {.flag = DL_EXT_RESERVED_ADDRESS_HINT | DL_EXT_RESERVED_ADDRESS_RECURSIVE,
+        .relro_fd = relro_fd,
+        .reserved_addr = map,
+        .reserved_size = map_size};
+    void *handle = dlopen_ext(LIB_NAME, RTLD_NOW, &extinfo);
+    EXPECT_PTRNE(__FUNCTION__, handle, NULL);
+    tear_down(relro_fd, relro_file);
+    clear_handle(handle);
+    munmap(map, map_size);
+}
+
+/**
+ * @tc.name      : dlopen_ext_relro_2000
+ * @tc.desc      : extinfo flag is DL_EXT_RESERVED_ADDRESS, relro_fd is valid, reserved address size is not enough
+ *                 call dlopen_ext, return handle is NULL.
+ * @tc.level     : Level 2
+ */
+static void dlopen_ext_relro_2000(void)
+{
+    char relro_file[] = RELRO_FILE_PATH;
+    if (create_temp_relro_file(relro_file) < 0) {
+        return;
+    }
+    int relro_fd = open(relro_file, O_RDWR | O_TRUNC | O_CLOEXEC);
+    if (relro_fd < 0) {
+        t_error("%s relro file %s open failed error is : %s \n", __FUNCTION__, relro_file, dlerror());
+        return;
+    }
+    size_t map_size = MIN_RESERVED_ADDRESS_SIZE;
+    void *map = mmap(NULL, map_size, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    if (map == MAP_FAILED) {
+        t_error("%s map reserved address failed.\n", __FUNCTION__);
+        tear_down(relro_fd, relro_file);
+        return;
+    }
+    dl_extinfo extinfo = {
+        .flag = DL_EXT_RESERVED_ADDRESS,
+        .relro_fd = relro_fd,
+        .reserved_addr = map,
+        .reserved_size = map_size,
+    };
+    void *handle = dlopen_ext(LIB_NAME, RTLD_NOW, &extinfo);
+    EXPECT_PTREQ(__FUNCTION__, handle, NULL);
+    tear_down(relro_fd, relro_file);
+    clear_handle(handle);
+    munmap(map, map_size);
+}
+
+/**
+ * @tc.name      : dlopen_ext_relro_2100
+ * @tc.desc      : extinfo flag is DL_EXT_RESERVED_ADDRESS_HINT, relro_fd is valid, reserved address size is not enough
+ *                 call dlopen_ext, return handle is not NULL.
+ * @tc.level     : Level 1
+ */
+static void dlopen_ext_relro_2100(void)
+{
+    char relro_file[] = RELRO_FILE_PATH;
+    if (create_temp_relro_file(relro_file) < 0) {
+        return;
+    }
+    int relro_fd = open(relro_file, O_RDWR | O_TRUNC | O_CLOEXEC);
+    if (relro_fd < 0) {
+        t_error("%s relro file %s open failed error is : %s \n", __FUNCTION__, relro_file, dlerror());
+        return;
+    }
+    size_t map_size = MIN_RESERVED_ADDRESS_SIZE;
+    void *map = mmap(NULL, map_size, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    if (map == MAP_FAILED) {
+        t_error("%s map reserved address failed.\n", __FUNCTION__);
+        tear_down(relro_fd, relro_file);
+        return;
+    }
+    dl_extinfo extinfo = {
+        .flag = DL_EXT_RESERVED_ADDRESS_HINT,
+        .relro_fd = relro_fd,
+        .reserved_addr = map,
+        .reserved_size = map_size,
+    };
+    void *handle = dlopen_ext(LIB_NAME, RTLD_NOW, &extinfo);
+    EXPECT_PTRNE(__FUNCTION__, handle, NULL);
+    tear_down(relro_fd, relro_file);
+    clear_handle(handle);
+    munmap(map, map_size);
+}
+
+/**
+ * @tc.name      : dlopen_ext_relro_2300
+ * @tc.desc      : child process extinfo flag is DL_EXT_WRITE_RELRO | DL_EXT_RESERVED_ADDRESS,
+ *                 parent process extinfo flag is DL_EXT_USE_RELRO | DL_EXT_RESERVED_ADDRESS,
+ *                 relro_fd is valid, reserved address size is enough, call dlopen_ext, return handle is not NULL.
+ * @tc.level     : Level 1
+ */
+static void dlopen_ext_relro_2200(void)
+{
+    char relro_file[] = RELRO_FILE_PATH;
+    if (create_temp_relro_file(relro_file) < 0) {
+        return;
+    }
+    int relro_fd = open(relro_file, O_RDWR | O_TRUNC | O_CLOEXEC);
+    if (relro_fd < 0) {
+        t_error("%s relro file %s open failed error is : %s \n", __FUNCTION__, relro_file, dlerror());
+        return;
+    }
+    size_t map_size = RESERVED_ADDRESS_SIZE;
+    void *map = mmap(NULL, map_size, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    if (map == MAP_FAILED) {
+        t_error("%s map reserved address failed.\n", __FUNCTION__);
+        tear_down(relro_fd, relro_file);
+        return;
+    }
+    test_write_relro_file_ext(LIB_NAME, relro_fd, DL_EXT_WRITE_RELRO | DL_EXT_RESERVED_ADDRESS, map, map_size);
+    dl_extinfo extinfo = {
+        .flag = DL_EXT_USE_RELRO | DL_EXT_RESERVED_ADDRESS,
+        .relro_fd = relro_fd,
+        .reserved_addr = map,
+        .reserved_size = map_size,
+    };
+    void *handle = dlopen_ext(LIB_NAME, RTLD_NOW, &extinfo);
+    EXPECT_PTRNE(__FUNCTION__, handle, NULL);
+    tear_down(relro_fd, relro_file);
+    clear_handle(handle);
+    munmap(map, map_size);
+}
+
+/**
+ * @tc.name      : dlopen_ext_relro_2300
+ * @tc.desc      : child process extinfo flag is DL_EXT_WRITE_RELRO | DL_EXT_RESERVED_ADDRESS_HINT,
+ *                 parent process extinfo flag is DL_EXT_USE_RELRO | DL_EXT_RESERVED_ADDRESS_HINT,
+ *                 relro_fd is valid, reserved address size is enough, call dlopen_ext, return handle is not NULL.
+ * @tc.level     : Level 1
+ */
+static void dlopen_ext_relro_2300(void)
+{
+    char relro_file[] = RELRO_FILE_PATH;
+    if (create_temp_relro_file(relro_file) < 0) {
+        return;
+    }
+    int relro_fd = open(relro_file, O_RDWR | O_TRUNC | O_CLOEXEC);
+    if (relro_fd < 0) {
+        t_error("%s relro file %s open failed error is : %s \n", __FUNCTION__, relro_file, dlerror());
+        return;
+    }
+    size_t map_size = RESERVED_ADDRESS_SIZE;
+    void *map = mmap(NULL, map_size, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    if (map == MAP_FAILED) {
+        t_error("%s map reserved address failed.\n", __FUNCTION__);
+        tear_down(relro_fd, relro_file);
+        return;
+    }
+    test_write_relro_file_ext(LIB_NAME, relro_fd, DL_EXT_WRITE_RELRO | DL_EXT_RESERVED_ADDRESS_HINT, map, map_size);
+    dl_extinfo extinfo = {
+        .flag = DL_EXT_USE_RELRO | DL_EXT_RESERVED_ADDRESS_HINT,
+        .relro_fd = relro_fd,
+        .reserved_addr = map,
+        .reserved_size = map_size,
+    };
+    void *handle = dlopen_ext(LIB_NAME, RTLD_NOW, &extinfo);
+    EXPECT_PTRNE(__FUNCTION__, handle, NULL);
+    tear_down(relro_fd, relro_file);
+    clear_handle(handle);
+    munmap(map, map_size);
+}
+
+/**
+ * @tc.name      : dlopen_ext_relro_2400
+ * @tc.desc      : extinfo flag is DL_EXT_RESERVED_ADDRESS, relro_fd is valid, reserved addresses are not page aligned,
+ *                 reserved address size is enough, call dlopen_ext, return handle is not NULL.
+ * @tc.level     : Level 1
+ */
+static void dlopen_ext_relro_2400(void)
+{
+    char relro_file[] = RELRO_FILE_PATH;
+    if (create_temp_relro_file(relro_file) < 0) {
+        return;
+    }
+    int relro_fd = open(relro_file, O_RDWR | O_TRUNC | O_CLOEXEC);
+    if (relro_fd < 0) {
+        t_error("%s relro file %s open failed error is : %s \n", __FUNCTION__, relro_file, dlerror());
+        return;
+    }
+    size_t map_size = RESERVED_ADDRESS_SIZE;
+    void *map = mmap(NULL, map_size, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    if (map == MAP_FAILED) {
+        t_error("%s map reserved address failed.\n", __FUNCTION__);
+        tear_down(relro_fd, relro_file);
+        return;
+    }
+    void *start_addr = (uint8_t *)map + 0x1;
+    dl_extinfo extinfo = {
+        .flag = DL_EXT_RESERVED_ADDRESS,
+        .relro_fd = relro_fd,
+        .reserved_addr = start_addr,
+        .reserved_size = map_size,
+    };
+    void *handle = dlopen_ext(LIB_NAME, RTLD_NOW, &extinfo);
+    EXPECT_PTRNE(__FUNCTION__, handle, NULL);
+    tear_down(relro_fd, relro_file);
+    clear_handle(handle);
+    munmap(map, map_size);
 }
 
 TEST_FUN g_fun_array[] = {
@@ -389,6 +747,15 @@ TEST_FUN g_fun_array[] = {
     dlopen_ext_relro_1100,
     dlopen_ext_relro_1200,
     dlopen_ext_relro_1500,
+    dlopen_ext_relro_1600,
+    dlopen_ext_relro_1700,
+    dlopen_ext_relro_1800,
+    dlopen_ext_relro_1900,
+    dlopen_ext_relro_2000,
+    dlopen_ext_relro_2100,
+    dlopen_ext_relro_2200,
+    dlopen_ext_relro_2300,
+    dlopen_ext_relro_2400,
 };
 
 int main(int argc, char *argv[])

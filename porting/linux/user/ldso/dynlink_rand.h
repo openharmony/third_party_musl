@@ -33,7 +33,7 @@ struct dso;
 #define READ_ELF_LENGTH 896
 
 // load library context
-hidden struct loadtask {
+struct loadtask {
     // parameters
     const char *name;
     struct dso *needed_by;
@@ -66,7 +66,7 @@ hidden struct loadtask {
 };
 
 // dynamic array for loadtask
-hidden struct loadtasks {
+struct loadtasks {
     struct loadtask **array;
     size_t capacity;
     size_t length;
