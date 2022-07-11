@@ -93,6 +93,7 @@ static int libc_start_main_stage2(int (*main)(int,char **,char **), int argc, ch
 #ifdef RESERVE_SIGNAL_STACK
 	pthread_reserve_signal_stack();
 #endif
+	errno = 0;
 
 	/* Pass control to the application */
 	exit(main(argc, argv, envp));
