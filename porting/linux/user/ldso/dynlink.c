@@ -206,7 +206,7 @@ static void load_preload(char *s, ns_t *ns, struct loadtasks *tasks);
 static void handle_relro_sharing(struct dso *p, const dl_extinfo *extinfo, ssize_t *relro_fd_offset);
 
 /* asan path open */
-int handle_asan_path_open(int fd, const char *name, ns_t *namespace, char *buf);
+int handle_asan_path_open(int fd, const char *name, ns_t *namespace, char *buf, size_t buf_size);
 
 /* add namespace function */
 static void *addr2dso(size_t a);
@@ -333,7 +333,7 @@ static void init_namespace(struct dso *app)
 
 	nslist *nsl = nslist_init();
 	ns_configor *conf = configor_init();
-	char file_path[sizeof "/etc/ld-musl-namespace-" + sizeof (LDSO_ARCH) + sizeof ".ini" + 1];
+	char file_path[sizeof "/etc/ld-musl-namespace-" + sizeof (LDSO_ARCH) + sizeof ".ini" + 1] = {0};
 	(void)snprintf(file_path, sizeof file_path, "/etc/ld-musl-namespace-%s.ini", LDSO_ARCH);
 	LD_LOGI("init_namespace file_path:%s", file_path);
 	int ret = conf->parse(file_path, app_path);
@@ -1262,7 +1262,8 @@ static struct dso *find_library_by_name(const char *name, const ns_t *ns, bool c
 }
 /* Find loaded so by file stat */
 static struct dso *find_library_by_fstat(const struct stat *st, const ns_t *ns, bool check_inherited) {
-	LD_LOGD("find_library_by_fstat st->st_dev:%lu, st->st_ino:%lu, ns:%p, check_inherited:%d\n", st->st_dev, st->st_ino, ns, check_inherited);
+	LD_LOGD("find_library_by_fstat st->st_dev:%lu, st->st_ino:%lu, ns:%p, check_inherited:%d\n",
+			st->st_dev, st->st_ino, ns, check_inherited);
 	struct dso *p = search_dso_by_fstat(st, ns);
 	if (p) return p;
 	if (check_inherited && ns->ns_inherits) {
@@ -1373,7 +1374,7 @@ struct dso *load_library(
 
 		}
 		if (g_is_asan) {
-			fd = handle_asan_path_open(fd, name, namespace, buf);
+			fd = handle_asan_path_open(fd, name, namespace, buf, sizeof buf);
 			LD_LOGD("load_library handle_asan_path_open fd:%d.\n", fd);
 		} else {
 			if (fd == -1 && namespace->lib_paths) {
@@ -2538,7 +2539,6 @@ static void *dlopen_impl(
 		do_dlclose(p);
 		p = 0;
 	}
-	LD_LOGD("dlopen %s: realpath=%s, handle=%p", name, p->rpath, handle);
 #endif
 end:
 #ifdef LOAD_ORDER_RANDOMIZATION
@@ -3085,7 +3085,7 @@ int dlns_set_namespace_allowed_libs(const char * name, const char * allowed_libs
 	return 0;
 }
 
-int handle_asan_path_open(int fd, const char *name, ns_t *namespace, char *buf)
+int handle_asan_path_open(int fd, const char *name, ns_t *namespace, char *buf, size_t buf_size)
 {
 	LD_LOGD("handle_asan_path_open fd:%d, name:%s , namespace:%p , buf:%s.\n", fd, name, namespace, buf);
 	int fd_tmp = fd;
@@ -3097,14 +3097,14 @@ int handle_asan_path_open(int fd, const char *name, ns_t *namespace, char *buf)
 			strcpy(new_lib_paths, namespace->asan_lib_paths);
 			strcat(new_lib_paths, ":");
 			strcat(new_lib_paths, namespace->lib_paths);
-			fd_tmp = path_open(name, new_lib_paths, buf, sizeof buf);
+			fd_tmp = path_open(name, new_lib_paths, buf, buf_size);
 			LD_LOGD("handle_asan_path_open path_open new_lib_paths:%s ,fd: %d.\n", new_lib_paths, fd_tmp);
 			free(new_lib_paths);
 		} else if (namespace->asan_lib_paths) {
-			fd_tmp = path_open(name, namespace->asan_lib_paths, buf, sizeof buf);
+			fd_tmp = path_open(name, namespace->asan_lib_paths, buf, buf_size);
 			LD_LOGD("handle_asan_path_open path_open asan_lib_paths:%s ,fd: %d.\n", namespace->asan_lib_paths, fd_tmp);
 		} else {
-			fd_tmp = path_open(name, namespace->lib_paths, buf, sizeof buf);
+			fd_tmp = path_open(name, namespace->lib_paths, buf, buf_size);
 			LD_LOGD("handle_asan_path_open path_open lib_paths:%s ,fd: %d.\n", namespace->lib_paths, fd_tmp);
 		}
 	}
@@ -3509,7 +3509,7 @@ static bool load_library_header(struct loadtask *task)
 			}
 		}
 		if (g_is_asan) {
-			task->fd = handle_asan_path_open(task->fd, name, namespace, task->buf);
+			task->fd = handle_asan_path_open(task->fd, name, namespace, task->buf, sizeof task->buf);
 			LD_LOGD("load_library handle_asan_path_open fd:%d.\n", task->fd);
 		} else {
 			if (task->fd == -1 && namespace->lib_paths) {
