@@ -211,9 +211,6 @@ static void do_tzset()
             }
         }
     }
-    if (!map) {
-        s = __utc;
-    }
 
     if (map && (map_size < 44 || memcmp(map, "TZif", 4))) {
         __munmap((void *)map, map_size);
