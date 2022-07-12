@@ -1,8 +1,8 @@
 import("//build/test.gni")
 
-musl_dir = "third_party/musl/"
-test_dir = "${musl_dir}/libc-test"
-out_test_dir = "${root_out_dir}/obj/${musl_dir}/libc-test"
+musl_base_dir = "third_party/musl/"
+test_dir = "${musl_base_dir}/libc-test"
+out_test_dir = "${root_out_dir}/obj/${musl_base_dir}/libc-test"
 
 if (current_cpu == "arm") {
   musl_arch = "arm"
@@ -11,8 +11,9 @@ if (current_cpu == "arm") {
 }
 
 musl_include_dir =
-    "${root_out_dir}/obj/${musl_dir}/usr/include/${musl_arch}-linux-ohos"
-musl_lib_dir = "${root_out_dir}/obj/${musl_dir}/usr/lib/${musl_arch}-linux-ohos"
+    "${root_out_dir}/obj/${musl_base_dir}/usr/include/${musl_arch}-linux-ohos"
+musl_lib_dir =
+    "${root_out_dir}/obj/${musl_base_dir}/usr/lib/${musl_arch}-linux-ohos"
 
 test_lib_dir = "musl/libc-test-lib"
 
