@@ -33,4 +33,5 @@ ICCARM_ADAPT_INCLUDE_DIRS = [ "$MUSLPORTINGDIR/include" ]
 ICCARM_ADAPT_SRC_COMMON = [
   "$MUSLPORTINGDIR/src/malloc.c",
   "$MUSLPORTINGDIR/src/fs.c",
+  "$MUSLPORTINGDIR/src/misc/realpath.c",
 ]
