@@ -17,6 +17,7 @@
 #define DLFCN_EXT_H
 
 #include <dlfcn.h>
+#include <stddef.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -26,13 +27,19 @@ extern "C" {
 #define DL_EXT_WRITE_RELRO 0x1
 #define DL_EXT_USE_RELRO 0x2
 #define DL_EXT_RESERVED_ADDRESS_RECURSIVE 0x4
+#define DL_EXT_RESERVED_ADDRESS 0x8
+#define DL_EXT_RESERVED_ADDRESS_HINT 0x10
 
 /** Mask of valid bits. */
-#define DL_EXT_VALID_FLAG_BITS (DL_EXT_WRITE_RELRO | DL_EXT_USE_RELRO | DL_EXT_RESERVED_ADDRESS_RECURSIVE)
+#define DL_EXT_VALID_FLAG_BITS                                                                             \
+    (DL_EXT_WRITE_RELRO | DL_EXT_USE_RELRO | DL_EXT_RESERVED_ADDRESS_RECURSIVE | DL_EXT_RESERVED_ADDRESS | \
+        DL_EXT_RESERVED_ADDRESS_HINT)
 
 typedef struct {
     int flag;
     int relro_fd;
+    void *reserved_addr;
+    size_t reserved_size;
 } dl_extinfo;
 
 /**
