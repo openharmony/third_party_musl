@@ -275,11 +275,7 @@ void ns_set_permitted_paths(ns_t *ns, const char *permitted_paths)
     }
     if (ns->permitted_paths) strlist_free(ns->permitted_paths);
     ns->permitted_paths = strsplit(permitted_paths,":");
-#if (LD_LOG_LEVEL & LD_LOG_DEBUG)
-    for (size_t i = 0; i < ns->permitted_paths->num; i++) {
-        LD_LOGD("ns_set_permitted_paths ns[%s] permitted_paths[%d]:%s.\n", ns->ns_name, i, ns->permitted_paths[i]);
-    }
-#endif
+    LD_LOGD("ns_set_permitted_paths ns[%s] permitted_paths:%s.\n", ns->ns_name, permitted_paths);
 }
 
 void ns_set_asan_permitted_paths(ns_t *ns, const char *asan_permitted_paths)
@@ -292,11 +288,7 @@ void ns_set_asan_permitted_paths(ns_t *ns, const char *asan_permitted_paths)
         strlist_free(ns->asan_permitted_paths);
     }
     ns->asan_permitted_paths = strsplit(asan_permitted_paths, ":");
-#if (LD_LOG_LEVEL & LD_LOG_DEBUG)
-    for (size_t i = 0; i < ns->asan_permitted_paths->num; i++) {
-        LD_LOGD("ns_set_asan_permitted_paths ns[%s] asan_permitted_paths[%d]:%s.\n", ns->ns_name, i, ns->asan_permitted_paths[i]);
-    }
-#endif
+    LD_LOGD("ns_set_asan_permitted_paths ns[%s] asan_permitted_paths:%s.\n", ns->ns_name, asan_permitted_paths);
 }
 
 void ns_set_separated(ns_t *ns, bool separated)
@@ -324,7 +316,7 @@ void ns_set_allowed_libs(ns_t *ns, const char *allowed_libs)
         if (strtrim(a_libs) > 0) ns->allowed_libs = strsplit(a_libs,":");
         free(a_libs);
     }
-    LD_LOGD("ns_set_allowed_libs ns[%s] allowed_libs:%s.\n", ns->ns_name, ns->allowed_libs);
+    LD_LOGD("ns_set_allowed_libs ns[%s] allowed_libs:%s.\n", ns->ns_name, allowed_libs);
 }
 
 ns_t *find_ns_by_name(const char *ns_name)
