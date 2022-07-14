@@ -208,11 +208,42 @@ if (is_lite_system && current_os == "ohos") {
     deps = [ ":create_porting_src" ]
   }
 
+  action("make_uapi") {
+    kernel_dir = rebase_path(linux_kernel_dir)
+    kernel_out_dir = rebase_path(get_path_info("${kernel_dir}/", "out_dir"))
+    uapi_dir = "${kernel_out_dir}/usr/include"
+    make_uapi_cmd = "rm -rf ${uapi_dir}"
+    make_uapi_cmd += " && make -C ${kernel_dir} -sj headers O=${kernel_out_dir} ARCH=${target_cpu}"
+    make_uapi_cmd += " && cp -f ${kernel_dir}/drivers/staging/android/uapi/ashmem.h ${uapi_dir}/linux/ashmem.h"
+    make_uapi_cmd += " && sed -i '/#define _INPUT_H/i#define _UAPI_INPUT_H' ${uapi_dir}/linux/input.h"
+    make_uapi_cmd += " && sed -i '/struct __kernel_sockaddr_storage/i#define sockaddr_storage __kernel_sockaddr_storage' ${uapi_dir}/linux/socket.h"
+    outputs = [ "${target_out_dir}/" + rebase_path(uapi_dir, target_out_dir) ]
+    script = "/bin/sh"
+    args = [ "-c" ]
+    args += [ make_uapi_cmd ]
+  }
+
+  # if uapi_dir does not exist, then make uapi from linux_kernel_dir
+  if (exec_script("/bin/sh",
+                  [
+                    "-c",
+                    "if [ ! -d " + rebase_path(uapi_dir) +
+                        " ]; then echo true; else echo false; fi",
+                  ],
+                  "value")) {
+    uapi_dir = get_path_info("${linux_kernel_dir}/", "out_dir") + "/usr/include"
+    uapi_deps = [ ":make_uapi" ]
+  } else {
+    uapi_deps = []
+  }
+
   action("copy_uapi") {
-    outputs = [ "${target_out_dir}/${musl_inc_out_dir}/linux" ]
+    outputs = [ "${target_out_dir}/${musl_inc_out_dir}" ]
+    inputs = [ uapi_dir ]
+    deps = uapi_deps
     script = "scripts/copy_uapi.sh"
-    args = [ "-i" ] + [ rebase_path("${uapi_dir}") ]
-    args += [ "-o" ] + [ rebase_path("${target_out_dir}/${musl_inc_out_dir}") ]
+    args = [ "-i" ] + rebase_path(inputs)
+    args += [ "-o" ] + rebase_path(outputs)
     args += [ "-t" ] + [ "${musl_arch}" ]
   }
 
