@@ -19,6 +19,7 @@ import("//third_party/musl/musl_template.gni")
 
 toolchains_dir = "//prebuilts/clang/ohos"
 musl_target_out_dir = "${root_out_dir}/obj/third_party/musl"
+ndk_musl_include = "ndk_musl_include"
 
 if (host_os == "mac") {
   if (host_cpu == "arm64") {
@@ -123,14 +124,32 @@ group("musl_sysroot") {
   ]
 }
 
+action("copy_ndk_uapi") {
+  outputs = [ "${musl_target_out_dir}/${ndk_musl_include}/linux" ]
+  script = "${musl_dir}/scripts/copy_uapi.sh"
+  args = [ "-i" ] + [ rebase_path("${uapi_dir}") ]
+  args +=
+      [ "-o" ] + [ rebase_path("${musl_target_out_dir}/${ndk_musl_include}") ]
+  args += [ "-t" ] + [ "${musl_arch}" ]
+}
+
+action("copy_ndk_musl_headers") {
+  outputs = [ "${musl_target_out_dir}/${ndk_musl_include}" ]
+  script = "copy_ndk_musl_headers.sh"
+  args = [ "-i" ] + [ rebase_path("${musl_dir}/${ndk_musl_include}") ]
+  args +=
+      [ "-o" ] + [ rebase_path("${musl_target_out_dir}/${ndk_musl_include}") ]
+  deps = [ ":copy_ndk_uapi" ]
+}
+
 action("copy_musl_sysroot") {
   outputs = [ "${ndk_headers_out_dir}" ]
   script = "copy_musl_sysroot.sh"
   args =
-      [ "-i" ] + [ rebase_path("${musl_target_out_dir}/${musl_inc_out_dir}") ]
+      [ "-i" ] + [ rebase_path("${musl_target_out_dir}/${ndk_musl_include}") ]
   args += [ "-o" ] + [ rebase_path("${ndk_headers_out_dir}") ]
   args += [ "-t" ] + [ "${musl_arch}" ]
-  deps = [ "//third_party/musl:musl_headers" ]
+  deps = [ ":copy_ndk_musl_headers" ]
 }
 
 musl_libs_arm32 = [
