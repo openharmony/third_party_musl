@@ -27,10 +27,10 @@ enum EnumHookMode {
 	STEP_HOOK_MODE,
 };
 
-#ifdef HOOK_ENABLE
+
 extern void* function_of_shared_lib[];
 extern volatile atomic_llong ohos_malloc_hook_shared_liibrary;
-#endif
+
 
 #ifdef __cplusplus
 extern "C" {
