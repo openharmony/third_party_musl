@@ -40,7 +40,7 @@ int __get_resolv_conf(struct resolvconf *conf, char *search, size_t search_sz)
 	dlclose(handle);
 	if (ret < 0) {
 		DNS_CONFIG_PRINT("__get_resolv_conf OHOS_GET_CONFIG_FUNC_NAME err %d\n", ret);
-		return -1;
+		return EAI_NONAME;
 	}
 	int32_t timeout_second = config.timeout_ms / 1000;
 
