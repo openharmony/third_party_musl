@@ -24,7 +24,7 @@ int __thread_clone(int (*func)(void *), int flags, struct pthread *thread, unsig
 	param.user_sp = sp;
 	param.map_base = thread->map_base;
 	param.map_size = thread->map_size;
-	ret = __syscall(SYS_creat_user_thread , func, &param, join_flag);
+	ret = __syscall(SYS_create_user_thread , func, &param, join_flag);
 	if (ret < 0) {
 		return ret;
 	}

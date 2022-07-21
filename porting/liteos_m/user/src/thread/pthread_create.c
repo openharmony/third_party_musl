@@ -103,7 +103,7 @@ _LIBC_TEXT_SECTION static int __thread_clone(int (*func)(void *), int flags, str
 
 	user_area = (unsigned long)TP_ADJ(thread);
 	user_sp = (unsigned long)sp;
-	ret = __syscall(SYS_creat_user_thread, func, user_area, user_sp, join_flag);
+	ret = __syscall(SYS_create_user_thread, func, user_area, user_sp, join_flag);
 	if (ret < 0) {
 		return ret;
 	}
