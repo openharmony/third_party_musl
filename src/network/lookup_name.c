@@ -173,7 +173,8 @@ static int name_from_dns_search(struct address buf[static MAXADDRS], char canon[
 	size_t l, dots;
 	char *p, *z;
 
-	if (__get_resolv_conf(&conf, search, sizeof search) < 0) return -1;
+	int res = __get_resolv_conf(&conf, search, sizeof search);
+	if (res < 0) return res;
 
 	/* Count dots, suppress search when >=ndots or name ends in
 	 * a dot, which is an explicit request for global scope. */
