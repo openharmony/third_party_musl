@@ -40,10 +40,12 @@ int __get_resolv_conf(struct resolvconf *conf, char *search, size_t search_sz)
 	dlclose(handle);
 	if (ret < 0) {
 		DNS_CONFIG_PRINT("__get_resolv_conf OHOS_GET_CONFIG_FUNC_NAME err %d\n", ret);
-		return EAI_NONAME;
+		goto etc_resolv_conf;
 	}
 	int32_t timeout_second = config.timeout_ms / 1000;
+#endif
 
+#if OHOS_DNS_PROXY_BY_NETSYS
 netsys_conf:
 	if (timeout_second > 0) {
 		if (timeout_second >= 60) {
