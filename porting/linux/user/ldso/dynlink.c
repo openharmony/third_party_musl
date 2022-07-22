@@ -2397,6 +2397,7 @@ static void *dlopen_impl(
 #ifdef LOAD_ORDER_RANDOMIZATION
 	struct loadtasks *tasks = NULL;
 	struct loadtask *task = NULL;
+	bool is_task_appended = false;
 #endif
 
 	if (!file) {
@@ -2498,13 +2499,38 @@ static void *dlopen_impl(
 			file);
 			goto end;
 		}
-		p = task->p;
 		if (reserved_address) {
-			reserved_params.target = p;
+			reserved_params.target = task->p;
 		}
+	}
+	if (!task->p) {
+		error(noload ?
+			"Library %s is not already loaded" :
+			"Error loading shared library %s: %m",
+			file);
+		goto end;
+	}
+	if (!task->isloaded) {
+		is_task_appended = append_loadtasks(tasks, task);
+	}
+	preload_deps(task->p, ns, tasks);
+	unmap_preloaded_sections(tasks);
+	if (!reserved_address_recursive) {
+		shuffle_loadtasks(tasks);
+	}
+	run_loadtasks(tasks, reserved_address ? &reserved_params : NULL);
+	p = task->p;
+	if (!task->isloaded) {
+		assign_tls(p);
+	}
+	if (!is_task_appended) {
+		free_task(task);
+		task = NULL;
+	}
+	free_loadtasks(tasks);
+	tasks = NULL;
 #else
 		p = load_library(file, head, ns, true, reserved_address ? &reserved_params : NULL);
-#endif
 	}
 
 	if (!p) {
@@ -2514,26 +2540,6 @@ static void *dlopen_impl(
 			file);
 		goto end;
 	}
-
-#ifdef LOAD_ORDER_RANDOMIZATION
-	if (!task->isloaded) {
-		append_loadtasks(tasks, task);
-	}
-	preload_deps(p, ns, tasks);
-	unmap_preloaded_sections(tasks);
-	if (!reserved_address_recursive) {
-		shuffle_loadtasks(tasks);
-	}
-	run_loadtasks(tasks, reserved_address ? &reserved_params : NULL);
-	if (!task->isloaded) {
-		assign_tls(p);
-	} else {
-		free_task(task);
-		task = NULL;
-	}
-	free_loadtasks(tasks);
-	tasks = NULL;
-#else
 	/* First load handling */
 	load_deps(p, ns, reserved_address && reserved_address_recursive ? &reserved_params : NULL);
 #endif
@@ -2588,8 +2594,10 @@ static void *dlopen_impl(
 #endif
 end:
 #ifdef LOAD_ORDER_RANDOMIZATION
+	if (!is_task_appended) {
+		free_task(task);
+	}
 	free_loadtasks(tasks);
-	tasks = NULL;
 #endif
 	__release_ptc();
 	if (p) gencnt++;
@@ -3704,11 +3712,17 @@ static void task_load_library(struct loadtask *task, struct reserved_address_par
 	decode_dyn(task->p);
 	if (find_sym(task->p, "__libc_start_main", 1).sym &&
 		find_sym(task->p, "stdin", 1).sym) {
-		unmap_library(task->p);
+		do_dlclose(task->p);
+		task->p = NULL;
 		free((void*)task->name);
 		task->name = strdup("libc.so");
 		task->check_inherited = true;
-		load_library_header(task);
+		if (!load_library_header(task)) {
+			error("Error loading library %s: failed to load libc.so", task->name);
+			if (runtime) {
+				longjmp(*rtld_fail, 1);
+			}
+		}
 		return;
 	}
 	/* Past this point, if we haven't reached runtime yet, ldso has
