@@ -25,7 +25,7 @@
 #include "functionalext.h"
 
 #define PIPE_FD 2
-#define NUM_OF_BYTE 8
+#define LEN_OF_POINTER 8
 #define BASE_NUM 11
 #define TEST_COUNTS 32
 
@@ -561,6 +561,42 @@ static void dlclose_randomization_0100(void)
     EXPECT_EQ(__FUNCTION__, -1, ret);
 }
 
+/**
+ * @tc.name      : dlopen_randomization_0800
+ * @tc.desc      : Call the dlopen interface to load libc.so
+ * @tc.level     : Level1
+ */
+static void dlopen_randomization_0800(void)
+{
+    if (sizeof(void *) == LEN_OF_POINTER) {
+        system("cp /system/lib64/libc.so .");
+    } else {
+        system("cp /system/lib/libc.so .");
+    }
+    void *handle = dlopen("./libc.so", RTLD_NOW);
+    EXPECT_PTRNE(__FUNCTION__, handle, 0);
+    system("rm ./libc.so");
+}
+
+/**
+ * @tc.name      : dlopen_randomization_0900
+ * @tc.desc      : Call the dlopen interface to load ld.so
+ * @tc.level     : Level1
+ */
+static void dlopen_randomization_0900(void)
+{
+    void *handle = NULL;
+    if (sizeof(void *) == LEN_OF_POINTER) {
+        system("cp /system/lib/ld-musl-aarch64.so.1 .");
+        handle = dlopen("./ld-musl-aarch64.so.1", RTLD_NOW);
+        system("rm ld-musl-aarch64.so.1");
+    } else {
+        system("cp /system/lib/ld-musl-arm.so.1 .");
+        handle = dlopen("./ld-musl-arm.so.1", RTLD_NOW);
+        system("rm ./ld-musl-arm.so.1");
+    }
+    EXPECT_PTRNE(__FUNCTION__, handle, 0);
+}
 
 TEST_FUNC test_cases[] = {
     dlopen_randomization_0100,
@@ -586,6 +622,8 @@ TEST_FUNC test_cases[] = {
     dlsym_randomization_0600,
     dlsym_randomization_0700,
     dlclose_randomization_0100,
+    dlopen_randomization_0800,
+    dlopen_randomization_0900,
 };
 
 int main(int argc, char *argv[])
