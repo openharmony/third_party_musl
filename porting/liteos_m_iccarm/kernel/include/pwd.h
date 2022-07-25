@@ -11,11 +11,11 @@ extern "C" {
 #define __NEED_uid_t
 #define __NEED_gid_t
 
-#ifdef _GNU_SOURCE
-#define __NEED_FILE
-#endif
-
 #include <bits/alltypes.h>
+
+#ifdef _GNU_SOURCE
+#include <stdio.h>
+#endif
 
 struct passwd {
 	char *pw_name;
