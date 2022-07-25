@@ -34,5 +34,9 @@ elif [ ${TARGET_ARCH} = "aarch64" ]; then
     mv ${OUT_DIR}/asm-arm64/asm ${OUT_DIR}/asm
     rm -rf ${OUT_DIR}/asm-arm64
     rm -rf ${OUT_DIR}/asm-arm
+elif [ ${TARGET_ARCH} = "x86_64" ]; then
+    mv ${OUT_DIR}/asm-arm64/asm ${OUT_DIR}/asm
+    rm -rf ${OUT_DIR}/asm-arm64
+    rm -rf ${OUT_DIR}/asm-arm
 fi
 
