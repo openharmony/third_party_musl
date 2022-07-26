@@ -49,3 +49,7 @@ declare_args() {
   #       musl_linker_extension
   # }
 }
+
+declare_args() {
+  enable_musl_log = false
+}
