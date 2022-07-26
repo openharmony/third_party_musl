@@ -185,6 +185,10 @@ template("musl_libs") {
       defines += [ "OHOS_DNS_PROXY_BY_NETSYS=1" ]
     }
 
+    if (enable_musl_log) {
+      defines += [ "ENABLE_MUSL_LOG" ]
+    }
+
     dynamic_list =
         rebase_path("${target_out_dir}/${musl_ported_dir}/dynamic.list")
 
