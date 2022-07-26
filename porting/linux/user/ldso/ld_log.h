@@ -25,26 +25,28 @@
 
 #define LD_LOG_LEVEL (LD_LOG_ERROR | LD_LOG_WARNING)
 
+#define LD_LOG_TAG "MUSL-LDSO"
+
 #if (LD_LOG_LEVEL & LD_LOG_ERROR)
-#define LD_LOGE(...) MUSL_LOGE(...)
+#define LD_LOGE(...) ((void)HiLogAdapterPrint(MUSL_LOG_TYPE, LOG_ERROR, MUSL_LOG_DOMAIN, LD_LOG_TAG, __VA_ARGS__))
 #else
 #define LD_LOGE(...)
 #endif
 
 #if (LD_LOG_LEVEL & LD_LOG_WARNING)
-#define LD_LOGW(...) MUSL_LOGW(...)
+#define LD_LOGW(...) ((void)HiLogAdapterPrint(MUSL_LOG_TYPE, LOG_WARN, MUSL_LOG_DOMAIN, LD_LOG_TAG, __VA_ARGS__))
 #else
 #define LD_LOGW(...)
 #endif
 
 #if (LD_LOG_LEVEL & LD_LOG_INFO)
-#define LD_LOGI(...) MUSL_LOGI(...)
+#define LD_LOGI(...) ((void)HiLogAdapterPrint(MUSL_LOG_TYPE, LOG_INFO, MUSL_LOG_DOMAIN, LD_LOG_TAG, __VA_ARGS__))
 #else
 #define LD_LOGI(...)
 #endif
 
 #if (LD_LOG_LEVEL & LD_LOG_DEBUG)
-#define LD_LOGD(...) MUSL_LOGD(...)
+#define LD_LOGD(...) ((void)HiLogAdapterPrint(MUSL_LOG_TYPE, LOG_DEBUG, MUSL_LOG_DOMAIN, LD_LOG_TAG, __VA_ARGS__))
 #else
 #define LD_LOGD(...)
 #endif

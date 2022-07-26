@@ -16,19 +16,21 @@
 #ifndef _MUSL_LOG_H
 #define _MUSL_LOG_H
 
+#include <hilog_adapter.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 #define MUSL_LOG_TYPE LOG_CORE
 #define MUSL_LOG_DOMAIN 0xD003F00
-#define MUSL_LOG_TAG "musl_linker"
+#define MUSL_LOG_TAG "MUSL"
 
 #ifdef ENABLE_MUSL_LOG
-#define MUSL_LOGE(...) ((void)HiLogBasePrint(MUSL_LOG_TYPE, LOG_ERROR, MUSL_LOG_DOMAIN, MUSL_LOG_TAG, __VA_ARGS__))
-#define MUSL_LOGW(...) ((void)HiLogBasePrint(MUSL_LOG_TYPE, LOG_WARN, MUSL_LOG_DOMAIN, MUSL_LOG_TAG, __VA_ARGS__))
-#define MUSL_LOGI(...) ((void)HiLogBasePrint(MUSL_LOG_TYPE, LOG_INFO, MUSL_LOG_DOMAIN, MUSL_LOG_TAG, __VA_ARGS__))
-#define MUSL_LOGD(...) ((void)HiLogBasePrint(MUSL_LOG_TYPE, LOG_DEBUG, MUSL_LOG_DOMAIN, MUSL_LOG_TAG, __VA_ARGS__))
+#define MUSL_LOGE(...) ((void)HiLogAdapterPrint(MUSL_LOG_TYPE, LOG_ERROR, MUSL_LOG_DOMAIN, MUSL_LOG_TAG, __VA_ARGS__))
+#define MUSL_LOGW(...) ((void)HiLogAdapterPrint(MUSL_LOG_TYPE, LOG_WARN, MUSL_LOG_DOMAIN, MUSL_LOG_TAG, __VA_ARGS__))
+#define MUSL_LOGI(...) ((void)HiLogAdapterPrint(MUSL_LOG_TYPE, LOG_INFO, MUSL_LOG_DOMAIN, MUSL_LOG_TAG, __VA_ARGS__))
+#define MUSL_LOGD(...) ((void)HiLogAdapterPrint(MUSL_LOG_TYPE, LOG_DEBUG, MUSL_LOG_DOMAIN, MUSL_LOG_TAG, __VA_ARGS__))
 #else
 #define MUSL_LOGE(...)
 #define MUSL_LOGW(...)
