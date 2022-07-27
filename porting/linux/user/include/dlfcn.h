@@ -20,6 +20,11 @@ extern "C" {
 
 #define RTLD_DI_LINKMAP 2
 
+
+/* create flags for dlns_create */
+#define CREATE_INHERIT_DEFAULT 0x1
+#define CREATE_INHERIT_CURRENT 0x2
+
 int    dlclose(void *);
 char  *dlerror(void);
 void  *dlopen(const char *, int);
@@ -33,7 +38,7 @@ typedef struct {
 
 /**
   * @brief Initialize a namespace structure for operating namespaces through related functional interfaces.
-  * @param Dl_namespace * Carry the naming information of the namespace.
+  * @param Dl_namespace * namespace handle.
   * @param char * namespace name.
   * @return void.
   * @retval none.
@@ -41,9 +46,20 @@ typedef struct {
 void dlns_init(Dl_namespace *, const char *);
 
 /**
+  * @brief Gets the current namespace handle, or verifies that the given name namespace exists.
+  * @param char * Namespace name.Gets the current caller namespace handle when name is null.
+  * @param Dl_namespace * namespace handle.
+  * @return return 0 on success,fail other values.
+  * @retval
+  *    EINVAL(22) Invalid argument.
+  *    ENOKEY(126) Required key not available.
+  */
+int dlns_get(const char *, Dl_namespace *);
+
+/**
   * @brief open dso in given namespace which has own lib search paths, when namespace is null, it's same to dlopen().
   *        avoid using "default" as namespace, which is the default namespace.
-  * @param Dl_namespace * Carry the naming information of the namespace.
+  * @param Dl_namespace * namespace handle.
   * @param char * the name of the so file you want to open.
   * @param int open file mode.
   *    -- RTLD_LAZY.
@@ -61,7 +77,7 @@ void *dlopen_ns(Dl_namespace *, const char *, int);
   * @brief create the namespace and set lib search paths of namespace,
   *        the paths should be splited by ':'. When namespace already exist,return error.
   *        avoid using "default" as namespace, which is the default namespace.
-  * @param Dl_namespace * namespace information.
+  * @param Dl_namespace * namespace handle.
   * @param char * lib path library that can be specified.
   * @return return 0 on success,fail other values.
   * @retval
@@ -70,6 +86,20 @@ void *dlopen_ns(Dl_namespace *, const char *, int);
   *    ENOMEM(12) Out of memory.
   */
 int dlns_create(Dl_namespace *, const char *);
+
+/**
+  * @brief create the namespace and set lib search paths of namespace,
+  *        like dlns_create, except can use flags to set parent ns.
+  * @param Dl_namespace * namespace handle.
+  * @param char * lib path library that can be specified.
+  * #param int flags for create namespace, CREATE_INHERIT_CURRENT or CREATE_INHERIT_DEFAULT.
+  * @return return 0 on success,fail other values.
+  * @retval
+  *    EINVAL(22) Invalid argument.
+  *    EEXIST(17) File exists.
+  *    ENOMEM(12) Out of memory.
+  */
+int dlns_create2(Dl_namespace *, const char *, int);
 
 /**
   * @brief make one namespace inherit another, and so it can use shared libs by the inherited one.
