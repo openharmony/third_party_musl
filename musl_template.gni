@@ -182,7 +182,10 @@ template("musl_libs") {
       defines += [ "BROKEN_VFP_ASM" ]
     }
     if (is_standard_system) {
-      defines += [ "OHOS_DNS_PROXY_BY_NETSYS=1" ]
+      defines += [
+        "OHOS_DNS_PROXY_BY_NETSYS=1",
+        "OHOS_PERMISSION_INTERNET=1",
+      ]
     }
 
     dynamic_list =
