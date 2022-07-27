@@ -15,6 +15,10 @@
 #include "stdio_impl.h"
 #include "syscall.h"
 
+#if OHOS_PERMISSION_INTERNET
+uint8_t is_allow_internet(void);
+#endif
+
 static int is_valid_hostname(const char *host)
 {
 	const unsigned char *s;
@@ -168,6 +172,13 @@ static int name_from_dns(struct address buf[static MAXADDRS], char canon[static 
 
 static int name_from_dns_search(struct address buf[static MAXADDRS], char canon[static 256], const char *name, int family)
 {
+#if OHOS_PERMISSION_INTERNET
+	if (is_allow_internet() == 0) {
+		errno = EPERM;
+		return -1;
+	}
+#endif
+
 	char search[256];
 	struct resolvconf conf;
 	size_t l, dots;
