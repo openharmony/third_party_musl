@@ -307,42 +307,6 @@ typedef struct { unsigned __attr[2]; } pthread_rwlockattr_t;
 #define __DEFINED_pthread_rwlockattr_t
 #endif
 
-
-#if defined(__NEED_struct__IO_FILE) && !defined(__DEFINED_struct__IO_FILE)
-struct _IO_FILE {
-  unsigned flags;
-  unsigned char *rpos, *rend;
-  int (*close)(struct _IO_FILE *);
-  unsigned char *wend, *wpos;
-  unsigned char *mustbezero_1;
-  unsigned char *wbase;
-  size_t (*read)(struct _IO_FILE *, unsigned char *, size_t);
-  size_t (*write)(struct _IO_FILE *, const unsigned char *, size_t);
-  off_t (*seek)(struct _IO_FILE *, off_t, int);
-  unsigned char *buf;
-  size_t buf_size;
-  struct _IO_FILE *prev, *next;
-  int fd;
-  int pipe_pid;
-  int mode;
-  void *lock;
-  int lbf;
-  void *cookie;
-  off_t off;
-  char *getln_buf;
-  void *mustbezero_2;
-  unsigned char *shend;
-  off_t shlim, shcnt;
-  struct __locale_struct *locale;
-};
-#define __DEFINED_struct__IO_FILE
-#endif
-
-#if defined(__NEED_FILE) && !defined(__DEFINED_FILE)
-typedef struct _IO_FILE FILE;
-#define __DEFINED_FILE
-#endif
-
 #if defined(__NEED___isoc_va_list) && !defined(__DEFINED___isoc_va_list)
 typedef __builtin_va_list __isoc_va_list;
 #define __DEFINED___isoc_va_list
