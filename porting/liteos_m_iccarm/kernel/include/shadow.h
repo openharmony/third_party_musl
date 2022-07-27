@@ -5,10 +5,10 @@
 extern "C" {
 #endif
 
-#define	__NEED_FILE
 #define __NEED_size_t
 
 #include <bits/alltypes.h>
+#include <stdio.h>
 
 #define	SHADOW "/etc/shadow"
 
