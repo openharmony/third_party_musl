@@ -6,9 +6,15 @@
 static ns_t g_ns_default;
 static nslist g_ns_list;
 
+#ifndef NSLIST_DEFAULT_SIZE
 #define NSLIST_DEFAULT_SIZE 16
+#endif
+#ifndef DSOLIST_DEFAULT_SIZE
 #define DSOLIST_DEFAULT_SIZE 16
+#endif
+#ifndef INHERIT_DEFAULT_SIZE
 #define INHERIT_DEFAULT_SIZE 16
+#endif
 
 static ns_inherit_list *nsinherits_alloc()
 {
