@@ -53,3 +53,9 @@ declare_args() {
 declare_args() {
   enable_musl_log = false
 }
+
+declare_args() {
+  if (!defined(product_path)) {
+    product_path = ""
+  }
+}
