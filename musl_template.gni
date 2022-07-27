@@ -204,10 +204,6 @@ template("musl_libs") {
       "-Wl,--exclude-libs=ALL",
       "-Wl,--dynamic-list=${dynamic_list}",
     ]
-    if (is_asan) {
-      ldflags -= [ "-Wl,--dynamic-list=${dynamic_list}" ]
-      ldflags += [ "-Wl,-Bsymbolic-functions" ]
-    }
     asmflags = cflags
   }
 
@@ -427,6 +423,13 @@ template("musl_libs") {
       "-fPIC",
       "-fno-stack-protector",
     ]
+    if (is_asan) {
+      defines = [
+        "NSLIST_DEFAULT_SIZE=1600",
+        "DSOLIST_DEFAULT_SIZE=1600",
+        "INHERIT_DEFAULT_SIZE=1600",
+      ]
+    }
 
     deps = porting_deps
   }
