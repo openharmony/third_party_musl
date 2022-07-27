@@ -160,6 +160,20 @@ ssize_t pwrite(int fd, const void *buf, size_t nbyte, off_t offset)
     return LOS_Pwrite(fd, buf, nbyte, offset);
 }
 
+int access(const char *path, int mode)
+{
+    struct stat st;
+    if (stat(path, &st) < 0) {
+        return -1;
+    }
+    return 0;
+}
+
+int remove(const char *filename)
+{
+    return unlink(filename);
+}
+
 #else /* #ifdef LOSCFG_FS_VFS */
 
 int mount(const char *source, const char *target,
@@ -270,6 +284,16 @@ ssize_t pread(int fd, void *buf, size_t nbyte, off_t offset)
 }
 
 ssize_t pwrite(int fd, const void *buf, size_t nbyte, off_t offset)
+{
+    return -1;
+}
+
+int access(const char *path, int mode)
+{
+    return -1;
+}
+
+int remove(const char *filename)
 {
     return -1;
 }
