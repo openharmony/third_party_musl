@@ -15,4 +15,6 @@ functionalext_thread_list = [
   "pthread_mutex",
   "pthread_rwlock_rdlock",
   "pthread_rwlock_wrlock",
+  "pthread_guard_size",
+  "pthread_stack_size",
 ]
