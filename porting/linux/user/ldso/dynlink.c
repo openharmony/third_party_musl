@@ -2636,6 +2636,36 @@ void dlns_init(Dl_namespace *dlns, const char *name)
 	LD_LOGI("dlns_init dlns->name:%s .\n", dlns->name);
 }
 
+int dlns_get(const char *name, Dl_namespace *dlns)
+{
+	if (!dlns) {
+		LD_LOGW("dlns_get dlns is null.\n");
+		return EINVAL;
+	}
+	int ret = 0;
+	ns_t *ns = NULL;
+	pthread_rwlock_rdlock(&lock);
+	if (!name) {
+		struct dso *caller;
+		const void *caller_addr = __builtin_return_address(0);
+		caller = (struct dso *)addr2dso((size_t)caller_addr);
+		ns = ((caller && caller->namespace) ? caller->namespace : get_default_ns());
+		(void)snprintf(dlns->name, sizeof dlns->name, ns->ns_name);
+		LD_LOGI("dlns_get name is null, current dlns dlns->name:%s.\n", dlns->name);
+	} else {
+		ns = find_ns_by_name(name);
+		if (ns) {
+			(void)snprintf(dlns->name, sizeof dlns->name, ns->ns_name);
+			LD_LOGI("dlns_get found ns, current dlns dlns->name:%s.\n", dlns->name);
+		} else {
+			LD_LOGI("dlns_get not found ns! name:%s.\n", name);
+			ret = ENOKEY;
+		}
+	}
+	pthread_rwlock_unlock(&lock);
+	return ret;
+}
+
 void *dlopen_ns(Dl_namespace *dlns, const char *file, int mode)
 {
 	const void *caller_addr = __builtin_return_address(0);
@@ -2643,7 +2673,7 @@ void *dlopen_ns(Dl_namespace *dlns, const char *file, int mode)
 	return dlopen_impl(file, mode, dlns->name, caller_addr, NULL);
 }
 
-int dlns_create(Dl_namespace *dlns, const char *lib_path)
+int dlns_create2(Dl_namespace *dlns, const char *lib_path, int flags)
 {
 	if (!dlns) {
 		LD_LOGW("dlns_create dlns is null.\n");
@@ -2668,7 +2698,20 @@ int dlns_create(Dl_namespace *dlns, const char *lib_path)
 	ns_add_dso(ns, get_default_ns()->ns_dsos->dsos[0]); /* add main app to this namespace*/
 	nslist_add_ns(ns); /* add ns to list*/
 	ns_set_lib_paths(ns, lib_path);
-	ns_add_inherit(ns, get_default_ns(), NULL);
+
+	if ((flags & CREATE_INHERIT_DEFAULT) != 0) {
+		ns_add_inherit(ns, get_default_ns(), NULL);
+	}
+
+	if ((flags & CREATE_INHERIT_CURRENT) != 0) {
+		struct dso *caller;
+		const void *caller_addr = __builtin_return_address(0);
+		caller = (struct dso *)addr2dso((size_t)caller_addr);
+		if (caller && caller->namespace) {
+			ns_add_inherit(ns, caller->namespace, NULL);
+		}
+	}
+
 	LD_LOGI("dlns_create :"
 			"ns: %p ,"
 			"ns_name: %s ,"
@@ -2678,6 +2721,11 @@ int dlns_create(Dl_namespace *dlns, const char *lib_path)
 	pthread_rwlock_unlock(&lock);
 
 	return 0;
+}
+
+int dlns_create(Dl_namespace *dlns, const char *lib_path)
+{
+	return dlns_create2(dlns, lib_path, CREATE_INHERIT_DEFAULT);
 }
 
 int dlns_inherit(Dl_namespace *dlns, Dl_namespace *inherited, const char *shared_libs)
