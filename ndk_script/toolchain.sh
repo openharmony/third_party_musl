@@ -22,7 +22,7 @@ do
 done
 
 
-ndk_dir=$(ls ${SOURCE_DIR}/lib/|more |awk '{print $NF}')
+ndk_dir=$(ls ${SOURCE_DIR}/lib/|more |grep ohos |awk '{print $NF}')
 
 for i in $ndk_dir
 do
