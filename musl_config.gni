@@ -52,4 +52,5 @@ declare_args() {
 
 declare_args() {
   enable_musl_log = false
+  musl_secure_level = 1
 }

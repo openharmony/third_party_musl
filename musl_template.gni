@@ -300,8 +300,15 @@ template("musl_libs") {
       ]
     }
 
+    defines = []
     if ("${target_abi}" == "a7_hard_neon-vfpv4") {
-      defines = [ "__ARM_PCS_VFP" ]
+      defines += [ "__ARM_PCS_VFP" ]
+    }
+    if (musl_secure_level > 0) {
+      defines += [ "MALLOC_FREELIST_HARDENED" ]
+    }
+    if (musl_secure_level >= 3) {
+      defines += [ "MALLOC_SECURE_ALL" ]
     }
 
     foreach(s, sources_orig) {
