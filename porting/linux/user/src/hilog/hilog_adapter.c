@@ -41,14 +41,14 @@ static int SendMessage(HilogMsg *header, const char *tag, uint16_t tagLen, const
 {
     int socketFd = TEMP_FAILURE_RETRY(socket(AF_UNIX, SOCKET_TYPE, 0));
     if (socketFd < 0) {
-        dprintf(ERROR_FD, "%s %d Can't create socket! Errno: %d\n", __FILE__, __LINE__, errno);
+        dprintf(ERROR_FD, "HiLogAdapter: Can't create socket! Errno: %d\n", errno);
         return socketFd;
     }
 
     long int result =
         TEMP_FAILURE_RETRY(connect(socketFd, (const struct sockaddr *)(&SOCKET_ADDR), sizeof(SOCKET_ADDR)));
     if (result < 0) {
-        dprintf(ERROR_FD, "%s %d Can't connect to server. Errno: %d\n", __FILE__, __LINE__, errno);
+        dprintf(ERROR_FD, "HiLogAdapter: Can't connect to server. Errno: %d\n", errno);
         if (socketFd >= 0) {
             close(socketFd);
         }
