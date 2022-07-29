@@ -375,7 +375,6 @@ static kvlist *config_get_kvs(const char *sname)
 static char *config_get_value_by_acquiescence(kvlist *acquiescence_kvs, const char *key)
 {
     if (!acquiescence_kvs) {
-        LD_LOGW("config_get_value_by_acquiescence acquiescence_kvs is NULL!\n");
         return NULL;
     }
     size_t i;
@@ -391,7 +390,6 @@ static char *config_get_value_by_acquiescence(kvlist *acquiescence_kvs, const ch
 static char *config_get_acquiescence_lib_path(kvlist *acquiescence_kvs)
 {
     if (!acquiescence_kvs) {
-        LD_LOGW("config_get_acquiescence_lib_path acquiescence_kvs is NULL!\n");
         return NULL;
     }
     config_key_join(ATTR_NS_PREFIX, true);
@@ -406,7 +404,6 @@ static char *config_get_acquiescence_lib_path(kvlist *acquiescence_kvs)
 static char *config_get_acquiescence_asan_lib_path(kvlist *acquiescence_kvs)
 {
     if (!acquiescence_kvs) {
-        LD_LOGW("config_get_acquiescence_asan_lib_path acquiescence_kvs is NULL!\n");
         return NULL;
     }
     config_key_join(ATTR_NS_PREFIX, true);
@@ -423,7 +420,6 @@ static char *config_get_acquiescence_asan_lib_path(kvlist *acquiescence_kvs)
 static char *config_get_value(const char *key) 
 {
     if (!g_configor.kvs) {
-        LD_LOGW("config_get_value g_configor.kvs is NULL!\n");
         return NULL;
     }
     size_t i;
@@ -437,7 +433,6 @@ static char *config_get_value(const char *key)
 static char *config_get_lib_paths(const char *ns_name)
 {
     if (ns_name == NULL) {
-        LD_LOGW("config_get_lib_paths ns_name is NULL!\n");
         return NULL;
     }
     config_key_join(ATTR_NS_PREFIX, true);
@@ -452,7 +447,6 @@ static char *config_get_lib_paths(const char *ns_name)
 static char *config_get_asan_lib_paths(const char *ns_name)
 {
     if (ns_name == NULL) {
-        LD_LOGW("config_get_asan_lib_paths ns_name is NULL!\n");
         return NULL;
     }
     config_key_join(ATTR_NS_PREFIX, true);
@@ -478,13 +472,13 @@ static int config_parse(const char *file_path, const char *exe_path)
     g_configor.sections = config_load(fpath);
 
     if (!g_configor.sections) {
-        LD_LOGE("config_parse load ini config fail!\n");
+        LD_LOGD("config_parse load ini config fail!");
         return -2;
     }
     dirkvs = config_get_kvs(SECTION_DIR_MAP);
     acquiescence_kvs = config_get_kvs(ATTR_NS_ACQUIESCENCE);
     if (!dirkvs||!acquiescence_kvs) {
-        LD_LOGE("config_parse get dirkvs or acquiescence_kvs fail!\n");
+        LD_LOGD("config_parse get dirkvs or acquiescence_kvs fail!");
         return -3; /* no section directory map or acquiescence section found */
     }
     g_configor.config_sys_path = config_get_acquiescence_lib_path(acquiescence_kvs);
@@ -504,11 +498,11 @@ static int config_parse(const char *file_path, const char *exe_path)
         if (sname) break;
     }
     if (!sname) {
-        LD_LOGW("config_parse no section found!\n");
+        LD_LOGD("config_parse no section found!");
         return -4;/* no section found */
     }
     if (!(g_configor.kvs = config_get_kvs(sname))) {
-        LD_LOGW("config_parse no section key-value list found!\n");
+        LD_LOGD("config_parse no section key-value list found!");
         return -5;/* no section key-value list found */
     }
 
@@ -516,13 +510,13 @@ static int config_parse(const char *file_path, const char *exe_path)
     if (default_lib_paths) {
         g_configor.config_sys_path = default_lib_paths;
     } else {
-        LD_LOGW("config_parse get default lib paths fail! Config namespace default lib paths,please!\n");
+        LD_LOGW("config_parse get default lib paths fail! Config namespace default lib paths,please!");
     }
     char *default_asan_lib_paths = config_get_asan_lib_paths(ATTR_NS_DEFAULT);
     if (default_asan_lib_paths) {
         g_configor.config_asan_sys_path = default_asan_lib_paths;
     } else {
-        LD_LOGW("config_parse get default asan lib paths fail! Config namespace default asan lib paths,please!\n");
+        LD_LOGW("config_parse get default asan lib paths fail! Config namespace default asan lib paths,please!");
     }
     return 0;
 }
@@ -539,7 +533,6 @@ static strlist *config_get_namespaces()
 static char *config_get_permitted_paths(const char *ns_name)
 {
     if (ns_name == NULL) {
-        LD_LOGW("config_get_permitted_paths ns_name is NULL!\n");
         return NULL;
     }
     config_key_join(ATTR_NS_PREFIX, true);
@@ -554,7 +547,6 @@ static char *config_get_permitted_paths(const char *ns_name)
 static char *config_get_asan_permitted_paths(const char *ns_name)
 {
     if (ns_name == NULL) {
-        LD_LOGW("config_get_asan_permitted_paths ns_name is NULL!\n");
         return NULL;
     }
     config_key_join(ATTR_NS_PREFIX, true);
@@ -570,7 +562,6 @@ static char *config_get_asan_permitted_paths(const char *ns_name)
 static strlist *config_get_inherits(const char *ns_name)
 {
     if (ns_name == NULL) {
-        LD_LOGW("config_get_inherits ns_name is NULL!\n");
         return NULL;
     }
     config_key_join(ATTR_NS_PREFIX, true);
@@ -585,7 +576,6 @@ static strlist *config_get_inherits(const char *ns_name)
 static bool config_get_separated(const char *ns_name)
 {
     if (ns_name == NULL) {
-        LD_LOGW("config_get_separated ns_name is NULL!\n");
         return false;
     }
     config_key_join(ATTR_NS_PREFIX, true);
@@ -603,7 +593,6 @@ static bool config_get_separated(const char *ns_name)
 static char *config_get_allowed_libs(const char *ns_name)
 {
     if (ns_name == NULL) {
-        LD_LOGW("config_get_allowed_libs ns_name is NULL!\n");
         return NULL;
     }
     config_key_join(ATTR_NS_PREFIX, true);
@@ -616,9 +605,7 @@ static char *config_get_allowed_libs(const char *ns_name)
 /* get shared libs by inherited namespace */
 static char *config_get_inherit_shared_libs(const char *ns_name, const char *inherited_ns_name)
 {
-
     if (ns_name == NULL || inherited_ns_name == NULL) {
-        LD_LOGW("config_get_inherit_shared_libs ns_name or inherited_ns_name is NULL!\n");
         return NULL;
     }
     config_key_join(ATTR_NS_PREFIX, true);
