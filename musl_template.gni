@@ -300,6 +300,8 @@ template("musl_libs") {
         "src/string/strcmp.c",
         "src/string/strlen.c",
       ]
+    } else if (musl_arch == "x86_64") {
+      sources_orig -= [ "src/thread/${musl_arch}/__set_thread_area.s" ]
     }
 
     defines = []
@@ -403,6 +405,8 @@ template("musl_libs") {
     if (musl_arch == "arm") {
       sources_orig += [ "src/thread/${musl_arch}/__set_thread_area.c" ]
     } else if (musl_arch == "aarch64") {
+      sources_orig += [ "src/thread/${musl_arch}/__set_thread_area.s" ]
+    } else if (musl_arch == "x86_64") {
       sources_orig += [ "src/thread/${musl_arch}/__set_thread_area.s" ]
     }
 
