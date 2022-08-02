@@ -20,7 +20,6 @@ template("musl_libs") {
     musl_subarch = "hf"
   }
 
-  dfx_deps = [ "//base/hiviewdfx/faultloggerd/interfaces/innerkits/signal_handler:dfxsignalhandler" ]
   porting_deps = [
     "//third_party/musl:create_alltypes_h",
     "//third_party/musl:create_porting_src",
@@ -165,7 +164,6 @@ template("musl_libs") {
     }
 
     cflags_auto += [ "-DRESERVE_SIGNAL_STACK" ]
-    cflags_auto += [ "-DDFX_SIGNAL_LIBC" ]
 
     cflags_c99fse = [
       "-std=c99",
@@ -448,7 +446,6 @@ template("musl_libs") {
     }
 
     deps = porting_deps
-    deps += dfx_deps
   }
 
   source_set("${abi_prefix}_musl_hook") {
