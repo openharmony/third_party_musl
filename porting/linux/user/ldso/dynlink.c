@@ -194,6 +194,12 @@ extern hidden void (*const __init_array_end)(void), (*const __fini_array_end)(vo
 
 weak_alias(__init_array_start, __init_array_end);
 weak_alias(__fini_array_start, __fini_array_end);
+#ifdef DFX_SIGNAL_LIBC
+static void __InstallSignalHandler()
+{
+}
+weak_alias(__InstallSignalHandler, DFX_InstallSignalHandler);
+#endif
 
 #ifdef HANDLE_RANDOMIZATION
 static int do_dlclose(struct dso *p);
@@ -2342,6 +2348,9 @@ void __dls3(size_t *sp, size_t *auxv)
 
 	if (replace_argv0) argv[0] = replace_argv0;
 
+#ifdef DFX_SIGNAL_LIBC
+	DFX_InstallSignalHandler();
+#endif
 	errno = 0;
 
 	CRTJMP((void *)aux[AT_ENTRY], argv-1);
