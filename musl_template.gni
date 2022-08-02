@@ -448,7 +448,6 @@ template("musl_libs") {
     }
 
     deps = porting_deps
-    deps += dfx_deps
   }
 
   source_set("${abi_prefix}_musl_hook") {
@@ -489,6 +488,7 @@ template("musl_libs") {
       ":${abi_prefix}_musl_src",
       ":${abi_prefix}_musl_src_nossp",
     ]
+    deps += dfx_deps
   }
 
   static_library("${abi_prefix}_libm") {
@@ -581,6 +581,7 @@ template("musl_libs") {
       ":${abi_prefix}_musl_src",
       ":${abi_prefix}_musl_src_nossp",
     ]
+    deps += dfx_deps
   }
 
   action_foreach("${abi_prefix}_musl_crt_install_action") {
