@@ -37,7 +37,7 @@ void stack_naming(struct pthread *new){
 };
 
 #ifdef RESERVE_SIGNAL_STACK
-#if defined (__LP64__)
+#if defined (__LF64__)
 #define RESERVE_SIGNAL_STACK_SIZE (32 * 1024)
 #else
 #define RESERVE_SIGNAL_STACK_SIZE (20 * 1024)
