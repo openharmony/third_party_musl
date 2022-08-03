@@ -242,8 +242,17 @@ extern hidden volatile int __thread_list_lock;
 extern hidden unsigned __default_stacksize;
 extern hidden unsigned __default_guardsize;
 
+#ifdef TARGET_STACK_SIZE
+#define DEFAULT_STACK_SIZE TARGET_STACK_SIZE
+#else
 #define DEFAULT_STACK_SIZE 131072
+#endif
+
+#ifdef TARGET_GUARD_SIZE
+#define DEFAULT_GUARD_SIZE TARGET_GUARD_SIZE
+#else
 #define DEFAULT_GUARD_SIZE 8192
+#endif
 
 #define DEFAULT_STACK_MAX (8<<20)
 #define DEFAULT_GUARD_MAX (1<<20)
