@@ -20,6 +20,7 @@ template("musl_libs") {
     musl_subarch = "hf"
   }
 
+  dfx_deps = [ "//base/hiviewdfx/faultloggerd/interfaces/innerkits/signal_handler:dfxsignalhandler" ]
   porting_deps = [
     "//third_party/musl:create_alltypes_h",
     "//third_party/musl:create_porting_src",
@@ -164,6 +165,7 @@ template("musl_libs") {
     }
 
     cflags_auto += [ "-DRESERVE_SIGNAL_STACK" ]
+    cflags_auto += [ "-DDFX_SIGNAL_LIBC" ]
 
     cflags_c99fse = [
       "-std=c99",
@@ -182,7 +184,14 @@ template("musl_libs") {
       defines += [ "BROKEN_VFP_ASM" ]
     }
     if (is_standard_system) {
-      defines += [ "OHOS_DNS_PROXY_BY_NETSYS=1" ]
+      defines += [
+        "OHOS_DNS_PROXY_BY_NETSYS=1",
+        "OHOS_PERMISSION_INTERNET=1",
+      ]
+    }
+
+    if (enable_musl_log) {
+      defines += [ "ENABLE_MUSL_LOG" ]
     }
 
     dynamic_list =
@@ -200,10 +209,6 @@ template("musl_libs") {
       "-Wl,--exclude-libs=ALL",
       "-Wl,--dynamic-list=${dynamic_list}",
     ]
-    if (is_asan) {
-      ldflags -= [ "-Wl,--dynamic-list=${dynamic_list}" ]
-      ldflags += [ "-Wl,-Bsymbolic-functions" ]
-    }
     asmflags = cflags
   }
 
@@ -295,10 +300,19 @@ template("musl_libs") {
         "src/string/strcmp.c",
         "src/string/strlen.c",
       ]
+    } else if (musl_arch == "x86_64") {
+      sources_orig -= [ "src/thread/${musl_arch}/__set_thread_area.s" ]
     }
 
+    defines = []
     if ("${target_abi}" == "a7_hard_neon-vfpv4") {
-      defines = [ "__ARM_PCS_VFP" ]
+      defines += [ "__ARM_PCS_VFP" ]
+    }
+    if (musl_secure_level > 0) {
+      defines += [ "MALLOC_FREELIST_HARDENED" ]
+    }
+    if (musl_secure_level >= 3) {
+      defines += [ "MALLOC_SECURE_ALL" ]
     }
 
     foreach(s, sources_orig) {
@@ -392,6 +406,8 @@ template("musl_libs") {
       sources_orig += [ "src/thread/${musl_arch}/__set_thread_area.c" ]
     } else if (musl_arch == "aarch64") {
       sources_orig += [ "src/thread/${musl_arch}/__set_thread_area.s" ]
+    } else if (musl_arch == "x86_64") {
+      sources_orig += [ "src/thread/${musl_arch}/__set_thread_area.s" ]
     }
 
     foreach(s, sources_orig) {
@@ -423,6 +439,13 @@ template("musl_libs") {
       "-fPIC",
       "-fno-stack-protector",
     ]
+    if (is_asan) {
+      defines = [
+        "NSLIST_DEFAULT_SIZE=1600",
+        "DSOLIST_DEFAULT_SIZE=1600",
+        "INHERIT_DEFAULT_SIZE=1600",
+      ]
+    }
 
     deps = porting_deps
   }
@@ -465,6 +488,7 @@ template("musl_libs") {
       ":${abi_prefix}_musl_src",
       ":${abi_prefix}_musl_src_nossp",
     ]
+    deps += dfx_deps
   }
 
   static_library("${abi_prefix}_libm") {
@@ -560,6 +584,7 @@ template("musl_libs") {
     if (is_standard_system) {
       deps += [ "//base/startup/init/services/param/base:parameterbase" ]
     }
+    deps += dfx_deps
   }
 
   action_foreach("${abi_prefix}_musl_crt_install_action") {

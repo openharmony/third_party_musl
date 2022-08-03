@@ -9,6 +9,7 @@
 #include "atomic.h"
 #include "pthread_impl.h"
 #include "malloc_impl.h"
+#include "malloc_random.h"
 #include <sys/prctl.h>
 
 #if defined(__GNUC__) && defined(__PIC__)
@@ -30,6 +31,16 @@ int __malloc_replaced;
 
 /* Synchronization tools */
 
+static inline struct chunk *encode_chunk(struct chunk *ptr, void *key)
+{
+#ifndef MALLOC_FREELIST_HARDENED
+	(void)key;
+	return ptr;
+#else
+	return (struct chunk *)encode_ptr(ptr, key);
+#endif
+}
+
 static inline void lock(volatile int *lk)
 {
 	if (libc.threads_minus_1)
@@ -47,8 +58,14 @@ static inline void unlock(volatile int *lk)
 static inline void lock_bin(int i)
 {
 	lock(mal.bins[i].lock);
-	if (!mal.bins[i].head)
+	if (!mal.bins[i].head) {
+#ifdef MALLOC_FREELIST_HARDENED
+		mal.bins[i].key = next_key();
+		mal.bins[i].head = mal.bins[i].tail = encode_chunk(BIN_TO_CHUNK(i), mal.bins[i].key);
+#else
 		mal.bins[i].head = mal.bins[i].tail = BIN_TO_CHUNK(i);
+#endif
+	}
 }
 
 static inline void unlock_bin(int i)
@@ -193,10 +210,22 @@ static int adjust_size(size_t *n)
 
 static void unbin(struct chunk *c, int i)
 {
+#ifdef MALLOC_FREELIST_HARDENED
+	void *key = mal.bins[i].key;
+#else
+	void *key = NULL;
+#endif
+	struct chunk *next = encode_chunk(c->next, key);
+	struct chunk *prev = encode_chunk(c->prev, key);
+	if (prev->next != encode_chunk(c, key) ||
+		next->prev != encode_chunk(c, key)) {
+		/* crash when the double-link list is corrupt */
+		a_crash();
+	}
 	if (c->prev == c->next)
 		a_and_64(&mal.binmap, ~(1ULL<<i));
-	c->prev->next = c->next;
-	c->next->prev = c->prev;
+	prev->next = c->next;
+	next->prev = c->prev;
 	c->csize |= C_INUSE;
 	NEXT_CHUNK(c)->psize |= C_INUSE;
 }
@@ -258,10 +287,17 @@ static int pretrim(struct chunk *self, size_t n, int i, int j)
 	next = NEXT_CHUNK(self);
 	split = (void *)((char *)self + n);
 
+#ifdef MALLOC_FREELIST_HARDENED
+	void *key = mal.bins[j].key;
+#else
+	void *key = NULL;
+#endif
+	struct chunk *realprev = encode_chunk(self->prev, key);
+	struct chunk *realnext = encode_chunk(self->next, key);
 	split->prev = self->prev;
 	split->next = self->next;
-	split->prev->next = split;
-	split->next->prev = split;
+	realprev->next = encode_chunk(split, key);
+	realnext->prev = encode_chunk(split, key);
 	split->psize = n | C_INUSE;
 	split->csize = n1-n;
 	next->psize = n1-n;
@@ -328,7 +364,12 @@ void *malloc(size_t n)
 		}
 		j = first_set(mask);
 		lock_bin(j);
-		c = mal.bins[j].head;
+#ifdef MALLOC_FREELIST_HARDENED
+		void *key = mal.bins[j].key;
+#else
+		void *key = NULL;
+#endif
+		c = encode_chunk(mal.bins[j].head, key); /* Decode the head pointer */
 		if (c != BIN_TO_CHUNK(j)) {
 			if (!pretrim(c, n, i, j)) unbin(c, j);
 			unlock_bin(j);
@@ -503,10 +544,16 @@ void __bin_chunk(struct chunk *self)
 	next->psize = final_size;
 	unlock(mal.free_lock);
 
-	self->next = BIN_TO_CHUNK(i);
+#ifdef MALLOC_FREELIST_HARDENED
+	void *key = mal.bins[i].key;
+#else
+	void *key = NULL;
+#endif
+	self->next = encode_chunk(BIN_TO_CHUNK(i), key);
 	self->prev = mal.bins[i].tail;
-	self->next->prev = self;
-	self->prev->next = self;
+	struct chunk *xorptr = encode_ptr(self, key);
+	encode_chunk(mal.bins[i].tail, key)->next = xorptr;
+	mal.bins[i].tail = xorptr;
 
 	/* Replace middle of large chunks with fresh zero pages */
 	if (reclaim) {

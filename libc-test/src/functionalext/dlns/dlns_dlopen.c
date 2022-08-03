@@ -220,6 +220,55 @@ void dlopen_ns_0500(void)
     dlclose(handle);
 }
 
+/**
+ * @tc.name      : dlns_get_0100
+ * @tc.desc      : Gets an existing namespace handle.
+ * @tc.level     : Level 1
+ */
+void dlns_get_0100(void)
+{
+    Dl_namespace dlns;
+    dlns_init(&dlns, "dlns_get_0100");
+    dlns_create(&dlns, NULL);
+    dlns_get("dlns_get_0100", &dlns);
+    EXPECT_EQ("dlns_get_0100", strcmp(dlns.name, "dlns_get_0100"), 0);
+}
+
+/**
+ * @tc.name      : dlns_get_0200
+ * @tc.desc      : Gets the current namespace handle when name=NULL.
+ * @tc.level     : Level 1
+ */
+void dlns_get_0200(void)
+{
+    Dl_namespace dlns;
+    dlns_get(NULL, &dlns);
+    EXPECT_EQ("dlns_get_0200", strcmp(dlns.name, "default"), 0);
+}
+
+/**
+ * @tc.name      : dlns_get_0300
+ * @tc.desc      : Call dlns_get when dlns=NULL.
+ * @tc.level     : Level 2
+ */
+void dlns_get_0300(void)
+{
+    dlns_get(NULL, NULL);
+    EXPECT_EQ("dlns_get_0300", dlns_get(NULL, NULL), EINVAL);
+}
+
+/**
+ * @tc.name      : dlns_get_0400
+ * @tc.desc      : Gets a namespace handle that does not exist.
+ * @tc.level     : Level 2
+ */
+void dlns_get_0400(void)
+{
+    Dl_namespace dlns;
+    dlns_init(&dlns, "dlns_get_0400");
+    EXPECT_EQ("dlns_get_0400", dlns_get("dlns_get_0400", &dlns), ENOKEY);
+}
+
 TEST_FUN G_Fun_Array[] = {
     dlopen_0100,
     dlopen_0200,
@@ -235,6 +284,10 @@ TEST_FUN G_Fun_Array[] = {
     dlopen_ns_0300,
     dlopen_ns_0400,
     dlopen_ns_0500,
+    dlns_get_0100,
+    dlns_get_0200,
+    dlns_get_0300,
+    dlns_get_0400,
 };
 
 int main(void)
