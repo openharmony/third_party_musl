@@ -8,6 +8,8 @@ declare_args() {
     musl_arch = "arm"
   } else if (current_cpu == "arm64") {
     musl_arch = "aarch64"
+  } else if (current_cpu == "x86_64") {
+    musl_arch = "x86_64"
   }
   # musl_root = "$root_out_dir/obj/third_party/musl"
   # musl_sub_arch = ""
@@ -48,4 +50,9 @@ declare_args() {
   #       musl_syslib_dir + "/ld-musl-${musl_arch}${musl_sub_arch}." +
   #       musl_linker_extension
   # }
+}
+
+declare_args() {
+  enable_musl_log = false
+  musl_secure_level = 1
 }
