@@ -11,6 +11,10 @@
 typedef Elf32_Ehdr Ehdr;
 typedef Elf32_Phdr Phdr;
 typedef Elf32_Sym Sym;
+typedef Elf32_Verdaux Verdaux;
+typedef Elf32_Verdef Verdef;
+typedef Elf32_Vernaux Vernaux;
+typedef Elf32_Verneed Verneed;
 #define R_TYPE(x) ((x)&255)
 #define R_SYM(x) ((x)>>8)
 #define R_INFO ELF32_R_INFO
@@ -18,6 +22,10 @@ typedef Elf32_Sym Sym;
 typedef Elf64_Ehdr Ehdr;
 typedef Elf64_Phdr Phdr;
 typedef Elf64_Sym Sym;
+typedef Elf64_Verdaux Verdaux;
+typedef Elf64_Verdef Verdef;
+typedef Elf64_Vernaux Vernaux;
+typedef Elf64_Verneed Verneed;
 #define R_TYPE(x) ((x)&0x7fffffff)
 #define R_SYM(x) ((x)>>32)
 #define R_INFO ELF64_R_INFO
@@ -98,6 +106,7 @@ struct fdpic_dummy_loadmap {
 typedef void (*stage2_func)(unsigned char *, size_t *);
 
 hidden void *__dlsym(void *restrict, const char *restrict, void *restrict);
+hidden void *__dlvsym(void *restrict, const char *restrict, const char *restrict, void *restrict);
 hidden int __dlclose(void *p);
 
 hidden void __dl_seterr(const char *, ...);

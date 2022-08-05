@@ -7,6 +7,7 @@ if (musl_arch == "arm") {
     "src/fenv/arm/fenv.c",
     "src/ldso/arm/dlsym.s",
     "src/ldso/arm/dlsym_time64.S",
+    "src/ldso/arm/dlvsym.s",
     "src/ldso/arm/find_exidx.c",
     "src/ldso/arm/tlsdesc.S",
     "src/math/arm/fabs.c",
@@ -99,6 +100,7 @@ if (musl_arch == "arm") {
   musl_src_arch_file = [
     "src/fenv/aarch64/fenv.s",
     "src/ldso/aarch64/dlsym.s",
+    "src/ldso/aarch64/dlvsym.s",
     "src/ldso/aarch64/tlsdesc.s",
     "src/math/aarch64/ceil.c",
     "src/math/aarch64/ceilf.c",
@@ -2085,6 +2087,10 @@ musl_src_porting_file = [
   "src/time/strptime.c",
   "src/time/time_impl.h",
   "src/thread/pthread_getname_np.c",
+  "src/ldso/aarch64/dlvsym.s",
+  "src/ldso/arm/dlvsym.s",
+  "src/ldso/riscv64/dlvsym.s",
+  "src/ldso/x86_64/dlvsym.s",
 ]
 
 musl_inc_hook_files = [

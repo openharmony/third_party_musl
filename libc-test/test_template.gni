@@ -136,6 +136,19 @@ template("test_unittest") {
       include_dirs += [ "//${test_dir}/src/functionalext/common" ]
     }
 
+    if (target_dir == "functionalext/symver") {
+      if (target_name == "dlsym" || target_name == "dlvsym" ||
+          target_name == "dynlink" || target_name == "dynlink_default") {
+        ldflags += [ "-Wl,-rpath=src/functional" ]
+        libs += [
+          "//${root_out_dir}/${test_lib_dir}/libdso_easy_symver.so",
+          "//${root_out_dir}/${test_lib_dir}/libdso_hard_symver.so",
+          "//${root_out_dir}/${test_lib_dir}/libdso_no_symver.so",
+          "//${root_out_dir}/${test_lib_dir}/libdso_symver.so",
+        ]
+      }
+    }
+
     if (target_dir == "musl") {
       cflags_c += [ "-w" ]
 
@@ -242,6 +255,11 @@ template("test_sharedlib") {
       "-shared",
       "-nostdlib",
     ]
+
+    if (defined(invoker.version_script)) {
+      _version_script = rebase_path(invoker.version_script, root_build_dir)
+      ldflags += [ "-Wl,--version-script=${_version_script}" ]
+    }
 
     libs = [ "//${out_test_dir}/src/common/libtest.a" ]
 
