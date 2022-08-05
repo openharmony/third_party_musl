@@ -459,6 +459,11 @@ template("musl_libs") {
         "DSOLIST_DEFAULT_SIZE=1600",
         "INHERIT_DEFAULT_SIZE=1600",
       ]
+    } else {
+      defines = [
+        "HANDLE_RANDOMIZATION",
+        "LOAD_ORDER_RANDOMIZATION",
+      ]
     }
 
     deps = porting_deps
