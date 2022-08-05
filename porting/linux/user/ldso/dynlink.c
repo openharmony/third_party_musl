@@ -81,6 +81,12 @@ struct td_index {
 	struct td_index *next;
 };
 
+struct verinfo {
+	const char *s;
+	const char *v;
+	Verneed *verneed;
+};
+
 struct dso {
 #if DL_FDPIC
 	struct fdpic_loadmap *loadmap;
@@ -102,6 +108,8 @@ struct dso {
 	Elf_Symndx *hashtab;
 	uint32_t *ghashtab;
 	int16_t *versym;
+	Verdef *verdef;
+	Verneed *verneed;
 	char *strings;
 	struct dso *syms_next, *lazy_next;
 	size_t *lazy, lazy_cnt;
@@ -453,6 +461,95 @@ static int search_vec(size_t *v, size_t *r, size_t key)
 	return 1;
 }
 
+static int check_verneed(Verdef *def, int vsym, struct verinfo *verinfo)
+{
+	int matched = 0;
+
+	Verneed *verneed = verinfo->verneed;
+	vsym &= 0x7fff;
+	for(;;) {
+		Vernaux *vernaux = (Vernaux *)((char *)verneed + verneed->vn_aux);
+
+		for (size_t cnt = 0; cnt < verneed->vn_cnt; cnt++) {
+			Verdef *verdef = def;
+			/* find the version of symbol for verneed. */
+			for(;;) {
+				if (vernaux->vna_hash == verdef->vd_hash) {
+					if ((verdef->vd_ndx & 0x7fff) == vsym) {
+						matched = 1;
+					}
+					break;
+				}
+
+				if (verdef->vd_next == 0) {
+					break;
+				}
+
+				verdef = (Verdef *)((char *)verdef + verdef->vd_next);
+			}
+
+			if (matched) {
+				break;
+			}
+
+			vernaux = (Vernaux *)((char *)vernaux + vernaux->vna_next);
+		}
+
+		if (verneed->vn_next == 0) {
+			break;
+		}
+
+		verneed = (Verneed *)((char *)verneed + verneed->vn_next);
+	}
+
+	return matched;
+}
+
+static int check_verinfo(Verdef *def, int16_t *versym, uint32_t index, struct verinfo *verinfo, char *strings)
+{
+	/* if the versym and verinfo is null , then not need version. */
+	if (!versym) {
+		if (strlen(verinfo->v) == 0) {
+			return 1;
+		} else {
+			return 0;
+		}
+	}
+
+	int vsym = versym[index];
+
+	/* if the verneed is not null , find the verneed symbol. */
+	Verneed *verneed = verinfo->verneed;
+	if (verneed) {
+		return check_verneed(def, vsym, verinfo);
+	}
+
+	/* if the version length is zero and vsym not less than zero, then library hava default version symbol. */
+	if (strlen(verinfo->v) == 0) {
+		if (vsym >= 0) {
+			return 1;
+		} else {
+			return 0;
+		}
+	}
+
+	/* find the version of symbol. */
+	vsym &= 0x7fff;
+	for (;;) {
+		if (!(def->vd_flags & VER_FLG_BASE) && (def->vd_ndx & 0x7fff) == vsym) {
+			break;
+		}
+		if (def->vd_next == 0) {
+			return 0;
+		}
+		def = (Verdef *)((char *)def + def->vd_next);
+	}
+
+	Verdaux *aux = (Verdaux *)((char *)def + def->vd_aux);
+
+	return !strcmp(verinfo->v, strings + aux->vda_name);
+}
+
 static uint32_t sysv_hash(const char *s0)
 {
 	const unsigned char *s = (void *)s0;
@@ -473,21 +570,27 @@ static uint32_t gnu_hash(const char *s0)
 	return h;
 }
 
-static Sym *sysv_lookup(const char *s, uint32_t h, struct dso *dso)
+static Sym *sysv_lookup(struct verinfo *verinfo, uint32_t h, struct dso *dso)
 {
 	size_t i;
 	Sym *syms = dso->syms;
 	Elf_Symndx *hashtab = dso->hashtab;
 	char *strings = dso->strings;
 	for (i=hashtab[2+h%hashtab[0]]; i; i=hashtab[2+hashtab[0]+i]) {
-		if ((!dso->versym || dso->versym[i] >= 0)
-			&& (!strcmp(s, strings+syms[i].st_name)))
+		if ((!dso->versym || (dso->versym[i] & 0x7fff) >= 0)
+			&& (!strcmp(verinfo->s, strings+syms[i].st_name))) {
+			if (!check_verinfo(dso->verdef, dso->versym, i, verinfo, dso->strings)) {
+				continue;
+			}
+
 			return syms+i;
+		}
+
 	}
 	return 0;
 }
 
-static Sym *gnu_lookup(uint32_t h1, uint32_t *hashtab, struct dso *dso, const char *s)
+static Sym *gnu_lookup(uint32_t h1, uint32_t *hashtab, struct dso *dso, struct verinfo *verinfo)
 {
 	uint32_t nbuckets = hashtab[0];
 	uint32_t *buckets = hashtab + 4 + hashtab[2]*(sizeof(size_t)/4);
@@ -499,17 +602,24 @@ static Sym *gnu_lookup(uint32_t h1, uint32_t *hashtab, struct dso *dso, const ch
 
 	for (h1 |= 1; ; i++) {
 		uint32_t h2 = *hashval++;
-		if ((h1 == (h2|1)) && (!dso->versym || dso->versym[i] >= 0)
-			&& !strcmp(s, dso->strings + dso->syms[i].st_name))
+		if ((h1 == (h2|1)) && (!dso->versym || (dso->versym[i] & 0x7fff) >= 0)
+			&& !strcmp(verinfo->s, dso->strings + dso->syms[i].st_name)) {
+			if (!check_verinfo(dso->verdef, dso->versym, i, verinfo, dso->strings)) {
+				continue;
+			}
+
 			return dso->syms+i;
+		}
+
 		if (h2 & 1) break;
 	}
 
 	return 0;
 }
 
-static Sym *gnu_lookup_filtered(uint32_t h1, uint32_t *hashtab, struct dso *dso, const char *s, uint32_t fofs, size_t fmask)
+static Sym *gnu_lookup_filtered(uint32_t h1, uint32_t *hashtab, struct dso *dso, struct verinfo *verinfo, uint32_t fofs, size_t fmask)
 {
+
 	const size_t *bloomwords = (const void *)(hashtab+4);
 	size_t f = bloomwords[fofs & (hashtab[2]-1)];
 	if (!(f & fmask)) return 0;
@@ -517,7 +627,7 @@ static Sym *gnu_lookup_filtered(uint32_t h1, uint32_t *hashtab, struct dso *dso,
 	f >>= (h1 >> hashtab[3]) % (8 * sizeof f);
 	if (!(f & 1)) return 0;
 
-	return gnu_lookup(h1, hashtab, dso, s);
+	return gnu_lookup(h1, hashtab, dso, verinfo);
 }
 
 #define OK_TYPES (1<<STT_NOTYPE | 1<<STT_OBJECT | 1<<STT_FUNC | 1<<STT_COMMON | 1<<STT_TLS)
@@ -530,19 +640,19 @@ static Sym *gnu_lookup_filtered(uint32_t h1, uint32_t *hashtab, struct dso *dso,
 #if defined(__GNUC__)
 __attribute__((always_inline))
 #endif
-static inline struct symdef find_sym2(struct dso *dso, const char *s, int need_def, int use_deps)
+static inline struct symdef find_sym2(struct dso *dso, struct verinfo *verinfo, int need_def, int use_deps)
 {
-	uint32_t h = 0, gh = gnu_hash(s), gho = gh / (8*sizeof(size_t)), *ght;
+	uint32_t h = 0, gh = gnu_hash(verinfo->s), gho = gh / (8*sizeof(size_t)), *ght;
 	size_t ghm = 1ul << gh % (8*sizeof(size_t));
 	struct symdef def = {0};
 	struct dso **deps = use_deps ? dso->deps : 0;
 	for (; dso; dso=use_deps ? *deps++ : dso->syms_next) {
 		Sym *sym;
 		if ((ght = dso->ghashtab)) {
-			sym = gnu_lookup_filtered(gh, ght, dso, s, gho, ghm);
+			sym = gnu_lookup_filtered(gh, ght, dso, verinfo, gho, ghm);
 		} else {
-			if (!h) h = sysv_hash(s);
-			sym = sysv_lookup(s, h, dso);
+			if (!h) h = sysv_hash(verinfo->s);
+			sym = sysv_lookup(verinfo, h, dso);
 		}
 		if (!sym) continue;
 		if (!sym->st_shndx)
@@ -563,7 +673,8 @@ static inline struct symdef find_sym2(struct dso *dso, const char *s, int need_d
 
 static struct symdef find_sym(struct dso *dso, const char *s, int need_def)
 {
-	return find_sym2(dso, s, need_def, 0);
+	struct verinfo verinfo = { .s = s, .v = "", .verneed = dso->verneed };
+	return find_sym2(dso, &verinfo, need_def, 0);
 }
 
 static void do_relocs(struct dso *dso, size_t *rel, size_t rel_size, size_t stride)
@@ -1163,6 +1274,10 @@ static void decode_dyn(struct dso *p)
 		p->ghashtab = laddr(p, *dyn);
 	if (search_vec(p->dynv, dyn, DT_VERSYM))
 		p->versym = laddr(p, *dyn);
+	if (search_vec(p->dynv, dyn, DT_VERDEF))
+		p->verdef = laddr(p, *dyn);
+	if (search_vec(p->dynv, dyn, DT_VERNEED))
+		p->verneed = laddr(p, *dyn);
 }
 
 static size_t count_syms(struct dso *p)
@@ -2816,7 +2931,7 @@ static void *addr2dso(size_t a)
 	return 0;
 }
 
-static void *do_dlsym(struct dso *p, const char *s, void *ra)
+static void *do_dlsym(struct dso *p, const char *s, const char *v, void *ra)
 {
 	int use_deps = 0;
 	if (p == head || p == RTLD_DEFAULT) {
@@ -2829,9 +2944,10 @@ static void *do_dlsym(struct dso *p, const char *s, void *ra)
 		return 0;
 	} else
 		use_deps = 1;
-	struct symdef def = find_sym2(p, s, 0, use_deps);
+	struct verinfo verinfo = { .s = s, .v = v, .verneed = NULL };
+	struct symdef def = find_sym2(p, &verinfo, 0, use_deps);
 	if (!def.sym) {
-		error("Symbol not found: %s", s);
+		error("Symbol not found: %s, version: %s", s, strlen(v) > 0 ? v : "null");
 		return 0;
 	}
 	if ((def.sym->st_info&0xf) == STT_TLS)
@@ -3040,12 +3156,34 @@ hidden void *__dlsym(void *restrict p, const char *restrict s, void *restrict ra
 			pthread_rwlock_unlock(&lock);
 			return 0;
 		}
-		res = do_dlsym(dso, s, ra);
+		res = do_dlsym(dso, s, "", ra);
 	} else {
-		res = do_dlsym(p, s, ra);
+		res = do_dlsym(p, s, "", ra);
 	}
 #else
-	res = do_dlsym(p, s, ra);
+	res = do_dlsym(p, s, "", ra);
+#endif
+	pthread_rwlock_unlock(&lock);
+	return res;
+}
+
+hidden void *__dlvsym(void *restrict p, const char *restrict s, const char *restrict v, void *restrict ra)
+{
+	void *res;
+	pthread_rwlock_rdlock(&lock);
+#ifdef HANDLE_RANDOMIZATION
+	if ((p != RTLD_DEFAULT) && (p != RTLD_NEXT)) {
+		struct dso *dso = find_dso_by_handle(p);
+		if (dso == NULL) {
+			pthread_rwlock_unlock(&lock);
+			return 0;
+		}
+		res = do_dlsym(dso, s, v, ra);
+	} else {
+		res = do_dlsym(p, s, v, ra);
+	}
+#else
+	res = do_dlsym(p, s, v, ra);
 #endif
 	pthread_rwlock_unlock(&lock);
 	return res;

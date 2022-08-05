@@ -11,16 +11,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-functionalext_list = [
-  "locale:functionalext_locale_test",
-  "time:functionalext_time_test",
-  "reboot:functionalext_reboot_test",
-  "tgkill:functionalext_tgkill_test",
-  "thread:functionalext_thread_test",
-  "trace:functionalext_trace_test",
-  "dlns:dlns_test",
-  "info:functionalext_info_test",
-  "ldso_randomization:functionalext_ldso_randomization_test",
-  "relro:functionalext_relro_test",
-  "symver:functionalext_symver_test",
+functionalext_symver_list = [
+  "dlsym",
+  "dlvsym",
+  "dynlink_default",
+  "dynlink",
 ]
