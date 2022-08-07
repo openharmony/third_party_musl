@@ -29,6 +29,7 @@ int    dlclose(void *);
 char  *dlerror(void);
 void  *dlopen(const char *, int);
 void  *dlsym(void *__restrict, const char *__restrict);
+void  *dlvsym(void *__restrict, const char *__restrict, const char *__restrict);
 
 /* namespace apis */
 #define NS_NAME_MAX 255
