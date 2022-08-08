@@ -476,6 +476,8 @@ pid_t gettid(void);
 #endif
 #endif
 
+#include <fortify/unistd.h>
+
 #ifdef __cplusplus
 }
 #endif

@@ -80,6 +80,7 @@ if (is_lite_system && current_os == "ohos") {
       ":create_version_h",
       ":musl_copy_inc_arpa",
       ":musl_copy_inc_bits",
+      ":musl_copy_inc_fortify",
       ":musl_copy_inc_hook",
       ":musl_copy_inc_info",
       ":musl_copy_inc_net",
@@ -110,6 +111,7 @@ if (is_lite_system && current_os == "ohos") {
     src_files += musl_inc_netpacket_files
     src_files += musl_inc_scsi_files
     src_files += musl_inc_sys_files
+    src_files += musl_inc_fortify_files
     src_files += musl_inc_root_files
     src_files += [
       "crt/${musl_arch}/crti.s",
@@ -140,24 +142,24 @@ if (is_lite_system && current_os == "ohos") {
           src_files -= [ "${s}" ]
         }
       }
-    }
 
-    outputs = []
-    foreach(s, src_files) {
-      outputs += [ "${target_out_dir}/${musl_ported_dir}/${s}" ]
-    }
+      outputs = []
+      foreach(s, src_files) {
+        outputs += [ "${target_out_dir}/${musl_ported_dir}/${s}" ]
+      }
 
-    foreach(s, musl_src_porting_file) {
-      outputs += [ "${target_out_dir}/${musl_ported_dir}/${s}" ]
-    }
+      foreach(s, musl_src_porting_file) {
+        outputs += [ "${target_out_dir}/${musl_ported_dir}/${s}" ]
+      }
 
-    inputs = []
-    foreach(s, src_files) {
-      inputs += [ "${musl_dir}/${s}" ]
-    }
+      inputs = []
+      foreach(s, src_files) {
+        inputs += [ "${musl_dir}/${s}" ]
+      }
 
-    foreach(s, musl_src_porting_file) {
-      inputs += [ "${musl_porting_dir}/${s}" ]
+      foreach(s, musl_src_porting_file) {
+        inputs += [ "${musl_porting_dir}/${s}" ]
+      }
     }
   }
 
@@ -344,6 +346,17 @@ if (is_lite_system && current_os == "ohos") {
     }
     outputs =
         [ "${target_out_dir}/${musl_inc_out_dir}/info/{{source_file_part}}" ]
+    deps = [ ":create_porting_src" ]
+  }
+
+  copy("musl_copy_inc_fortify") {
+    sources = []
+    sources_orig = musl_inc_fortify_files
+    foreach(s, sources_orig) {
+      sources += [ "${target_out_dir}/${musl_ported_dir}/${s}" ]
+    }
+    outputs =
+        [ "${target_out_dir}/${musl_inc_out_dir}/fortify/{{source_file_part}}" ]
     deps = [ ":create_porting_src" ]
   }
 

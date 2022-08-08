@@ -124,6 +124,10 @@ template("test_unittest") {
       }
     }
 
+    if (target_dir == "functionalext/fortify") {
+      defines = [ "MUSL_FORTIFY_SOURCE=2" ]
+    }
+
     if (target_dir == "functionalext/ldso_randomization") {
       if (target_name == "ldso_randomization_test") {
         ldflags += [ "-Wl,--export-dynamic,-rpath=./" ]
