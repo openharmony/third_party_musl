@@ -36,10 +36,6 @@
 
 static void error(const char *, ...);
 
-// address randomization definition
-#define HANDLE_RANDOMIZATION
-#define LOAD_ORDER_RANDOMIZATION
-
 #define MAXP2(a,b) (-(-(a)&-(b)))
 #define ALIGN(x,y) ((x)+(y)-1 & -(y))
 
