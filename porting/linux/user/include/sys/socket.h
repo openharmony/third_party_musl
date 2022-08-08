@@ -413,6 +413,8 @@ __REDIR(recvmmsg, __recvmmsg_time64);
 #endif
 #endif
 
+#include <fortify/socket.h>
+
 #ifdef __cplusplus
 }
 #endif
