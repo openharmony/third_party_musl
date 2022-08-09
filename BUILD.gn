@@ -142,24 +142,24 @@ if (is_lite_system && current_os == "ohos") {
           src_files -= [ "${s}" ]
         }
       }
+    }
 
-      outputs = []
-      foreach(s, src_files) {
-        outputs += [ "${target_out_dir}/${musl_ported_dir}/${s}" ]
-      }
+    outputs = []
+    foreach(s, src_files) {
+      outputs += [ "${target_out_dir}/${musl_ported_dir}/${s}" ]
+    }
 
-      foreach(s, musl_src_porting_file) {
-        outputs += [ "${target_out_dir}/${musl_ported_dir}/${s}" ]
-      }
+    foreach(s, musl_src_porting_file) {
+      outputs += [ "${target_out_dir}/${musl_ported_dir}/${s}" ]
+    }
 
-      inputs = []
-      foreach(s, src_files) {
-        inputs += [ "${musl_dir}/${s}" ]
-      }
+    inputs = []
+    foreach(s, src_files) {
+      inputs += [ "${musl_dir}/${s}" ]
+    }
 
-      foreach(s, musl_src_porting_file) {
-        inputs += [ "${musl_porting_dir}/${s}" ]
-      }
+    foreach(s, musl_src_porting_file) {
+      inputs += [ "${musl_porting_dir}/${s}" ]
     }
   }
 
