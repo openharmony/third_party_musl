@@ -601,9 +601,6 @@ template("musl_libs") {
       ":${abi_prefix}_musl_src",
       ":${abi_prefix}_musl_src_nossp",
     ]
-    if (is_standard_system) {
-      deps += [ "//base/startup/init/services/param/base:parameterbase" ]
-    }
     deps += dfx_deps
   }
 
