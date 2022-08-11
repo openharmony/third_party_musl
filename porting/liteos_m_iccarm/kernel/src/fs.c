@@ -27,22 +27,20 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#define _GNU_SOURCE
 
 #include "los_config.h"
-#include "stdarg.h"
-#include "dirent.h"
-#include "sys/mount.h"
-#include "sys/statfs.h"
-#include "sys/stat.h"
-#include "unistd.h"
+#include <errno.h>
+#include <stdarg.h>
+#include <dirent.h>
+#include <sys/mount.h>
+#include <sys/statfs.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 #ifdef LOSCFG_LIBC_ICCARM_FS
 #include "los_fs.h"
-#else
-#include "sys/stat.h"
-#endif
 
-#ifdef LOSCFG_LIBC_ICCARM_FS
 int mount(const char *source, const char *target,
           const char *filesystemtype, unsigned long mountflags,
           const void *data)
@@ -160,6 +158,33 @@ ssize_t pwrite(int fd, const void *buf, size_t nbyte, off_t offset)
     return LOS_Pwrite(fd, buf, nbyte, offset);
 }
 
+int access(const char *path, int mode)
+{
+    struct stat st;
+
+    if (stat(path, &st) < 0) {
+        return -1;
+    }
+    if ((st.st_mode & S_IFDIR) || (st.st_mode & S_IFREG)) {
+        return 0;
+    }
+    if ((mode & W_OK) && !(st.st_mode & S_IWRITE)) {
+        return -1;
+    }
+
+    return 0;
+}
+
+int remove(const char *filename)
+{
+    int ret = unlink(filename);
+    if (ret == -EISDIR) {
+        ret = rmdir(filename);
+    }
+
+    return ret;
+}
+
 #else /* #ifdef LOSCFG_FS_VFS */
 
 int mount(const char *source, const char *target,
@@ -270,6 +295,16 @@ ssize_t pread(int fd, void *buf, size_t nbyte, off_t offset)
 }
 
 ssize_t pwrite(int fd, const void *buf, size_t nbyte, off_t offset)
+{
+    return -1;
+}
+
+int access(const char *path, int mode)
+{
+    return -1;
+}
+
+int remove(const char *filename)
 {
     return -1;
 }
