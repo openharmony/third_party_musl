@@ -25,37 +25,46 @@ static void handler(int s)
 {
 }
 
+volatile void *tmp;
+
+int set_devide_chunk(size_t size)
+{
+	if (!(tmp = malloc(size))) {
+		t_error("Malloc failed: %s\n", strerror(errno));
+		return -1;
+	}
+	return 0;
+}
+
 static int child(void)
 {
-	uintptr_t *c0 = (uintptr_t *)malloc(sizeof(uintptr_t) * 10);
-	if (!c0) {
-		t_error("Malloc failed: %s\n", strerror(errno));
+	uintptr_t *c;
+	uintptr_t *temp;
+
+	/* Set first dividing chunk */
+	if (set_devide_chunk(sizeof(size_t)))
 		return -1;
+
+	/*
+	 * The init procedure makes the freelist unpredictable. To make sure trigger the safe-unlink
+	 * check, Here we create as many chunks as possible to make sure there are enough chunks in
+	 * bin[0] and malloc again. Basically this is heap spray.
+	 */
+	for (int i = 0; i < 512; ++i) {
+		if (set_devide_chunk(sizeof(size_t)))
+			return -1;
+		c = (uintptr_t *)malloc(sizeof(uintptr_t));
+		if (!c) {
+			t_error("Malloc failed: %s\n", strerror(errno));
+			return -1;
+		}
+		free(c);
+		/* exchange the prev and next pointer */
+		uintptr_t temp = c[0];
+		c[0] = c[1];
+		c[1] = temp;
 	}
-	/* Malloc a dividing chunk to avoiding combination of neighbouring chunk */
-	malloc(sizeof(uintptr_t) * 10);
-	/* Malloc another chunk */
-	uintptr_t *c1 = (uintptr_t *)malloc(sizeof(uintptr_t) * 10);
-	if (!c1) {
-		t_error("Malloc failed: %s\n", strerror(errno));
-		return -1;
-	}
-	/* Malloc a dividing chunk to avoiding combination of neighbouring chunk */
-	malloc(sizeof(uintptr_t) * 10);
 
-	/* Free the chunk, now they are in same list */
-	free(c0);
-	free(c1);
-
-	/* Exchange the next and prev pointer in chunk */
-	/* They are legal but wrongly pointing */
-	uintptr_t temp = c0[0];
-	c0[0] = c0[1];
-	c0[1] = temp;
-
-	/* Malloc again, trigger the safe-unlink check */
-	c0 = (uintptr_t *)malloc(sizeof(uintptr_t) * 10);
-	c1 = (uintptr_t *)malloc(sizeof(uintptr_t) * 10);
 	return 0;
 }
 
@@ -108,12 +117,12 @@ int main(int argc, char *argv[])
 	}
 
 	if (WIFSIGNALED(status)) {
-		if (WTERMSIG(status) != SIGSEGV) {
+		if (WTERMSIG(status) != SIGSEGV && WTERMSIG(status) != SIGILL) {
 			t_error("%s child process out with %s\n", argv[0], strsignal(WTERMSIG(status)));
 			return -1;
 		}
 	} else {
 		t_error("%s child process finished normally\n", argv[0]);
 	}
-	return t_status;
+	return 0;
 }

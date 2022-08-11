@@ -25,20 +25,43 @@ static void handler(int s)
 {
 }
 
+volatile uintptr_t *p0;
+volatile uintptr_t *p1;
+volatile void *tmp;
+
 static int child(void)
 {
-	uintptr_t *p = (uintptr_t *)malloc(10 * sizeof(uintptr_t));
-	if (!p) {
+	p0 = (uintptr_t *)malloc(10 * sizeof(uintptr_t));
+	if (!p0) {
 		t_error("Malloc failed:%s\n", strerror(errno));
 		return -1;
 	}
 	/* Malloc a dividing chunk to avoid combination of neighbouring freed chunk */
-	malloc(10 * sizeof(uintptr_t));
-	free(p);
-	/* Reverse the pointer getting an illegal pointer */
-	*p = ~*p;
-	/* Malloc same chunk to trigger illegal pointer access */
-	p = (uintptr_t *)malloc(10 *sizeof(uintptr_t));
+	tmp = malloc(10 * sizeof(uintptr_t));
+	/* Malloc another chunk to get a key */
+	p1 = (uintptr_t *)malloc(10 * sizeof(uintptr_t));
+	if (!p1) {
+		t_error("Malloc failed:%s\n", strerror(errno));
+		return -1;
+	}
+	/* Malloc a dividing chunk to avoid combination of neighbouring freed chunk */
+	tmp = malloc(10 * sizeof(uintptr_t));
+
+	free((void *)p0);
+	free((void *)p1);
+
+	uintptr_t *fake_ptr = (uintptr_t *)((uintptr_t)((char *)p1 - sizeof(size_t) * 2) ^ (uintptr_t)p0[0]);
+	p0[0] = (uintptr_t)fake_ptr;
+	p1[0] = (uintptr_t)fake_ptr;
+
+	/*
+	 * The init procedure makes the freelist unpredictable. To make sure to trigger the ivalid ptr
+	 * acess, here we create as many chunks as possible to make sure there are enough chunks in
+	 * bin[j] of size "10 * sizeof(uintptr_t)". Basically this is heap spray.
+	 */
+	for (int i = 0; i < 512; ++i) {
+		tmp = malloc(10 *sizeof(uintptr_t));
+	}
 	return 0;
 }
 
@@ -91,12 +114,12 @@ int main(int argc, char *argv[])
 	}
 
 	if (WIFSIGNALED(status)) {
-		if (WTERMSIG(status) != SIGSEGV) {
+		if (WTERMSIG(status) != SIGSEGV && WTERMSIG(status) != SIGILL) {
 			t_error("%s child process out with %s\n", argv[0], strsignal(WTERMSIG(status)));
 			return -1;
 		}
 	} else {
 		t_error("%s child process finished normally\n", argv[0]);
 	}
-	return t_status;
+	return 0;
 }
