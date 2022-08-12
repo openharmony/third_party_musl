@@ -216,7 +216,7 @@ static bool load_library_header(struct loadtask *task);
 static void task_load_library(struct loadtask *task, struct reserved_address_params *reserved_params);
 static void preload_direct_deps(struct dso *p, ns_t *namespace, struct loadtasks *tasks);
 static void unmap_preloaded_sections(struct loadtasks *tasks);
-static void preload_deps(struct dso *p, ns_t *ns, struct loadtasks *tasks);
+static void preload_deps(struct dso *p, struct loadtasks *tasks);
 static void run_loadtasks(struct loadtasks *tasks, struct reserved_address_params *reserved_params);
 static void assign_tls(struct dso *p);
 static void load_preload(char *s, ns_t *ns, struct loadtasks *tasks);
@@ -1680,11 +1680,11 @@ static void load_direct_deps(struct dso *p, ns_t *namespace, struct reserved_add
 	p->ndeps_direct = cnt;
 }
 
-static void load_deps(struct dso *p, ns_t *ns, struct reserved_address_params *reserved_params)
+static void load_deps(struct dso *p, struct reserved_address_params *reserved_params)
 {
 	if (p->deps) return;
 	for (; p; p=p->next)
-		load_direct_deps(p, ns, reserved_params);
+		load_direct_deps(p, p->namespace, reserved_params);
 }
 #endif
 
@@ -2344,7 +2344,7 @@ void __dls3(size_t *sp, size_t *auxv)
 	if (env_preload) {
 		load_preload(env_preload, get_default_ns(), tasks);
 	}
-	preload_deps(&app, get_default_ns(), tasks);
+	preload_deps(&app, tasks);
 	unmap_preloaded_sections(tasks);
 	shuffle_loadtasks(tasks);
 	run_loadtasks(tasks, NULL);
@@ -2352,7 +2352,7 @@ void __dls3(size_t *sp, size_t *auxv)
 	assign_tls(app.next);
 #else
 	if (env_preload) load_preload(env_preload, get_default_ns());
- 	load_deps(&app, get_default_ns(), NULL);
+ 	load_deps(&app, NULL);
 #endif
 
 	for (struct dso *p=head; p; p=p->next)
@@ -2628,7 +2628,7 @@ static void *dlopen_impl(
 	if (!task->isloaded) {
 		is_task_appended = append_loadtasks(tasks, task);
 	}
-	preload_deps(task->p, ns, tasks);
+	preload_deps(task->p, tasks);
 	unmap_preloaded_sections(tasks);
 	if (!reserved_address_recursive) {
 		shuffle_loadtasks(tasks);
@@ -2656,7 +2656,7 @@ static void *dlopen_impl(
 		goto end;
 	}
 	/* First load handling */
-	load_deps(p, ns, reserved_address && reserved_address_recursive ? &reserved_params : NULL);
+	load_deps(p, reserved_address && reserved_address_recursive ? &reserved_params : NULL);
 #endif
 	extend_bfs_deps(p);
 	pthread_mutex_lock(&init_fini_lock);
@@ -4059,13 +4059,13 @@ static void unmap_preloaded_sections(struct loadtasks *tasks)
 	}
 }
 
-static void preload_deps(struct dso *p, ns_t *ns, struct loadtasks *tasks)
+static void preload_deps(struct dso *p, struct loadtasks *tasks)
 {
 	if (p->deps) {
 		return;
 	}
 	for (; p; p = p->next) {
-		preload_direct_deps(p, ns, tasks);
+		preload_direct_deps(p, p->namespace, tasks);
 	}
 }
 
