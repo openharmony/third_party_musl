@@ -25,6 +25,11 @@ static struct {
 	volatile uint64_t binmap;
 	struct bin bins[64];
 	volatile int free_lock[2];
+#ifdef MALLOC_FREELIST_QUARANTINE
+	struct bin quarantine[QUARANTINE_NUM];
+	size_t quarantined_count[QUARANTINE_NUM];
+	size_t quarantined_size[QUARANTINE_NUM];
+#endif
 } mal;
 
 int __malloc_replaced;
@@ -72,6 +77,22 @@ static inline void unlock_bin(int i)
 {
 	unlock(mal.bins[i].lock);
 }
+
+#ifdef MALLOC_FREELIST_QUARANTINE
+static inline void lock_quarantine(int i)
+{
+	lock(mal.quarantine[i].lock);
+	if (!mal.quarantine[i].head) {
+		mal.quarantine[i].key = next_key();
+		mal.quarantine[i].head = mal.quarantine[i].tail = encode_chunk(QUARANTINE_TO_CHUNK(i), mal.quarantine[i].key);
+	}
+}
+
+static inline void unlock_quarantine(int i)
+{
+	unlock(mal.quarantine[i].lock);
+}
+#endif
 
 static int first_set(uint64_t x)
 {
@@ -595,6 +616,86 @@ static void unmap_chunk(struct chunk *self)
 	__munmap(base, len);
 }
 
+#ifdef MALLOC_FREELIST_QUARANTINE
+static inline int quarantine_index(size_t size)
+{
+	return (size / SIZE_ALIGN) & (QUARANTINE_NUM - 1);
+}
+
+static void quarantine_contained(struct chunk *self)
+{
+	size_t size = CHUNK_SIZE(self);
+	int i = quarantine_index(size);
+	struct chunk *cur;
+	struct chunk *next;
+	struct chunk *prev;
+	void *key;
+
+	lock_quarantine(i);
+	key = mal.quarantine[i].key;
+	cur = encode_chunk(mal.quarantine[i].head, key);
+	prev = QUARANTINE_TO_CHUNK(i);
+	while (cur != QUARANTINE_TO_CHUNK(i)) {
+		/* "Safe-unlink" check */
+		next = encode_chunk(cur->next, key);
+		if (prev->next != encode_chunk(cur, key) ||
+			next->prev != encode_chunk(cur, key))
+		a_crash();
+		/* Find that "self" is in the freelist, crash */
+		if (cur == self) a_crash();
+		prev = cur;
+		cur = next;
+	}
+	unlock_quarantine(i);
+}
+
+static void quarantine_bin(struct chunk *self)
+{
+	size_t size = CHUNK_SIZE(self);
+	struct chunk *cur;
+	struct chunk *next;
+	void *key;
+	int i;
+
+	/* Avoid quarantining large memory */
+	if (size > QUARANTINE_THRESHOLD) {
+		__bin_chunk(self);
+		return;
+	}
+
+	i = quarantine_index(size);
+	lock_quarantine(i);
+	key = mal.quarantine[i].key;
+	if (mal.quarantined_size[i] > QUARANTINE_THRESHOLD || mal.quarantined_count[i] > QUARANTINE_N_THRESHOLD) {
+		/* cherry-pick an independent list from quarantine */
+		cur = encode_chunk(mal.quarantine[i].head, key);
+		/* now clear the quarantine[i] */
+		mal.quarantine[i].head = mal.quarantine[i].tail = encode_chunk(QUARANTINE_TO_CHUNK(i), key);
+		mal.quarantined_size[i] = mal.quarantined_count[i] = 0;
+		unlock_quarantine(i);
+
+		/* Bin the quarantined chunk */
+		do {
+			next = encode_chunk(cur->next, key);
+			__bin_chunk(cur);
+			cur = next;
+		} while (cur != QUARANTINE_TO_CHUNK(i));
+	} else {
+		unlock_quarantine(i);
+	}
+
+	lock_quarantine(i);
+	self->next = encode_chunk(QUARANTINE_TO_CHUNK(i), key);
+	self->prev = mal.quarantine[i].tail;
+	encode_chunk(mal.quarantine[i].tail, key)->next = encode_chunk(self, key);
+	mal.quarantine[i].tail = encode_chunk(self, key);
+
+	mal.quarantined_size[i] += size;
+	mal.quarantined_count[i] += 1;
+	unlock_quarantine(i);
+}
+#endif
+
 #ifdef HOOK_ENABLE
 void __libc_free(void *p)
 #else
@@ -612,8 +713,14 @@ void internal_free(void *p)
 
 	if (IS_MMAPPED(self))
 		unmap_chunk(self);
-	else
+	else {
+#ifdef MALLOC_FREELIST_QUARANTINE
+		quarantine_contained(self);
+		quarantine_bin(self);
+#else
 		__bin_chunk(self);
+#endif
+	}
 }
 
 void __malloc_donate(char *start, char *end)
