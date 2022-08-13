@@ -31,6 +31,13 @@ struct bin {
 #define DONTCARE 16
 #define RECLAIM 163840
 
+#ifdef MALLOC_FREELIST_QUARANTINE
+#define QUARANTINE_MEM_SIZE 16384
+#define QUARANTINE_THRESHOLD (QUARANTINE_MEM_SIZE / QUARANTINE_NUM)
+#define QUARANTINE_N_THRESHOLD 32
+#define QUARANTINE_NUM 8
+#endif
+
 #define CHUNK_SIZE(c) ((c)->csize & -2)
 #define CHUNK_PSIZE(c) ((c)->psize & -2)
 #define PREV_CHUNK(c) ((struct chunk *)((char *)(c) - CHUNK_PSIZE(c)))
@@ -38,6 +45,10 @@ struct bin {
 #define MEM_TO_CHUNK(p) (struct chunk *)((char *)(p) - OVERHEAD)
 #define CHUNK_TO_MEM(c) (void *)((char *)(c) + OVERHEAD)
 #define BIN_TO_CHUNK(i) (MEM_TO_CHUNK(&mal.bins[i].head))
+
+#ifdef MALLOC_FREELIST_QUARANTINE
+#define QUARANTINE_TO_CHUNK(i) (MEM_TO_CHUNK(&mal.quarantine[i].head))
+#endif
 
 #define C_INUSE  ((size_t)1)
 

@@ -311,7 +311,10 @@ template("musl_libs") {
     if (musl_secure_level > 0) {
       defines += [ "MALLOC_FREELIST_HARDENED" ]
     }
-    if (musl_secure_level >= 3) {
+    if (musl_secure_level > 1) {
+      defines += [ "MALLOC_FREELIST_QUARANTINE" ]
+    }
+    if (is_debug || musl_secure_level >= 3) {
       defines += [ "MALLOC_SECURE_ALL" ]
     }
 
