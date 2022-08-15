@@ -13,35 +13,24 @@
  * limitations under the License.
  */
 
-#ifndef _INFO_FATAL_MESSAGE_H
-#define _INFO_FATAL_MESSAGE_H
-
-#include <stddef.h>
-#include <stdint.h>
-
+#ifndef _SYS_TGKILL_H
+#define _SYS_TGKILL_H
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
-
-typedef struct fatal_msg {
-    size_t size;
-    char msg[0];
-} fatal_msg_t;
-
-/**
-  * @brief Set up fatal message
-  * @param msg The fatal message
+/** 
+  * @brief send any signal to any process group or process.
+  * @param tgid the group ID of the calling process.
+  * @param tid the thread ID of the calling process.
+  * @param sig the actual signal.
+  * @return tgkill result.
+  * @retval 0 is returned on success.
+  * @retval -1 is returned on failure, and errno is set to indicate the error.
   */
-void set_fatal_message(const char *msg);
-
-/**
-  * @brief Get the set fatal message
-  * @return Address of fatal message
-  */
-fatal_msg_t *get_fatal_message(void);
+int tgkill(int tgid, int tid, int sig);
 
 #ifdef __cplusplus
 }
 #endif
-
-#endif // _INFO_FATAL_MESSAGE_H
+#endif
