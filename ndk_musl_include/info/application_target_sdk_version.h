@@ -25,6 +25,18 @@ extern "C" {
 #define SDK_VERSION_8 8
 #define SDK_VERSION_9 9
 
+/**
+  * @brief Get the target sdk version number of the application.
+  * @return The target sdk version number.
+  */
+int get_application_target_sdk_version(void);
+
+/**
+  * @brief Set the target sdk version number of the application.
+  * @param target The target sdk version number.
+  */
+void set_application_target_sdk_version(int target);
+
 #ifdef __cplusplus
 }
 #endif
