@@ -92,6 +92,58 @@ static void test_strcat_0020()
 }
 
 /**
+ * @tc.name     : test_strcat_0010
+ * @tc.desc     : After adding fortify, test the normal strcat of the function.
+ * @tc.level    : Level 0
+ */
+static void test_strncat_0010()
+{
+    char src[SIZE_15];
+    strcpy(src, STRLEN_10);
+    char dst[SIZE_20];
+    memset(dst, 0, SIZE_20);
+    strncat(dst, src, strlen(src));
+    TEST(dst[0] == EQ_0);
+}
+
+/**
+ * @tc.name     : test_strcat_0020
+ * @tc.desc     : Ability to test the strcat Fortify runtime
+ * @tc.level    : Level 2
+ */
+static void test_strncat_0020()
+{
+    struct sigaction sigabrt = {
+        .sa_handler = SignalHandler,
+    };
+    sigaction(SIGABRT, &sigabrt, NULL);
+
+    char src[SIZE_15];
+    strcpy(src, STRLEN_10);
+    char dst[SIZE_5];
+    memset(dst, 0, SIZE_5);
+    int status;
+    int pid = fork();
+    switch (pid) {
+        case -1:
+            t_error("fork failed: %s\n", strerror(errno));
+            break;
+        case 0:
+            strncat(dst, src, strlen(src));
+            exit(0);
+        default:
+            waitpid(pid, &status, WUNTRACED);
+            TEST(WIFEXITED(status) == 0);
+            TEST(WIFSTOPPED(status) == 1);
+            TEST(WSTOPSIG(status) == SIGSTOP);
+            kill(pid, SIGCONT);
+            break;
+    }
+    return;
+}
+
+
+/**
  * @tc.name     : test_stpcpy_0010
  * @tc.desc     : After adding fortify, test the normal stpcpy of the function.
  * @tc.level    : Level 0
@@ -798,9 +850,40 @@ static void test_memset_0020()
     return;
 }
 
+static void test_strlen_0010()
+{
+    struct sigaction sigabrt = {
+        .sa_handler = SignalHandler,
+    };
+    sigaction(SIGABRT, &sigabrt, NULL);
+    
+    char buf[SIZE_10];
+    memcpy(buf, STRLEN_10, sizeof(buf));
+    int status;
+    int pid = fork();
+    switch (pid) {
+        case -1:
+            t_error("fork failed: %s\n", strerror(errno));
+            break;
+        case 0:
+            strlen(buf);
+            exit(0);
+        default:
+            waitpid(pid, &status, WUNTRACED);
+            TEST(WIFEXITED(status) == 0);
+            TEST(WIFSTOPPED(status) == 1);
+            TEST(WSTOPSIG(status) == SIGSTOP);
+            kill(pid, SIGCONT);
+            break;
+    }
+    return;
+}
+
 int main(int argc, char *argv[]) {
     test_strcat_0010();
     test_strcat_0020();
+    test_strncat_0010();
+    test_strncat_0020();
     test_strchr_0010();
     test_strchr_0020();
     test_strncpy_0010();
@@ -821,6 +904,7 @@ int main(int argc, char *argv[]) {
     test_memset_0020();
     test_memcpy_0010();
     test_memcpy_0020();
+    test_strlen_0010();
 
     #ifdef _GNU_SOURCE
     test_mempcpy_0010();
