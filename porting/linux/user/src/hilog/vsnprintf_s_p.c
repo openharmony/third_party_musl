@@ -19,6 +19,8 @@
 #include <string.h>
 #include <stdio.h>
 
+#include "malloc_impl.h"
+
 /* Define the max length of the string */
 #ifndef SECUREC_STRING_MAX_LEN
 #define SECUREC_STRING_MAX_LEN 0x7fffffffUL
@@ -127,11 +129,11 @@ typedef enum {
 
 #ifndef HILOG_PROHIBIT_ALLOCATION
 #ifndef SECUREC_MALLOC
-#define SECUREC_MALLOC(x) malloc((size_t)(x))
+#define SECUREC_MALLOC(x) internal_malloc((size_t)(x))
 #endif
 
 #ifndef SECUREC_FREE
-#define SECUREC_FREE(x)   free((void *)(x))
+#define SECUREC_FREE(x)   internal_free((void *)(x))
 #endif
 
 #else

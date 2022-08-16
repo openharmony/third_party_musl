@@ -47,4 +47,12 @@ hidden void __bin_chunk(struct chunk *);
 
 hidden extern int __malloc_replaced;
 
+hidden void *internal_malloc(size_t n);
+
+hidden void internal_free(void *p);
+
+hidden void *internal_calloc(size_t m, size_t n);
+
+hidden void *internal_realloc(void *p, size_t n);
+
 #endif
