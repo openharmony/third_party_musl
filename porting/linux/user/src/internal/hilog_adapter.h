@@ -16,6 +16,7 @@
 #ifndef MUSL_HILOG_ADAPTER_H
 #define MUSL_HILOG_ADAPTER_H
 
+#include <features.h>
 #include <stdarg.h>
 #include <stdbool.h>
 
@@ -42,8 +43,8 @@ typedef enum {
     LOG_LEVEL_MAX,
 } LogLevel;
 
-int HiLogAdapterPrint(LogType type, LogLevel level, unsigned int domain, const char *tag, const char *fmt, ...)
+hidden int HiLogAdapterPrint(LogType type, LogLevel level, unsigned int domain, const char *tag, const char *fmt, ...)
     __attribute__((__format__(os_log, 5, 6)));
 
-bool HiLogAdapterIsLoggable(unsigned int domain, const char *tag, LogLevel level);
+hidden bool HiLogAdapterIsLoggable(unsigned int domain, const char *tag, LogLevel level);
 #endif  // MUSL_HILOG_ADAPTER_H

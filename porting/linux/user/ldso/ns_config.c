@@ -1,15 +1,25 @@
-/*-------------------------------------------------------------------------*/
-/**
-   @file    ns_config.c
-   @author  yangwenjun
-   @brief    deal with ld-musl-namespace.ini file
-*/
+/*
+ * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 #include "ns_config.h"
 
 #include <ctype.h>
 #include <stdarg.h>
 
 #include "ld_log.h"
+#include "malloc_impl.h"
 /*---------------------------- Defines -------------------------------------*/
 #define MAX_LINE_SIZE         (1024)
 #define INI_INVALID_KEY     ((char*)-1)
@@ -102,16 +112,16 @@ static kvlist * kvlist_alloc(size_t size)
 
     if (size < KV_DEFAULT_SIZE) size = KV_DEFAULT_SIZE;
 
-    kvs = (kvlist *)calloc(1, sizeof *kvs);
+    kvs = (kvlist *)internal_calloc(1, sizeof *kvs);
     if (kvs) {
-        kvs->key = (char **)calloc(size, sizeof *kvs->key);
-        kvs->val = (char **)calloc(size, sizeof *kvs->val);
+        kvs->key = (char **)internal_calloc(size, sizeof *kvs->key);
+        kvs->val = (char **)internal_calloc(size, sizeof *kvs->val);
         if (kvs->key && kvs->val) {
             kvs->size = size;
         } else {
-            free(kvs->key);
-            free(kvs->val);
-            free(kvs);
+            internal_free(kvs->key);
+            internal_free(kvs->val);
+            internal_free(kvs);
             kvs = NULL;
         }
     }
@@ -124,10 +134,10 @@ static void kvlist_realloc(kvlist *kvs)
     size_t size = 2*kvs->size;
     if (size) {
         char **keys, **vals;
-        keys = (char **)realloc(kvs->key, size * (sizeof *kvs->key));
+        keys = (char **)internal_realloc(kvs->key, size * (sizeof *kvs->key));
         if (!keys) return;
         kvs->key = keys;
-        vals = (char **)realloc(kvs->val, size * (sizeof *kvs->val));
+        vals = (char **)internal_realloc(kvs->val, size * (sizeof *kvs->val));
         if (!vals) return;
         kvs->val = vals;
         kvs->size = size;
@@ -141,12 +151,12 @@ static void kvlist_free(kvlist *kvs)
     size_t i;
     if (!kvs) return;
     for (i=0; i<kvs->num; i++) {
-        free(kvs->key[i]);
-        free(kvs->val[i]);
+        internal_free(kvs->key[i]);
+        internal_free(kvs->val[i]);
     }
-    free(kvs->key);
-    free(kvs->val);
-    free(kvs);
+    internal_free(kvs->key);
+    internal_free(kvs->val);
+    internal_free(kvs);
 }
 
 static section_list *sections_alloc(size_t size)
@@ -154,17 +164,17 @@ static section_list *sections_alloc(size_t size)
     section_list *sections;
     if (size < SECTION_DEFAULT_SIZE) size = SECTION_DEFAULT_SIZE;
 
-    sections = (section_list *)calloc(1, sizeof *sections);
+    sections = (section_list *)internal_calloc(1, sizeof *sections);
 
     if (sections) {
-        sections->names = (char**)calloc(size, sizeof *sections->names);
-        sections->kvs = (kvlist**)calloc(size, sizeof *sections->kvs);
+        sections->names = (char**)internal_calloc(size, sizeof *sections->names);
+        sections->kvs = (kvlist**)internal_calloc(size, sizeof *sections->kvs);
         if (sections->names && sections->kvs) {
             sections->size = size;
         } else {
-            free(sections->names);
-            free(sections->kvs);
-            free(sections);
+            internal_free(sections->names);
+            internal_free(sections->kvs);
+            internal_free(sections);
             sections = NULL;
         }
     }
@@ -178,10 +188,10 @@ static void sections_realloc(section_list *sections)
     if (size) {
         char **names;
         kvlist **kvs;
-        names = (char **)realloc(sections->names, size * (sizeof *sections->names));
+        names = (char **)internal_realloc(sections->names, size * (sizeof *sections->names));
         if (!names) return;
         sections->names = names;
-        kvs = (kvlist **)realloc(sections->kvs, size * (sizeof *sections->kvs));
+        kvs = (kvlist **)internal_realloc(sections->kvs, size * (sizeof *sections->kvs));
         if (!kvs) return;
         sections->kvs = kvs;
         sections->size = size;
@@ -193,12 +203,12 @@ static void sections_free(section_list *sections)
 {
     if (!sections) return;
     for (size_t i=0; i < sections->num; i++) {
-        free(sections->names[i]);
+        internal_free(sections->names[i]);
         kvlist_free(sections->kvs[i]);
     }
-    free(sections->names);
-    free(sections->kvs);
-    free(sections);
+    internal_free(sections->names);
+    internal_free(sections->kvs);
+    internal_free(sections);
 }
 
 static void kvlist_set(kvlist *kvs, const char *key, const char *val)
@@ -213,9 +223,9 @@ static void kvlist_set(kvlist *kvs, const char *key, const char *val)
     }
 
     if (i < kvs->num) {
-        char * v = strdup(val);
+        char * v = ld_strdup(val);
         if (v) {
-            free(kvs->val[i]);
+            internal_free(kvs->val[i]);
             kvs->val[i] = v;
         }
         return;
@@ -224,13 +234,13 @@ static void kvlist_set(kvlist *kvs, const char *key, const char *val)
         kvlist_realloc(kvs);
     }
     if (kvs->num < kvs->size) {
-        kvs->key[kvs->num] = strdup(key);
-        kvs->val[kvs->num] = strdup(val);
+        kvs->key[kvs->num] = ld_strdup(key);
+        kvs->val[kvs->num] = ld_strdup(val);
         if (kvs->key[kvs->num] && kvs->val[kvs->num]) {
             kvs->num++;
         } else {
-            free(kvs->key[kvs->num]);
-            free(kvs->val[kvs->num]);
+            internal_free(kvs->key[kvs->num]);
+            internal_free(kvs->val[kvs->num]);
         }
     }
     return;
@@ -258,13 +268,13 @@ static void sections_set(section_list *sections, const char *name, const char *k
     
     if (sections->num < sections->size) {
         kvs = kvlist_alloc(0);
-        sections->names[sections->num] = strdup(name);
+        sections->names[sections->num] = ld_strdup(name);
         sections->kvs[sections->num] = kvs;
         if (sections->names[sections->num] && kvs) {
             sections->num++;
             kvlist_set(kvs,key,val);
         } else {
-            free(sections->names[sections->num]);
+            internal_free(sections->names[sections->num]);
             kvlist_free(kvs);
         }
     }
@@ -465,10 +475,10 @@ static int config_parse(const char *file_path, const char *exe_path)
     kvlist* dirkvs;
     kvlist* acquiescence_kvs;
     if (!exe_path) return -1;
-    g_configor.exe_path = strdup(exe_path);
+    g_configor.exe_path = ld_strdup(exe_path);
     const char * fpath = CONFIG_DEFAULT_FILE;
     if (file_path) fpath = file_path;
-    g_configor.file_path = strdup(fpath);
+    g_configor.file_path = ld_strdup(fpath);
     g_configor.sections = config_load(fpath);
 
     if (!g_configor.sections) {
@@ -655,11 +665,11 @@ void configor_free()
         g_configor.sections = NULL;
     }
     if (g_configor.file_path) {
-        free(g_configor.file_path);
+        internal_free(g_configor.file_path);
         g_configor.file_path = NULL;
     }
     if (g_configor.exe_path) {
-        free(g_configor.exe_path);
+        internal_free(g_configor.exe_path);
         g_configor.exe_path = NULL;
     }
 }
