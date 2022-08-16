@@ -1,5 +1,21 @@
+/*
+ * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 #include <ctype.h>
 #include "strops.h"
+#include "malloc_impl.h"
 
 /* string to lower */
 void strlwc(char *str)
@@ -37,10 +53,10 @@ strlist *strsplit(const char *str, const char *split_s)
     if(!str) return NULL;
 
     strlist *sl = strlist_alloc(0);
-    char *ss = strdup(str);
+    char *ss = ld_strdup(str);
     if (!sl || !ss) {
         strlist_free(sl);
-        free(ss);
+        internal_free(ss);
         return NULL;
     }
 
@@ -53,7 +69,7 @@ strlist *strsplit(const char *str, const char *split_s)
     }
     strtrim(cur);
     strlist_set(sl, cur);
-    free(ss);
+    internal_free(ss);
     return sl;
 }
 
@@ -64,14 +80,14 @@ strlist *strlist_alloc(size_t size)
     strlist *strs;
     if (size < STR_DEFAULT_SIZE) size = STR_DEFAULT_SIZE ;
 
-    strs = (strlist *)calloc(1, sizeof *strs) ;
+    strs = (strlist *)internal_calloc(1, sizeof *strs) ;
 
     if (strs) {
-        strs->strs  = (char **)calloc(size, sizeof *strs->strs);
+        strs->strs  = (char **)internal_calloc(size, sizeof *strs->strs);
         if (strs->strs) {
             strs->size = size;
         } else {
-            free(strs);
+            internal_free(strs);
             strs = NULL;
         }
     }
@@ -83,7 +99,7 @@ static void strlist_realloc(strlist *strs)
     if(!strs) return;
     size_t size = 2*strs->size;
     if (size) {
-        char **ss = (char **)realloc(strs->strs, size * (sizeof *strs->strs));
+        char **ss = (char **)internal_realloc(strs->strs, size * (sizeof *strs->strs));
         if (ss) {
             strs->size = size;
             strs->strs = ss;
@@ -96,10 +112,10 @@ void strlist_free(strlist *strs)
 {
     if (!strs) return;
     for (size_t i=0; i < strs->num; i++) {
-        free(strs->strs[i]);
+        internal_free(strs->strs[i]);
     }
-    free(strs->strs);
-    free(strs);
+    internal_free(strs->strs);
+    internal_free(strs);
 }
 
 void strlist_set(strlist *strs,const char *str)
@@ -109,7 +125,15 @@ void strlist_set(strlist *strs,const char *str)
        strlist_realloc(strs);
     }
     if (strs->num < strs->size) {
-        strs->strs[strs->num] = strdup(str);
+        strs->strs[strs->num] = ld_strdup(str);
         if (strs->strs[strs->num]) strs->num++;
     }
+}
+
+char *ld_strdup(const char *s)
+{
+    size_t l = strlen(s);
+    char *d = internal_malloc(l+1);
+    if (!d) return NULL;
+    return memcpy(d, s, l+1);
 }

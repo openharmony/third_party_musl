@@ -329,6 +329,11 @@ void *__libc_malloc(size_t n)
 void *malloc(size_t n)
 #endif
 {
+	return internal_malloc(n);
+}
+
+void *internal_malloc(size_t n)
+{
 	struct chunk *c;
 	int i, j;
 
@@ -404,12 +409,17 @@ static size_t mal0_clear(char *p, size_t pagesz, size_t n)
 
 void *calloc(size_t m, size_t n)
 {
+	return internal_calloc(m, n);
+}
+
+void *internal_calloc(size_t m, size_t n)
+{
 	if (n && m > (size_t)-1/n) {
 		errno = ENOMEM;
 		return 0;
 	}
 	n *= m;
-	void *p = malloc(n);
+	void *p = internal_malloc(n);
 	if (!p) return p;
 	if (!__malloc_replaced) {
 		if (IS_MMAPPED(MEM_TO_CHUNK(p)))
@@ -422,13 +432,18 @@ void *calloc(size_t m, size_t n)
 
 void *realloc(void *p, size_t n)
 {
+	return internal_realloc(p, n);
+}
+
+void *internal_realloc(void *p, size_t n)
+{
 	struct chunk *self, *next;
 	size_t n0, n1;
 	void *new;
 
-	if (!p) return malloc(n);
+	if (!p) return internal_malloc(n);
 	if (!n) {
-		free(p);
+		internal_free(p);
 		return NULL;
 	}
 
@@ -444,7 +459,7 @@ void *realloc(void *p, size_t n)
 		size_t newlen = n + extra;
 		/* Crash on realloc of freed chunk */
 		if (extra & 1) a_crash();
-		if (newlen < PAGE_SIZE && (new = malloc(n-OVERHEAD))) {
+		if (newlen < PAGE_SIZE && (new = internal_malloc(n-OVERHEAD))) {
 			n0 = n;
 			goto copy_free_ret;
 		}
@@ -487,11 +502,11 @@ void *realloc(void *p, size_t n)
 
 copy_realloc:
 	/* As a last resort, allocate a new chunk and copy to it. */
-	new = malloc(n-OVERHEAD);
+	new = internal_malloc(n-OVERHEAD);
 	if (!new) return 0;
 copy_free_ret:
 	memcpy(new, p, n0-OVERHEAD);
-	free(CHUNK_TO_MEM(self));
+	internal_free(CHUNK_TO_MEM(self));
 	return new;
 }
 
@@ -585,6 +600,11 @@ void __libc_free(void *p)
 #else
 void free(void *p)
 #endif
+{
+	return internal_free(p);
+}
+
+void internal_free(void *p)
 {
 	if (!p) return;
 
