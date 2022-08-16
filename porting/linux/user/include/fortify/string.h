@@ -29,7 +29,6 @@ size_t __strlcpy_diagnose(char*, const char*, size_t, size_t);
 size_t __strlcat_diagnose(char*, const char*, size_t, size_t);
 char *__strchr_diagnose(const char* p, int ch, size_t s_len);
 char *__strrchr_diagnose(const char *p, int ch, size_t s_len);
-size_t __strlen_chk(const char* s, size_t s_len);
 
 #ifdef __FORTIFY_COMPILATION
 __DIAGNOSE_FORTIFY_INLINE
@@ -94,15 +93,6 @@ __DIAGNOSE_ERROR_IF(__DIAGNOSE_UNEVALUATED_LE(__DIAGNOSE_BOS(dst), __builtin_str
     return __builtin_strcat(dst, src);
 #endif
 }
-
-#ifdef __FORTIFY_RUNTIME
-__DIAGNOSE_FORTIFY_INLINE
-char *strncat(char* const dst __DIAGNOSE_PASS_OBJECT_SIZE, const char* src, size_t n)
-__DIAGNOSE_OVERLOAD
-{
-    return __builtin___strncat_chk(dst, src, n, __DIAGNOSE_BOS(dst));
-}
-#endif
 
 #ifdef __FORTIFY_RUNTIME
 __DIAGNOSE_FORTIFY_INLINE
@@ -230,15 +220,6 @@ __DIAGNOSE_OVERLOAD
 #endif
     return __builtin_strrchr(s, c);
 }
-
-#ifdef __FORTIFY_RUNTIME
-__DIAGNOSE_FORTIFY_INLINE
-size_t strlen(const char* const s __DIAGNOSE_PASS_OBJECT_SIZE0)
-__DIAGNOSE_OVERLOAD
-{
-    return __strlen_chk(s, __DIAGNOSE_BOS0(s));
-}
-#endif
 
 #endif // __FORTIFY_COMPILATION
 #ifdef __cplusplus
