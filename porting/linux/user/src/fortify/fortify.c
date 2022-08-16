@@ -167,24 +167,18 @@ static inline void __diagnose_count(const char *fn, const char *identifier, size
 
 size_t __strlen_chk(const char* s, size_t s_len)
 {
-    size_t ret = __DIAGNOSE_CALL_BYPASSING_FORTIFY(strlen)(s);
+    size_t ret = strlen(s);
     if (__DIAGNOSE_PREDICT_FALSE(ret >= s_len)) {
         __fortify_error("strlen: detected read past end of buffer\n");
+        return 0;
     }
     return ret;
-}
-
-char* __strncat_chk(char* dst, const char* src, size_t len, size_t dst_buf_size)
-{
-    size_t src_len = strlen(src) + strlen(dst);
-    __diagnose_buffer_access("strncat", "write into", src_len, dst_buf_size);
-    return __DIAGNOSE_CALL_BYPASSING_FORTIFY(strncat)(dst, src, len);
 }
 
 char* __strcat_chk(char* dst, const char* src, size_t dst_buf_size)
 {
     size_t src_len = strlen(src) + strlen(dst);
-    __diagnose_buffer_access("strcat", "write into", src_len, dst_buf_size);
+    __diagnose_buffer_access("strcpy", "write into", src_len, dst_buf_size);
     return __DIAGNOSE_CALL_BYPASSING_FORTIFY(strcat)(dst, src);
 }
 
