@@ -55,6 +55,8 @@ static void error(const char *, ...);
 #define INVALID_FD_INHIBIT_FURTHER_SEARCH (-2)
 #endif
 
+#define PARENTS_BASE_CAPACITY 8
+
 struct debug {
 	int ver;
 	void *head;
@@ -145,6 +147,9 @@ struct dso {
 		size_t *got;
 	} *funcdescs;
 	size_t *got;
+	struct dso **parents;
+	size_t parents_count;
+	size_t parents_capacity;
 	char buf[];
 };
 
@@ -627,6 +632,77 @@ static Sym *gnu_lookup_filtered(uint32_t h1, uint32_t *hashtab, struct dso *dso,
 	return gnu_lookup(h1, hashtab, dso, verinfo);
 }
 
+static bool check_sym_accessible(struct dso *dso, ns_t *ns)
+{
+	if (!dso || !dso->namespace || !ns) {
+		return false;
+	}
+	if (dso->namespace == ns) {
+		return true;
+	}
+	for (int i = 0; i < dso->parents_count; i++) {
+		if (dso->parents[i]->namespace == ns) {
+			return true;
+		}
+	}
+	return false;
+}
+
+static int find_dso_parent(struct dso *p, struct dso *target)
+{
+	int index = -1;
+	for (int i = 0; i < p->parents_count; i++) {
+		if (p->parents[i] == target) {
+			index = i;
+			break;
+		}
+	}
+	return index;
+}
+
+static void add_dso_parent(struct dso *p, struct dso *parent)
+{
+	int index = find_dso_parent(p, parent);
+	if (index != -1) {
+		return;
+	}
+	if (p->parents_count + 1 > p->parents_capacity) {
+		if (p->parents_capacity == 0) {
+			p->parents = (struct dso **)internal_malloc(sizeof(struct dso *) * PARENTS_BASE_CAPACITY);
+			if (!p->parents) {
+				return;
+			}
+			p->parents_capacity = PARENTS_BASE_CAPACITY;
+		} else {
+			struct dso ** realloced = (struct dso **)internal_realloc(
+				p->parents, sizeof(struct dso *) * (p->parents_capacity + PARENTS_BASE_CAPACITY));
+			if (!realloced) {
+				return;
+			}
+			p->parents = realloced;
+			p->parents_capacity += PARENTS_BASE_CAPACITY;
+		}
+	}
+	p->parents[p->parents_count] = parent;
+	p->parents_count++;
+}
+
+static void remove_dso_parent(struct dso *p, struct dso *parent)
+{
+	int index = find_dso_parent(p, parent);
+	if (index == -1) {
+		return;
+	}
+	int i;
+	for (i = 0; i < index; i++) {
+		p->parents[i] = p->parents[i];
+	}
+	for (i = index; i < p->parents_count - 1; i++) {
+		p->parents[i] = p->parents[i + 1];
+	}
+	p->parents_count--;
+}
+
 #define OK_TYPES (1<<STT_NOTYPE | 1<<STT_OBJECT | 1<<STT_FUNC | 1<<STT_COMMON | 1<<STT_TLS)
 #define OK_BINDS (1<<STB_GLOBAL | 1<<STB_WEAK | 1<<STB_GNU_UNIQUE)
 
@@ -637,7 +713,7 @@ static Sym *gnu_lookup_filtered(uint32_t h1, uint32_t *hashtab, struct dso *dso,
 #if defined(__GNUC__)
 __attribute__((always_inline))
 #endif
-static inline struct symdef find_sym2(struct dso *dso, struct verinfo *verinfo, int need_def, int use_deps)
+static inline struct symdef find_sym2(struct dso *dso, struct verinfo *verinfo, int need_def, int use_deps, ns_t *ns)
 {
 	uint32_t h = 0, gh = gnu_hash(verinfo->s), gho = gh / (8*sizeof(size_t)), *ght;
 	size_t ghm = 1ul << gh % (8*sizeof(size_t));
@@ -645,6 +721,9 @@ static inline struct symdef find_sym2(struct dso *dso, struct verinfo *verinfo, 
 	struct dso **deps = use_deps ? dso->deps : 0;
 	for (; dso; dso=use_deps ? *deps++ : dso->syms_next) {
 		Sym *sym;
+		if (ns && !check_sym_accessible(dso, ns)) {
+			continue;
+		}
 		if ((ght = dso->ghashtab)) {
 			sym = gnu_lookup_filtered(gh, ght, dso, verinfo, gho, ghm);
 		} else {
@@ -671,7 +750,7 @@ static inline struct symdef find_sym2(struct dso *dso, struct verinfo *verinfo, 
 static struct symdef find_sym(struct dso *dso, const char *s, int need_def)
 {
 	struct verinfo verinfo = { .s = s, .v = "", .verneed = dso->verneed };
-	return find_sym2(dso, &verinfo, need_def, 0);
+	return find_sym2(dso, &verinfo, need_def, 0, NULL);
 }
 
 static void do_relocs(struct dso *dso, size_t *rel, size_t rel_size, size_t stride)
@@ -724,9 +803,10 @@ static void do_relocs(struct dso *dso, size_t *rel, size_t rel_size, size_t stri
 			sym = syms + sym_index;
 			name = strings + sym->st_name;
 			ctx = type==REL_COPY ? head->syms_next : head;
+			struct verinfo vinfo = { .s = name, .v = "", .verneed = dso->verneed };
 			def = (sym->st_info>>4) == STB_LOCAL
 				? (struct symdef){ .dso = dso, .sym = sym }
-				: find_sym(ctx, name, type==REL_PLT);
+				: find_sym2(ctx, &vinfo, type==REL_PLT, 0, dso->namespace);
 			if (!def.sym && (sym->st_shndx != SHN_UNDEF
 				|| sym->st_info>>4 != STB_WEAK)) {
 				if (dso->lazy && (type==REL_PLT || type==REL_GOT)) {
@@ -1679,6 +1759,9 @@ static void load_direct_deps(struct dso *p, ns_t *namespace, struct reserved_add
 	}
 	p->deps[cnt] = 0;
 	p->ndeps_direct = cnt;
+	for (i = 0; i < p->ndeps_direct; i++) {
+		add_dso_parent(p->deps[i], p);
+	}
 }
 
 static void load_deps(struct dso *p, struct reserved_address_params *reserved_params)
@@ -2580,9 +2663,17 @@ static void *dlopen_impl(
 			internal_free(p->funcdescs);
 			if (p->rpath != p->rpath_orig)
 				internal_free(p->rpath);
+			if (p->deps) {
+				for (int i = 0; i < p->ndeps_direct; i++) {
+					remove_dso_parent(p->deps[i], p);
+				}
+			}
 			internal_free(p->deps);
 			dlclose_ns(p);
 			unmap_library(p);
+			if (p->parents) {
+				internal_free(p->parents);
+			}
 			internal_free(p);
 		}
 		internal_free(ctor_queue);
@@ -2786,12 +2877,12 @@ int dlns_get(const char *name, Dl_namespace *dlns)
 void *dlopen_ns(Dl_namespace *dlns, const char *file, int mode)
 {
 	const void *caller_addr = __builtin_return_address(0);
-    LD_LOGI("dlopen_ns file:%{public}s, mode:%{public}x , caller_addr:%{public}p , dlns->name:%{public}s.",
-        file,
-        mode,
-        caller_addr,
-        dlns->name);
-    return dlopen_impl(file, mode, dlns->name, caller_addr, NULL);
+	LD_LOGI("dlopen_ns file:%{public}s, mode:%{public}x , caller_addr:%{public}p , dlns->name:%{public}s.",
+		file,
+		mode,
+		caller_addr,
+		dlns->name);
+	return dlopen_impl(file, mode, dlns->name, caller_addr, NULL);
 }
 
 int dlns_create2(Dl_namespace *dlns, const char *lib_path, int flags)
@@ -2931,18 +3022,31 @@ static void *addr2dso(size_t a)
 static void *do_dlsym(struct dso *p, const char *s, const char *v, void *ra)
 {
 	int use_deps = 0;
+	bool ra2dso = false;
+	ns_t *ns = NULL;
+	struct dso *caller = NULL;
 	if (p == head || p == RTLD_DEFAULT) {
 		p = head;
+		ra2dso = true;
 	} else if (p == RTLD_NEXT) {
 		p = addr2dso((size_t)ra);
 		if (!p) p=head;
 		p = p->next;
+		ra2dso = true;
 	} else if (__dl_invalid_handle(p)) {
 		return 0;
-	} else
+	} else {
 		use_deps = 1;
+		ns = p->namespace;
+	}
+	if (ra2dso) {
+		caller = (struct dso *)addr2dso((size_t)ra);
+		if (caller && caller->namespace) {
+			ns = caller->namespace;
+		}
+	}
 	struct verinfo verinfo = { .s = s, .v = v, .verneed = NULL };
-	struct symdef def = find_sym2(p, &verinfo, 0, use_deps);
+	struct symdef def = find_sym2(p, &verinfo, 0, use_deps, ns);
 	if (!def.sym) {
 		error("Symbol not found: %s, version: %s", s, strlen(v) > 0 ? v : "null");
 		return 0;
@@ -3039,9 +3143,18 @@ static int do_dlclose(struct dso *p)
 	
 	if (p->lazy != NULL)
 		internal_free(p->lazy);
+	if (p->deps) {
+		for (int i = 0; i < p->ndeps_direct; i++) {
+			remove_dso_parent(p->deps[i], p);
+		}
+	}
 	if (p->deps != no_deps)
 		internal_free(p->deps);
 	unmap_library(p);
+
+	if (p->parents) {
+		internal_free(p->parents);
+	}
 
 	if (p->tls.size == 0) {
 		internal_free(p);
@@ -3344,12 +3457,12 @@ int dlns_set_namespace_allowed_libs(const char * name, const char * allowed_libs
 
 int handle_asan_path_open(int fd, const char *name, ns_t *namespace, char *buf, size_t buf_size)
 {
-    LD_LOGD("handle_asan_path_open fd:%{public}d, name:%{public}s , namespace:%{public}p , buf:%{public}s.",
-        fd,
-        name,
-        namespace,
-        buf);
-    int fd_tmp = fd;
+	LD_LOGD("handle_asan_path_open fd:%{public}d, name:%{public}s , namespace:%{public}p , buf:%{public}s.",
+		fd,
+		name,
+		namespace,
+		buf);
+	int fd_tmp = fd;
 	if (fd == -1 && (namespace->asan_lib_paths || namespace->lib_paths)) {
 		if (namespace->lib_paths && namespace->asan_lib_paths) {
 			size_t newlen = strlen(namespace->asan_lib_paths) + strlen(namespace->lib_paths) + 2;
@@ -3363,14 +3476,14 @@ int handle_asan_path_open(int fd, const char *name, ns_t *namespace, char *buf, 
 			internal_free(new_lib_paths);
 		} else if (namespace->asan_lib_paths) {
 			fd_tmp = path_open(name, namespace->asan_lib_paths, buf, buf_size);
-            LD_LOGD("handle_asan_path_open path_open asan_lib_paths:%{public}s ,fd: %{public}d.",
-                namespace->asan_lib_paths,
-                fd_tmp);
-        } else {
+			LD_LOGD("handle_asan_path_open path_open asan_lib_paths:%{public}s ,fd: %{public}d.",
+				namespace->asan_lib_paths,
+				fd_tmp);
+		} else {
 			fd_tmp = path_open(name, namespace->lib_paths, buf, buf_size);
-            LD_LOGD(
-                "handle_asan_path_open path_open lib_paths:%{public}s ,fd: %{public}d.", namespace->lib_paths, fd_tmp);
-        }
+			LD_LOGD(
+				"handle_asan_path_open path_open lib_paths:%{public}s ,fd: %{public}d.", namespace->lib_paths, fd_tmp);
+		}
 	}
 	return fd_tmp;
 }
@@ -3385,10 +3498,10 @@ void* dlopen_ext(const char *file, int mode, const dl_extinfo *extinfo)
 	}
 	const void *caller_addr = __builtin_return_address(0);
 	LD_LOGI("dlopen_ext file:%{public}s, mode:%{public}x , caller_addr:%{public}p , extinfo->flag:%{public}x",
-        file,
-        mode,
-        caller_addr,
-        extinfo ? extinfo->flag : 0);
+		file,
+		mode,
+		caller_addr,
+		extinfo ? extinfo->flag : 0);
   	return dlopen_impl(file, mode, NULL, caller_addr, extinfo);
 }
 
@@ -4019,10 +4132,10 @@ static void preload_direct_deps(struct dso *p, ns_t *namespace, struct loadtasks
 		if (!load_library_header(task)) {
 			free_task(task);
 			task = NULL;
-            LD_LOGE("Error loading shared library %{public}s: (needed by %{public}s)",
-                p->strings + p->dynv[i + 1],
-                p->name);
-            error("Error loading shared library %s: %m (needed by %s)",
+			LD_LOGE("Error loading shared library %{public}s: (needed by %{public}s)",
+				p->strings + p->dynv[i + 1],
+				p->name);
+			error("Error loading shared library %s: %m (needed by %s)",
 				p->strings + p->dynv[i + 1], p->name);
 			if (runtime) {
 				longjmp(*rtld_fail, 1);
@@ -4039,6 +4152,9 @@ static void preload_direct_deps(struct dso *p, ns_t *namespace, struct loadtasks
 	}
 	p->deps[cnt] = 0;
 	p->ndeps_direct = cnt;
+	for (i = 0; i < p->ndeps_direct; i++) {
+		add_dso_parent(p->deps[i], p);
+	}
 }
 
 static void unmap_preloaded_sections(struct loadtasks *tasks)
