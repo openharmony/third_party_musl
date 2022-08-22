@@ -27,9 +27,7 @@ static void *RwlockClockRealTimeOut1(void *arg)
 {
     EXPECT_EQ(pthread_rwlock_wrlock(&w_rwlock1), 0);
     Msleep(SLEEP_50_MS);
-    CheckStep(CHECK_STEP_TWO);
     Msleep(SLEEP_100_MS);
-    CheckStep(CHECK_STEP_FOUR);
     EXPECT_EQ(pthread_rwlock_unlock(&w_rwlock1), 0);
     return arg;
 }
@@ -41,7 +39,6 @@ static void *RwlockClockRealTimeOut2(void *arg)
     Msleep(SLEEP_20_MS);
     GetDelayedTimeByClockid(&ts, SLEEP_100_MS, CLOCK_REALTIME);
     EXPECT_EQ(pthread_rwlock_clockwrlock(&w_rwlock1, CLOCK_REALTIME, &ts), ETIMEDOUT);
-    CheckStep(CHECK_STEP_THREE);
     clock_gettime(CLOCK_REALTIME, &tsNow);
     int timeDiff = GetTimeDiff(tsNow, ts);
     EXPECT_GE(timeDiff, 0);
@@ -53,7 +50,6 @@ static void *RwlockClockRealTimeWait1(void *arg)
 {
     EXPECT_EQ(pthread_rwlock_wrlock(&w_rwlock2), 0);
     Msleep(SLEEP_50_MS);
-    CheckStep(CHECK_STEP_TWO);
     EXPECT_EQ(pthread_rwlock_unlock(&w_rwlock2), 0);
     return arg;
 }
@@ -65,7 +61,6 @@ static void *RwlockClockRealTimeWait2(void *arg)
     Msleep(SLEEP_20_MS);
     GetDelayedTimeByClockid(&ts, SLEEP_100_MS, clock_id);
     EXPECT_EQ(pthread_rwlock_clockwrlock(&w_rwlock2, clock_id, &ts), 0);
-    CheckStep(CHECK_STEP_THREE);
     EXPECT_EQ(pthread_rwlock_unlock(&w_rwlock2), 0);
     return arg;
 }
@@ -74,9 +69,7 @@ static void *RwlockClockMonotonicTimeOut1(void *arg)
 {
     EXPECT_EQ(pthread_rwlock_wrlock(&w_rwlock5), 0);
     Msleep(SLEEP_50_MS);
-    CheckStep(CHECK_STEP_TWO);
     Msleep(SLEEP_100_MS);
-    CheckStep(CHECK_STEP_FOUR);
     EXPECT_EQ(pthread_rwlock_unlock(&w_rwlock5), 0);
     return arg;
 }
@@ -88,7 +81,6 @@ static void *RwlockClockMonotonicTimeOut2(void *arg)
     Msleep(SLEEP_20_MS);
     GetDelayedTimeByClockid(&ts, SLEEP_100_MS, CLOCK_MONOTONIC);
     EXPECT_EQ(pthread_rwlock_clockwrlock(&w_rwlock5, CLOCK_MONOTONIC, &ts), ETIMEDOUT);
-    CheckStep(CHECK_STEP_THREE);
     clock_gettime(CLOCK_MONOTONIC, &tsNow);
     int timeDiff = GetTimeDiff(tsNow, ts);
     EXPECT_GE(timeDiff, 0);
@@ -100,7 +92,6 @@ static void *RwlockClockMonotonicTimeWait1(void *arg)
 {
     EXPECT_EQ(pthread_rwlock_wrlock(&w_rwlock6), 0);
     Msleep(SLEEP_50_MS);
-    CheckStep(CHECK_STEP_TWO);
     EXPECT_EQ(pthread_rwlock_unlock(&w_rwlock6), 0);
     return arg;
 }
@@ -111,7 +102,6 @@ static void *RwlockClockMonotonicTimeWait2(void *arg)
     Msleep(SLEEP_20_MS);
     GetDelayedTimeByClockid(&ts, SLEEP_100_MS, CLOCK_MONOTONIC);
     EXPECT_EQ(pthread_rwlock_clockwrlock(&w_rwlock6, CLOCK_MONOTONIC, &ts), 0);
-    CheckStep(CHECK_STEP_THREE);
     EXPECT_EQ(pthread_rwlock_unlock(&w_rwlock6), 0);
     return arg;
 }
@@ -120,9 +110,7 @@ static void *RwlockMonotonicTime1(void *arg)
 {
     EXPECT_EQ(pthread_rwlock_wrlock(&w_rwlock3), 0);
     Msleep(SLEEP_50_MS);
-    CheckStep(CHECK_STEP_TWO);
     Msleep(SLEEP_100_MS);
-    CheckStep(CHECK_STEP_FOUR);
     EXPECT_EQ(pthread_rwlock_unlock(&w_rwlock3), 0);
     return arg;
 }
@@ -134,7 +122,6 @@ static void *RwlockMonotonicTime2(void *arg)
     Msleep(SLEEP_20_MS);
     GetDelayedTimeByClockid(&ts, SLEEP_100_MS, CLOCK_MONOTONIC);
     EXPECT_EQ(pthread_rwlock_timedwrlock_monotonic_np(&w_rwlock3, &ts), ETIMEDOUT);
-    CheckStep(CHECK_STEP_THREE);
     clock_gettime(CLOCK_MONOTONIC, &tsNow);
     int timeDiff = GetTimeDiff(tsNow, ts);
     EXPECT_GE(timeDiff, 0);
@@ -146,7 +133,6 @@ static void *RwlockMonotonicTime3(void *arg)
 {
     EXPECT_EQ(pthread_rwlock_wrlock(&w_rwlock4), 0);
     Msleep(SLEEP_50_MS);
-    CheckStep(CHECK_STEP_TWO);
     EXPECT_EQ(pthread_rwlock_unlock(&w_rwlock4), 0);
     return arg;
 }
@@ -157,7 +143,6 @@ static void *RwlockMonotonicTime4(void *arg)
     Msleep(SLEEP_20_MS);
     GetDelayedTimeByClockid(&ts, SLEEP_100_MS, CLOCK_MONOTONIC);
     EXPECT_EQ(pthread_rwlock_timedwrlock_monotonic_np(&w_rwlock4, &ts), 0);
-    CheckStep(CHECK_STEP_THREE);
     EXPECT_EQ(pthread_rwlock_unlock(&w_rwlock4), 0);
     return arg;
 }
@@ -243,7 +228,6 @@ void pthread_rwlock_timedwrlock_0040(void)
 void pthread_rwlock_timedwrlock_0050(void)
 {
     pthread_t tid[2];
-    CheckStep(CHECK_STEP_ONE);
     EXPECT_EQ(pthread_rwlock_init(&w_rwlock2, NULL), 0);
 
     EXPECT_EQ(pthread_create(&tid[0], NULL, RwlockClockRealTimeWait1, NULL), 0);
@@ -251,7 +235,6 @@ void pthread_rwlock_timedwrlock_0050(void)
 
     EXPECT_EQ(pthread_join(tid[0], NULL), 0);
     EXPECT_EQ(pthread_join(tid[1], NULL), 0);
-    EXPECT_EQ(CheckStep(CHECK_STEP_FOUR), (uint64_t)0x1234);
     EXPECT_EQ(pthread_rwlock_destroy(&w_rwlock2), 0);
 }
 
@@ -263,7 +246,6 @@ void pthread_rwlock_timedwrlock_0050(void)
 void pthread_rwlock_timedwrlock_0060(void)
 {
     pthread_t tid[2];
-    CheckStep(CHECK_STEP_ONE);
     EXPECT_EQ(pthread_rwlock_init(&w_rwlock1, NULL), 0);
 
     EXPECT_EQ(pthread_create(&tid[0], NULL, RwlockClockRealTimeOut1, NULL), 0);
@@ -271,7 +253,6 @@ void pthread_rwlock_timedwrlock_0060(void)
 
     EXPECT_EQ(pthread_join(tid[0], NULL), 0);
     EXPECT_EQ(pthread_join(tid[1], NULL), 0);
-    EXPECT_EQ(CheckStep(CHECK_STEP_FIVE), (uint64_t)0x12345);
     EXPECT_EQ(pthread_rwlock_destroy(&w_rwlock1), 0);
 }
 
@@ -283,7 +264,6 @@ void pthread_rwlock_timedwrlock_0060(void)
 void pthread_rwlock_timedwrlock_0070(void)
 {
     pthread_t tid[2];
-    CheckStep(CHECK_STEP_ONE);
     EXPECT_EQ(pthread_rwlock_init(&w_rwlock5, NULL), 0);
 
     EXPECT_EQ(pthread_create(&tid[0], NULL, RwlockClockMonotonicTimeOut1, NULL), 0);
@@ -291,7 +271,6 @@ void pthread_rwlock_timedwrlock_0070(void)
 
     EXPECT_EQ(pthread_join(tid[0], NULL), 0);
     EXPECT_EQ(pthread_join(tid[1], NULL), 0);
-    EXPECT_EQ(CheckStep(CHECK_STEP_FIVE), (uint64_t)0x12345);
     EXPECT_EQ(pthread_rwlock_destroy(&w_rwlock5), 0);
 }
 
@@ -303,7 +282,6 @@ void pthread_rwlock_timedwrlock_0070(void)
 void pthread_rwlock_timedwrlock_0080(void)
 {
     pthread_t tid[2];
-    CheckStep(CHECK_STEP_ONE);
     EXPECT_EQ(pthread_rwlock_init(&w_rwlock6, NULL), 0);
 
     EXPECT_EQ(pthread_create(&tid[0], NULL, RwlockClockMonotonicTimeWait1, NULL), 0);
@@ -311,7 +289,6 @@ void pthread_rwlock_timedwrlock_0080(void)
 
     EXPECT_EQ(pthread_join(tid[0], NULL), 0);
     EXPECT_EQ(pthread_join(tid[1], NULL), 0);
-    EXPECT_EQ(CheckStep(CHECK_STEP_FOUR), (uint64_t)0x1234);
     EXPECT_EQ(pthread_rwlock_destroy(&w_rwlock6), 0);
 }
 
@@ -323,7 +300,6 @@ void pthread_rwlock_timedwrlock_0080(void)
 void pthread_rwlock_timedwrlock_0090(void)
 {
     pthread_t tid[2];
-    CheckStep(CHECK_STEP_ONE);
     EXPECT_EQ(pthread_rwlock_init(&w_rwlock3, NULL), 0);
 
     EXPECT_EQ(pthread_create(&tid[0], NULL, RwlockMonotonicTime1, NULL), 0);
@@ -331,7 +307,6 @@ void pthread_rwlock_timedwrlock_0090(void)
 
     EXPECT_EQ(pthread_join(tid[0], NULL), 0);
     EXPECT_EQ(pthread_join(tid[1], NULL), 0);
-    EXPECT_EQ(CheckStep(CHECK_STEP_FIVE), (uint64_t)0x12345);
     EXPECT_EQ(pthread_rwlock_destroy(&w_rwlock3), 0);
 }
 
@@ -343,7 +318,6 @@ void pthread_rwlock_timedwrlock_0090(void)
 void pthread_rwlock_timedwrlock_0100(void)
 {
     pthread_t tid[2];
-    CheckStep(CHECK_STEP_ONE);
     EXPECT_EQ(pthread_rwlock_init(&w_rwlock4, NULL), 0);
 
     EXPECT_EQ(pthread_create(&tid[0], NULL, RwlockMonotonicTime3, NULL), 0);
@@ -351,7 +325,6 @@ void pthread_rwlock_timedwrlock_0100(void)
 
     EXPECT_EQ(pthread_join(tid[0], NULL), 0);
     EXPECT_EQ(pthread_join(tid[1], NULL), 0);
-    EXPECT_EQ(CheckStep(CHECK_STEP_FOUR), (uint64_t)0x1234);
     EXPECT_EQ(pthread_rwlock_destroy(&w_rwlock4), 0);
 }
 

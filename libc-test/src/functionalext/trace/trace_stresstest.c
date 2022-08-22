@@ -23,7 +23,6 @@
 #include <unistd.h>
 
 #define BUFFER_LEN 1000000
-#define RUNNUM 10000
 static const int count = 10;
 
 /**
@@ -47,23 +46,19 @@ static void trace_marker_stresstest_0010(void)
         bool trace_async_sucess = false;
         char buf[BUFFER_LEN] = {0};
 
-        while (1) {
+        while (traceCount <= 5000) {
             snprintf(buf, BUFFER_LEN, "%d", traceCount);
             system("cd /sys/kernel/debug/tracing;echo 1 > tracing_on");
             trace_marker_async_begin("Trace_Marker_Async_Begin", buf, 1);
             trace_marker_async_end("Trace_Marker_Async_End", buf, 1);
             system("cd /sys/kernel/debug/tracing;echo 0 > tracing_on");
-
-            if (traceCount % RUNNUM == 0) {
-                printf("trace_marker_async_begin has been running times is:%d\n", traceCount);
-            }
+            printf("trace_marker_async_begin has been running times is:%d\n", traceCount);
             traceCount++;
         }
         exit(pidChild);
     } else {
         pid_t pidCChild;
         int traceCount = 0;
-        bool trace_sucess = false;
         char buf[BUFFER_LEN] = {0};
 
         // start process again
@@ -71,16 +66,13 @@ static void trace_marker_stresstest_0010(void)
         if (pidCChild < 0) {
             t_printf("error in fork!");
         } else if (pidCChild == 0) {
-            while (1) {
+            while (traceCount <= 5000) {
                 snprintf(buf, BUFFER_LEN, "%d", traceCount);
                 system("cd /sys/kernel/debug/tracing;echo 1 > tracing_on");
                 trace_marker_begin("Trace_Marker", buf);
                 trace_marker_end();
                 system("cd /sys/kernel/debug/tracing;echo 0 > tracing_on");
-
-                if (traceCount % RUNNUM == 0) {
-                    printf("trace_marker_begin has been running times is:%d\n", traceCount);
-                }
+                printf("trace_marker_begin has been running times is:%d\n", traceCount);  
                 traceCount++;
             }
             exit(pidCChild);
@@ -88,14 +80,11 @@ static void trace_marker_stresstest_0010(void)
             pidCParent = getpid();
             int traceCount = 0;
 
-            while (1) {
+            while (traceCount <= 5000) {
                 system("cd /sys/kernel/debug/tracing;echo 1 > tracing_on");
                 trace_marker_count("traceCount", traceCount);
                 system("cd /sys/kernel/debug/tracing;echo 0 > tracing_on");
-
-                if (traceCount % RUNNUM == 0) {
-                    printf("trace_marker_count has been running times is:%d\n", traceCount);
-                }
+                printf("trace_marker_count has been running times is:%d\n", traceCount);
                 traceCount++;
             }
             exit(pidCParent);
