@@ -12,6 +12,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifndef MALLOC_CONFIG_H
+#define MALLOC_CONFIG_H
 
 #ifdef MALLOC_SECURE_ALL
 
@@ -19,4 +21,14 @@
 #define MALLOC_FREELIST_HARDENED
 #endif
 
+#ifndef MALLOC_FREELIST_QUARANTINE
+#define MALLOC_FREELIST_QUARANTINE
+#endif
+
 #endif // MALLOC_SECURE_ALL
+
+#if defined(MALLOC_FREELIST_QUARANTINE) && !defined(MALLOC_FREELIST_HARDENED)
+#error MALLOC_FREELIST_QUARANTINE can be only applied when MALLOC_FREELIST_HARDENED is set.
+#endif
+
+#endif // MALLOC_CONFIG_H
