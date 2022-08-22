@@ -25,6 +25,7 @@ static const char* dllNamePath2 = "/data/tests/libc-test/src/functionalext/dlns/
 static const char* errPath_ns = "src/test";
 
 static const char* sharedLib = "sharedlibtest.so";
+static const char* pathA = "/data/tests/libc-test/src/functionalext/dlns/A";
 static const char* pathB = "/data/tests/libc-test/src/functionalext/dlns/B";
 static const char* pathC = "/data/tests/libc-test/src/functionalext/dlns/C";
 static const char* pathD = "/data/tests/libc-test/src/functionalext/dlns/D";
@@ -43,4 +44,9 @@ static const char* dllName_inh_011 = "inherit_1100.so";
 typedef void(*TEST_FUN)(void);
 
 static const int EOK = 0;
+
+static const int test_result_1 = 1;
+static const int test_result_2 = 2;
+static const int test_result_3 = 3;
+static const int test_result_4 = 4;
 #endif
