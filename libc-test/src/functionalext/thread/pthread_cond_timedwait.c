@@ -190,7 +190,6 @@ static void *ClockWaitTimedwait1(void *arg)
 {
     Msleep(SLEEP_50_MS);
     EXPECT_EQ(pthread_mutex_lock(&c_mtx1), 0);
-    CheckStep(CHECK_STEP_TWO);
     EXPECT_EQ(pthread_mutex_unlock(&c_mtx1), 0);
     EXPECT_EQ(pthread_cond_signal(&c_cond1), 0);
     return arg;
@@ -209,7 +208,6 @@ static void *ClockWaitTimedwait2(void *arg)
 
     clockid_t clock_id = CLOCK_REALTIME;
     EXPECT_EQ(pthread_cond_clockwait(&c_cond1, &c_mtx1, clock_id, &ts), 0);
-    CheckStep(CHECK_STEP_THREE);
     EXPECT_EQ(pthread_mutex_unlock(&c_mtx1), 0);
     return arg;
 }
@@ -223,7 +221,6 @@ void clockwait_timedwait_0010(void)
 {
     pthread_t tid1;
     pthread_t tid2;
-    CheckStep(CHECK_STEP_ONE);
     EXPECT_EQ(pthread_create(&tid1, NULL, ClockWaitTimedwait1, NULL), 0);
     EXPECT_EQ(pthread_create(&tid2, NULL, ClockWaitTimedwait2, NULL), 0);
     Msleep(SLEEP_100_MS);
@@ -231,7 +228,6 @@ void clockwait_timedwait_0010(void)
     pthread_join(tid2, NULL);
     EXPECT_EQ(pthread_cond_destroy(&c_cond1), 0);
     EXPECT_EQ(pthread_mutex_destroy(&c_mtx1), 0);
-    EXPECT_EQ(CheckStep(CHECK_STEP_FOUR), (uint64_t)0x1234);
 }
 
 static void *ClockWaitTimeOut(void *arg)
@@ -243,7 +239,6 @@ static void *ClockWaitTimeOut(void *arg)
     clockid_t clock_id = CLOCK_REALTIME;
     GetDelayedTimeByClockid(&ts, SLEEP_100_MS, clock_id);
     EXPECT_EQ(pthread_cond_clockwait(&c_cond2, &c_mtx1, clock_id, &ts), ETIMEDOUT);
-    CheckStep(CHECK_STEP_TWO);
     clock_gettime(CLOCK_REALTIME, &tsNow);
 
     int timeDiff = GetTimeDiff(tsNow, ts);
@@ -262,20 +257,17 @@ static void *ClockWaitTimeOut(void *arg)
 void clockwait_timedwait_0020(void)
 {
     pthread_t tid;
-    CheckStep(CHECK_STEP_ONE);
     EXPECT_EQ(pthread_create(&tid, NULL, ClockWaitTimeOut, NULL), 0);
     Msleep(SLEEP_200_MS);
     pthread_join(tid, NULL);
     EXPECT_EQ(pthread_cond_destroy(&c_cond2), 0);
     EXPECT_EQ(pthread_mutex_destroy(&c_mtx2), 0);
-    EXPECT_EQ(CheckStep(CHECK_STEP_THREE), (uint64_t)0x123);
 }
 
 static void *ClockWaitTimedwait3(void *arg)
 {
     Msleep(SLEEP_50_MS);
     EXPECT_EQ(pthread_mutex_lock(&c_mtx3), 0);
-    CheckStep(CHECK_STEP_TWO);
     EXPECT_EQ(pthread_mutex_unlock(&c_mtx3), 0);
     EXPECT_EQ(pthread_cond_signal(&c_cond3), 0);
     return arg;
@@ -294,7 +286,6 @@ static void *ClockWaitTimedwait4(void *arg)
 
     clockid_t clock_id = CLOCK_MONOTONIC;
     EXPECT_EQ(pthread_cond_clockwait(&c_cond3, &c_mtx3, clock_id, &ts), 0);
-    CheckStep(CHECK_STEP_THREE);
     EXPECT_EQ(pthread_mutex_unlock(&c_mtx3), 0);
     return arg;
 }
@@ -308,7 +299,6 @@ void clockwait_timedwait_0030(void)
 {
     pthread_t tid1;
     pthread_t tid2;
-    CheckStep(CHECK_STEP_ONE);
     EXPECT_EQ(pthread_create(&tid1, NULL, ClockWaitTimedwait3, NULL), 0);
     EXPECT_EQ(pthread_create(&tid2, NULL, ClockWaitTimedwait4, NULL), 0);
     Msleep(SLEEP_100_MS);
@@ -316,7 +306,6 @@ void clockwait_timedwait_0030(void)
     pthread_join(tid2, NULL);
     EXPECT_EQ(pthread_cond_destroy(&c_cond3), 0);
     EXPECT_EQ(pthread_mutex_destroy(&c_mtx3), 0);
-    EXPECT_EQ(CheckStep(CHECK_STEP_FOUR), (uint64_t)0x1234);
 }
 
 static void *ClockWaitTimeOut2(void *arg)
@@ -328,7 +317,6 @@ static void *ClockWaitTimeOut2(void *arg)
     clockid_t clock_id = CLOCK_MONOTONIC;
     GetDelayedTimeByClockid(&ts, SLEEP_100_MS, clock_id);
     EXPECT_EQ(pthread_cond_clockwait(&c_cond2, &c_mtx1, clock_id, &ts), ETIMEDOUT);
-    CheckStep(CHECK_STEP_TWO);
     clock_gettime(CLOCK_MONOTONIC, &tsNow);
 
     int timeDiff = GetTimeDiff(tsNow, ts);
@@ -347,13 +335,11 @@ static void *ClockWaitTimeOut2(void *arg)
 void clockwait_timedwait_0040(void)
 {
     pthread_t tid;
-    CheckStep(CHECK_STEP_ONE);
     EXPECT_EQ(pthread_create(&tid, NULL, ClockWaitTimeOut2, NULL), 0);
     Msleep(SLEEP_200_MS);
     pthread_join(tid, NULL);
     EXPECT_EQ(pthread_cond_destroy(&c_cond2), 0);
     EXPECT_EQ(pthread_mutex_destroy(&c_mtx2), 0);
-    EXPECT_EQ(CheckStep(CHECK_STEP_THREE), (uint64_t)0x123);
 }
 
 static void *ClockWaitTimeMismatch(void *arg)
@@ -369,7 +355,6 @@ static void *ClockWaitTimeMismatch(void *arg)
 
     clockid_t clock_id = CLOCK_REALTIME;
     EXPECT_EQ(pthread_cond_clockwait(&c_cond4, &c_mtx4, clock_id, &ts), ETIMEDOUT);
-    CheckStep(CHECK_STEP_TWO);
 
     EXPECT_EQ(pthread_mutex_unlock(&c_mtx4), 0);
     return arg;
@@ -397,7 +382,6 @@ static void *ClockWaitTimeMismatch2(void *arg)
 
     clockid_t clock_id = CLOCK_REALTIME;
     EXPECT_EQ(pthread_cond_clockwait(&c_cond5, &c_mtx5, clock_id, &ts), 0);
-    CheckStep(CHECK_STEP_THREE);
 
     EXPECT_EQ(pthread_mutex_unlock(&c_mtx5), 0);
     return arg;
@@ -413,7 +397,6 @@ void clockwait_timedwait_0050(void)
     pthread_t tid;
     pthread_t tid1;
     pthread_t tid2;
-    CheckStep(CHECK_STEP_ONE);
     EXPECT_EQ(pthread_create(&tid1, NULL, ClockWaitTimeMismatch1, NULL), 0);
     EXPECT_EQ(pthread_create(&tid2, NULL, ClockWaitTimeMismatch2, NULL), 0);
     EXPECT_EQ(pthread_create(&tid, NULL, ClockWaitTimeMismatch, NULL), 0);
@@ -425,7 +408,6 @@ void clockwait_timedwait_0050(void)
     EXPECT_EQ(pthread_mutex_destroy(&c_mtx4), 0);
     EXPECT_EQ(pthread_cond_destroy(&c_cond5), 0);
     EXPECT_EQ(pthread_mutex_destroy(&c_mtx5), 0);
-    EXPECT_EQ(CheckStep(CHECK_STEP_FOUR), (uint64_t)0x1234);
 }
 
 static void *ClockWaitTimeMismatch3(void *arg)
@@ -510,7 +492,6 @@ static void *PthreadCondMonotonicTimeWait1(void *arg)
 {
     Msleep(SLEEP_50_MS);
     EXPECT_EQ(pthread_mutex_lock(&m_mtx1), 0);
-    CheckStep(CHECK_STEP_TWO);
     EXPECT_EQ(pthread_mutex_unlock(&m_mtx1), 0);
     EXPECT_EQ(pthread_cond_signal(&m_cond1), 0);
     return arg;
@@ -528,7 +509,6 @@ static void *PthreadCondMonotonicTimeWait2(void *arg)
     ts.tv_nsec = (ts.tv_nsec + nsecPer100Ms) % nsecPerSec;
 
     EXPECT_EQ(pthread_cond_timedwait_monotonic_np(&m_cond1, &m_mtx1, &ts), 0);
-    CheckStep(CHECK_STEP_THREE);
     EXPECT_EQ(pthread_mutex_unlock(&m_mtx1), 0);
     return arg;
 }
@@ -542,7 +522,6 @@ void monotonic_timewait_0010(void)
 {
     pthread_t tid1;
     pthread_t tid2;
-    CheckStep(CHECK_STEP_ONE);
 
     EXPECT_EQ(pthread_create(&tid1, NULL, PthreadCondMonotonicTimeWait1, NULL), 0);
     EXPECT_EQ(pthread_create(&tid2, NULL, PthreadCondMonotonicTimeWait2, NULL), 0);
@@ -552,7 +531,6 @@ void monotonic_timewait_0010(void)
     pthread_join(tid2, NULL);
     EXPECT_EQ(pthread_cond_destroy(&m_cond1), 0);
     EXPECT_EQ(pthread_mutex_destroy(&m_mtx1), 0);
-    EXPECT_EQ(CheckStep(CHECK_STEP_FOUR), (uint64_t)0x1234);
 }
 
 static void *PthreadCondMonotonicTimeOut(void *arg)
@@ -563,7 +541,6 @@ static void *PthreadCondMonotonicTimeOut(void *arg)
 
     GetDelayedTimeByClockid(&ts, SLEEP_100_MS, CLOCK_MONOTONIC);
     EXPECT_EQ(pthread_cond_timedwait_monotonic_np(&m_cond2, &m_mtx2, &ts), ETIMEDOUT);
-    CheckStep(CHECK_STEP_TWO);
     clock_gettime(CLOCK_MONOTONIC, &tsNow);
 
     int timeDiff = GetTimeDiff(tsNow, ts);
@@ -582,13 +559,11 @@ static void *PthreadCondMonotonicTimeOut(void *arg)
 void monotonic_timewait_0020(void)
 {
     pthread_t tid;
-    CheckStep(CHECK_STEP_ONE);
     EXPECT_EQ(pthread_create(&tid, NULL, PthreadCondMonotonicTimeOut, NULL), 0);
     Msleep(SLEEP_200_MS);
     pthread_join(tid, NULL);
     EXPECT_EQ(pthread_cond_destroy(&m_cond2), 0);
     EXPECT_EQ(pthread_mutex_destroy(&m_mtx2), 0);
-    EXPECT_EQ(CheckStep(CHECK_STEP_THREE), (uint64_t)0x123);
 }
 
 static void *PthreadCondMonotonicTimeEinval(void *arg)
@@ -600,7 +575,6 @@ static void *PthreadCondMonotonicTimeEinval(void *arg)
     ts.tv_sec = 1;
     ts.tv_nsec = einvalNsec;
     EXPECT_EQ(pthread_cond_timedwait_monotonic_np(&m_cond3, &m_mtx3, &ts), EINVAL);
-    CheckStep(CHECK_STEP_TWO);
 
     EXPECT_EQ(pthread_mutex_unlock(&m_mtx3), 0);
     return arg;
@@ -614,7 +588,6 @@ static void *PthreadCondMonotonicTimeEinval(void *arg)
 void monotonic_timewait_0030(void)
 {
     pthread_t tid;
-    CheckStep(CHECK_STEP_ONE);
 
     EXPECT_EQ(pthread_create(&tid, NULL, PthreadCondMonotonicTimeEinval, NULL), 0);
 
@@ -622,14 +595,12 @@ void monotonic_timewait_0030(void)
     pthread_join(tid, NULL);
     EXPECT_EQ(pthread_cond_destroy(&m_cond3), 0);
     EXPECT_EQ(pthread_mutex_destroy(&m_mtx3), 0);
-    EXPECT_EQ(CheckStep(CHECK_STEP_THREE), (uint64_t)0x123);
 }
 
 static void *PthreadCondUnsignedTimeWait1(void *arg)
 {
     Msleep(SLEEP_50_MS);
     EXPECT_EQ(pthread_mutex_lock(&u_mtx1), 0);
-    CheckStep(CHECK_STEP_TWO);
     EXPECT_EQ(pthread_mutex_unlock(&u_mtx1), 0);
     EXPECT_EQ(pthread_cond_signal(&u_cond1), 0);
     return arg;
@@ -643,7 +614,6 @@ static void *PthreadCondUnsignedTimeWait2(void *arg)
     GetDelayedTimeByClockid(&ts, ms, CLOCK_MONOTONIC);
     EXPECT_EQ(pthread_mutex_lock(&u_mtx1), 0);
     EXPECT_EQ(pthread_cond_timeout_np(&u_cond1, &u_mtx1, ms), 0);
-    CheckStep(CHECK_STEP_THREE);
     EXPECT_EQ(pthread_mutex_unlock(&u_mtx1), 0);
     return arg;
 }
@@ -657,7 +627,6 @@ void timeoutnp_timewait_0010(void)
 {
     pthread_t tid1;
     pthread_t tid2;
-    CheckStep(CHECK_STEP_ONE);
 
     EXPECT_EQ(pthread_create(&tid1, NULL, PthreadCondUnsignedTimeWait1, NULL), 0);
     EXPECT_EQ(pthread_create(&tid2, NULL, PthreadCondUnsignedTimeWait2, NULL), 0);
@@ -667,7 +636,6 @@ void timeoutnp_timewait_0010(void)
     pthread_join(tid2, NULL);
     EXPECT_EQ(pthread_cond_destroy(&u_cond1), 0);
     EXPECT_EQ(pthread_mutex_destroy(&u_mtx1), 0);
-    EXPECT_EQ(CheckStep(CHECK_STEP_FOUR), (uint64_t)0x1234);
 }
 
 static void *PthreadCondUnsignedTimeOut(void *arg)
@@ -679,7 +647,6 @@ static void *PthreadCondUnsignedTimeOut(void *arg)
 
     GetDelayedTimeByClockid(&ts, SLEEP_100_MS, CLOCK_MONOTONIC);
     EXPECT_EQ(pthread_cond_timeout_np(&u_cond2, &u_mtx2, ms), ETIMEDOUT);
-    CheckStep(CHECK_STEP_TWO);
     clock_gettime(CLOCK_MONOTONIC, &tsNow);
 
     int timeDiff = GetTimeDiff(tsNow, ts);
@@ -698,13 +665,11 @@ static void *PthreadCondUnsignedTimeOut(void *arg)
 void timeoutnp_timewait_0020(void)
 {
     pthread_t tid;
-    CheckStep(CHECK_STEP_ONE);
     EXPECT_EQ(pthread_create(&tid, NULL, PthreadCondUnsignedTimeOut, NULL), 0);
     Msleep(SLEEP_200_MS);
     pthread_join(tid, NULL);
     EXPECT_EQ(pthread_cond_destroy(&u_cond2), 0);
     EXPECT_EQ(pthread_mutex_destroy(&u_mtx2), 0);
-    EXPECT_EQ(CheckStep(CHECK_STEP_THREE), (uint64_t)0x123);
 }
 
 TEST_FUN G_Fun_Array[] = {

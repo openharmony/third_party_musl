@@ -85,24 +85,4 @@ static inline void Msleep(int msec)
     usleep(msec * MS_PER_S);
 }
 
-static inline uint64_t CheckStep(int value)
-{
-    if (value == 1) {
-        shmctl(SHMID_CHECK_STEP, IPC_RMID, NULL);
-        SHMID_CHECK_STEP = shmget(IPC_PRIVATE, ONE_KB, FLAG | IPC_CREAT);
-    }
-    if (SHMID_CHECK_STEP != -1) {
-        uint64_t *shared = (uint64_t *)shmat(SHMID_CHECK_STEP, NULL, 0);
-        if (value == 1) {
-            *shared = 1;
-        } else {
-            *shared = (*shared << CARRY) + value;
-        }
-        uint64_t state = *shared;
-        shmdt(shared);
-        return state;
-    }
-    return 0;
-}
-
 #endif // __FUNCTIONALEXT_PTHREAD_UTIL_H__
