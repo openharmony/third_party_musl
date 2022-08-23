@@ -15,4 +15,4 @@ There are two ways to use the linker namespace:
 
 ### Usage example
 
-Test usages show some examples of using the linker namespace. The file <ld-musl-namespace.ini> in current directory is configures for test. The file <libc-test/src/functional/dlopen_ns.c> gives usages of how apis and configures work.
+Test usages show some examples of using the linker namespace. The file <ld-musl-namespace-arm-test.ini> or <ld-musl-namespace-aarch64-test.ini> in config directory is configures for test. The file <libc-test/src/functionalext/dlns/> gives usages of how apis and configures work.
