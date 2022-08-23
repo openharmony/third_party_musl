@@ -58,6 +58,8 @@ static void error(const char *, ...);
 #define INVALID_FD_INHIBIT_FURTHER_SEARCH (-2)
 #endif
 
+#define PARENTS_BASE_CAPACITY 8
+
 struct debug {
 	int ver;
 	void *head;
@@ -130,6 +132,9 @@ struct dso {
 		size_t *got;
 	} *funcdescs;
 	size_t *got;
+	struct dso **parents;
+	size_t parents_count;
+	size_t parents_capacity;
 	char buf[];
 };
 
@@ -196,7 +201,7 @@ static bool load_library_header(struct loadtask *task);
 static void task_load_library(struct loadtask *task);
 static void preload_direct_deps(struct dso *p, ns_t *namespace, struct loadtasks *tasks);
 static void unmap_preloaded_sections(struct loadtasks *tasks);
-static void preload_deps(struct dso *p, ns_t *ns, struct loadtasks *tasks);
+static void preload_deps(struct dso *p, struct loadtasks *tasks);
 static void run_loadtasks(struct loadtasks *tasks);
 static void assign_tls(struct dso *p);
 static void load_preload(char *s, ns_t *ns, struct loadtasks *tasks);
@@ -510,6 +515,77 @@ static Sym *gnu_lookup_filtered(uint32_t h1, uint32_t *hashtab, struct dso *dso,
 	return gnu_lookup(h1, hashtab, dso, s);
 }
 
+static bool check_sym_accessible(struct dso *dso, ns_t *ns)
+{
+	if (!dso || !dso->namespace || !ns) {
+		return false;
+	}
+	if (dso->namespace == ns) {
+		return true;
+	}
+	for (int i = 0; i < dso->parents_count; i++) {
+		if (dso->parents[i]->namespace == ns) {
+			return true;
+		}
+	}
+	return false;
+}
+
+static int find_dso_parent(struct dso *p, struct dso *target)
+{
+	int index = -1;
+	for (int i = 0; i < p->parents_count; i++) {
+		if (p->parents[i] == target) {
+			index = i;
+			break;
+		}
+	}
+	return index;
+}
+
+static void add_dso_parent(struct dso *p, struct dso *parent)
+{
+	int index = find_dso_parent(p, parent);
+	if (index != -1) {
+		return;
+	}
+	if (p->parents_count + 1 > p->parents_capacity) {
+		if (p->parents_capacity == 0) {
+			p->parents = (struct dso **)malloc(sizeof(struct dso *) * PARENTS_BASE_CAPACITY);
+			if (!p->parents) {
+				return;
+			}
+			p->parents_capacity = PARENTS_BASE_CAPACITY;
+		} else {
+			struct dso ** realloced = (struct dso **)realloc(
+				p->parents, sizeof(struct dso *) * (p->parents_capacity + PARENTS_BASE_CAPACITY));
+			if (!realloced) {
+				return;
+			}
+			p->parents = realloced;
+			p->parents_capacity += PARENTS_BASE_CAPACITY;
+		}
+	}
+	p->parents[p->parents_count] = parent;
+	p->parents_count++;
+}
+
+static void remove_dso_parent(struct dso *p, struct dso *parent)
+{
+	int index = find_dso_parent(p, parent);
+	if (index == -1) {
+		return;
+	}
+	int i;
+	for (i = 0; i < index; i++) {
+		p->parents[i] = p->parents[i];
+	}
+	for (i = index; i < p->parents_count - 1; i++) {
+		p->parents[i] = p->parents[i + 1];
+	}
+	p->parents_count--;
+}
+
 #define OK_TYPES (1<<STT_NOTYPE | 1<<STT_OBJECT | 1<<STT_FUNC | 1<<STT_COMMON | 1<<STT_TLS)
 #define OK_BINDS (1<<STB_GLOBAL | 1<<STB_WEAK | 1<<STB_GNU_UNIQUE)
 
@@ -520,7 +596,7 @@ static Sym *gnu_lookup_filtered(uint32_t h1, uint32_t *hashtab, struct dso *dso,
 #if defined(__GNUC__)
 __attribute__((always_inline))
 #endif
-static inline struct symdef find_sym2(struct dso *dso, const char *s, int need_def, int use_deps)
+static inline struct symdef find_sym2(struct dso *dso, const char *s, int need_def, int use_deps, ns_t *ns)
 {
 	uint32_t h = 0, gh = gnu_hash(s), gho = gh / (8*sizeof(size_t)), *ght;
 	size_t ghm = 1ul << gh % (8*sizeof(size_t));
@@ -528,6 +604,9 @@ static inline struct symdef find_sym2(struct dso *dso, const char *s, int need_d
 	struct dso **deps = use_deps ? dso->deps : 0;
 	for (; dso; dso=use_deps ? *deps++ : dso->syms_next) {
 		Sym *sym;
+		if (ns && !check_sym_accessible(dso, ns)) {
+			continue;
+		}
 		if ((ght = dso->ghashtab)) {
 			sym = gnu_lookup_filtered(gh, ght, dso, s, gho, ghm);
 		} else {
@@ -553,7 +632,7 @@ static inline struct symdef find_sym2(struct dso *dso, const char *s, int need_d
 
 static struct symdef find_sym(struct dso *dso, const char *s, int need_def)
 {
-	return find_sym2(dso, s, need_def, 0);
+	return find_sym2(dso, s, need_def, 0, NULL);
 }
 
 static void do_relocs(struct dso *dso, size_t *rel, size_t rel_size, size_t stride)
@@ -608,7 +687,7 @@ static void do_relocs(struct dso *dso, size_t *rel, size_t rel_size, size_t stri
 			ctx = type==REL_COPY ? head->syms_next : head;
 			def = (sym->st_info>>4) == STB_LOCAL
 				? (struct symdef){ .dso = dso, .sym = sym }
-				: find_sym(ctx, name, type==REL_PLT);
+				: find_sym2(ctx, name, type==REL_PLT, 0, dso->namespace);
 			if (!def.sym && (sym->st_shndx != SHN_UNDEF
 				|| sym->st_info>>4 != STB_WEAK)) {
 				if (dso->lazy && (type==REL_PLT || type==REL_GOT)) {
@@ -1539,13 +1618,16 @@ static void load_direct_deps(struct dso *p, ns_t *namespace)
 	}
 	p->deps[cnt] = 0;
 	p->ndeps_direct = cnt;
+	for (i = 0; i < p->ndeps_direct; i++) {
+		add_dso_parent(p->deps[i], p);
+	}
 }
 
-static void load_deps(struct dso *p, ns_t *ns)
+static void load_deps(struct dso *p)
 {
 	if (p->deps) return;
 	for (; p; p=p->next)
-		load_direct_deps(p, ns);
+		load_direct_deps(p, p->namespace);
 }
 #endif
 
@@ -2205,7 +2287,7 @@ void __dls3(size_t *sp, size_t *auxv)
 	if (env_preload) {
 		load_preload(env_preload, get_default_ns(), tasks);
 	}
-	preload_deps(&app, get_default_ns(), tasks);
+	preload_deps(&app, tasks);
 	unmap_preloaded_sections(tasks);
 	shuffle_loadtasks(tasks);
 	run_loadtasks(tasks);
@@ -2213,7 +2295,7 @@ void __dls3(size_t *sp, size_t *auxv)
 	assign_tls(app.next);
 #else
 	if (env_preload) load_preload(env_preload, get_default_ns());
- 	load_deps(&app, get_default_ns());
+ 	load_deps(&app);
 #endif
 
 	for (struct dso *p=head; p; p=p->next)
@@ -2417,9 +2499,17 @@ static void *dlopen_impl(
 			free(p->funcdescs);
 			if (p->rpath != p->rpath_orig)
 				free(p->rpath);
+			if (p->deps) {
+				for (int i = 0; i < p->ndeps_direct; i++) {
+					remove_dso_parent(p->deps[i], p);
+				}
+			}
 			free(p->deps);
 			dlclose_ns(p);
 			unmap_library(p);
+			if (p->parents) {
+				free(p->parents);
+			}
 			free(p);
 		}
 		free(ctor_queue);
@@ -2470,7 +2560,7 @@ static void *dlopen_impl(
 	if (!task->isloaded) {
 		append_loadtasks(tasks, task);
 	}
-	preload_deps(p, ns, tasks);
+	preload_deps(p, tasks);
 	unmap_preloaded_sections(tasks);
 	if (extinfo) {
 		reserved_address_recursive = extinfo->flag & DL_EXT_RESERVED_ADDRESS_RECURSIVE;
@@ -2489,7 +2579,7 @@ static void *dlopen_impl(
 	tasks = NULL;
 #else
 	/* First load handling */
-	load_deps(p, ns, extinfo);
+	load_deps(p);
 #endif
 	extend_bfs_deps(p);
 	pthread_mutex_lock(&init_fini_lock);
@@ -2582,6 +2672,35 @@ void dlns_init(Dl_namespace *dlns, const char *name)
 	LD_LOGI("dlns_init dlns->name:%s .\n", dlns->name);
 }
 
+int dlns_get(const char *name, Dl_namespace *dlns)
+{
+	if (!dlns) {
+		LD_LOGW("dlns_get dlns is null.\n");
+		return EINVAL;
+	}
+	int ret = 0;
+	ns_t *ns = NULL;
+	pthread_rwlock_rdlock(&lock);
+	if (!name) {
+		struct dso *caller;
+		const void *caller_addr = __builtin_return_address(0);
+		caller = (struct dso *)addr2dso((size_t)caller_addr);
+		ns = ((caller && caller->namespace) ? caller->namespace : get_default_ns());
+		(void)snprintf(dlns->name, sizeof dlns->name, ns->ns_name);
+		LD_LOGI("dlns_get name is null, current dlns dlns->name:%s.\n", dlns->name);
+	} else {
+		ns = find_ns_by_name(name);
+		if (ns) {
+			(void)snprintf(dlns->name, sizeof dlns->name, ns->ns_name);
+			LD_LOGI("dlns_get found ns, current dlns dlns->name:%s.\n", dlns->name);
+		} else {
+			LD_LOGI("dlns_get not found ns! name:%s.\n", name);
+			ret = ENOKEY;
+		}
+	}
+	pthread_rwlock_unlock(&lock);
+	return ret;
+}
 void *dlopen_ns(Dl_namespace *dlns, const char *file, int mode)
 {
 	const void *caller_addr = __builtin_return_address(0);
@@ -2589,10 +2708,10 @@ void *dlopen_ns(Dl_namespace *dlns, const char *file, int mode)
 	return dlopen_impl(file, mode, dlns->name, caller_addr, NULL);
 }
 
-int dlns_create(Dl_namespace *dlns, const char *lib_path)
+int dlns_create2(Dl_namespace *dlns, const char *lib_path, int flags)
 {
 	if (!dlns) {
-		LD_LOGW("dlns_create dlns is null.\n");
+		LD_LOGW("dlns_create2 dlns is null.\n");
 		return EINVAL;
 	}
 	ns_t *ns;
@@ -2600,13 +2719,13 @@ int dlns_create(Dl_namespace *dlns, const char *lib_path)
 	pthread_rwlock_wrlock(&lock);
 	ns = find_ns_by_name(dlns->name);
 	if (ns) {
-		LD_LOGE("dlns_create ns is exist.\n");
+		LD_LOGE("dlns_create2 ns is exist.\n");
 		pthread_rwlock_unlock(&lock);
 		return EEXIST;
 	}
 	ns = ns_alloc();
 	if (!ns) {
-		LD_LOGE("dlns_create no memery.\n");
+		LD_LOGE("dlns_create2 no memery.\n");
 		pthread_rwlock_unlock(&lock);
 		return ENOMEM;
 	}
@@ -2614,8 +2733,21 @@ int dlns_create(Dl_namespace *dlns, const char *lib_path)
 	ns_add_dso(ns, get_default_ns()->ns_dsos->dsos[0]); /* add main app to this namespace*/
 	nslist_add_ns(ns); /* add ns to list*/
 	ns_set_lib_paths(ns, lib_path);
-	ns_add_inherit(ns, get_default_ns(), NULL);
-	LD_LOGI("dlns_create :"
+
+	if ((flags & CREATE_INHERIT_DEFAULT) != 0) {
+		ns_add_inherit(ns, get_default_ns(), NULL);
+	}
+
+	if ((flags & CREATE_INHERIT_CURRENT) != 0) {
+		struct dso *caller;
+		const void *caller_addr = __builtin_return_address(0);
+		caller = (struct dso *)addr2dso((size_t)caller_addr);
+		if (caller && caller->namespace) {
+			ns_add_inherit(ns, caller->namespace, NULL);
+		}
+	}
+
+	LD_LOGI("dlns_create2 :"
 			"ns: %p ,"
 			"ns_name: %s ,"
 			"separated:%d ,"
@@ -2624,6 +2756,11 @@ int dlns_create(Dl_namespace *dlns, const char *lib_path)
 	pthread_rwlock_unlock(&lock);
 
 	return 0;
+}
+
+int dlns_create(Dl_namespace *dlns, const char *lib_path)
+{
+	return dlns_create2(dlns, lib_path, CREATE_INHERIT_DEFAULT);
 }
 
 int dlns_inherit(Dl_namespace *dlns, Dl_namespace *inherited, const char *shared_libs)
@@ -2707,17 +2844,30 @@ static void *addr2dso(size_t a)
 static void *do_dlsym(struct dso *p, const char *s, void *ra)
 {
 	int use_deps = 0;
+	bool ra2dso = false;
+	ns_t *ns = NULL;
+	struct dso *caller = NULL;
 	if (p == head || p == RTLD_DEFAULT) {
 		p = head;
+		ra2dso = true;
 	} else if (p == RTLD_NEXT) {
 		p = addr2dso((size_t)ra);
 		if (!p) p=head;
 		p = p->next;
+		ra2dso = true;
 	} else if (__dl_invalid_handle(p)) {
 		return 0;
-	} else
+	} else {
 		use_deps = 1;
-	struct symdef def = find_sym2(p, s, 0, use_deps);
+		ns = p->namespace;
+	}
+	if (ra2dso) {
+		caller = (struct dso *)addr2dso((size_t)ra);
+		if (caller && caller->namespace) {
+			ns = caller->namespace;
+		}
+	}
+	struct symdef def = find_sym2(p, s, 0, use_deps, ns);
 	if (!def.sym) {
 		error("Symbol not found: %s", s);
 		return 0;
@@ -2809,9 +2959,17 @@ static int do_dlclose(struct dso *p)
 	
 	if (p->lazy != NULL)
 		free(p->lazy);
+	if (p->deps) {
+		for (int i = 0; i < p->ndeps_direct; i++) {
+			remove_dso_parent(p->deps[i], p);
+		}
+	}
 	if (p->deps != no_deps)
 		free(p->deps);
 	unmap_library(p);
+	if (p->parents) {
+		free(p->parents);
+	}
 	free(p);
 
 	return 0;
@@ -3735,6 +3893,9 @@ static void preload_direct_deps(struct dso *p, ns_t *namespace, struct loadtasks
 	}
 	p->deps[cnt] = 0;
 	p->ndeps_direct = cnt;
+	for (i = 0; i < p->ndeps_direct; i++) {
+		add_dso_parent(p->deps[i], p);
+	}
 }
 
 static void unmap_preloaded_sections(struct loadtasks *tasks)
@@ -3764,13 +3925,13 @@ static void unmap_preloaded_sections(struct loadtasks *tasks)
 	}
 }
 
-static void preload_deps(struct dso *p, ns_t *ns, struct loadtasks *tasks)
+static void preload_deps(struct dso *p, struct loadtasks *tasks)
 {
 	if (p->deps) {
 		return;
 	}
 	for (; p; p = p->next) {
-		preload_direct_deps(p, ns, tasks);
+		preload_direct_deps(p, p->namespace, tasks);
 	}
 }
 
