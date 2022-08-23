@@ -1,29 +1,50 @@
 
 cd /data/tests/libc-test
 rm src/REPORT 
-touch src/REPORT 
+touch src/REPORT
 
-for filelist in src/*
-do  
-    if [ -d $filelist ]; then
-        for file in `ls $filelist`
-        do
-            if [ "$file" = "runtest" ] \
-            || [ "$file" = "libdlopen_dso.so" ] \
-            || [ "$file" = "libtls_init_dso.so" ] \
-            || [ "$file" = "libtls_align_dso.so" ] \
-            || [ "$file" = "libtls_get_new-dtv_dso.so" ]
-            then
-                continue
-            else
-                if [ "$file" = "tls_get_new-dtv" ];then
-                    cd src/regression
-                    /data/tests/libc-test/src/common/runtest -w '' $file >> /data/tests/libc-test/src/REPORT
-                    cd /data/tests/libc-test
-                else
-                    src/common/runtest -w '' $filelist/$file >> src/REPORT
-                fi
-            fi
-        done
+function FileSuffix() {
+    local filename="$1"
+    if [ -n "$filename" ]; then
+        echo "${filename##*.}"
     fi
+}
+
+for dir in src/*
+do
+	if [ -d $dir ]; then
+		if [ "$dir" = "src/functionalext" ] 
+		then
+			# continue
+			for subdir in $dir/*
+			do
+				for file in `ls $subdir`
+				do
+					if [ "$(FileSuffix ${file})" = "so" ] \
+					|| [ "$file" = "trace_stresstest" ] \
+					|| [ -d ./$subdir/$file ] 
+					then
+						continue
+					else
+						# echo file=$subdir/$file
+						src/common/runtest -w '' ./$subdir/$file >> src/REPORT
+					fi
+				done
+			done
+		else
+			# continue
+			for file in `ls $dir`
+			do
+				if [ "$file" = "runtest" ] \
+				|| [ "$(FileSuffix ${file})" = "so" ] \
+				|| [ -d $file ] 
+				then
+					continue
+				else
+					# echo file=$dir/$file
+					src/common/runtest -w '' $dir/$file >> src/REPORT
+				fi
+			done
+		fi
+	fi
 done
