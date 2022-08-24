@@ -17,13 +17,8 @@ if (is_lite_system && current_os == "ohos") {
 } else {
   import("musl_template.gni")
 
-  musl_abi_target = "soft"
-
   group("musl_all") {
     deps = [
-      ":a7_hard_neon_libs",
-      ":a7_soft_libs",
-      ":a7_softfp_neon_libs",
       ":musl_headers",
       ":soft_libs",
     ]
@@ -51,25 +46,13 @@ if (is_lite_system && current_os == "ohos") {
 
   group("musl_libs") {
     deps = [
-      ":${musl_abi_target}_libs",
+      ":soft_libs",
       ":musl_headers",
     ]
   }
 
   musl_libs("soft_libs") {
     target_abi = "soft"
-  }
-
-  musl_libs("a7_soft_libs") {
-    target_abi = "a7_soft"
-  }
-
-  musl_libs("a7_softfp_neon_libs") {
-    target_abi = "a7_softfp_neon-vfpv4"
-  }
-
-  musl_libs("a7_hard_neon_libs") {
-    target_abi = "a7_hard_neon-vfpv4"
   }
 
   group("musl_headers") {
