@@ -5,7 +5,6 @@ template("musl_libs") {
   no_default_deps = true
 
   forward_variables_from(invoker, [ "target_abi" ])
-  abi_prefix = target_abi
 
   if (target_abi == "soft") {
     _libs_path_prefix = "."
@@ -30,47 +29,47 @@ template("musl_libs") {
 
   group(target_name) {
     deps = [
-      ":${abi_prefix}_create_linker",
-      ":${abi_prefix}_libc_musl_shared",
-      ":${abi_prefix}_libc_musl_static",
-      ":${abi_prefix}_musl_crt_libs",
+      ":soft_create_linker",
+      ":soft_libc_musl_shared",
+      ":soft_libc_musl_static",
+      ":soft_musl_crt_libs",
     ]
   }
 
-  group("${abi_prefix}_shared_libs") {
+  group("soft_shared_libs") {
     deps = [
-      ":${abi_prefix}_libc_musl_shared",
-      ":${abi_prefix}_libcrypt",
-      ":${abi_prefix}_libdl",
-      ":${abi_prefix}_libm",
-      ":${abi_prefix}_libpthread",
-      ":${abi_prefix}_libresolv",
-      ":${abi_prefix}_librt",
-      ":${abi_prefix}_libutil",
-      ":${abi_prefix}_libxnet",
-      ":${abi_prefix}_musl_crt_libs",
+      ":soft_libc_musl_shared",
+      ":soft_libcrypt",
+      ":soft_libdl",
+      ":soft_libm",
+      ":soft_libpthread",
+      ":soft_libresolv",
+      ":soft_librt",
+      ":soft_libutil",
+      ":soft_libxnet",
+      ":soft_musl_crt_libs",
       ":musl_headers",
     ]
   }
 
-  group("${abi_prefix}_static_libs") {
+  group("soft_static_libs") {
     deps = [
-      ":${abi_prefix}_libc_musl_static",
-      ":${abi_prefix}_libcrypt",
-      ":${abi_prefix}_libdl",
-      ":${abi_prefix}_libm",
-      ":${abi_prefix}_libpthread",
-      ":${abi_prefix}_libresolv",
-      ":${abi_prefix}_librt",
-      ":${abi_prefix}_libutil",
-      ":${abi_prefix}_libxnet",
-      ":${abi_prefix}_musl_crt_libs",
+      ":soft_libc_musl_static",
+      ":soft_libcrypt",
+      ":soft_libdl",
+      ":soft_libm",
+      ":soft_libpthread",
+      ":soft_libresolv",
+      ":soft_librt",
+      ":soft_libutil",
+      ":soft_libxnet",
+      ":soft_musl_crt_libs",
       ":musl_headers",
     ]
   }
 
-  group("${abi_prefix}_musl_crt_libs") {
-    deps = [ ":${abi_prefix}_musl_crt_install_action" ]
+  group("soft_musl_crt_libs") {
+    deps = [ ":soft_musl_crt_install_action" ]
   }
 
   # part of default_compiler_configs from build/config/BUILDCONFIG.gn
@@ -93,33 +92,8 @@ template("musl_libs") {
     "//build/config/sanitizers:default_sanitizer_flags",
   ]
 
-  config("${abi_prefix}_musl_abi_config") {
-    if (musl_arch == "arm") {
-      if (target_abi == "soft") {
-        cflags = [ "-mfloat-abi=soft" ]
-      } else if (target_abi == "a7_soft") {
-        cflags = [
-          "-mcpu=cortex-a7",
-          "-mfloat-abi=soft",
-        ]
-      } else if (target_abi == "a7_softfp_neon-vfpv4") {
-        cflags = [
-          "-mcpu=cortex-a7",
-          "-mfloat-abi=softfp",
-          "-mfpu=neon-vfpv4",
-        ]
-      } else if (target_abi == "a7_hard_neon-vfpv4") {
-        cflags = [
-          "-mcpu=cortex-a7",
-          "-mfloat-abi=hard",
-          "-mfpu=neon-vfpv4",
-        ]
-      }
-    }
-  }
-
-  config("${abi_prefix}_musl_config") {
-    configs = [ ":${abi_prefix}_musl_abi_config" ]
+  config("soft_musl_config") {
+    configs = [ "//build/config/compiler:compiler_cpu_abi" ]
 
     include_dirs = [
       "${target_out_dir}/${musl_ported_dir}/arch/${musl_arch}",
@@ -138,10 +112,8 @@ template("musl_libs") {
     ]
 
     if (musl_arch == "arm") {
-      cflags_basic += [ "-march=armv7-a" ]
       cflags_basic += [ "-mtp=cp15" ]
     } else if (musl_arch == "aarch64") {
-      cflags_basic += [ "-march=armv8" ]
     }
 
     cflags_auto = [
@@ -212,7 +184,7 @@ template("musl_libs") {
     asmflags = cflags
   }
 
-  config("${abi_prefix}_hook") {
+  config("soft_hook") {
     defines = []
     configs = []
 
@@ -245,7 +217,7 @@ template("musl_libs") {
     }
   }
 
-  source_set("${abi_prefix}_musl_crt") {
+  source_set("soft_musl_crt") {
     sources = [
       "${target_out_dir}/${musl_ported_dir}/crt/${musl_arch}/crti.s",
       "${target_out_dir}/${musl_ported_dir}/crt/${musl_arch}/crtn.s",
@@ -257,7 +229,7 @@ template("musl_libs") {
     defines = [ "CRT" ]
 
     configs -= musl_inherited_configs
-    configs += [ ":${abi_prefix}_musl_config" ]
+    configs += [ ":soft_musl_config" ]
     cflags = [
       "-fPIC",
       "-fno-stack-protector",
@@ -268,7 +240,7 @@ template("musl_libs") {
     asmflags = cflags
   }
 
-  source_set("${abi_prefix}_musl_src") {
+  source_set("soft_musl_src") {
     sources_orig = []
     sources = []
     set_sources_assignment_filter([])
@@ -387,7 +359,7 @@ template("musl_libs") {
     ]
 
     configs -= musl_inherited_configs
-    configs += [ ":${abi_prefix}_musl_config" ]
+    configs += [ ":soft_musl_config" ]
 
     if (!defined(defines)) {
       defines = []
@@ -406,7 +378,7 @@ template("musl_libs") {
     deps = porting_deps
   }
 
-  source_set("${abi_prefix}_musl_src_nossp") {
+  source_set("soft_musl_src_nossp") {
     sources = []
     sources_orig = [
       "src/string/mempcpy.c",
@@ -429,7 +401,7 @@ template("musl_libs") {
     }
 
     configs -= musl_inherited_configs
-    configs += [ ":${abi_prefix}_musl_config" ]
+    configs += [ ":soft_musl_config" ]
     cflags = [
       "-O3",
       "-fPIC",
@@ -439,7 +411,7 @@ template("musl_libs") {
     deps = porting_deps
   }
 
-  source_set("${abi_prefix}_musl_ldso") {
+  source_set("soft_musl_ldso") {
     sources = []
     sources_orig = musl_src_ldso
 
@@ -448,7 +420,7 @@ template("musl_libs") {
     }
 
     configs -= musl_inherited_configs
-    configs += [ ":${abi_prefix}_musl_config" ]
+    configs += [ ":soft_musl_config" ]
     cflags = [
       "-fPIC",
       "-fno-stack-protector",
@@ -469,7 +441,7 @@ template("musl_libs") {
     deps = porting_deps
   }
 
-  source_set("${abi_prefix}_musl_hook") {
+  source_set("soft_musl_hook") {
     sources = [
       "./porting/linux/user/src/hook/malloc_common.c",
       "./porting/linux/user/src/hook/memory_tag.c",
@@ -492,11 +464,11 @@ template("musl_libs") {
 
     configs += [
       "//build/config/compiler:compiler",
-      ":${abi_prefix}_hook",
+      ":soft_hook",
     ]
   }
 
-  static_library("${abi_prefix}_libc_musl_static") {
+  static_library("soft_libc_musl_static") {
     output_name = "libc"
     complete_static_lib = true
 
@@ -504,70 +476,70 @@ template("musl_libs") {
 
     output_dir = "${target_out_dir}/${_libs_out_dir}"
     deps = [
-      ":${abi_prefix}_musl_hook",
-      ":${abi_prefix}_musl_src",
-      ":${abi_prefix}_musl_src_nossp",
+      ":soft_musl_hook",
+      ":soft_musl_src",
+      ":soft_musl_src_nossp",
     ]
     deps += dfx_deps
   }
 
-  static_library("${abi_prefix}_libm") {
+  static_library("soft_libm") {
     complete_static_lib = true
     configs -= musl_inherited_configs
     output_name = "libm"
     output_dir = "${target_out_dir}/${_libs_out_dir}"
   }
 
-  static_library("${abi_prefix}_librt") {
+  static_library("soft_librt") {
     complete_static_lib = true
     configs -= musl_inherited_configs
     output_name = "librt"
     output_dir = "${target_out_dir}/${_libs_out_dir}"
   }
 
-  static_library("${abi_prefix}_libpthread") {
+  static_library("soft_libpthread") {
     complete_static_lib = true
     configs -= musl_inherited_configs
     output_name = "libpthread"
     output_dir = "${target_out_dir}/${_libs_out_dir}"
   }
 
-  static_library("${abi_prefix}_libcrypt") {
+  static_library("soft_libcrypt") {
     complete_static_lib = true
     configs -= musl_inherited_configs
     output_name = "libcrypt"
     output_dir = "${target_out_dir}/${_libs_out_dir}"
   }
 
-  static_library("${abi_prefix}_libutil") {
+  static_library("soft_libutil") {
     complete_static_lib = true
     configs -= musl_inherited_configs
     output_name = "libutil"
     output_dir = "${target_out_dir}/${_libs_out_dir}"
   }
 
-  static_library("${abi_prefix}_libresolv") {
+  static_library("soft_libresolv") {
     complete_static_lib = true
     configs -= musl_inherited_configs
     output_name = "libresolv"
     output_dir = "${target_out_dir}/${_libs_out_dir}"
   }
 
-  static_library("${abi_prefix}_libxnet") {
+  static_library("soft_libxnet") {
     complete_static_lib = true
     configs -= musl_inherited_configs
     output_name = "libxnet"
     output_dir = "${target_out_dir}/${_libs_out_dir}"
   }
 
-  static_library("${abi_prefix}_libdl") {
+  static_library("soft_libdl") {
     complete_static_lib = true
     configs -= musl_inherited_configs
     output_name = "libdl"
     output_dir = "${target_out_dir}/${_libs_out_dir}"
   }
 
-  shared_library("${abi_prefix}_libc_musl_shared") {
+  shared_library("soft_libc_musl_shared") {
     output_dir = "${target_out_dir}/${_libs_out_dir}"
     output_name = "libc"
     output_extension = "so"
@@ -590,29 +562,29 @@ template("musl_libs") {
 
     configs -= musl_inherited_configs
     configs -= [ "//build/config:default_libs" ]
-    configs += [ ":${abi_prefix}_musl_config" ]
+    configs += [ ":soft_musl_config" ]
 
     deps = [
-      ":${abi_prefix}_libdl",
-      ":${abi_prefix}_libpthread",
-      ":${abi_prefix}_musl_crt_install_action",
-      ":${abi_prefix}_musl_hook",
-      ":${abi_prefix}_musl_ldso",
-      ":${abi_prefix}_musl_src",
-      ":${abi_prefix}_musl_src_nossp",
+      ":soft_libdl",
+      ":soft_libpthread",
+      ":soft_musl_crt_install_action",
+      ":soft_musl_hook",
+      ":soft_musl_ldso",
+      ":soft_musl_src",
+      ":soft_musl_src_nossp",
     ]
     deps += dfx_deps
   }
 
-  action_foreach("${abi_prefix}_musl_crt_install_action") {
+  action_foreach("soft_musl_crt_install_action") {
     redir = "${root_out_dir}/obj"
     script = "${target_out_dir}/${musl_ported_dir}/scripts/install.py"
     sources = [
-      "${redir}/${target_out_dir}/${musl_ported_dir}/crt/${abi_prefix}_musl_crt/Scrt1.o",
-      "${redir}/${target_out_dir}/${musl_ported_dir}/crt/${abi_prefix}_musl_crt/crt1.o",
-      "${redir}/${target_out_dir}/${musl_ported_dir}/crt/${abi_prefix}_musl_crt/rcrt1.o",
-      "${redir}/${target_out_dir}/${musl_ported_dir}/crt/${musl_arch}/${abi_prefix}_musl_crt/crti.o",
-      "${redir}/${target_out_dir}/${musl_ported_dir}/crt/${musl_arch}/${abi_prefix}_musl_crt/crtn.o",
+      "${redir}/${target_out_dir}/${musl_ported_dir}/crt/soft_musl_crt/Scrt1.o",
+      "${redir}/${target_out_dir}/${musl_ported_dir}/crt/soft_musl_crt/crt1.o",
+      "${redir}/${target_out_dir}/${musl_ported_dir}/crt/soft_musl_crt/rcrt1.o",
+      "${redir}/${target_out_dir}/${musl_ported_dir}/crt/${musl_arch}/soft_musl_crt/crti.o",
+      "${redir}/${target_out_dir}/${musl_ported_dir}/crt/${musl_arch}/soft_musl_crt/crtn.o",
     ]
     outputs = [ "${root_build_dir}/obj/third_party/musl/${_libs_out_dir}/{{source_file_part}}" ]
     args = [
@@ -620,13 +592,13 @@ template("musl_libs") {
       "{{source}}",
     ]
     args += [ "--output" ] + rebase_path(outputs, root_build_dir)
-    deps = [ ":${abi_prefix}_musl_crt" ]
+    deps = [ ":soft_musl_crt" ]
   }
 
-  copy("${abi_prefix}_create_linker") {
-    deps = [ ":${abi_prefix}_libc_musl_shared" ]
+  copy("soft_create_linker") {
+    deps = [ ":soft_libc_musl_shared" ]
 
-    # _libc_shared_outputs = get_target_outputs(":${abi_prefix}_libc_musl_shared")
+    # _libc_shared_outputs = get_target_outputs(":soft_libc_musl_shared")
     _libc_shared_so = "${target_out_dir}/${_libs_out_dir}/libc.so"
     sources = [ _libc_shared_so ]
     if (is_asan) {
