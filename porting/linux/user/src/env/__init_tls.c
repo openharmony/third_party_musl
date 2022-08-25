@@ -52,7 +52,9 @@ void *__copy_tls(unsigned char *mem)
 
 	for (i=1, p=libc.tls_head; p; i++, p=p->next) {
 		dtv[i] = (uintptr_t)(mem + p->offset) + DTP_OFFSET;
-		memcpy(mem + p->offset, p->image, p->len);
+		if (p->image) {
+			memcpy(mem + p->offset, p->image, p->len);
+		}
 	}
 #else
 	dtv = (uintptr_t *)mem;
@@ -63,7 +65,9 @@ void *__copy_tls(unsigned char *mem)
 
 	for (i=1, p=libc.tls_head; p; i++, p=p->next) {
 		dtv[i] = (uintptr_t)(mem - p->offset) + DTP_OFFSET;
-		memcpy(mem - p->offset, p->image, p->len);
+		if (p->image) {
+			memcpy(mem - p->offset, p->image, p->len);
+		}
 	}
 #endif
 	dtv[0] = libc.tls_cnt;
