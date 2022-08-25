@@ -296,7 +296,6 @@ static void set_ns_attrs(ns_t *ns, ns_configor *conf)
 	if (allowed_libs) ns_set_allowed_libs(ns, allowed_libs);
 
 	LD_LOGD("set_ns_attrs :"
-			"ns: %{public}p ,"
 			"ns_name: %{public}s ,"
 			"separated:%{public}d ,"
 			"lib_paths:%{public}s ,"
@@ -304,7 +303,7 @@ static void set_ns_attrs(ns_t *ns, ns_configor *conf)
 			"permitted_paths:%{public}s ,"
 			"asan_permitted_paths:%{public}s ,"
 			"allowed_libs: %{public}s .",
-			ns, ns->ns_name, ns->separated, ns->lib_paths, ns->asan_lib_paths, permitted_paths,
+			ns->ns_name, ns->separated, ns->lib_paths, ns->asan_lib_paths, permitted_paths,
 			asan_permitted_paths, allowed_libs);
 }
 
@@ -322,12 +321,11 @@ static void set_ns_inherits(ns_t *ns, ns_configor *conf)
 				char *shared_libs = conf->get_inherit_shared_libs(ns->ns_name, inherited_ns->ns_name);
 				ns_add_inherit(ns, inherited_ns, shared_libs);
 				LD_LOGD("set_ns_inherits :"
-						"inherited_ns: %{public}p ,"
 						"ns_name: %{public}s ,"
 						"separated:%{public}d ,"
 						"lib_paths:%{public}s ,"
 						"asan_lib_paths:%{public}s ,",
-						inherited_ns, inherited_ns->ns_name, inherited_ns->separated, inherited_ns->lib_paths,
+						inherited_ns->ns_name, inherited_ns->separated, inherited_ns->lib_paths,
 						inherited_ns->asan_lib_paths);
 			}
 		}
@@ -1444,10 +1442,11 @@ static void get_sys_path(ns_configor *conf)
 }
 
 static struct dso *search_dso_by_name(const char *name, const ns_t *ns) {
-	LD_LOGD("search_dso_by_name name:%{public}s, ns:%{public}p", name, ns);
+	LD_LOGD("search_dso_by_name name:%{public}s, ns_name:%{public}s", name, ns ? ns->ns_name: "NULL");
 	for (size_t i = 0; i < ns->ns_dsos->num; i++){
 		struct dso *p = ns->ns_dsos->dsos[i];
 		if (p->shortname && !strcmp(p->shortname, name)) {
+			LD_LOGD("search_dso_by_name found name:%{public}s, ns_name:%{public}s", name, ns ? ns->ns_name: "NULL");
 			return p;
 		}
 	}
@@ -1455,11 +1454,12 @@ static struct dso *search_dso_by_name(const char *name, const ns_t *ns) {
 }
 
 static struct dso *search_dso_by_fstat(const struct stat *st, const ns_t *ns) {
-	LD_LOGD("search_dso_by_fstat st->st_dev:%{public}lu, st->st_ino:%{public}lu, ns:%{public}p",
-			st->st_dev, st->st_ino, ns);
+	LD_LOGD("search_dso_by_fstat ns_name:%{public}s", ns ? ns->ns_name : "NULL");
 	for (size_t i = 0; i < ns->ns_dsos->num; i++){
 		struct dso *p = ns->ns_dsos->dsos[i];
 		if (p->dev == st->st_dev && p->ino == st->st_ino) {
+			LD_LOGD("search_dso_by_fstat found dev:%{public}lu, ino:%{public}lu, ns_name:%{public}s",
+				st->st_dev, st->st_ino, ns ? ns->ns_name : "NULL");
 			return p;
 		}
 	}
@@ -1467,8 +1467,11 @@ static struct dso *search_dso_by_fstat(const struct stat *st, const ns_t *ns) {
 }
 /* Find loaded so by name */
 static struct dso *find_library_by_name(const char *name, const ns_t *ns, bool check_inherited)
-{	
-	LD_LOGD("find_library_by_name name:%{public}s, ns:%{public}p, check_inherited:%{public}d", name, ns, check_inherited);
+{
+	LD_LOGD("find_library_by_name name:%{public}s, ns_name:%{public}s, check_inherited:%{public}d",
+		name,
+		ns ? ns->ns_name : "NULL",
+		!!check_inherited);
 	struct dso *p = search_dso_by_name(name, ns);
 	if (p) return p;
 	if (check_inherited && ns->ns_inherits) {
@@ -1482,9 +1485,9 @@ static struct dso *find_library_by_name(const char *name, const ns_t *ns, bool c
 }
 /* Find loaded so by file stat */
 static struct dso *find_library_by_fstat(const struct stat *st, const ns_t *ns, bool check_inherited) {
-	LD_LOGD("find_library_by_fstat st->st_dev:%{public}lu, st->st_ino:%{public}lu, "
-			"ns:%{public}p, check_inherited:%{public}d",
-			st->st_dev, st->st_ino, ns, check_inherited);
+	LD_LOGD("find_library_by_fstat ns_name:%{public}s, check_inherited :%{public}d",
+		ns ? ns->ns_name : "NULL",
+		!!check_inherited);
 	struct dso *p = search_dso_by_fstat(st, ns);
 	if (p) return p;
 	if (check_inherited && ns->ns_inherits) {
@@ -1749,6 +1752,7 @@ static void load_direct_deps(struct dso *p, ns_t *namespace, struct reserved_add
 	for (i=0; p->dynv[i]; i+=2) {
 		if (p->dynv[i] != DT_NEEDED) continue;
 		struct dso *dep = load_library(p->strings + p->dynv[i+1], p, namespace, true, reserved_params);
+		LD_LOGD("loading shared library %{public}s: (needed by %{public}s)", p->strings + p->dynv[i+1], p->name);
 		if (!dep) {
 			error("Error loading shared library %s: %m (needed by %s)",
 				p->strings + p->dynv[i+1], p->name);
@@ -2925,11 +2929,10 @@ int dlns_create2(Dl_namespace *dlns, const char *lib_path, int flags)
 	}
 
 	LD_LOGI("dlns_create2:"
-			"ns: %{public}p ,"
 			"ns_name: %{public}s ,"
 			"separated:%{public}d ,"
 			"lib_paths:%{public}s ",
-			ns, ns->ns_name, ns->separated, ns->lib_paths);
+			ns->ns_name, ns->separated, ns->lib_paths);
 	pthread_rwlock_unlock(&lock);
 
 	return 0;
@@ -2937,7 +2940,7 @@ int dlns_create2(Dl_namespace *dlns, const char *lib_path, int flags)
 
 int dlns_create(Dl_namespace *dlns, const char *lib_path)
 {
-	LD_LOGI("dlns_create dlns:%{public}s, lib_paths:%{public}s", dlns ? dlns->name : "NULL", lib_path);
+	LD_LOGI("dlns_create lib_paths:%{public}s", lib_path);
 	return dlns_create2(dlns, lib_path, CREATE_INHERIT_DEFAULT);
 }
 
@@ -3457,11 +3460,10 @@ int dlns_set_namespace_allowed_libs(const char * name, const char * allowed_libs
 
 int handle_asan_path_open(int fd, const char *name, ns_t *namespace, char *buf, size_t buf_size)
 {
-	LD_LOGD("handle_asan_path_open fd:%{public}d, name:%{public}s , namespace:%{public}p , buf:%{public}s.",
+	LD_LOGD("handle_asan_path_open fd:%{public}d, name:%{public}s , namespace:%{public}s .",
 		fd,
 		name,
-		namespace,
-		buf);
+		namespace ? namespace->ns_name : "NULL");
 	int fd_tmp = fd;
 	if (fd == -1 && (namespace->asan_lib_paths || namespace->lib_paths)) {
 		if (namespace->lib_paths && namespace->asan_lib_paths) {
@@ -4129,6 +4131,7 @@ static void preload_direct_deps(struct dso *p, ns_t *namespace, struct loadtasks
 			}
 			continue;
 		}
+		LD_LOGD("loading shared library %{public}s: (needed by %{public}s)", p->strings + p->dynv[i+1], p->name);
 		if (!load_library_header(task)) {
 			free_task(task);
 			task = NULL;
