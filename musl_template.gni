@@ -4,20 +4,10 @@ import("musl_src.gni")
 template("musl_libs") {
   no_default_deps = true
 
-  forward_variables_from(invoker, [ "target_abi" ])
+  forward_variables_from(invoker, [ "*" ])
 
-  if (target_abi == "soft") {
-    _libs_path_prefix = "."
-    _libs_out_dir = "usr/lib/${musl_target_triple}"
-  } else {
-    _libs_path_prefix = "${target_abi}"
-    _libs_out_dir = "usr/lib/${musl_target_triple}/${target_abi}"
-  }
-
-  musl_subarch = ""
-  if (target_abi == "a7_hard_neon-vfpv4") {
-    musl_subarch = "hf"
-  }
+  _libs_path_prefix = "."
+  _libs_out_dir = "usr/lib/${musl_target_triple}"
 
   dfx_deps = [ "//base/hiviewdfx/faultloggerd/interfaces/innerkits/signal_handler:dfxsignalhandler" ]
   porting_deps = [
@@ -151,10 +141,7 @@ template("musl_libs") {
 
     cflags = cflags_all
 
-    defines = []
-    if ("${target_abi}" != "a7_hard_neon-vfpv4") {
-      defines += [ "BROKEN_VFP_ASM" ]
-    }
+    defines = [ "BROKEN_VFP_ASM" ]
     if (is_standard_system) {
       defines += [
         "OHOS_DNS_PROXY_BY_NETSYS=1",
@@ -276,10 +263,7 @@ template("musl_libs") {
       sources_orig -= [ "src/thread/${musl_arch}/__set_thread_area.s" ]
     }
 
-    defines = []
-    if ("${target_abi}" == "a7_hard_neon-vfpv4") {
-      defines += [ "__ARM_PCS_VFP" ]
-    }
+    defines = [ "__ARM_PCS_VFP" ]
     if (musl_secure_level > 0) {
       defines += [ "MALLOC_FREELIST_HARDENED" ]
     }
@@ -606,7 +590,7 @@ template("musl_libs") {
     } else {
       asan = ""
     }
-    _muls_linker_so = "${root_out_dir}/common/common/libc/${_libs_path_prefix}/ld-musl-${musl_arch}${musl_subarch}${asan}.so.1"
+    _muls_linker_so = "${root_out_dir}/common/common/libc/${_libs_path_prefix}/ld-musl-${musl_arch}${asan}.so.1"
     outputs = [ _muls_linker_so ]
   }
 }

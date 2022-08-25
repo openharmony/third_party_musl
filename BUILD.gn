@@ -52,7 +52,6 @@ if (is_lite_system && current_os == "ohos") {
   }
 
   musl_libs("soft_libs") {
-    target_abi = "soft"
   }
 
   group("musl_headers") {
