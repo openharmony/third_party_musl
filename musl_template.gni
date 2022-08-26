@@ -187,7 +187,6 @@ template("musl_libs") {
       defines += [
         "OHOS_DNS_PROXY_BY_NETSYS=1",
         "OHOS_PERMISSION_INTERNET=1",
-        "OHOS_ENABLE_PARAMETER",
       ]
     }
 
@@ -472,6 +471,7 @@ template("musl_libs") {
 
     deps = porting_deps
     if (is_standard_system) {
+      defines += [ "OHOS_ENABLE_PARAMETER" ]
       deps += [ "//base/startup/init/services/param/base:parameterbase" ]
     }
   }
@@ -495,6 +495,7 @@ template("musl_libs") {
       "//third_party/musl:musl_copy_inc_sys",
     ]
     if (is_standard_system) {
+      defines = [ "OHOS_ENABLE_PARAMETER" ]
       deps += [ "//base/startup/init/services/param/base:parameterbase" ]
     }
 
