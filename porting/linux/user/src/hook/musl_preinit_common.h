@@ -22,7 +22,7 @@ enum EnumFunc {
 };
 
 enum EnumHookMode {
-	STATRUP_HOOK_MODE,
+	STARTUP_HOOK_MODE,
 	DIRECT_HOOK_MODE,
 	STEP_HOOK_MODE,
 };
