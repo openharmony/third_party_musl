@@ -56,7 +56,7 @@ static char* get_native_hook_param()
 {
 #ifdef OHOS_ENABLE_PARAMETER
 	const char *key =  MUSL_HOOK_PARAM_NAME;
-	char *value = (char *)calloc(OHOS_PARAM_MAX_SIZE, sizeof(char));
+	char *value = (char *)internal_calloc(OHOS_PARAM_MAX_SIZE, sizeof(char));
 	if (value == NULL) {
 		return NULL;
 	}
@@ -118,7 +118,7 @@ static int parse_hook_variable(enum EnumHookMode* mode, char* path, int size)
 			}
 		}
 
-		free(hook_param_value);
+		internal_free(hook_param_value);
 	}
 	__set_hook_flag(flag);
 	return 0;
@@ -129,9 +129,8 @@ static bool get_proc_name(pid_t pid, char *buf, unsigned int buf_len)
 	if (pid <= 0) {
 		return false;
 	}
-	const int file_name_max_size = 40;
-	char target_file[file_name_max_size] = {0};
-	(void)sprintf(target_file, "/proc/%d/cmdline", pid);
+	char target_file[FILE_NAME_MAX_SIZE] = {0};
+	(void)snprintf(target_file, sizeof(target_file), "/proc/%d/cmdline", pid);
 	FILE *f = fopen(target_file, "r");
 	if (f == NULL) {
 		return false;
