@@ -470,6 +470,10 @@ template("musl_libs") {
     }
 
     deps = porting_deps
+    if (is_standard_system) {
+      defines += [ "OHOS_ENABLE_PARAMETER" ]
+      deps += [ "//base/startup/init/services/param/base:parameterbase" ]
+    }
   }
 
   source_set("${abi_prefix}_musl_hook") {
@@ -490,6 +494,10 @@ template("musl_libs") {
       "//third_party/musl:musl_copy_inc_root",
       "//third_party/musl:musl_copy_inc_sys",
     ]
+    if (is_standard_system) {
+      defines = [ "OHOS_ENABLE_PARAMETER" ]
+      deps += [ "//base/startup/init/services/param/base:parameterbase" ]
+    }
 
     configs -= musl_inherited_configs
 

@@ -34,6 +34,9 @@
 #include "ns_config.h"
 #include "pthread_impl.h"
 #include "strops.h"
+#ifdef OHOS_ENABLE_PARAMETER
+#include "sys_param.h"
+#endif
 
 static void error(const char *, ...);
 
@@ -2280,7 +2283,9 @@ void __dls3(size_t *sp, size_t *auxv)
 		env_path = getenv("LD_LIBRARY_PATH");
 		env_preload = getenv("LD_PRELOAD");
 	}
-
+#ifdef OHOS_ENABLE_PARAMETER
+	InitParameterClient();
+#endif
 	/* If the main program was already loaded by the kernel,
 	 * AT_PHDR will point to some location other than the dynamic
 	 * linker's program headers. */

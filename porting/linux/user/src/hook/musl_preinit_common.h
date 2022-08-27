@@ -22,7 +22,7 @@ enum EnumFunc {
 };
 
 enum EnumHookMode {
-	STATRUP_HOOK_MODE,
+	STARTUP_HOOK_MODE,
 	DIRECT_HOOK_MODE,
 	STEP_HOOK_MODE,
 };
@@ -109,6 +109,7 @@ inline volatile const struct MallocDispatchType* get_current_dispatch_table()
 
 #define MUSL_HOOK_PARAM_NAME "libc.hook_mode"
 #define OHOS_PARAM_MAX_SIZE 96
+#define FILE_NAME_MAX_SIZE 40
 
 #ifdef __cplusplus
 }

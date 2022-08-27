@@ -21,10 +21,14 @@ which need be escaped.
 #include "musl_malloc.h"
 #include "memory_tag.h"
 #include "musl_preinit_common.h"
+#ifdef OHOS_ENABLE_PARAMETER
+#include "sys_param.h"
+#endif
 #include <pthread.h>
 #include <stdlib.h>
 #include <limits.h>
 #include <dlfcn.h>
+#include <errno.h>
 #include <stdatomic.h>
 #include <ctype.h>
 #include <assert.h>
@@ -42,39 +46,26 @@ static struct MallocDispatchType __ohos_malloc_hook_init_dispatch = {
 #define MAX_SYM_NAME_SIZE 1000
 static char *__malloc_hook_shared_lib = "libnative_hook.z.so";
 static char *__malloc_hook_function_prefix = "ohos_malloc_hook";
-static char *__get_param_shared_Lib = "libparam_client.z.so";
 volatile atomic_llong ohos_malloc_hook_shared_library;
 void* function_of_shared_lib[LAST_FUNCTION];
 static enum EnumHookMode __hook_mode = STEP_HOOK_MODE;
-static char __hook_process_path[PATH_MAX+ 1] = {0};
+static char __hook_process_path[PATH_MAX + 1] = {0};
 static char __progname[PATH_MAX + 1] = {0};
-
 
 static char* get_native_hook_param()
 {
-	int (*getFunction)(const char *name, char *value, unsigned int *len);
-
-	void* shared_library_handle = dlopen(__get_param_shared_Lib, RTLD_NOW | RTLD_LOCAL);
-	if (!shared_library_handle) {
-		return NULL;
-	}
-
-	getFunction = (int (*)(const char *name, char *value, unsigned int *len))dlsym((void*)shared_library_handle, "SystemGetParameter");
-	if (getFunction == NULL) {
-		dlclose(shared_library_handle);
-		return NULL;
-	}
+#ifdef OHOS_ENABLE_PARAMETER
 	const char *key =  MUSL_HOOK_PARAM_NAME;
-	char *value = (char *)malloc(OHOS_PARAM_MAX_SIZE);
+	char *value = (char *)internal_calloc(OHOS_PARAM_MAX_SIZE, sizeof(char));
 	if (value == NULL) {
-		dlclose(shared_library_handle);
 		return NULL;
 	}
-	memset(value, 0, OHOS_PARAM_MAX_SIZE);
 	unsigned int len = OHOS_PARAM_MAX_SIZE;
-	getFunction(key, value, &len);
-	dlclose(shared_library_handle);
+	(void)SystemReadParam(key, value, &len);
 	return value;
+#else
+	return NULL;
+#endif
 }
 
 static int parse_hook_variable(enum EnumHookMode* mode, char* path, int size)
@@ -102,7 +93,7 @@ static int parse_hook_variable(enum EnumHookMode* mode, char* path, int size)
 		}
 
 		if (strcmp(mode_str, "startup") == 0) {
-			*mode = STATRUP_HOOK_MODE;
+			*mode = STARTUP_HOOK_MODE;
 		} else if (strcmp(mode_str, "direct") == 0) {
 			*mode = DIRECT_HOOK_MODE;
 		} else if (strcmp(mode_str, "step") == 0) {
@@ -110,7 +101,7 @@ static int parse_hook_variable(enum EnumHookMode* mode, char* path, int size)
 		} else {
 			*mode = STEP_HOOK_MODE;
 		}
-		if (*mode == STATRUP_HOOK_MODE) {
+		if (*mode == STARTUP_HOOK_MODE) {
 			if (*ptr == '\"') {
 				++ptr;
 				int idx = 0;
@@ -127,10 +118,29 @@ static int parse_hook_variable(enum EnumHookMode* mode, char* path, int size)
 			}
 		}
 
-		free(hook_param_value);
+		internal_free(hook_param_value);
 	}
 	__set_hook_flag(flag);
 	return 0;
+}
+
+static bool get_proc_name(pid_t pid, char *buf, unsigned int buf_len)
+{
+	if (pid <= 0) {
+		return false;
+	}
+	char target_file[FILE_NAME_MAX_SIZE] = {0};
+	(void)snprintf(target_file, sizeof(target_file), "/proc/%d/cmdline", pid);
+	FILE *f = fopen(target_file, "r");
+	if (f == NULL) {
+		return false;
+	}
+	if (fgets(buf, buf_len, f) == NULL) {
+		(void)fclose(f);
+		return false;
+	}
+	(void)fclose(f);
+	return true;
 }
 
 static bool init_malloc_function(void* malloc_shared_library_handler, MallocMallocType* func, const char* prefix)
@@ -418,12 +428,31 @@ static void __initialize_malloc()
 	__install_malloc_hook_signal_handler();
 }
 
-
 __attribute__((constructor(1))) static void __musl_initialize()
 {
 	atomic_store_explicit(&__hook_enable_hook_flag, (volatile bool)false, memory_order_seq_cst);
 	__set_default_malloc();
-	//__init_musl_log();
+	parse_hook_variable(&__hook_mode, __hook_process_path, sizeof(__hook_process_path));
+	if (__hook_mode == STARTUP_HOOK_MODE) {
+		if (get_proc_name(getpid(), __progname, sizeof(__progname) - 1)) {
+			const char *pos = strrchr(__progname, '/');
+			const char* file_name;
+			if (pos != NULL) {
+				file_name = pos + 1;
+			} else {
+				file_name = __progname;
+			}
+			if (strncmp(file_name, __hook_process_path, strlen(__hook_process_path)) == 0) {
+				atomic_store_explicit(&__hook_enable_hook_flag, (volatile bool)true, memory_order_seq_cst);
+				init_ohos_malloc_hook();
+			} else {
+				__hook_mode = STEP_HOOK_MODE;
+			}
+		} else {
+			__hook_mode = STEP_HOOK_MODE;
+		}
+	}
 	__initialize_malloc();
+	errno = 0;
 }
 #endif
