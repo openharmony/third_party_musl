@@ -28,6 +28,7 @@ template("musl_libs") {
 
   group("soft_shared_libs") {
     deps = [
+      ":musl_headers",
       ":soft_libc_musl_shared",
       ":soft_libcrypt",
       ":soft_libdl",
@@ -38,12 +39,12 @@ template("musl_libs") {
       ":soft_libutil",
       ":soft_libxnet",
       ":soft_musl_crt_libs",
-      ":musl_headers",
     ]
   }
 
   group("soft_static_libs") {
     deps = [
+      ":musl_headers",
       ":soft_libc_musl_static",
       ":soft_libcrypt",
       ":soft_libdl",
@@ -54,7 +55,6 @@ template("musl_libs") {
       ":soft_libutil",
       ":soft_libxnet",
       ":soft_musl_crt_libs",
-      ":musl_headers",
     ]
   }
 
@@ -564,11 +564,11 @@ template("musl_libs") {
     redir = "${root_out_dir}/obj"
     script = "${target_out_dir}/${musl_ported_dir}/scripts/install.py"
     sources = [
+      "${redir}/${target_out_dir}/${musl_ported_dir}/crt/${musl_arch}/soft_musl_crt/crti.o",
+      "${redir}/${target_out_dir}/${musl_ported_dir}/crt/${musl_arch}/soft_musl_crt/crtn.o",
       "${redir}/${target_out_dir}/${musl_ported_dir}/crt/soft_musl_crt/Scrt1.o",
       "${redir}/${target_out_dir}/${musl_ported_dir}/crt/soft_musl_crt/crt1.o",
       "${redir}/${target_out_dir}/${musl_ported_dir}/crt/soft_musl_crt/rcrt1.o",
-      "${redir}/${target_out_dir}/${musl_ported_dir}/crt/${musl_arch}/soft_musl_crt/crti.o",
-      "${redir}/${target_out_dir}/${musl_ported_dir}/crt/${musl_arch}/soft_musl_crt/crtn.o",
     ]
     outputs = [ "${root_build_dir}/obj/third_party/musl/${_libs_out_dir}/{{source_file_part}}" ]
     args = [
