@@ -46,8 +46,8 @@ if (is_lite_system && current_os == "ohos") {
 
   group("musl_libs") {
     deps = [
-      ":soft_libs",
       ":musl_headers",
+      ":soft_libs",
     ]
   }
 
