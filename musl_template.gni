@@ -271,7 +271,6 @@ template("musl_libs") {
   source_set("${abi_prefix}_musl_src") {
     sources_orig = []
     sources = []
-    set_sources_assignment_filter([])
 
     sources_orig = musl_src_arch_file + musl_src_file
     sources_orig -= musl_src_filterout
