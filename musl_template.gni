@@ -263,7 +263,7 @@ template("musl_libs") {
       sources_orig -= [ "src/thread/${musl_arch}/__set_thread_area.s" ]
     }
 
-    defines = [ "__ARM_PCS_VFP" ]
+    defines = []
     if (musl_secure_level > 0) {
       defines += [ "MALLOC_FREELIST_HARDENED" ]
     }
