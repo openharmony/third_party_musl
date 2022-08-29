@@ -17,6 +17,8 @@ group("dlns_test") {
   testonly = true
   deps = [
     ":dlns_dlopen_test",
+    ":dlns_dlsym_dep_a",
+    ":dlns_dlsym_test",
     ":dlns_inherit_test",
     ":dlns_separated_test",
     ":dlns_set_fun_test",
@@ -82,4 +84,59 @@ ohos_unittest("dlns_special_scene_test") {
 
   sources = [ "dlns_special_scene.c" ]
   configs = [ "//third_party/musl/libc-test/src/common:config_runtest" ]
+}
+
+ohos_unittest("dlns_dlsym_test") {
+  module_out_path = "libc-test/src/functionalext/dlns"
+  include_dirs = [
+    "../common",
+    "//third_party/musl/porting/linux/user/include",
+    "//third_party/musl/libc-test/src/common",
+  ]
+
+  sources = [ "dlns_dlsym.c" ]
+  configs = [ "//third_party/musl/libc-test/src/common:config_runtest" ]
+}
+
+ohos_shared_library("dlns_dlsym_dep_c") {
+  include_dirs = [ "." ]
+
+  sources = [ "dlns_dlsym_dep_c.c" ]
+
+  output_name = "dlns_dlsym_dep_c"
+
+  output_extension = "so"
+
+  subsystem_name = "musl"
+  part_name = "libc-test-lib"
+}
+
+ohos_shared_library("dlns_dlsym_dep_b") {
+  include_dirs = [ "." ]
+
+  sources = [ "dlns_dlsym_dep_b.c" ]
+
+  output_name = "dlns_dlsym_dep_b"
+
+  output_extension = "so"
+
+  deps = [ ":dlns_dlsym_dep_c" ]
+
+  subsystem_name = "musl"
+  part_name = "libc-test-lib"
+}
+
+ohos_shared_library("dlns_dlsym_dep_a") {
+  include_dirs = [ "." ]
+
+  sources = [ "dlns_dlsym_dep_a.c" ]
+
+  output_name = "dlns_dlsym_dep_a"
+
+  output_extension = "so"
+
+  deps = [ ":dlns_dlsym_dep_b" ]
+
+  subsystem_name = "musl"
+  part_name = "libc-test-lib"
 }
