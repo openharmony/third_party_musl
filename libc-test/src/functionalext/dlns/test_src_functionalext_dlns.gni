@@ -13,6 +13,8 @@
 
 functionalext_complex_list = [
   "dlns_dlopen",
+  "dlns_dlsym",
+  "dlns_dlsym_dep_a",
   "dlns_set_fun",
   "dlns_inherit",
   "dlns_separated",
