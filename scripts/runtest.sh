@@ -22,6 +22,8 @@ do
 				do
 					if [ "$(FileSuffix ${file})" = "so" ] \
 					|| [ "$file" = "trace_stresstest" ] \
+					|| [ "$file" = "fatal_message" ] \
+					|| [ "$file" = "tgkill" ] \
 					|| [ -d ./$subdir/$file ] 
 					then
 						continue

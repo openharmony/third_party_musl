@@ -125,7 +125,10 @@ template("test_unittest") {
     }
 
     if (target_dir == "functionalext/fortify") {
-      defines = [ "MUSL_FORTIFY_SOURCE=2" ]
+      if (!defined(defines)) {
+        defines = []
+      }
+      defines += [ "MUSL_FORTIFY_SOURCE=2" ]
     }
 
     if (target_dir == "functionalext/ldso_randomization") {
