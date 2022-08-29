@@ -239,9 +239,9 @@ if (is_lite_system && current_os == "ohos") {
 
   # exclude these files because they need special treatment
   if (uapi_from == "make") {
-    exclude_files = "asm|scsi"
+    exclude_files = "^asm\$|^scsi\$"
   } else {
-    exclude_files = "asm-arm|asm-arm64|scsi"
+    exclude_files = "^asm-arm\$|^asm-arm64\$|^scsi\$"
   }
 
   arguments_uapi +=
