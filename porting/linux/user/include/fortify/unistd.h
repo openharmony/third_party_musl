@@ -26,15 +26,15 @@ extern "C" {
 #if defined(__FORTIFY_COMPILATION)
 
 #define __DIAGNOSE_ERROR_IF_OVERFLOWS_SSIZET(what, fn) \
-    __DIAGNOSE_ERROR_IF((what) > SSIZE_MAX, "in call to '" #fn "', '" #what "' must be <= SSIZE_MAX")
+    __DIAGNOSE_ERROR_IF((what) > FORTIFY_SSIZE_MAX, "in call to '" #fn "', '" #what "' must be <= FORTIFY_SSIZE_MAX")
 
 #define __DIAGNOSE_ERROR_IF_OVERFLOWS_OBJECTSIZE(what, objsize, fn) \
     __DIAGNOSE_ERROR_IF(__DIAGNOSE_UNEVALUATED_LT((objsize), (what)), \
     "in call to '" #fn "', '" #what "' bytes overflows the given object")
 
 #define __DIAGNOSE_BOS_TRIVIALLY_GE_NO_OVERFLOW(bos_val, index)  \
-    ((__DIAGNOSE_BOS_DYNAMIC_CHECK_IMPL_AND((bos_val), >=, (index), (bos_val) <= (SSIZE_MAX)) && \
-    __builtin_constant_p(index) && (index) <= (SSIZE_MAX)))
+    ((__DIAGNOSE_BOS_DYNAMIC_CHECK_IMPL_AND((bos_val), >=, (index), (bos_val) <= (FORTIFY_SSIZE_MAX)) && \
+    __builtin_constant_p(index) && (index) <= (FORTIFY_SSIZE_MAX)))
 
 char* __getcwd_chk(char*, size_t, size_t) ;
 
