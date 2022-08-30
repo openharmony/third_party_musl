@@ -29,6 +29,11 @@ static struct {
 	struct bin quarantine[QUARANTINE_NUM];
 	size_t quarantined_count[QUARANTINE_NUM];
 	size_t quarantined_size[QUARANTINE_NUM];
+#ifdef MALLOC_RED_ZONE
+	char poison[64];
+	volatile int poison_lock[2];
+	int poison_count_down;
+#endif
 #endif
 } mal;
 
@@ -146,6 +151,73 @@ static int bin_index_up(size_t x)
 	return bin_tab[x/128-4] + 17;
 }
 
+#ifdef MALLOC_RED_ZONE
+static inline size_t chunk_checksum_calculate(struct chunk *c)
+{
+	return (((size_t)c) ^ c->csize ^ c->usize ^ (c->state & M_STATE_MASK)) << M_CHECKSUM_SHIFT;
+}
+
+void chunk_checksum_set(struct chunk *c)
+{
+	c->state = (c->state & M_STATE_MASK) | chunk_checksum_calculate(c);
+}
+
+int chunk_checksum_check(struct chunk *c)
+{
+	return (c->state & ~M_STATE_MASK) ^ chunk_checksum_calculate(c);
+}
+
+static inline char get_poison(int i)
+{
+	char poison = 0;
+	lock(mal.poison_lock);
+	if (!mal.poison[i]) {
+		mal.poison[i] = (char)(uintptr_t)next_key();
+	}
+	poison = mal.poison[i];
+	unlock(mal.poison_lock);
+	return poison;
+}
+
+static inline int need_poison(void)
+{
+	int ret = 0;
+	lock(mal.poison_lock);
+	if (mal.poison_count_down == 0) {
+		/* Make sure the period is POISON_COUNT_DOWN_BASE */
+		mal.poison_count_down = POISON_PERIOD - 1;
+		ret = 1;
+	} else {
+		--mal.poison_count_down;
+	}
+	unlock(mal.poison_lock);
+	return ret;
+}
+
+static inline void chunk_poison_set(struct chunk *c)
+{
+	char * start = ((char *)CHUNK_TO_MEM(c)) + c->usize;
+	size_t size = CHUNK_SIZE(c) - OVERHEAD - c->usize;
+	char val = get_poison(bin_index(CHUNK_SIZE(c)));
+	memset(start, val, size);
+	c->state |= M_RZ_POISON;
+}
+
+void chunk_poison_check(struct chunk *c)
+{
+	size_t csize = CHUNK_SIZE(c);
+	char poison = get_poison(bin_index(csize));
+	size_t padding_size = csize - OVERHEAD - c->usize;
+	char *start = (char *)c + OVERHEAD + c->usize;
+	for (size_t i = 0; i < padding_size; ++i) {
+		/* Poison not right, crash */
+		if (start[i] != poison) {
+			a_crash();
+		}
+	}
+}
+#endif
+
 #if 0
 void __dump_heap(int x)
 {
@@ -207,6 +279,11 @@ static struct chunk *expand_heap(size_t n)
 	 * zero-size sentinel header at the old end-of-heap. */
 	w = MEM_TO_CHUNK(p);
 	w->csize = n | C_INUSE;
+#ifdef MALLOC_RED_ZONE
+	w->state = M_STATE_BRK;
+	w->usize = POINTER_USAGE;
+	chunk_checksum_set(w);
+#endif
 
 	unlock(heap_lock);
 
@@ -225,7 +302,15 @@ static int adjust_size(size_t *n)
 			return 0;
 		}
 	}
+#ifdef MALLOC_RED_ZONE
+	/*
+	 * *n + OVERHEAD + SIZE_ALIGN + 1 - 1
+	 * to make sure a least 1 byte for red zone
+	 */
+	*n = (*n + OVERHEAD + SIZE_ALIGN) & SIZE_MASK;
+#else
 	*n = (*n + OVERHEAD + SIZE_ALIGN - 1) & SIZE_MASK;
+#endif
 	return 0;
 }
 
@@ -323,6 +408,13 @@ static int pretrim(struct chunk *self, size_t n, int i, int j)
 	split->csize = n1-n;
 	next->psize = n1-n;
 	self->csize = n | C_INUSE;
+#ifdef MALLOC_RED_ZONE
+	/* split poison state keep up to self for less poison operations */
+	self->state &= ~M_RZ_POISON;
+	split->state = M_STATE_BRK;
+	split->usize = POINTER_USAGE;
+	chunk_checksum_set(split);
+#endif
 	return 1;
 }
 
@@ -340,6 +432,12 @@ static void trim(struct chunk *self, size_t n)
 	split->csize = n1-n | C_INUSE;
 	next->psize = n1-n | C_INUSE;
 	self->csize = n | C_INUSE;
+#ifdef MALLOC_RED_ZONE
+	/* Remove the poison tag, because of triming chunk */
+	split->state = M_STATE_BRK;
+	split->usize = POINTER_USAGE;
+	chunk_checksum_set(split);
+#endif
 
 	__bin_chunk(split);
 }
@@ -357,6 +455,10 @@ void *internal_malloc(size_t n)
 {
 	struct chunk *c;
 	int i, j;
+#ifdef MALLOC_RED_ZONE
+	size_t user_size = n;
+	char poison;
+#endif
 
 	if (adjust_size(&n) < 0) return 0;
 
@@ -371,6 +473,14 @@ void *internal_malloc(size_t n)
 		c = (void *)(base + SIZE_ALIGN - OVERHEAD);
 		c->csize = len - (SIZE_ALIGN - OVERHEAD);
 		c->psize = SIZE_ALIGN - OVERHEAD;
+#ifdef MALLOC_RED_ZONE
+		c->state = M_STATE_MMAP | M_STATE_USED;
+		c->usize = user_size;
+		if (need_poison()) {
+			chunk_poison_set(c);
+		}
+		chunk_checksum_set(c);
+#endif
 		return CHUNK_TO_MEM(c);
 	}
 
@@ -397,6 +507,11 @@ void *internal_malloc(size_t n)
 #endif
 		c = encode_chunk(mal.bins[j].head, key); /* Decode the head pointer */
 		if (c != BIN_TO_CHUNK(j)) {
+#ifdef MALLOC_RED_ZONE
+			if (c->state & M_RZ_POISON) {
+				chunk_poison_check(c);
+			}
+#endif
 			if (!pretrim(c, n, i, j)) unbin(c, j);
 			unlock_bin(j);
 			break;
@@ -407,6 +522,16 @@ void *internal_malloc(size_t n)
 	/* Now patch up in case we over-allocated */
 	trim(c, n);
 
+#ifdef MALLOC_RED_ZONE
+	c->usize = user_size;
+	c->state |= M_STATE_USED;
+	if (need_poison()) {
+		chunk_poison_set(c);
+	} else {
+		c->state &= ~M_RZ_POISON;
+	}
+	chunk_checksum_set(c);
+#endif
 	return CHUNK_TO_MEM(c);
 }
 
@@ -461,6 +586,9 @@ void *internal_realloc(void *p, size_t n)
 	struct chunk *self, *next;
 	size_t n0, n1;
 	void *new;
+#ifdef MALLOC_RED_ZONE
+	size_t user_size = n;
+#endif
 
 	if (!p) return internal_malloc(n);
 	if (!n) {
@@ -472,6 +600,12 @@ void *internal_realloc(void *p, size_t n)
 
 	self = MEM_TO_CHUNK(p);
 	n1 = n0 = CHUNK_SIZE(self);
+#ifdef MALLOC_RED_ZONE
+	/* Not a valid chunk */
+	if (!(self->state & M_STATE_USED)) a_crash();
+	if (chunk_checksum_check(self)) a_crash();
+	if (self->state & M_RZ_POISON) chunk_poison_check(self);
+#endif
 
 	if (IS_MMAPPED(self)) {
 		size_t extra = self->psize;
@@ -479,6 +613,10 @@ void *internal_realloc(void *p, size_t n)
 		size_t oldlen = n0 + extra;
 		size_t newlen = n + extra;
 		/* Crash on realloc of freed chunk */
+#ifdef MALLOC_RED_ZONE
+		/* Wrong malloc type */
+		if (!(self->state & M_STATE_MMAP)) a_crash();
+#endif
 		if (extra & 1) a_crash();
 		if (newlen < PAGE_SIZE && (new = internal_malloc(n-OVERHEAD))) {
 			n0 = n;
@@ -491,6 +629,15 @@ void *internal_realloc(void *p, size_t n)
 			goto copy_realloc;
 		self = (void *)(base + extra);
 		self->csize = newlen - extra;
+#ifdef MALLOC_RED_ZONE
+		self->usize = user_size;
+		if (need_poison()) {
+			chunk_poison_set(self);
+		} else {
+			self->state &= ~M_RZ_POISON;
+		}
+		chunk_checksum_set(self);
+#endif
 		return CHUNK_TO_MEM(self);
 	}
 
@@ -505,6 +652,10 @@ void *internal_realloc(void *p, size_t n)
 	if (n > n1 && alloc_fwd(next)) {
 		n1 += CHUNK_SIZE(next);
 		next = NEXT_CHUNK(next);
+#ifdef MALLOC_RED_ZONE
+		/* alloc forward arises, remove the poison tag */
+		self->state &= ~M_RZ_POISON;
+#endif
 	}
 	/* FIXME: find what's wrong here and reenable it..? */
 	if (0 && n > n1 && alloc_rev(self)) {
@@ -518,6 +669,15 @@ void *internal_realloc(void *p, size_t n)
 	if (n <= n1) {
 		//memmove(CHUNK_TO_MEM(self), p, n0-OVERHEAD);
 		trim(self, n);
+#ifdef MALLOC_RED_ZONE
+		self->usize = user_size;
+		if (need_poison()) {
+			chunk_poison_set(self);
+		} else {
+			self->state &= ~M_RZ_POISON;
+		}
+		chunk_checksum_set(self);
+#endif
 		return CHUNK_TO_MEM(self);
 	}
 
@@ -526,7 +686,12 @@ copy_realloc:
 	new = internal_malloc(n-OVERHEAD);
 	if (!new) return 0;
 copy_free_ret:
+#ifndef MALLOC_RED_ZONE
 	memcpy(new, p, n0-OVERHEAD);
+#else
+	memcpy(new, p, self->usize < user_size ? self->usize : user_size);
+	chunk_checksum_set(self);
+#endif
 	internal_free(CHUNK_TO_MEM(self));
 	return new;
 }
@@ -571,6 +736,10 @@ void __bin_chunk(struct chunk *self)
 				reclaim = 1;
 			next = NEXT_CHUNK(next);
 		}
+#ifdef MALLOC_RED_ZONE
+		/* if poisoned chunk is combined, we should remove the poisoned tag */
+		self->state &= ~M_RZ_POISON;
+#endif
 	}
 
 	if (!(mal.binmap & 1ULL<<i))
@@ -601,8 +770,14 @@ void __bin_chunk(struct chunk *self)
 		__mmap((void *)a, b-a, PROT_READ|PROT_WRITE,
 			MAP_PRIVATE|MAP_ANONYMOUS|MAP_FIXED, -1, 0);
 #endif
+#ifdef MALLOC_RED_ZONE
+		self->state &= ~M_RZ_POISON;
+#endif
 	}
 
+#ifdef MALLOC_RED_ZONE
+	chunk_checksum_set(self);
+#endif
 	unlock_bin(i);
 }
 
@@ -611,6 +786,10 @@ static void unmap_chunk(struct chunk *self)
 	size_t extra = self->psize;
 	char *base = (char *)self - extra;
 	size_t len = CHUNK_SIZE(self) + extra;
+#ifdef MALLOC_RED_ZONE
+	/* Wrong chunk type */
+	if (!(self->state & M_STATE_MMAP)) a_crash();
+#endif
 	/* Crash on double free */
 	if (extra & 1) a_crash();
 	__munmap(base, len);
@@ -630,6 +809,11 @@ static void quarantine_contained(struct chunk *self)
 	struct chunk *next;
 	struct chunk *prev;
 	void *key;
+
+#ifdef MALLOC_RED_ZONE
+	/* Wrong chunk type */
+	if (!(self->state & M_STATE_BRK)) a_crash();
+#endif
 
 	lock_quarantine(i);
 	key = mal.quarantine[i].key;
@@ -657,8 +841,22 @@ static void quarantine_bin(struct chunk *self)
 	void *key;
 	int i;
 
+#ifdef MALLOC_RED_ZONE
+	self->state &= ~M_STATE_USED;
+#endif
 	/* Avoid quarantining large memory */
 	if (size > QUARANTINE_THRESHOLD) {
+#ifdef MALLOC_RED_ZONE
+		self->usize = POINTER_USAGE;
+		if ((self->psize & self->csize & NEXT_CHUNK(self)->csize & C_INUSE) &&
+			need_poison()) {
+			/* Self will not be combined mostly */
+			chunk_poison_set(self);
+		} else {
+			self->state &= ~M_RZ_POISON;
+		}
+		chunk_checksum_set(self);
+#endif
 		__bin_chunk(self);
 		return;
 	}
@@ -677,6 +875,9 @@ static void quarantine_bin(struct chunk *self)
 		/* Bin the quarantined chunk */
 		do {
 			next = encode_chunk(cur->next, key);
+#ifdef MALLOC_RED_ZONE
+			if (cur->state & M_RZ_POISON) chunk_poison_check(cur);
+#endif
 			__bin_chunk(cur);
 			cur = next;
 		} while (cur != QUARANTINE_TO_CHUNK(i));
@@ -692,6 +893,16 @@ static void quarantine_bin(struct chunk *self)
 
 	mal.quarantined_size[i] += size;
 	mal.quarantined_count[i] += 1;
+
+#ifdef MALLOC_RED_ZONE
+	if (need_poison()) {
+		self->usize = POINTER_USAGE;
+		chunk_poison_set(self);
+	} else {
+		self->state &= ~M_RZ_POISON;
+	}
+	chunk_checksum_set(self);
+#endif
 	unlock_quarantine(i);
 }
 #endif
@@ -711,6 +922,12 @@ void internal_free(void *p)
 
 	struct chunk *self = MEM_TO_CHUNK(p);
 
+#ifdef MALLOC_RED_ZONE
+	/* This is not a valid chunk for freeing */
+	if (chunk_checksum_check(self)) a_crash();
+	if (!(self->state & M_STATE_USED)) a_crash();
+	if (self->state & M_RZ_POISON) chunk_poison_check(self);
+#endif
 	if (IS_MMAPPED(self))
 		unmap_chunk(self);
 	else {
@@ -739,5 +956,10 @@ void __malloc_donate(char *start, char *end)
 	struct chunk *c = MEM_TO_CHUNK(start), *n = MEM_TO_CHUNK(end);
 	c->psize = n->csize = C_INUSE;
 	c->csize = n->psize = C_INUSE | (end-start);
+#ifdef MALLOC_RED_ZONE
+	c->usize = POINTER_USAGE;
+	c->state = M_STATE_BRK;
+	chunk_checksum_set(c);
+#endif
 	__bin_chunk(c);
 }
