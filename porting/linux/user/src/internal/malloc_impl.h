@@ -12,6 +12,10 @@ hidden void *__memalign(size_t, size_t);
 
 struct chunk {
 	size_t psize, csize;
+#ifdef MALLOC_RED_ZONE
+	size_t usize;
+	size_t state;
+#endif
 	struct chunk *next, *prev;
 };
 
@@ -24,11 +28,21 @@ struct bin {
 #endif
 };
 
-#define SIZE_ALIGN (4*sizeof(size_t))
 #define SIZE_MASK (-SIZE_ALIGN)
+#ifndef MALLOC_RED_ZONE
+#define SIZE_ALIGN (4*sizeof(size_t))
 #define OVERHEAD (2*sizeof(size_t))
+#else
+#define SIZE_ALIGN (8*sizeof(size_t))
+#define OVERHEAD (4*sizeof(size_t))
+#endif
 #define MMAP_THRESHOLD (0x1c00*SIZE_ALIGN)
+#ifndef MALLOC_RED_ZONE
 #define DONTCARE 16
+#else
+#define DONTCARE OVERHEAD
+#define POINTER_USAGE (2*sizeof(void *))
+#endif
 #define RECLAIM 163840
 
 #ifdef MALLOC_FREELIST_QUARANTINE
@@ -50,6 +64,21 @@ struct bin {
 #define QUARANTINE_TO_CHUNK(i) (MEM_TO_CHUNK(&mal.quarantine[i].head))
 #endif
 
+#ifdef MALLOC_RED_ZONE
+#define M_STATE_FREE   0x00
+#define M_STATE_USED   0x01U
+#define M_STATE_BRK    0x02U
+#define M_STATE_MMAP   0x04U
+
+#define M_RZ_NONE   0x00
+#define M_RZ_POISON 0x10U
+
+#define M_STATE_MASK   0xffU
+#define M_CHECKSUM_SHIFT 8
+
+#define POISON_PERIOD 31
+#endif
+
 #define C_INUSE  ((size_t)1)
 
 #define IS_MMAPPED(c) !((c)->csize & (C_INUSE))
@@ -65,5 +94,11 @@ hidden void internal_free(void *p);
 hidden void *internal_calloc(size_t m, size_t n);
 
 hidden void *internal_realloc(void *p, size_t n);
+
+#ifdef MALLOC_RED_ZONE
+hidden void chunk_checksum_set(struct chunk *c);
+
+hidden int chunk_checksum_check(struct chunk *c);
+#endif
 
 #endif
