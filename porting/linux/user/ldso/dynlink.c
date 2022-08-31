@@ -511,7 +511,7 @@ static int check_verneed(Verdef *def, int vsym, struct verinfo *verinfo)
 static int check_verinfo(Verdef *def, int16_t *versym, uint32_t index, struct verinfo *verinfo, char *strings)
 {
 	/* if the versym and verinfo is null , then not need version. */
-	if (!versym) {
+	if (!versym || !def) {
 		if (strlen(verinfo->v) == 0) {
 			return 1;
 		} else {
