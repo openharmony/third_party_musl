@@ -105,7 +105,7 @@ hdc shell cp %REMOTEFEXT%/dlns/libdlopen_ns_dso.so %REMOTEFEXT%/dlns/inherit_030
 hdc shell cp %REMOTEFEXT%/dlns/libdlopen_ns_dso.so %REMOTEFEXT%/dlns/inherit_0700.so
 hdc shell cp %REMOTEFEXT%/dlns/libdlopen_ns_dso.so %REMOTEFEXT%/dlns/inherit_0800.so
 hdc shell cp %REMOTEFEXT%/dlns/libdlopen_ns_dso.so %REMOTEFEXT%/dlns/inherit_1100.so
-hdc shell mv /etc/ld-musl-namespace-arm.ini /etc/ld-musl-namespace-arm-temp.ini
+hdc shell cp /etc/ld-musl-namespace-arm.ini /etc/ld-musl-namespace-arm-temp.ini
 hdc shell mv /etc/ld-musl-namespace-arm-test.ini /etc/ld-musl-namespace-arm.ini
 
 
@@ -136,9 +136,9 @@ echo The test cases have been executed.
 
 @REM 恢复现场
 echo Start restore the scene
-echo hdc shell mv /etc/ld-musl-namespace-arm.ini /etc/ld-musl-namespace-arm-test.inherit_0300
+echo hdc shell mv /etc/ld-musl-namespace-arm.ini /etc/ld-musl-namespace-arm-test.ini
 echo ...
-hdc shell mv /etc/ld-musl-namespace-arm.ini /etc/ld-musl-namespace-arm-test.ini
+hdc shell cp /etc/ld-musl-namespace-arm.ini /etc/ld-musl-namespace-arm-test.ini
 hdc shell mv /etc/ld-musl-namespace-arm-temp.ini /etc/ld-musl-namespace-arm.ini
 hdc shell rm %REMOTEFEXT%/dlns/sharedlibtest.so -rf
 hdc shell rm %REMOTEFEXT%/dlns/B/libB.so -rf
