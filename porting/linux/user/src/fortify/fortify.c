@@ -17,6 +17,7 @@
 
 #include <fortify/fortify.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <poll.h>
 #include <stdarg.h>
 #include <stdbool.h>

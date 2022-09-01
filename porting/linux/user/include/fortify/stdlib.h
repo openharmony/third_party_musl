@@ -26,7 +26,7 @@ extern "C" {
 #if defined(_GNU_SOURCE) && defined(__FORTIFY_COMPILATION)
 char* realpath(const char* path, char* resolved)
 __DIAGNOSE_ERROR_IF(!path, "'realpath': NULL path is never correct; flipped arguments?")
-__DIAGNOSE_ERROR_IF(__DIAGNOSE_UNEVALUATED_LT(__DIAGNOSE_BOS(resolved), PATH_MAX),
+__DIAGNOSE_ERROR_IF(__DIAGNOSE_UNEVALUATED_LT(__DIAGNOSE_BOS(resolved), FORTIFY_PATH_MAX),
     "'realpath' " OUTPUT_PARAMETER_BYTES);
 #endif
 #ifdef __cplusplus

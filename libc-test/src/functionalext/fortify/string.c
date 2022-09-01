@@ -12,13 +12,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include <errno.h>
+#include <limits.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/wait.h>
 #include "fortify_test.h"
-#include "test.h" 
+#include "test.h"
 
 #define SIZE_1 1
 #define SIZE_5 5
@@ -556,7 +558,7 @@ static void test_strlcpy_0020()
     };
     sigaction(SIGABRT, &sigabrt, NULL);
 
-    
+
     char src[SIZE_15];
     char dst[SIZE_10];
     strcpy(src, STRLEN_14);
@@ -781,7 +783,7 @@ static void test_memcpy_0020()
     };
     sigaction(SIGABRT, &sigabrt, NULL);
 
-    
+
     int status;
     char dst[SIZE_10];
     int pid = fork();
@@ -827,7 +829,7 @@ static void test_memset_0020()
         .sa_handler = SignalHandler,
     };
     sigaction(SIGABRT, &sigabrt, NULL);
-    
+
     char buf[SIZE_10];
     size_t n = atoi(EQ_11);
     int status;
@@ -856,7 +858,7 @@ static void test_strlen_0010()
         .sa_handler = SignalHandler,
     };
     sigaction(SIGABRT, &sigabrt, NULL);
-    
+
     char buf[SIZE_10];
     memcpy(buf, STRLEN_10, sizeof(buf));
     int status;

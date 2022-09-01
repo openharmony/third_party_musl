@@ -39,22 +39,22 @@ extern "C" {
 #endif
 
 #if defined(__LP64__)
-#ifndef	LONG_MAX
-#define LONG_MAX 0x7fffffffffffffffL
+#ifndef	FORTIFY_LONG_MAX
+#define FORTIFY_LONG_MAX 0x7fffffffffffffffL
 #endif
-#ifndef	SSIZE_MAX
-#define SSIZE_MAX LONG_MAX
+#ifndef	FORTIFY_SSIZE_MAX
+#define FORTIFY_SSIZE_MAX FORTIFY_LONG_MAX
 #endif
 #else
-#ifndef	LONG_MAX
-#define LONG_MAX 0x7fffffffL
+#ifndef	FORTIFY_LONG_MAX
+#define FORTIFY_LONG_MAX 0x7fffffffL
 #endif
-#ifndef	SSIZE_MAX
-#define SSIZE_MAX LONG_MAX
+#ifndef	FORTIFY_SSIZE_MAX
+#define FORTIFY_SSIZE_MAX FORTIFY_LONG_MAX
 #endif
 #endif
-#ifndef	PATH_MAX
-#define PATH_MAX 4096
+#ifndef	FORTIFY_PATH_MAX
+#define FORTIFY_PATH_MAX 4096
 #endif
 
 #define __DIAGNOSE_ALWAYS_INLINE __attribute__((__always_inline__))
@@ -122,7 +122,7 @@ extern "C" {
 #define CALLED_WITH_STRING_BIGGER_BUFFER "called with string bigger than buffer"
 #define FD_COUNT_LARGE_GIVEN_BUFFER "fd_count is larger than the given buffer"
 #define CALLED_WITH_SIZE_BIGGER_BUFFER "called with size bigger than buffer"
-#define OUTPUT_PARAMETER_BYTES "output parameter must be NULL or a pointer to a buffer with >= PATH_MAX bytes"
+#define OUTPUT_PARAMETER_BYTES "output parameter must be NULL or a pointer to a buffer with >= FORTIFY_PATH_MAX bytes"
 #define SIZE_LARGER_THEN_DESTINATION_BUFFER "size is larger than the destination buffer"
 
 void __fortify_error(const char* info, ...);

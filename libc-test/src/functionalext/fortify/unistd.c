@@ -14,6 +14,7 @@
  */
 
 #include <fcntl.h>
+#include <limits.h>
 #include <unistd.h>
 #include <signal.h>
 #include <string.h>
