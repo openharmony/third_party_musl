@@ -1,3 +1,5 @@
+import("../../../musl_config.gni")
+
 regression_list = [
   "daemon-failure",
   "dn_expand-empty",
@@ -77,3 +79,10 @@ regression_list = [
   "wcsncpy-read-overflow",
   "wcsstr-false-negative",
 ]
+
+if (musl_secure_level >= 3) {
+  regression_list += [
+    "malloc-overflow-check",
+    "malloc-uaf-check",
+  ]
+}

@@ -25,10 +25,18 @@
 #define MALLOC_FREELIST_QUARANTINE
 #endif
 
+#ifndef MALLOC_RED_ZONE
+#define MALLOC_RED_ZONE
+#endif
+
 #endif // MALLOC_SECURE_ALL
 
 #if defined(MALLOC_FREELIST_QUARANTINE) && !defined(MALLOC_FREELIST_HARDENED)
 #error MALLOC_FREELIST_QUARANTINE can be only applied when MALLOC_FREELIST_HARDENED is set.
+#endif
+
+#if defined(MALLOC_RED_ZONE) && !defined(MALLOC_FREELIST_QUARANTINE)
+#error MALLOC_RED_ZONE can be only applied when MALLOC_FREELIST_QUARANTINE is set.
 #endif
 
 #endif // MALLOC_CONFIG_H
