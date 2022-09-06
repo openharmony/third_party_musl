@@ -22,6 +22,7 @@ functionalext_list = [
   "info:functionalext_info_test",
   "ldso_randomization:functionalext_ldso_randomization_test",
   "relro:functionalext_relro_test",
+  "supplement:functionalext_supplement_test",
   "fortify:functionalext_fortify_test",
   "symver:functionalext_symver_test",
 ]

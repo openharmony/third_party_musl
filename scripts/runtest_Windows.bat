@@ -51,6 +51,27 @@ for /D %%i in (%TESTDIR%\*) do (
     for /D %%j in (%%i\*) do (
 		echo [MKdir] %REMOTE%/%%~ni/%%~nj
 		hdc shell mkdir %REMOTE%/%%~ni/%%~nj
+		@REM Check local subdirectory
+		for /D %%m in (%%j\*) do (
+			echo [MKdir] %REMOTE%/%%~ni/%%~nj/%%~nm
+			hdc shell mkdir %REMOTE%/%%~ni/%%~nj/%%~nm
+			@REM Check local subdirectory
+			for /D %%p in (%%m\*) do (
+				echo [MKdir] %REMOTE%/%%~ni/%%~nj/%%~nm/%%~np
+				hdc shell mkdir %REMOTE%/%%~ni/%%~nj/%%~nm/%%~np
+				@REM Send test cases to remote subdirectory
+				for %%q in (%%~p\*) do (
+					echo Sending %%q %REMOTE%/%%~ni/%%~nj/%%~nm/%%~np
+					hdc file send %%q %REMOTE%/%%~ni/%%~nj/%%~nm/%%~np
+				)
+			)
+			@REM Send test cases to remote subdirectory
+			for %%o in (%%~m\*) do (
+				echo Sending %%o %REMOTE%/%%~ni/%%~nj/%%~nm
+				hdc file send %%o %REMOTE%/%%~ni/%%~nj/%%~nm
+			)
+			hdc shell chmod +x %REMOTE%/%%~ni/%%~nj/%%~nm/*
+		)
 		@REM Send test cases to remote subdirectory
 		for %%k in (%%~j\*) do (
 			echo Sending %%k %REMOTE%/%%~ni/%%~nj
@@ -92,9 +113,13 @@ hdc file send %DYNLIB%\libldso_randomization_dep_e.so %REMOTEFEXT%/ldso_randomiz
 hdc file send %DYNLIB%\libdlopen_ext_relro_dso.so %REMOTEFEXT%/relro/libdlopen_ext_relro_dso.so
 
 @REM 构造测试所需环境
+hdc shell mkdir %REMOTE%/functionalext/dlns/A
 hdc shell mkdir %REMOTE%/functionalext/dlns/B
 hdc shell mkdir %REMOTE%/functionalext/dlns/C
 hdc shell mkdir %REMOTE%/functionalext/dlns/D
+hdc file send %DYNLIB%\libdlns_dlsym_dep_a.so %REMOTEFEXT%/dlns/A/libdlns_dlsym_dep_a.so
+hdc file send %DYNLIB%\libdlns_dlsym_dep_b.so %REMOTEFEXT%/dlns/B/libdlns_dlsym_dep_b.so
+hdc file send %DYNLIB%\libdlns_dlsym_dep_c.so %REMOTEFEXT%/dlns/C/libdlns_dlsym_dep_c.so
 hdc shell cp %REMOTEFEXT%/dlns/libdlopen_ns_dso.so %REMOTEFEXT%/dlns/sharedlibtest.so
 hdc shell cp %REMOTEFEXT%/dlns/libdlopen_ns_dso.so %REMOTEFEXT%/dlns/B/libB.so
 hdc shell cp %REMOTEFEXT%/dlns/libdlopen_ns_dso.so %REMOTEFEXT%/dlns/C/libC.so
@@ -169,13 +194,13 @@ set /a endM=%time:~3,2%
 set /a diffS_=%endS%-%startS%
 set /a diffM_=%endM%-%startM%
 
-@REM REPORT文件比较 
+@REM REPORT文件比较
 start python %LOCAL%\third_party\musl\scripts\compare.py
 if exist "%LOCAL%\third_party\musl\scripts\\result.html" (
   echo Test failed,please checking result.html!
 ) else (
   echo Test successful!
-)  
+)
 echo file compareing finished
 
 echo All items finished.

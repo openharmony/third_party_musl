@@ -27,6 +27,7 @@
 #define EPS (0.00001)
 #define CMPFLAG 0
 #define ERREXPECT (-1)
+#define ONREXPECT 1
 
 #define EXPECT_TRUE(fun, c) do { \
     if (!(c)) \
@@ -43,6 +44,16 @@
         t_error("[%s] failed %d != %d \n", fun, a, b); \
 } while (0)
 
+#define EXPECT_LT(fun, a, b) do { \
+    if ((a) >= (b)) \
+        t_error("[%s] failed (errno: %s)  %d >= %d \n", #fun, strerror(errno), a, b); \
+} while(0)
+
+#define EXPECT_MT(fun, a, b) do { \
+    if ((a) <= (b)) \
+        t_error("[%s] failed (errno: %s)  %d >= %d \n", #fun, strerror(errno), a, b); \
+} while(0)
+
 #define EXPECT_NE(fun, a, b) do { \
     if ((int)(a) == (int)(b)) \
         t_error("[%s] failed %d == %d \n", fun, (a), (b)); \
@@ -54,9 +65,14 @@
         t_error("[%s] failed %s != %s \n", fun, (a), (b)); \
 } while (0)
 
-#define EXPECT_STRNE(fun, a, b) do { \
-    if (strcmp((a), (b)) == 0) \
-        t_error("[%s] failed %s == %s \n", fun, (a), (b)); \
+#define EXPECT_STRLT(fun, a, b) do { \
+    if ((a) >= (b)) \
+        t_error("[%s] failed (errno: %s)  %d >= %d \n", #fun, strerror(errno), a, b); \
+} while(0)
+
+#define EXPECT_STRMT(fun, a, b) do { \
+    if ((a) <= (b)) \
+        t_error("[%s] failed (errno: %s)  %d >= %d \n", #fun, strerror(errno), a, b); \
 } while(0)
 
 /* floating point comparison */
@@ -77,5 +93,25 @@
     } \
 } while (0)
 
+#define EXPECT_STRNE(fun, a, b) do { \
+    if (strcmp((a), (b)) == 0) \
+        t_error("[%s] failed %s == %s \n", fun, (a), (b)); \
+} while(0)
+
+#define EXPECT_LONGEQ(fun, a, b) do { \
+    if ((long)(a) != (long)(b)) \
+        t_error("[%s] failed %ld != %ld \n", fun, a, b); \
+} while(0)
+
+#define EXPECT_LONGLONGEQ(fun, a, b) do { \
+    if ((long)(a) != (long)(b)) \
+        t_error("[%s] failed %lld != %lld \n", fun, a, b); \
+} while(0)
+
+#define EXPECT_GT(fun, a, b) do { \
+    if ((a) <= (b)) { \
+        t_error("[%s] failed %d > %d \n", fun, a, b); \
+    } \
+} while(0)
 
 #endif
