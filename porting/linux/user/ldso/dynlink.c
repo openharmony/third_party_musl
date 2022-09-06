@@ -2547,7 +2547,7 @@ void __dls3(size_t *sp, size_t *auxv)
 	debug.bp = dl_debug_state;
 	debug.head = head;
 	debug.base = ldso.base;
-	debug.state = 0;
+	debug.state = RT_CONSISTENT;
 	_dl_debug_state();
 
 	if (replace_argv0) argv[0] = replace_argv0;
@@ -2638,6 +2638,8 @@ static void *dlopen_impl(
 	pthread_rwlock_wrlock(&lock);
 	__inhibit_ptc();
 
+	debug.state = RT_ADD;
+	_dl_debug_state();
 	/* When namespace does not exist, use caller's namespce
 	 * and when caller does not exist, use default namespce. */
 	caller = (struct dso *)addr2dso((size_t)caller_addr);
@@ -2798,7 +2800,6 @@ static void *dlopen_impl(
 	update_tls_size();
 	if (tls_cnt != orig_tls_cnt)
 		install_new_tls();
-	_dl_debug_state();
 	orig_tail = tail;
 
 #ifdef HANDLE_RANDOMIZATION
@@ -2810,6 +2811,8 @@ static void *dlopen_impl(
 	}
 #endif
 end:
+	debug.state = RT_CONSISTENT;
+	_dl_debug_state();
 #ifdef LOAD_ORDER_RANDOMIZATION
 	if (!is_task_appended) {
 		free_task(task);
