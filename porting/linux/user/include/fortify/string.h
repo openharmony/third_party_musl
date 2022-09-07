@@ -33,132 +33,132 @@ size_t __strlen_chk(const char* s, size_t s_len);
 
 #ifdef __FORTIFY_COMPILATION
 __DIAGNOSE_FORTIFY_INLINE
-char *strcpy(char *const dst __DIAGNOSE_PASS_OBJECT_SIZE, const char *src)
+char *strcpy(char *const dest __DIAGNOSE_PASS_OBJECT_SIZE, const char *src)
 __DIAGNOSE_OVERLOAD
-__DIAGNOSE_ERROR_IF(__DIAGNOSE_UNEVALUATED_LE(__DIAGNOSE_BOS(dst), __builtin_strlen(src)),
+__DIAGNOSE_ERROR_IF(__DIAGNOSE_UNEVALUATED_LE(__DIAGNOSE_BOS(dest), __builtin_strlen(src)),
     "'strcpy' " CALLED_WITH_STRING_BIGGER_BUFFER)
 {
 #ifdef __FORTIFY_RUNTIME
-    return __builtin___strcpy_chk(dst, src, __DIAGNOSE_BOS(dst));
+    return __builtin___strcpy_chk(dest, src, __DIAGNOSE_BOS(dest));
 #else
-    return __builtin_strcpy(dst, src);
+    return __builtin_strcpy(dest, src);
 #endif
 }
 
 __DIAGNOSE_FORTIFY_INLINE
-char *stpcpy(char *const dst __DIAGNOSE_PASS_OBJECT_SIZE, const char *src)
+char *stpcpy(char *const dest __DIAGNOSE_PASS_OBJECT_SIZE, const char *src)
 __DIAGNOSE_OVERLOAD
-__DIAGNOSE_ERROR_IF(__DIAGNOSE_UNEVALUATED_LE(__DIAGNOSE_BOS(dst), __builtin_strlen(src)),
+__DIAGNOSE_ERROR_IF(__DIAGNOSE_UNEVALUATED_LE(__DIAGNOSE_BOS(dest), __builtin_strlen(src)),
     "'stpcpy' " CALLED_WITH_STRING_BIGGER_BUFFER)
 {
 #ifdef __FORTIFY_RUNTIME
-    return __builtin___stpcpy_chk(dst, src, __DIAGNOSE_BOS(dst));
+    return __builtin___stpcpy_chk(dest, src, __DIAGNOSE_BOS(dest));
 #else
-    return __builtin_stpcpy(dst, src);
+    return __builtin_stpcpy(dest, src);
 #endif
 }
 
 __DIAGNOSE_FORTIFY_INLINE
-void *memmove(void *const dst __DIAGNOSE_PASS_OBJECT_SIZE0, const void *src, size_t len)
+void *memmove(void *const dest __DIAGNOSE_PASS_OBJECT_SIZE0, const void *src, size_t len)
 __DIAGNOSE_OVERLOAD
 {
 #ifdef __FORTIFY_RUNTIME
-    return __builtin___memmove_chk(dst, src, len, __DIAGNOSE_BOS(dst));
+    return __builtin___memmove_chk(dest, src, len, __DIAGNOSE_BOS(dest));
 #else
-    return __builtin_memmove(dst, src, len);
+    return __builtin_memmove(dest, src, len);
 #endif
 }
 
 __DIAGNOSE_FORTIFY_INLINE
-void *mempcpy(void *const dst __DIAGNOSE_PASS_OBJECT_SIZE, const void *src, size_t copy_amount)
+void *mempcpy(void *const dest __DIAGNOSE_PASS_OBJECT_SIZE, const void *src, size_t copy_amount)
 __DIAGNOSE_OVERLOAD
-__DIAGNOSE_ERROR_IF(__DIAGNOSE_UNEVALUATED_LT(__DIAGNOSE_BOS0(dst), copy_amount),
+__DIAGNOSE_ERROR_IF(__DIAGNOSE_UNEVALUATED_LT(__DIAGNOSE_BOS0(dest), copy_amount),
     "'mempcpy' " CALLED_WITH_STRING_BIGGER_BUFFER)
 {
 #ifdef __FORTIFY_RUNTIME
-    return __builtin___mempcpy_chk(dst, src, copy_amount, __DIAGNOSE_BOS0(dst));
+    return __builtin___mempcpy_chk(dest, src, copy_amount, __DIAGNOSE_BOS0(dest));
 #else
-    return __builtin_mempcpy(dst, src, copy_amount);
+    return __builtin_mempcpy(dest, src, copy_amount);
 #endif
 }
 
 __DIAGNOSE_FORTIFY_INLINE
-char *strcat(char *const dst __DIAGNOSE_PASS_OBJECT_SIZE, const char *src)
+char *strcat(char *const dest __DIAGNOSE_PASS_OBJECT_SIZE, const char *src)
 __DIAGNOSE_OVERLOAD
-__DIAGNOSE_ERROR_IF(__DIAGNOSE_UNEVALUATED_LE(__DIAGNOSE_BOS(dst), __builtin_strlen(src)),
+__DIAGNOSE_ERROR_IF(__DIAGNOSE_UNEVALUATED_LE(__DIAGNOSE_BOS(dest), __builtin_strlen(src)),
     "'strcat' " CALLED_WITH_STRING_BIGGER_BUFFER)
 {
 #ifdef __FORTIFY_RUNTIME
-    return __builtin___strcat_chk(dst, src, __DIAGNOSE_BOS(dst));
+    return __builtin___strcat_chk(dest, src, __DIAGNOSE_BOS(dest));
 #else
-    return __builtin_strcat(dst, src);
+    return __builtin_strcat(dest, src);
 #endif
 }
 
 #ifdef __FORTIFY_RUNTIME
 __DIAGNOSE_FORTIFY_INLINE
-char *strncat(char* const dst __DIAGNOSE_PASS_OBJECT_SIZE, const char* src, size_t n)
+char *strncat(char* const dest __DIAGNOSE_PASS_OBJECT_SIZE, const char* src, size_t n)
 __DIAGNOSE_OVERLOAD
 {
-    return __builtin___strncat_chk(dst, src, n, __DIAGNOSE_BOS(dst));
+    return __builtin___strncat_chk(dest, src, n, __DIAGNOSE_BOS(dest));
 }
 #endif
 
 #ifdef __FORTIFY_RUNTIME
 __DIAGNOSE_FORTIFY_INLINE
-char *stpncpy(char *const dst __DIAGNOSE_PASS_OBJECT_SIZE,
+char *stpncpy(char *const dest __DIAGNOSE_PASS_OBJECT_SIZE,
     const char *const src __DIAGNOSE_PASS_OBJECT_SIZE, size_t n)
 __DIAGNOSE_OVERLOAD
 {
-    size_t bos_dst = __DIAGNOSE_BOS(dst);
-    return __builtin___stpncpy_chk(dst, src, n, bos_dst);
+    size_t bos_dest = __DIAGNOSE_BOS(dest);
+    return __builtin___stpncpy_chk(dest, src, n, bos_dest);
 }
 #endif
 
 #ifdef __FORTIFY_RUNTIME
 __DIAGNOSE_FORTIFY_INLINE
-char *strncpy(char *const dst __DIAGNOSE_PASS_OBJECT_SIZE,
+char *strncpy(char *const dest __DIAGNOSE_PASS_OBJECT_SIZE,
     const char *const src __DIAGNOSE_PASS_OBJECT_SIZE, size_t n)
 __DIAGNOSE_OVERLOAD
 {
-    size_t bos_dst = __DIAGNOSE_BOS(dst);
-    return __builtin___strncpy_chk(dst, src, n, bos_dst);
+    size_t bos_dest = __DIAGNOSE_BOS(dest);
+    return __builtin___strncpy_chk(dest, src, n, bos_dest);
 }
 #endif
 
 #ifdef __FORTIFY_RUNTIME
 __DIAGNOSE_FORTIFY_INLINE
-void *memcpy(void *const dst __DIAGNOSE_PASS_OBJECT_SIZE0, const void *src, size_t copy_amount)
+void *memcpy(void *const dest __DIAGNOSE_PASS_OBJECT_SIZE0, const void *src, size_t copy_amount)
 __DIAGNOSE_OVERLOAD
 {
-    return __builtin___memcpy_chk(dst, src, copy_amount, __DIAGNOSE_BOS0(dst));
+    return __builtin___memcpy_chk(dest, src, copy_amount, __DIAGNOSE_BOS0(dest));
 }
 #endif
 
 #if defined(_BSD_SOURCE) || defined(_GNU_SOURCE)
 __DIAGNOSE_FORTIFY_INLINE
-size_t strlcpy(char *const dst __DIAGNOSE_PASS_OBJECT_SIZE, const char *src, size_t size)
+size_t strlcpy(char *const dest __DIAGNOSE_PASS_OBJECT_SIZE, const char *src, size_t size)
 __DIAGNOSE_OVERLOAD
-__DIAGNOSE_ERROR_IF(__DIAGNOSE_UNEVALUATED_LT(__DIAGNOSE_BOS(dst), size),
+__DIAGNOSE_ERROR_IF(__DIAGNOSE_UNEVALUATED_LT(__DIAGNOSE_BOS(dest), size),
     "'strlcpy' called with size bigger than buffer")
 {
 #ifdef __FORTIFY_RUNTIME
-    return __strlcpy_diagnose(dst, src, size, __DIAGNOSE_BOS(dst));
+    return __strlcpy_diagnose(dest, src, size, __DIAGNOSE_BOS(dest));
 #else
-    return __DIAGNOSE_CALL_BYPASSING_FORTIFY(strlcpy)(dst, src, size);
+    return __DIAGNOSE_CALL_BYPASSING_FORTIFY(strlcpy)(dest, src, size);
 #endif
 }
 
 __DIAGNOSE_FORTIFY_INLINE
-size_t strlcat(char* const dst __DIAGNOSE_PASS_OBJECT_SIZE, const char* src, size_t size)
+size_t strlcat(char* const dest __DIAGNOSE_PASS_OBJECT_SIZE, const char* src, size_t size)
 __DIAGNOSE_OVERLOAD
-__DIAGNOSE_ERROR_IF(__DIAGNOSE_UNEVALUATED_LT(__DIAGNOSE_BOS(dst), size),
+__DIAGNOSE_ERROR_IF(__DIAGNOSE_UNEVALUATED_LT(__DIAGNOSE_BOS(dest), size),
     "'strlcat' called with size bigger than buffer")
 {
 #ifdef __FORTIFY_RUNTIME
-    return __strlcat_diagnose(dst, src, size, __DIAGNOSE_BOS(dst));
+    return __strlcat_diagnose(dest, src, size, __DIAGNOSE_BOS(dest));
 #else
-    return __DIAGNOSE_CALL_BYPASSING_FORTIFY(strlcat)(dst, src, size);
+    return __DIAGNOSE_CALL_BYPASSING_FORTIFY(strlcat)(dest, src, size);
 #endif
 }
 #endif // defined(_GNU_SOURCE) || defined(_BSD_SOURCE)
