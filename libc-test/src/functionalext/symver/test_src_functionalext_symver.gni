@@ -16,4 +16,5 @@ functionalext_symver_list = [
   "dlvsym",
   "dynlink_default",
   "dynlink",
+  "reloc_symver",
 ]
