@@ -31,37 +31,37 @@ int __ppoll_chk(struct pollfd*, nfds_t, const struct timespec*, const sigset_t*,
 
 #ifdef __FORTIFY_COMPILATION
 __DIAGNOSE_FORTIFY_INLINE
-int poll(struct pollfd* const fds __DIAGNOSE_PASS_OBJECT_SIZE, nfds_t fd_count, int timeout)
+int poll(struct pollfd* const fds __DIAGNOSE_PASS_OBJECT_SIZE, nfds_t fd_amount, int timeout)
 __DIAGNOSE_OVERLOAD
-__DIAGNOSE_ERROR_IF(__DIAGNOSE_UNEVALUATED_LT(__DIAGNOSE_BOS(fds), sizeof(*fds) * fd_count),
+__DIAGNOSE_ERROR_IF(__DIAGNOSE_UNEVALUATED_LT(__DIAGNOSE_BOS(fds), sizeof(*fds) * fd_amount),
     "in call to 'poll', " FD_COUNT_LARGE_GIVEN_BUFFER)
 {
 #ifdef __FORTIFY_RUNTIME
     size_t bos_fds = __DIAGNOSE_BOS(fds);
 
-    if (!__DIAGNOSE_BOS_FD_COUNT_TRIVIALLY_SAFE(bos_fds, fds, fd_count)) {
-        return __poll_diagnose(fds, fd_count, timeout, bos_fds);
+    if (!__DIAGNOSE_BOS_FD_COUNT_TRIVIALLY_SAFE(bos_fds, fds, fd_amount)) {
+        return __poll_diagnose(fds, fd_amount, timeout, bos_fds);
     }
 #endif
-    return __DIAGNOSE_CALL_BYPASSING_FORTIFY(poll)(fds, fd_count, timeout);
+    return __DIAGNOSE_CALL_BYPASSING_FORTIFY(poll)(fds, fd_amount, timeout);
 }
 
 #ifdef _GNU_SOURCE
 __DIAGNOSE_FORTIFY_INLINE
-int ppoll(struct pollfd* const fds __DIAGNOSE_PASS_OBJECT_SIZE, nfds_t fd_count,
+int ppoll(struct pollfd* const fds __DIAGNOSE_PASS_OBJECT_SIZE, nfds_t fd_amount,
     const struct timespec* timeout, const sigset_t* mask)
 __DIAGNOSE_OVERLOAD
-__DIAGNOSE_ERROR_IF(__DIAGNOSE_UNEVALUATED_LT(__DIAGNOSE_BOS(fds), sizeof(*fds) * fd_count),
+__DIAGNOSE_ERROR_IF(__DIAGNOSE_UNEVALUATED_LT(__DIAGNOSE_BOS(fds), sizeof(*fds) * fd_amount),
     "in call to 'ppoll', " FD_COUNT_LARGE_GIVEN_BUFFER)
 {
 #ifdef __FORTIFY_RUNTIME
     size_t bos_fds = __DIAGNOSE_BOS(fds);
 
-    if (!__DIAGNOSE_BOS_FD_COUNT_TRIVIALLY_SAFE(bos_fds, fds, fd_count)) {
-        return __ppoll_chk(fds, fd_count, timeout, mask, bos_fds);
+    if (!__DIAGNOSE_BOS_FD_COUNT_TRIVIALLY_SAFE(bos_fds, fds, fd_amount)) {
+        return __ppoll_chk(fds, fd_amount, timeout, mask, bos_fds);
     }
 #endif
-    return __DIAGNOSE_CALL_BYPASSING_FORTIFY(ppoll)(fds, fd_count, timeout, mask);
+    return __DIAGNOSE_CALL_BYPASSING_FORTIFY(ppoll)(fds, fd_amount, timeout, mask);
 }
 #endif
 

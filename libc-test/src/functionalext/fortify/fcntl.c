@@ -48,7 +48,7 @@ static void open_0020(void)
     };
     sigaction(SIGABRT, &sigabrt, NULL);
 
-    int flags = O_CREAT; // Fool the compiler.
+    int flags = O_CREAT;
     int status;
     int pid = fork();
     switch (pid) {
@@ -82,7 +82,7 @@ static void open_0030(void)
     };
     sigaction(SIGABRT, &sigabrt, NULL);
 
-    int flags = O_TMPFILE; // Fool the compiler.
+    int flags = O_TMPFILE;
     int status;
     int pid = fork();
     switch (pid) {
@@ -131,7 +131,7 @@ static void openat_0020(void)
     };
     sigaction(SIGABRT, &sigabrt, NULL);
 
-    int flags = O_CREAT; // Fool the compiler.
+    int flags = O_CREAT;
     int status;
     int pid = fork();
     switch (pid) {
@@ -165,7 +165,7 @@ static void openat_0030(void)
     };
     sigaction(SIGABRT, &sigabrt, NULL);
 
-    int flags = O_TMPFILE; // Fool the compiler.
+    int flags = O_TMPFILE;
     int status;
     int pid = fork();
     switch (pid) {
@@ -214,7 +214,7 @@ static void open64_0020(void)
     };
     sigaction(SIGABRT, &sigabrt, NULL);
 
-    int flags = O_CREAT; // Fool the compiler.
+    int flags = O_CREAT;
     int status;
     int pid = fork();
     switch (pid) {
@@ -248,7 +248,7 @@ static void open64_0030(void)
     };
     sigaction(SIGABRT, &sigabrt, NULL);
 
-    int flags = O_TMPFILE; // Fool the compiler.
+    int flags = O_TMPFILE;
     int status;
     int pid = fork();
     switch (pid) {
@@ -297,7 +297,7 @@ static void openat64_0020(void)
     };
     sigaction(SIGABRT, &sigabrt, NULL);
 
-    int flags = O_CREAT; // Fool the compiler.
+    int flags = O_CREAT;
     int status;
     int pid = fork();
     switch (pid) {
@@ -331,7 +331,7 @@ static void openat64_0030(void)
     };
     sigaction(SIGABRT, &sigabrt, NULL);
 
-    int flags = O_TMPFILE; // Fool the compiler.
+    int flags = O_TMPFILE;
     int status;
     int pid = fork();
     switch (pid) {

@@ -56,7 +56,7 @@ static void send_0010(void)
     };
     sigaction(SIGABRT, &sigabrt, NULL);
 
-    size_t data_len = atoi("11"); // suppress compiler optimizations
+    size_t data_len = atoi("11");
     char buf[BUF_SIZE_10];
     int status;
     int pid = fork();
@@ -91,7 +91,7 @@ static void recv_0010(void)
     };
     sigaction(SIGABRT, &sigabrt, NULL);
 
-    size_t data_len = atoi("11"); // suppress compiler optimizations
+    size_t data_len = atoi("11");
     char buf[BUF_SIZE_10];
     int status;
     int pid = fork();
@@ -153,7 +153,7 @@ static void sendto_0010(void)
     };
     sigaction(SIGABRT, &sigabrt, NULL);
 
-    size_t data_len = atoi("11"); // suppress compiler optimizations
+    size_t data_len = atoi("11");
     char buf[BUF_SIZE_10];
     int status;
     int pid = fork();
@@ -188,7 +188,7 @@ static void recvfrom_0010(void)
     };
     sigaction(SIGABRT, &sigabrt, NULL);
 
-    size_t data_len = atoi("11"); // suppress compiler optimizations
+    size_t data_len = atoi("11");
     char buf[BUF_SIZE_10];
     int status;
     int pid = fork();
