@@ -77,7 +77,7 @@ __DIAGNOSE_ERROR_IF(__DIAGNOSE_UNEVALUATED_LT(__DIAGNOSE_BOS0(buf), size * count
 __DIAGNOSE_FORTIFY_INLINE
 char* fgets(char* const __DIAGNOSE_PASS_OBJECT_SIZE dest, int size, FILE* stream)
 __DIAGNOSE_OVERLOAD
-__DIAGNOSE_ERROR_IF(size < 0, "in call to 'fgets', size should not be negative")
+__DIAGNOSE_ERROR_IF(size < 0, "in call to 'fgets', size should not be less than 0")
 __DIAGNOSE_ERROR_IF(__DIAGNOSE_UNEVALUATED_LT(__DIAGNOSE_BOS(dest), size),
     "in call to 'fgets', " SIZE_LARGER_THEN_DESTINATION_BUFFER)
 {
@@ -111,10 +111,10 @@ __DIAGNOSE_FORTIFY_VARIADIC __DIAGNOSE_PRINTFLIKE(FORMAT_PLACE_2, VALIST_PLACE_3
 int sprintf(char* const __DIAGNOSE_PASS_OBJECT_SIZE dest, const char* format, ...)
 __DIAGNOSE_OVERLOAD
 {
-    va_list va;
-    va_start(va, format);
-    int result = __builtin___vsprintf_chk(dest, 0, __DIAGNOSE_BOS(dest), format, va);
-    va_end(va);
+    va_list va_l;
+    va_start(va_l, format);
+    int result = __builtin___vsprintf_chk(dest, 0, __DIAGNOSE_BOS(dest), format, va_l);
+    va_end(va_l);
     return result;
 }
 
@@ -122,10 +122,10 @@ __DIAGNOSE_FORTIFY_VARIADIC __DIAGNOSE_PRINTFLIKE(FORMAT_PLACE_3, VALIST_PLACE_4
 int snprintf(char* const __DIAGNOSE_PASS_OBJECT_SIZE dest, size_t size, const char* format, ...)
 __DIAGNOSE_OVERLOAD
 {
-    va_list va;
-    va_start(va, format);
-    int result = __builtin___vsnprintf_chk(dest, size, 0, __DIAGNOSE_BOS(dest), format, va);
-    va_end(va);
+    va_list va_l;
+    va_start(va_l, format);
+    int result = __builtin___vsnprintf_chk(dest, size, 0, __DIAGNOSE_BOS(dest), format, va_l);
+    va_end(va_l);
     return result;
 }
 

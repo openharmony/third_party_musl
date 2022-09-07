@@ -82,14 +82,14 @@ extern "C" {
 #define __DIAGNOSE_PASS_OBJECT_SIZE0 __DIAGNOSE_PASS_OBJECT_SIZE_N(0)
 
 #define __DIAGNOSE_FORTIFY_UNKNOWN_SIZE ((unsigned int) -1)
-/* Intended for use in unevaluated contexts, e.g. diagnose_if conditions. */
+/* The following are intended for use in unevaluated environments, e.g. diagnose_if conditions. */
 #define __DIAGNOSE_UNEVALUATED_LT(bos_val, val) \
 ((bos_val) != __DIAGNOSE_FORTIFY_UNKNOWN_SIZE && (bos_val) < (val))
 
 #define __DIAGNOSE_UNEVALUATED_LE(bos_val, val) \
     ((bos_val) != __DIAGNOSE_FORTIFY_UNKNOWN_SIZE && (bos_val) <= (val))
 
-/* Intended for use in evaluated contexts. */
+/* The following acts in the context of evaluation. */
 #define __DIAGNOSE_BOS_DYNAMIC_CHECK_IMPL_AND(bos_val, op, index, cond) \
     ((bos_val) == __DIAGNOSE_FORTIFY_UNKNOWN_SIZE ||                 \
     (__builtin_constant_p(index) && bos_val op index && (cond)))
@@ -102,7 +102,10 @@ extern "C" {
 
 #define __DIAGNOSE_OVERLOAD __attribute__((overloadable))
 
-/* Used to rename functions so that the compiler emits a call to 'x' rather than the function this was applied to. */
+/*
+ * A function to prevent this function from being applied.
+ * Used to rename the function so that the compiler emits a call to "x".
+ */
 #define __DIAGNOSE_RENAME(x) __asm__(#x)
 #define __DIAGNOSE_OPEN_MODES_USEFUL(flags) (((flags) & O_CREAT) || ((flags) & O_TMPFILE) == O_TMPFILE)
 #define __DIAGNOSE_BOS_FD_COUNT_TRIVIALLY_SAFE(bos_val, fds, fd_count)              \
@@ -116,14 +119,14 @@ extern "C" {
     !__DIAGNOSE_UNSAFE_CHK_MUL_OVERFLOW(size, count))
 
 #define FORTIFY_RUNTIME_ERROR_PREFIX "Musl Fortify runtime error: "
-#define OPEN_TOO_MANY_ARGS_ERROR "too many arguments"
-#define OPEN_TOO_FEW_ARGS_ERROR "called with O_CREAT or O_TMPFILE, but missing mode"
-#define OPEN_USELESS_MODES_WARNING "has superfluous mode bits; missing O_CREAT?"
-#define CALLED_WITH_STRING_BIGGER_BUFFER "called with string bigger than buffer"
-#define FD_COUNT_LARGE_GIVEN_BUFFER "fd_count is larger than the given buffer"
-#define CALLED_WITH_SIZE_BIGGER_BUFFER "called with size bigger than buffer"
-#define OUTPUT_PARAMETER_BYTES "output parameter must be NULL or a pointer to a buffer with >= FORTIFY_PATH_MAX bytes"
-#define SIZE_LARGER_THEN_DESTINATION_BUFFER "size is larger than the destination buffer"
+#define OPEN_TOO_MANY_ARGS_ERROR "There are too many arguments"
+#define OPEN_TOO_FEW_ARGS_ERROR "invoking with O_CREAT or O_TMPFILE, but missing pattern."
+#define OPEN_USELESS_MODES_WARNING "having redundant mode bits; but missing O_CREAT."
+#define CALLED_WITH_STRING_BIGGER_BUFFER "called with a string larger than the buffer"
+#define FD_COUNT_LARGE_GIVEN_BUFFER "fd_count is greater than the given buffer"
+#define CALLED_WITH_SIZE_BIGGER_BUFFER "called with bigger size than the buffer"
+#define OUTPUT_PARAMETER_BYTES "the output parameter must be nullptr or a pointer to the buffer with >= FORTIFY_PATH_MAX bytes"
+#define SIZE_LARGER_THEN_DESTINATION_BUFFER "the size is greater than the target buffer"
 
 void __fortify_error(const char* info, ...);
 

@@ -27,12 +27,12 @@ mode_t __umask_diagnose(mode_t);
 mode_t __umask_real(mode_t mode) __DIAGNOSE_RENAME(umask);
 
 #ifdef __FORTIFY_COMPILATION
-/* Abuse enable_if to make this an overload of umask. */
+/* Overload of umask. */
 __DIAGNOSE_FORTIFY_INLINE
 mode_t umask(mode_t mode)
 __DIAGNOSE_OVERLOAD
 __DIAGNOSE_ENABLE_IF(1, "")
-__DIAGNOSE_ERROR_IF(mode & ~0777, "'umask' called with invalid mode")
+__DIAGNOSE_ERROR_IF(mode & ~0777, "'umask' was called in invalid mode")
 {
 #ifdef __FORTIFY_RUNTIME
     return __umask_diagnose(mode);
