@@ -72,6 +72,9 @@ do
 				|| [ -d $file ]
 				then
 					continue
+				elif [ "$file" = "tgkill" ]
+				then
+				    src/common/runtest -w '' $dir/$file 12345 34567 >> src/REPORT
 				else
 					# echo file=$dir/$file
 					src/common/runtest -w '' $dir/$file >> src/REPORT
