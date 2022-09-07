@@ -119,7 +119,7 @@ static inline void __diagnose_buffer_access(const char* fn, const char* action,
     size_t claim, size_t actual)
 {
     if (__DIAGNOSE_PREDICT_FALSE(claim > actual)) {
-        __fortify_error("%s: prevented %zu-byte %s %zu-byte buffer\n", fn, claim, action, actual);
+        __fortify_error("%s: avoid %zu-byte %s %zu-byte buffer\n", fn, claim, action, actual);
     }
 }
 
@@ -157,8 +157,8 @@ mode_t __umask_diagnose(mode_t mode)
     return __umask_real(mode);
 }
 
-// Runtime implementation of string related interface
-// (used directly by the compiler, not in a header file).
+// Runtime implementation of the string-dependent interface.
+// Used directly by the compiler, not in a header file.
 static inline void __diagnose_count(const char *fn, const char *identifier, size_t value)
 {
     if (__DIAGNOSE_PREDICT_FALSE(value > LONG_MAX)) {
@@ -170,59 +170,59 @@ size_t __strlen_chk(const char* s, size_t s_len)
 {
     size_t ret = __DIAGNOSE_CALL_BYPASSING_FORTIFY(strlen)(s);
     if (__DIAGNOSE_PREDICT_FALSE(ret >= s_len)) {
-        __fortify_error("strlen: detected read past end of buffer\n");
+        __fortify_error("strlen: diagnose read exceed end of buffer\n");
     }
     return ret;
 }
 
-char* __strncat_chk(char* dst, const char* src, size_t len, size_t dst_buf_size)
+char* __strncat_chk(char* dest, const char* src, size_t len, size_t dst_buf_size)
 {
-    size_t src_len = strlen(src) + strlen(dst);
+    size_t src_len = strlen(src) + strlen(dest);
     __diagnose_buffer_access("strncat", "write into", src_len, dst_buf_size);
-    return __DIAGNOSE_CALL_BYPASSING_FORTIFY(strncat)(dst, src, len);
+    return __DIAGNOSE_CALL_BYPASSING_FORTIFY(strncat)(dest, src, len);
 }
 
-char* __strcat_chk(char* dst, const char* src, size_t dst_buf_size)
+char* __strcat_chk(char* dest, const char* src, size_t dst_buf_size)
 {
-    size_t src_len = strlen(src) + strlen(dst);
+    size_t src_len = strlen(src) + strlen(dest);
     __diagnose_buffer_access("strcat", "write into", src_len, dst_buf_size);
-    return __DIAGNOSE_CALL_BYPASSING_FORTIFY(strcat)(dst, src);
+    return __DIAGNOSE_CALL_BYPASSING_FORTIFY(strcat)(dest, src);
 }
 
-char* __strcpy_chk(char* dst, const char* src, size_t dst_len)
+char* __strcpy_chk(char* dest, const char* src, size_t dst_len)
 {
     size_t src_len = strlen(src) + 1;
     __diagnose_buffer_access("strcpy", "write into", src_len, dst_len);
-    return __DIAGNOSE_CALL_BYPASSING_FORTIFY(strcpy)(dst, src);
+    return __DIAGNOSE_CALL_BYPASSING_FORTIFY(strcpy)(dest, src);
 }
 
-void* __memmove_chk(void* dst, const void* src, size_t len, size_t dst_len)
+void* __memmove_chk(void* dest, const void* src, size_t len, size_t dst_len)
 {
     __diagnose_buffer_access("memmove", "write into", len, dst_len);
-    return __DIAGNOSE_CALL_BYPASSING_FORTIFY(memmove)(dst, src, len);
+    return __DIAGNOSE_CALL_BYPASSING_FORTIFY(memmove)(dest, src, len);
 }
 
-void* __memcpy_chk(void* dst, const void* src, size_t count, size_t dst_len)
+void* __memcpy_chk(void* dest, const void* src, size_t count, size_t dst_len)
 {
     __diagnose_count("memcpy", "count", count);
     __diagnose_buffer_access("memcpy", "write into", count, dst_len);
-    return __DIAGNOSE_CALL_BYPASSING_FORTIFY(memcpy)(dst, src, count);
+    return __DIAGNOSE_CALL_BYPASSING_FORTIFY(memcpy)(dest, src, count);
 }
 
 #ifdef _GNU_SOURCE
-void* __mempcpy_chk(void* dst, const void* src, size_t count, size_t dst_len)
+void* __mempcpy_chk(void* dest, const void* src, size_t count, size_t dst_len)
 {
     __diagnose_count("mempcpy", "count", count);
     __diagnose_buffer_access("mempcpy", "write into", count, dst_len);
-    return __DIAGNOSE_CALL_BYPASSING_FORTIFY(mempcpy)(dst, src, count);
+    return __DIAGNOSE_CALL_BYPASSING_FORTIFY(mempcpy)(dest, src, count);
 }
 #endif
 
-char* __stpcpy_chk(char* dst, const char* src, size_t dst_len)
+char* __stpcpy_chk(char* dest, const char* src, size_t dst_len)
 {
     size_t src_len = strlen(src);
     __diagnose_buffer_access("stpcpy", "write into", src_len, dst_len);
-    return __DIAGNOSE_CALL_BYPASSING_FORTIFY(stpcpy)(dst, src);
+    return __DIAGNOSE_CALL_BYPASSING_FORTIFY(stpcpy)(dest, src);
 }
 
 void* __memchr_diagnose(const void* s, int c, size_t n, size_t actual_size)
@@ -232,56 +232,56 @@ void* __memchr_diagnose(const void* s, int c, size_t n, size_t actual_size)
     return __DIAGNOSE_CALL_BYPASSING_FORTIFY(memchr)(const_cast_s, c, n);
 }
 
-char* __stpncpy_chk(char* dst, const char* src, size_t len, size_t dst_len)
+char* __stpncpy_chk(char* dest, const char* src, size_t len, size_t dst_len)
 {
     __diagnose_buffer_access("stpncpy", "write into", len, dst_len);
-    return __DIAGNOSE_CALL_BYPASSING_FORTIFY(stpncpy)(dst, src, len);
+    return __DIAGNOSE_CALL_BYPASSING_FORTIFY(stpncpy)(dest, src, len);
 }
 
-char *__strncpy_chk(char *dst, const char *src, size_t len, size_t dst_len)
+char *__strncpy_chk(char *dest, const char *src, size_t len, size_t dst_len)
 {
     __diagnose_buffer_access("strncpy", "write into", len, dst_len);
     if (len != 0) {
-        char *d = dst;
+        char *d = dest;
         const char *s = src;
         size_t src_len = strlen(src);
         do {
             size_t s_copy_len = (size_t)(s - src);
             if (__DIAGNOSE_PREDICT_FALSE(s_copy_len >= src_len)) {
-                __fortify_error("strncpy: detected read past end of %zu-byte buffer\n", src_len);
+                __fortify_error("strncpy: diagnose read exceed end of %zu-byte buffer\n", src_len);
             }
         } while (--len != 0);
     }
-    return __DIAGNOSE_CALL_BYPASSING_FORTIFY(strncpy)(dst, src, len);
+    return __DIAGNOSE_CALL_BYPASSING_FORTIFY(strncpy)(dest, src, len);
 }
 
-void *__memset_chk(void *dst, int byte, size_t count, size_t dst_len)
+void *__memset_chk(void *dest, int byte, size_t count, size_t dst_len)
 {
     __diagnose_count("memset", "count", count);
     __diagnose_buffer_access("memset", "write into", count, dst_len);
-    return __DIAGNOSE_CALL_BYPASSING_FORTIFY(memset)(dst, byte, count);
+    return __DIAGNOSE_CALL_BYPASSING_FORTIFY(memset)(dest, byte, count);
 }
 
 #if defined(_GNU_SOURCE) || defined(_BSD_SOURCE)
-size_t __strlcpy_diagnose(char *dst, const char *src,
+size_t __strlcpy_diagnose(char *dest, const char *src,
     size_t supplied_size, size_t dst_len_from_compiler)
 {
     __diagnose_buffer_access("strlcpy", "write into", supplied_size, dst_len_from_compiler);
-    return __DIAGNOSE_CALL_BYPASSING_FORTIFY(strlcpy)(dst, src, supplied_size);
+    return __DIAGNOSE_CALL_BYPASSING_FORTIFY(strlcpy)(dest, src, supplied_size);
 }
 
-size_t __strlcat_diagnose(char *dst, const char *src,
+size_t __strlcat_diagnose(char *dest, const char *src,
     size_t supplied_size, size_t dst_len_from_compiler)
 {
     __diagnose_buffer_access("strlcat", "write into", supplied_size, dst_len_from_compiler);
-    return __DIAGNOSE_CALL_BYPASSING_FORTIFY(strlcat)(dst, src, supplied_size);
+    return __DIAGNOSE_CALL_BYPASSING_FORTIFY(strlcat)(dest, src, supplied_size);
 }
 #endif
 
 char* __strchr_diagnose(const char *s, int c, size_t s_len)
 {
     if (s_len == 0) {
-        __fortify_error("strchr: prevented read past end of buffer\n");
+        __fortify_error("strchr: avoid read exceed end of buffer\n");
     }
     return __DIAGNOSE_CALL_BYPASSING_FORTIFY(strchr)(s, c);
 }
@@ -289,7 +289,7 @@ char* __strchr_diagnose(const char *s, int c, size_t s_len)
 char *__strrchr_diagnose(const char *s, int c, size_t s_len)
 {
     if (s_len == 0) {
-        __fortify_error("strrchr: prevented read past end of buffer\n");
+        __fortify_error("strrchr: avoid read exceed end of buffer\n");
     }
     return __DIAGNOSE_CALL_BYPASSING_FORTIFY(strrchr)(s, c);
 }
@@ -373,49 +373,49 @@ size_t __fwrite_chk(const void* buf, size_t size, size_t count, FILE* stream, si
     return __DIAGNOSE_CALL_BYPASSING_FORTIFY(fwrite)(buf, size, count, stream);
 }
 
-char* __fgets_chk(char* dst, int supplied_size, FILE* stream, size_t dst_len_from_compiler)
+char* __fgets_chk(char* dest, int supplied_size, FILE* stream, size_t dst_len_from_compiler)
 {
     __diagnose_buffer_access("fgets", "write into", supplied_size, dst_len_from_compiler);
-    return __DIAGNOSE_CALL_BYPASSING_FORTIFY(fgets)(dst, supplied_size, stream);
+    return __DIAGNOSE_CALL_BYPASSING_FORTIFY(fgets)(dest, supplied_size, stream);
 }
 
-int __vsnprintf_chk(char* dst, size_t supplied_size, int flags,
+int __vsnprintf_chk(char* dest, size_t supplied_size, int flags,
     size_t dst_len_from_compiler, const char* format, va_list va)
 {
     __diagnose_buffer_access("vsnprintf", "write into", supplied_size, dst_len_from_compiler);
-    return __DIAGNOSE_CALL_BYPASSING_FORTIFY(vsnprintf)(dst, supplied_size, format, va);
+    return __DIAGNOSE_CALL_BYPASSING_FORTIFY(vsnprintf)(dest, supplied_size, format, va);
 }
 
-int __vsprintf_chk(char* dst, int flags,
+int __vsprintf_chk(char* dest, int flags,
     size_t dst_len_from_compiler, const char* format, va_list va)
 {
-    // The compiler uses SIZE_MAX to mean "no idea", but our vsnprintf rejects sizes that large.
-    int result = __DIAGNOSE_CALL_BYPASSING_FORTIFY(vsnprintf)(dst,
+    // The compiler has SIZE_MAX, But vsnprintf cannot use such a large size.
+    int result = __DIAGNOSE_CALL_BYPASSING_FORTIFY(vsnprintf)(dest,
         dst_len_from_compiler == SIZE_MAX ? SSIZE_MAX : dst_len_from_compiler,
         format, va);
 
-    // Try to catch failures after the fact...
+    // Attempts to find out after the fact fail.
     __diagnose_buffer_access("vsprintf", "write into", result + 1, dst_len_from_compiler);
     return result;
 }
 #undef SSIZE_MAX
 #undef SIZE_MAX
 
-int __snprintf_chk(char* dst, size_t supplied_size, int flags,
+int __snprintf_chk(char* dest, size_t supplied_size, int flags,
     size_t dst_len_from_compiler, const char* format, ...)
 {
     va_list va;
     va_start(va, format);
-    int result = __vsnprintf_chk(dst, supplied_size, flags, dst_len_from_compiler, format, va);
+    int result = __vsnprintf_chk(dest, supplied_size, flags, dst_len_from_compiler, format, va);
     va_end(va);
     return result;
 }
 
-int __sprintf_chk(char* dst, int flags, size_t dst_len_from_compiler, const char* format, ...)
+int __sprintf_chk(char* dest, int flags, size_t dst_len_from_compiler, const char* format, ...)
 {
     va_list va;
     va_start(va, format);
-    int result = __vsprintf_chk(dst, flags, dst_len_from_compiler, format, va);
+    int result = __vsprintf_chk(dest, flags, dst_len_from_compiler, format, va);
     va_end(va);
     return result;
 }

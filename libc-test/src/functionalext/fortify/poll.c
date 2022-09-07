@@ -48,7 +48,7 @@ static void poll_0020(void)
     };
     sigaction(SIGABRT, &sigabrt, NULL);
 
-    nfds_t fd_count = atoi("2"); // suppress compiler optimizations
+    nfds_t fd_count = atoi("2");
     struct pollfd buf[1] = {{0, POLLIN, 0}};
 
     int status;
@@ -58,7 +58,7 @@ static void poll_0020(void)
             t_error("fork failed: %s\n", strerror(errno));
             break;
         case 0:
-            // Set timeout to zero to prevent waiting in poll when fortify test fails.
+            // Set timeout to 0 to prevent waiting for polling if hardening tests fail.
             poll(buf, fd_count, 0);
             exit(0);
         default:
@@ -100,7 +100,7 @@ static void ppoll_0020(void)
     };
     sigaction(SIGABRT, &sigabrt, NULL);
 
-    nfds_t fd_count = atoi("2"); // suppress compiler optimizations
+    nfds_t fd_count = atoi("2");
     struct pollfd buf[1] = {{0, POLLIN, 0}};
     // Set timeout to zero to prevent waiting in ppoll when fortify test fails.
     struct timespec timeout;
