@@ -488,7 +488,7 @@ static int check_vna_hash(Verdef *def, int16_t vsym, uint32_t vna_hash)
 static int check_verinfo(Verdef *def, int16_t *versym, uint32_t index, struct verinfo *verinfo, char *strings)
 {
 	/* if the versym and verinfo is null , then not need version. */
-	if (!versym) {
+	if (!versym || !def) {
 		if (strlen(verinfo->v) == 0) {
 			return 1;
 		} else {
