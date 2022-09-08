@@ -274,6 +274,10 @@ template("test_sharedlib") {
       ldflags += [ "-Wl,--version-script=${_version_script}" ]
     }
 
+    if (defined(invoker.deps)) {
+      deps = invoker.deps
+    }
+
     libs = [ "//${out_test_dir}/src/common/libtest.a" ]
 
     output_name = "${target_name}"
