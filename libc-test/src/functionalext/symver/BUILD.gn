@@ -37,6 +37,7 @@ group("dso_shared") {
     ":dso_hard_symver",
     ":dso_no_symver",
     ":dso_symver",
+    ":reloc_symver_dso",
   ]
 }
 
@@ -52,4 +53,11 @@ test_sharedlib("dso_no_symver") {
 }
 
 test_sharedlib("dso_symver") {
+}
+
+test_sharedlib("reloc_symver_dso") {
+  deps = [
+    ":dso_easy_symver",
+    ":dso_no_symver",
+  ]
 }
