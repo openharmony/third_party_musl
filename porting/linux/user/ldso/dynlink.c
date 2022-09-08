@@ -82,7 +82,8 @@ struct td_index {
 struct verinfo {
 	const char *s;
 	const char *v;
-	Verneed *verneed;
+	bool use_vna_hash;
+	uint32_t vna_hash;
 };
 
 struct dso {
@@ -462,45 +463,23 @@ static int search_vec(size_t *v, size_t *r, size_t key)
 	return 1;
 }
 
-static int check_verneed(Verdef *def, int vsym, struct verinfo *verinfo)
+static int check_vna_hash(Verdef *def, int16_t vsym, uint32_t vna_hash)
 {
 	int matched = 0;
 
-	Verneed *verneed = verinfo->verneed;
 	vsym &= 0x7fff;
+	Verdef *verdef = def;
 	for(;;) {
-		Vernaux *vernaux = (Vernaux *)((char *)verneed + verneed->vn_aux);
-
-		for (size_t cnt = 0; cnt < verneed->vn_cnt; cnt++) {
-			Verdef *verdef = def;
-			/* find the version of symbol for verneed. */
-			for(;;) {
-				if (vernaux->vna_hash == verdef->vd_hash) {
-					if ((verdef->vd_ndx & 0x7fff) == vsym) {
-						matched = 1;
-					}
-					break;
-				}
-
-				if (verdef->vd_next == 0) {
-					break;
-				}
-
-				verdef = (Verdef *)((char *)verdef + verdef->vd_next);
+		if ((verdef->vd_ndx & 0x7fff) == vsym) {
+			if (vna_hash == verdef->vd_hash) {
+				matched = 1;
 			}
-
-			if (matched) {
-				break;
-			}
-
-			vernaux = (Vernaux *)((char *)vernaux + vernaux->vna_next);
-		}
-
-		if (verneed->vn_next == 0) {
 			break;
 		}
-
-		verneed = (Verneed *)((char *)verneed + verneed->vn_next);
+		if (verdef->vd_next == 0) {
+			break;
+		}
+		verdef = (Verdef *)((char *)verdef + verdef->vd_next);
 	}
 
 	return matched;
@@ -517,12 +496,13 @@ static int check_verinfo(Verdef *def, int16_t *versym, uint32_t index, struct ve
 		}
 	}
 
-	int vsym = versym[index];
+	int16_t vsym = versym[index];
 
-	/* if the verneed is not null , find the verneed symbol. */
-	Verneed *verneed = verinfo->verneed;
-	if (verneed) {
-		return check_verneed(def, vsym, verinfo);
+	/* find the verneed symbol. */
+	if (verinfo->use_vna_hash) {
+		if (vsym != VER_NDX_LOCAL && versym != VER_NDX_GLOBAL) {
+			return check_vna_hash(def, vsym, verinfo->vna_hash);
+		}
 	}
 
 	/* if the version length is zero and vsym not less than zero, then library hava default version symbol. */
@@ -748,8 +728,50 @@ static inline struct symdef find_sym2(struct dso *dso, struct verinfo *verinfo, 
 
 static struct symdef find_sym(struct dso *dso, const char *s, int need_def)
 {
-	struct verinfo verinfo = { .s = s, .v = "", .verneed = dso->verneed };
+	struct verinfo verinfo = { .s = s, .v = "", .use_vna_hash = false };
 	return find_sym2(dso, &verinfo, need_def, 0, NULL);
+}
+
+static bool get_vna_hash(struct dso *dso, int sym_index, uint32_t *vna_hash)
+{
+	if (!dso->versym || !dso->verneed) {
+		return false;
+	}
+
+	uint16_t vsym = dso->versym[sym_index];
+	if (vsym == VER_NDX_LOCAL || vsym == VER_NDX_GLOBAL) {
+		return false;
+	}
+
+	bool result = false;
+	Verneed *verneed = dso->verneed;
+	Vernaux *vernaux;
+	vsym &= 0x7fff;
+
+	for(;;) {
+		vernaux = (Vernaux *)((char *)verneed + verneed->vn_aux);
+
+		for (size_t cnt = 0; cnt < verneed->vn_cnt; cnt++) {
+			if ((vernaux->vna_other & 0x7fff) == vsym) {
+				result = true;
+				*vna_hash = vernaux->vna_hash;
+				break;
+			}
+
+			vernaux = (Vernaux *)((char *)vernaux + vernaux->vna_next);
+		}
+
+		if (result) {
+			break;
+		}
+
+		if (verneed->vn_next == 0) {
+			break;
+		}
+
+		verneed = (Verneed *)((char *)verneed + verneed->vn_next);
+	}
+	return result;
 }
 
 static void do_relocs(struct dso *dso, size_t *rel, size_t rel_size, size_t stride)
@@ -802,7 +824,8 @@ static void do_relocs(struct dso *dso, size_t *rel, size_t rel_size, size_t stri
 			sym = syms + sym_index;
 			name = strings + sym->st_name;
 			ctx = type==REL_COPY ? head->syms_next : head;
-			struct verinfo vinfo = { .s = name, .v = "", .verneed = dso->verneed };
+			struct verinfo vinfo = { .s = name, .v = "" };
+			vinfo.use_vna_hash = get_vna_hash(dso, sym_index, &vinfo.vna_hash);
 			def = (sym->st_info>>4) == STB_LOCAL
 				? (struct symdef){ .dso = dso, .sym = sym }
 				: find_sym2(ctx, &vinfo, type==REL_PLT, 0, dso->namespace);
@@ -3044,7 +3067,7 @@ static void *do_dlsym(struct dso *p, const char *s, const char *v, void *ra)
 			ns = caller->namespace;
 		}
 	}
-	struct verinfo verinfo = { .s = s, .v = v, .verneed = NULL };
+	struct verinfo verinfo = { .s = s, .v = v, .use_vna_hash = false };
 	struct symdef def = find_sym2(p, &verinfo, 0, use_deps, ns);
 	if (!def.sym) {
 		error("Symbol not found: %s, version: %s", s, strlen(v) > 0 ? v : "null");
