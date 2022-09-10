@@ -2089,6 +2089,7 @@ musl_src_porting_file = [
   "src/thread/pthread_rwlock_timedwrlock.c",
   "src/trace/trace_marker.c",
   "src/ldso/dlclose.c",
+  "src/ldso/dlerror.c",
   "ldso/dynlink.c",
   "src/exit/atexit.c",
   "crt/arm/crti.s",
