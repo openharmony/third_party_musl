@@ -51,18 +51,15 @@ void* function_of_shared_lib[LAST_FUNCTION];
 static enum EnumHookMode __hook_mode = STEP_HOOK_MODE;
 static char __hook_process_path[PATH_MAX + 1] = {0};
 static char __progname[PATH_MAX + 1] = {0};
+static char __param_value[OHOS_PARAM_MAX_SIZE + 1] = {0};
 
 static char* get_native_hook_param()
 {
 #ifdef OHOS_ENABLE_PARAMETER
 	const char *key =  MUSL_HOOK_PARAM_NAME;
-	char *value = (char *)internal_calloc(OHOS_PARAM_MAX_SIZE, sizeof(char));
-	if (value == NULL) {
-		return NULL;
-	}
 	unsigned int len = OHOS_PARAM_MAX_SIZE;
-	(void)SystemReadParam(key, value, &len);
-	return value;
+	(void)SystemReadParam(key, __param_value, &len);
+	return __param_value;
 #else
 	return NULL;
 #endif
@@ -76,7 +73,7 @@ static int parse_hook_variable(enum EnumHookMode* mode, char* path, int size)
 
 	bool flag = __set_hook_flag(false);
 	char* hook_param_value = get_native_hook_param();
-	if (!hook_param_value) {
+	if (hook_param_value == NULL || hook_param_value[0] == '\0') {
 		*mode = STEP_HOOK_MODE;
 		path[0] = '\0';
 	} else {
@@ -117,8 +114,6 @@ static int parse_hook_variable(enum EnumHookMode* mode, char* path, int size)
 				path[idx] = '\0';
 			}
 		}
-
-		internal_free(hook_param_value);
 	}
 	__set_hook_flag(flag);
 	return 0;
