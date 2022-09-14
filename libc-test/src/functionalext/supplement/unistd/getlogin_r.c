@@ -53,7 +53,7 @@ void getlogin_r_0200(void)
     EXPECT_NE("getlogin_r_0200", ret, 0);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     getlogin_r_0100();
     getlogin_r_0200();

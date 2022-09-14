@@ -28,13 +28,14 @@
 void chdir_0100(void)
 {
     int num;
-    if (NULL == opendir("/data/dir"))
+    if (NULL == opendir("/data/dir")) {
         mkdir("/data/dir", 0777);
+    }
     num = chdir("/data/dir");
     EXPECT_EQ("chdir_0100", num, 0);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     chdir_0100();
 

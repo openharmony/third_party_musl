@@ -14,11 +14,8 @@
  */
 
 #include <fcntl.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
-#include <stdint.h>
-#include <signal.h>
 #include <unistd.h>
 #include "functionalext.h"
 
@@ -63,7 +60,7 @@ TEST_FUN G_Fun_Array[] = {
     getpid_0100,
 };
 
-int main()
+int main(int argc, char *argv[])
 {
     int num = sizeof(G_Fun_Array) / sizeof(TEST_FUN);
     for (int pos = 0; pos < num; ++pos) {

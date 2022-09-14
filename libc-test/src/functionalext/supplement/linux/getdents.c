@@ -76,7 +76,7 @@ void getdents_0300(void)
     EXPECT_EQ("getdents_0300", result, FAILED);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     getdents_0100();
     getdents_0200();

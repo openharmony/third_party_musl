@@ -12,6 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <dirent.h>
@@ -45,7 +46,7 @@ void alphasort_0200(void)
     EXPECT_TRUE("alphasort_0100", total < 0);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     alphasort_0100();
     alphasort_0200();

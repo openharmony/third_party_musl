@@ -57,7 +57,7 @@ void fork_0100()
     remove("test2.txt");
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     fork_0100();
     return t_status;

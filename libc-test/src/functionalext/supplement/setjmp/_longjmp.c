@@ -46,7 +46,7 @@ void _longjmp_0100(void)
     }
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     _longjmp_0100();
     return t_status;

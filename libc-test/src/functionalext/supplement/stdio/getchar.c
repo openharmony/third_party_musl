@@ -15,12 +15,9 @@
 
 #include <fcntl.h>
 #include <stdio.h>
-#include <stdlib.h>
-#include <stdbool.h>
-#include <stdint.h>
-#include <signal.h>
-#include <unistd.h>
-#include "functionalext.h"
+#include "test.h"
+
+const char *path = "/data/readtest.txt";
 
 /**
  * @tc.name      : getchar_0100
@@ -29,24 +26,31 @@
  */
 void getchar_0100(void)
 {
-    bool flag = false;
-    char str[] = "r\n";
-    int fd = open("/data/readtest.txt", O_RDWR | O_CREAT);
-    write(fd, str, sizeof(str));
-    FILE *fp = freopen("/data/readtest.txt", "r", stdin);
-    char reschar;
-    reschar = getchar();
-    if (reschar == 'r')
-    {
-        flag = true;
+    char str[] = "t";
+    int fd = open(path, O_RDWR | O_CREAT);
+    if (fd < 0) {
+        t_error("%s open failed\n", __func__);
     }
-    EXPECT_TRUE("getchar_0100", flag);
-    fclose(stdin);
+    ssize_t ret = write(fd, str, sizeof(str));
+    if (ret < 0) {
+        t_error("%s write failed\n", __func__);
+    }
+
+    FILE *fp = freopen(path, "r", stdin);
+    if (!fp) {
+        t_error("%s freopen failed\n", __func__);
+    }
+
+    char ch = getchar();
+    if (ch != 't') {
+        t_error("%s getchar failed\n", __func__);
+    }
+
     close(fd);
-    remove("/data/readtest.txt");
+    remove(path);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     getchar_0100();
     return t_status;

@@ -13,9 +13,6 @@
  * limitations under the License.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
 #include "functionalext.h"
 
 /**
@@ -25,8 +22,7 @@
  */
 void ffs_0100(void)
 {
-    int result;
-    result = ffs(0);
+    int result = ffs(0);
     EXPECT_EQ("ffs_0100", result, 0);
 }
 
@@ -37,8 +33,7 @@ void ffs_0100(void)
  */
 void ffs_0200(void)
 {
-    int result;
-    result = ffs(1);
+    int result = ffs(1);
     EXPECT_EQ("ffs_0200", result, 1);
 }
 
@@ -49,8 +44,7 @@ void ffs_0200(void)
  */
 void ffs_0300(void)
 {
-    int result;
-    result = ffs(2);
+    int result = ffs(2);
     EXPECT_EQ("ffs_0300", result, 2);
 }
 
@@ -61,8 +55,7 @@ void ffs_0300(void)
  */
 void ffs_0400(void)
 {
-    int result;
-    result = ffs(3);
+    int result = ffs(3);
     EXPECT_EQ("ffs_0400", result, 1);
 }
 
@@ -73,12 +66,11 @@ void ffs_0400(void)
  */
 void ffs_0500(void)
 {
-    int result;
-    result = ffs(128);
+    int result = ffs(128);
     EXPECT_EQ("ffs_0500", result, 8);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     ffs_0100();
     ffs_0200();

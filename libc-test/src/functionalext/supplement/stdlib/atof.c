@@ -13,35 +13,36 @@
  * limitations under the License.
  */
 
-#include <stdio.h>
+#include <float.h>
+#include <math.h>
 #include <stdlib.h>
-#include <stdbool.h>
-#include "functionalext.h"
+#include "test.h"
 
 typedef void (*TEST_FUN)();
-const double COUNT_SUCCESS = 123456.00;
+
+#define EXPECT_DOUBLE_EQ(a, b)                                             \
+    do {                                                                   \
+        if (!(fabs(a - b) < DBL_EPSILON))                                  \
+            t_error("%s failed: %f is not equal to %f\n", __func__, a, b); \
+    } while (0)
 
 /**
  * @tc.name      : atof_0100
- * @tc.desc      : Verify that the parameter is valid convert the string to an integer
+ * @tc.desc      : Convert a string to a double
  * @tc.level     : Level 0
  */
 void atof_0100()
 {
-    bool flag = false;
-    const char *buff = "123456.00";
-    double result = atof(buff);
-    if (result == COUNT_SUCCESS) {
-        flag = true;
-    }
-    EXPECT_TRUE("atof_0100", flag);
+    const char *str = "123456.00";
+    double result = atof(str);
+    EXPECT_DOUBLE_EQ(result, 123456.00);
 }
 
 TEST_FUN G_Fun_Array[] = {
     atof_0100,
 };
 
-int main()
+int main(int argc, char *argv[])
 {
     int num = sizeof(G_Fun_Array) / sizeof(TEST_FUN);
     for (int pos = 0; pos < num; ++pos) {

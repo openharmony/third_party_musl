@@ -32,7 +32,7 @@ void getifaddrs_0100(void)
     ifaddr = NULL;
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     getifaddrs_0100();
     return t_status;

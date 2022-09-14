@@ -97,7 +97,7 @@ void mprotect_0600(void)
     EXPECT_EQ("mprotect_0600", ret, FAILED);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     mprotect_0100();
     mprotect_0200();

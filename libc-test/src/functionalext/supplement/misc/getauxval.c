@@ -54,7 +54,7 @@ void getauxval_0300(void)
     EXPECT_TRUE("getauxval_0300", result != 0);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     getauxval_0100();
     getauxval_0200();

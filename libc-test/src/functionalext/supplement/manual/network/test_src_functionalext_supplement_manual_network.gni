@@ -21,6 +21,5 @@ functionalext_supplement_manual_network_test = [
   "gethostbyaddr_r",
   "gethostbyname2_r",
   "gethostbyaddr",
-
-  #"getnetbyname",
+  "getnetbyname",
 ]

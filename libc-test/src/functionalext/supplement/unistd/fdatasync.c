@@ -14,15 +14,12 @@
  */
 
 #include <fcntl.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/stat.h>
-#include <stdint.h>
-#include <signal.h>
 #include <unistd.h>
 #include "functionalext.h"
 
 typedef void (*TEST_FUN)();
+
+const char *path = "/data/readtest.txt";
 
 /**
  * @tc.name      : fdatasync_0100
@@ -33,15 +30,19 @@ void fdatasync_0100()
 {
     char str[] = "hello";
     char buffer[1024] = {"\0"};
-    int fd = open("/data/readtest.txt", O_RDWR | O_CREAT);
-    int retwrite = write(fd, str, sizeof(str));
+    int fd = open(path, O_RDWR | O_CREAT);
+    EXPECT_NE("fdatasync_0100", fd, -1);
+
+    write(fd, str, sizeof(str));
     lseek(fd, 0L, SEEK_SET);
     read(fd, buffer, 1024);
+
     int result = fdatasync(fd);
     EXPECT_EQ("fdatasync_0100", result, 0);
     EXPECT_STREQ("fdatasync_0100", buffer, "hello");
+
     close(fd);
-    remove("/data/readtest.txt");
+    remove(path);
 }
 
 /**
@@ -53,11 +54,14 @@ void fdatasync_0200()
 {
     char str[] = "hello\n";
     char buffer[1024] = {"\0"};
-    int fd = open("/data/readtest.txt", O_RDWR | O_CREAT);
+    int fd = open(path, O_RDWR | O_CREAT);
+    EXPECT_NE("fdatasync_0100", fd, -1);
     close(fd);
+
     int result = fdatasync(fd);
     EXPECT_EQ("fdatasync_0200", result, -1);
-    remove("/data/readtest.txt");
+
+    remove(path);
 }
 
 /**
@@ -77,11 +81,10 @@ TEST_FUN G_Fun_Array[] = {
     fdatasync_0300,
 };
 
-int main()
+int main(int argc, char *argv[])
 {
     int num = sizeof(G_Fun_Array) / sizeof(TEST_FUN);
-    for (int pos = 0; pos < num; ++pos)
-    {
+    for (int pos = 0; pos < num; ++pos) {
         G_Fun_Array[pos]();
     }
 

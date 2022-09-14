@@ -70,8 +70,7 @@ void __fpclassifyf_0400(void)
     EXPECT_EQ("__fpclassifyf_0400", ret, FP_ZERO);
 }
 
-
-int main()
+int main(int argc, char *argv[])
 {
     __fpclassifyf_0100();
     __fpclassifyf_0200();

@@ -33,7 +33,7 @@ void gethostent_0100(void)
     endhostent();
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     gethostent_0100();
     return t_status;

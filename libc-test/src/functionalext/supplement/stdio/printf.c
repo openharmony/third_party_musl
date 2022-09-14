@@ -13,14 +13,9 @@
  * limitations under the License.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdbool.h>
-#include <stdint.h>
 #include "functionalext.h"
 
 typedef void (*TEST_FUN)();
-const int32_t COUNT_ZERO = 0;
 
 /**
  * @tc.name      : printf_0100
@@ -30,13 +25,8 @@ const int32_t COUNT_ZERO = 0;
 void printf_0100(void)
 {
     int num = 6;
-    int count;
-    count = printf("num:%d\n", num);
-    bool flag = false;
-    if (count > COUNT_ZERO) {
-        flag = true;
-    }
-    EXPECT_TRUE("printf_0100", flag);
+    int result = printf("%d\n", num);
+    EXPECT_TRUE("printf_0100", result > 0);
 }
 
 /**
@@ -47,13 +37,8 @@ void printf_0100(void)
 void printf_0200(void)
 {
     int num = 6;
-    int count;
-    count = printf("num:%o\n", num);
-    bool flag = false;
-    if (count > COUNT_ZERO) {
-        flag = true;
-    }
-    EXPECT_TRUE("printf_0200", flag);
+    int result = printf("%o\n", num);
+    EXPECT_TRUE("printf_0200", result > 0);
 }
 
 /**
@@ -64,13 +49,11 @@ void printf_0200(void)
 void printf_0300(void)
 {
     int num = 6;
-    int count;
-    count = printf("num:%x,X\n", num);
-    bool flag = false;
-    if (count > COUNT_ZERO) {
-        flag = true;
-    }
-    EXPECT_TRUE("printf_0300", flag);
+    int result = printf("%x\n", num);
+    EXPECT_TRUE("printf_0300", result > 0);
+
+    result = printf("%X\n", num);
+    EXPECT_TRUE("printf_0300", result > 0);
 }
 
 /**
@@ -81,13 +64,8 @@ void printf_0300(void)
 void printf_0400(void)
 {
     int num = 6;
-    int count;
-    count = printf("num:%u\n", num);
-    bool flag = false;
-    if (count > COUNT_ZERO) {
-        flag = true;
-    }
-    EXPECT_TRUE("printf_0400", flag);
+    int result = printf("%u\n", num);
+    EXPECT_TRUE("printf_0400", result > 0);
 }
 
 /**
@@ -98,13 +76,8 @@ void printf_0400(void)
 void printf_0500(void)
 {
     int num = 6;
-    int count;
-    count = printf("num:%f\n", num);
-    bool flag = false;
-    if (count > COUNT_ZERO) {
-        flag = true;
-    }
-    EXPECT_TRUE("printf_0500", flag);
+    int result = printf("%f\n", num);
+    EXPECT_TRUE("printf_0500", result > 0);
 }
 
 /**
@@ -115,13 +88,11 @@ void printf_0500(void)
 void printf_0600(void)
 {
     int num = 6;
-    int count;
-    count = printf("num:%e,E\n", num);
-    bool flag = false;
-    if (count > COUNT_ZERO) {
-        flag = true;
-    }
-    EXPECT_TRUE("printf_0600", flag);
+    int result = printf("%e\n", num);
+    EXPECT_TRUE("printf_0600", result > 0);
+
+    result = printf("%E\n", num);
+    EXPECT_TRUE("printf_0600", result > 0);
 }
 
 /**
@@ -132,13 +103,11 @@ void printf_0600(void)
 void printf_0700(void)
 {
     int num = 6;
-    int count;
-    count = printf("num:%g,G\n", num);
-    bool flag = false;
-    if (count > COUNT_ZERO) {
-        flag = true;
-    }
-    EXPECT_TRUE("printf_0700", flag);
+    int result = printf("%g\n", num);
+    EXPECT_TRUE("printf_0700", result > 0);
+
+    result = printf("%G\n", num);
+    EXPECT_TRUE("printf_0700", result > 0);
 }
 
 /**
@@ -148,14 +117,9 @@ void printf_0700(void)
  */
 void printf_0800(void)
 {
-    int num = 6;
-    int count;
-    count = printf("num:%c\n", num);
-    bool flag = false;
-    if (count > COUNT_ZERO) {
-        flag = true;
-    }
-    EXPECT_TRUE("printf_0800", flag);
+    char ch = 'a';
+    int result = printf("%c\n", ch);
+    EXPECT_TRUE("printf_0800", result > 0);
 }
 
 /**
@@ -166,33 +130,21 @@ void printf_0800(void)
 void printf_0900(void)
 {
     char num[] = "test";
-    int count;
-    count = printf("num:%s\n", num);
-    bool flag = false;
-    if (count > COUNT_ZERO) {
-        flag = true;
-    }
-    EXPECT_TRUE("printf_0900", flag);
+    int result = printf("%s\n", num);
+    EXPECT_TRUE("printf_0900", result > 0);
 }
 
-TEST_FUN G_Fun_Array[] = {
-    printf_0100,
-    printf_0200,
-    printf_0300,
-    printf_0400,
-    printf_0500,
-    printf_0600,
-    printf_0700,
-    printf_0800,
-    printf_0900,
-};
-
-int main()
+int main(int argc, char *argv[])
 {
-    int num = sizeof(G_Fun_Array) / sizeof(TEST_FUN);
-    for (int pos = 0; pos < num; ++pos) {
-        G_Fun_Array[pos]();
-    }
+    printf_0100();
+    printf_0200();
+    printf_0300();
+    printf_0400();
+    printf_0500();
+    printf_0600();
+    printf_0700();
+    printf_0800();
+    printf_0900();
 
     return t_status;
 }

@@ -16,7 +16,7 @@
 #include <unistd.h>
 #include "functionalext.h"
 
-int main()
+int main(int argc, char *argv[])
 {
     uid_t uid = getuid();
     EXPECT_EQ("fexecverely", uid, getuid());

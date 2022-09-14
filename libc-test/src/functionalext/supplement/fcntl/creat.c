@@ -67,7 +67,7 @@ void creat_0300(void)
     ptr = NULL;
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     creat_0100();
     creat_0200();

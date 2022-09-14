@@ -81,9 +81,9 @@ void fwrite_0300(void)
     EXPECT_EQ("fwrite_0300", result, COUNT_ZERO);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
-        fwrite_0100();
+    fwrite_0100();
     fwrite_0200();
     fwrite_0300();
     return t_status;

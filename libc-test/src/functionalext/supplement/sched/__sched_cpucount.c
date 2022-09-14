@@ -101,7 +101,7 @@ void __sched_cpucount_0300(void)
     CPU_FREE(cpusetp);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     __sched_cpucount_0100();
     __sched_cpucount_0200();

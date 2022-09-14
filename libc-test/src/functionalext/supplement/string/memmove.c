@@ -99,7 +99,7 @@ void memmove_0400(void)
     EXPECT_TRUE("memmove_0400", flag);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     memmove_0100();
     memmove_0200();

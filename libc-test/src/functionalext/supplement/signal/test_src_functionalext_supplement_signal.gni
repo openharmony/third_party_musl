@@ -29,7 +29,7 @@ functionalext_supplement_signal_test = [
   "sigwaitinfo",
   "psiginfo",
   "psignal",
-  "libc_current_sigrtmax",
-  "libc_current_sigrtmin",
+  "__libc_current_sigrtmax",
+  "__libc_current_sigrtmin",
   "getitimer",
 ]

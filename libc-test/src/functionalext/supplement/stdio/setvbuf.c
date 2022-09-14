@@ -13,14 +13,9 @@
  * limitations under the License.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
 #include "functionalext.h"
 
-typedef void (*TEST_FUN)();
-const int32_t COUNT_ZERO = 0;
-const int32_t COUNT_failed = -1;
+const char *ptr = "/data/tests/libc-test/src/functionalext/supplement/stdio/test.txt";
 
 /**
  * @tc.name      : setvbuf_0100
@@ -30,13 +25,14 @@ const int32_t COUNT_failed = -1;
 void setvbuf_0100(void)
 {
     char buff[1024];
-    const char *ptr = "test.txt";
-    int result;
     FILE *fptr = fopen(ptr, "w+");
-    result = setvbuf(fptr, buff, _IOFBF, 1024);
-    EXPECT_EQ("setvbuf_0100", result, COUNT_ZERO);
+    EXPECT_PTRNE("setvbuf_0100", fptr, NULL);
+
+    int result = setvbuf(fptr, buff, _IOFBF, 1024);
+    EXPECT_EQ("setvbuf_0100", result, 0);
+
     fclose(fptr);
-    remove("test.txt");
+    remove(ptr);
 }
 
 /**
@@ -47,26 +43,19 @@ void setvbuf_0100(void)
 void setvbuf_0200(void)
 {
     char buff[1024];
-    const char *ptr = "test.txt";
-    int result;
     FILE *fptr = fopen(ptr, "w+");
-    result = setvbuf(fptr, buff, -1, 1024);
-    EXPECT_EQ("setvbuf_0200", result, COUNT_failed);
+    EXPECT_PTRNE("setvbuf_0100", fptr, NULL);
+
+    int result = setvbuf(fptr, buff, -1, 1024);
+    EXPECT_EQ("setvbuf_0200", result, -1);
+
     fclose(fptr);
-    remove("test.txt");
+    remove(ptr);
 }
 
-TEST_FUN G_Fun_Array[] = {
-    setvbuf_0100,
-    setvbuf_0200,
-};
-
-int main()
+int main(int argc, char *argv[])
 {
-    int num = sizeof(G_Fun_Array) / sizeof(TEST_FUN);
-    for (int pos = 0; pos < num; ++pos) {
-        G_Fun_Array[pos]();
-    }
-
+    setvbuf_0100();
+    setvbuf_0200();
     return t_status;
 }

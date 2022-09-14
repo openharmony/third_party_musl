@@ -13,50 +13,48 @@
  * limitations under the License.
  */
 
-#include <ctype.h>
-#include <fcntl.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <signal.h>
+#include <errno.h>
 #include <termios.h>
-#include <unistd.h>
-#include "functionalext.h"
-
-const int32_t COUNT_ZERO = 0;
-const int32_t COUNT_NEGATIVE = -1;
+#include "test.h"
 
 /**
- * @tc.name      : cfgetispeed_0100
+ * @tc.name      : cfsetispeed_0100
  * @tc.desc      : Verify information that can set the input baud rate (parameter valid).
  * @tc.level     : Level 0
  */
-void cfgetispeed_0100(void)
+void cfsetispeed_0100(void)
 {
-    struct termios termios_p;
-    tcgetattr(STDIN_FILENO, &termios_p);
-    speed_t speed = B50;
-    int result = cfsetispeed(&termios_p, speed);
-    EXPECT_EQ("cfgetispeed_0100", result, COUNT_ZERO);
+    struct termios t = {};
+    int result = cfsetispeed(&t, B1200);
+    if (result != 0) {
+        t_error("%s cfsetispeed failed\n", __func__);
+    }
+    if (cfgetispeed(&t) != (speed_t)(B1200)) {
+        t_error("%s cfsetispeed failed\n", __func__);
+    }
 }
 
 /**
- * @tc.name      : cfgetispeed_0200
+ * @tc.name      : cfsetispeed_0200
  * @tc.desc      : Verify that the input baud rate cannot be set (the speed parameter is invalid).
  * @tc.level     : Level 2
  */
-void cfgetispeed_0200(void)
+void cfsetispeed_0200(void)
 {
-    struct termios termios_p;
-    tcgetattr(STDIN_FILENO, &termios_p);
-    speed_t speed = -2;
-    int result = cfsetispeed(&termios_p, speed);
-    EXPECT_EQ("cfgetispeed_0200", result, COUNT_NEGATIVE);
+    struct termios t = {};
+    errno = 0;
+    int result = cfsetispeed(&t, 1200);
+    if (result != -1) {
+        t_error("%s cfsetispeed should be failed\n", __func__);
+    }
+    if (errno != EINVAL) {
+        t_error("%s errno should be EINVAL", __func__);
+    }
 }
 
-int main()
+int main(int argc, char *argv[])
 {
-    cfgetispeed_0100();
-    cfgetispeed_0200();
+    cfsetispeed_0100();
+    cfsetispeed_0200();
     return t_status;
 }

@@ -36,8 +36,7 @@ void __flbf_0100(void)
     FILE *fptr = fopen("test.txt", "w");
     setvbuf(fptr, buf, _IOLBF, 1024);
     result = __flbf(fptr);
-    if (result > 0)
-    {
+    if (result > 0) {
         flag = true;
     }
     EXPECT_TRUE("__flbf_0100", flag);
@@ -79,7 +78,7 @@ void __flbf_0300(void)
     remove("test.txt");
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     __flbf_0100();
     __flbf_0200();

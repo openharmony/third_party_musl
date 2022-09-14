@@ -13,12 +13,9 @@
  * limitations under the License.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
+#include <string.h>
 #include <termios.h>
-#include <unistd.h>
-#include "functionalext.h"
+#include "test.h"
 
 /**
  * @tc.name      : cfmakeraw_0100
@@ -27,20 +24,34 @@
  */
 void cfmakeraw_0100(void)
 {
-    static struct termios tin;
-    static struct termios tlocal;
-    memcpy(&tlocal, &tin, sizeof(tin));
-    cfmakeraw(&tlocal);
-    tcsetattr(STDIN_FILENO, TCSANOW, &tlocal);
-    tcgetattr(STDIN_FILENO, &tin);
-    EXPECT_TRUE("cfmakeraw_0100", tin.c_cflag >= 0);
-    EXPECT_EQ("cfmakeraw_0100", tin.c_iflag, 0);
-    EXPECT_EQ("cfmakeraw_0100", tin.c_oflag, 0);
-    EXPECT_EQ("cfmakeraw_0100", tin.c_cc[VTIME], 0);
-    EXPECT_EQ("cfmakeraw_0100", tin.c_iflag, 0);
+    struct termios t;
+    memset(&t, 0xff, sizeof(t));
+    cfmakeraw(&t);
+
+    if ((t.c_iflag & (IGNBRK | BRKINT | PARMRK | ISTRIP | INLCR | IGNCR | ICRNL | IXON)) != 0U) {
+        t_error("%s t.c_iflag failed\n", __func__);
+    }
+    if ((t.c_oflag & OPOST) != 0U) {
+        t_error("%s t.c_oflag failed\n", __func__);
+    }
+    if ((t.c_lflag & (ECHO | ECHONL | ICANON | ISIG | IEXTEN)) != 0U) {
+        t_error("%s t.c_lflag failed\n", __func__);
+    }
+    if ((t.c_cflag & PARENB) != 0U) {
+        t_error("%s t.c_cflag failed\n", __func__);
+    }
+    if ((int)(t.c_cflag & CSIZE) != CS8) {
+        t_error("%s t.c_cflag failed\n", __func__);
+    }
+    if (t.c_cc[VMIN] != 1) {
+        t_error("%s t.c_cc[VMIN] failed\n", __func__);
+    }
+    if (t.c_cc[VTIME] != 0) {
+        t_error("%s t.c_cc[VTIME] failed\n", __func__);
+    }
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     cfmakeraw_0100();
     return t_status;

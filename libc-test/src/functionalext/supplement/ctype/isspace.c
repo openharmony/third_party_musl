@@ -14,13 +14,7 @@
  */
 
 #include <ctype.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
 #include "functionalext.h"
-
-const int32_t COUJNT_ZERO = 0;
-const int32_t COUJNT_SIX = 6;
 
 /*
  * @tc.name      : isspace_0100
@@ -30,7 +24,7 @@ const int32_t COUJNT_SIX = 6;
 void isspace_0100(void)
 {
     int ret = isspace(' ');
-    EXPECT_NE("isspace_0100", ret, COUJNT_ZERO);
+    EXPECT_NE("isspace_0100", ret, 0);
 }
 
 /*
@@ -41,7 +35,7 @@ void isspace_0100(void)
 void isspace_0200(void)
 {
     int ret = isspace('\r');
-    EXPECT_NE("isspace_0200", ret, COUJNT_ZERO);
+    EXPECT_NE("isspace_0200", ret, 0);
 }
 
 /*
@@ -52,7 +46,7 @@ void isspace_0200(void)
 void isspace_0300(void)
 {
     int ret = isspace('\n');
-    EXPECT_NE("isspace_0300", ret, COUJNT_ZERO);
+    EXPECT_NE("isspace_0300", ret, 0);
 }
 
 /*
@@ -63,7 +57,7 @@ void isspace_0300(void)
 void isspace_0400(void)
 {
     int ret = isspace('\v');
-    EXPECT_NE("isspace_0400", ret, COUJNT_ZERO);
+    EXPECT_NE("isspace_0400", ret, 0);
 }
 
 /*
@@ -74,7 +68,7 @@ void isspace_0400(void)
 void isspace_0500(void)
 {
     int ret = isspace('\f');
-    EXPECT_NE("isspace_0500", ret, COUJNT_ZERO);
+    EXPECT_NE("isspace_0500", ret, 0);
 }
 
 /*
@@ -85,7 +79,7 @@ void isspace_0500(void)
 void isspace_0600(void)
 {
     int ret = isspace('a');
-    EXPECT_EQ("isspace_0600", ret, COUJNT_ZERO);
+    EXPECT_EQ("isspace_0600", ret, 0);
 }
 
 /*
@@ -96,7 +90,7 @@ void isspace_0600(void)
 void isspace_0700(void)
 {
     int ret = isspace('6');
-    EXPECT_EQ("isspace_0700", ret, COUJNT_ZERO);
+    EXPECT_EQ("isspace_0700", ret, 0);
 }
 
 /*
@@ -107,7 +101,7 @@ void isspace_0700(void)
 void isspace_0800(void)
 {
     int ret = isspace('#');
-    EXPECT_EQ("isspace_0800", ret, COUJNT_ZERO);
+    EXPECT_EQ("isspace_0800", ret, 0);
 }
 
 /*
@@ -124,7 +118,7 @@ void isspace_0900(void)
             total++;
         }
     }
-    EXPECT_EQ("isspace_0900", total, COUJNT_SIX);
+    EXPECT_EQ("isspace_0900", total, 6);
 }
 
 int main(void)

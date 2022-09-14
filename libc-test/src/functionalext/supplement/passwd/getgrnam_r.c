@@ -31,7 +31,7 @@
 void getgrnam_r_0100(void)
 {
     system("ps -eo command,gid | grep -E \"GID|getgrnam_r\" > "
-    "/data/tests/libc-test/src/functionalext/supplement/passwd/pss.txt");
+           "/data/tests/libc-test/src/functionalext/supplement/passwd/pss.txt");
     char abc[256] = {0};
     bool successflag = false;
     FILE *fptr = fopen("/data/tests/libc-test/src/functionalext/supplement/passwd/pss.txt", "r");
@@ -82,7 +82,7 @@ void getgrnam_r_0200(void)
     EXPECT_EQ("getgrnam_r_0200", data, 0);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     getgrnam_r_0100();
     getgrnam_r_0200();

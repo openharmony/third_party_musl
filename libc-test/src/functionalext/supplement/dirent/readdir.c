@@ -46,7 +46,7 @@ void readdir_0200(void)
     EXPECT_TRUE("readdir_0200", NULL == ret);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     readdir_0100();
     readdir_0200();

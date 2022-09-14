@@ -14,13 +14,7 @@
  */
 
 #include <arpa/inet.h>
-#include <ctype.h>
-#include <netinet/in.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include "functionalext.h"
-
-typedef void (*TEST_FUN)();
 
 /**
  * @tc.name      : inet_ntoa_0100
@@ -29,40 +23,14 @@ typedef void (*TEST_FUN)();
  */
 void inet_ntoa_0100()
 {
-    char buff[] = "127.0.0.1";
-    struct in_addr in;
-    char *result;
-    inet_aton(buff, &in);
-    result = inet_ntoa(in);
-    EXPECT_STREQ("inet_ntoa_0100", result, buff);
+    struct in_addr a = {(htonl)(0x7f000001)};
+    char *result = inet_ntoa(a);
+    EXPECT_STREQ("inet_ntoa_0100", result, "127.0.0.1");
 }
 
-/**
- * @tc.name      : inet_ntoa_0200
- * @tc.desc      : Validation cannot convert a network binary number to an IP address string
- *                 (the in argument is invalid)
- * @tc.level     : Level 2
- */
-void inet_ntoa_0200()
+int main(int argc, char *argv[])
 {
-    struct in_addr in;
-    in.s_addr = 0;
-    char *result;
-    result = inet_ntoa(in);
-    EXPECT_STREQ("inet_ntoa_0200", result, "0.0.0.0");
-}
-
-TEST_FUN G_Fun_Array[] = {
-    inet_ntoa_0100,
-    inet_ntoa_0200,
-};
-
-int main()
-{
-    int num = sizeof(G_Fun_Array) / sizeof(TEST_FUN);
-    for (int pos = 0; pos < num; ++pos) {
-        G_Fun_Array[pos]();
-    }
+    inet_ntoa_0100();
 
     return t_status;
 }

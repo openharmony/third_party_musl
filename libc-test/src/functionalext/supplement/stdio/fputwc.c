@@ -88,7 +88,7 @@ void fputwc_0200()
     system("rm -rf file.txt");
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     fputwc_0100();
     fputwc_0200();

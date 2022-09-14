@@ -79,7 +79,8 @@ functionalext_supplement_unistd_test = [
   "geteuid",
   "getegid",
   "getcwd",
-  "getsockopt",
   "exittest01",
   "exittest02",
+  "chdir",
+  "fchdir",
 ]

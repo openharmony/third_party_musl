@@ -48,7 +48,7 @@ void __freadable_0200(void)
     remove("freadable.txt");
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     __freadable_0100();
     __freadable_0200();

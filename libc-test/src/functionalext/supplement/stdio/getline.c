@@ -13,13 +13,10 @@
  * limitations under the License.
  */
 
-#include <ctype.h>
 #include <fcntl.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <signal.h>
-#include <unistd.h>
 #include "functionalext.h"
+
+const char *ptr = "/data/tests/libc-test/src/functionalext/supplement/stdio/test.txt";
 
 /**
  * @tc.name      : getline_0100
@@ -28,20 +25,21 @@
  */
 void getline_0100(void)
 {
-    char abc[100] = {0};
     char *wrstring = "helloworld";
-    FILE *fp;
     char *line = NULL;
     size_t len = 0;
-    ssize_t read;
-    fp = fopen("test.txt", "w+");
+
+    FILE *fp = fopen(ptr, "w+");
+    EXPECT_PTRNE("getline_0100", fp, NULL);
     fwrite(wrstring, sizeof(char), strlen(wrstring), fp);
     fseek(fp, 0, SEEK_SET);
-    read = getline(&line, &len, fp);
+
+    ssize_t read = getline(&line, &len, fp);
     EXPECT_EQ("getline_0100", read, 10);
     EXPECT_STREQ("getline_0100", line, "helloworld");
+
     fclose(fp);
-    remove("test.txt");
+    remove(ptr);
 }
 
 /**
@@ -51,15 +49,15 @@ void getline_0100(void)
  */
 void getline_0200(void)
 {
-    FILE *fp;
-    char *line = NULL;
     size_t len = 0;
-    ssize_t read;
-    fp = fopen("test.txt", "w+");
-    read = getline(NULL, &len, fp);
+    FILE *fp = fopen(ptr, "w+");
+    EXPECT_PTRNE("getline_0100", fp, NULL);
+
+    ssize_t read = getline(NULL, &len, fp);
     EXPECT_EQ("getline_0200", read, -1);
+
     fclose(fp);
-    remove("test.txt");
+    remove(ptr);
 }
 
 /**
@@ -69,18 +67,17 @@ void getline_0200(void)
  */
 void getline_0300(void)
 {
-    FILE *fp;
     char *line = NULL;
-    size_t len = 0;
-    ssize_t read;
-    fp = fopen("test.txt", "w+");
-    read = getline(&line, 0, fp);
+    FILE *fp = fopen(ptr, "w+");
+    EXPECT_PTRNE("getline_0100", fp, NULL);
+
+    ssize_t read = getline(&line, 0, fp);
     EXPECT_EQ("getline_0300", read, -1);
     fclose(fp);
-    remove("test.txt");
+    remove(ptr);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     getline_0100();
     getline_0200();

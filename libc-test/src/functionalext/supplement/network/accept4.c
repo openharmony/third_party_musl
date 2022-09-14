@@ -380,7 +380,7 @@ void accept4_0600(void)
     ret = pthread_barrier_destroy(&g_barrier);
     EXPECT_EQ("accept4_0600", SUCCESS, ret);
 }
-int main()
+int main(int argc, char *argv[])
 {
     accept4_0100();
     accept4_0200();

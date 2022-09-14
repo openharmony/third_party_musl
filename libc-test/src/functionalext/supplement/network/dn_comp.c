@@ -61,8 +61,7 @@ void dn_comp_0300(void)
 {
     int result;
     char name[1024];
-    for (int i = 0; i < 260; i++)
-    {
+    for (int i = 0; i < 260; i++) {
         name[i] = 'w';
     }
     unsigned char buf[1024] = "\0";
@@ -112,7 +111,7 @@ void dn_comp_0600(void)
     EXPECT_EQ("dn_comp_0600", result, COUNT_FAILED);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     dn_comp_0100();
     dn_comp_0200();

@@ -71,7 +71,7 @@ void __fpclassifyl_0400(void)
 }
 
 
-int main()
+int main(int argc, char *argv[])
 {
     __fpclassifyl_0100();
     __fpclassifyl_0200();

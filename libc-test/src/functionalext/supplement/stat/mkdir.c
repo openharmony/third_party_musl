@@ -63,7 +63,7 @@ void mkdir_0200(void)
     path = NULL;
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     mkdir_0100();
     mkdir_0200();

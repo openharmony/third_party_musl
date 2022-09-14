@@ -166,7 +166,7 @@ void getnameinfo_0700()
     EXPECT_EQ("getnameinfo_0700", ret, FAMILY_NOTSUPPORTED);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     getnameinfo_0100();
     getnameinfo_0200();

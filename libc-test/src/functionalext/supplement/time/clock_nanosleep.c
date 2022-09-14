@@ -111,7 +111,7 @@ void clock_nanosleep_0600(void)
     EXPECT_EQ("clock_nanosleep_0600", ret, EINVAL);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     clock_nanosleep_0100();
     clock_nanosleep_0200();

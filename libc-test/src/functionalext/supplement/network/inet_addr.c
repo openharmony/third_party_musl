@@ -14,10 +14,6 @@
  */
 
 #include <arpa/inet.h>
-#include <ctype.h>
-#include <netinet/in.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include "functionalext.h"
 
 typedef void (*TEST_FUN)();
@@ -30,36 +26,33 @@ typedef void (*TEST_FUN)();
 void inet_addr_0100()
 {
     char buff[] = "127.0.0.1";
-    int result;
-    result = inet_addr(buff);
+    int result = inet_addr(buff);
     EXPECT_NE("inet_addr_0100", result, INADDR_NONE);
 }
 
 /**
  * @tc.name      : inet_addr_0200
- * @tc.desc      : The p argument is invalid and has a negative number.
- *                 An IP address string cannot be converted to a network binary number
+ * @tc.desc      : The p argument is invalid and has a negative number. An IP address string cannot
+ *                 be converted to a network binary number
  * @tc.level     : Level 2
  */
 void inet_addr_0200()
 {
     char buff[] = "-127.0.0.1";
-    int result;
-    result = inet_addr(buff);
+    int result = inet_addr(buff);
     EXPECT_EQ("inet_addr_0200", result, INADDR_NONE);
 }
 
 /**
  * @tc.name      : inet_addr_0300
- * @tc.desc      : The p argument is invalid. A number greater than 255 exists.
- *                 An IP address string cannot be converted to a network binary number
+ * @tc.desc      : The p argument is invalid. A number greater than 255 exists. An IP address string cannot be
+ *                 converted to a network binary number
  * @tc.level     : Level 2
  */
 void inet_addr_0300()
 {
     char buff[] = "127.0.256.1";
-    int result;
-    result = inet_addr(buff);
+    int result = inet_addr(buff);
     EXPECT_EQ("inet_addr_0300", result, INADDR_NONE);
 }
 
@@ -69,7 +62,7 @@ TEST_FUN G_Fun_Array[] = {
     inet_addr_0300,
 };
 
-int main()
+int main(int argc, char *argv[])
 {
     int num = sizeof(G_Fun_Array) / sizeof(TEST_FUN);
     for (int pos = 0; pos < num; ++pos) {

@@ -55,7 +55,7 @@ void gethostbyaddre_0200(void)
     EXPECT_TRUE("gethostbyaddre_0200", hptr != NULL);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     gethostbyaddre_0100();
     gethostbyaddre_0200();

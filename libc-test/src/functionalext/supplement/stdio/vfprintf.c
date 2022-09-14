@@ -78,7 +78,7 @@ void vfprintf_n_test(char *file_name, char *format, char *func_name, char *want_
     unlink(file_name);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     /**
      * @tc.name      : vfprintf_0100

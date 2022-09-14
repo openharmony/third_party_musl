@@ -60,7 +60,7 @@ void ffsll_0300(void)
     EXPECT_EQ("ffsll_0300", result, 36);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     ffsll_0100();
     ffsll_0200();

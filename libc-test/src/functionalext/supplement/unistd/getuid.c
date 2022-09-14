@@ -37,7 +37,7 @@ void getuid_0100(void)
     EXPECT_EQ("getuid_0100", uid, intuid);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     getuid_0100();
 

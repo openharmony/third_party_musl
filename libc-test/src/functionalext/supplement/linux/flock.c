@@ -38,8 +38,7 @@ void flock_0100()
     fd = open("/data/test.txt", O_RDWR | O_CREAT, 0666);
     lseek(fd, 2, SEEK_SET);
     if (fd < 0) {
-        printf("open failed!\n");
-        return;
+        t_error("%s open failed\n", __func__);
     }
     result = flock(fd, LOCK_SH);
     EXPECT_EQ("flock_0100", result, SUCCESS);
@@ -59,8 +58,7 @@ void flock_0200()
     fd = open("/data/test.txt", O_RDWR | O_CREAT, 0666);
     lseek(fd, 2, SEEK_SET);
     if (fd < 0) {
-        printf("open failed!\n");
-        return;
+        t_error("%s open failed\n", __func__);
     }
     result = flock(fd, LOCK_SH | LOCK_NB);
     EXPECT_EQ("flock_0200", result, SUCCESS);
@@ -80,8 +78,7 @@ void flock_0300()
     fd = open("/data/test.txt", O_RDWR | O_CREAT, 0666);
     lseek(fd, 2, SEEK_SET);
     if (fd < 0) {
-        printf("open failed!\n");
-        return;
+        t_error("%s open failed\n", __func__);
     }
     result = flock(fd, LOCK_EX);
     EXPECT_EQ("flock_0300", result, SUCCESS);
@@ -101,8 +98,7 @@ void flock_0400()
     fd = open("/data/test.txt", O_RDWR | O_CREAT, 0666);
     lseek(fd, 2, SEEK_SET);
     if (fd < 0) {
-        printf("open failed!\n");
-        return;
+        t_error("%s open failed\n", __func__);
     }
     result = flock(fd, LOCK_EX | LOCK_NB);
     EXPECT_EQ("flock_0400", result, SUCCESS);
@@ -122,8 +118,7 @@ void flock_0500()
     fd = open("/data/test.txt", O_RDWR | O_CREAT, 0666);
     lseek(fd, 2, SEEK_SET);
     if (fd < 0) {
-        printf("open failed!\n");
-        return;
+        t_error("%s open failed\n", __func__);
     }
     result = flock(fd, LOCK_UN);
     EXPECT_EQ("flock_0500", result, SUCCESS);
@@ -157,8 +152,7 @@ void flock_0700()
     fd = open("/data/test.txt", O_RDWR | O_CREAT, 0666);
     lseek(fd, 2, SEEK_SET);
     if (fd < 0) {
-        printf("open failed!\n");
-        return;
+        t_error("%s open failed\n", __func__);
     }
     result = flock(fd, 0);
     EXPECT_EQ("flock_0700", result, FAILED);
@@ -166,7 +160,7 @@ void flock_0700()
     system("rm -rf /data/test.txt");
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     flock_0100();
     flock_0200();

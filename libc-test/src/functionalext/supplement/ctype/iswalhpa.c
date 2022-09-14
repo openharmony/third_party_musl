@@ -107,7 +107,7 @@ void iswalhpa_0400()
     EXPECT_EQ("iswalhpa_0400", ret, 0);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     iswalhpa_0100();
     iswalhpa_0200();

@@ -51,7 +51,7 @@ void fgetln_0100(void)
  * @tc.desc       : Validation cannot get pointer to next row (f argument invalid)
  * @tc.level      : level 2
  */
-void fgetln_0200()
+void fgetln_0200(void)
 {
     char *p = NULL;
     size_t len;
@@ -66,7 +66,7 @@ void fgetln_0200()
     fclose(fptr);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     fgetln_0100();
     fgetln_0200();

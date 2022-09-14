@@ -58,7 +58,7 @@ void bsearch_0200(void)
     EXPECT_TRUE("bsearch_0200", flag);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     bsearch_0100();
     bsearch_0200();

@@ -28,7 +28,7 @@ void drand48_0100(void)
     EXPECT_TRUE("drand48_0100", ret >= 0.0 && ret < 1.0);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     drand48_0100();
     return t_status;

@@ -15,15 +15,12 @@
 
 #include <stdio.h>
 #include <arpa/inet.h>
-#include <ctype.h>
-#include <netinet/in.h>
 #include <netdb.h>
-#include <arpa/inet.h>
-#include <sys/socket.h>
-#include <stdbool.h>
-#include "functionalext.h"
+#include <string.h>
+#include "test.h"
 
-typedef void (*TEST_FUN)();
+const char *path = "/etc/networks";
+const char *netinfo = "loopback       127.0.0.1";
 
 /**
  * @tc.name      : getnetbyaddr_0100
@@ -32,19 +29,19 @@ typedef void (*TEST_FUN)();
  */
 void getnetbyaddr_0100(void)
 {
-    bool flag = false;
-    char *ptr, **pptr;
-    char str[INET_ADDRSTRLEN];
-    struct hostent *hptr;
-    struct in_addr *addr;
-    struct sockaddr_in saddr;
-    inet_aton("127.0.0.1", &saddr.sin_addr);
-    hptr = gethostbyaddr((void *)&saddr.sin_addr, 4, AF_INET);
-    if (hptr != NULL) {
-        flag = true;
+    FILE *fd = fopen(path, "w+");
+    if (!fd) {
+        t_error("%s fopen failed\n", __func__);
     }
-    EXPECT_STREQ("getnetbyaddr_0100", hptr->h_name, "127.0.0.1");
-    EXPECT_TRUE("getnetbyaddr_0100", flag);
+    fwrite(netinfo, sizeof(char), strlen(netinfo), fd);
+
+    struct netent *nptr;
+    uint32_t ip = inet_network("127.0.0.1");
+    printf("ip: %d\n", ip);
+    nptr = getnetbyaddr(ip, AF_INET);
+    if (!nptr) {
+        t_error("%s getnetbyaddr failed\n", __func__);
+    }
 }
 
 /**
@@ -53,20 +50,7 @@ void getnetbyaddr_0100(void)
  * @tc.level     : Level 2
  */
 void getnetbyaddr_0200(void)
-{
-    bool flag = false;
-    char *ptr, **pptr;
-    char str[INET_ADDRSTRLEN];
-    struct hostent *hptr;
-    struct in_addr *addr;
-    struct sockaddr_in saddr;
-    inet_aton("-128.256.w.1", &saddr.sin_addr);
-    hptr = gethostbyaddr((void *)&saddr.sin_addr, 0, AF_INET);
-    if (hptr == NULL) {
-        flag = true;
-    }
-    EXPECT_TRUE("getnetbyaddr_0200", flag);
-}
+{}
 
 /**
  * @tc.name      : getnetbyaddr_0300
@@ -74,20 +58,7 @@ void getnetbyaddr_0200(void)
  * @tc.level     : Level 0
  */
 void getnetbyaddr_0300(void)
-{
-    bool flag = false;
-    char *ptr, **pptr;
-    char str[INET_ADDRSTRLEN];
-    struct hostent *hptr;
-    struct in_addr *addr;
-    struct sockaddr_in saddr;
-    inet_aton("::1", &saddr.sin_addr);
-    hptr = gethostbyaddr((void *)&saddr.sin_addr, 16, AF_INET6);
-    if (hptr != NULL) {
-        flag = true;
-    }
-    EXPECT_TRUE("getnetbyaddr_0300", flag);
-}
+{}
 
 /**
  * @tc.name      : getnetbyaddr_0400
@@ -95,33 +66,13 @@ void getnetbyaddr_0300(void)
  * @tc.level     : Level 2
  */
 void getnetbyaddr_0400(void)
-{
-    bool flag = false;
-    char *ptr, **pptr;
-    char str[INET_ADDRSTRLEN];
-    struct hostent *hptr;
-    struct in_addr *addr;
-    struct sockaddr_in saddr;
-    inet_aton("0:-127.w.-256.1", &saddr.sin_addr);
-    hptr = gethostbyaddr((void *)&saddr.sin_addr, 4, AF_INET6);
-    if (hptr == NULL) {
-        flag = true;
-    }
-    EXPECT_TRUE("getnetbyaddr_0400", flag);
-}
+{}
 
-TEST_FUN G_Fun_Array[] = {
-    getnetbyaddr_0100,
-    getnetbyaddr_0200,
-    getnetbyaddr_0300,
-    getnetbyaddr_0400,
-};
-
-int main()
+int main(int argc, char *argv[])
 {
-    int num = sizeof(G_Fun_Array) / sizeof(TEST_FUN);
-    for (int pos = 0; pos < num; ++pos) {
-        G_Fun_Array[pos]();
-    }
+    getnetbyaddr_0100();
+    getnetbyaddr_0200();
+    getnetbyaddr_0300();
+    getnetbyaddr_0400();
     return t_status;
 }

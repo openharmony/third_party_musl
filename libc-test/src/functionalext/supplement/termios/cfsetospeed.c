@@ -13,17 +13,9 @@
  * limitations under the License.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <time.h>
+#include <errno.h>
 #include <termios.h>
-#include <unistd.h>
-#include "functionalext.h"
-
-typedef void (*TEST_FUN)();
-const int32_t COUNT_ZERO = 0;
-const int32_t COUNT_NEGATIVE = -1;
+#include "test.h"
 
 /**
  * @tc.name      : cfsetospeed_0100
@@ -32,11 +24,16 @@ const int32_t COUNT_NEGATIVE = -1;
  */
 void cfsetospeed_0100(void)
 {
-    int result;
-    struct termios buff;
-    tcgetattr(STDIN_FILENO, &buff);
-    result = cfsetospeed(&buff, B0);
-    EXPECT_EQ("cfsetospeed_0100", result, COUNT_ZERO);
+    struct termios t = {};
+    int result = cfsetospeed(&t, B1200);
+    if (result != 0) {
+        t_error("%s cfsetospeed failed\n", __func__);
+    }
+
+    speed_t ret = cfgetospeed(&t);
+    if (ret != (speed_t)(B1200)) {
+        t_error("%s cfgetospeed failed\n", __func__);
+    }
 }
 
 /**
@@ -46,14 +43,19 @@ void cfsetospeed_0100(void)
  */
 void cfsetospeed_0200(void)
 {
-    int result;
-    struct termios buff;
-    tcgetattr(STDIN_FILENO, &buff);
-    result = cfsetospeed(&buff, -10);
-    EXPECT_EQ("cfsetospeed_0200", result, COUNT_NEGATIVE);
+    struct termios t = {};
+    errno = 0;
+
+    int result = cfsetospeed(&t, 1200);
+    if (result != -1) {
+        t_error("%s cfsetospeed should be failed\n", __func__);
+    }
+    if (errno != EINVAL) {
+        t_error("%s errno should be EINVAL", __func__);
+    }
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     cfsetospeed_0100();
     cfsetospeed_0200();

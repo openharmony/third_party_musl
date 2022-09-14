@@ -75,7 +75,7 @@ void rename_0300(void)
     newptr = NULL;
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     rename_0100();
     rename_0200();

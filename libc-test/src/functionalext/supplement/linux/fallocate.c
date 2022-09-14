@@ -92,7 +92,7 @@ void fallocate_0400(void)
     remove("fatest.txt");
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     fallocate_0100();
     fallocate_0200();

@@ -37,8 +37,7 @@ void __fseterr_0100(void)
     __fseterr(fptr);
     result2 = ferror(fptr);
     EXPECT_EQ("__fseterr_0100", result1, COUNT_ZERO);
-    if (result2 != 0)
-    {
+    if (result2 != 0) {
         flag = true;
     }
     EXPECT_TRUE("__fseterr_0100", flag);
@@ -46,7 +45,7 @@ void __fseterr_0100(void)
     remove("test.txt");
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     __fseterr_0100();
     return t_status;

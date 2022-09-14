@@ -14,11 +14,7 @@
  */
 
 #include <fcntl.h>
-#include <signal.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <sys/stat.h>
-#include <unistd.h>
 #include "functionalext.h"
 
 typedef void (*TEST_FUN)();
@@ -30,17 +26,19 @@ typedef void (*TEST_FUN)();
  */
 void fchmod_0100()
 {
-    int fd;
     struct stat buf;
-    fd = open("test.txt", O_RDWR | O_CREAT);
+    const char *path = "/data/test.txt";
+    int fd = open(path, O_RDWR | O_CREAT);
+    EXPECT_NE("fchmod_0100", fd, -1);
+
     int result = fchmod(fd,
         S_IRUSR | S_ISGID | S_ISVTX | S_IWUSR | S_IROTH | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IXGRP | S_IROTH |
             S_IWOTH | S_IXOTH);
-    stat("test.txt", &buf);
+    stat(path, &buf);
     EXPECT_EQ("fchmod_0100", result, 0);
     EXPECT_EQ("fchmod_0100", buf.st_mode, 34815);
     close(fd);
-    remove("test.txt");
+    remove(path);
 }
 
 /**
@@ -50,15 +48,15 @@ void fchmod_0100()
  */
 void fchmod_0200()
 {
-    int fd;
     struct stat buf;
-    fd = open("test.txt", O_RDWR | O_CREAT);
+    const char *path = "/data/test.txt";
+    int fd = open(path, O_RDWR | O_CREAT);
     int result = fchmod(fd, S_IRWXU | S_IRWXG | S_IRWXO);
-    stat("test.txt", &buf);
+    stat(path, &buf);
     EXPECT_EQ("fchmod_0200", result, 0);
     EXPECT_EQ("fchmod_0200", buf.st_mode, 33279);
     close(fd);
-    remove("test.txt");
+    remove(path);
 }
 
 /**
@@ -78,7 +76,7 @@ TEST_FUN G_Fun_Array[] = {
     fchmod_0300,
 };
 
-int main()
+int main(int argc, char *argv[])
 {
     int num = sizeof(G_Fun_Array) / sizeof(TEST_FUN);
     for (int pos = 0; pos < num; ++pos) {

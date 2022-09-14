@@ -35,8 +35,7 @@ void __fbufsize_0100(void)
     fwrite("1", 1, 1, fptr);
     size_t result = 0;
     result = __fbufsize(fptr);
-    if (result > 0)
-    {
+    if (result > 0) {
         flag = true;
     }
     EXPECT_TRUE("__fbufsize_0200", flag);
@@ -61,7 +60,7 @@ void __fbufsize_0200(void)
     remove("test.txt");
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     __fbufsize_0100();
     __fbufsize_0200();
