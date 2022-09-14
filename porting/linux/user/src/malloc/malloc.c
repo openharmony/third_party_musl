@@ -555,7 +555,20 @@ static size_t mal0_clear(char *p, size_t pagesz, size_t n)
 
 void *calloc(size_t m, size_t n)
 {
-	return internal_calloc(m, n);
+	if(n && m > (size_t)-1/n){
+		errno=ENOMEM;
+		return 0;
+	}
+	n *= m;
+	void *p=malloc(n);
+	if(!p) return p;
+	if(!__malloc_replaced) {
+		if(IS_MMAPPED(MEM_TO_CHUNK(P)))
+			return p;
+		if(n >= PAGE_SIZE)
+			n = mal0_clear(p, PAGE_SIZE, n);
+	}
+	return memset(p, 0, n);
 }
 
 void *internal_calloc(size_t m, size_t n)
@@ -578,7 +591,117 @@ void *internal_calloc(size_t m, size_t n)
 
 void *realloc(void *p, size_t n)
 {
-	return internal_realloc(p, n);
+	struct chunk *self, *next;
+	size_t n0, n1;
+	void *new;
+#ifdef MALLOC_RED_ZONE
+	size_t user_size = n;
+#endif
+
+	if (!p) return malloc(n);
+	if (!n) {
+		free(p);
+		return NULL;
+	}
+
+	if (adjust_size(&n) < 0) return 0;
+
+	self = MEM_TO_CHUNK(p);
+	n1 = n0 = CHUNK_SIZE(self);
+#ifdef MALLOC_RED_ZONE
+	/* Not a valid chunk */
+	if (!(self->state & M_STATE_USED)) a_crash();
+	if (chunk_checksum_check(self)) a_crash();
+	if (self->state & M_RZ_POISON) chunk_poison_check(self);
+#endif
+
+	if (IS_MMAPPED(self)) {
+		size_t extra = self->psize;
+		char *base = (char *)self - extra;
+		size_t oldlen = n0 + extra;
+		size_t newlen = n + extra;
+		/* Crash on realloc of freed chunk */
+#ifdef MALLOC_RED_ZONE
+		/* Wrong malloc type */
+		if (!(self->state & M_STATE_MMAP)) a_crash();
+#endif
+		if (extra & 1) a_crash();
+		if (newlen < PAGE_SIZE && (new = malloc(n-OVERHEAD))) {
+			n0 = n;
+			goto copy_free_ret;
+		}
+		newlen = (newlen + PAGE_SIZE-1) & -PAGE_SIZE;
+		if (oldlen == newlen) return p;
+		base = __mremap(base, oldlen, newlen, MREMAP_MAYMOVE);
+		if (base == (void *)-1)
+			goto copy_realloc;
+		self = (void *)(base + extra);
+		self->csize = newlen - extra;
+#ifdef MALLOC_RED_ZONE
+		self->usize = user_size;
+		if (need_poison()) {
+			chunk_poison_set(self);
+		} else {
+			self->state &= ~M_RZ_POISON;
+		}
+		chunk_checksum_set(self);
+#endif
+		return CHUNK_TO_MEM(self);
+	}
+
+	next = NEXT_CHUNK(self);
+
+	/* Crash on corrupted footer (likely from buffer overflow) */
+	if (next->psize != self->csize) a_crash();
+
+	/* Merge adjacent chunks if we need more space. This is not
+	 * a waste of time even if we fail to get enough space, because our
+	 * subsequent call to free would otherwise have to do the merge. */
+	if (n > n1 && alloc_fwd(next)) {
+		n1 += CHUNK_SIZE(next);
+		next = NEXT_CHUNK(next);
+#ifdef MALLOC_RED_ZONE
+		/* alloc forward arises, remove the poison tag */
+		self->state &= ~M_RZ_POISON;
+#endif
+	}
+	/* FIXME: find what's wrong here and reenable it..? */
+	if (0 && n > n1 && alloc_rev(self)) {
+		self = PREV_CHUNK(self);
+		n1 += CHUNK_SIZE(self);
+	}
+	self->csize = n1 | C_INUSE;
+	next->psize = n1 | C_INUSE;
+
+	/* If we got enough space, split off the excess and return */
+	if (n <= n1) {
+		//memmove(CHUNK_TO_MEM(self), p, n0-OVERHEAD);
+		trim(self, n);
+#ifdef MALLOC_RED_ZONE
+		self->usize = user_size;
+		if (need_poison()) {
+			chunk_poison_set(self);
+		} else {
+			self->state &= ~M_RZ_POISON;
+		}
+		chunk_checksum_set(self);
+#endif
+		return CHUNK_TO_MEM(self);
+	}
+
+copy_realloc:
+	/* As a last resort, allocate a new chunk and copy to it. */
+	new = malloc(n-OVERHEAD);
+	if (!new) return 0;
+copy_free_ret:
+#ifndef MALLOC_RED_ZONE
+	memcpy(new, p, n0-OVERHEAD);
+#else
+	memcpy(new, p, self->usize < user_size ? self->usize : user_size);
+	chunk_checksum_set(self);
+#endif
+	free(CHUNK_TO_MEM(self));
+	return new;
 }
 
 void *internal_realloc(void *p, size_t n)
