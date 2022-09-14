@@ -44,7 +44,7 @@ void signal_0200(void)
     EXPECT_EQ("signal_0200", ret, FAILED);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     signal_0100();
     signal_0200();

@@ -24,18 +24,14 @@ void execlp_0100(void)
 {
     pid_t fpid;
     fpid = fork();
-    if (fpid == 0)
-    {
+    if (fpid == 0) {
         int ret = execlp("touch", "touch", "execlptest.txt", NULL);
     }
     sleep(1);
 
     int isExist = access("execlptest.txt", F_OK);
     EXPECT_EQ("execlp_0100", isExist, 0);
-    if (isExist == 0)
-    {
-        remove("execlptest.txt");
-    }
+    remove("execlptest.txt");
 }
 
 /**
@@ -57,15 +53,14 @@ void execlp_0200(void)
 void execlp_0300(void)
 {
     char buff[300];
-    for (int i = 0; i < 300; i++)
-    {
+    for (int i = 0; i < 300; i++) {
         buff[i] = 'a';
     }
     int ret = execlp(buff, "touch", "execlptest.txt", NULL);
     EXPECT_EQ("execlp_0300", ret, -1);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     execlp_0100();
     execlp_0200();

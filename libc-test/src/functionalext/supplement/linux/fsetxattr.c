@@ -39,7 +39,7 @@ void fsetxattr_0100(void)
     remove("/data/test.txt");
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     fsetxattr_0100();
     return t_status;

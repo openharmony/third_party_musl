@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#include <netinet/in.h>
 #include <arpa/nameser.h>
+#include <netinet/in.h>
 #include <resolv.h>
 #include "functionalext.h"
 
@@ -99,7 +99,7 @@ TEST_FUN G_Fun_Array[] = {
     res_querydomain_0400,
 };
 
-int main()
+int main(int argc, char *argv[])
 {
     int num = sizeof(G_Fun_Array) / sizeof(TEST_FUN);
     for (int pos = 0; pos < num; ++pos) {

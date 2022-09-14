@@ -13,18 +13,10 @@
  * limitations under the License.
  */
 
-#include <dlfcn.h>
-#include <errno.h>
 #include <pthread.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/stat.h>
-#include <unistd.h>
 #include "functionalext.h"
 
 const int SUCCESS = 0;
-const int FAILED = -1;
 
 /**
  * @tc.name      : pthread_cond_broadcast_0100
@@ -39,7 +31,7 @@ void pthread_cond_broadcast_0100(void)
     EXPECT_EQ("pthread_cond_broadcast_0100", back, SUCCESS);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     pthread_cond_broadcast_0100();
     return t_status;

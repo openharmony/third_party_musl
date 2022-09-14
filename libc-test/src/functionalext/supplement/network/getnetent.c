@@ -31,7 +31,7 @@ void getnetent_0100(void)
     ret = NULL;
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     getnetent_0100();
     return t_status;

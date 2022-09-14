@@ -14,11 +14,11 @@
  */
 
 #include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include "functionalext.h"
+#include <string.h>
+#include "test.h"
 
-typedef void (*TEST_FUN)();
+const char *wrstring = "This is a test sample!";
+const char *path = "/data/test.txt";
 
 /**
  * @tc.name      : fseeko_0100
@@ -27,17 +27,27 @@ typedef void (*TEST_FUN)();
  */
 void fseeko_0100(void)
 {
-    const char *wrstring = "This is a test sample!";
-    const char *ptr = "test.txt";
-    char ch;
-    FILE *fptr = fopen(ptr, "w+");
-    fwrite(wrstring, sizeof(char), strlen(wrstring), fptr);
-    int32_t data = fseek(fptr, 0L, SEEK_SET);
-    ch = fgetc(fptr);
-    EXPECT_EQ("fseeko_0100", data, 0);
-    EXPECT_EQ("fseeko_0100", ch, 'T');
-    fclose(fptr);
-    remove(ptr);
+    FILE *fp = fopen(path, "w+");
+    if (!fp) {
+        t_error("%s fopen failed\n", __func__);
+    }
+
+    size_t ret = fwrite(wrstring, sizeof(char), strlen(wrstring), fp);
+    if (ret < 0) {
+        t_error("%s fwrite failed\n", __func__);
+    }
+
+    int result = fseeko(fp, 0L, SEEK_SET);
+    char ch = fgetc(fp);
+    if (result != 0) {
+        t_error("%s fseeko failed, result is %d\n", __func__, result);
+    }
+    if (ch != 'T') {
+        t_error("%s fseeko failed, ch is %c\n", __func__, ch);
+    }
+
+    fclose(fp);
+    remove(path);
 }
 
 /**
@@ -47,17 +57,27 @@ void fseeko_0100(void)
  */
 void fseeko_0200(void)
 {
-    const char *wrstring = "This is a test sample!";
-    const char *ptr = "test.txt";
-    char ch;
-    FILE *fptr = fopen(ptr, "w+");
-    fwrite(wrstring, sizeof(char), strlen(wrstring), fptr);
-    int32_t data = fseek(fptr, 8L, SEEK_SET);
-    ch = fgetc(fptr);
-    EXPECT_EQ("fseeko_0200", data, 0);
-    EXPECT_EQ("fseeko_0200", ch, 'a');
-    fclose(fptr);
-    remove(ptr);
+    FILE *fp = fopen(path, "w+");
+    if (!fp) {
+        t_error("%s fopen failed\n", __func__);
+    }
+
+    size_t ret = fwrite(wrstring, sizeof(char), strlen(wrstring), fp);
+    if (ret < 0) {
+        t_error("%s fwrite failed\n", __func__);
+    }
+
+    int result = fseeko(fp, 8L, SEEK_SET);
+    char ch = fgetc(fp);
+    if (result != 0) {
+        t_error("%s fseeko failed, result is %d\n", __func__, result);
+    }
+    if (ch != 'a') {
+        t_error("%s fseeko failed, ch is %c\n", __func__, ch);
+    }
+
+    fclose(fp);
+    remove(path);
 }
 
 /**
@@ -67,18 +87,33 @@ void fseeko_0200(void)
  */
 void fseeko_0300(void)
 {
-    const char *wrstring = "This is a test sample!";
-    const char *ptr = "test.txt";
-    char ch;
-    FILE *fptr = fopen(ptr, "w+");
-    fwrite(wrstring, sizeof(char), strlen(wrstring), fptr);
-    int32_t code = fseek(fptr, 10L, SEEK_SET);
-    int32_t data = fseek(fptr, 0L, SEEK_CUR);
-    ch = fgetc(fptr);
-    EXPECT_EQ("fseeko_0300", data, 0);
-    EXPECT_EQ("fseeko_0300", ch, 't');
-    fclose(fptr);
-    remove(ptr);
+    FILE *fp = fopen(path, "w+");
+    if (!fp) {
+        t_error("%s fopen failed\n", __func__);
+    }
+
+    size_t ret = fwrite(wrstring, sizeof(char), strlen(wrstring), fp);
+    if (ret < 0) {
+        t_error("%s fwrite failed\n", __func__);
+    }
+
+    int code = fseeko(fp, 10L, SEEK_SET);
+    if (code != 0) {
+        t_error("%s fseeko failed, code is %d\n", __func__, code);
+    }
+
+    int data = fseeko(fp, 0L, SEEK_CUR);
+    if (data != 0) {
+        t_error("%s fseeko failed, data is %d\n", __func__, data);
+    }
+
+    char ch = fgetc(fp);
+    if (ch != 't') {
+        t_error("%s fseeko failed, ch is %c\n", __func__, ch);
+    }
+
+    fclose(fp);
+    remove(path);
 }
 
 /**
@@ -88,17 +123,27 @@ void fseeko_0300(void)
  */
 void fseeko_0400(void)
 {
-    const char *wrstring = "This is a test sample!";
-    const char *ptr = "test.txt";
-    char ch;
-    FILE *fptr = fopen(ptr, "w+");
-    fwrite(wrstring, sizeof(char), strlen(wrstring), fptr);
-    int32_t data = fseek(fptr, -1L, SEEK_END);
-    ch = fgetc(fptr);
-    EXPECT_EQ("fseeko_0400", data, 0);
-    EXPECT_EQ("fseeko_0400", ch, '!');
-    fclose(fptr);
-    remove(ptr);
+    FILE *fp = fopen(path, "w+");
+    if (!fp) {
+        t_error("%s fopen failed\n", __func__);
+    }
+
+    size_t ret = fwrite(wrstring, sizeof(char), strlen(wrstring), fp);
+    if (ret < 0) {
+        t_error("%s fwrite failed\n", __func__);
+    }
+
+    int result = fseeko(fp, -1L, SEEK_END);
+    char ch = fgetc(fp);
+    if (result != 0) {
+        t_error("%s fseeko failed, result is %d\n", __func__, result);
+    }
+    if (ch != '!') {
+        t_error("%s fseeko failed, ch is %c\n", __func__, ch);
+    }
+
+    fclose(fp);
+    remove(path);
 }
 
 /**
@@ -108,16 +153,23 @@ void fseeko_0400(void)
  */
 void fseeko_0500(void)
 {
-    const char *wrstring = "This is a test sample!";
-    const char *ptr = "test.txt";
-    char ch;
-    FILE *fptr = fopen(ptr, "w+");
-    fwrite(wrstring, sizeof(char), strlen(wrstring), fptr);
-    int32_t data = fseek(fptr, -10L, SEEK_SET);
-    ch = fgetc(fptr);
-    EXPECT_EQ("fseeko_0500", data, -1);
-    fclose(fptr);
-    remove(ptr);
+    FILE *fp = fopen(path, "w+");
+    if (!fp) {
+        t_error("%s fopen failed\n", __func__);
+    }
+
+    size_t ret = fwrite(wrstring, sizeof(char), strlen(wrstring), fp);
+    if (ret < 0) {
+        t_error("%s fwrite failed\n", __func__);
+    }
+
+    int result = fseeko(fp, -10L, SEEK_SET);
+    if (result != -1) {
+        t_error("%s fseeko should be failed, result is %d\n", __func__, result);
+    }
+
+    fclose(fp);
+    remove(path);
 }
 
 /**
@@ -127,33 +179,33 @@ void fseeko_0500(void)
  */
 void fseeko_0600(void)
 {
-    const char *wrstring = "This is a test sample!";
-    const char *ptr = "test.txt";
-    char ch;
-    FILE *fptr = fopen(ptr, "w+");
-    fwrite(wrstring, sizeof(char), strlen(wrstring), fptr);
-    int32_t data = fseek(fptr, 10L, SEEK_END);
-    ch = fgetc(fptr);
-    EXPECT_EQ("fseeko_0600", data, 0);
-    fclose(fptr);
-    remove(ptr);
+    FILE *fp = fopen(path, "w+");
+    if (!fp) {
+        t_error("%s fopen failed\n", __func__);
+    }
+
+    size_t ret = fwrite(wrstring, sizeof(char), strlen(wrstring), fp);
+    if (ret < 0) {
+        t_error("%s fwrite failed\n", __func__);
+    }
+
+    int result = fseeko(fp, 10L, SEEK_END);
+    if (result != 0) {
+        t_error("%s fseeko failed, result is %d\n", __func__, result);
+    }
+
+    fclose(fp);
+    remove(path);
 }
 
-TEST_FUN G_Fun_Array[] = {
-    fseeko_0100,
-    fseeko_0200,
-    fseeko_0300,
-    fseeko_0400,
-    fseeko_0500,
-    fseeko_0600,
-};
-
-int main()
+int main(int argc, char *argv[])
 {
-    int num = sizeof(G_Fun_Array) / sizeof(TEST_FUN);
-    for (int pos = 0; pos < num; ++pos) {
-        G_Fun_Array[pos]();
-    }
+    fseeko_0100();
+    fseeko_0200();
+    fseeko_0300();
+    fseeko_0400();
+    fseeko_0500();
+    fseeko_0600();
 
     return t_status;
 }

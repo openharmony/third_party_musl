@@ -80,7 +80,7 @@ void fchmodat_0300(void)
     EXPECT_EQ("fchmodat_0300", result, failed);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     fchmodat_0100();
     fchmodat_0200();

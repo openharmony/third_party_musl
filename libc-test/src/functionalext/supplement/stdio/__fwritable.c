@@ -53,7 +53,7 @@ void __fwritable_0200(void)
     remove(ptr);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     __fwritable_0100();
     __fwritable_0200();

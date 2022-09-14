@@ -22,7 +22,7 @@
  * @tc.desc      : Verify the permission to modify the file (the mode parameter is set separately)
  * @tc.level     : Level 0
  */
-void chmod_0100()
+void chmod_0100(void)
 {
 
     struct stat buf;
@@ -41,7 +41,7 @@ void chmod_0100()
  * @tc.desc      : Verify the permission to modify the file (the overall setting of the mode parameter)
  * @tc.level     : Level 2
  */
-void chmod_0200()
+void chmod_0200(void)
 {
 
     struct stat buf;
@@ -58,7 +58,7 @@ void chmod_0200()
  * @tc.desc      : Verify that file permissions cannot be modified (parameter invalid)
  * @tc.level     : Level 2
  */
-void chmod_0300()
+void chmod_0300(void)
 {
     char filename[80];
     char buf[100] = "";
@@ -78,7 +78,7 @@ void chmod_0300()
  * @tc.desc      : Verify that file permissions cannot be modified (parameter invalid)
  * @tc.level     : Level 2
  */
-void chmod_0400()
+void chmod_0400(void)
 {
     char filename[80];
     char buf[100] = "";
@@ -92,7 +92,7 @@ void chmod_0400()
     remove("data/test.txt");
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     chmod_0100();
     chmod_0200();

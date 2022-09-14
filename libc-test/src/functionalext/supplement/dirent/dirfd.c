@@ -55,7 +55,7 @@ void dirfd_0100(void)
     closedir(dir_ptr);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     dirfd_0100();
     return t_status;

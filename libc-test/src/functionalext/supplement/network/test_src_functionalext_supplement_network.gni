@@ -41,7 +41,6 @@ functionalext_supplement_network_test = [
   "htonl",
   "htons",
   "if_nameindex",
-  "dn_skipname",
   "dn_comp",
   "getservbyname",
   "getservbyport",
@@ -54,4 +53,5 @@ functionalext_supplement_network_test = [
   "getsockopt",
   "gai_strerror",
   "recv",
+  "freeaddrinfo",
 ]

@@ -14,110 +14,118 @@
  */
 
 #include <arpa/inet.h>
-#include <ctype.h>
-#include <netinet/in.h>
-#include <stdio.h>
-#include <stdbool.h>
-#include <stdlib.h>
-#include "functionalext.h"
-
-typedef void (*TEST_FUN)();
-const int COUNT_ZERO = 0;
-const int COUNT_ONE = 1;
+#include "test.h"
 
 /**
  * @tc.name      : inet_aton_0100
- * @tc.desc      : Verify converting an IP address string to a network binary number (parameter valid)
+ * @tc.desc      : The format of the parameter _cp is a.b.c.d
  * @tc.level     : Level 0
  */
 void inet_aton_0100()
 {
-    bool flag = false;
-    char ip4test[] = "127.0.0.1";
-    struct in_addr sin_addr;
-    int result;
-    result = inet_aton(ip4test, &sin_addr);
-    if (sin_addr.s_addr == 16777343) {
-        flag = true;
+    struct in_addr a;
+    a.s_addr = 0;
+    int ret = inet_aton("127.1.2.3", &a);
+    if (ret != 1) {
+        t_error("%s inet_aton failed\n", __func__);
     }
-    EXPECT_TRUE("inet_aton_0100", flag);
-    EXPECT_EQ("inet_aton_0100", result, COUNT_ONE);
+    if (a.s_addr != (htonl)(0x7f010203)) {
+        t_error("%s inet_aton invalid\n", __func__);
+    }
 }
 
 /**
  * @tc.name      : inet_aton_0200
- * @tc.desc      : Validation cannot convert an IP address string to a network binary number
- *                 (the s0 argument is invalid and has a negative number)
- * @tc.level     : Level 2
+ * @tc.desc      : The format of the parameter _cp is a.b.c
+ * @tc.level     : Level 0
  */
 void inet_aton_0200()
 {
-    char ip4test[] = "-127.0.0.1";
-    struct in_addr sin_addr;
-    int result;
-    result = inet_aton(ip4test, &sin_addr);
-    EXPECT_EQ("inet_aton_0200", result, COUNT_ZERO);
+    struct in_addr a;
+    a.s_addr = 0;
+    int ret = inet_aton("127.1.2", &a);
+    if (ret != 1) {
+        t_error("%s inet_aton failed\n", __func__);
+    }
+    if (a.s_addr != (htonl)(0x7f010002)) {
+        t_error("%s inet_aton invalid\n", __func__);
+    }
 }
 
 /**
  * @tc.name      : inet_aton_0300
- * @tc.desc      : Validation cannot convert an IP address string to a network binary number
- *                 (s0 argument invalid, number greater than 255 exists)
- * @tc.level     : Level 2
+ * @tc.desc      : The format of the parameter _cp is a.b
+ * @tc.level     : Level 0
  */
 void inet_aton_0300()
 {
-    char ip4test[] = "127.0.256.1";
-    struct in_addr sin_addr;
-    int result;
-    result = inet_aton(ip4test, &sin_addr);
-    EXPECT_EQ("inet_aton_0300", result, COUNT_ZERO);
+    struct in_addr a;
+    a.s_addr = 0;
+    int ret = inet_aton("127.1", &a);
+    if (ret != 1) {
+        t_error("%s inet_aton failed\n", __func__);
+    }
+    if (a.s_addr != (htonl)(0x7f000001)) {
+        t_error("%s inet_aton invalid\n", __func__);
+    }
 }
 
 /**
  * @tc.name      : inet_aton_0400
- * @tc.desc      : Validation cannot convert an IP address string to a network binary number
- *                 (the s0 argument is invalid, the format is not correct)
- * @tc.level     : Level 2
+ * @tc.desc      : The format of the parameter _cp is a
+ * @tc.level     : Level 0
  */
 void inet_aton_0400()
 {
-    char ip4test[] = "127.1.2.3.4";
-    struct in_addr sin_addr;
-    int result;
-    result = inet_aton(ip4test, &sin_addr);
-    EXPECT_EQ("inet_aton_0400", result, COUNT_ZERO);
+    struct in_addr a;
+    a.s_addr = 0;
+    int ret = inet_aton("0x7f000001", &a);
+    if (ret != 1) {
+        t_error("%s inet_aton failed\n", __func__);
+    }
+    if (a.s_addr != (htonl)(0x7f000001)) {
+        t_error("%s inet_aton invalid\n", __func__);
+    }
 }
 
 /**
  * @tc.name      : inet_aton_0500
- * @tc.desc      : Validation cannot convert an IP address string to a network binary number
- *                 (the s0 argument is invalid and contains characters)
- * @tc.level     : Level 2
+ * @tc.desc      : Hex (0x) and mixed-case hex digits.
+ * @tc.level     : Level 0
  */
 void inet_aton_0500()
 {
-    char ip4test[] = "127.0.w.1";
-    struct in_addr sin_addr;
-    int result;
-    result = inet_aton(ip4test, &sin_addr);
-    EXPECT_EQ("inet_aton_0500", result, COUNT_ZERO);
+    struct in_addr a;
+    a.s_addr = 0;
+    int ret = inet_aton("0xFf.0.0.1", &a);
+    if (ret != 1) {
+        t_error("%s inet_aton failed\n", __func__);
+    }
+    if (a.s_addr != (htonl)(0xff000001)) {
+        t_error("%s inet_aton invalid\n", __func__);
+    }
 }
 
-TEST_FUN G_Fun_Array[] = {
-    inet_aton_0100,
-    inet_aton_0200,
-    inet_aton_0300,
-    inet_aton_0400,
-    inet_aton_0500,
-};
-
-int main()
+/**
+ * @tc.name      : inet_aton_0600
+ * @tc.desc      : When the parameter is invalid, test the return value of the function
+ * @tc.level     : Level 2
+ */
+void inet_aton_0600()
 {
-    int num = sizeof(G_Fun_Array) / sizeof(TEST_FUN);
-    for (int pos = 0; pos < num; ++pos) {
-        G_Fun_Array[pos]();
+    int ret = inet_aton("", NULL);
+    if (ret != 0) {
+        t_error("%s inet_aton failed\n", __func__);
     }
+}
 
+int main(int argc, char *argv[])
+{
+    inet_aton_0100();
+    inet_aton_0200();
+    inet_aton_0300();
+    inet_aton_0400();
+    inet_aton_0500();
+    inet_aton_0600();
     return t_status;
 }

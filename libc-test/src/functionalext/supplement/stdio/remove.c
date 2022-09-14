@@ -45,7 +45,7 @@ void remove_0200(void)
     ptr = NULL;
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     remove_0100();
     remove_0200();

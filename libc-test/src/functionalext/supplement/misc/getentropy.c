@@ -46,7 +46,7 @@ void getentropy_0200(void)
     EXPECT_EQ("getentrcopy_0200", result, FAILED);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     getentropy_0100();
     getentropy_0200();

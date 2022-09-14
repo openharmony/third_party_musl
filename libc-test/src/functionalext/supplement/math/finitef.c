@@ -13,15 +13,10 @@
  * limitations under the License.
  */
 
-#include <stdlib.h>
-#include <stdio.h>
 #include <float.h>
+#include <math.h>
 #include <stdint.h>
 #include "functionalext.h"
-#include "math.h"
-
-const int32_t NUM_ZERO = 0;
-const int32_t NUM_ONE = 1;
 
 /**
  * @tc.name      : finitef_0100
@@ -30,8 +25,8 @@ const int32_t NUM_ONE = 1;
  */
 void finitef_0100(void)
 {
-    float ret = finitef(0.0);
-    EXPECT_EQ("finitef_0100", ret, NUM_ONE);
+    int ret = finitef(0.0);
+    EXPECT_EQ("finitef_0100", ret, 1);
 }
 
 /**
@@ -41,8 +36,8 @@ void finitef_0100(void)
  */
 void finitef_0200(void)
 {
-    float ret = finitef(DBL_MIN / 2);
-    EXPECT_EQ("finitef_0100", ret, NUM_ONE);
+    int ret = finitef(DBL_MIN / 2);
+    EXPECT_EQ("finitef_0100", ret, 1);
 }
 
 /**
@@ -52,8 +47,8 @@ void finitef_0200(void)
  */
 void finitef_0300(void)
 {
-    float ret = finitef(NAN);
-    EXPECT_EQ("finitef_0100", ret, NUM_ZERO);
+    int ret = finitef(NAN);
+    EXPECT_EQ("finitef_0100", ret, 0);
 }
 
 /**
@@ -63,8 +58,8 @@ void finitef_0300(void)
  */
 void finitef_0400(void)
 {
-    float ret = finitef(INFINITY);
-    EXPECT_EQ("finitef_0100", ret, NUM_ZERO);
+    int ret = finitef(INFINITY);
+    EXPECT_EQ("finitef_0100", ret, 0);
 }
 
 /**
@@ -74,8 +69,8 @@ void finitef_0400(void)
  */
 void finitef_0500(void)
 {
-    float ret = finitef(sqrt(-1.0));
-    EXPECT_EQ("finitef_0100", ret, NUM_ZERO);
+    int ret = finitef(sqrt(-1.0));
+    EXPECT_EQ("finitef_0100", ret, 0);
 }
 
 /**
@@ -85,8 +80,8 @@ void finitef_0500(void)
  */
 void finitef_0600(void)
 {
-    float ret = finitef(exp(800));
-    EXPECT_EQ("finitef_0100", ret, NUM_ZERO);
+    int ret = finitef(exp(800));
+    EXPECT_EQ("finitef_0100", ret, 0);
 }
 
 int main(int argc, char *argv[])

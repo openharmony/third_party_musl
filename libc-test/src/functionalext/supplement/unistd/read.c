@@ -39,7 +39,7 @@ void read_0100(void)
     remove("/data/readtest.txt");
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     read_0100();
 

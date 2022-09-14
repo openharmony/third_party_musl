@@ -50,7 +50,7 @@ void gethostbyaddr_r_0200(void)
     EXPECT_NE("gethostbyaddr_r_0200", ret, 0);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     gethostbyaddr_r_0100();
     gethostbyaddr_r_0200();

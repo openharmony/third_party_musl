@@ -13,14 +13,12 @@
  * limitations under the License.
  */
 
-#include <stdbool.h>
+#include <errno.h>
 #include <dirent.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include "functionalext.h"
+#include <string.h>
+#include "test.h"
 
-typedef void (*TEST_FUN)();
-#define MAXPATH 1000
+const char *path = "/data";
 
 /*
  * @tc.name      : opendir_0100
@@ -29,57 +27,57 @@ typedef void (*TEST_FUN)();
  */
 void opendir_0100(void)
 {
-    bool flag = false;
-    char path[MAXPATH];
-    DIR *dir_ptr;
-    char *data = NULL;
-    data = getcwd(path, MAXPATH);
-    dir_ptr = opendir(path);
-    if (dir_ptr != 0) {
-        flag = true;
+    DIR *dir = opendir(path);
+    if (!dir) {
+        t_error("%s opendir failed\n", __func__);
     }
-    EXPECT_TRUE("opendir_0100", flag);
+    struct dirent *r = readdir(dir);
+    if (strcmp(r->d_name, ".")) {
+        t_error("%s opendir is not right, d_name is %s\n", __func__, r->d_name);
+    }
+    closedir(dir);
 }
 
 /*
  * @tc.name      : opendir_0200
- * @tc.desc      : The verification parameter is invalid, the specified directory cannot be opened
- *                 (name does not exist)
+ * @tc.desc      : When the path is not a folder or not exit, test the return value of the function
  * @tc.level     : Level 2
  */
 void opendir_0200(void)
 {
-    DIR *dir_ptr;
-    dir_ptr = opendir("/dev/key");
-    EXPECT_EQ("opendir_0200", dir_ptr, 0);
+    DIR *dir1 = opendir("/dev/null");
+    if (dir1) {
+        t_error("%s dir should be NULL\n", __func__);
+    }
+
+    errno = 0;
+    DIR *dir2 = opendir("/does/not/exit/folder");
+    if (dir2) {
+        t_error("%s dir should be NULL\n", __func__);
+    }
+    if (errno != ENOENT) {
+        t_error("%s errno should be ENOTDIR, but now is %d\n", __func__, errno);
+    }
 }
 
 /*
  * @tc.name      : opendir_0300
- * @tc.desc      : The validation parameter is invalid and the specified directory cannot be opened (name is NULL)
+ * @tc.desc      : When the path is NULL, test the return value of the function
  * @tc.level     : Level 2
  */
 void opendir_0300(void)
 {
-    DIR *dir_ptr;
-    char *path = NULL;
-    path = getcwd(NULL, 0);
-    dir_ptr = opendir(NULL);
-    EXPECT_EQ("opendir_0300", dir_ptr, 0);
+    DIR *dir = opendir(NULL);
+    if (dir) {
+        t_error("%s dir should be NULL\n", __func__);
+    }
 }
 
-TEST_FUN G_Fun_Array[] = {
-    opendir_0100,
-    opendir_0200,
-    opendir_0300,
-};
-
-int main()
+int main(int argc, char *argv[])
 {
-    int num = sizeof(G_Fun_Array) / sizeof(TEST_FUN);
-    for (int pos = 0; pos < num; ++pos) {
-        G_Fun_Array[pos]();
-    }
+    opendir_0100();
+    opendir_0200();
+    opendir_0300();
 
     return t_status;
 }

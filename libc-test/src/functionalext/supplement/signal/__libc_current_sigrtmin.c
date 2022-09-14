@@ -13,41 +13,24 @@
  * limitations under the License.
  */
 
-#include <limits.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdbool.h>
-#include <unistd.h>
-#include <sys/sysinfo.h>
+#include <signal.h>
 #include "functionalext.h"
+#define MAXPATH 1000
 
-typedef void (*TEST_FUN)();
-
-/**
- * @tc.name      : get_nprocs_0100
- * @tc.desc      : Verify the total number of pages available for acquisition
+/*
+ * @tc.name      : libc_current_sigrtmin_0100
+ * @tc.desc      : Verify that the number of real-time signals can be obtained
  * @tc.level     : Level 0
  */
-void get_nprocs_0100(void)
+void libc_current_sigrtmin_0100(void)
 {
-    int result;
-    result = get_avphys_pages();
-    bool flag = false;
-    if (result > 0) {
-        flag = true;
-    }
-    EXPECT_TRUE("fpathconf_0100", true);
+    int result = __libc_current_sigrtmin();
+    EXPECT_EQ("libc_current_sigrtmin_0100", result, 35);
 }
 
-TEST_FUN G_Fun_Array[] = {
-    get_nprocs_0100,
-};
-
-int main()
+int main(int argc, char *argv[])
 {
-    int num = sizeof(G_Fun_Array) / sizeof(TEST_FUN);
-    for (int pos = 0; pos < num; ++pos) {
-        G_Fun_Array[pos]();
-    }
+    libc_current_sigrtmin_0100();
+
     return t_status;
 }

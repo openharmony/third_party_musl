@@ -48,7 +48,7 @@ void closedir_0200(void)
     EXPECT_EQ("closedir_0200", ret, -1);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     closedir_0100();
     closedir_0200();

@@ -53,7 +53,7 @@ void flockfile_0100(void)
     remove("test.txt");
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     flockfile_0100();
     return t_status;

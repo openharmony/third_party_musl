@@ -53,7 +53,7 @@ void gettimeofday_0200(void)
     EXPECT_EQ("gettimeofday_0200", returnflag, SUCCESS);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     gettimeofday_0100();
     gettimeofday_0200();

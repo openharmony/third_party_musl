@@ -13,9 +13,6 @@
  * limitations under the License.
  */
 
-#include <fcntl.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <signal.h>
 #include <unistd.h>
 #include "functionalext.h"
@@ -35,18 +32,16 @@ void handler()
  */
 void alarm_0100()
 {
-    int i;
     signal(SIGALRM, handler);
-    unsigned int result;
-    result = alarm(SLEEP_TIME);
-    FLOAT_EQUAL("alarm_0100", result, 0);
+    unsigned int result = alarm(SLEEP_TIME);
+    EXPECT_EQ("alarm_0100", result, 0);
 }
 
 TEST_FUN G_Fun_Array[] = {
     alarm_0100,
 };
 
-int main()
+int main(int argc, char *argv[])
 {
     int num = sizeof(G_Fun_Array) / sizeof(TEST_FUN);
     for (int pos = 0; pos < num; ++pos) {

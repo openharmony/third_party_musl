@@ -13,19 +13,10 @@
  * limitations under the License.
  */
 
-#include <dlfcn.h>
-#include <errno.h>
 #include <pthread.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/stat.h>
-#include <unistd.h>
-
 #include "functionalext.h"
 
 const int SUCCESS = 0;
-const int FAILED = -1;
 
 /**
  * @tc.name      : pthread_attr_destroy_0100
@@ -39,7 +30,7 @@ void pthread_attr_destroy_0100(void)
     EXPECT_EQ("pthread_attr_destroy_0100", result, SUCCESS);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     pthread_attr_destroy_0100();
 

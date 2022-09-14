@@ -13,13 +13,9 @@
  * limitations under the License.
  */
 
-#include <stdio.h>
 #include <stdlib.h>
-#include <stdbool.h>
-#include <stdint.h>
+#include <unistd.h>
 #include "functionalext.h"
-
-typedef void (*TEST_FUN)();
 
 void exitsecondtest()
 {
@@ -29,16 +25,8 @@ void exitsecondtest()
     fprintf(fptr, "%s", "exit after");
 }
 
-TEST_FUN G_Fun_Array[] = {
-    exitsecondtest,
-};
-
-int main()
+int main(int argc, char *argv[])
 {
-    int num = sizeof(G_Fun_Array) / sizeof(TEST_FUN);
-    for (int pos = 0; pos < num; ++pos) {
-        G_Fun_Array[pos]();
-    }
-
+    exitsecondtest();
     return t_status;
 }

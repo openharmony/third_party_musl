@@ -123,7 +123,7 @@ void fsetpos_0400()
     wrstring = NULL;
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     fsetpos_0100();
     fsetpos_0200();

@@ -48,7 +48,7 @@ void vfork_0100()
     }
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     vfork_0100();
     return t_status;

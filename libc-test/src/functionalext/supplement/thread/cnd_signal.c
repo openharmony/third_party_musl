@@ -54,7 +54,7 @@ void cnd_signal_0100(void)
     mtx_destroy(&mtx);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     cnd_signal_0100();
     return t_status;

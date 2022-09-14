@@ -13,18 +13,10 @@
  * limitations under the License.
  */
 
-#include <ctype.h>
 #include <fcntl.h>
-#include <stdio.h>
-#include <stdint.h>
-#include <stdlib.h>
-#include <signal.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include "functionalext.h"
-
-const int COUNT_ZERO = 0;
-const int COUNT_NEFATIVE_ONE = -1;
 
 /**
  * @tc.name      : chown_0100
@@ -34,14 +26,18 @@ const int COUNT_NEFATIVE_ONE = -1;
 void chown_0100(void)
 {
     struct stat buf;
-    const char *ptr = "test.txt";
-    FILE *fptr = fopen(ptr, "w+");
-    int result = chown("test.txt", 0, 0);
-    stat("test.txt", &buf);
-    EXPECT_EQ("chown_0100", result, COUNT_ZERO);
-    EXPECT_EQ("chown_0100", buf.st_uid, COUNT_ZERO);
-    EXPECT_EQ("chown_0100", buf.st_gid, COUNT_ZERO);
-    fclose(fptr);
+    const char *ptr = "/data/test.txt";
+    FILE *fp = fopen(ptr, "w+");
+    EXPECT_PTRNE("chown_0100", fp, NULL);
+
+    int result = chown(ptr, 0, 0);
+    int ret = stat(ptr, &buf);
+    EXPECT_EQ("chown_0100", ret, 0);
+    EXPECT_EQ("chown_0100", result, 0);
+    EXPECT_EQ("chown_0100", buf.st_uid, 0);
+    EXPECT_EQ("chown_0100", buf.st_gid, 0);
+
+    fclose(fp);
     remove(ptr);
 }
 
@@ -53,13 +49,17 @@ void chown_0100(void)
 void chown_0200(void)
 {
     struct stat buf;
-    const char *ptr = "test.txt";
-    FILE *fptr = fopen(ptr, "w+");
-    int result = chown("test.txt", 0, -1);
-    stat("test.txt", &buf);
-    EXPECT_EQ("chown_0200", result, COUNT_ZERO);
-    EXPECT_EQ("chown_0200", buf.st_uid, COUNT_ZERO);
-    fclose(fptr);
+    const char *ptr = "/data/test.txt";
+    FILE *fp = fopen(ptr, "w+");
+    EXPECT_PTRNE("chown_0200", fp, NULL);
+
+    int result = chown(ptr, 0, -1);
+    int ret = stat(ptr, &buf);
+    EXPECT_EQ("chown_0200", ret, 0);
+    EXPECT_EQ("chown_0200", result, 0);
+    EXPECT_EQ("chown_0200", buf.st_uid, 0);
+    printf("0200: %d\n", buf.st_gid);
+    fclose(fp);
     remove(ptr);
 }
 
@@ -71,13 +71,18 @@ void chown_0200(void)
 void chown_0300(void)
 {
     struct stat buf;
-    const char *ptr = "test.txt";
-    FILE *fptr = fopen(ptr, "w+");
-    int result = chown("test.txt", -1, 0);
-    stat("test.txt", &buf);
-    EXPECT_EQ("chown_0300", result, COUNT_ZERO);
-    EXPECT_EQ("chown_0300", buf.st_gid, COUNT_ZERO);
-    fclose(fptr);
+    const char *ptr = "/data/test.txt";
+    FILE *fp = fopen(ptr, "w+");
+    EXPECT_PTRNE("chown_0300", fp, NULL);
+
+    int result = chown(ptr, -1, 0);
+    int ret = stat(ptr, &buf);
+    EXPECT_EQ("chown_0300", ret, 0);
+    EXPECT_EQ("chown_0300", result, 0);
+    EXPECT_EQ("chown_0300", buf.st_gid, 0);
+    printf("0300: %d\n", buf.st_uid);
+
+    fclose(fp);
     remove(ptr);
 }
 
@@ -88,12 +93,8 @@ void chown_0300(void)
  */
 void chown_0400(void)
 {
-    const char *ptr = "test.txt";
-    FILE *fptr = fopen(ptr, "w+");
-    fclose(fptr);
-    remove(ptr);
-    int result = chown("test.txt", 0, 0);
-    EXPECT_EQ("chown_0400", result, COUNT_NEFATIVE_ONE);
+    int result = chown("/data/test.txt", 0, 0);
+    EXPECT_EQ("chown_0400", result, -1);
 }
 
 /**
@@ -103,12 +104,11 @@ void chown_0400(void)
  */
 void chown_0500(void)
 {
-    const char *ptr = NULL;
-    int result = chown(ptr, 0, 0);
-    EXPECT_EQ("chown_0500", result, COUNT_NEFATIVE_ONE);
+    int result = chown(NULL, 0, 0);
+    EXPECT_EQ("chown_0500", result, -1);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     chown_0100();
     chown_0200();

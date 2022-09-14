@@ -34,10 +34,8 @@ void getnetbyname_0100(void)
 {
     struct netent *Socket = NULL;
     Socket = getnetbyname("127.0.0.1");
-    if (Socket != NULL) {
-        printf(" name is %s\n", Socket->n_name);
-    } else {
-        printf("getnetbyname_0100 is failed\n");
+    if (!Socket) {
+        t_error("%s getnetbyname failed\n", __func__);
     }
 }
 
@@ -62,7 +60,7 @@ TEST_FUN G_Fun_Array[] = {
     getnetbyname_0200,
 };
 
-int main()
+int main(int argc, char *argv[])
 {
     int num = sizeof(G_Fun_Array) / sizeof(TEST_FUN);
     for (int pos = 0; pos < num; ++pos) {

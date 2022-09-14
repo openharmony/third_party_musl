@@ -42,7 +42,7 @@ void getegid_0100(void)
     EXPECT_EQ("getegid_0100", gid, id);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     getegid_0100();
     return t_status;

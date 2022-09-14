@@ -50,7 +50,7 @@ void fexecve_0200(void)
     EXPECT_EQ("fexecve_0200", ret, -1);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     fexecve_0100();
     fexecve_0200();

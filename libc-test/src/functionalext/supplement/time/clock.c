@@ -22,14 +22,14 @@
  * @tc.desc      : Can get the time used by the processor clock.
  * @tc.level     : Level 0
  */
-void clock_0100()
+void clock_0100(void)
 {
     clock_t ret;
     ret = clock();
     EXPECT_TRUE("clock_0100", ret > 0);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     clock_0100();
     return t_status;

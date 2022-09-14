@@ -37,7 +37,7 @@ void __fpurge_0100()
     remove("fpurge.txt");
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     __fpurge_0100();
     return t_status;

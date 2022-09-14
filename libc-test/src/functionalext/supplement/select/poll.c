@@ -16,152 +16,121 @@
 #include <fcntl.h>
 #include <poll.h>
 #include <stdio.h>
-#include <stdint.h>
-#include <stdlib.h>
-#include <signal.h>
-#include <stdbool.h>
-#include <unistd.h>
-#include "functionalext.h"
+#include <string.h>
+#include "test.h"
 
-typedef void (*TEST_FUN)();
-const int32_t COUNT_FAILED = -1;
+const char *path1 = "/data/polltest1.txt";
+const char *str1 = "HelloWorld";
+const char *path2 = "/data/polltest2.txt";
+const char *str2 = "TestforPoll";
 
 /*
  * @tc.name      : poll_0100
- * @tc.desc      : Verify the attribute changes of the monitored file descriptor (timeout parameter is greater than 0)
+ * @tc.desc      : Waits for one of a set of file descriptors to become ready to perform I/O.
  * @tc.level     : Level 0
  */
 void poll_0100(void)
 {
-    int fd, ret;
-    unsigned char key_val;
-    struct pollfd fds[1];
-    fd = open("/data/test.txt", O_RDWR | O_CREAT);
-    if (fd < 0) {
-        fputs("open r is failed\n", stdout);
+    char buf[BUFSIZ];
+    struct pollfd fds[2];
+    int time_delay = 2000;
+
+    int fd1 = open(path1, O_WRONLY | O_CREAT);
+    if (fd1 < 0) {
+        t_error("%s open path1 failed\n", __func__);
     }
-    fds[0].fd = fd;
+    write(fd1, str1, strlen(str1) + 1);
+    close(fd1);
+
+    int fd2 = open(path2, O_WRONLY | O_CREAT);
+    if (fd2 < 0) {
+        t_error("%s open path2 failed\n", __func__);
+    }
+    write(fd2, str2, strlen(str2) + 1);
+    close(fd2);
+
+    fds[0].fd = open(path1, O_RDONLY | O_NONBLOCK);
+    if (fds[0].fd < 0) {
+        t_error("%s open failed\n", __func__);
+    }
     fds[0].events = POLLIN;
-    ret = poll(fds, 1, 2000);
-    bool flag = false;
-    if (ret >= 0) {
-        flag = true;
+
+    fds[1].fd = open(path2, O_RDONLY | O_NONBLOCK);
+    if (fds[1].fd < 0) {
+        t_error("%s open failed\n", __func__);
     }
-    EXPECT_TRUE("poll_0100", flag);
-    close(fd);
-    remove("/data/test.txt");
+    fds[1].events = POLLIN;
+
+    while (fds[0].events || fds[1].events) {
+        int ret = poll(fds, 2, time_delay);
+        if (ret <= 0) {
+            t_error("%s poll failed\n", __func__);
+        }
+        for (int i = 0; i < 2; i++) {
+            if (fds[i].revents) {
+                memset(buf, 0, BUFSIZ);
+                int result = read(fds[i].fd, buf, BUFSIZ);
+                if (result < 0) {
+                    t_error("%s read failed\n", __func__);
+                } else if (result == 0) {
+                    close(fds[i].fd);
+                    fds[i].events = 0;
+                } else {
+                    buf[result] = '\0';
+                    if (i == 0) {
+                        if (strcmp(buf, str1)) {
+                            t_error("%s read buf is %s, not HelloWorld\n", __func__, buf);
+                        }
+                    } else {
+                        if (strcmp(buf, str2)) {
+                            t_error("%s read buf is %s, not TestforPoll\n", __func__, buf);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    remove(path1);
+    remove(path2);
 }
 
 /*
  * @tc.name      : poll_0200
- * @tc.desc      : Verify the attribute changes of the monitored file descriptor (timeout parameter is equal to 0)
- * @tc.level     : Level 1
+ * @tc.desc      : When the parameter __fds is invalid, test the return value of the function
+ * @tc.level     : Level 2
  */
 void poll_0200(void)
 {
-    int fd, ret;
-    unsigned char key_val;
-    struct pollfd fds[1];
-    fd = open("/data/test.txt", O_RDWR | O_CREAT);
-    if (fd < 0) {
-        fputs("open r is failed\n", stdout);
+    int result = poll(NULL, 1, 0);
+    if (result != -1) {
+        t_error("%s poll should be failed\n", __func__);
     }
-    fds[0].fd = fd;
-    fds[0].events = POLLIN;
-    ret = poll(fds, 1, 0);
-    bool flag = false;
-    if (ret >= 0) {
-        flag = true;
-    }
-    EXPECT_TRUE("poll_0200", flag);
-    close(fd);
-    remove("/data/test.txt");
 }
 
 /*
  * @tc.name      : poll_0300
- * @tc.desc      : Verify the attribute changes of the monitored file descriptor (timeout parameter is less than 0)
- * @tc.level     : Level 1
+ * @tc.desc      : When the parameter nfds is invalid, test the return value of the function
+ * @tc.level     : Level 2
  */
 void poll_0300(void)
 {
-    int fd, ret;
-    unsigned char key_val;
-    struct pollfd fds[1];
-    fd = open("/data/test.txt", O_RDWR | O_CREAT);
-    if (fd < 0) {
-        fputs("open r is failed\n", stdout);
-    }
-    fds[0].fd = fd;
+    struct pollfd fds[2];
+    fds[0].fd = 1;
     fds[0].events = POLLIN;
-    ret = poll(fds, 1, -1);
-    bool flag = false;
-    if (ret > 0) {
-        flag = true;
+    fds[1].fd = 1;
+    fds[1].events = POLLIN;
+
+    int result = poll(fds, -1, 1);
+    if (result != -1) {
+        t_error("%s poll should be failed\n", __func__);
     }
-    EXPECT_TRUE("poll_0300", flag);
-    close(fd);
-    remove("/data/test.txt");
 }
 
-/*
- * @tc.name      : poll_0400
- * @tc.desc      : Verify that the attribute changes of the monitored file descriptor (fds parameter NULL)
- * @tc.level     : Level 2
- */
-void poll_0400(void)
+int main(int argc, char *argv[])
 {
-    int fd, ret;
-    unsigned char key_val;
-    struct pollfd fds[1];
-    fd = open("/data/test.txt", O_RDWR | O_CREAT);
-    if (fd < 0) {
-        fputs("open r is failed\n", stdout);
-    }
-    fds[0].fd = fd;
-    fds[0].events = POLLIN;
-    ret = poll(NULL, 1, 0);
-    EXPECT_EQ("poll_0400", ret, COUNT_FAILED);
-    close(fd);
-    remove("/data/test.txt");
-}
-
-/*
- * @tc.name      : poll_0500
- * @tc.desc      : Validate the attribute changes of the monitored file descriptor (n parameter -1)
- * @tc.level     : Level 2
- */
-void poll_0500(void)
-{
-    int fd, ret;
-    unsigned char key_val;
-    struct pollfd fds[1];
-    fd = open("/data/test.txt", O_RDWR | O_CREAT);
-    if (fd < 0) {
-        fputs("open r is failed\n", stdout);
-    }
-    fds[0].fd = fd;
-    fds[0].events = POLLIN;
-    ret = poll(fds, -1, 2000);
-    EXPECT_EQ("poll_0500", ret, COUNT_FAILED);
-    close(fd);
-    remove("/data/test.txt");
-}
-
-TEST_FUN G_Fun_Array[] = {
-    poll_0100,
-    poll_0200,
-    poll_0300,
-    poll_0400,
-    poll_0500,
-};
-
-int main()
-{
-    int num = sizeof(G_Fun_Array) / sizeof(TEST_FUN);
-    for (int pos = 0; pos < num; ++pos) {
-        G_Fun_Array[pos]();
-    }
-
+    poll_0100();
+    poll_0200();
+    poll_0300();
     return t_status;
 }

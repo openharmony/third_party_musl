@@ -34,6 +34,12 @@ void acct_0100(void)
     if (result != 0) {
         t_error("%s result is %d, except zero\n", __func__, result);
     }
+
+    if (errno != 0) {
+        t_error("%s errno is %d, not 0\n", __func__, errno);
+    }
+    close(fd);
+    remove(filePath);
 }
 
 /**
@@ -55,8 +61,6 @@ void acct_0200(void)
 void acct_0300(void)
 {
     const char *filePath = "/data/tests/libc-test/src/functionalext/supplement/unistd/accttest.txt";
-    FILE *fptr = fopen(filePath, "w");
-    fclose(fptr);
     int result = acct(filePath);
     EXPECT_EQ("acct_0300", result, -1);
     remove(filePath);

@@ -49,7 +49,7 @@ void abs_0300(void)
     EXPECT_EQ("abs_0300", result, 10);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     abs_0100();
     abs_0200();

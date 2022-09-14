@@ -13,41 +13,24 @@
  * limitations under the License.
  */
 
-#include <limits.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdbool.h>
-#include <unistd.h>
 #include <sys/sysinfo.h>
-#include "functionalext.h"
-
-typedef void (*TEST_FUN)();
+#include "test.h"
 
 /**
- * @tc.name      : get_nprocs_0100
+ * @tc.name      : get_phys_pages_0100
  * @tc.desc      : Verify the total number of pages fetched in memory
  * @tc.level     : Level 0
  */
-void get_nprocs_0100(void)
+void get_phys_pages_0100(void)
 {
-    int result;
-    result = get_phys_pages();
-    bool flag = false;
-    if (result > 0) {
-        flag = true;
+    long phys_pages = get_phys_pages();
+    if (sysconf(_SC_PHYS_PAGES) != phys_pages) {
+        t_error("%s get_phys_pages failed\n", __func__);
     }
-    EXPECT_TRUE("fpathconf_0100", true);
 }
 
-TEST_FUN G_Fun_Array[] = {
-    get_nprocs_0100,
-};
-
-int main()
+int main(int argc, char *argv[])
 {
-    int num = sizeof(G_Fun_Array) / sizeof(TEST_FUN);
-    for (int pos = 0; pos < num; ++pos) {
-        G_Fun_Array[pos]();
-    }
+    get_phys_pages_0100();
     return t_status;
 }

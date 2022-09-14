@@ -63,7 +63,7 @@ void dladdr_0200(void)
     EXPECT_EQ("dladdr_0200", num, 1);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     dladdr_0100();
     dladdr_0200();

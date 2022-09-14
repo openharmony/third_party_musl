@@ -41,7 +41,7 @@ void getgrent_0100(void)
     endgrent();
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     getgrent_0100();
     return t_status;

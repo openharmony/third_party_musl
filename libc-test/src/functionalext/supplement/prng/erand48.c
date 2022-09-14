@@ -29,7 +29,7 @@ void erand48_0100(void)
     EXPECT_TRUE("erand48_0100", result >= 0.0 && result < 1.0);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     erand48_0100();
     return t_status;

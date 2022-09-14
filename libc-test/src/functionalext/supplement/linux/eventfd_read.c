@@ -14,55 +14,71 @@
  */
 
 #include <fcntl.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <sys/eventfd.h>
-#include <unistd.h>
-#include "functionalext.h"
+#include "test.h"
 
 /**
  * @tc.name      : eventfd_read_0100
- * @tc.desc      : The flags parameter is equal to EFD_SEMAPHORE, which creates an eventfd object.
+ * @tc.desc      : Read the value of event through the file descriptor
  * @tc.level     : Level 0
  */
 void eventfd_read_0100(void)
 {
-    int fd, write_ret, read_ret;
-    uint64_t value;
-    fd = eventfd(1, EFD_NONBLOCK);
-    write_ret = eventfd_write(fd, 20);
-    read_ret = eventfd_read(fd, &value);
-    EXPECT_EQ("eventfd_read_0100", read_ret, 0);
+    unsigned int initial_value = 2;
+    int fd = eventfd(initial_value, O_NONBLOCK);
+    if (fd == -1) {
+        t_error("%s eventfd failed\n", __func__);
+    }
+
+    eventfd_t value = 123;
+    int result = eventfd_read(fd, &value);
+    if (result != 0) {
+        t_error("%s eventfd_read failed\n", __func__);
+    }
+
+    if (value != initial_value) {
+        t_error("%s eventfd_read value invalid\n", __func__);
+    }
+
+    close(fd);
 }
 
 /**
  * @tc.name      : eventfd_read_0200
- * @tc.desc      : The flags parameter is equal to EFD_CLOEXEC, which creates an eventfd object.
+ * @tc.desc      : When the file descriptor is invalid, test the return value of this function
  * @tc.level     : Level 2
  */
 void eventfd_read_0200(void)
 {
-    int fd, write_ret, read_ret;
-    fd = eventfd(1, EFD_NONBLOCK);
-    write_ret = eventfd_write(fd, 20);
-    read_ret = eventfd_read(fd, NULL);
-    EXPECT_EQ("eventfd_read_0200", read_ret, -1);
+    eventfd_t value = 123;
+    int result = eventfd_read(-1, &value);
+    if (result != -1) {
+        t_error("%s eventfd_read should be failed\n", __func__);
+    }
 }
 
 /**
  * @tc.name      : eventfd_read_0300
- * @tc.desc      : The flags parameter is equal to EFD_NONBLOCK, which creates an eventfd object.
+ * @tc.desc      : When the eventfd_t value is invalid, test the return value of this function
  * @tc.level     : Level 2
  */
 void eventfd_read_0300(void)
 {
-    int fd, write_ret, read_ret;
-    uint64_t value;
-    read_ret = eventfd_read(-1, &value);
-    EXPECT_EQ("eventfd_read_0300", read_ret, -1);
+    unsigned int initial_value = 2;
+    int fd = eventfd(initial_value, O_NONBLOCK);
+    if (fd == -1) {
+        t_error("%s eventfd failed\n", __func__);
+    }
+
+    int result = eventfd_read(fd, NULL);
+    if (result != -1) {
+        t_error("%s eventfd_read should be failed\n", __func__);
+    }
+
+    close(fd);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     eventfd_read_0100();
     eventfd_read_0200();

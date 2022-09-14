@@ -123,7 +123,7 @@ TEST_FUN G_Fun_Array[] = {
     ioctl_0200,
 };
 
-int main()
+int main(int argc, char *argv[])
 {
     int num = sizeof(G_Fun_Array) / sizeof(TEST_FUN);
     for (int pos = 0; pos < num; ++pos) {

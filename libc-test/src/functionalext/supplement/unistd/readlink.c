@@ -100,7 +100,7 @@ void readlink_0300(void)
     softptr = NULL;
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     readlink_0100();
     readlink_0200();
