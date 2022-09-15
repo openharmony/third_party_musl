@@ -51,7 +51,6 @@ volatile atomic_llong ohos_malloc_hook_shared_library;
 void* function_of_shared_lib[LAST_FUNCTION];
 static enum EnumHookMode __hook_mode = STEP_HOOK_MODE;
 
-
 static void  get_native_hook_param(char *buf, unsigned int buf_len)
 {
 #ifdef OHOS_ENABLE_PARAMETER
