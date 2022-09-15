@@ -436,7 +436,7 @@ __attribute__((constructor(1))) static void __musl_initialize()
 			} else {
 				file_name = proc_name;
 			}
-			if (strncmp(file_name, __hook_process_path, strlen(__hook_process_path)) == 0) {
+			if (strncmp(file_name, hook_process_path, strlen(hook_process_path)) == 0) {
 				atomic_store_explicit(&__hook_enable_hook_flag, (volatile bool)true, memory_order_seq_cst);
 				init_ohos_malloc_hook();
 			} else {
