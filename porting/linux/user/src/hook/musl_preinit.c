@@ -44,7 +44,7 @@ static struct MallocDispatchType __ohos_malloc_hook_init_dispatch = {
 	.munmap = MuslMalloc(munmap),
 };
 #define MAX_SYM_NAME_SIZE 1000
-#define MAX_PROC_NAME_SIZE 1024
+#define MAX_PROC_NAME_SIZE 256
 static char *__malloc_hook_shared_lib = "libnative_hook.z.so";
 static char *__malloc_hook_function_prefix = "ohos_malloc_hook";
 volatile atomic_llong ohos_malloc_hook_shared_library;
@@ -71,7 +71,7 @@ static int parse_hook_variable(enum EnumHookMode* mode, char* path, int size)
 	bool flag = __set_hook_flag(false);
 	char hook_param_value[OHOS_PARAM_MAX_SIZE + 1] = {0};
 	unsigned int len = OHOS_PARAM_MAX_SIZE;
-	get_native_hook_param(hook_param_value,len);
+	get_native_hook_param(hook_param_value, len);
 	if (hook_param_value[0] == '\0') {
 		*mode = STEP_HOOK_MODE;
 		path[0] = '\0';
@@ -424,17 +424,17 @@ __attribute__((constructor(1))) static void __musl_initialize()
 {
 	atomic_store_explicit(&__hook_enable_hook_flag, (volatile bool)false, memory_order_seq_cst);
 	__set_default_malloc();
-	char __hook_process_path[MAX_PROC_NAME_SIZE + 1] = {0};
-	parse_hook_variable(&__hook_mode, __hook_process_path, sizeof(__hook_process_path) - 1);
+	char hook_process_path[MAX_PROC_NAME_SIZE + 1] = {0};
+	parse_hook_variable(&__hook_mode, hook_process_path, sizeof(hook_process_path) - 1);
 	if (__hook_mode == STARTUP_HOOK_MODE) {
-		char __progname[MAX_PROC_NAME_SIZE + 1] = {0};
-		if (get_proc_name(getpid(), __progname, sizeof(__progname) - 1)) {
-			const char *pos = strrchr(__progname, '/');
+		char proc_name[MAX_PROC_NAME_SIZE + 1] = {0};
+		if (get_proc_name(getpid(), proc_name, sizeof(proc_name) - 1)) {
+			const char *pos = strrchr(proc_name, '/');
 			const char* file_name;
 			if (pos != NULL) {
 				file_name = pos + 1;
 			} else {
-				file_name = __progname;
+				file_name = proc_name;
 			}
 			if (strncmp(file_name, __hook_process_path, strlen(__hook_process_path)) == 0) {
 				atomic_store_explicit(&__hook_enable_hook_flag, (volatile bool)true, memory_order_seq_cst);
