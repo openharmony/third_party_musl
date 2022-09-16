@@ -174,7 +174,7 @@ void fgets_0600(void)
     ptr = NULL;
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     fgets_0100();
     fgets_0200();

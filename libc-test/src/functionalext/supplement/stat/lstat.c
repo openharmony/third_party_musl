@@ -14,12 +14,9 @@
  */
 
 #include <fcntl.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <sys/stat.h>
-#include <stdint.h>
 #include <stdbool.h>
-#include <unistd.h>
+#include <stdlib.h>
 #include "functionalext.h"
 
 typedef void (*TEST_FUN)();
@@ -31,7 +28,7 @@ typedef void (*TEST_FUN)();
  */
 void lstat_0100(void)
 {
-    const char *ptr = "test.txt";
+    const char *ptr = "/data/tests/libc-test/src/functionalext/supplement/stattest.txt";
     const char str[] = "this is a sample!";
     FILE *fptr = fopen(ptr, "w+");
     struct stat statbuff;
@@ -51,11 +48,9 @@ void lstat_0100(void)
  */
 void lstat_0200(void)
 {
-    fopen("/data/NULL.txt", "w+");
     struct stat statbuff;
     int32_t back = lstat("test.txt", &statbuff);
     EXPECT_EQ("lstat_0200", back, -1);
-    remove("/data/NULL.txt");
 }
 
 /*
@@ -66,11 +61,14 @@ void lstat_0200(void)
 void lstat_0300(void)
 {
     struct stat buf[3];
-    const char *ptr = "tests.txt";
+    const char *ptr = "/data/tests/libc-test/src/functionalext/supplement/stat/tests.txt";
+    const char *ptrlink = "/data/tests/libc-test/src/functionalext/supplement/stat/tests.txt.soft";
+
     FILE *fptr = fopen(ptr, "w+");
-    system("ln -s tests.txt tests.txt.soft");
+    system("ln -s /data/tests/libc-test/src/functionalext/supplement/stat/tests.txt "
+           "/data/tests/libc-test/src/functionalext/supplement/stat/tests.txt.soft");
     struct stat statbuff;
-    int32_t back = lstat("tests.txt.soft", &statbuff);
+    int32_t back = lstat(ptrlink, &statbuff);
     EXPECT_EQ("lstat_0300", back, 0);
     bool successflag = false;
     if (S_ISLNK(statbuff.st_mode)) {
@@ -81,7 +79,7 @@ void lstat_0300(void)
     EXPECT_TRUE("lstat_0300", successflag);
     fclose(fptr);
     remove(ptr);
-    remove("tests.txt.soft");
+    remove(ptrlink);
 }
 
 TEST_FUN G_Fun_Array[] = {
@@ -91,7 +89,7 @@ TEST_FUN G_Fun_Array[] = {
 
 };
 
-int main()
+int main(int argc, char *argv[])
 {
     int num = sizeof(G_Fun_Array) / sizeof(TEST_FUN);
     for (int pos = 0; pos < num; ++pos) {

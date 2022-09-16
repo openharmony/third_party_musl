@@ -88,7 +88,7 @@ void fwprintf_0400(void)
     EXPECT_EQ("fwprintf_0400", result, COUNT_NEGATIVE);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     fwprintf_0100();
     fwprintf_0200();

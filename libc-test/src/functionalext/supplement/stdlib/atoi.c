@@ -13,9 +13,7 @@
  * limitations under the License.
  */
 
-#include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
 #include "functionalext.h"
 
 typedef void (*TEST_FUN)();
@@ -28,8 +26,8 @@ const int32_t BURDENNUM = -2147483648;
 
 /**
  * @tc.name      : atoi_0100
- * @tc.desc      : Verify that there are and only numbers (starting with non-zero digits)
- *                 strings are converted to integers
+ * @tc.desc      : Verify that there are and only numbers (starting with non-zero digits) strings are
+ *                 converted to integers
  * @tc.level     : Level 0
  */
 void atoi_0100(void)
@@ -212,7 +210,7 @@ TEST_FUN G_Fun_Array[] = {
     atoi_1400,
 };
 
-int main()
+int main(int argc, char *argv[])
 {
     int num = sizeof(G_Fun_Array) / sizeof(TEST_FUN);
     for (int pos = 0; pos < num; ++pos) {

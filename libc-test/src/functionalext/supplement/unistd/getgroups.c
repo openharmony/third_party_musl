@@ -59,7 +59,7 @@ void getgroups_0200(void)
     EXPECT_EQ("getgroups_0200", result, -1);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     getgroups_0100();
     getgroups_0200();

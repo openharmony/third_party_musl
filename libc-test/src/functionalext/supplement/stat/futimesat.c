@@ -87,7 +87,7 @@ void futimesat_0400(void)
     remove(path);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     futimesat_0100();
     futimesat_0200();

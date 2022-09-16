@@ -13,15 +13,9 @@
  * limitations under the License.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <sys/stat.h>
 #include <sys/mman.h>
+#include <sys/stat.h>
 #include "functionalext.h"
-
-typedef void (*TEST_FUN)();
-const int32_t COUNT_ZERO = 0;
 
 /*
  * @tc.name      : munmap_0100
@@ -33,27 +27,20 @@ void munmap_0100(void)
     const char *ptr = "/data/test.txt";
     const char str[] = "this is a sample!";
     FILE *fptr = fopen(ptr, "w+");
-    char *p_map;
+    EXPECT_PTRNE("munmap_0100", fptr, NULL);
+
     struct stat statbuff;
     fwrite(str, sizeof(char), strlen(str), fptr);
     fseek(fptr, 0L, SEEK_SET);
-    p_map = mmap(NULL, sizeof(char) * 10, PROT_READ | PROT_WRITE, MAP_SHARED, fileno(fptr), 0);
+    char *p_map = mmap(NULL, sizeof(char) * 10, PROT_READ | PROT_WRITE, MAP_SHARED, fileno(fptr), 0);
     fclose(fptr);
     int data = munmap(p_map, sizeof(char) * 10);
-    EXPECT_EQ("munmap_0100", data, COUNT_ZERO);
+    EXPECT_EQ("munmap_0100", data, 0);
     remove(ptr);
 }
 
-TEST_FUN G_Fun_Array[] = {
-    munmap_0100,
-};
-
-int main()
+int main(int argc, char *argv[])
 {
-    int num = sizeof(G_Fun_Array) / sizeof(TEST_FUN);
-    for (int pos = 0; pos < num; ++pos) {
-        G_Fun_Array[pos]();
-    }
-
+    munmap_0100();
     return t_status;
 }

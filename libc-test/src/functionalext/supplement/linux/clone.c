@@ -37,13 +37,12 @@ void clone_0100(void)
 {
     void *stack = malloc(STACK_SIZE);
     int cpid = -1;
-    cpid = clone((int (*)(void *))test, (char *)stack + STACK_SIZE,
-                 CLONE_VM | CLONE_FS | CLONE_FILES | SIGCHLD, NULL);
+    cpid = clone((int (*)(void *))test, (char *)stack + STACK_SIZE, CLONE_VM | CLONE_FS | CLONE_FILES | SIGCHLD, NULL);
     sleep(1);
     EXPECT_NE("clone_0100", cpid, -1);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     clone_0100();
     return t_status;

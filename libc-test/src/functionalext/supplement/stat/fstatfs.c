@@ -15,14 +15,8 @@
 
 #include <fcntl.h>
 #include <stdio.h>
-#include <stdlib.h>
-#include <sys/stat.h>
-#include <stdint.h>
-#include <signal.h>
 #include <sys/vfs.h>
-#include <sys/statfs.h>
-#include <unistd.h>
-#include "functionalext.h"
+#include "test.h"
 
 /**
  * @tc.name      : fstatfs_0100
@@ -31,12 +25,42 @@
  */
 void fstatfs_0100(void)
 {
-    struct statfs buff;
-    int fd = open("/data/readtest.txt", O_RDWR | O_CREAT);
-    int result = fstatfs(fd, &buff);
-    EXPECT_EQ("fstatfs_0100", result, 0);
+    struct statfs st;
+    int fd = open("/proc", O_RDONLY);
+    if (fd < 0) {
+        t_error("%s open failed\n", __func__);
+    }
+
+    int result = fstatfs(fd, &st);
+    if (result != 0) {
+        t_error("%s fstatfs failed, result is %d\n", __func__, result);
+    }
+
     close(fd);
-    remove("/data/readtest.txt");
+
+    if ((int)st.f_bsize != 4096) {
+        t_error("%s st.f_bsize invalid\n", __func__);
+    }
+
+    if (st.f_bfree != 0U) {
+        t_error("%s st.f_bfree invalid\n"), __func__;
+    }
+
+    if (st.f_ffree != 0U) {
+        t_error("%s st.f_ffree invalid\n"), __func__;
+    }
+
+    if (st.f_fsid.__val[0] != 0) {
+        t_error("%s st.f_fsid.__val[0] invalid\n"), __func__;
+    }
+
+    if (st.f_fsid.__val[1] != 0) {
+        t_error("%s st.f_fsid.__val[1] invalid\n"), __func__;
+    }
+
+    if ((int)st.f_namelen != 255) {
+        t_error("%s st.f_namelen invalid\n"), __func__;
+    }
 }
 
 /**
@@ -46,33 +70,16 @@ void fstatfs_0100(void)
  */
 void fstatfs_0200(void)
 {
-    struct statfs buff;
-    int fd = open("/data/readtest.txt", O_RDWR);
-    int result = fstatfs(fd, &buff);
-    EXPECT_EQ("fstatfs_0200", result, -1);
+    struct statfs st;
+    int result = fstatfs(-1, &st);
+    if (result != -1) {
+        t_error("%s fstatfs should be failed\n", __func__);
+    }
 }
 
-/**
- * @tc.name      : fstatfs_0300
- * @tc.desc      : Validation failed to get file status (parameter invalid file does not exist)
- * @tc.level     : Level 2
- */
-void fstatfs_0300(void)
-{
-    struct statfs buff;
-    buff.f_type = -666666;
-    buff.f_bsize = -1111111;
-    int fd = open("/data/readtest.txt", O_RDWR | O_CREAT);
-    int result = fstatfs(fd, &buff);
-    EXPECT_EQ("fstatfs_0300", result, 0);
-    close(fd);
-    remove("/data/readtest.txt");
-}
-
-int main()
+int main(int argc, char *argv[])
 {
     fstatfs_0100();
     fstatfs_0200();
-    fstatfs_0300();
     return t_status;
 }

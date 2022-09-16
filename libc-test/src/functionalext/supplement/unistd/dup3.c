@@ -61,7 +61,7 @@ void dup3_0300(void)
     remove("/data/readtest.txt");
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     dup3_0100();
     dup3_0200();

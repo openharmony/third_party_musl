@@ -83,7 +83,7 @@ void getgrgid_r_0200(void)
     EXPECT_EQ("getgrgid_r_0200", data, 0);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     getgrgid_r_0100();
     getgrgid_r_0200();

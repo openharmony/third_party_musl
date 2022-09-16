@@ -14,7 +14,7 @@
 functionalext_supplement_conf_test = [
   "sysconf",
   "fpathconf",
-  "get_avphys_page",
+  "get_avphys_pages",
   "get_nprocs",
   "get_nprocs_conf",
   "get_phys_pages",

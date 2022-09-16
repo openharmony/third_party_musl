@@ -13,14 +13,8 @@
  * limitations under the License.
  */
 
-#include <ctype.h>
-#include <fcntl.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <signal.h>
 #include <termios.h>
-#include <unistd.h>
-#include "functionalext.h"
+#include "test.h"
 
 /**
  * @tc.name      : cfgetispeed_0100
@@ -29,13 +23,19 @@
  */
 void cfgetispeed_0100(void)
 {
-    struct termios termptr;
-    tcgetattr(STDIN_FILENO, &termptr);
-    speed_t result = cfgetispeed(&termptr);
-    EXPECT_TRUE("cfgetispeed_0100", result >= 0);
+    struct termios t = {};
+    int result = cfsetispeed(&t, B1200);
+    if (result != 0) {
+        t_error("%s cfsetispeed failed\n", __func__);
+    }
+
+    speed_t ret = cfgetispeed(&t);
+    if (ret != (speed_t)(B1200)) {
+        t_error("%s cfgetispeed failed\n", __func__);
+    }
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     cfgetispeed_0100();
     return t_status;

@@ -28,7 +28,7 @@ const int32_t COUNT_ONE = 1;
  */
 void signbitl_0100(void)
 {
-    long double x = 0;
+    long double x = 0.0L;
     int result;
     result = __signbitl(x);
     EXPECT_EQ("signbitl_0100", result, COUNT_ZERO);
@@ -41,7 +41,7 @@ void signbitl_0100(void)
  */
 void signbitl_0200(void)
 {
-    long double x = 10;
+    long double x = 3.14;
     int result;
     result = __signbitl(x);
     EXPECT_EQ("signbitl_0200", result, COUNT_ZERO);
@@ -49,19 +49,18 @@ void signbitl_0200(void)
 
 /**
  * @tc.name      : signbitl_0300
- * @tc.desc      : the sign bit of the returned parameter is 1
- *                  (The parameter value of type long is negative)
+ * @tc.desc      : the sign bit of the returned parameter is 1 (The parameter value of type long is negative)
  * @tc.level     : Level 0
  */
 void signbitl_0300(void)
 {
-    long double x = -10;
+    long double x = -3.14;
     int result;
     result = __signbitl(x);
     EXPECT_EQ("signbitl_0300", result, COUNT_ONE);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     signbitl_0100();
     signbitl_0200();

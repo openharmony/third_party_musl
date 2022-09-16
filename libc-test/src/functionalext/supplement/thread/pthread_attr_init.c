@@ -13,19 +13,10 @@
  * limitations under the License.
  */
 
-#include <dlfcn.h>
-#include <errno.h>
 #include <pthread.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/stat.h>
-#include <unistd.h>
-
 #include "functionalext.h"
 
 const int SUCCESS = 0;
-const int FAILED = -1;
 
 void *ThreadFun(void *arg)
 {
@@ -63,7 +54,7 @@ void pthread_attr_init_0200(void)
     EXPECT_EQ("pthread_attr_init_0200", result, SUCCESS);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     pthread_attr_init_0100();
     pthread_attr_init_0200();

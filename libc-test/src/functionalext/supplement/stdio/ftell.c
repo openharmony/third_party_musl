@@ -13,19 +13,13 @@
  * limitations under the License.
  */
 
-#include <errno.h>
+#include <fcntl.h>
 #include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <limits.h>
-#include "functionalext.h"
+#include <string.h>
+#include "test.h"
 
-typedef void (*TEST_FUN)();
-const int COUNT_ZERO = 0;
-const int COUNT_ZE = -1;
-const int COUNT_EIGHT = 8;
-const int COUNT_TWENTYTWO = 22;
-#define ERROR_LEN 8
+const char *wrstring = "This is a test sample!";
+const char *path = "test.txt";
 
 /**
  * @tc.name      : ftell_0100
@@ -34,16 +28,28 @@ const int COUNT_TWENTYTWO = 22;
  */
 void ftell_0100(void)
 {
-    const char *wrstring = "This is a test sample!";
-    const char *ptr = "test.txt";
-    unsigned long filesize = -1;
-    FILE *fptr = fopen(ptr, "w+");
-    fwrite(wrstring, sizeof(char), strlen(wrstring), fptr);
-    fseek(fptr, 0L, SEEK_SET);
-    filesize = ftell(fptr);
-    EXPECT_EQ("ftell_0100", filesize, COUNT_ZERO);
+    FILE *fptr = fopen(path, "w+");
+    if (!fptr) {
+        t_error("%s fopen failed\n", __func__);
+    }
+
+    size_t ret = fwrite(wrstring, sizeof(char), strlen(wrstring), fptr);
+    if (ret < 0) {
+        t_error("%s fwrite failed\n", __func__);
+    }
+
+    int fret = fseek(fptr, 0L, SEEK_SET);
+    if (fret != 0) {
+        t_error("%s fseek failed\n", __func__);
+    }
+
+    long result = ftell(fptr);
+    if (result != 0) {
+        t_error("%s ftell failed\n", __func__);
+    }
+
     fclose(fptr);
-    remove(ptr);
+    remove(path);
 }
 
 /**
@@ -53,16 +59,28 @@ void ftell_0100(void)
  */
 void ftell_0200(void)
 {
-    const char *wrstring = "This is a test sample!";
-    const char *ptr = "test.txt";
-    unsigned long filesize = -1;
-    FILE *fptr = fopen(ptr, "w+");
-    fwrite(wrstring, sizeof(char), strlen(wrstring), fptr);
-    fseek(fptr, 8L, SEEK_SET);
-    filesize = ftell(fptr);
-    EXPECT_EQ("ftell_0200", filesize, COUNT_EIGHT);
+    FILE *fptr = fopen(path, "w+");
+    if (!fptr) {
+        t_error("%s fopen failed\n", __func__);
+    }
+
+    size_t ret = fwrite(wrstring, sizeof(char), strlen(wrstring), fptr);
+    if (ret < 0) {
+        t_error("%s fwrite failed\n", __func__);
+    }
+
+    int fret = fseek(fptr, 8L, SEEK_SET);
+    if (fret != 0) {
+        t_error("%s fseek failed\n", __func__);
+    }
+
+    long result = ftell(fptr);
+    if (result != 8) {
+        t_error("%s ftell failed\n", __func__);
+    }
+
     fclose(fptr);
-    remove(ptr);
+    remove(path);
 }
 
 /**
@@ -72,31 +90,34 @@ void ftell_0200(void)
  */
 void ftell_0300(void)
 {
-    const char *wrstring = "This is a test sample!";
-    const char *ptr = "test.txt";
-    unsigned long filesize = -1;
-    FILE *fptr = fopen(ptr, "w+");
-    fwrite(wrstring, sizeof(char), strlen(wrstring), fptr);
-    fseek(fptr, 0L, SEEK_END);
-    filesize = ftell(fptr);
-    EXPECT_EQ("ftell_0300", filesize, COUNT_TWENTYTWO);
+    FILE *fptr = fopen(path, "w+");
+    if (!fptr) {
+        t_error("%s fopen failed\n", __func__);
+    }
+
+    size_t ret = fwrite(wrstring, sizeof(char), strlen(wrstring), fptr);
+    if (ret < 0) {
+        t_error("%s fwrite failed\n", __func__);
+    }
+
+    int fret = fseek(fptr, 0L, SEEK_END);
+    if (fret != 0) {
+        t_error("%s fseek failed\n", __func__);
+    }
+    long result = ftell(fptr);
+    if (result != 22) {
+        t_error("%s ftell failed\n", __func__);
+    }
+
     fclose(fptr);
-    remove(ptr);
+    remove(path);
 }
 
-
-TEST_FUN G_Fun_Array[] = {
-    ftell_0100,
-    ftell_0200,
-    ftell_0300,
-};
-
-int main()
+int main(int argc, char *argv[])
 {
-    int num = sizeof(G_Fun_Array) / sizeof(TEST_FUN);
-    for (int pos = 0; pos < num; ++pos) {
-        G_Fun_Array[pos]();
-    }
+    ftell_0100();
+    ftell_0200();
+    ftell_0300();
 
     return t_status;
 }

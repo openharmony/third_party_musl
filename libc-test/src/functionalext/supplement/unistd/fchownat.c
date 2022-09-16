@@ -13,7 +13,6 @@
  * limitations under the License.
  */
 
-#include <stdio.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/stat.h>
@@ -63,7 +62,7 @@ void fchownat_0200(void)
     ptr = NULL;
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     fchownat_0100();
     fchownat_0200();

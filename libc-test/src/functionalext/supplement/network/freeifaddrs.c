@@ -30,14 +30,13 @@ void freeifaddrs_0100(void)
     freeifaddrs(ifaddr);
     ifaddr = NULL;
     bool flag = false;
-    if (ifaddr == NULL)
-    {
+    if (ifaddr == NULL) {
         flag = true;
     }
     EXPECT_TRUE("freeifaddrs_0100", flag);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     freeifaddrs_0100();
     return t_status;

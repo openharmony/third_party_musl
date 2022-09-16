@@ -37,7 +37,7 @@ void ftw_0100()
     EXPECT_NE("ftw_0100", ret, FAIL);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     ftw_0100();
 

@@ -13,15 +13,8 @@
  * limitations under the License.
  */
 
-#include <limits.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdbool.h>
-#include <unistd.h>
 #include <sys/sysinfo.h>
-#include "functionalext.h"
-
-typedef void (*TEST_FUN)();
+#include "test.h"
 
 /**
  * @tc.name      : get_nprocs_0100
@@ -30,24 +23,17 @@ typedef void (*TEST_FUN)();
  */
 void get_nprocs_0100(void)
 {
-    int result;
-    result = get_nprocs();
-    bool flag = false;
-    if (result > 0) {
-        flag = true;
+    int nprocs = get_nprocs();
+    if (nprocs <= 0) {
+        t_error("%s get_nprocs failed\n", __func__);
     }
-    EXPECT_TRUE("fpathconf_0100", true);
+    if (sysconf(_SC_NPROCESSORS_ONLN) != nprocs) {
+        t_error("%s get_nprocs invalid\n", __func__);
+    }
 }
 
-TEST_FUN G_Fun_Array[] = {
-    get_nprocs_0100,
-};
-
-int main()
+int main(int argc, char *argv[])
 {
-    int num = sizeof(G_Fun_Array) / sizeof(TEST_FUN);
-    for (int pos = 0; pos < num; ++pos) {
-        G_Fun_Array[pos]();
-    }
+    get_nprocs_0100();
     return t_status;
 }

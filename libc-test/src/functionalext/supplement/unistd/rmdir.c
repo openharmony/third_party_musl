@@ -63,7 +63,7 @@ void rmdir_0200(void)
     path = NULL;
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     rmdir_0100();
     rmdir_0200();

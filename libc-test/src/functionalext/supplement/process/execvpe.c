@@ -115,7 +115,7 @@ void execvpe_0400(void)
     EXPECT_EQ("execvpe_0400", result, COUNT_NEGATIVE);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     execvpe_0100();
     execvpe_0200();

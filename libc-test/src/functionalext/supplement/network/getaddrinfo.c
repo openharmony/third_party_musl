@@ -339,7 +339,7 @@ void getaddrinfo_1500(void)
     EXPECT_EQ("getaddrinfo_1500", ret, SOCKTYPE_NOTSUPPORTED);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     getaddrinfo_0100();
     getaddrinfo_0200();

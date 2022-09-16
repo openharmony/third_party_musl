@@ -485,7 +485,7 @@ void mmap_1100(void)
     close(fd);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     mmap_0100();
     mmap_0200();

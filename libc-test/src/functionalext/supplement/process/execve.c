@@ -33,9 +33,7 @@ void execve_0100(void)
     sleep(1);
     int isExist = access("execvetest.txt", F_OK);
     EXPECT_EQ("execve_0100", isExist, 0);
-    if (isExist == 0) {
-        remove("execvetest.txt");
-    }
+    remove("execvetest.txt");
 }
 
 /**
@@ -66,7 +64,7 @@ void execve_0300(void)
     EXPECT_EQ("execve_0300", ret, -1);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     execve_0100();
     execve_0200();

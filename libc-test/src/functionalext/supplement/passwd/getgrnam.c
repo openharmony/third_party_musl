@@ -13,15 +13,11 @@
  * limitations under the License.
  */
 
+#include <errno.h>
 #include <fcntl.h>
 #include <grp.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <signal.h>
-#include <stdint.h>
-#include <stdbool.h>
-#include <unistd.h>
-#include "functionalext.h"
+#include <string.h>
+#include "test.h"
 
 /**
  * @tc.name      : getgrnam_0100
@@ -30,32 +26,26 @@
  */
 void getgrnam_0100(void)
 {
-    system("ps -eo command,gid | grep -E \"GID|getgrnam\" > ps.txt");
-    char abc[256] = {0};
-    bool successflag = false;
-    FILE *fptr = fopen("ps.txt", "r");
-    if (fptr) {
-        while (!feof(fptr)) {
-            fread(abc, sizeof(abc), 1, fptr);
-            char num[8] = {0};
-            int index = 0;
-            for (int i = 0; i < (int)strlen(abc); i++) {
-                if (abc[i] >= '0' && abc[i] <= '9') {
-                    num[index++] += abc[i];
-                }
-            }
-            num[index] = '\0';
-            gid_t intgid = atoi(num);
-            struct group *data;
-            data = getgrnam("root");
-            if (data->gr_gid == intgid) {
-                successflag = true;
-            }
-        }
+    errno = 0;
+    const char *group_name = "root";
+    gid_t gid = 0;
+
+    struct group *grp = getgrnam(group_name);
+    if (errno != 0) {
+        t_error("%s failed, errno is %d\n", __func__, errno);
     }
-    EXPECT_TRUE("getgrnam_0100", successflag);
-    fclose(fptr);
-    remove("ps.txt");
+    if (!grp) {
+        t_error("%s getgrgid failed\n", __func__);
+    }
+    if (strcmp(group_name, grp->gr_name)) {
+        t_error("%s failed, grp->gr_name is %s\n", __func__, grp->gr_name);
+    }
+    if (grp->gr_gid != gid) {
+        t_error("%s failed, grp->gr_gid is %d\n", __func__, grp->gr_gid);
+    }
+    if (grp->gr_mem == NULL) {
+        t_error("%s failed, grp->gr_mem is NULL\n", __func__);
+    }
 }
 
 /**
@@ -66,16 +56,13 @@ void getgrnam_0100(void)
  */
 void getgrnam_0200(void)
 {
-    int flag = false;
-    struct group *result;
-    result = getgrnam(0);
-    if (result != 0) {
-        flag = true;
+    struct group *result = getgrnam("invalid_name");
+    if (result) {
+        t_error("%s getgrnam should be failed\n", __func__);
     }
-    EXPECT_TRUE("getgrnam_0200", flag);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     getgrnam_0100();
     getgrnam_0200();

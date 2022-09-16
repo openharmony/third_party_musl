@@ -64,7 +64,7 @@ void fputws_0200(void)
     ptr = NULL;
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     fputws_0100();
     fputws_0200();

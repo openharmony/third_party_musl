@@ -14,10 +14,7 @@
  */
 
 #include <fcntl.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <stdio_ext.h>
-#include <unistd.h>
 #include "functionalext.h"
 
 const int32_t INIT_LEN = 0;
@@ -30,20 +27,30 @@ const int32_t INIT_LEN = 0;
 void flushlbf_0100(void)
 {
     char buffer[1024] = {0};
-    char array[] = "this is a test!";
-    FILE *fd = fopen("/data/test.txt", "w+");
+    char array[] = "This is a test!";
+    const char *path = "/data/test.txt";
+
+    FILE *fd = fopen(path, "w+");
+    EXPECT_PTRNE("flushlbf_0100", fd, NULL);
+
     fprintf(fd, "%s", array);
     FILE *fp = freopen("/data/test.txt", "r", stdin);
+    EXPECT_PTRNE("flushlbf_0100", fp, NULL);
+
     fseek(fp, 0, SEEK_SET);
     int32_t rsize = fread(buffer, 1, 10, fd);
     EXPECT_EQ("flushlbf_0100", rsize, INIT_LEN);
+
     _flushlbf();
+
     fseek(fp, 0, SEEK_SET);
     fread(buffer, 1, 20, fp);
-    EXPECT_STREQ("flushlbf_0100", buffer, "this is a test!");
+    EXPECT_STREQ("flushlbf_0100", buffer, array);
+
     fclose(stdin);
+    fclose(fd);
     fclose(fp);
-    remove("/data/test.txt");
+    remove(path);
 }
 
 int main(int argc, char *argv[])

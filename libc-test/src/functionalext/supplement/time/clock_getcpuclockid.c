@@ -62,7 +62,7 @@ void clock_getcpuclockid_0200(void)
     EXPECT_TRUE("clock_getcpuclockid_0200", flag);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     clock_getcpuclockid_0100();
     clock_getcpuclockid_0200();

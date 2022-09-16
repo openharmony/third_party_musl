@@ -89,7 +89,7 @@ void execvp_0400(void)
     EXPECT_EQ("execvp_0400", ret, -1);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     execvp_0100();
     execvp_0200();

@@ -79,4 +79,5 @@ functionalext_supplement_linux_test = [
   "prlimit",
   "quotactl",
   "chroot",
+  "fanotify_init",
 ]

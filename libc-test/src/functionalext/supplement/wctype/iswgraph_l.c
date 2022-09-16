@@ -82,7 +82,7 @@ void iswgraph_l_0400(void)
     EXPECT_EQ("iswgraph_l_0400", total, COUNT);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     iswgraph_l_0100();
     iswgraph_l_0200();

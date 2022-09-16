@@ -14,11 +14,7 @@
  */
 
 #include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
 #include <stdbool.h>
-#include <netinet/in.h>
-#include <arpa/nameser.h>
 #include <resolv.h>
 #include "functionalext.h"
 
@@ -40,7 +36,7 @@ void res_send_0100(void)
     EXPECT_TRUE("res_send_0100", flag);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     res_send_0100();
     return t_status;

@@ -13,9 +13,7 @@
  * limitations under the License.
  */
 
-#include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
 #include "functionalext.h"
 
 typedef void (*TEST_FUN)();
@@ -32,13 +30,17 @@ void fread_0100(void)
 {
     char abc[100] = {0};
     const char *wrstring = "starttowritehelloworld";
-    const char *ptr = "Freadtest.txt";
+    const char *ptr = "/data/Freadtest.txt";
     FILE *fptr = fopen(ptr, "w+");
+    EXPECT_PTRNE("fread_0100", fptr, NULL);
+
     fwrite(wrstring, sizeof(char), strlen(wrstring), fptr);
     fseek(fptr, 0, SEEK_SET);
-    int32_t rsize = fread(abc, 1, 10, fptr);
-    EXPECT_EQ("fread_0100", rsize, NUM_TEN);
+
+    size_t rsize = fread(abc, 1, 10, fptr);
+    EXPECT_EQ("fread_0100", rsize, 10);
     EXPECT_STREQ("fread_0100", abc, "starttowri");
+
     fclose(fptr);
     remove(ptr);
 }
@@ -52,13 +54,18 @@ void fread_0200(void)
 {
     char abc[100] = {0};
     const char *wrstring = "startwritehelloworld";
-    const char *ptr = "Freadtest.txt";
+    const char *ptr = "/data/Freadtest.txt";
+
     FILE *fptr = fopen(ptr, "w+");
+    EXPECT_PTRNE("fread_0200", fptr, NULL);
+
     fwrite(wrstring, sizeof(char), strlen(wrstring), fptr);
     fseek(fptr, 0, SEEK_SET);
-    int32_t rsize = fread(abc, 1, 25, fptr);
-    EXPECT_EQ("fread_0200", rsize, NUM_TWENTY);
+
+    size_t rsize = fread(abc, 1, 25, fptr);
+    EXPECT_EQ("fread_0200", rsize, 20);
     EXPECT_STREQ("fread_0200", abc, wrstring);
+
     fclose(fptr);
     remove(ptr);
 }
@@ -73,12 +80,15 @@ void fread_0300(void)
 {
     char abc[100] = {0};
     const char *wrstring = "startwritehelloworld";
-    const char *ptr = "Freadtest.txt";
+    const char *ptr = "/data/Freadtest.txt";
     FILE *fptr = fopen(ptr, "w+");
+    EXPECT_PTRNE("fread_0200", fptr, NULL);
+
     fwrite(wrstring, sizeof(char), strlen(wrstring), fptr);
     fseek(fptr, 0, SEEK_END);
-    int32_t rsize = fread(abc, 1, 10, fptr);
-    EXPECT_EQ("fread_0300", rsize, NUM_ZERO);
+    size_t rsize = fread(abc, 1, 10, fptr);
+    EXPECT_EQ("fread_0300", rsize, 0);
+
     fclose(fptr);
     remove(ptr);
 }
@@ -92,12 +102,16 @@ void fread_0400(void)
 {
     char abc[100] = {0};
     const char *wrstring = "startwritehelloworld";
-    const char *ptr = "Freadtest.txt";
+    const char *ptr = "/data/Freadtest.txt";
     FILE *fptr = fopen(ptr, "w+");
+    EXPECT_PTRNE("fread_0200", fptr, NULL);
+
     fwrite(wrstring, sizeof(char), strlen(wrstring), fptr);
     fseek(fptr, 0, SEEK_END);
-    int32_t rsize = fread(abc, 0, 10, fptr);
-    EXPECT_EQ("fread_0400", rsize, NUM_ZERO);
+
+    size_t rsize = fread(abc, 0, 10, fptr);
+    EXPECT_EQ("fread_0400", rsize, 0);
+
     fclose(fptr);
     remove(ptr);
 }
@@ -109,7 +123,7 @@ TEST_FUN G_Fun_Array[] = {
     fread_0400,
 };
 
-int main()
+int main(int argc, char *argv[])
 {
     int num = sizeof(G_Fun_Array) / sizeof(TEST_FUN);
     for (int pos = 0; pos < num; ++pos) {

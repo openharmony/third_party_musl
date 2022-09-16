@@ -29,5 +29,5 @@ functionalext_supplement_stdlib_test = [
   "abs",
   "lldiv",
   "atoll",
-  "bseach",
+  "bsearch",
 ]

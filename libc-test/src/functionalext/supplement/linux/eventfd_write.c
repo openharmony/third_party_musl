@@ -14,55 +14,81 @@
  */
 
 #include <fcntl.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <sys/eventfd.h>
-#include <unistd.h>
-#include "functionalext.h"
+#include "test.h"
 
 /**
  * @tc.name      : eventfd_write_0100
- * @tc.desc      : The flags parameter is equal to EFD_SEMAPHORE, which creates an eventfd object.
+ * @tc.desc      : Write the value through this function
  * @tc.level     : Level 0
  */
 void eventfd_write_0100(void)
 {
-    int fd, write_ret;
-    uint64_t value;
-    fd = eventfd(1, EFD_NONBLOCK);
-    write_ret = eventfd_write(fd, 20);
-    EXPECT_EQ("eventfd_write_0100", write_ret, 0);
+    eventfd_t value;
+    unsigned int initial_value = 0;
+    int fd = eventfd(initial_value, O_NONBLOCK);
+    if (fd == -1) {
+        t_error("%s eventfd failed\n", __func__);
+    }
+
+    int ret = eventfd_write(fd, 1);
+    if (ret != 0) {
+        t_error("%s eventfd_write failed\n", __func__);
+    }
+    ret = eventfd_write(fd, 1);
+    if (ret != 0) {
+        t_error("%s eventfd_write failed\n", __func__);
+    }
+    ret = eventfd_write(fd, 1);
+    if (ret != 0) {
+        t_error("%s eventfd_write failed\n", __func__);
+    }
+
+    ret = eventfd_read(fd, &value);
+    if (ret != 0) {
+        t_error("%s eventfd_read failed\n", __func__);
+    }
+    if (value != 3U) {
+        t_error("%s value is %d, not three\n", __func__);
+    }
+    close(fd);
 }
 
 /**
  * @tc.name      : eventfd_write_0200
- * @tc.desc      : The flags parameter is equal to EFD_CLOEXEC, which creates an eventfd object.
+ * @tc.desc      : When the file descriptor is invalid, test the return value of this function
  * @tc.level     : Level 2
  */
 void eventfd_write_0200(void)
 {
-    int fd, write_ret;
-    uint64_t value;
-    fd = eventfd(1, EFD_NONBLOCK);
-    write_ret = eventfd_write(-1, 20);
-    EXPECT_EQ("eventfd_write_0200", write_ret, -1);
+    int ret = eventfd_write(-1, 1);
+    if (ret != -1) {
+        t_error("%s eventfd_write should be failed\n", __func__);
+    }
 }
 
 /**
  * @tc.name      : eventfd_write_0300
- * @tc.desc      : The flags parameter is equal to EFD_NONBLOCK, which creates an eventfd object.
+ * @tc.desc      : When the eventfd_t value is invalid, test the return value of this function
  * @tc.level     : Level 2
  */
 void eventfd_write_0300(void)
 {
-    int fd, write_ret;
-    uint64_t value;
-    fd = eventfd(1, EFD_NONBLOCK);
-    write_ret = eventfd_write(fd, -1);
-    EXPECT_EQ("eventfd_write_0300", write_ret, -1);
+    unsigned int initial_value = 2;
+    int fd = eventfd(initial_value, O_NONBLOCK);
+    if (fd == -1) {
+        t_error("%s eventfd failed\n", __func__);
+    }
+
+    int result = eventfd_write(fd, -1);
+    if (result != -1) {
+        t_error("%s eventfd_write should be failed\n", __func__);
+    }
+
+    close(fd);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     eventfd_write_0100();
     eventfd_write_0200();

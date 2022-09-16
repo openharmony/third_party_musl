@@ -14,9 +14,6 @@
  */
 
 #include <ctype.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <stdint.h>
 #include "functionalext.h"
 
 const int32_t COUNT_ZERO = 0;
@@ -73,11 +70,9 @@ void isalpha_0400(void)
 void isalpha_0500(void)
 {
     int total = 0;
-    for (int i = 0; i < 128; i++)
-    {
+    for (int i = 0; i < 128; i++) {
         int ret = isalpha((char)i);
-        if (ret)
-        {
+        if (ret) {
             total++;
         }
     }

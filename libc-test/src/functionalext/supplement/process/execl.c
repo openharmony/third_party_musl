@@ -13,44 +13,32 @@
  * limitations under the License.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
+#include <errno.h>
 #include <unistd.h>
-#include <sys/stat.h>
-#include "functionalext.h"
-
-typedef void (*TEST_FUN)();
-const int32_t COUNT_NEFATIVE = -1;
-int result;
+#include "test.h"
 
 /**
  * @tc.name      : execl_0100
  * @tc.desc      : The file in the specified directory can be executed
  * @tc.level     : Level 0
  */
-void execl_0100()
+void execl_0100(void)
 {
-    mkdir("/data/tests/libc-test/src/functionalext/supplement/process/test", 0777);
-    pid_t fpid;
-    fpid = fork();
+    errno = 0;
+    pid_t fpid = fork();
     if (fpid == 0) {
-        result = execl("/bin/ls", "ls", "/data/tests/libc-test/src/functionalext/supplement/process/test/", (char *)0);
+        int result = execl("/bin/ls", "ls", "-al", "/etc/passwd", (char *)0);
+        if (result == -1) {
+            t_error("%s execl failed\n", __func__);
+        }
+        if (errno != 0) {
+            t_error("%s failed, errno is %d\n", __func__, errno);
+        }
     }
-    sleep(1);
-    EXPECT_NE("execl_0100", result, COUNT_NEFATIVE);
 }
 
-TEST_FUN G_Fun_Array[] = {
-    execl_0100,
-};
-
-int main()
+int main(int argc, char *argv[])
 {
-    int num = sizeof(G_Fun_Array) / sizeof(TEST_FUN);
-    for (int pos = 0; pos < num; ++pos) {
-        G_Fun_Array[pos]();
-    }
-
+    execl_0100();
     return t_status;
 }

@@ -16,9 +16,6 @@
 #include <math.h>
 #include "functionalext.h"
 
-const int32_t COUNT_ZERO = 0;
-const int32_t COUNT_ONE = 1;
-
 /*
  * @tc.name      :  __signbitf_0100
  * @tc.desc      : The parameter value of float type is 0, and the sign bit of the return parameter is 0.
@@ -26,24 +23,22 @@ const int32_t COUNT_ONE = 1;
  */
 void __signbitf_0100(void)
 {
-    float x = 0;
-    int result;
-    result = __signbitf(x);
-    EXPECT_EQ(" __signbitf_0100", result, COUNT_ZERO);
+    float x = 0.0f;
+    int result = __signbitf(x);
+    EXPECT_EQ("__signbitf_0100", result, 0);
 }
 
 /*
  * @tc.name      :  __signbitf_0200
- * @tc.desc      : The parameter value of type float is a positive number,
- *                 and the sign bit of the returned parameter is 0.
+ * @tc.desc      : The parameter value of type float is a positive number, and the sign bit of the returned
+ *                 parameter is 0.
  * @tc.level     : Level 0
  */
 void __signbitf_0200(void)
 {
-    float x = 10;
-    int result;
-    result = __signbitf(x);
-    EXPECT_EQ(" __signbitf_0200", result, COUNT_ZERO);
+    float x = 3.14f;
+    int result = __signbitf(x);
+    EXPECT_EQ("__signbitf_0200", result, 0);
 }
 
 /*
@@ -54,13 +49,12 @@ void __signbitf_0200(void)
  */
 void __signbitf_0300(void)
 {
-    float x = -10;
-    int result;
-    result = __signbitf(x);
-    EXPECT_EQ(" __signbitf_0300", result, COUNT_ONE);
+    float x = -3.14f;
+    int result = __signbitf(x);
+    EXPECT_EQ("__signbitf_0300", result, 1);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     __signbitf_0100();
     __signbitf_0200();
