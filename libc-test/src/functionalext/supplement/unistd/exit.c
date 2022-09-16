@@ -13,37 +13,36 @@
  * limitations under the License.
  */
 
-#include <stdio.h>
 #include <stdlib.h>
-#include <stdbool.h>
-#include <stdint.h>
 #include "functionalext.h"
-
-typedef void (*TEST_FUN)();
 
 /*
  * @tc.name      : exit_0100
- * @tc.desc      : Verify that the file content of the auxiliary application output information
- *                 is viewed by calling the exit(0) function.
+ * @tc.desc      : Verify that the file content of the auxiliary application output information is viewed
+ *                 by calling the exit(0) function.
  * @tc.level     : Level 0
  */
 void exit_0100(void)
 {
     system("cd /data/tests/libc-test/src/functionalext/supplement/unistd/; ./exittest01");
-    char abc[100] = {0};
-    bool successflag = false;
+
+    char str[100] = {0};
     const char *ptr = "/data/Exittest01.txt";
-    FILE *fptr = fopen(ptr, "r");
-    fseek(fptr, 0, SEEK_SET);
-    int32_t rsize = fread(abc, sizeof(abc), 1, fptr);
-    if (strcmp(abc, "exit before") == 0) {
-        successflag = true;
+    FILE *fp = fopen(ptr, "r");
+    if (!fp) {
+        t_error("%s fopen failed\n", __func__);
     }
-    if (strcmp(abc, "exit after") == 0) {
-        successflag = false;
+    int ret = fseek(fp, 0, SEEK_SET);
+    if (ret != 0) {
+        t_error("%s fseek failed\n", __func__);
     }
-    EXPECT_TRUE("exit_0100", successflag);
-    fclose(fptr);
+
+    size_t rsize = fread(str, sizeof(str), 1, fp);
+    if (strcmp(str, "exit before")) {
+        t_error("%s exit failed\n", __func__);
+    }
+
+    fclose(fp);
     remove(ptr);
 }
 
@@ -56,34 +55,29 @@ void exit_0100(void)
 void exit_0200(void)
 {
     system("cd /data/tests/libc-test/src/functionalext/supplement/unistd/; ./exittest02");
+
     char abc[100] = {0};
-    bool successflag = false;
     const char *ptr = "/data/Exittest02.txt";
-    FILE *fptr = fopen(ptr, "r");
-    fseek(fptr, 0, SEEK_SET);
-    char *content = fgets(abc, 27, fptr);
-    if (strcmp(content, "exit before") == 0) {
-        successflag = true;
+    FILE *fp = fopen(ptr, "r");
+    if (!fp) {
+        t_error("%s fopen failed\n", __func__);
     }
-    if (strcmp(content, "exit after") == 0) {
-        successflag = false;
+    int ret = fseek(fp, 0, SEEK_SET);
+    if (ret != 0) {
+        t_error("%s fseek failed\n", __func__);
     }
-    EXPECT_TRUE("exit_0200", successflag);
-    fclose(fptr);
+    char *content = fgets(abc, 27, fp);
+    if (strcmp(content, "exit before")) {
+        t_error("%s exit failed\n", __func__);
+    }
+
+    fclose(fp);
     remove(ptr);
 }
 
-TEST_FUN G_Fun_Array[] = {
-    exit_0100,
-    exit_0200,
-};
-
-int main()
+int main(int argc, char *argv[])
 {
-    int num = sizeof(G_Fun_Array) / sizeof(TEST_FUN);
-    for (int pos = 0; pos < num; ++pos) {
-        G_Fun_Array[pos]();
-    }
-
+    exit_0100();
+    exit_0200();
     return t_status;
 }

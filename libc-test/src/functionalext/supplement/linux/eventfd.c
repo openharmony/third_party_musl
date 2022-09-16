@@ -21,7 +21,7 @@
  * @tc.desc      : The flags parameter is equal to EFD_SEMAPHORE, which creates an eventfd object.
  * @tc.level     : Level 0
  */
-void eventfd_0100()
+void eventfd_0100(void)
 {
     int ret = eventfd(0, EFD_SEMAPHORE);
     EXPECT_TRUE("eventfd_0100", ret > 0);
@@ -32,7 +32,7 @@ void eventfd_0100()
  * @tc.desc      : The flags parameter is equal to EFD_CLOEXEC, which creates an eventfd object.
  * @tc.level     : Level 1
  */
-void eventfd_0200()
+void eventfd_0200(void)
 {
     int ret = eventfd(0, EFD_CLOEXEC);
     EXPECT_TRUE("eventfd_0200", ret > 0);
@@ -43,13 +43,13 @@ void eventfd_0200()
  * @tc.desc      : The flags parameter is equal to EFD_NONBLOCK, which creates an eventfd object.
  * @tc.level     : Level 1
  */
-void eventfd_0300()
+void eventfd_0300(void)
 {
     int ret = eventfd(0, EFD_NONBLOCK);
     EXPECT_TRUE("eventfd_0300", ret > 0);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     eventfd_0100();
     eventfd_0200();

@@ -98,7 +98,7 @@ void fstatat_0300(void)
     ptr = NULL;
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     fstatat_0100();
     fstatat_0200();

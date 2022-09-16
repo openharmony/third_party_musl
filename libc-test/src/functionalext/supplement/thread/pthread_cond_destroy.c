@@ -26,18 +26,18 @@ const int FAILED = -1;
  */
 void pthread_cond_destroy_0100()
 {
-    pthread_cond_t attr;
-    int result = pthread_cond_init(&attr, NULL);
+    pthread_cond_t cond;
+    int result = pthread_cond_init(&cond, NULL);
     if (result != 0) {
         t_error("%s pthread_cond_init failed\n", __func__);
     }
-    result = pthread_cond_destroy(&attr);
+    result = pthread_cond_destroy(&cond);
     if (result != 0) {
         t_error("%s pthread_cond_destroy failed\n", __func__);
     }
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     pthread_cond_destroy_0100();
 

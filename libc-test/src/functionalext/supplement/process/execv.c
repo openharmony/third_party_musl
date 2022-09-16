@@ -25,18 +25,14 @@ void execv_0100(void)
     pid_t fpid;
     fpid = fork();
     FILE *fp;
-    if (fpid == 0)
-    {
+    if (fpid == 0) {
         char *argv[] = {"touch", "touch", "execvtest.txt", NULL};
         int ret = execv("/bin/touch", argv);
     }
     sleep(1);
     int isExist = access("execvtest.txt", F_OK);
     EXPECT_EQ("execv_0100", isExist, 0);
-    if (isExist == 0)
-    {
-        remove("execvtest.txt");
-    }
+    remove("execvtest.txt");
 }
 
 /**
@@ -59,8 +55,7 @@ void execv_0200(void)
 void execv_0300(void)
 {
     char buff[300];
-    for (int i = 0; i < 300; i++)
-    {
+    for (int i = 0; i < 300; i++) {
         buff[i] = 'a';
     }
     char *argv[] = {"touch", "touch", "execvtest.txt", NULL};
@@ -68,7 +63,7 @@ void execv_0300(void)
     EXPECT_TRUE("execv_0300", ret == -1);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     execv_0100();
     execv_0200();

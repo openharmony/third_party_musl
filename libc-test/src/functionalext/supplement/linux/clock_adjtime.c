@@ -34,8 +34,7 @@ void clock_adjtime_0100(void)
     struct timex tx = {0};
     int result = -1;
     result = clock_adjtime(CLOCK_REALTIME, &tx);
-    if (result != -1)
-    {
+    if (result != -1) {
         flag = true;
     }
     EXPECT_TRUE("clock_adjtime_0100", flag);
@@ -96,7 +95,7 @@ void clock_adjtime_0500(void)
     EXPECT_EQ("clock_adjtime_0500", result, COUNT_NEGATIVE);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     clock_adjtime_0100();
     clock_adjtime_0200();

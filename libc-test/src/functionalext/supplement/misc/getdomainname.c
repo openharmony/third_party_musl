@@ -63,7 +63,7 @@ void getdomainname_0300(void)
     EXPECT_EQ("getdomainname_0300", result, FAILED);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     getdomainname_0100();
     getdomainname_0200();

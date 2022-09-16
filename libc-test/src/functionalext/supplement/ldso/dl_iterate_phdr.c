@@ -45,7 +45,7 @@ void dl_iterate_phdr_0100(void)
     exit(EXIT_SUCCESS);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     dl_iterate_phdr_0100();
     return t_status;

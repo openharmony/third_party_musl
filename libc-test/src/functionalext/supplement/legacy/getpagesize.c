@@ -18,10 +18,6 @@
 #include <unistd.h>
 #include "functionalext.h"
 
-const int EOK = 0;
-const int SUCCESS = 0;
-const int FAILED = -1;
-
 /**
  * @tc.name      : getpagesize_0100
  * @tc.desc      : The call is successful and the size of the page can be obtained
@@ -39,7 +35,7 @@ void getpagesize_0100()
     remove("/data/1.txt");
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     getpagesize_0100();
     return t_status;

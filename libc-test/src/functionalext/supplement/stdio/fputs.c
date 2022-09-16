@@ -76,7 +76,7 @@ void fputs_0300(void)
     fptr = NULL;
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     fputs_0100();
     fputs_0200();

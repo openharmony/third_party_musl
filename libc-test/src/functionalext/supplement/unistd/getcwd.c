@@ -49,7 +49,6 @@ void getcwd_0100(void)
 void getcwd_0200(void)
 {
     char *result;
-    char buf[200];
     result = getcwd(NULL, 200);
     if (!(strcmp(result, manual) ^ strcmp(result, hdc_auto))) {
         t_error("%s getcwd failed, except result is %s when manual or %s when hdc test\n", __func__, manual, hdc_auto);
@@ -71,7 +70,7 @@ void getcwd_0300(void)
     }
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     getcwd_0100();
     getcwd_0200();

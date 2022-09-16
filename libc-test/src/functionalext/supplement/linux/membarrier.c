@@ -60,7 +60,7 @@ void membarrier_0300(void)
     EXPECT_EQ("membarrier_0300", result, COUNT_NEGATIVE);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     membarrier_0100();
     membarrier_0200();

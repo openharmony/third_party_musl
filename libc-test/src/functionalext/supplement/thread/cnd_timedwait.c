@@ -79,7 +79,7 @@ void cnd_timedwait_0100(void)
     cnd_destroy(&cond);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     cnd_timedwait_0100();
     return t_status;

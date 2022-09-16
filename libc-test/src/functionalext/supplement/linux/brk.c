@@ -13,14 +13,14 @@
  * limitations under the License.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <fcntl.h>
+#include <errno.h>
 #include <unistd.h>
-#include "functionalext.h"
+#include "test.h"
 
-#define MAX 10
+void *get_brk()
+{
+    return sbrk(0);
+}
 
 /**
  * @tc.name      : brk_0100
@@ -29,18 +29,26 @@
  */
 void brk_0100(void)
 {
-    int *p, n = 0, max = MAX;
-    FILE *fp;
-    int result;
-    p = (int *)malloc(MAX * sizeof(int));
-    max++;
-    result = brk(p);
-#ifdef __BSD_SOURCE
-    EXPECT_EQ("brk_0100", result, 0);
-#endif
+    errno = 0;
+    void *initial_break = get_brk();
+    void *new_break = (void *)((uintptr_t)(initial_break) + 1);
+
+    int result = brk(new_break);
+    if (result == -1) {
+        if (errno != ENOMEM) {
+            t_error("%s errno should be ENOMEM\n", __func__);
+        }
+    } else {
+        if (result != 0) {
+            t_error("%s brk failed\n", __func__);
+        }
+        if (get_brk() < new_break) {
+            t_error("%s brk invalid\n", __func__);
+        }
+    }
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     brk_0100();
     return t_status;

@@ -13,28 +13,30 @@
  * limitations under the License.
  */
 
-#include <unistd.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
 #include <termios.h>
-#include "functionalext.h"
+#include "test.h"
 
 /**
- * @tc.name      : cfgetispeed_0100
+ * @tc.name      : cfgetospeed_0100
  * @tc.desc      : Verify that information about the output baud rate is obtained.
  * @tc.level     : Level 0
  */
-void cfgetispeed_0100(void)
+void cfgetospeed_0100(void)
 {
-    struct termios termios_p;
-    tcgetattr(STDIN_FILENO, &termios_p);
-    speed_t result = cfgetospeed(&termios_p);
-    EXPECT_TRUE("cfgetispeed_0100", result >= 0);
+    struct termios t = {};
+    int result = cfsetospeed(&t, B1200);
+    if (result != 0) {
+        t_error("%s cfsetospeed failed\n", __func__);
+    }
+
+    speed_t ret = cfgetospeed(&t);
+    if (ret != (speed_t)(B1200)) {
+        t_error("%s cfgetospeed failed\n", __func__);
+    }
 }
 
-int main()
+int main(int argc, char *argv[])
 {
-    cfgetispeed_0100();
+    cfgetospeed_0100();
     return t_status;
 }

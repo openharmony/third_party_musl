@@ -13,12 +13,6 @@
  * limitations under the License.
  */
 
-#include <ctype.h>
-#include <errno.h>
-#include <fcntl.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
 #include <sys/timex.h>
 #include "functionalext.h"
 
@@ -48,8 +42,7 @@ void adjtimex_0100(void)
     tx.calcnt = 1;
     tx.errcnt = 1;
     tx.stbcnt = 1;
-    int result = -1;
-    result = adjtimex(&tx);
+    int result = adjtimex(&tx);
     EXPECT_NE("adjtimex_0100", result, NUM_NEG);
 }
 

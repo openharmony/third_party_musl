@@ -58,7 +58,7 @@ void fstatvfs_0200(void)
     remove("test.txt");
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     fstatvfs_0100();
     fstatvfs_0200();

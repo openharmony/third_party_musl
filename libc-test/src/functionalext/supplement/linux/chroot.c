@@ -64,7 +64,7 @@ void chroot_0400(void)
     EXPECT_EQ("chroot_0100", result, -1);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     chroot_0100();
     chroot_0200();

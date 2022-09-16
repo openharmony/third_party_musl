@@ -14,11 +14,6 @@
  */
 
 #include <fcntl.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/stat.h>
-#include <stdint.h>
-#include <signal.h>
 #include <unistd.h>
 #include "functionalext.h"
 
@@ -69,6 +64,7 @@ void lseek_0100(void)
 {
     char *wrstring = "This is a test sample!";
     int fd = open("/data/readtest.txt", O_RDWR | O_CREAT);
+    EXPECT_STRLT("lseek_0100", 0, fd);
     int retwrite = write(fd, wrstring, sizeof(wrstring));
     off_t data = lseek(fd, 0L, SEEK_SET);
     EXPECT_EQ("lseek_0100", (int)data, FILE_ZERO);
@@ -85,6 +81,7 @@ void lseek_0200(void)
 {
     char *wrstring = "This is a test sample!";
     int fd = open("/data/readtest.txt", O_RDWR | O_CREAT);
+    EXPECT_STRLT("lseek_0200", 0, fd);
     int retwrite = write(fd, wrstring, sizeof(wrstring));
     off_t data = lseek(fd, 8L, SEEK_SET);
     EXPECT_EQ("lseek_0200", (int)data, FILE_EIGHT);
@@ -101,6 +98,7 @@ void lseek_0300(void)
 {
     char *wrstring = "This is a test sample!";
     int fd = open("/data/readtest.txt", O_RDWR | O_CREAT);
+    EXPECT_STRLT("lseek_0300", 0, fd);
     int retwrite = write(fd, wrstring, sizeof(wrstring));
     off_t data = lseek(fd, 10L, SEEK_SET);
     data = lseek(fd, 0L, SEEK_CUR);
@@ -118,6 +116,7 @@ void lseek_0400(void)
 {
     char str[] = "This is a test sample!";
     int fd = open("/data/readtest.txt", O_RDWR | O_CREAT);
+    EXPECT_STRLT("lseek_0400", 0, fd);
     int retwrite = write(fd, str, sizeof(str));
     off_t data = lseek(fd, -1L, SEEK_END);
     EXPECT_EQ("lseek_0400", (int)data, FILE_TWENTWO);
@@ -134,6 +133,7 @@ void lseek_0500(void)
 {
     char str[] = "This is a test sample!";
     int fd = open("/data/readtest.txt", O_RDWR | O_CREAT);
+    EXPECT_STRLT("lseek_0500", 0, fd);
     int retwrite = write(fd, str, sizeof(str));
     off_t data = lseek(fd, -10L, SEEK_SET);
     EXPECT_EQ("lseek_0500", (int)data, FILE_NEGA);
@@ -150,6 +150,7 @@ void lseek_0600(void)
 {
     char str[] = "This is a test sample!";
     int fd = open("/data/readtest.txt", O_RDWR | O_CREAT);
+    EXPECT_STRLT("lseek_0600", 0, fd);
     int retwrite = write(fd, str, sizeof(str));
     off_t data = lseek(fd, 10L, SEEK_END);
     EXPECT_EQ("lseek_0600", (int)data, FILE_THIRTYTHREE);

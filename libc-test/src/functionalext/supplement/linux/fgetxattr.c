@@ -14,10 +14,10 @@
  */
 
 #include <fcntl.h>
-#include <stdlib.h>
-#include <stdbool.h>
-#include "functionalext.h"
-#include "sys/xattr.h"
+#include <stdio.h>
+#include <string.h>
+#include <sys/xattr.h>
+#include "test.h"
 
 /**
  * @tc.name      : fgetxattr_0100
@@ -26,20 +26,27 @@
  */
 void fgetxattr_0100(void)
 {
-    int fd = open("fgetxattr.txt", O_RDWR | O_CREAT);
+    const char *path = "/data/fgetxattr.txt";
     char name[] = "user.x";
     char value[] = "the past is not dead.";
-    ssize_t size;
-    fsetxattr(fd, name, value, strlen(value), 0);
-    size = fgetxattr(fd, name, value, 1024);
-    bool flag = false;
-    if (size >= 0)
-    {
-        flag = true;
+
+    int fd = open(path, O_RDWR | O_CREAT);
+    if (fd < 0) {
+        t_error("%s open failed\n", __func__);
     }
-    EXPECT_TRUE("fgetxattr_0100", flag);
+
+    int ret = fsetxattr(fd, name, value, strlen(value), 0);
+    if (ret != 0) {
+        t_error("%s fsetxattr failed\n", __func__);
+    }
+
+    ssize_t result = fgetxattr(fd, name, value, 1024);
+    if (result < 0) {
+        t_error("%s fgetxattr failed\n", __func__);
+    }
+
     close(fd);
-    remove("fgetxattr.txt");
+    remove(path);
 }
 
 int main(int argc, char *argv[])

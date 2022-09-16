@@ -56,7 +56,7 @@ void open_by_handle_at_0100(void)
     EXPECT_TRUE("open_by_handle_at_0100", flag);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     // open_by_handle_at_0100();
     return t_status;

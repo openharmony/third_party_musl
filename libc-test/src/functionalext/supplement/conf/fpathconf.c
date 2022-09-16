@@ -84,7 +84,7 @@ void fpathconf_0500(void)
     EXPECT_EQ("fpathconf_0500", result, -1);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     fpathconf_0100();
     fpathconf_0200();

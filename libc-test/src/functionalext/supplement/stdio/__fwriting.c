@@ -74,7 +74,7 @@ void __fwriting_0300(void)
     remove(ptr);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     __fwriting_0100();
     __fwriting_0200();

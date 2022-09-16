@@ -49,7 +49,7 @@ void name_to_handle_at_0100(void)
     EXPECT_EQ("name_to_handle_at_0100", result, COUNT_ZERO);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     // name_to_handle_at_0100();
     return t_status;

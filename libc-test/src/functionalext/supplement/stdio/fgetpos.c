@@ -13,13 +13,12 @@
  * limitations under the License.
  */
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include "functionalext.h"
 
 typedef void (*TEST_FUN)();
-const int32_t NUM_ZERO = 0;
+
 const int32_t NUN_ELEVEN = 11;
 
 /**
@@ -30,15 +29,20 @@ const int32_t NUN_ELEVEN = 11;
 void fgetpos_0100()
 {
     fpos_t pos;
-    int result;
     char buff[] = "hello world";
-    FILE *fptr = fopen("test.txt", "w+");
-    fputs(buff, fptr);
-    fseek(fptr, 0, SEEK_END);
-    result = fgetpos(fptr, &pos);
-    EXPECT_EQ("fgetpos_0100", result, NUM_ZERO);
-    fclose(fptr);
-    remove("test.txt");
+    const char *path = "/data/test.txt";
+
+    FILE *fp = fopen(path, "w+");
+    EXPECT_PTRNE("fgetpos_0100", fp, NULL);
+
+    fputs(buff, fp);
+    fseek(fp, 0, SEEK_END);
+
+    int result = fgetpos(fp, &pos);
+    EXPECT_EQ("fgetpos_0100", result, 0);
+
+    fclose(fp);
+    remove(path);
 }
 
 /**
@@ -49,15 +53,19 @@ void fgetpos_0100()
 void fgetpos_0200()
 {
     fpos_t pos;
-    int result;
     char buff[] = "hello world";
-    FILE *fptr = fopen("test.txt", "w+");
+    const char *path = "/data/test.txt";
+
+    FILE *fptr = fopen(path, "w+");
+    EXPECT_PTRNE("fgetpos_0100", fptr, NULL);
+
     fputs(buff, fptr);
     fseek(fptr, 0, SEEK_SET);
-    result = fgetpos(fptr, &pos);
-    EXPECT_EQ("fgetpos_0200", result, NUM_ZERO);
+    int result = fgetpos(fptr, &pos);
+    EXPECT_EQ("fgetpos_0200", result, 0);
+
     fclose(fptr);
-    remove("test.txt");
+    remove(path);
 }
 
 /**
@@ -67,12 +75,14 @@ void fgetpos_0200()
  */
 void fgetpos_0300()
 {
-    FILE *fptr = fopen("test.txt", "w+");
-    remove("test.txt");
     fpos_t pos;
-    int result;
-    result = fgetpos(fptr, &pos);
-    EXPECT_EQ("fgetpos_0300", result, NUM_ZERO);
+    const char *path = "/data/test.txt";
+    FILE *fptr = fopen(path, "w+");
+    fclose(fptr);
+
+    int result = fgetpos(fptr, &pos);
+    EXPECT_EQ("fgetpos_0300", result, -1);
+    remove(path);
 }
 
 TEST_FUN G_Fun_Array[] = {
@@ -81,7 +91,7 @@ TEST_FUN G_Fun_Array[] = {
     fgetpos_0300,
 };
 
-int main()
+int main(int argc, char *argv[])
 {
     int num = sizeof(G_Fun_Array) / sizeof(TEST_FUN);
     for (int pos = 0; pos < num; ++pos) {

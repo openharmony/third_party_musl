@@ -84,7 +84,7 @@ void fdopendir_0400(void)
     system("rm -rf /data/data/test.txt");
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     fdopendir_0100();
     fdopendir_0200();

@@ -72,7 +72,7 @@ void __fpending_0300(void)
     remove("fpending.txt");
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     __fpending_0100();
     __fpending_0200();

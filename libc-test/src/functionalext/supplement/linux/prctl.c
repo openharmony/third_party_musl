@@ -13,12 +13,8 @@
  * limitations under the License.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <sys/prctl.h>
 #include "functionalext.h"
-
-typedef void (*TEST_FUN)();
 
 /*
  * @tc.name      : prctl_0100
@@ -27,24 +23,19 @@ typedef void (*TEST_FUN)();
  */
 void prctl_0100(void)
 {
-    char buff[100] = {0};
-    int prc = prctl(PR_SET_NAME, (unsigned long)"TestThread");
-    int data = prctl(PR_GET_NAME, (unsigned long)buff);
-    EXPECT_EQ("prctl_0100", prc, 0);
-    EXPECT_EQ("prctl_0100", data, 0);
-    EXPECT_STREQ("prctl_0100", buff, "TestThread");
+    char buf[BUFSIZ];
+    memset(buf, 0, BUFSIZ);
+
+    int result = prctl(PR_SET_NAME, (unsigned long)"TestThread");
+    EXPECT_EQ("prctl_0100", result, 0);
+
+    result = prctl(PR_GET_NAME, (unsigned long)buf);
+    EXPECT_EQ("prctl_0100", result, 0);
+    EXPECT_STREQ("prctl_0100", buf, "TestThread");
 }
 
-TEST_FUN G_Fun_Array[] = {
-    prctl_0100,
-};
-
-int main()
+int main(int argc, char *argv[])
 {
-    int num = sizeof(G_Fun_Array) / sizeof(TEST_FUN);
-    for (int pos = 0; pos < num; ++pos) {
-        G_Fun_Array[pos]();
-    }
-
+    prctl_0100();
     return t_status;
 }

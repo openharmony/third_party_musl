@@ -75,7 +75,7 @@ void __freading_0300(void)
     remove("freading.txt");
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     __freading_0100();
     __freading_0200();

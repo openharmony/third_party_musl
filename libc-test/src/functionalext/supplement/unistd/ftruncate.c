@@ -124,7 +124,7 @@ void ftruncate_0500(void)
     ptr = NULL;
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     ftruncate_0100();
     ftruncate_0200();

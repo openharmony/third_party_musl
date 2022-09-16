@@ -13,50 +13,39 @@
  * limitations under the License.
  */
 
-#include <ctype.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <grp.h>
-#include <netinet/in.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <signal.h>
-#include <stdbool.h>
-#include <unistd.h>
-#include "functionalext.h"
+#include <string.h>
+#include "test.h"
 
 /**
- * @tc.name      : mprotect_0100
+ * @tc.name      : getgrgid_0100
  * @tc.desc      : Verify that the specified GID can be retrieved from the group file (parameter valid)
  * @tc.level     : Level 0
  */
 void getgrgid_0100(void)
 {
-    system("ps -eo command,gid | grep -E \"GID|getgrgid\" > ps.txt");
-    char abc[256] = {0};
-    bool successflag = false;
-    FILE *fptr = fopen("ps.txt", "r");
-    if (fptr) {
-        while (!feof(fptr)) {
-            fread(abc, sizeof(abc), 1, fptr);
-            char num[8] = {0};
-            int index = 0;
-            for (int i = 0; i < (int)strlen(abc); i++) {
-                if (abc[i] >= '0' && abc[i] <= '9') {
-                    num[index++] += abc[i];
-                }
-            }
-            num[index] = '\0';
-            gid_t intgid = atoi(num);
-            struct group *gid;
-            gid = getgrgid(intgid);
-            if (gid->gr_gid == intgid) {
-                successflag = true;
-            }
-        }
+    errno = 0;
+    const char *group_name = "root";
+    gid_t gid = 0;
+
+    struct group *grp = getgrgid(gid);
+    if (errno != 0) {
+        t_error("%s failed, errno is %d\n", __func__, errno);
     }
-    EXPECT_TRUE("getgrgid_0100", successflag);
-    fclose(fptr);
-    remove("ps.txt");
+    if (!grp) {
+        t_error("%s getgrgid failed\n", __func__);
+    }
+    if (strcmp(group_name, grp->gr_name)) {
+        t_error("%s failed, grp->gr_name is %s\n", __func__, grp->gr_name);
+    }
+    if (grp->gr_gid != gid) {
+        t_error("%s failed, grp->gr_gid is %d\n", __func__, grp->gr_gid);
+    }
+    if (grp->gr_mem == NULL) {
+        t_error("%s failed, grp->gr_mem is NULL\n", __func__);
+    }
 }
 
 /**
@@ -67,12 +56,13 @@ void getgrgid_0100(void)
  */
 void getgrgid_0200(void)
 {
-    struct group *data;
-    data = getgrgid(-1);
-    EXPECT_EQ("getgrgid_0200", data, 0);
+    struct group *data = getgrgid(-1);
+    if (data != NULL) {
+        t_error("%s data should be NULL", __func__);
+    }
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     getgrgid_0100();
     getgrgid_0200();

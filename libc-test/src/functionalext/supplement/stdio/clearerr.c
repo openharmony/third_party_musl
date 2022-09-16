@@ -31,7 +31,7 @@ void clearerr_0100(void)
     EXPECT_EQ("clearerr_0100", ferror(stdin), 0);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     clearerr_0100();
     return t_status;

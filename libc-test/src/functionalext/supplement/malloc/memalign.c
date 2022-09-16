@@ -125,7 +125,7 @@ void memalign_0500(void)
     buff = NULL;
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     memalign_0100();
     memalign_0200();

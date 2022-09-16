@@ -145,7 +145,7 @@ void recv_0100()
     EXPECT_EQ("recv_0100", 0, sign);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     recv_0100();
     return t_status;

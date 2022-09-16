@@ -31,7 +31,7 @@ void cnd_init_0100(void)
     EXPECT_EQ("cnd_init_0100", result, thrd_success);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     cnd_init_0100();
     return t_status;

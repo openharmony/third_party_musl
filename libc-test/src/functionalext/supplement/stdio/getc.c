@@ -13,12 +13,13 @@
  * limitations under the License.
  */
 
+#include <fcntl.h>
 #include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include "functionalext.h"
+#include <string.h>
+#include "test.h"
 
-typedef void (*TEST_FUN)();
+const char *wrstring = "This is a test sample!";
+const char *path = "test.txt";
 
 /**
  * @tc.name      : getc_0100
@@ -27,28 +28,31 @@ typedef void (*TEST_FUN)();
  */
 void getc_0100(void)
 {
-    const char *wrstring = "This is a test sample!";
-    const char *ptr = "test.txt";
-    char ch;
-    FILE *fptr = fopen(ptr, "w+");
-    fwrite(wrstring, sizeof(char), strlen(wrstring), fptr);
-    fseek(fptr, 0, SEEK_SET);
-    ch = fgetc(fptr);
-    EXPECT_EQ("getc_0100", ch, 'T');
-    fclose(fptr);
-    remove(ptr);
-}
-
-TEST_FUN G_Fun_Array[] = {
-    getc_0100,
-};
-
-int main()
-{
-    int num = sizeof(G_Fun_Array) / sizeof(TEST_FUN);
-    for (int pos = 0; pos < num; ++pos) {
-        G_Fun_Array[pos]();
+    FILE *fptr = fopen(path, "w+");
+    if (!fptr) {
+        t_error("%s fopen failed\n", __func__);
     }
 
+    size_t ret = fwrite(wrstring, sizeof(char), strlen(wrstring), fptr);
+    if (ret < 0) {
+        t_error("%s fwrite failed\n", __func__);
+    }
+
+    int fret = fseek(fptr, 0, SEEK_SET);
+    if (fret != 0) {
+        t_error("%s fseek failed\n", __func__);
+    }
+    char ch = getc(fptr);
+    if (ch != 'T') {
+        t_error("%s getc failed\n", __func__);
+    }
+
+    fclose(fptr);
+    remove(path);
+}
+
+int main(int argc, char *argv[])
+{
+    getc_0100();
     return t_status;
 }

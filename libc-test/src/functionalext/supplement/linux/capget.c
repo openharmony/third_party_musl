@@ -74,7 +74,7 @@ void capget_0300(void)
     EXPECT_EQ("capget_0300", result, COUNT_ZERO);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     capget_0100();
     capget_0200();

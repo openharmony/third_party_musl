@@ -60,7 +60,7 @@ void getc_unlocked_0200(void)
     ptr = NULL;
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     getc_unlocked_0100();
     getc_unlocked_0200();

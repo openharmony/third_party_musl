@@ -41,7 +41,8 @@ void geteuid_0100(void)
     remove("id.txt");
     EXPECT_EQ("geteuid_0100", (int)uid, id);
 }
-int main()
+
+int main(int argc, char *argv[])
 {
     geteuid_0100();
 

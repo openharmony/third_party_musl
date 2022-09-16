@@ -75,10 +75,10 @@ void fwide_0300(void)
     remove("test.txt");
 }
 
-int main()
+int main(int argc, char *argv[])
 {
 
-       fwide_0100();
+    fwide_0100();
     fwide_0200();
     fwide_0300();
     return t_status;

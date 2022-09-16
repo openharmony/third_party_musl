@@ -71,7 +71,7 @@ void futimes_0300(void)
     EXPECT_EQ("futimes_0300", ret, FAIL);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     futimes_0100();
     futimes_0200();

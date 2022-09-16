@@ -13,14 +13,8 @@
  * limitations under the License.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
 #include <time.h>
 #include "functionalext.h"
-
-typedef void (*TEST_FUN)();
-const int COUNT_ZERO = 0;
 
 /*
  * @tc.name      : nanosleep_0100
@@ -32,22 +26,12 @@ void nanosleep_0100(void)
     struct timespec n_sleep;
     n_sleep.tv_sec = 0;
     n_sleep.tv_nsec = 5e8L;
-    int data;
-    data = nanosleep(&n_sleep, NULL);
-    EXPECT_EQ("nanosleep_0100", data, COUNT_ZERO);
+    int data = nanosleep(&n_sleep, NULL);
+    EXPECT_EQ("nanosleep_0100", data, 0);
 }
 
-TEST_FUN G_Fun_Array[] = {
-    nanosleep_0100,
-
-};
-
-int main()
+int main(int argc, char *argv[])
 {
-    int num = sizeof(G_Fun_Array) / sizeof(TEST_FUN);
-    for (int pos = 0; pos < num; ++pos) {
-        G_Fun_Array[pos]();
-    }
-
+    nanosleep_0100();
     return t_status;
 }

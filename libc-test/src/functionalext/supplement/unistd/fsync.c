@@ -74,7 +74,7 @@ void fsync_0300(void)
     EXPECT_EQ("fsync_0300", result, -1);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     fsync_0100();
     fsync_0200();

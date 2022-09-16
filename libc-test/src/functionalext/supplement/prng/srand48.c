@@ -50,7 +50,7 @@ void srand48_0100(void)
     }
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     srand48_0100();
 

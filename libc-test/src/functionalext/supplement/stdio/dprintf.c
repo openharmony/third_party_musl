@@ -89,7 +89,7 @@ void dprintf_0400(void)
     EXPECT_EQ("dprintf_0400", result, COUNT_NEGATIVE);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     dprintf_0100();
     dprintf_0200();

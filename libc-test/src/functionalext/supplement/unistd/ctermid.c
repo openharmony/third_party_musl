@@ -56,7 +56,7 @@ void ctermid_0200(void)
     EXPECT_TRUE("ctermid_0200", flag);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     ctermid_0100();
     ctermid_0200();

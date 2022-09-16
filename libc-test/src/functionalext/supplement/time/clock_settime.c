@@ -42,7 +42,7 @@ void clock_settime_0100(void)
     EXPECT_EQ("clock_settime_0100", ret, SUCCESS);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     clock_settime_0100();
     return t_status;

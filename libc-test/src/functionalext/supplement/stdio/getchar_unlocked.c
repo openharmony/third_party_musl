@@ -15,12 +15,9 @@
 
 #include <fcntl.h>
 #include <stdio.h>
-#include <stdbool.h>
-#include <pthread.h>
-#include <sys/time.h>
-#include "functionalext.h"
+#include "test.h"
 
-typedef void (*TEST_FUN)();
+const char *path = "/data/readtest.txt";
 
 /**
  * @tc.name      : getchar_unlocked_0100
@@ -29,31 +26,33 @@ typedef void (*TEST_FUN)();
  */
 void getchar_unlocked_0100(void)
 {
-    bool flag = false;
-    char str[] = "r\n";
-    int fd = open("/data/readtest.txt", O_RDWR | O_CREAT);
-    write(fd, str, sizeof(str));
-    FILE *fp = freopen("/data/readtest.txt", "r", stdin);
-    char result = getchar_unlocked();
-    if (result == 'r') {
-        flag = true;
+    char str[] = "r";
+    int fd = open(path, O_RDWR | O_CREAT);
+    if (fd < 0) {
+        t_error("%s open failed\n", __func__);
     }
-    EXPECT_TRUE("getchar_unlocked_0100", flag);
+
+    ssize_t ret = write(fd, str, sizeof(str));
+    if (ret < 0) {
+        t_error("%s write failed\n", __func__);
+    }
+    FILE *fp = freopen(path, "r", stdin);
+    if (!fp) {
+        t_error("%s freopen failed\n", __func__);
+    }
+
+    char ch = getchar_unlocked();
+    if (ch != 'r') {
+        t_error("%s getchar_unlocked failed\n");
+    }
+
     fclose(fp);
     close(fd);
-    fclose(stdin);
-    remove("/data/readtest.txt");
+    remove(path);
 }
 
-TEST_FUN G_Fun_Array[] = {
-    getchar_unlocked_0100,
-};
-
-int main()
+int main(int argc, char *argv[])
 {
-    int num = sizeof(G_Fun_Array) / sizeof(TEST_FUN);
-    for (int pos = 0; pos < num; ++pos) {
-        G_Fun_Array[pos]();
-    }
+    getchar_unlocked_0100();
     return t_status;
 }

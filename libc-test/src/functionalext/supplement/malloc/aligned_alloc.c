@@ -13,12 +13,7 @@
  * limitations under the License.
  */
 
-#include <stdbool.h>
-#include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
-#include <sys/stat.h>
-#include <fcntl.h>
 #include "functionalext.h"
 
 /**
@@ -28,13 +23,11 @@
  */
 void aligned_alloc_0100(void)
 {
-    bool flag = false;
     int pagesize = getpagesize();
-    int *p1 = (int *)aligned_alloc(pagesize, 1024 * sizeof(int));
-    if (p1 != 0) {
-        flag = true;
+    void *p = aligned_alloc(pagesize, 1024 * sizeof(int));
+    if (!p) {
+        t_error("%s aligned_alloc failed\n", __func__);
     }
-    EXPECT_TRUE("aligned_alloc_0100", flag);
 }
 
 int main(void)

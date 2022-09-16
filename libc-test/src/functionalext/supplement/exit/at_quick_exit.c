@@ -13,12 +13,9 @@
  * limitations under the License.
  */
 
-#include <stdio.h>
 #include <stdlib.h>
 #include "functionalext.h"
 
-const int SUCCESS = 0;
-const int FAILED = -1;
 void f1()
 {}
 void f2()
@@ -26,21 +23,21 @@ void f2()
 
 /**
  * @tc.name      : at_quick_exit_0100
- * @tc.desc      : Verify that the function pointed to can be registered
- *                 (the number of registrations is less than 32).
+ * @tc.desc      : Verify that the function pointed to can be registered (the number of registrations
+ *                 is less than 32).
  * @tc.level     : Level 0
  */
 void at_quick_exit_0100(void)
 {
     int result = at_quick_exit(f1);
     quick_exit(0);
-    EXPECT_EQ("at_quick_exit_0100", result, SUCCESS);
+    EXPECT_EQ("at_quick_exit_0100", result, 0);
 }
 
 /**
  * @tc.name      : at_quick_exit_0200
- * @tc.desc      : Verify that the pointed function cannot be registered
- *                 (the number of registrations is greater than 32).
+ * @tc.desc      : Verify that the pointed function cannot be registered (the number of registrations
+ *                 is greater than 32).
  * @tc.level     : Level 2
  */
 void at_quick_exit_0200(void)
@@ -51,7 +48,7 @@ void at_quick_exit_0200(void)
     }
     result = at_quick_exit(f2);
     quick_exit(0);
-    EXPECT_EQ("at_quick_exit_0200", result, FAILED);
+    EXPECT_EQ("at_quick_exit_0200", result, -1);
 }
 
 int main(int argc, char *argv[])

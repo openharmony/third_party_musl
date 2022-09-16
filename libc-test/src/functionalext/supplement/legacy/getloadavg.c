@@ -29,14 +29,13 @@ void getloadavg_0100(void)
     double buf[1024];
     int result = -10;
     result = getloadavg(buf, 1024);
-    if (result > 0)
-    {
+    if (result > 0) {
         flag = true;
     }
     EXPECT_TRUE("getloadavg_0100", flag);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     getloadavg_0100();
     return t_status;

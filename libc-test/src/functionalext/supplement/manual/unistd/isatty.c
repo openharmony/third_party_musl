@@ -14,18 +14,10 @@
  */
 
 #include <fcntl.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/stat.h>
-#include <stdint.h>
-#include <signal.h>
-#include <stdint.h>
 #include <unistd.h>
 #include "functionalext.h"
 
 typedef void (*TEST_FUN)();
-const int32_t COUNT_ZERO = 0;
-const int32_t COUNT_ONE = 1;
 
 /**
  * @tc.name      : isatty_0100
@@ -35,7 +27,7 @@ const int32_t COUNT_ONE = 1;
 void isatty_0100()
 {
     int result = isatty(fileno(stdout));
-    EXPECT_EQ("isatty_0100", result, COUNT_ONE);
+    EXPECT_EQ("isatty_0100", result, 1);
 }
 
 /**
@@ -45,11 +37,11 @@ void isatty_0100()
  */
 void isatty_0200()
 {
-    int fd = open("readtest.txt", O_RDWR | O_CREAT);
+    int fd = open("/data/readtest.txt", O_RDWR | O_CREAT);
     int result = isatty(fd);
-    EXPECT_EQ("isatty_0200", result, COUNT_ZERO);
+    EXPECT_EQ("isatty_0200", result, 0);
     close(fd);
-    remove("readtest.txt");
+    remove("/data/readtest.txt");
 }
 
 TEST_FUN G_Fun_Array[] = {
@@ -57,7 +49,7 @@ TEST_FUN G_Fun_Array[] = {
     isatty_0200,
 };
 
-int main()
+int main(int argc, char *argv[])
 {
     int num = sizeof(G_Fun_Array) / sizeof(TEST_FUN);
     for (int pos = 0; pos < num; ++pos) {

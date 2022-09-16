@@ -181,7 +181,7 @@ void atoll_1200(void)
     EXPECT_EQ("atoll_1200", num, successfully);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     atoll_0100();
     atoll_0200();

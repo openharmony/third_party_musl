@@ -13,161 +13,158 @@
  * limitations under the License.
  */
 
-#include <uchar.h>
-#include <wchar.h>
-#include <stdlib.h>
-#include <stdio.h>
+#include <limits.h>
 #include <locale.h>
-#include "functionalext.h"
-
-mbstate_t state;
+#include <string.h>
+#include <uchar.h>
+#include "test.h"
 
 /**
  * @tc.name      : c16rtomb_0100
- * @tc.desc      : Verify that the 16-bit wide character representation is converted to a narrow multibyte character
+ * @tc.desc      : Converts a variable-length 16-bit wide character representation to its narrow multibyte character
  *                 representation.
  * @tc.level     : Level 0
  */
 void c16rtomb_0100(void)
 {
-    wchar_t str[] = L"test";
-    size_t in_sz = sizeof str / sizeof *str;
-    int rc = 0;
-    char out[MB_CUR_MAX * in_sz];
-    char *p = out;
-    for (size_t n = 0; n < in_sz; ++n) {
-        rc = c16rtomb(p, str[n], &state);
-        p += rc;
+    char bytes[MB_LEN_MAX];
+    memset(bytes, 0, sizeof(bytes));
+    size_t result = c16rtomb(bytes, L'h', NULL);
+    if (result != 1U) {
+        t_error("%s c16rtomb failed, result is %d\n", __func__, result);
     }
-    EXPECT_EQ("c16rtomb_0100", rc, 1);
+    if (bytes[0] != 'h') {
+        t_error("%s bytes[0] is %c, not \'h\'\n", bytes[0]);
+    }
+
+    char *ret = setlocale(LC_CTYPE, "C.UTF-8");
+    if (strcmp(ret, "C.UTF-8")) {
+        t_error("%s setlocale failed\n", __func__);
+    }
+    uselocale(LC_GLOBAL_LOCALE);
+
+    // 1-byte UTF-8.
+    memset(bytes, 0, sizeof(bytes));
+    result = c16rtomb(bytes, L'h', NULL);
+    if (result != 1U) {
+        t_error("%s c16rtomb failed, result is %d\n", __func__, result);
+    }
+    if (bytes[0] != 'h') {
+        t_error("%s bytes[0] is %c, not \'h\'\n", bytes[0]);
+    }
+
+    // 2-byte UTF-8.
+    memset(bytes, 0, sizeof(bytes));
+    result = c16rtomb(bytes, 0x00a2, NULL);
+    if (result != 2U) {
+        t_error("%s c16rtomb failed, result is %d\n", __func__, result);
+    }
+    if (bytes[0] != '\xc2') {
+        t_error("%s bytes[0] is %c, not \'\\xc2\'\n", bytes[0]);
+    }
+    if (bytes[1] != '\xa2') {
+        t_error("%s bytes[0] is %c, not \'\\xa2\'\n", bytes[1]);
+    }
+
+    // 3-byte UTF-8.
+    memset(bytes, 0, sizeof(bytes));
+    result = c16rtomb(bytes, 0x20ac, NULL);
+    if (result != 3U) {
+        t_error("%s c16rtomb failed, result is %d\n", __func__, result);
+    }
+    if (bytes[0] != '\xe2') {
+        t_error("%s bytes[0] is %c, not \'\\xe2\'\n", bytes[0]);
+    }
+    if (bytes[1] != '\x82') {
+        t_error("%s bytes[0] is %c, not \'\\x82\'\n", bytes[1]);
+    }
+    if (bytes[2] != '\xac') {
+        t_error("%s bytes[0] is %c, not \'\\xac\'\n", bytes[2]);
+    }
 }
 
 /**
  * @tc.name      : c16rtomb_0200
- * @tc.desc      : Verify that the 16-bit wide character representation is converted to a narrow multibyte character
- *                 representation(s parameter NULL). representation.
+ * @tc.desc      : When the s parameter is invalid, test the return value of the function.
  * @tc.level     : Level 1
  */
 void c16rtomb_0200(void)
 {
-    wchar_t str[] = L"";
-    size_t in_sz = sizeof str / sizeof *str;
-    int rc = 0;
-    char out[MB_CUR_MAX * in_sz];
-    char *p = out;
-    for (size_t n = 0; n < in_sz; ++n) {
-        rc = c16rtomb(p, str[n], &state);
-        p += rc;
+    size_t result = c16rtomb(NULL, L'\0', NULL);
+    if (result != 1U) {
+        t_error("%s c16rtomb failed, result is %d\n", __func__, result);
     }
-    EXPECT_EQ("c16rtomb_0200", rc, 1);
+
+    result = c16rtomb(NULL, L'h', NULL);
+    if (result != 1U) {
+        t_error("%s c16rtomb failed, result is %d\n", __func__, result);
+    }
 }
 
 /**
  * @tc.name      : c16rtomb_0300
- * @tc.desc      : Verify that the 16-bit wide character representation cannot be converted to a narrow multibyte
- *                 character representation (s parameter NULL).
- * @tc.level     : Level 2
+ * @tc.desc      : Test the return value of this function when c16 is equal to 0xdbea.
+ * @tc.leve      : Level 1
  */
 void c16rtomb_0300(void)
 {
-    wchar_t str[] = L"";
-    size_t in_sz = sizeof str / sizeof *str;
-    int rc = 0;
-    char out[MB_CUR_MAX * in_sz];
-    char *p = out;
-    size_t n = 0;
-    rc = c16rtomb(p, 0xE000u, NULL);
-    EXPECT_EQ("c16rtomb_0300", rc, -1);
+    char bytes[MB_LEN_MAX];
+    memset(bytes, 0, sizeof(bytes));
+    size_t result = c16rtomb(bytes, 0xdbea, NULL);
+    if (result != 0U) {
+        t_error("%s c16rtomb failed\n", __func__);
+    }
 }
 
 /**
  * @tc.name      : c16rtomb_0400
- * @tc.desc      : Verify that the 16-bit wide character representation is converted to a narrow multibyte character
- *                 representation(c16 is 0xD800u,ps parameter NULL).
+ * @tc.desc      : Test the return value of this function when c16 is equal to 0xdfcd.
  * @tc.leve      : Level 1
  */
 void c16rtomb_0400(void)
 {
-    wchar_t str[] = L"test";
-    size_t in_sz = sizeof str / sizeof *str;
-    int rc = 0;
-    char out[MB_CUR_MAX * in_sz];
-    char *p = out;
-    for (size_t n = 0; n < in_sz; ++n) {
-        rc = c16rtomb(p, 0xD800u, NULL);
-        p += rc;
+    char bytes[MB_LEN_MAX];
+    memset(bytes, 0, sizeof(bytes));
+    size_t result = c16rtomb(bytes, 0xdfcd, NULL);
+    if (result != 4U) {
+        t_error("%s c16rtomb failed\n", __func__);
     }
-    EXPECT_EQ("c16rtomb_0400", rc, 0);
+
+    if (bytes[0] != '\xf4') {
+        t_error("%s bytes[0] is %c, not \'\\xf4\'\n", bytes[0]);
+    }
+    if (bytes[1] != '\x8a') {
+        t_error("%s bytes[0] is %c, not \'\\x8a\'\n", bytes[1]);
+    }
+    if (bytes[2] != '\xaf') {
+        t_error("%s bytes[0] is %c, not \'\\xaf\'\n", bytes[2]);
+    }
+    if (bytes[3] != '\x8d') {
+        t_error("%s bytes[0] is %c, not \'\\x8d\'\n", bytes[3]);
+    }
 }
 
 /**
  * @tc.name      : c16rtomb_0500
- * @tc.desc      : Verify that the 16-bit wide character representation is converted to a narrow multibyte character
- *                 representation (c16 is 0xDC00u,s parameter NULL).
- * @tc.leve      : Level 1
+ * @tc.desc      : Test the return value of this function when c16 is equal to 0xdfcd.
+ * @tc.leve      : Level 2
  */
 void c16rtomb_0500(void)
 {
-    wchar_t str[] = L"test";
-    size_t in_sz = sizeof str / sizeof *str;
-    int rc = 0;
-    char out[MB_CUR_MAX * in_sz];
-    char *p = out;
-    for (size_t n = 0; n < in_sz; n++) {
-        rc = c16rtomb(p, 0xdc00u, NULL);
-        p += rc;
+    char bytes[MB_LEN_MAX];
+    memset(bytes, 0, sizeof(bytes));
+    size_t result = c16rtomb(bytes, 0xdfcd, NULL);
+    if (result != (size_t)-1) {
+        t_error("%s c16rtomb failed\n", __func__);
     }
-    EXPECT_EQ("c16rtomb_0500", rc, -1);
 }
 
-/**
- * @tc.name      : c16rtomb_0600
- * @tc.desc      : Verify that the 16-bit wide character representation cannot be converted to a narrow multibyte
- *                 character representation (c16 is 0xE000u).
- * @tc.leve      : Level 2
- */
-void c16rtomb_0600(void)
-{
-    wchar_t str[] = L"test";
-    size_t in_sz = sizeof str / sizeof *str;
-    int rc = 0;
-    char out[MB_CUR_MAX * in_sz];
-    char *p = out;
-    for (size_t n = 0; n < in_sz; ++n) {
-        rc = c16rtomb(p, 0xE000u, &state);
-        p += rc;
-    }
-    EXPECT_EQ("c16rtomb_0600", rc, -1);
-}
-
-/**
- * @tc.name      : c16rtomb_0700
- * @tc.desc      : Verify that the 16-bit wide character representation is converted to a narrow multibyte character
- *                 representation (c16 is 0xDFFFu).
- * @tc.leve      : Level 1
- */
-void c16rtomb_0700(void)
-{
-    wchar_t str[] = L"test";
-    size_t in_sz = sizeof str / sizeof *str;
-    int rc = 0;
-    char out[MB_CUR_MAX * in_sz];
-    char *p = out;
-    for (size_t n = 0; n < in_sz; ++n) {
-        rc = c16rtomb(p, 0xDFFFu, &state);
-        p += rc;
-    }
-    EXPECT_EQ("c16rtomb_0700", rc, 1);
-}
-
-int main()
+int main(int argc, char *argv[])
 {
     c16rtomb_0100();
     c16rtomb_0200();
     c16rtomb_0300();
     c16rtomb_0400();
     c16rtomb_0500();
-    c16rtomb_0600();
-    c16rtomb_0700();
     return t_status;
 }
