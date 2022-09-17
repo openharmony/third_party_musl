@@ -6,11 +6,6 @@
 #include <string.h>
 #include <pthread.h>
 
-int ioctl(int fd, int req, ...)
-{
-	return 0;
-}
-
 FILE *__fdopen(int fd, const char *mode)
 {
 	FILE *f;
@@ -32,9 +27,6 @@ FILE *__fdopen(int fd, const char *mode)
 	/* Impose mode restrictions */
 	if (!strchr(mode, '+')) f->flags = (*mode == 'r') ? F_NOWR : F_NORD;
 
-	/* Apply close-on-exec flag */
-	if (strchr(mode, 'e')) fcntl(fd, F_SETFD, FD_CLOEXEC);
-
 	/* Set append mode on fd if opened for append */
 	if (*mode == 'a') {
 		int flags = fcntl(fd, F_GETFL);
@@ -51,7 +43,7 @@ FILE *__fdopen(int fd, const char *mode)
 
 	/* Activate line buffered mode for terminals */
 	f->lbf = EOF;
-	if (!(f->flags & F_NOWR) && !ioctl(fd, TIOCGWINSZ, &wsz))
+	if (!(f->flags & F_NOWR))
 		f->lbf = '\n';
 
 	/* Initialize op ptrs. No problem if some are unneeded. */

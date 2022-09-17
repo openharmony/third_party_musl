@@ -22,8 +22,6 @@ FILE *fopen(const char *restrict filename, const char *restrict mode)
 
 	fd = open(filename, flags, 0666);
 	if (fd < 0) return 0;
-	if (flags & O_CLOEXEC)
-		fcntl(fd, F_SETFD, FD_CLOEXEC);
 
 #if !defined(__LP64__)
 	if (fd > SHRT_MAX) {
