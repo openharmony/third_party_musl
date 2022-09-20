@@ -47,8 +47,14 @@ if (is_lite_system && current_os == "ohos") {
   group("musl_libs") {
     deps = [
       ":musl_headers",
+      ":musl_sysparam",
       ":soft_libs",
     ]
+  }
+
+  ohos_prebuilt_etc("musl_sysparam") {
+    source = "${musl_porting_dir}/etc/musl.para"
+    relative_install_dir = "param"
   }
 
   musl_libs("soft_libs") {

@@ -53,7 +53,9 @@ declare_args() {
 }
 
 declare_args() {
-  enable_musl_log = false
+  if (!is_standard_system) {
+    enable_musl_log = false
+  }
   musl_secure_level = 1
 }
 

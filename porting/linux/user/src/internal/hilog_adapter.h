@@ -47,4 +47,8 @@ hidden int HiLogAdapterPrint(LogType type, LogLevel level, unsigned int domain, 
     __attribute__((__format__(os_log, 5, 6)));
 
 hidden bool HiLogAdapterIsLoggable(unsigned int domain, const char *tag, LogLevel level);
+
+hidden bool is_musl_log_enable();
+hidden void musl_log_reset();
+
 #endif  // MUSL_HILOG_ADAPTER_H
