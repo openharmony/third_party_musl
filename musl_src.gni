@@ -2094,6 +2094,7 @@ musl_src_porting_file = [
   "src/exit/atexit.c",
   "crt/arm/crti.s",
   "crt/aarch64/crti.s",
+  "crt/crtplus.c",
   "ldso/ld_log.h",
   "ldso/namespace.c",
   "ldso/ns_config.c",
