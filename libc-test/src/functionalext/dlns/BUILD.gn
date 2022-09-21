@@ -26,8 +26,9 @@ group("dlns_test") {
   ]
 }
 
-ohos_unittest("dlns_dlopen_test") {
-  module_out_path = "libc-test/src/functionalext/dlns"
+ohos_executable("dlns_dlopen_test") {
+  subsystem_name = "musl"
+  part_name = "libc-test"
   include_dirs = [
     "../common",
     "//third_party/musl/porting/linux/user/include",
@@ -38,8 +39,9 @@ ohos_unittest("dlns_dlopen_test") {
   configs = [ "//third_party/musl/libc-test/src/common:config_runtest" ]
 }
 
-ohos_unittest("dlns_set_fun_test") {
-  module_out_path = "libc-test/src/functionalext/dlns"
+ohos_executable("dlns_set_fun_test") {
+  subsystem_name = "musl"
+  part_name = "libc-test"
   include_dirs = [
     "../common",
     "//third_party/musl/porting/linux/user/include",
@@ -50,8 +52,9 @@ ohos_unittest("dlns_set_fun_test") {
   configs = [ "//third_party/musl/libc-test/src/common:config_runtest" ]
 }
 
-ohos_unittest("dlns_inherit_test") {
-  module_out_path = "libc-test/src/functionalext/dlns"
+ohos_executable("dlns_inherit_test") {
+  subsystem_name = "musl"
+  part_name = "libc-test"
   include_dirs = [
     "../common",
     "//third_party/musl/porting/linux/user/include",
@@ -62,8 +65,9 @@ ohos_unittest("dlns_inherit_test") {
   configs = [ "//third_party/musl/libc-test/src/common:config_runtest" ]
 }
 
-ohos_unittest("dlns_separated_test") {
-  module_out_path = "libc-test/src/functionalext/dlns"
+ohos_executable("dlns_separated_test") {
+  subsystem_name = "musl"
+  part_name = "libc-test"
   include_dirs = [
     "../common",
     "//third_party/musl/porting/linux/user/include",
@@ -74,8 +78,9 @@ ohos_unittest("dlns_separated_test") {
   configs = [ "//third_party/musl/libc-test/src/common:config_runtest" ]
 }
 
-ohos_unittest("dlns_special_scene_test") {
-  module_out_path = "libc-test/src/functionalext/dlns"
+ohos_executable("dlns_special_scene_test") {
+  subsystem_name = "musl"
+  part_name = "libc-test"
   include_dirs = [
     "../common",
     "//third_party/musl/porting/linux/user/include",
@@ -86,8 +91,9 @@ ohos_unittest("dlns_special_scene_test") {
   configs = [ "//third_party/musl/libc-test/src/common:config_runtest" ]
 }
 
-ohos_unittest("dlns_dlsym_test") {
-  module_out_path = "libc-test/src/functionalext/dlns"
+ohos_executable("dlns_dlsym_test") {
+  subsystem_name = "musl"
+  part_name = "libc-test"
   include_dirs = [
     "../common",
     "//third_party/musl/porting/linux/user/include",
