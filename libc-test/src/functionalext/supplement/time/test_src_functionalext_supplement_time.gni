@@ -12,11 +12,11 @@
 # limitations under the License.
 
 functionalext_supplement_time_test = [
-  "difftime",
-  "gmtime_r",
-  "gmtime",
-  "mktime",
-  "time",
+  "difftime_sup",
+  "gmtime_r_sup",
+  "gmtime_sup",
+  "mktime_sup",
+  "time_sup",
   "timer_create",
   "timer_delete",
   "timer_settime",
@@ -24,7 +24,7 @@ functionalext_supplement_time_test = [
   "timer_getoverrun",
   "times",
   "timespec_get",
-  "utime",
+  "utime_sup",
   "wcsftime",
   "wcsftime_l",
   "nanosleep",

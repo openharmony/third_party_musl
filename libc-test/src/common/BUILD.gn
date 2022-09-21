@@ -40,14 +40,13 @@ ohos_static_library("libtest") {
   output_name = "libtest"
 }
 
-ohos_unittest("runtest") {
-  module_out_path = "libc-test/src/common"
-
+ohos_executable("runtest") {
   sources = [ "runtest.c" ]
 
   configs = [ ":config_runtest" ]
-
   deps = [ ":libtest" ]
+  subsystem_name = "musl"
+  part_name = "libc-test"
 }
 
 config("config_runtest") {
