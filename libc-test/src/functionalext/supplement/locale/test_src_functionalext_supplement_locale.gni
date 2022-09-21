@@ -12,12 +12,12 @@
 # limitations under the License.
 
 functionalext_supplement_locale_test = [
-  "duplocale",
-  "langinfo",
-  "localeconv",
-  "newlocale",
-  "setlocale",
-  "uselocale",
+  "duplocale_sup",
+  "langinfo_sup",
+  "localeconv_sup",
+  "newlocale_sup",
+  "setlocale_sup",
+  "uselocale_sup",
   "strxfrm",
   "wcscoll",
   "wcsxfrm",

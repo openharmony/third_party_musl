@@ -23,8 +23,8 @@ functionalext_time_test = [
   "localtime",
   "mktime",
   "strftime_l",
-  "strftime",
-  "strptime",
-  "time",
+  "strftime_ext",
+  "strptime_ext",
+  "time_ext",
   "timegm",
 ]

@@ -12,8 +12,8 @@
 # limitations under the License.
 
 functionalext_supplement_stat_test = [
-  "statvfs",
-  "stat",
+  "statvfs_sup",
+  "stat_sup",
   "statfs",
   "mkfifo",
   "mkfifoat",

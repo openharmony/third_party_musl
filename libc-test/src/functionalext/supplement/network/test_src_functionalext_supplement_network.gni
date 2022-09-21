@@ -50,7 +50,7 @@ functionalext_supplement_network_test = [
   "recvmsg",
   "getpeername",
   "freeifaddrs",
-  "getsockopt",
+  "getsockopt_network",
   "gai_strerror",
   "recv",
   "freeaddrinfo",
