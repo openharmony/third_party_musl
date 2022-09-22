@@ -451,7 +451,7 @@ static int printf_core(FILE *f, const char *fmt, va_list *ap, union arg *nl_arg,
 #ifdef LOSCFG_FS_VFS
 	struct winsize wsz;
 
-	if (f && (f->write == __stdout_write) && !ioctl(f->fd, TIOCGWINSZ, &wsz)) {
+	if (f && (f->write == __stdout_write)) {
 		f->lbf = '\n';
 		f->write = __stdio_write;
 		f->wpos = f->wbase = f->buf;
