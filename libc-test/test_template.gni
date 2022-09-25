@@ -27,8 +27,9 @@ template("test_unittest") {
   target_name = invoker.target_name
   target_dir = invoker.target_dir
 
-  target("ohos_unittest", "${target_name}") {
-    module_out_path = "libc-test/src/${target_dir}"
+  target("ohos_executable", "${target_name}") {
+    subsystem_name = "musl"
+    part_name = "libc-test"
 
     if (target_cpu == "arm64") {
       defines = [ "_ARM64_" ]
