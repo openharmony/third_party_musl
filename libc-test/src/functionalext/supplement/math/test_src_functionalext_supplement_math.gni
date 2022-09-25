@@ -17,7 +17,7 @@ functionalext_supplement_math_test = [
   "__signbitf",
   "finite",
   "nanl",
-  "rint",
+  "rint_ext",
   "__fpclassifyl",
   "finitef",
   "significand",
