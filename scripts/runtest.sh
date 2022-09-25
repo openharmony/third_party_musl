@@ -1,7 +1,7 @@
 
-cd /data/tests/libc-test
-rm src/REPORT
-touch src/REPORT
+cd /data/tests/libc-test/src
+rm /data/tests/libc-test/REPORT
+touch /data/tests/libc-test/REPORT
 
 function FileSuffix() {
     local filename="$1"
@@ -12,7 +12,8 @@ function FileSuffix() {
 
 #Test cases that need to be shielded
 ShieldedList=("trace_stresstest" "fatal_message" "tgkill" "exittest01" "exittest02"
-"syslog" "vsyslog" "ldso_randomization_manual" "ldso_randomization_test" "dlopen_ext_relro_test")
+"syslog" "vsyslog" "ldso_randomization_manual" "ldso_randomization_test" "dlopen_ext_relro_test"
+"runtest")
 
 function ShieldedCases() {
 	for filename in ${ShieldedList[*]}
@@ -24,62 +25,18 @@ function ShieldedCases() {
 	done
 }
 
-for dir in src/*
+for file in `ls *`
 do
-	if [ -d $dir ]; then
-		if [ "$dir" = "src/functionalext" ]
-		then
-			# continue
-			for subdir in $dir/*
-			do
-				if [ "$subdir" = "src/functionalext/supplement" ]
-				then
-					for supplementsubdir in $subdir/*
-					do
-						for subfile in `ls $supplementsubdir`
-						do
-							if [ "$(FileSuffix ${subfile})" = "so" ] \
-							|| [ "$(ShieldedCases ${subfile})" = "ShieldedCases" ] \
-							|| [ -d ./$supplementsubdir/$subfile ]
-							then
-								continue
-							else
-								src/common/runtest -w '' ./$supplementsubdir/$subfile >> src/REPORT
-							fi
-						done
-					done
-				else
-					for file in `ls $subdir`
-					do
-						if [ "$(FileSuffix ${file})" = "so" ] \
-						|| [ "$(ShieldedCases ${file})" = "ShieldedCases" ] \
-						|| [ -d ./$subdir/$file ]
-						then
-							continue
-						else
-							# echo file=$subdir/$file
-							src/common/runtest -w '' ./$subdir/$file >> src/REPORT
-						fi
-					done
-				fi
-			done
-		else
-			# continue
-			for file in `ls $dir`
-			do
-				if [ "$file" = "runtest" ] \
-				|| [ "$(FileSuffix ${file})" = "so" ] \
-				|| [ -d $file ]
-				then
-					continue
-				elif [ "$file" = "tgkill" ]
-				then
-				    src/common/runtest -w '' $dir/$file 12345 34567 >> src/REPORT
-				else
-					# echo file=$dir/$file
-					src/common/runtest -w '' $dir/$file >> src/REPORT
-				fi
-			done
-		fi
+	if [ "$(FileSuffix ${file})" = "so" ] \
+	|| [ "$(ShieldedCases ${file})" = "ShieldedCases" ] \
+	|| [ -d $file ]
+	then
+		continue
+	elif [ "$file" = "tgkill" ]
+	then
+		./runtest -w '' $file 12345 34567 >> /data/tests/libc-test/REPORT
+	else
+		echo $subdir/$file >> FileList
+		./runtest -w '' $file >> /data/tests/libc-test/REPORT
 	fi
 done

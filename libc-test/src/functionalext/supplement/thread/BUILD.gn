@@ -20,136 +20,153 @@ default_include_dirs =
 
 default_configs = [ "//third_party/musl/libc-test/src/common:config_runtest" ]
 
-default_module_out_path = "libc-test/src/functionalext/supplement/thread"
-
-ohos_unittest("pthread_attr_getstack_test") {
-  module_out_path = default_module_out_path
+ohos_executable("pthread_attr_getstack_test") {
+  subsystem_name = "musl"
+  part_name = "libc-test"
   include_dirs = default_include_dirs
   configs = default_configs
   sources = [ "pthread_attr_getstack.c" ]
 }
 
-ohos_unittest("pthread_attr_setdetachstate_test") {
-  module_out_path = default_module_out_path
+ohos_executable("pthread_attr_setdetachstate_test") {
+  subsystem_name = "musl"
+  part_name = "libc-test"
   include_dirs = default_include_dirs
   configs = default_configs
   sources = [ "pthread_attr_setdetachstate.c" ]
 }
 
-ohos_unittest("pthread_attr_setstacksize_test") {
-  module_out_path = default_module_out_path
+ohos_executable("pthread_attr_setstacksize_test") {
+  subsystem_name = "musl"
+  part_name = "libc-test"
   include_dirs = default_include_dirs
   configs = default_configs
   sources = [ "pthread_attr_setstacksize.c" ]
 }
 
-ohos_unittest("pthread_condattr_destroy_test") {
-  module_out_path = default_module_out_path
+ohos_executable("pthread_condattr_destroy_test") {
+  subsystem_name = "musl"
+  part_name = "libc-test"
   include_dirs = default_include_dirs
   configs = default_configs
   sources = [ "pthread_condattr_destroy.c" ]
 }
 
-ohos_unittest("pthread_condattr_init_test") {
-  module_out_path = default_module_out_path
+ohos_executable("pthread_condattr_init_test") {
+  subsystem_name = "musl"
+  part_name = "libc-test"
   include_dirs = default_include_dirs
   configs = default_configs
   sources = [ "pthread_condattr_init.c" ]
 }
 
-ohos_unittest("pthread_create_test") {
-  module_out_path = default_module_out_path
+ohos_executable("pthread_create_test") {
+  subsystem_name = "musl"
+  part_name = "libc-test"
   include_dirs = default_include_dirs
   configs = default_configs
   sources = [ "pthread_create.c" ]
 }
 
-ohos_unittest("pthread_exit_test") {
-  module_out_path = default_module_out_path
+ohos_executable("pthread_exit_test") {
+  subsystem_name = "musl"
+  part_name = "libc-test"
   include_dirs = default_include_dirs
   configs = default_configs
   sources = [ "pthread_exit.c" ]
 }
 
-ohos_unittest("pthread_getattr_np_test") {
-  module_out_path = default_module_out_path
+ohos_executable("pthread_getattr_np_test") {
+  subsystem_name = "musl"
+  part_name = "libc-test"
   include_dirs = default_include_dirs
   configs = default_configs
   sources = [ "pthread_getattr_np.c" ]
 }
 
-ohos_unittest("pthread_getschedparam_test") {
-  module_out_path = default_module_out_path
+ohos_executable("pthread_getschedparam_test") {
+  subsystem_name = "musl"
+  part_name = "libc-test"
   include_dirs = default_include_dirs
   configs = default_configs
   sources = [ "pthread_getschedparam.c" ]
 }
 
-ohos_unittest("pthread_getspecific_test") {
-  module_out_path = default_module_out_path
+ohos_executable("pthread_getspecific_test") {
+  subsystem_name = "musl"
+  part_name = "libc-test"
   include_dirs = default_include_dirs
   configs = default_configs
   sources = [ "pthread_getspecific.c" ]
 }
 
-ohos_unittest("pthread_key_create_test") {
-  module_out_path = default_module_out_path
+ohos_executable("pthread_key_create_test") {
+  subsystem_name = "musl"
+  part_name = "libc-test"
   include_dirs = default_include_dirs
   configs = default_configs
   sources = [ "pthread_key_create.c" ]
 }
 
-ohos_unittest("pthread_mutex_init_test") {
-  module_out_path = default_module_out_path
+ohos_executable("pthread_mutex_init_test") {
+  subsystem_name = "musl"
+  part_name = "libc-test"
   include_dirs = default_include_dirs
   configs = default_configs
   sources = [ "pthread_mutex_init.c" ]
 }
 
-ohos_unittest("pthread_mutex_lock_test") {
-  module_out_path = default_module_out_path
+ohos_executable("pthread_mutex_lock_test") {
+  subsystem_name = "musl"
+  part_name = "libc-test"
   include_dirs = default_include_dirs
   configs = default_configs
   sources = [ "pthread_mutex_lock.c" ]
 }
 
-ohos_unittest("pthread_mutex_unlock_test") {
-  module_out_path = default_module_out_path
+ohos_executable("pthread_mutex_unlock_test") {
+  subsystem_name = "musl"
+  part_name = "libc-test"
   include_dirs = default_include_dirs
   configs = default_configs
   sources = [ "pthread_mutex_unlock.c" ]
 }
 
-ohos_unittest("pthread_once_test") {
-  module_out_path = default_module_out_path
+ohos_executable("pthread_once_test") {
+  subsystem_name = "musl"
+  part_name = "libc-test"
   include_dirs = default_include_dirs
   configs = default_configs
   sources = [ "pthread_once.c" ]
 }
 
-ohos_unittest("pthread_rwlock_destroy_test") {
-  module_out_path = default_module_out_path
+ohos_executable("pthread_rwlock_destroy_test") {
+  subsystem_name = "musl"
+  part_name = "libc-test"
   include_dirs = default_include_dirs
   configs = default_configs
   sources = [ "pthread_rwlock_destroy.c" ]
 }
 
-ohos_unittest("pthread_setschedparam_test") {
-  module_out_path = default_module_out_path
+ohos_executable("pthread_setschedparam_test") {
+  subsystem_name = "musl"
+  part_name = "libc-test"
   include_dirs = default_include_dirs
   configs = default_configs
   sources = [ "pthread_setschedparam.c" ]
 }
 
-ohos_unittest("pthread_setspecific_test") {
-  module_out_path = default_module_out_path
+ohos_executable("pthread_setspecific_test") {
+  subsystem_name = "musl"
+  part_name = "libc-test"
   include_dirs = default_include_dirs
   configs = default_configs
   sources = [ "pthread_setspecific.c" ]
 }
 
-ohos_unittest("pthread_sigmask_test") {
-  module_out_path = default_module_out_path
+ohos_executable("pthread_sigmask_test") {
+  subsystem_name = "musl"
+  part_name = "libc-test"
   include_dirs = default_include_dirs
   configs = default_configs
   sources = [ "pthread_sigmask.c" ]

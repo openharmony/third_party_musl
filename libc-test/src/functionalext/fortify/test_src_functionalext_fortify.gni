@@ -12,11 +12,11 @@
 # limitations under the License.
 
 functionalext_fortify_list = [
-  "fcntl",
+  "fcntl_ext",
   "poll",
-  "socket",
-  "stat",
+  "socket_ext",
+  "stat_ext",
   "unistd",
   "stdio",
-  "string",
+  "string_ext",
 ]
