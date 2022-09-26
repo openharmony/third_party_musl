@@ -121,6 +121,8 @@ group("musl_sysroot") {
     ":copy_musl_sysroot",
     ":musl_arm_bits_arm32",
     ":musl_arm_uapi_arm32",
+    ":musl_bits_aarch64",
+    ":musl_bits_x86_64",
   ]
 }
 
@@ -156,6 +158,18 @@ musl_libs_arm32 = [
   "//third_party/musl:create_alltypes_h(//build/toolchain/ohos:ohos_clang_arm)",
   "//third_party/musl:create_syscall_h(//build/toolchain/ohos:ohos_clang_arm)",
   "//third_party/musl:musl_copy_inc_bits(//build/toolchain/ohos:ohos_clang_arm)",
+]
+
+musl_libs_aarch64 = [
+  "//third_party/musl:create_alltypes_h(//build/toolchain/ohos:ohos_clang_arm64)",
+  "//third_party/musl:create_syscall_h(//build/toolchain/ohos:ohos_clang_arm64)",
+  "//third_party/musl:musl_copy_inc_bits(//build/toolchain/ohos:ohos_clang_arm64)",
+]
+
+musl_libs_x86_64 = [
+  "//third_party/musl:create_alltypes_h(//build/toolchain/ohos:ohos_clang_x86_64)",
+  "//third_party/musl:create_syscall_h(//build/toolchain/ohos:ohos_clang_x86_64)",
+  "//third_party/musl:musl_copy_inc_bits(//build/toolchain/ohos:ohos_clang_x86_64)",
 ]
 
 musl_lib_arm32 = [
@@ -211,6 +225,46 @@ ohos_copy("musl_arm_bits_arm32") {
                  "/usr/include/arm-linux-ohos/bits/${s}" ]
   }
   outputs = [ "$ndk_os_irrelevant_out_dir/sysroot/usr/include/arm-linux-ohos/bits/{{source_file_part}}" ]
+}
+
+## aarch64-linux-ohos bits directory
+ohos_copy("musl_bits_aarch64") {
+  deps = musl_libs_aarch64
+  sources = []
+  sources_temp = [
+    "alltypes.h",
+    "syscall.h",
+  ]
+  sources_temp += musl_inc_bits_files
+  sources_orig = get_path_info(sources_temp, "file")
+
+  # print("${sources_orig}")
+
+  foreach(s, sources_orig) {
+    sources += [ get_label_info(deps[0], "target_out_dir") +
+                 "/usr/include/aarch64-linux-ohos/bits/${s}" ]
+  }
+  outputs = [ "$ndk_os_irrelevant_out_dir/sysroot/usr/include/aarch64-linux-ohos/bits/{{source_file_part}}" ]
+}
+
+## x86_64-linux-ohos bits directory
+ohos_copy("musl_bits_x86_64") {
+  deps = musl_libs_x86_64
+  sources = []
+  sources_temp = [
+    "alltypes.h",
+    "syscall.h",
+  ]
+  sources_temp += musl_inc_bits_files
+  sources_orig = get_path_info(sources_temp, "file")
+
+  # print("${sources_orig}")
+
+  foreach(s, sources_orig) {
+    sources += [ get_label_info(deps[0], "target_out_dir") +
+                 "/usr/include/x86_64-linux-ohos/bits/${s}" ]
+  }
+  outputs = [ "$ndk_os_irrelevant_out_dir/sysroot/usr/include/x86_64-linux-ohos/bits/{{source_file_part}}" ]
 }
 
 ohos_copy("musl_ndk_libs_arm32") {
