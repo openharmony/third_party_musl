@@ -38,4 +38,7 @@ ICCARM_ADAPT_SRC_COMMON = [
   "$MUSLPORTINGDIR/src/network/htons.c",
   "$MUSLPORTINGDIR/src/network/ntohl.c",
   "$MUSLPORTINGDIR/src/network/ntohs.c",
+  "$MUSLPORTINGDIR/src/regex/regcomp.c",
+  "$MUSLPORTINGDIR/src/regex/regexec.c",
+  "$MUSLPORTINGDIR/src/regex/tre-mem.c",
 ]
