@@ -13,8 +13,11 @@
  * limitations under the License.
  */
 
-#include <stdbool.h>
-#include "functionalext.h"
+#include <string.h>
+#include "test.h"
+
+char one[50];
+char two[50];
 
 /**
  * @tc.name      : memmove_0100
@@ -23,14 +26,13 @@
  */
 void memmove_0100(void)
 {
-    char str[] = "memmove_0100";
-    void *p = memmove(str, str, 5);
-    EXPECT_EQ("memmove_0100", p, str);
-    bool flag = false;
-    if (p != NULL) {
-        flag = true;
+    memset(one, 0, sizeof(one));
+
+    strcpy(one, "abcdefgh");
+    memmove(one, one, 9);
+    if (strcmp(one, "abcdefgh")) {
+        t_error("%s memmove failed\n", __func__);
     }
-    EXPECT_TRUE("memmove_0100", flag);
 }
 
 /**
@@ -40,19 +42,18 @@ void memmove_0100(void)
  */
 void memmove_0200(void)
 {
-    bool successflag = false;
-    char str[] = "memmove_0200";
-    char *dest = str + 3, *src = str;
-    void *p = memmove(dest, src, 2);
-    if (strstr(dest, src) != NULL || strstr(src, dest) != NULL) {
-        successflag = true;
+    memset(one, 0, sizeof(one));
+    memset(two, 0, sizeof(two));
+
+    strcpy(one, "helloWorld");
+    strcpy(two, "foo");
+    memmove(two, one, 11);
+    if (strcmp(one, "helloWorld")) {
+        t_error("%s memmove failed\n", __func__);
     }
-    EXPECT_TRUE("memmove_0200", successflag);
-    bool flag = false;
-    if (p != NULL) {
-        flag = true;
+    if (strcmp(two, "helloWorld")) {
+        t_error("%s memmove failed\n", __func__);
     }
-    EXPECT_TRUE("memmove_0200", flag);
 }
 
 /**
@@ -62,19 +63,13 @@ void memmove_0200(void)
  */
 void memmove_0300(void)
 {
-    bool successflag = false;
-    char str[] = "memmove_0300";
-    char *dest = str, *src = str + 2;
-    void *p = memmove(dest, src, 5);
-    if (strstr(dest, src) != NULL || strstr(src, dest) != NULL) {
-        successflag = true;
+    memset(one, 0, sizeof(one));
+
+    strcpy(one, "abcdefgh");
+    memmove(one + 1, one + 2, 7);
+    if (strcmp(one, "acdefgh")) {
+        t_error("%s memmove failed\n", __func__);
     }
-    EXPECT_TRUE("memmove_0300", successflag);
-    bool flag = false;
-    if (p != NULL) {
-        flag = true;
-    }
-    EXPECT_TRUE("memmove_0300", flag);
 }
 
 /**
@@ -84,19 +79,13 @@ void memmove_0300(void)
  */
 void memmove_0400(void)
 {
-    bool successflag = false;
-    char str[] = "memmove_0400";
-    char *dest = str + 2, *src = str;
-    void *p = memmove(dest, src, 5);
-    if (strstr(dest, src) != NULL || strstr(src, dest) != NULL) {
-        successflag = true;
+    memset(one, 0, sizeof(one));
+
+    strcpy(one, "abcdefgh");
+    memmove(one + 1, one, 9);
+    if (strcmp(one, "aabcdefgh")) {
+        t_error("%s memmove failed\n", __func__);
     }
-    EXPECT_TRUE("memmove_0400", successflag);
-    bool flag = false;
-    if (p != NULL) {
-        flag = true;
-    }
-    EXPECT_TRUE("memmove_0400", flag);
 }
 
 int main(int argc, char *argv[])

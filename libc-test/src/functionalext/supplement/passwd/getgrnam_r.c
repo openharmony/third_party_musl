@@ -13,73 +13,63 @@
  * limitations under the License.
  */
 
-#include <fcntl.h>
+#include <errno.h>
 #include <grp.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <signal.h>
-#include <stdint.h>
-#include <stdbool.h>
-#include <unistd.h>
-#include "functionalext.h"
+#include <string.h>
+#include "test.h"
 
 /**
  * @tc.name      : getgrnam_r_0100
- * @tc.desc      : Verify that the specified group data can be obtained from the group file (parameters are valid)
+ * @tc.desc      : Get group file entry
  * @tc.level     : Level 0
  */
 void getgrnam_r_0100(void)
 {
-    system("ps -eo command,gid | grep -E \"GID|getgrnam_r\" > "
-           "/data/tests/libc-test/src/functionalext/supplement/passwd/pss.txt");
-    char abc[256] = {0};
-    bool successflag = false;
-    FILE *fptr = fopen("/data/tests/libc-test/src/functionalext/supplement/passwd/pss.txt", "r");
-    if (fptr) {
-        while (!feof(fptr)) {
-            fread(abc, sizeof(abc), 1, fptr);
-            char num[8] = {0};
-            int index = 0;
-            for (int i = 0; i < (int)strlen(abc); i++) {
-                if (abc[i] >= '0' && abc[i] <= '9') {
-                    num[index++] += abc[i];
-                }
-            }
-            num[index] = '\0';
-            gid_t intgid = atoi(num);
-            int data;
-            short int lp;
-            struct group grp;
-            struct group *grpptr = &grp;
-            struct group *tempGrpPtr;
-            char grpbuffer[200];
-            int grplinelen = sizeof(grpbuffer);
-            data = getgrnam_r("root", grpptr, grpbuffer, grplinelen, &tempGrpPtr);
-            if (data == intgid) {
-                successflag = true;
-            }
-        }
+    errno = 0;
+    char buf[512];
+    gid_t gid = 0;
+
+    struct group *grp;
+    struct group grp_storage;
+    const char *group_name = "root";
+
+    int result = getgrnam_r(group_name, &grp_storage, buf, sizeof(buf), &grp);
+    if (result != 0) {
+        t_error("%s getgrnam_r failed\n", __func__);
     }
-    EXPECT_TRUE("getgrgid_r_0100", successflag);
-    fclose(fptr);
-    remove("/data/tests/libc-test/src/functionalext/supplement/passwd/pss.txt");
+    if (errno != 0) {
+        t_error("%s errno should be zero\n", __func__);
+    }
+
+    if (!grp) {
+        t_error("%s failed, grp is NULL\n", __func__);
+    }
+    if (strcmp(group_name, grp->gr_name)) {
+        t_error("%s grp->gr_name is %s\n", __func__, grp->gr_name);
+    }
+    if (gid != grp->gr_gid) {
+        t_error("%s gr_gid is %d\n", __func__, grp->gr_gid);
+    }
+    if (!grp->gr_mem) {
+        t_error("%s grp->gr_mem is NULL\n", __func__);
+    }
 }
 
 /**
  * @tc.name      : getgrnam_r_0200
- * @tc.desc      : Verify that the specified group data can be obtained from the group file (parameter invalid)
+ * @tc.desc      : Invalid parameter test
  * @tc.level     : Level 2
  */
 void getgrnam_r_0200(void)
 {
-    int data;
-    struct group grp;
-    struct group *grpptr = &grp;
-    struct group *tempGrpPtr;
-    char grpbuffer[200];
-    int grplinelen = sizeof(grpbuffer);
-    data = getgrnam_r("root", grpptr, grpbuffer, -1, &tempGrpPtr);
-    EXPECT_EQ("getgrnam_r_0200", data, 0);
+    char buf[512];
+    struct group *grp;
+    struct group grp_storage;
+
+    int result = getgrnam_r("invalid_name", &grp_storage, buf, sizeof(buf), &grp);
+    if (result) {
+        t_error("%s getgrnam_r should be failed\n", __func__);
+    }
 }
 
 int main(int argc, char *argv[])

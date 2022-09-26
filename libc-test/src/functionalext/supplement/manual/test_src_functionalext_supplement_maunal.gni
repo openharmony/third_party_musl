@@ -16,5 +16,4 @@ functionalext_supplement_manual_test = [
   "termios:functionalext_supplement_manual_termios_test",
   "unistd:functionalext_supplement_manual_unistd_test",
   "network:functionalext_supplement_manual_network_test",
-  "thread:functionalext_supplement_manual_thread_test",
 ]

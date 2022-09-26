@@ -14,7 +14,6 @@
  */
 
 #include <getopt.h>
-#include <stdint.h>
 #include "functionalext.h"
 
 const int32_t FAILED = -1;

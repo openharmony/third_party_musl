@@ -14,8 +14,6 @@
  */
 
 #include <limits.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <unistd.h>
 #include "functionalext.h"
 
@@ -27,8 +25,7 @@
  */
 void fpathconf_0100(void)
 {
-    long result;
-    result = fpathconf(0, _PC_LINK_MAX);
+    long result = fpathconf(0, _PC_LINK_MAX);
     EXPECT_EQ("fpathconf_0100", result, _POSIX_LINK_MAX);
 }
 
@@ -40,8 +37,7 @@ void fpathconf_0100(void)
  */
 void fpathconf_0200(void)
 {
-    long result;
-    result = fpathconf(0, _PC_SOCK_MAXBUF);
+    long result = fpathconf(0, _PC_SOCK_MAXBUF);
     EXPECT_EQ("fpathconf_0200", result, -1);
 }
 
@@ -53,8 +49,7 @@ void fpathconf_0200(void)
  */
 void fpathconf_0300(void)
 {
-    long result;
-    result = fpathconf(0, _PC_FILESIZEBITS);
+    long result = fpathconf(0, _PC_FILESIZEBITS);
     EXPECT_EQ("fpathconf_0300", result, FILESIZEBITS);
 }
 
@@ -66,8 +61,7 @@ void fpathconf_0300(void)
  */
 void fpathconf_0400(void)
 {
-    long result;
-    result = fpathconf(0, _PC_2_SYMLINKS);
+    long result = fpathconf(0, _PC_2_SYMLINKS);
     EXPECT_EQ("fpathconf_0400", result, 1);
 }
 
@@ -79,8 +73,7 @@ void fpathconf_0400(void)
  */
 void fpathconf_0500(void)
 {
-    long result;
-    result = fpathconf(0, 1000);
+    long result = fpathconf(0, 1000);
     EXPECT_EQ("fpathconf_0500", result, -1);
 }
 

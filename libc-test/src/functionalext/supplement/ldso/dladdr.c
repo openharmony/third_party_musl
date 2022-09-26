@@ -14,9 +14,7 @@
  */
 
 #include <dlfcn.h>
-#include <stdio.h>
 #include <stdlib.h>
-
 #include "functionalext.h"
 
 void test1()
@@ -34,13 +32,10 @@ void dladdr_0100(void)
     int num = 0;
     int ret = dladdr((void *)test1, &info);
     EXPECT_EQ("dladdr_0100", ret, 1);
+
     char *name = "dladdr";
-    if (strstr(info.dli_fname, name)) {
-        num = 1;
-    } else {
-        num = 2;
-    }
-    EXPECT_EQ("dladdr_0100", num, 1);
+    char *result = strstr(info.dli_fname, name);
+    EXPECT_PTRNE("dladdr_0100", result, NULL);
 }
 
 /**
@@ -55,12 +50,7 @@ void dladdr_0200(void)
     int num = 0;
     int ret = dladdr(NULL, &info);
     EXPECT_EQ("dladdr_0100", ret, 0);
-    if (info.dli_fname == NULL) {
-        num = 1;
-    } else {
-        num = 2;
-    }
-    EXPECT_EQ("dladdr_0200", num, 1);
+    EXPECT_TRUE("dladdr_0200", info.dli_fname == NULL);
 }
 
 int main(int argc, char *argv[])

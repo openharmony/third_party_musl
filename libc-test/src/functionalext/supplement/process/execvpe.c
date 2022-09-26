@@ -13,18 +13,11 @@
  * limitations under the License.
  */
 
-#include <errno.h>
-#include <signal.h>
+#include <unistd.h>
 #include <stdlib.h>
-#include <string.h>
-#include <stdbool.h>
-#include <stdint.h>
 #include "functionalext.h"
 
-const int32_t COUNT_NEGATIVE = -1;
 char *my_env[] = {"THIS=environment will be", "PASSED=to new process by", "the EXEC=functions", NULL};
-int result_1;
-int result_2;
 
 /**
  * @tc.name      : execvpe_0100
@@ -34,22 +27,18 @@ int result_2;
  */
 void execvpe_0100(void)
 {
-    bool flag = false;
-    char *path;
-    path = getenv("touch");
+    char *path = getenv("touch");
     pid_t fpid;
     fpid = fork();
     if (fpid == 0) {
         char *argv[] = {"touch", "touch", "/data/test.txt", 0};
-        result_1 = execvpe("touch", argv, &path);
+        int result = execvpe("touch", argv, &path);
+        EXPECT_NE("execvpe_0100", result, -1);
     }
+
     sleep(1);
     FILE *fptr = fopen("/data/test.txt", "r");
-    if (fptr != NULL) {
-        flag = true;
-    }
-    EXPECT_NE("execvpe_0100", result_1, COUNT_NEGATIVE);
-    EXPECT_TRUE("execvpe_0100", flag);
+    EXPECT_PTRNE("execvpe_0100", fptr, NULL);
     fclose(fptr);
     remove("/data/test.txt");
 }
@@ -61,24 +50,22 @@ void execvpe_0100(void)
  */
 void execvpe_0200(void)
 {
-    bool flag = false;
     char *path = getenv("touch");
     setenv("touch", "\0", 1);
     pid_t fpid;
     fpid = fork();
     if (fpid == 0) {
         char *argv[] = {"touch", "touch", "/data/test.txt", 0};
-        result_2 = execvpe("touch", argv, &path);
+        int result = execvpe("touch", argv, &path);
+        EXPECT_NE("execvpe_0100", result, -1);
     }
+
     sleep(1);
     FILE *fptr = fopen("/data/test.txt", "r");
-    if (fptr != NULL) {
-        flag = true;
-    }
+    EXPECT_PTRNE("execvpe_0100", fptr, NULL);
+
     fclose(fptr);
     remove("/data/test.txt");
-    EXPECT_NE("execvpe_0200", result_2, COUNT_NEGATIVE);
-    EXPECT_TRUE("execvpe_0200", flag);
     unsetenv("touch");
 }
 
@@ -90,11 +77,10 @@ void execvpe_0200(void)
  */
 void execvpe_0300(void)
 {
-    int result;
     char buff[] = "\0";
     char *argv[] = {"ls", "-al", "/etc/passwd", 0};
-    result = execvpe(buff, argv, my_env);
-    EXPECT_EQ("execvpe_0300", result, COUNT_NEGATIVE);
+    int result = execvpe(buff, argv, my_env);
+    EXPECT_EQ("execvpe_0300", result, -1);
 }
 
 /**
@@ -105,14 +91,13 @@ void execvpe_0300(void)
  */
 void execvpe_0400(void)
 {
-    int result;
     char *argv[] = {"ls", "-al", "/etc/passwd", 0};
     char buff[300];
     for (int i = 0; i < 300; i++) {
         buff[i] = 'a';
     }
-    result = execvpe(buff, argv, my_env);
-    EXPECT_EQ("execvpe_0400", result, COUNT_NEGATIVE);
+    int result = execvpe(buff, argv, my_env);
+    EXPECT_EQ("execvpe_0400", result, -1);
 }
 
 int main(int argc, char *argv[])

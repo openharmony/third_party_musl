@@ -13,16 +13,8 @@
  * limitations under the License.
  */
 
+#include <sys/auxv.h>
 #include <unistd.h>
-#include <stdlib.h>
-#include <signal.h>
-#include <fcntl.h>
-#include <stdarg.h>
-#include <sys/wait.h>
-#include <spawn.h>
-#include <errno.h>
-#include <limits.h>
-#include <string.h>
 #include "functionalext.h"
 
 /*
@@ -32,14 +24,9 @@
  */
 void getegid_0100(void)
 {
-    char struid[10];
-    system("id -g > ./id.txt");
-    FILE *fptr = fopen("id.txt", "r");
-    fread(struid, sizeof(struid), 1, fptr);
-    int id = atoi(struid);
-    gid_t gid = getegid();
-    remove("id.txt");
-    EXPECT_EQ("getegid_0100", gid, id);
+    unsigned long int ret = getauxval(AT_EGID);
+    gid_t egid = getegid();
+    EXPECT_EQ("getegid_0100", egid, ret);
 }
 
 int main(int argc, char *argv[])

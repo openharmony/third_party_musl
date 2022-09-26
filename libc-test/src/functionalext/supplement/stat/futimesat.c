@@ -14,77 +14,117 @@
  */
 
 #include <fcntl.h>
-#include <signal.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <time.h>
+#include <sys/stat.h>
 #include <sys/time.h>
-#include <unistd.h>
-#include "functionalext.h"
+#include "test.h"
 
-const int32_t COUNT_ZERO = 0;
-const int32_t COUNT_NEGATIVE = -1;
-const char *path = "/data/file.txt";
+const char *path = "/data";
 
 /**
  * @tc.name      : futimesat_0100
- * @tc.desc      : Verify that you can set the file access time and modify time (valid parameters, times is not 0)
+ * @tc.desc      : Change timestamps of a file relative to a directory file descriptor
  * @tc.level     : Level 0
  */
 void futimesat_0100(void)
 {
-    int result = 10;
-    int fd = open(path, O_RDWR | O_CREAT);
-    result = futimesat(fd, path, NULL);
-    EXPECT_EQ("futimesat_0100", result, COUNT_ZERO);
+    int dir_fd = open(path, O_RDONLY | O_DIRECTORY);
+    if (dir_fd < 0) {
+        t_error("%s open failed\n", __func__);
+    }
+
+    int fd = openat(dir_fd, "test.txt", O_CREAT | O_RDWR | O_EXCL, 0666);
+    if (fd < 0) {
+        t_error("%s openat failed\n", __func__);
+    }
+
+    write(fd, "helloworld", 5);
+
+    struct stat st1;
+    if (fstat(fd, &st1) != 0) {
+        t_error("%s fstat failed\n", __func__);
+    }
     close(fd);
-    remove(path);
+
+    struct timeval tv[2];
+    tv[0].tv_sec = st1.st_atime + 1;
+    tv[0].tv_usec = 0;
+    tv[1].tv_sec = st1.st_mtime + 1;
+    tv[1].tv_usec = 0;
+
+    int result = futimesat(dir_fd, "test.txt", tv);
+    if (result != 0) {
+        t_error("%s futimesat failed\n", __func__);
+    }
+
+    struct stat st2;
+    if (fstatat(dir_fd, "test.txt", &st2, 0) != 0) {
+        t_error("%s fstatat failed\n", __func__);
+    }
+
+    if (st2.st_mtime != tv[1].tv_sec) {
+        t_error("%s stat shows different mtime\n", __func__);
+    }
+
+    if (unlinkat(dir_fd, "test.txt", 0) != 0) {
+        t_error("%s unlinkat failed\n", __func__);
+    }
+
+    close(dir_fd);
 }
 
 /**
  * @tc.name      : futimesat_0200
- * @tc.desc      : Verify that you can set the file access time and modify time (valid parameters, times is 0)
+ * @tc.desc      : Test the return value of the function when timeval is NULL
  * @tc.level     : Level 1
  */
 void futimesat_0200(void)
 {
-    int result = 10;
-    int fd = open(path, O_RDWR | O_CREAT);
-    result = futimesat(fd, path, 0);
-    EXPECT_EQ("futimesat_0200", result, COUNT_ZERO);
-    close(fd);
-    remove(path);
+    int dir_fd = open(path, O_RDONLY | O_DIRECTORY);
+    if (dir_fd < 0) {
+        t_error("%s open failed\n", __func__);
+    }
+
+    int fd = openat(dir_fd, "test.txt", O_CREAT | O_RDWR | O_EXCL, 0666);
+    if (fd < 0) {
+        t_error("%s openat failed\n", __func__);
+    }
+
+    int result = futimesat(dir_fd, "test.txt", NULL);
+    if (result != 0) {
+        t_error("%s futimesat failed\n", __func__);
+    }
+
+    if (unlinkat(dir_fd, "test.txt", 0) != 0) {
+        t_error("%s unlinkat failed\n", __func__);
+    }
+
+    close(dir_fd);
 }
 
 /**
  * @tc.name      : futimesat_0300
- * @tc.desc      : Verify that file access time and modification time cannot be set (the dirfd parameter is invalid)
+ * @tc.desc      : Test the return value of the function when dirfd is invalid
  * @tc.level     : Level 2
  */
 void futimesat_0300(void)
 {
-    int result = 10;
-    int fd = open(path, O_RDWR | O_CREAT);
-    close(fd);
-    remove(path);
-    result = futimesat(fd, path, NULL);
-    EXPECT_EQ("futimesat_0300", result, COUNT_NEGATIVE);
+    int result = futimesat(-1, "test.txt", NULL);
+    if (result != -1) {
+        t_error("%s futimesat should be failed\n", __func__);
+    }
 }
 
 /**
  * @tc.name      : futimesat_0400
- * @tc.desc      : Validation cannot set file access time and modify time (pathname parameter invalid)
+ * @tc.desc      : Test the return value of the function when pathname is invalid
  * @tc.level     : Level 2
  */
 void futimesat_0400(void)
 {
-    int result = 10;
-    int fd = open(path, O_RDWR | O_CREAT);
-    result = futimesat(fd, "", NULL);
-    EXPECT_EQ("futimesat_0400", result, COUNT_NEGATIVE);
-    close(fd);
-    remove(path);
+    int result = futimesat(AT_FDCWD, NULL, NULL);
+    if (result != -1) {
+        t_error("%s futimesat should be failed\n", __func__);
+    }
 }
 
 int main(int argc, char *argv[])

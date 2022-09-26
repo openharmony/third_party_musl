@@ -13,9 +13,11 @@
  * limitations under the License.
  */
 
+#include <stdio.h>
 #include <ifaddrs.h>
-#include <stdbool.h>
-#include "functionalext.h"
+#include <netinet/in.h>
+#include <string.h>
+#include "test.h"
 
 /**
  * @tc.name      : freeifaddrs_0100
@@ -24,16 +26,42 @@
  */
 void freeifaddrs_0100(void)
 {
-    struct ifaddrs *ifaddr;
-    int ret = getifaddrs(&ifaddr);
-    ifaddr->ifa_next = NULL;
-    freeifaddrs(ifaddr);
-    ifaddr = NULL;
-    bool flag = false;
-    if (ifaddr == NULL) {
-        flag = true;
+    struct ifaddrs *addrs = NULL;
+    struct ifaddrs *lo_inet4 = NULL;
+    struct ifaddrs *lo_inet6 = NULL;
+    struct ifaddrs *lo_packet = NULL;
+
+    int result = getifaddrs(&addrs);
+    if (result != 0) {
+        t_error("%s getifaddrs failed\n", __func__);
     }
-    EXPECT_TRUE("freeifaddrs_0100", flag);
+    if (!addrs) {
+        t_error("%s addrs is NULL\n", __func__);
+    }
+
+    for (struct ifaddrs *addr = addrs; addr != NULL; addr = addr->ifa_next) {
+        if (addr->ifa_name && strcmp(addr->ifa_name, "lo") == 0) {
+            if (addr->ifa_addr && addr->ifa_addr->sa_family == AF_INET) {
+                lo_inet4 = addr;
+            } else if (addr->ifa_addr && addr->ifa_addr->sa_family == AF_INET6) {
+                lo_inet6 = addr;
+            } else if (addr->ifa_addr && addr->ifa_addr->sa_family == AF_PACKET) {
+                lo_packet = addr;
+            }
+        }
+    }
+
+    if (lo_inet4 == NULL) {
+        t_error("%s lo_inet4 is NULL\n", __func__);
+    }
+    if (lo_inet6 == NULL) {
+        t_error("%s lo_inet4 is NULL\n", __func__);
+    }
+    if (lo_packet == NULL) {
+        t_error("%s lo_inet4 is NULL\n", __func__);
+    }
+
+    freeifaddrs(addrs);
 }
 
 int main(int argc, char *argv[])

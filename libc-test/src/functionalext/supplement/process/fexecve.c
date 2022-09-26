@@ -14,7 +14,6 @@
  */
 
 #include <fcntl.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include "functionalext.h"
 
@@ -34,7 +33,6 @@ void fexecve_0100(void)
         int ret = fexecve(fd, argv, environ);
         EXPECT_NE("fexecve_0100", ret, -1);
     }
-    sleep(1);
 }
 
 /**

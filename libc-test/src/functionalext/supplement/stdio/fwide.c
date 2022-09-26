@@ -13,14 +13,10 @@
  * limitations under the License.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <stdbool.h>
 #include <wchar.h>
 #include "functionalext.h"
 
-const int32_t COUNT_ZERO = 0;
+const char *path = "/data/test.txt";
 
 /**
  * @tc.name      : fwide_0100
@@ -29,16 +25,14 @@ const int32_t COUNT_ZERO = 0;
  */
 void fwide_0100(void)
 {
-    FILE *fptr = fopen("test.txt", "w+");
-    int result;
-    bool flag = false;
-    result = fwide(fptr, 5);
-    if (result > 0) {
-        flag = true;
-    }
-    EXPECT_TRUE("fwide_0100", flag);
-    fclose(fptr);
-    remove("test.txt");
+    FILE *fp = fopen(path, "w+");
+    EXPECT_PTRNE("fwide_0100", fp, NULL);
+
+    int result = fwide(fp, 5);
+    EXPECT_TRUE("fwide_0100", result > 0);
+
+    fclose(fp);
+    remove(path);
 }
 
 /**
@@ -48,12 +42,14 @@ void fwide_0100(void)
  */
 void fwide_0200(void)
 {
-    FILE *fptr = fopen("test.txt", "w+");
-    int result;
-    result = fwide(fptr, 0);
-    EXPECT_EQ("fwide_0200", result, COUNT_ZERO);
-    fclose(fptr);
-    remove("test.txt");
+    FILE *fp = fopen(path, "w+");
+    EXPECT_PTRNE("fwide_0100", fp, NULL);
+
+    int result = fwide(fp, 0);
+    EXPECT_EQ("fwide_0200", result, 0);
+
+    fclose(fp);
+    remove(path);
 }
 
 /**
@@ -63,16 +59,14 @@ void fwide_0200(void)
  */
 void fwide_0300(void)
 {
-    FILE *fptr = fopen("test.txt", "w+");
-    int result;
-    bool flag = false;
-    result = fwide(fptr, -5);
-    if (result < 0) {
-        flag = true;
-    }
-    EXPECT_TRUE("fwide_0300", flag);
-    fclose(fptr);
-    remove("test.txt");
+    FILE *fp = fopen(path, "w+");
+    EXPECT_PTRNE("fwide_0100", fp, NULL);
+
+    int result = fwide(fp, -5);
+    EXPECT_TRUE("fwide_0300", result < 0);
+
+    fclose(fp);
+    remove(path);
 }
 
 int main(int argc, char *argv[])

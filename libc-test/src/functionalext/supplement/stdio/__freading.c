@@ -13,10 +13,10 @@
  * limitations under the License.
  */
 
-#include <stdio.h>
 #include <stdio_ext.h>
-#include <string.h>
 #include "functionalext.h"
+
+const char *path = "/data/freading.txt";
 
 /**
  * @tc.name      : __freading_0100
@@ -27,14 +27,14 @@
 void __freading_0100(void)
 {
     char *str = "This is a test";
-    FILE *fp = fopen("freading.txt", "w");
+    FILE *fp = fopen(path, "w");
     fputs(str, fp);
     fclose(fp);
-    FILE *ffp = fopen("freading.txt", "r");
+    FILE *ffp = fopen(path, "r");
     size_t ret = __freading(ffp);
     EXPECT_NE("__freading_0100", ret, 0);
     fclose(ffp);
-    remove("freading.txt");
+    remove(path);
 }
 
 /**
@@ -46,16 +46,16 @@ void __freading_0100(void)
 void __freading_0200(void)
 {
     char *str = "This is a test";
-    FILE *fp = fopen("freading.txt", "w");
+    FILE *fp = fopen(path, "w");
     fputs(str, fp);
     fclose(fp);
-    FILE *ffp = fopen("freading.txt", "r");
+    FILE *ffp = fopen(path, "r");
     char buf[100];
     fgets(buf, 100, ffp);
     size_t ret = __freading(ffp);
     EXPECT_NE("__freading_0200", ret, 0);
     fclose(ffp);
-    remove("freading.txt");
+    remove(path);
 }
 
 /**
@@ -67,12 +67,12 @@ void __freading_0200(void)
 void __freading_0300(void)
 {
     char *str = "This is a test";
-    FILE *fp = fopen("freading.txt", "w");
+    FILE *fp = fopen(path, "w");
     fputs(str, fp);
     size_t ret = __freading(fp);
     EXPECT_EQ("__freading_0300", ret, 0);
     fclose(fp);
-    remove("freading.txt");
+    remove(path);
 }
 
 int main(int argc, char *argv[])

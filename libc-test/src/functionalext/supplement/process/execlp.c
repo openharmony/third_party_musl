@@ -26,6 +26,7 @@ void execlp_0100(void)
     fpid = fork();
     if (fpid == 0) {
         int ret = execlp("touch", "touch", "execlptest.txt", NULL);
+        EXPECT_NE("execlp_0100", ret, -1);
     }
     sleep(1);
 

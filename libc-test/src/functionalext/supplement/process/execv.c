@@ -28,6 +28,7 @@ void execv_0100(void)
     if (fpid == 0) {
         char *argv[] = {"touch", "touch", "execvtest.txt", NULL};
         int ret = execv("/bin/touch", argv);
+        EXPECT_NE("execv_0100", ret, -1);
     }
     sleep(1);
     int isExist = access("execvtest.txt", F_OK);

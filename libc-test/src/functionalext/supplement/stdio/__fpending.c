@@ -13,9 +13,10 @@
  * limitations under the License.
  */
 
-#include <stdio.h>
 #include <stdio_ext.h>
 #include "functionalext.h"
+
+const char *path = "/data/fpending.txt";
 
 /**
  * @tc.name      : __fpending_0100
@@ -26,13 +27,16 @@
 void __fpending_0100(void)
 {
     char *str = "This is a test";
-    FILE *fp = fopen("fpending.txt", "w");
+    FILE *fp = fopen(path, "w");
+    EXPECT_PTRNE("__fpending_0100", fp, NULL);
+
     fputs(str, fp);
     size_t ret = __fpending(fp);
     EXPECT_TRUE("__fpending_0100", ret > 0);
     EXPECT_EQ("__fpending_0100", ret, strlen(str));
+
     fclose(fp);
-    remove("fpending.txt");
+    remove(path);
 }
 
 /**
@@ -44,13 +48,16 @@ void __fpending_0100(void)
 void __fpending_0200(void)
 {
     char *str = "This is a test";
-    FILE *fp = fopen("fpending.txt", "w");
+    FILE *fp = fopen(path, "w");
+    EXPECT_PTRNE("__fpending_0200", fp, NULL);
+
     fputs(str, fp);
     fflush(fp);
     size_t ret = __fpending(fp);
     EXPECT_EQ("__fpending_0200", ret, 0);
+
     fclose(fp);
-    remove("fpending.txt");
+    remove(path);
 }
 
 /**
@@ -62,14 +69,18 @@ void __fpending_0200(void)
 void __fpending_0300(void)
 {
     char *str = "This is a test";
-    FILE *fp = fopen("fpending.txt", "w");
+    FILE *fp = fopen(path, "w");
+    EXPECT_PTRNE("__fpending_0300", fp, NULL);
+
     fputs(str, fp);
     fclose(fp);
-    FILE *ffp = fopen("fpending.txt", "r");
+
+    FILE *ffp = fopen(path, "r");
     size_t ret = __fpending(ffp);
     EXPECT_EQ("__fpending_0300", ret, 0);
+
     fclose(ffp);
-    remove("fpending.txt");
+    remove(path);
 }
 
 int main(int argc, char *argv[])

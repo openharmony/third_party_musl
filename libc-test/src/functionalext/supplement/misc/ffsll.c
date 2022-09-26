@@ -13,12 +13,6 @@
  * limitations under the License.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdbool.h>
-#include <syslog.h>
-#include <stdint.h>
-#include <unistd.h>
 #include "functionalext.h"
 
 /**
@@ -29,8 +23,7 @@
  */
 void ffsll_0100(void)
 {
-    int result;
-    result = ffsll(0);
+    int result = ffsll(0);
     EXPECT_EQ("ffsll_0100", result, 0);
 }
 
@@ -42,8 +35,7 @@ void ffsll_0100(void)
  */
 void ffsll_0200(void)
 {
-    int result;
-    result = ffsll(0x8000000);
+    int result = ffsll(0x8000000);
     EXPECT_EQ("ffsll_0200", result, 28);
 }
 
@@ -55,8 +47,7 @@ void ffsll_0200(void)
  */
 void ffsll_0300(void)
 {
-    int result;
-    result = ffsll(0x800000000);
+    int result = ffsll(0x800000000);
     EXPECT_EQ("ffsll_0300", result, 36);
 }
 

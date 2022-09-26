@@ -14,13 +14,7 @@
  */
 
 #include <unistd.h>
-#include <sys/random.h>
-#include <pthread.h>
-#include <errno.h>
 #include "functionalext.h"
-
-const int SUCCESS = 0;
-const int FAILED = -1;
 
 /*
  * @tc.name      : getentropy_0100
@@ -31,7 +25,7 @@ void getentropy_0100(void)
 {
     void *buffer[256];
     int result = getentropy(buffer, 256);
-    EXPECT_EQ("getentrcopy_0100", result, SUCCESS);
+    EXPECT_EQ("getentrcopy_0100", result, 0);
 }
 
 /*
@@ -41,9 +35,10 @@ void getentropy_0100(void)
  */
 void getentropy_0200(void)
 {
-    void *buffer[256];
-    int result = getentropy(buffer, 257);
-    EXPECT_EQ("getentrcopy_0200", result, FAILED);
+    errno = 0;
+    int result = getentropy(NULL, 1);
+    EXPECT_EQ("getentrcopy_0200", result, -1);
+    EXPECT_EQ("getentrcopy_0200", errno, EFAULT);
 }
 
 int main(int argc, char *argv[])

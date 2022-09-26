@@ -17,8 +17,6 @@
 #include <unistd.h>
 #include "functionalext.h"
 
-const int SUCCESS = 0;
-
 /**
  * @tc.name      : clock_settime_0100
  * @tc.desc      : Each parameter is valid, the clk parameter is CLOCK_REALTIME, which can set the system
@@ -39,7 +37,7 @@ void clock_settime_0100(void)
     ts.tv_nsec = 0;
     int ret = -1;
     ret = clock_settime(CLOCK_REALTIME, &ts);
-    EXPECT_EQ("clock_settime_0100", ret, SUCCESS);
+    EXPECT_EQ("clock_settime_0100", ret, 0);
 }
 
 int main(int argc, char *argv[])

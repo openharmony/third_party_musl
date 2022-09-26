@@ -13,7 +13,6 @@
  * limitations under the License.
  */
 
-#include <stdio.h>
 #include <netdb.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
@@ -30,11 +29,11 @@ void gethostbyaddre_0100(void)
     struct hostent *hptr = NULL;
     struct in_addr addr;
     if (inet_pton(AF_INET, ptr, &addr) <= 0) {
-        printf("inet_pton error:%s\n", strerror(errno));
+        t_error("%s inet_pton error:%s\n", __func__, strerror(errno));
     }
     hptr = gethostbyaddr((const char *)&addr, sizeof(addr), AF_INET);
     if (hptr == NULL) {
-        printf("gethostbyaddr error:%s\n", strerror(h_errno));
+        t_error("%s gethostbyaddr error:%s\n", __func__, strerror(h_errno));
     }
     EXPECT_TRUE("gethostbyaddre_0100", hptr != NULL);
     EXPECT_EQ("gethostbyaddre_0100", strcmp(hptr->h_name, ptr), 0);

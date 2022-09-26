@@ -13,14 +13,8 @@
  * limitations under the License.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
 #include <fcntl.h>
-#include <stdbool.h>
 #include "functionalext.h"
-
-typedef void (*TEST_FUN)();
 
 /**
  * @tc.name      : freopen_0100
@@ -29,30 +23,18 @@ typedef void (*TEST_FUN)();
  */
 void freopen_0100(void)
 {
-    int flag = false;
     FILE *fp;
-    FILE *fd;
     const char *ptr = "/data/tests/libc-test/src/functionalext/supplement/stdio/freopen.txt";
-    fd = freopen(ptr, "w+", stdin);
-    if (fd != 0) {
-        flag = true;
-    }
-    EXPECT_TRUE("freopen_0100", flag);
+    fp = freopen(ptr, "w+", stdin);
+    EXPECT_PTRNE("freopen_0100", fp, NULL);
+
     fclose(stdin);
-    fclose(fd);
+    fclose(fp);
     remove(ptr);
 }
 
-TEST_FUN G_Fun_Array[] = {
-    freopen_0100,
-};
-
 int main(int argc, char *argv[])
 {
-    int num = sizeof(G_Fun_Array) / sizeof(TEST_FUN);
-    for (int pos = 0; pos < num; ++pos) {
-        G_Fun_Array[pos]();
-    }
-
+    freopen_0100();
     return t_status;
 }

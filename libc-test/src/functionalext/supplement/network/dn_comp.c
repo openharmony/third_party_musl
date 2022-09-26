@@ -13,16 +13,8 @@
  * limitations under the License.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <netinet/in.h>
-#include <arpa/nameser.h>
 #include <resolv.h>
 #include "functionalext.h"
-
-const int32_t COUNT_SUCCESS = 1;
-const int32_t COUNT_FAILED = -1;
 
 /**
  * @tc.name      : dn_comp_0100
@@ -31,10 +23,9 @@ const int32_t COUNT_FAILED = -1;
  */
 void dn_comp_0100(void)
 {
-    int result;
     char name[1024] = "www.baidu.com";
     unsigned char buf[1024] = "\0";
-    result = dn_comp(name, buf, 1024, NULL, NULL);
+    int result = dn_comp(name, buf, 1024, NULL, NULL);
     EXPECT_EQ("dn_comp_0100", result, 15);
 }
 
@@ -45,11 +36,10 @@ void dn_comp_0100(void)
  */
 void dn_comp_0200(void)
 {
-    int result;
     char name[1024] = ".";
     unsigned char buf[1024] = "\0";
-    result = dn_comp(name, buf, 1024, NULL, NULL);
-    EXPECT_EQ("dn_comp_0200", result, COUNT_SUCCESS);
+    int result = dn_comp(name, buf, 1024, NULL, NULL);
+    EXPECT_EQ("dn_comp_0200", result, 1);
 }
 
 /**
@@ -59,14 +49,13 @@ void dn_comp_0200(void)
  */
 void dn_comp_0300(void)
 {
-    int result;
     char name[1024];
     for (int i = 0; i < 260; i++) {
         name[i] = 'w';
     }
     unsigned char buf[1024] = "\0";
-    result = dn_comp(name, buf, 1024, NULL, NULL);
-    EXPECT_EQ("dn_comp_0300", result, COUNT_FAILED);
+    int result = dn_comp(name, buf, 1024, NULL, NULL);
+    EXPECT_EQ("dn_comp_0300", result, -1);
 }
 
 /**
@@ -76,11 +65,10 @@ void dn_comp_0300(void)
  */
 void dn_comp_0400(void)
 {
-    int result;
     char name[1024] = "www.baidu.com";
     unsigned char buf[1024] = "\0";
-    result = dn_comp(name, buf, 0, NULL, NULL);
-    EXPECT_EQ("dn_comp_0400", result, COUNT_FAILED);
+    int result = dn_comp(name, buf, 0, NULL, NULL);
+    EXPECT_EQ("dn_comp_0400", result, -1);
 }
 
 /**
@@ -90,11 +78,10 @@ void dn_comp_0400(void)
  */
 void dn_comp_0500(void)
 {
-    int result;
     char name[1024] = "www.baidu.com";
     unsigned char buf[1024] = "\0";
-    result = dn_comp(name, buf, -1, NULL, NULL);
-    EXPECT_EQ("dn_comp_0500", result, COUNT_FAILED);
+    int result = dn_comp(name, buf, -1, NULL, NULL);
+    EXPECT_EQ("dn_comp_0500", result, -1);
 }
 
 /**
@@ -104,11 +91,10 @@ void dn_comp_0500(void)
  */
 void dn_comp_0600(void)
 {
-    int result;
     char name[1024] = "www.baidu.com";
     unsigned char buf[1024] = "\0";
-    result = dn_comp(name, buf, 1, NULL, NULL);
-    EXPECT_EQ("dn_comp_0600", result, COUNT_FAILED);
+    int result = dn_comp(name, buf, 1, NULL, NULL);
+    EXPECT_EQ("dn_comp_0600", result, -1);
 }
 
 int main(int argc, char *argv[])

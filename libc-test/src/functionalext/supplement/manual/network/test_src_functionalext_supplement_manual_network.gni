@@ -13,13 +13,10 @@
 
 functionalext_supplement_manual_network_test = [
   "getnameinfo",
-  "getnetbyaddr",
   "res_send",
-  "res_querydomain",
   "gethostbyname2",
   "gethostbyname_r",
   "gethostbyaddr_r",
   "gethostbyname2_r",
   "gethostbyaddr",
-  "getnetbyname",
 ]

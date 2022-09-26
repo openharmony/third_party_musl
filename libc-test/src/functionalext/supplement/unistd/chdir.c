@@ -13,12 +13,9 @@
  * limitations under the License.
  */
 
+#include <string.h>
 #include <unistd.h>
-#include <sys/stat.h>
-#include <stdlib.h>
-#include <dirent.h>
-#include <fcntl.h>
-#include "functionalext.h"
+#include "test.h"
 
 /*
  * @tc.name      : chdir_0100
@@ -27,17 +24,28 @@
  */
 void chdir_0100(void)
 {
-    int num;
-    if (NULL == opendir("/data/dir")) {
-        mkdir("/data/dir", 0777);
+    char buf[30];
+
+    int result = chdir("/data");
+    if (result) {
+        t_error("%s fchdir failed, result is %d\n", __func__, result);
     }
-    num = chdir("/data/dir");
-    EXPECT_EQ("chdir_0100", num, 0);
+
+    memset(buf, 0, sizeof(buf));
+
+    char *ret = getcwd(buf, sizeof(buf));
+    if (!ret) {
+        t_error("%s getcwd failed\n", __func__);
+    }
+
+    result = strcmp("/data", buf);
+    if (result) {
+        t_error("%s fchdir failed, buf is %s\n", __func__, buf);
+    }
 }
 
 int main(int argc, char *argv[])
 {
     chdir_0100();
-
     return t_status;
 }

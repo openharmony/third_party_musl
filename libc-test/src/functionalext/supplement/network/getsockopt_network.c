@@ -13,10 +13,6 @@
  * limitations under the License.
  */
 
-#include <errno.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <stdio.h>
 #include <sys/socket.h>
 #include "functionalext.h"
 #define IPPROTO_IP 0

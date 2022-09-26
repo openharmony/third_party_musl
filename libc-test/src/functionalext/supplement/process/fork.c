@@ -34,7 +34,7 @@ void fork_0100()
     char list2[2];
     FILE *fp;
     if (fpid < 0) {
-        printf("error in fork!");
+        t_error("%s error in fork!", __func__);
     } else if (fpid == 0) {
         fp = fopen("test1.txt", "w+");
         fwrite(sign_r, sizeof(char), strlen(sign_r), fp);
@@ -51,6 +51,7 @@ void fork_0100()
     fread(list2, sizeof(list2), 1, fp2);
     EXPECT_EQ("fork_0100", list1[0], '1');
     EXPECT_EQ("fork_0100", list2[0], '1');
+
     fclose(fp1);
     fclose(fp2);
     remove("test1.txt");

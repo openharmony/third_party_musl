@@ -19,7 +19,6 @@
 
 int successfully = 0;
 int failed = -1;
-typedef void (*TEST_FUN)();
 
 /*
  * @tc.name      : daemon_0100

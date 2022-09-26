@@ -13,10 +13,8 @@
  * limitations under the License.
  */
 
-#include <unistd.h>
-#include <stdio.h>
-#include <stdbool.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include "functionalext.h"
 
 /**
@@ -27,9 +25,9 @@
 void getuid_0100(void)
 {
     char struid[10];
-    bool successflag = false;
     system("id -u > ./id.txt");
     FILE *fptr = fopen("id.txt", "r");
+    EXPECT_PTRNE("getuid_0100", fptr, NULL);
     fread(struid, sizeof(struid), 1, fptr);
     int intuid = atoi(struid);
     uid_t uid = getuid();
@@ -40,6 +38,5 @@ void getuid_0100(void)
 int main(int argc, char *argv[])
 {
     getuid_0100();
-
     return t_status;
 }

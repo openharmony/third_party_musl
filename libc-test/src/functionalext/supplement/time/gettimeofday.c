@@ -14,8 +14,8 @@
  */
 
 #include <sys/time.h>
-#include <time.h>
 #include <stdlib.h>
+#include <time.h>
 #include <unistd.h>
 #include "functionalext.h"
 
@@ -43,13 +43,12 @@ void gettimeofday_0100(void)
 
 /**
  * @tc.name      : gettimeofday_0200
- * @tc.desc      : Each parameter is valid, and the current system time can be obtained.
+ * @tc.desc      : Each parameter is invalid, and the current system time can be obtained.
  * @tc.level     : Level 2
  */
 void gettimeofday_0200(void)
 {
-    struct timeval tv;
-    int returnflag = gettimeofday(&tv, NULL);
+    int returnflag = gettimeofday(NULL, NULL);
     EXPECT_EQ("gettimeofday_0200", returnflag, SUCCESS);
 }
 
