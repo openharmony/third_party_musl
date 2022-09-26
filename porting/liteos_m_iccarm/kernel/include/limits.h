@@ -40,6 +40,8 @@
 #define IOV_MAX 1024
 #define SSIZE_MAX LONG_MAX
 #define PTHREAD_KEYS_MAX 128
+#define CHARCLASS_NAME_MAX 14
+#define RE_DUP_MAX 255
 #include_next <limits.h>
 
 #endif /* _ADAPT_LIMITS_H */
