@@ -13,8 +13,6 @@
  * limitations under the License.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <threads.h>
 #include "functionalext.h"
 
@@ -26,8 +24,7 @@
 void cnd_init_0100(void)
 {
     cnd_t buf;
-    int result = -1;
-    result = cnd_init(&buf);
+    int result = cnd_init(&buf);
     EXPECT_EQ("cnd_init_0100", result, thrd_success);
 }
 

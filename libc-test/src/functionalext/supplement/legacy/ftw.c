@@ -14,7 +14,6 @@
  */
 
 #include <ftw.h>
-#include <stdio.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include "functionalext.h"

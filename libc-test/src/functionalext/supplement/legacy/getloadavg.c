@@ -13,9 +13,8 @@
  * limitations under the License.
  */
 
-#include <stdio.h>
+#include <limits.h>
 #include <stdlib.h>
-#include <stdbool.h>
 #include "functionalext.h"
 
 /**
@@ -25,14 +24,27 @@
  */
 void getloadavg_0100(void)
 {
-    bool flag = false;
-    double buf[1024];
-    int result = -10;
-    result = getloadavg(buf, 1024);
-    if (result > 0) {
-        flag = true;
-    }
-    EXPECT_TRUE("getloadavg_0100", flag);
+    int result;
+    double load[3];
+
+    result = getloadavg(load, -1);
+    EXPECT_EQ("getloadavg_0100", result, -1);
+    result = getloadavg(load, INT_MIN);
+    EXPECT_EQ("getloadavg_0100", result, -1);
+
+    result = getloadavg(load, 0);
+    EXPECT_EQ("getloadavg_0100", result, 0);
+
+    result = getloadavg(load, 1);
+    EXPECT_EQ("getloadavg_0100", result, 1);
+    result = getloadavg(load, 2);
+    EXPECT_EQ("getloadavg_0100", result, 2);
+    result = getloadavg(load, 3);
+    EXPECT_EQ("getloadavg_0100", result, 3);
+    result = getloadavg(load, 4);
+    EXPECT_EQ("getloadavg_0100", result, 3);
+    result = getloadavg(load, INT_MAX);
+    EXPECT_EQ("getloadavg_0100", result, 3);
 }
 
 int main(int argc, char *argv[])

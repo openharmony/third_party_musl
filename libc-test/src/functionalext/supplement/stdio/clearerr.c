@@ -13,7 +13,6 @@
  * limitations under the License.
  */
 
-#include <stdio.h>
 #include "functionalext.h"
 
 /**
@@ -23,7 +22,6 @@
  */
 void clearerr_0100(void)
 {
-    int c;
     putc('c', stdin);
     if (ferror(stdin)) {
         clearerr(stdin);

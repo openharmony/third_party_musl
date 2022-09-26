@@ -14,12 +14,7 @@
  */
 
 #include <sys/resource.h>
-#include <string.h>
-#include <errno.h>
 #include "functionalext.h"
-
-int success = 0;
-int fail = -1;
 
 /**
  * @tc.name      : getrusage_0100
@@ -30,7 +25,7 @@ void getrusage_0100(void)
 {
     struct rusage usage;
     int result = getrusage(RUSAGE_SELF, &usage);
-    EXPECT_EQ("getrusage_0100", result, success);
+    EXPECT_EQ("getrusage_0100", result, 0);
 }
 
 /**
@@ -42,7 +37,7 @@ void getrusage_0200(void)
 {
     struct rusage usage;
     int result = getrusage(RUSAGE_CHILDREN, &usage);
-    EXPECT_EQ("getrusage_0200", result, success);
+    EXPECT_EQ("getrusage_0200", result, 0);
 }
 
 /**
@@ -54,7 +49,7 @@ void getrusage_0300(void)
 {
     struct rusage usage;
     int result = getrusage(RUSAGE_THREAD, &usage);
-    EXPECT_EQ("getrusage_0300", result, success);
+    EXPECT_EQ("getrusage_0300", result, 0);
 }
 
 /**
@@ -66,7 +61,7 @@ void getrusage_0400(void)
 {
     struct rusage usage;
     int result = getrusage(100, &usage);
-    EXPECT_EQ("getrusage_0400", result, fail);
+    EXPECT_EQ("getrusage_0400", result, -1);
 }
 
 /**
@@ -78,7 +73,7 @@ void getrusage_0500(void)
 {
     struct rusage usage;
     int result = getrusage(RUSAGE_SELF, NULL);
-    EXPECT_EQ("getrusage_0500", result, fail);
+    EXPECT_EQ("getrusage_0500", result, -1);
 }
 
 int main(void)

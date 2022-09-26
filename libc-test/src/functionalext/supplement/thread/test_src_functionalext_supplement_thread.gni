@@ -78,4 +78,5 @@ functionalext_supplement_thread_test = [
   "pthread_key_delete",
   "pthread_equal",
   "pthread_rwlock_rdlock_sup",
+  "cnd_broadcast",
 ]

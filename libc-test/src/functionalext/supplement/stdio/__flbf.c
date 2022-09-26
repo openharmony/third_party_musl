@@ -13,69 +13,67 @@
  * limitations under the License.
  */
 
-#include <stdio.h>
 #include <stdio_ext.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <stddef.h>
-#include <stdbool.h>
 #include "functionalext.h"
-
-const int32_t COUNT_ZERO = 0;
 
 /**
  * @tc.name      : __flbf_0100
- * @tc.desc      : Verify file stream is row buffered (valid argument, is row buffered)
+ * @tc.desc      : Line buffer test
  * @tc.level     : Level 0
  */
 void __flbf_0100(void)
 {
-    char buf[1024];
-    int result = 0;
-    bool flag = false;
-    FILE *fptr = fopen("test.txt", "w");
-    setvbuf(fptr, buf, _IOLBF, 1024);
-    result = __flbf(fptr);
-    if (result > 0) {
-        flag = true;
-    }
-    EXPECT_TRUE("__flbf_0100", flag);
-    fclose(fptr);
-    remove("test.txt");
+    char buf[BUFSIZ];
+
+    FILE *fp = fopen("/proc/version", "r");
+    EXPECT_PTRNE("__flbf_0100", fp, NULL);
+
+    int ret = setvbuf(fp, buf, _IOLBF, sizeof buf);
+    EXPECT_EQ("__flbf_0100", ret, 0);
+
+    int result = __flbf(fp);
+    EXPECT_TRUE("__flbf_0100", result);
+    fclose(fp);
 }
 
 /**
  * @tc.name      : __flbf_0200
- * @tc.desc      : Verify file stream is not row buffered (valid argument, is full buffered)
- * @tc.level     : Level 1
+ * @tc.desc      : Full buffer test
+ * @tc.level     : Level 2
  */
 void __flbf_0200(void)
 {
-    char buf[1024];
-    int result = 0;
-    FILE *fptr = fopen("test.txt", "w");
-    setvbuf(fptr, buf, _IOFBF, 1024);
-    result = __flbf(fptr);
-    EXPECT_EQ("__flbf_0200", result, COUNT_ZERO);
-    fclose(fptr);
-    remove("test.txt");
+    char buf[BUFSIZ];
+
+    FILE *fp = fopen("/proc/version", "r");
+    EXPECT_PTRNE("__flbf_0200", fp, NULL);
+
+    int ret = setvbuf(fp, buf, _IOFBF, sizeof buf);
+    EXPECT_EQ("__flbf_0200", ret, 0);
+
+    int result = __flbf(fp);
+    EXPECT_FALSE("__flbf_0200", result);
+    fclose(fp);
 }
 
 /**
  * @tc.name      : __flbf_0300
- * @tc.desc      :Verify file stream is not row buffered (parameter valid, is not buffered)
- * @tc.level     : Level 1
+ * @tc.desc      : Unbuffered test
+ * @tc.level     : Level 2
  */
 void __flbf_0300(void)
 {
-    char buf[1024];
-    int result = 0;
-    FILE *fptr = fopen("test.txt", "w");
-    setvbuf(fptr, buf, _IONBF, 1024);
-    result = __flbf(fptr);
-    EXPECT_EQ("__flbf_0300", result, COUNT_ZERO);
-    fclose(fptr);
-    remove("test.txt");
+    char buf[BUFSIZ];
+
+    FILE *fp = fopen("/proc/version", "r");
+    EXPECT_PTRNE("__flbf_0300", fp, NULL);
+
+    int ret = setvbuf(fp, buf, _IONBF, sizeof buf);
+    EXPECT_EQ("__flbf_0300", ret, 0);
+
+    int result = __flbf(fp);
+    EXPECT_FALSE("__flbf_0300", result);
+    fclose(fp);
 }
 
 int main(int argc, char *argv[])

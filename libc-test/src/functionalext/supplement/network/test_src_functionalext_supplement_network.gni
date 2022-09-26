@@ -54,4 +54,6 @@ functionalext_supplement_network_test = [
   "gai_strerror",
   "recv",
   "freeaddrinfo",
+  "res_querydomain",
+  "dn_skipname",
 ]

@@ -19,46 +19,21 @@
 
 /**
  * @tc.name      : acct_0100
- * @tc.desc      : Verify that the recording function is enabled (parameters are valid)
- * @tc.level     : Level 0
- */
-void acct_0100(void)
-{
-    errno = 0;
-    const char *filePath = "/data/tests/libc-test/src/functionalext/supplement/unistd/accttest.txt";
-    int fd = open(filePath, O_RDWR | O_CREAT, 0777);
-    if (fd < 0) {
-        t_error("%s open failed\n", __func__);
-    }
-    int result = acct(filePath);
-    if (result != 0) {
-        t_error("%s result is %d, except zero\n", __func__, result);
-    }
-
-    if (errno != 0) {
-        t_error("%s errno is %d, not 0\n", __func__, errno);
-    }
-    close(fd);
-    remove(filePath);
-}
-
-/**
- * @tc.name      : acct_0200
  * @tc.desc      : Verify logging is disabled (parameter is NULL)
  * @tc.level     : Level 2
  */
-void acct_0200(void)
+void acct_0100(void)
 {
     int result = acct(NULL);
     EXPECT_EQ("acct_0200", result, -1);
 }
 
 /**
- * @tc.name      : acct_0300
+ * @tc.name      : acct_0200
  * @tc.desc      : Verify logging is disabled (parameter is file does not exist)
  * @tc.level     : Level 2
  */
-void acct_0300(void)
+void acct_0200(void)
 {
     const char *filePath = "/data/tests/libc-test/src/functionalext/supplement/unistd/accttest.txt";
     int result = acct(filePath);
@@ -68,8 +43,7 @@ void acct_0300(void)
 
 int main(void)
 {
-    // acct_0100();
+    acct_0100();
     acct_0200();
-    acct_0300();
     return t_status;
 }

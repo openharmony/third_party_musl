@@ -13,11 +13,9 @@
  * limitations under the License.
  */
 
-#include <sys/syscall.h>
-#include <signal.h>
+#include <malloc.h>
 #include <sched.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include <signal.h>
 #include <unistd.h>
 #include "functionalext.h"
 

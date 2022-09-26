@@ -13,77 +13,56 @@
  * limitations under the License.
  */
 
-#include <unistd.h>
 #include <grp.h>
-#include <limits.h>
-#include <stdlib.h>
-#include <signal.h>
-#include <fcntl.h>
-#include <stdarg.h>
-#include <sys/wait.h>
-#include <spawn.h>
-#include <errno.h>
-#include <limits.h>
-#include <string.h>
-#include "functionalext.h"
+#include <malloc.h>
+#include <pwd.h>
 #include <stdio.h>
+#include "test.h"
+
+static int server_ngroups;
+static gid_t *server_groups;
 
 /*
  * @tc.name      : getgrouplist_0100
- * @tc.desc      : Verify that the list of group IDs can be obtained (parameters are valid)
+ * @tc.desc      : Get list of groups to which a user belongs
  * @tc.level     : Level 0
  */
 void getgrouplist_0100()
 {
-    int ngroups;
-    char who[1024] = {0};
-    system("whoami > /data/user.txt");
-    FILE *fptr = fopen("/data/user.txt", "r");
-    fread(who, sizeof(who), 1, fptr);
+    int result;
+    struct group *gr;
+    const char *server_user = "root";
 
-    char buffer[1024] = {0};
-    system("id -g > /data/id.txt");
-    FILE *ptr = fopen("/data/id.txt", "r");
-    fread(buffer, sizeof(buffer), 1, ptr);
-    gid_t id = atoi(buffer);
-    gid_t gid = getgid();
-    int result = getgrouplist(who, gid, &id, &ngroups);
+    struct passwd *pwd = getpwnam(server_user);
+    if (!pwd) {
+        t_error("%s getpwnam failed\n", __func__);
+    }
 
-    EXPECT_TRUE("getgrouplist_0100", result != 0);
-}
+    gid_t server_gid = pwd->pw_gid;
 
-/*
- * @tc.name      : getgrouplist_0200
- * @tc.desc      : Validation cannot get group ID list (parameter invalid)
- * @tc.level     : Level 2
- */
-void getgrouplist_0200()
-{
-    int ngroups;
-    char who[1024] = {0};
-    char user[1024] = {0};
-    system("whoami > /data/user.txt");
-    FILE *fptr = fopen("/data/user.txt", "r");
-    fread(who, sizeof(who), 1, fptr);
+    result = getgrouplist(server_user, server_gid, NULL, &server_ngroups);
+    if (result == 0) {
+        t_error("%s getgrouplist should be failed\n", __func__);
+    }
 
-    char buffer[1204] = {0};
-    system("id -g > /data/id.txt");
-    FILE *ptr = fopen("/data/id.txt", "r");
-    fread(buffer, sizeof(buffer), 1, ptr);
-    gid_t id = atoi(buffer);
-    gid_t gid = getgid();
+    server_groups = (gid_t *)malloc(server_ngroups * sizeof(gid_t));
+    result = getgrouplist(server_user, server_gid, server_groups, &server_ngroups);
+    if (result == -1) {
+        t_error("%s getgrouplist failed\n", __func__);
+    }
 
-    int result = getgrouplist(user, gid, &id, &ngroups);
-
-    EXPECT_EQ("getgrouplist_0200", result, -1);
-    remove("/data/id.txt");
-    remove("/data/user.txt");
+    for (int i = 0; i < server_ngroups; i++) {
+        printf("%d", server_groups[i]);
+        gr = getgrgid(server_groups[i]);
+        if (gr != NULL) {
+            printf(" (%s)", gr->gr_name);
+        }
+        printf("\n");
+    }
 }
 
 int main(int argc, char *argv[])
 {
     getgrouplist_0100();
-    getgrouplist_0200();
-
     return t_status;
 }

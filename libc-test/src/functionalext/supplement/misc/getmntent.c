@@ -28,27 +28,18 @@ void getmntent_0100(void)
     char str[100];
     FILE *fptr = NULL;
     if ((fptr = fopen("/proc/mounts", "r")) == NULL) {
-        printf("Error! opening file");
+        t_error("%s Error! fopen failed\n", __func__);
     }
     fscanf(fptr, "%[^\n]", c);
     fclose(fptr);
     sscanf(c, "%[^ ]", str);
     struct mntent *m = NULL;
     FILE *ffp = setmntent("/proc/mounts", "r");
-    if (!ffp) {
-        printf("error:%s\n", strerror(errno));
-    }
+    EXPECT_PTRNE("getmntent_0100", ffp, NULL);
     m = getmntent(ffp);
-    bool flag = false;
-    if (m != NULL) {
-        flag = true;
-    }
-    EXPECT_TRUE("getmntent_0100", flag);
-    if (m != NULL) {
-        EXPECT_EQ("getmntent_0100", strcmp(m->mnt_fsname, str), 0);
-    } else {
-        printf("error\n");
-    }
+    EXPECT_TRUE("getmntent_0100", m != NULL);
+    EXPECT_EQ("getmntent_0100", strcmp(m->mnt_fsname, str), 0);
+
     endmntent(ffp);
 }
 
@@ -62,13 +53,13 @@ void getmntent_0200(void)
     char c[1000];
     char *str = "This is a test";
     FILE *fp = fopen("/data/getmntent.txt", "w");
+    EXPECT_PTRNE("getmntent_0200", fp, NULL);
     fputs(str, fp);
     fclose(fp);
     struct mntent *m = NULL;
     FILE *ffp = setmntent("/data/getmntent.txt", "r");
-    if (!ffp) {
-        printf("error:%s\n", strerror(errno));
-    }
+    EXPECT_PTRNE("getmntent_0200", ffp, NULL);
+
     m = getmntent(ffp);
     EXPECT_EQ("getmntent_0200", m, NULL);
     endmntent(ffp);

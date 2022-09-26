@@ -13,65 +13,60 @@
  * limitations under the License.
  */
 
-#include <unistd.h>
 #include <fcntl.h>
-#include <errno.h>
-#include <stdlib.h>
-#include <stdarg.h>
+#include <unistd.h>
 #include "functionalext.h"
-#include <sys/stat.h>
+
+const char *path = "/data/test.txt";
 
 /**
  * @tc.name      : fsync_0100
- * @tc.desc      : Verify that the kernel's cache can be flushed (parameter invalid)
+ * @tc.desc      : Tests of fsync on file descriptors in different modes
  * @tc.level     : Level 0
  */
 void fsync_0100(void)
 {
-    const char *msg = "This is a c test code for write function";
-    const char *path = "/data/tests/libc-test/src/functionalext/supplement/unistd/test_write.txt";
-    int len = strlen(msg);
-    struct stat buf;
-
-    int fd = open(path, O_RDWR | O_RSYNC | O_CREAT, 0777);
+    int fd = open(path, O_RDWR | O_CREAT);
     EXPECT_TRUE("fsync_0100", fd >= 0);
-
-    int assos = write(fd, msg, len);
-    EXPECT_EQ("fsync_0100", assos, 40);
 
     int result = fsync(fd);
     EXPECT_EQ("fsync_0100", result, 0);
-
     close(fd);
+
+    fd = open(path, O_RDONLY);
+    result = fsync(fd);
+    EXPECT_EQ("fsync_0100", result, 0);
+    close(fd);
+
     remove(path);
 }
 
 /**
  * @tc.name      : fsync_0200
- * @tc.desc      : Verify that the kernel's cache cannot be flushed (fd parameter invalid file close)
- * @tc.level     : Level 2
+ * @tc.desc      : fd is a directory
+ * @tc.level     : Level 1
  */
 void fsync_0200(void)
 {
-    int fd, size;
-    char w[] = "this is a good boy!\n";
-    fd = open("data/test.txt", S_IRWXO);
-    write(fd, w, sizeof("w"));
+    int fd = open("/data", O_RDONLY);
+    EXPECT_NE("fsync_0200", fd, -1);
+
     int result = fsync(fd);
+    EXPECT_EQ("fsync_0200", result, 0);
     close(fd);
-    EXPECT_EQ("fsync_0200", result, -1);
 }
 
 /**
  * @tc.name      : fsync_0300
- * @tc.desc      : Verify that the kernel's cache cannot be flushed (fd parameter is invalid)
+ * @tc.desc      : Can't sync an invalid fd
  * @tc.level     : Level 2
  */
 void fsync_0300(void)
 {
-    int fd = -1;
-    int result = fsync(fd);
+    errno = 0;
+    int result = fsync(-1);
     EXPECT_EQ("fsync_0300", result, -1);
+    EXPECT_EQ("fsync_0300", errno, EBADF);
 }
 
 int main(int argc, char *argv[])

@@ -13,15 +13,17 @@
  * limitations under the License.
  */
 
-#include <stdio.h>
+#include <errno.h>
+#include <signal.h>
 #include <stdlib.h>
-#include <stdint.h>
 #include <sys/timex.h>
-#include <stdbool.h>
 #include <time.h>
 #include "functionalext.h"
 
-const int32_t COUNT_NEGATIVE = -1;
+void exception_handler(int sig)
+{
+    exit(t_status);
+}
 
 /**
  * @tc.name      : clock_adjtime_0100
@@ -30,14 +32,11 @@ const int32_t COUNT_NEGATIVE = -1;
  */
 void clock_adjtime_0100(void)
 {
-    bool flag = false;
-    struct timex tx = {0};
-    int result = -1;
-    result = clock_adjtime(CLOCK_REALTIME, &tx);
-    if (result != -1) {
-        flag = true;
-    }
-    EXPECT_TRUE("clock_adjtime_0100", flag);
+    struct timex tx;
+    memset(&tx, 0, sizeof(tx));
+
+    int result = clock_adjtime(CLOCK_REALTIME, &tx);
+    EXPECT_NE("clock_adjtime_0100", result, -1);
 }
 
 /**
@@ -49,9 +48,9 @@ void clock_adjtime_0100(void)
 void clock_adjtime_0200(void)
 {
     struct timex tx = {ADJ_OFFSET_SS_READ};
-    int result = -1;
-    result = clock_adjtime(CLOCK_MONOTONIC, &tx);
-    EXPECT_EQ("clock_adjtime_0200", result, COUNT_NEGATIVE);
+
+    int result = clock_adjtime(CLOCK_MONOTONIC, &tx);
+    EXPECT_EQ("clock_adjtime_0200", result, -1);
 }
 
 /**
@@ -62,10 +61,11 @@ void clock_adjtime_0200(void)
  */
 void clock_adjtime_0300(void)
 {
-    struct timex tx = {0};
-    int result = -1;
-    result = clock_adjtime(CLOCK_PROCESS_CPUTIME_ID, &tx);
-    EXPECT_EQ("clock_adjtime_0300", result, COUNT_NEGATIVE);
+    struct timex tx;
+    memset(&tx, 0, sizeof(tx));
+
+    int result = clock_adjtime(CLOCK_PROCESS_CPUTIME_ID, &tx);
+    EXPECT_EQ("clock_adjtime_0300", result, -1);
 }
 
 /**
@@ -77,9 +77,10 @@ void clock_adjtime_0300(void)
 void clock_adjtime_0400(void)
 {
     struct timex tx = {0};
-    int result = -1;
-    result = clock_adjtime(CLOCK_THREAD_CPUTIME_ID, &tx);
-    EXPECT_EQ("clock_adjtime_0400", result, COUNT_NEGATIVE);
+    memset(&tx, 0, sizeof(tx));
+
+    int result = clock_adjtime(CLOCK_THREAD_CPUTIME_ID, &tx);
+    EXPECT_EQ("clock_adjtime_0400", result, -1);
 }
 
 /**
@@ -89,10 +90,12 @@ void clock_adjtime_0400(void)
  */
 void clock_adjtime_0500(void)
 {
-    struct timex tx = {100000};
-    int result = 0;
-    result = clock_adjtime(CLOCK_REALTIME, &tx);
-    EXPECT_EQ("clock_adjtime_0500", result, COUNT_NEGATIVE);
+    signal(SIGSEGV, exception_handler);
+
+    errno = 0;
+    int result = clock_adjtime(CLOCK_REALTIME, NULL);
+    EXPECT_EQ("clock_adjtime_0500", result, -1);
+    EXPECT_EQ("clock_adjtime_0500", errno, EFAULT);
 }
 
 int main(int argc, char *argv[])

@@ -16,8 +16,6 @@
 #include <ifaddrs.h>
 #include "functionalext.h"
 
-const int SUCCESS = 0;
-
 /**
  * @tc.name      : getifaddrs_0100
  * @tc.desc      : The parameter is valid, and the information of the local network interface can be obtained.
@@ -27,7 +25,7 @@ void getifaddrs_0100(void)
 {
     struct ifaddrs *ifaddr;
     int ret = getifaddrs(&ifaddr);
-    EXPECT_EQ("getifaddrs_0100", ret, SUCCESS);
+    EXPECT_EQ("getifaddrs_0100", ret, 0);
     freeifaddrs(ifaddr);
     ifaddr = NULL;
 }

@@ -16,8 +16,6 @@
 #include <pthread.h>
 #include "functionalext.h"
 
-const int SUCCESS = 0;
-
 /**
  * @tc.name      : pthread_attr_destroy_0100
  * @tc.desc      : The parameters are valid and the function can return normally
@@ -27,7 +25,7 @@ void pthread_attr_destroy_0100(void)
 {
     pthread_attr_t attr;
     int result = pthread_attr_destroy(&attr);
-    EXPECT_EQ("pthread_attr_destroy_0100", result, SUCCESS);
+    EXPECT_EQ("pthread_attr_destroy_0100", result, 0);
 }
 
 int main(int argc, char *argv[])
