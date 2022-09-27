@@ -210,6 +210,7 @@ template("musl_libs") {
       "${target_out_dir}/${musl_ported_dir}/crt/${musl_arch}/crtn.s",
       "${target_out_dir}/${musl_ported_dir}/crt/Scrt1.c",
       "${target_out_dir}/${musl_ported_dir}/crt/crt1.c",
+      "${target_out_dir}/${musl_ported_dir}/crt/crtplus.c",
       "${target_out_dir}/${musl_ported_dir}/crt/rcrt1.c",
     ]
 
@@ -590,12 +591,28 @@ template("musl_libs") {
       "${redir}/${target_out_dir}/${musl_ported_dir}/crt/soft_musl_crt/crt1.o",
       "${redir}/${target_out_dir}/${musl_ported_dir}/crt/soft_musl_crt/rcrt1.o",
     ]
+
     outputs = [ "${root_build_dir}/obj/third_party/musl/${_libs_out_dir}/{{source_file_part}}" ]
+
+    ldpath = []
+    if (is_mac) {
+      ldpath += [ "${clang_base_path}/bin/ld64.lld" ]
+    } else if (is_win) {
+      ldpath += [ "${clang_base_path}/bin/lld-link.exe" ]
+    } else {
+      ldpath += [ "${clang_base_path}/bin/ld.lld" ]
+    }
+
     args = [
       "--input",
       "{{source}}",
     ]
     args += [ "--output" ] + rebase_path(outputs, root_build_dir)
+    args += [ "--ldpath" ] + rebase_path(ldpath, root_build_dir)
+    args += [ "--crtplus" ] + rebase_path(
+                [ "${redir}/${target_out_dir}/${musl_ported_dir}/crt/soft_musl_crt/crtplus.o" ],
+                root_build_dir)
+
     deps = [ ":soft_musl_crt" ]
   }
 
