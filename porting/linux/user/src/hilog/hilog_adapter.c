@@ -16,26 +16,39 @@
 #define _GNU_SOURCE
 
 #include <hilog_adapter.h>
-#include "hilog_common.h"
-#include "vsnprintf_s_p.h"
 
 #include <errno.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/socket.h>
-#include <time.h>
 #include <sys/time.h>
 #include <sys/uio.h>
 #include <sys/un.h>
+#include <time.h>
 #include <unistd.h>
+
+#include "hilog_common.h"
+#ifdef OHOS_ENABLE_PARAMETER
+#include "sys_param.h"
+#endif
+#include "vsnprintf_s_p.h"
 
 #define LOG_LEN 3
 #define ERROR_FD 2
+#ifdef OHOS_ENABLE_PARAMETER
+#define SYSPARAM_LENGTH 32
+#endif
 
 const int SOCKET_TYPE = SOCK_DGRAM | SOCK_NONBLOCK | SOCK_CLOEXEC;
 const int INVALID_SOCKET = -1;
 const struct sockaddr_un SOCKET_ADDR = {AF_UNIX, SOCKET_FILE_DIR INPUT_SOCKET_NAME};
+
+static bool musl_log_enable = false;
+
+#ifdef OHOS_ENABLE_PARAMETER
+static const char *param_name = "musl.log.enable";
+#endif
 
 static int SendMessage(HilogMsg *header, const char *tag, uint16_t tagLen, const char *fmt, uint16_t fmtLen)
 {
@@ -81,10 +94,6 @@ static int SendMessage(HilogMsg *header, const char *tag, uint16_t tagLen, const
 static int HiLogAdapterPrintArgs(
     const LogType type, const LogLevel level, const unsigned int domain, const char *tag, const char *fmt, va_list ap)
 {
-    if (!HiLogAdapterIsLoggable(domain, tag, level)) {
-        return -1;
-    }
-
     char buf[MAX_LOG_LEN] = {0};
 
     vsnprintfp_s(buf, MAX_LOG_LEN, MAX_LOG_LEN - 1, true, fmt, ap);
@@ -105,6 +114,10 @@ static int HiLogAdapterPrintArgs(
 
 int HiLogAdapterPrint(LogType type, LogLevel level, unsigned int domain, const char *tag, const char *fmt, ...)
 {
+    if (!HiLogAdapterIsLoggable(domain, tag, level)) {
+        return -1;
+    }
+
     int ret;
     va_list ap;
     va_start(ap, fmt);
@@ -113,10 +126,40 @@ int HiLogAdapterPrint(LogType type, LogLevel level, unsigned int domain, const c
     return ret;
 }
 
+bool is_musl_log_enable()
+{
+    if (getpid() == 1) {
+        return false;
+    }
+    return musl_log_enable;
+}
+
 bool HiLogAdapterIsLoggable(unsigned int domain, const char *tag, LogLevel level)
 {
+    if (!is_musl_log_enable()) {
+        return false;
+    }
+
     if ((level <= LOG_LEVEL_MIN) || (level >= LOG_LEVEL_MAX) || tag == NULL) {
         return false;
     }
     return true;
+}
+
+void musl_log_reset()
+{
+#if (defined(OHOS_ENABLE_PARAMETER))
+    char param_value[SYSPARAM_LENGTH];
+    uint32_t length = SYSPARAM_LENGTH;
+    if (SystemReadParam(param_name, param_value, &length) == 0) {
+        param_value[length] = 0;
+        if (strcmp(param_value, "true") == 0) {
+            musl_log_enable = true;
+            return;
+        }
+    }
+    musl_log_enable = false;
+#elif (defined(ENABLE_MUSL_LOG))
+    musl_log_enable = true;
+#endif
 }
