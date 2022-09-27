@@ -26,7 +26,7 @@ extern "C" {
 #define MUSL_LOG_DOMAIN 0xD003F00
 #define MUSL_LOG_TAG "MUSL"
 
-#ifdef ENABLE_MUSL_LOG
+#if (defined(OHOS_ENABLE_PARAMETER) || defined(ENABLE_MUSL_LOG))
 #define MUSL_LOGE(...) ((void)HiLogAdapterPrint(MUSL_LOG_TYPE, LOG_ERROR, MUSL_LOG_DOMAIN, MUSL_LOG_TAG, __VA_ARGS__))
 #define MUSL_LOGW(...) ((void)HiLogAdapterPrint(MUSL_LOG_TYPE, LOG_WARN, MUSL_LOG_DOMAIN, MUSL_LOG_TAG, __VA_ARGS__))
 #define MUSL_LOGI(...) ((void)HiLogAdapterPrint(MUSL_LOG_TYPE, LOG_INFO, MUSL_LOG_DOMAIN, MUSL_LOG_TAG, __VA_ARGS__))

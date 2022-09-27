@@ -483,7 +483,11 @@ static int check_vna_hash(Verdef *def, int16_t vsym, uint32_t vna_hash)
 		}
 		verdef = (Verdef *)((char *)verdef + verdef->vd_next);
 	}
-
+#if (LD_LOG_LEVEL & LD_LOG_DEBUG)
+	if (!matched) {
+		LD_LOGD("check_vna_hash no matched found. vsym=%{public}d vna_hash=%{public}x", vsym, vna_hash);
+	}
+#endif
 	return matched;
 }
 
@@ -494,6 +498,8 @@ static int check_verinfo(Verdef *def, int16_t *versym, uint32_t index, struct ve
 		if (strlen(verinfo->v) == 0) {
 			return 1;
 		} else {
+			LD_LOGD("check_verinfo versym or def is null and verinfo->v exist, s:%{public}s v:%{public}s.",
+				verinfo->s, verinfo->v);
 			return 0;
 		}
 	}
@@ -512,6 +518,7 @@ static int check_verinfo(Verdef *def, int16_t *versym, uint32_t index, struct ve
 		if (vsym >= 0) {
 			return 1;
 		} else {
+			LD_LOGD("check_verinfo not default version. vsym:%{public}d s:%{public}s", vsym, verinfo->s);
 			return 0;
 		}
 	}
@@ -530,7 +537,14 @@ static int check_verinfo(Verdef *def, int16_t *versym, uint32_t index, struct ve
 
 	Verdaux *aux = (Verdaux *)((char *)def + def->vd_aux);
 
-	return !strcmp(verinfo->v, strings + aux->vda_name);
+	int ret = !strcmp(verinfo->v, strings + aux->vda_name);
+#if (LD_LOG_LEVEL & LD_LOG_DEBUG)
+	if (!ret) {
+		LD_LOGD("check_verinfo version not match. s=%{public}s v=%{public}s vsym=%{public}d vda_name=%{public}s",
+			verinfo->s, verinfo->v, vsym, strings + aux->vda_name);
+	}
+#endif
+	return ret;
 }
 
 static uint32_t sysv_hash(const char *s0)
@@ -570,6 +584,9 @@ static Sym *sysv_lookup(struct verinfo *verinfo, uint32_t h, struct dso *dso)
 		}
 
 	}
+	LD_LOGD("sysv_lookup not find the symbol, "
+		"so:%{public}s s:%{public}s v:%{public}s use_vna_hash:%{public}d vna_hash:%{public}x",
+		dso->name, verinfo->s, verinfo->v, verinfo->use_vna_hash, verinfo->vna_hash);
 	return 0;
 }
 
@@ -579,7 +596,10 @@ static Sym *gnu_lookup(uint32_t h1, uint32_t *hashtab, struct dso *dso, struct v
 	uint32_t *buckets = hashtab + 4 + hashtab[2]*(sizeof(size_t)/4);
 	uint32_t i = buckets[h1 % nbuckets];
 
-	if (!i) return 0;
+	if (!i) {
+		LD_LOGD("gnu_lookup symbol not found (bloom filter), so:%{public}s s:%{public}s", dso->name, verinfo->s);
+		return 0;
+	}
 
 	uint32_t *hashval = buckets + nbuckets + (i - hashtab[1]);
 
@@ -597,6 +617,9 @@ static Sym *gnu_lookup(uint32_t h1, uint32_t *hashtab, struct dso *dso, struct v
 		if (h2 & 1) break;
 	}
 
+	LD_LOGD("gnu_lookup symbol not found, "
+		"so:%{public}s s:%{public}s v:%{public}s use_vna_hash:%{public}d vna_hash:%{public}x",
+		dso->name, verinfo->s, verinfo->v, verinfo->use_vna_hash, verinfo->vna_hash);
 	return 0;
 }
 
@@ -616,6 +639,7 @@ static Sym *gnu_lookup_filtered(uint32_t h1, uint32_t *hashtab, struct dso *dso,
 static bool check_sym_accessible(struct dso *dso, ns_t *ns)
 {
 	if (!dso || !dso->namespace || !ns) {
+		LD_LOGD("check_sym_accessible invalid parameter!");
 		return false;
 	}
 	if (dso->namespace == ns) {
@@ -626,6 +650,8 @@ static bool check_sym_accessible(struct dso *dso, ns_t *ns)
 			return true;
 		}
 	}
+	LD_LOGD(
+		"check_sym_accessible dso name [%{public}s] ns_name [%{public}s] not accessible!", dso->name, ns->ns_name);
 	return false;
 }
 
@@ -840,6 +866,9 @@ static void do_relocs(struct dso *dso, size_t *rel, size_t rel_size, size_t stri
 					dso->lazy_cnt++;
 					continue;
 				}
+				LD_LOGE("relocating failed: symbol not found. "
+					"dso=%{public}s s=%{public}s use_vna_hash=%{public}d van_hash=%{public}x",
+					dso->name, name, vinfo.use_vna_hash, vinfo.vna_hash);
 				error("Error relocating %s: %s: symbol not found",
 					dso->name, name);
 				if (runtime) longjmp(*rtld_fail, 1);
@@ -2309,6 +2338,8 @@ void __dls3(size_t *sp, size_t *auxv)
 #ifdef OHOS_ENABLE_PARAMETER
 	InitParameterClient();
 #endif
+	musl_log_reset();
+	ld_log_reset();
 	/* If the main program was already loaded by the kernel,
 	 * AT_PHDR will point to some location other than the dynamic
 	 * linker's program headers. */
@@ -2860,6 +2891,8 @@ end:
 void *dlopen(const char *file, int mode)
 {
 	const void *caller_addr = __builtin_return_address(0);
+	musl_log_reset();
+	ld_log_reset();
 	LD_LOGI("dlopen file:%{public}s, mode:%{public}x ,caller_addr:%{public}p .", file, mode, caller_addr);
 	return dlopen_impl(file, mode, NULL, caller_addr, NULL);
 }
@@ -2912,11 +2945,13 @@ int dlns_get(const char *name, Dl_namespace *dlns)
 void *dlopen_ns(Dl_namespace *dlns, const char *file, int mode)
 {
 	const void *caller_addr = __builtin_return_address(0);
+	musl_log_reset();
+	ld_log_reset();
 	LD_LOGI("dlopen_ns file:%{public}s, mode:%{public}x , caller_addr:%{public}p , dlns->name:%{public}s.",
 		file,
 		mode,
 		caller_addr,
-		dlns->name);
+		dlns ? dlns->name : "NULL");
 	return dlopen_impl(file, mode, dlns->name, caller_addr, NULL);
 }
 
@@ -3082,6 +3117,7 @@ static void *do_dlsym(struct dso *p, const char *s, const char *v, void *ra)
 	struct verinfo verinfo = { .s = s, .v = v, .use_vna_hash = false };
 	struct symdef def = find_sym2(p, &verinfo, 0, use_deps, ns);
 	if (!def.sym) {
+		LD_LOGE("do_dlsym failed: symbol not found. so=%{public}s s=%{public}s v=%{public}s", p->name, s, v);
 		error("Symbol not found: %s, version: %s", s, strlen(v) > 0 ? v : "null");
 		return 0;
 	}
@@ -3300,6 +3336,8 @@ int dladdr(const void *addr_arg, Dl_info *info)
 hidden void *__dlsym(void *restrict p, const char *restrict s, void *restrict ra)
 {
 	void *res;
+	musl_log_reset();
+	ld_log_reset();
 	pthread_rwlock_rdlock(&lock);
 #ifdef HANDLE_RANDOMIZATION
 	if ((p != RTLD_DEFAULT) && (p != RTLD_NEXT)) {
@@ -3322,6 +3360,8 @@ hidden void *__dlsym(void *restrict p, const char *restrict s, void *restrict ra
 hidden void *__dlvsym(void *restrict p, const char *restrict s, const char *restrict v, void *restrict ra)
 {
 	void *res;
+	musl_log_reset();
+	ld_log_reset();
 	pthread_rwlock_rdlock(&lock);
 #ifdef HANDLE_RANDOMIZATION
 	if ((p != RTLD_DEFAULT) && (p != RTLD_NEXT)) {
@@ -3523,13 +3563,15 @@ int handle_asan_path_open(int fd, const char *name, ns_t *namespace, char *buf, 
 
 void* dlopen_ext(const char *file, int mode, const dl_extinfo *extinfo)
 {
+	const void *caller_addr = __builtin_return_address(0);
+	musl_log_reset();
+	ld_log_reset();
 	if (extinfo != NULL) {
 		if ((extinfo->flag & ~(DL_EXT_VALID_FLAG_BITS)) != 0) {
 			LD_LOGE("Error dlopen_ext %{public}s: invalid flag %{public}x", file, extinfo->flag);
 			return NULL;
 		}
 	}
-	const void *caller_addr = __builtin_return_address(0);
 	LD_LOGI("dlopen_ext file:%{public}s, mode:%{public}x , caller_addr:%{public}p , extinfo->flag:%{public}x",
 		file,
 		mode,

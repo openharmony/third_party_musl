@@ -149,8 +149,10 @@ template("musl_libs") {
       ]
     }
 
-    if (enable_musl_log) {
-      defines += [ "ENABLE_MUSL_LOG" ]
+    if (!is_standard_system && defined(enable_musl_log)) {
+      if (enable_musl_log) {
+        defines += [ "ENABLE_MUSL_LOG" ]
+      }
     }
 
     dynamic_list =
@@ -367,6 +369,11 @@ template("musl_libs") {
     }
 
     deps = porting_deps
+
+    if (is_standard_system) {
+      defines += [ "OHOS_ENABLE_PARAMETER" ]
+      deps += [ "//base/startup/init/services/param/base:parameterbase" ]
+    }
   }
 
   source_set("soft_musl_src_nossp") {
