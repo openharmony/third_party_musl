@@ -5,13 +5,20 @@ if (is_lite_system && current_os == "ohos") {
 
     # Mini system of liteos_a needs not prepare for build, so set "kernel_is_prebuilt is true" in
     # config.json to avoid it.
-    if (ohos_kernel_type != "liteos_m" && !ohos_kernel_is_prebuilt) {
+    if (!is_mini_system && !ohos_kernel_is_prebuilt) {
       deps = [ "scripts/build_lite:build" ]
     } else if (!ohos_kernel_is_prebuilt) {
-      all_dependent_configs = [
-        "//kernel/liteos_m:public",
-        "//kernel/liteos_m:kconfig_config",
-      ]
+      if (ohos_kernel_type == "liteos_m") {
+        all_dependent_configs = [
+          "//kernel/liteos_m:public",
+          "//kernel/liteos_m:kconfig_config",
+        ]
+      } else if (ohos_kernel_type == "uniproton") {
+        all_dependent_configs = [
+          "//kernel/uniproton:os_config",
+          "//kernel/uniproton:kconfig_config",
+        ]
+      }
     }
   }
 } else {
