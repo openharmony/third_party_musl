@@ -34,7 +34,6 @@ mkdir -p  ${OUT_DIR}/i686-linux-ohos
 
 cp -rp ${SOURCE_DIR}/* ${OUT_DIR}
 mv  ${OUT_DIR}/asm  ${OUT_DIR}/${TARGET_ARCH}-linux-ohos/
-mv  ${OUT_DIR}/bits ${OUT_DIR}/${TARGET_ARCH}-linux-ohos/
 
 cp -rp ${OUT_DIR}/asm-x86/asm ${OUT_DIR}/x86_64-linux-ohos
 mv ${OUT_DIR}/asm-x86/asm ${OUT_DIR}/i686-linux-ohos
