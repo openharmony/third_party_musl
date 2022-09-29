@@ -155,7 +155,6 @@ void __push_chunk(struct chunk *c)
 	}
 	occupied_bin->head = c;
 
-	c->flag = 0x00;
 	unlock(occupied_bin->lock);
 }
 
@@ -466,10 +465,10 @@ static struct chunk *expand_heap(size_t n)
 
 	p = __expand_heap(&n);
 	if (!p) {
-		unlock(heap_lock);
 #ifdef MUSL_ITERATE_AND_STATS_API
 		unlock(total_heap_space_inc_lock);
 #endif
+		unlock(heap_lock);
 		return 0;
 	}
 
@@ -1271,15 +1270,6 @@ void internal_free(void *p)
 
 	struct chunk *self = MEM_TO_CHUNK(p);
 #ifdef MUSL_ITERATE_AND_STATS_API
-#if 0
-	lock(pop_merge_lock);
-	if (self->flag == 0x01) {
-		unlock(pop_merge_lock);
-		return;
-	}
-	self->flag = 0x01;
-	unlock(pop_merge_lock);
-#endif
 	__pop_chunk(self);
 #endif
 
