@@ -15,7 +15,6 @@
 
 #include <signal.h>
 #include "functionalext.h"
-#define MAXPATH 1000
 
 /*
  * @tc.name      : libc_current_sigrtmax_0100

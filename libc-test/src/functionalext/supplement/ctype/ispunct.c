@@ -14,13 +14,6 @@
  */
 
 #include <ctype.h>
-#include <dlfcn.h>
-#include <errno.h>
-#include <locale.h>
-#include <stdio.h>
-#include <string.h>
-#include <wchar.h>
-#include <wctype.h>
 #include "functionalext.h"
 
 /**
@@ -87,7 +80,7 @@ void ispunct_0500(void)
     EXPECT_EQ("ispunct_0500", cout, 32);
 }
 
-int main(void)
+int main(int argc, char *argv[])
 {
     ispunct_0100();
     ispunct_0200();

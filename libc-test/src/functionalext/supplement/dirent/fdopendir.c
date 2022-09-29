@@ -17,7 +17,6 @@
 #include <dirent.h>
 #include <dlfcn.h>
 #include <fcntl.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include <unistd.h>
@@ -33,16 +32,10 @@ void fdopendir_0100(void)
     bool flag = false;
     DIR *dir = NULL;
     int fd = open("/data/data", O_RDONLY);
-    if (fd < 0) {
-        t_error("%s open failed, fd = %d\n", __func__, fd);
-    }
+    EXPECT_NE("fdopendir_0100", fd, -1);
+
     dir = fdopendir(fd);
-    if (dir == 0) {
-        t_error("%s fdopendir failed\n", __func__);
-    } else {
-        flag = true;
-    }
-    EXPECT_TRUE("fdopendir_0100", flag);
+    EXPECT_TRUE("fdopendir_0100", dir != 0);
 }
 
 /**
@@ -81,7 +74,7 @@ void fdopendir_0400(void)
     int fd = open("/data/data/test.txt", O_RDONLY);
     dir = fdopendir(fd);
     EXPECT_EQ("fdopendir_0400", dir, NULL);
-    system("rm -rf /data/data/test.txt");
+    remove("/data/data/test.txt");
 }
 
 int main(int argc, char *argv[])

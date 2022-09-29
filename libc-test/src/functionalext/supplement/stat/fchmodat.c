@@ -14,14 +14,9 @@
  */
 
 #include <fcntl.h>
-#include <signal.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <sys/stat.h>
-#include <unistd.h>
 #include "functionalext.h"
 
-typedef void (*TEST_FUN)();
 int success = 36863;
 int SUCCESS = 33279;
 int failed = -1;

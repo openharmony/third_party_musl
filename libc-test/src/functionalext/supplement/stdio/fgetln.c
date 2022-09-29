@@ -13,57 +13,63 @@
  * limitations under the License.
  */
 
-#include <string.h>
-#include "functionalext.h"
 #include <fcntl.h>
-#include <stdlib.h>
 #include <stdio.h>
-#include <stdint.h>
-#include <stdbool.h>
+#include <string.h>
+#include "test.h"
 
 /**
  * @tc.name       : fgetln_0100
- * @tc.desc       : Verify that a pointer to the next row can be obtained.
+ * @tc.desc       : Returns a pointer to the next line from the stream referenced by stream
  * @tc.level      : level 0
  */
 void fgetln_0100(void)
 {
+    size_t plen;
 
-    char *p = NULL;
-    size_t len;
-    FILE *fptr = fopen("test.txt", "w+");
-    fputs("this is test", fptr);
-    fprintf(fptr, "\n");
-    fputs("that is test.txt", fptr);
-    fseek(fptr, 0, SEEK_SET);
-    bool flag = false;
-    p = fgetln(fptr, &len);
-    if (p != NULL) {
-        flag = true;
+    FILE *f = fopen("/data/test.txt", "w+");
+    if (!f) {
+        t_error("%s fopen failed\n", __func__);
     }
-    EXPECT_TRUE("fgetln_0100", flag);
-    fclose(fptr);
-    remove("test.txt");
+
+    fputs("HelloWorld", f);
+    fseek(f, 0, SEEK_SET);
+    char *result = fgetln(f, &plen);
+    if (!result) {
+        t_error("%s fgetln failed\n", __func__);
+    }
+    if (strcmp(result, "HelloWorld")) {
+        t_error("%s result is %s, not HelloWorld\n", __func__, result);
+    }
+    if (plen != strlen(result)) {
+        t_error("%s failed, plen is %zu\n", __func__, plen);
+    }
+
+    fclose(f);
+    remove("/data/test.txt");
 }
 
 /**
  * @tc.name       : fgetln_0200
- * @tc.desc       : Validation cannot get pointer to next row (f argument invalid)
+ * @tc.desc       :
  * @tc.level      : level 2
  */
 void fgetln_0200(void)
 {
-    char *p = NULL;
-    size_t len;
-    FILE *fptr = fopen("test.txt", "w");
-    fseek(fptr, 0, SEEK_SET);
-    bool flag = false;
-    p = fgetln(fptr, &len);
-    if (p == NULL) {
-        flag = true;
+    size_t plen;
+
+    FILE *f = fopen("/data/test.txt", "w+");
+    if (!f) {
+        t_error("%s fopen failed\n", __func__);
     }
-    EXPECT_TRUE("fgetln_0200", flag);
-    fclose(fptr);
+
+    char *result = fgetln(f, &plen);
+    if (result) {
+        t_error("%s fgetln should be failed\n", __func__);
+    }
+
+    fclose(f);
+    remove("/data/test.txt");
 }
 
 int main(int argc, char *argv[])

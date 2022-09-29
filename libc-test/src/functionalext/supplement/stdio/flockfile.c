@@ -13,48 +13,114 @@
  * limitations under the License.
  */
 
+#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <pthread.h>
-#include "functionalext.h"
+#include <string.h>
+#include "test.h"
 
-void *pthreadFunc(FILE *fptr)
+static FILE *fp;
+const char *path = "/data/test.txt";
+
+void *do_child_one(void *a)
 {
-    pthread_t newthid;
-    newthid = pthread_self();
-    char buf[] = "test1";
-    fwrite(buf, 1, sizeof(buf), fptr);
-    fseek(fptr, 0, SEEK_END);
+    puts("start do_child_one");
+
+    flockfile(stdout);
+
+    puts("after first flockfile");
+
+    flockfile(stdout);
+
+    puts("foo");
+
+    funlockfile(stdout);
+
+    puts("after first funlockfile");
+
+    funlockfile(stdout);
+
+    puts("all done");
+    return a;
+}
+
+void *do_child_two(void *p)
+{
+    char buf[64];
+
+    flockfile(fp);
+
+    if (fseek(fp, 0L, SEEK_SET) == -1) {
+        t_error("%s fseek failed\n", __func__);
+    }
+    int ret = fread(buf, 64, 1, fp);
+
+    int count = atoi(buf);
+    ++count;
+    sprintf(buf, "%d", count);
+    if (fseek(fp, 0L, SEEK_SET) == -1) {
+        t_error("%s fseek failed\n", __func__);
+    }
+    ret = fwrite(buf, strlen(buf), 1, fp);
+
+    funlockfile(fp);
     return NULL;
 }
 
 /**
  * @tc.name      : flockfile_0100
- * @tc.desc      : Verify that files can be locked
+ * @tc.desc      : Acquire for a thread ownership of a (FILE *) object (stdout)
  * @tc.level     : Level 0
  */
 void flockfile_0100(void)
 {
-    FILE *fptr;
-    pthread_t tid;
-    char buf[] = "test";
-    char buff[1024] = "\0";
-    bzero(buff, sizeof(buf));
-    fptr = fopen("test.txt", "w+");
-    ftrylockfile(fptr);
-    fwrite(buf, 1, strlen(buf), fptr);
-    fseek(fptr, 0, SEEK_END);
-    int ret1 = pthread_create(&tid, NULL, (void *)pthreadFunc, fptr);
-    sleep(3);
-    rewind(fptr);
-    fgets(buff, 1024, fptr);
-    EXPECT_STREQ("flockfile_0100", buf, buff);
-    fclose(fptr);
-    remove("test.txt");
+    pthread_t th;
+
+    if (pthread_create(&th, NULL, do_child_one, NULL) != 0) {
+        t_error("%s pthread_create failed\n", __func__);
+    }
+
+    void *result;
+    if (pthread_join(th, &result) != 0) {
+        t_error("%s pthread_join failed\n", __func__);
+    } else if (result != NULL) {
+        t_error("%s wrong return value: %p, expected %p\n", __func__, result, NULL);
+    }
+}
+
+/**
+ * @tc.name      : flockfile_0200
+ * @tc.desc      : Shared FILE* to implements mutual exclusion
+ * @tc.level     : Level 1
+ */
+void flockfile_0200(void)
+{
+    pthread_t tid[100];
+
+    fp = fopen(path, "w+");
+    if (fp == NULL) {
+        t_error("%s fopen failed\n", __func__);
+    }
+
+    for (int i = 0; i < 100; i++) {
+        if (pthread_create(tid + i, NULL, do_child_two, NULL) != 0) {
+            t_error("%s pthread_create failed\n", __func__);
+        }
+    }
+
+    for (int j = 0; j < 100; j++) {
+        if (pthread_join(tid[j], NULL) != 0) {
+            t_error("%s pthread_join failed\n", __func__);
+        }
+    }
+
+    fclose(fp);
+    remove(path);
 }
 
 int main(int argc, char *argv[])
 {
     flockfile_0100();
+    flockfile_0200();
     return t_status;
 }

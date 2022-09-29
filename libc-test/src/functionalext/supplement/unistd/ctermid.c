@@ -13,12 +13,6 @@
  * limitations under the License.
  */
 
-#include <fcntl.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <signal.h>
-#include <stdbool.h>
-#include <unistd.h>
 #include "functionalext.h"
 
 /**
@@ -28,14 +22,10 @@
  */
 void ctermid_0100(void)
 {
-    char termid[1025];
-    bool flag = false;
-    char *result = NULL;
-    result = ctermid(termid);
-    if (result != NULL) {
-        flag = true;
-    }
-    EXPECT_TRUE("ctermid_0100", flag);
+    char buf[BUFSIZ];
+    char *result = ctermid(buf);
+    EXPECT_EQ("ctermid_0100", buf, result);
+    EXPECT_STREQ("ctermid_0100", result, "/dev/tty");
 }
 
 /**
@@ -46,14 +36,8 @@ void ctermid_0100(void)
  */
 void ctermid_0200(void)
 {
-    char termid[1025] = "ssad";
-    bool flag = false;
-    char *result = NULL;
-    result = ctermid(termid);
-    if (result != NULL) {
-        flag = true;
-    }
-    EXPECT_TRUE("ctermid_0200", flag);
+    char *result = ctermid(NULL);
+    EXPECT_STREQ("ctermid_0200", result, "/dev/tty");
 }
 
 int main(int argc, char *argv[])

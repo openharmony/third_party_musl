@@ -13,6 +13,7 @@
  * limitations under the License.
  */
 
+#include <fcntl.h>
 #include "functionalext.h"
 
 /**
@@ -22,18 +23,20 @@
  */
 void rename_0100(void)
 {
-    const char *ptr = "oldfile.txt";
-    const char *newptr = "newfile.txt";
-    FILE *fptr = fopen(ptr, "w");
-    EXPECT_TRUE("rename_0100", fptr != NULL);
-    int ret = rename(ptr, newptr);
+    const char *oldname = "oldfile.txt";
+    const char *newname = "newfile.txt";
+    int fd = open(oldname, O_RDONLY | O_CREAT);
+    EXPECT_TRUE("rename_0100", fd != -1);
+    close(fd);
+
+    int ret = rename(oldname, newname);
     EXPECT_EQ("rename_0100", ret, 0);
-    fclose(fptr);
-    remove(ptr);
-    remove(newptr);
-    fptr = NULL;
-    ptr = NULL;
-    newptr = NULL;
+    fd = open(oldname, O_RDONLY);
+    EXPECT_EQ("rename_0100", fd, -1);
+    fd = open(newname, O_RDONLY);
+    EXPECT_NE("rename_0100", fd, -1);
+    close(fd);
+    remove(newname);
 }
 
 /**
@@ -43,36 +46,50 @@ void rename_0100(void)
  */
 void rename_0200(void)
 {
-    const char *ptr = "test.txt";
-    const char *newptr = "newfile.txt";
-    int ret = rename(ptr, newptr);
+    const char *oldname = "oldfile.txt";
+    const char *newname = "newfile.txt";
+    int ret = rename(oldname, newname);
     EXPECT_EQ("rename_0200", ret, -1);
-    ptr = NULL;
-    newptr = NULL;
 }
 
 /**
  * @tc.name      : rename_0300
- * @tc.desc      : Parameter 2 is invalid, the file name cannot be changed.
- * @tc.level     : Level 2
+ * @tc.desc      : Newpath already exists, the file name can be changed.
+ * @tc.level     : Level 1
  */
 void rename_0300(void)
 {
-    const char *ptr = "oldfile.txt";
-    const char *newptr = "newfile.txt";
-    FILE *fptr = fopen(ptr, "w");
-    EXPECT_TRUE("rename_0300", fptr != NULL);
-    FILE *newfptr = fopen(newptr, "w");
-    EXPECT_TRUE("rename_0300", fptr != NULL);
-    int ret = rename(ptr, newptr);
-    EXPECT_EQ("rename_0300", ret, 0);
-    fclose(fptr);
-    fclose(newfptr);
-    remove(ptr);
-    remove(newptr);
-    fptr = NULL;
-    ptr = NULL;
-    newptr = NULL;
+    const char *oldname = "oldfile.txt";
+    const char *newname = "newfile.txt";
+    int fd_old = open(oldname, O_RDWR | O_CREAT);
+    EXPECT_TRUE("rename_0300", fd_old != -1);
+
+    char str_old[] = "old";
+    int ret_old = write(fd_old, str_old, sizeof(str_old));
+    EXPECT_TRUE("rename_0300", ret_old > 0);
+    close(fd_old);
+
+    int fd_new = open(newname, O_RDWR | O_CREAT);
+    EXPECT_TRUE("rename_0100", fd_new != -1);
+
+    char str_new[] = "new";
+    int ret_new = write(fd_old, str_new, sizeof(str_new));
+    EXPECT_TRUE("rename_0300", ret_new > 0);
+    close(fd_new);
+
+    int result = rename(oldname, newname);
+    EXPECT_EQ("rename_0300", result, 0);
+
+    int fd = open(newname, O_RDONLY);
+    EXPECT_TRUE("rename_0300", fd != -1);
+
+    char buf[10];
+    memset(buf, 0, sizeof(buf));
+    int nread = read(fd, buf, sizeof(buf));
+    EXPECT_TRUE("rename_0300", nread > 0);
+    EXPECT_TRUE("rename_0300", strcmp(buf, "old") == 0);
+
+    remove(newname);
 }
 
 int main(int argc, char *argv[])

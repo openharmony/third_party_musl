@@ -14,9 +14,7 @@
  */
 
 #include <sys/ipc.h>
-#include <sys/stat.h>
 #include "functionalext.h"
-int failed = -1;
 
 /*
  * @tc.name      : ftok_0100
@@ -26,7 +24,7 @@ int failed = -1;
 void ftok_0100(void)
 {
     key_t result = ftok("/data/tests/libc-test/src/functionalext/supplement/ipc/ftok", 1);
-    EXPECT_NE("ftok_0100", result, failed);
+    EXPECT_NE("ftok_0100", result, -1);
 }
 
 /*
@@ -37,7 +35,7 @@ void ftok_0100(void)
 void ftok_0200(void)
 {
     key_t result = ftok("./test", 1);
-    EXPECT_EQ("ftok_0200", result, failed);
+    EXPECT_EQ("ftok_0200", result, -1);
 }
 int main(int argc, char *argv[])
 {

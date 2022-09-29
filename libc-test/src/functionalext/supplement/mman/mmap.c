@@ -14,15 +14,12 @@
  */
 
 #include <fcntl.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
-#include <stdbool.h>
 #include <unistd.h>
 #include "functionalext.h"
 
-typedef void (*TEST_FUN)();
 const int EOK = 0;
 const int SUCCESS = 0;
 const int FAILED = -1;
@@ -36,43 +33,33 @@ const int FAILED = -1;
  */
 void mmap_0100(void)
 {
-    int fd;
-    int mm;
+    int fd, mm;
     void *start;
     const char *ptr = "/data/test.txt";
     static char str[] = "this is a sample!";
-    int number = 0;
     FILE *fptr = fopen(ptr, "w+");
+    EXPECT_PTRNE("mmap_0100", fptr, NULL);
+
     struct stat statbuff;
     fwrite(str, sizeof(char), strlen(str), fptr);
     fseek(fptr, 0L, SEEK_SET);
-    if (fgetc(fptr) == EOF) {
-        number = 1;
-    } else {
-        number = 2;
-    }
+    EXPECT_TRUE("mmap_0100", fgetc(fptr) != EOF);
     int back = stat(ptr, &statbuff);
     fclose(fptr);
+
     fd = open("/data/test.txt", O_RDWR | O_CREAT, 0777);
-    if (fd < 0) {
-        printf("Error!1");
-        exit(1);
-    }
+    EXPECT_NE("mmap_0100", fd, -1);
     start = mmap(NULL, statbuff.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
-    EXPECT_EQ("mmap_0100", number, 2);
     EXPECT_EQ("mmap_0100", back, SUCCESS);
-    bool flag = false;
-    if (start != MAP_FAILED) {
-        flag = true;
-    }
-    EXPECT_TRUE("mmap_0100", flag);
+    EXPECT_TRUE("mmap_0100", start != MAP_FAILED);
+
     mm = munmap(start, statbuff.st_size);
     EXPECT_EQ("mmap_0100", mm, SUCCESS);
+    close(fd);
     remove(ptr);
     remove("/data/test.txt");
     fptr = NULL;
     ptr = NULL;
-    close(fd);
 }
 
 /**
@@ -83,44 +70,34 @@ void mmap_0100(void)
  */
 void mmap_0200(void)
 {
-    int fd;
-    int mm;
+    int fd, mm;
     void *start;
     const char *ptr = "/data/test.txt";
     static char str[] = "this is a sample!";
-    int number = 0;
     FILE *fptr = fopen(ptr, "w+");
+    EXPECT_PTRNE("mmap_0200", fptr, NULL);
+
     struct stat statbuff;
     struct stat sb;
     fwrite(str, sizeof(char), strlen(str), fptr);
     fseek(fptr, 0L, SEEK_SET);
-    if (fgetc(fptr) == EOF) {
-        number = 1;
-    } else {
-        number = 2;
-    }
+    EXPECT_TRUE("mmap_0200", fgetc(fptr) != EOF);
+
     int back = stat(ptr, &statbuff);
     fclose(fptr);
     fd = open("/data/test.txt", O_RDWR | O_CREAT, 0777);
-    if (fd < 0) {
-        printf("Error!2");
-        exit(1);
-    }
+    EXPECT_NE("mmap_0200", fd, -1);
     start = mmap(NULL, statbuff.st_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-    EXPECT_EQ("mmap_0200", number, 2);
     EXPECT_EQ("mmap_0200", back, SUCCESS);
-    bool flag = false;
-    if (start != MAP_FAILED) {
-        flag = true;
-    }
-    EXPECT_TRUE("mmap_0200", flag);
+    EXPECT_TRUE("mmap_0200", start != MAP_FAILED);
+
     mm = munmap(start, statbuff.st_size);
     EXPECT_EQ("mmap_0200", mm, SUCCESS);
+    close(fd);
     remove(ptr);
     remove("/data/test.txt");
     fptr = NULL;
     ptr = NULL;
-    close(fd);
 }
 
 /**
@@ -134,11 +111,7 @@ void mmap_0300(void)
     void *start;
     int mm;
     start = mmap(NULL, getpagesize(), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANON, -1, 0);
-    bool flag = false;
-    if (start != MAP_FAILED) {
-        flag = true;
-    }
-    EXPECT_TRUE("mmap_0300", flag);
+    EXPECT_TRUE("mmap_0300", start != MAP_FAILED);
     mm = munmap(start, getpagesize());
     EXPECT_EQ("mmap_0300", mm, SUCCESS);
 }
@@ -151,37 +124,26 @@ void mmap_0300(void)
  */
 void mmap_0400(void)
 {
-    int fd;
-    int mm;
+    int fd, mm;
     void *start;
     const char *ptr = "/data/test.txt";
     static char str[] = "this is a sample!";
-    int number = 0;
     FILE *fptr = fopen(ptr, "w+");
+    EXPECT_PTRNE("mmap_0400", fptr, NULL);
+
     struct stat statbuff;
     struct stat sb;
     fwrite(str, sizeof(char), strlen(str), fptr);
     fseek(fptr, 0L, SEEK_SET);
-    if (fgetc(fptr) == EOF) {
-        number = 1;
-    } else {
-        number = 2;
-    }
+    EXPECT_TRUE("mmap_0400", fgetc(fptr) != EOF);
+
     int back = stat(ptr, &statbuff);
     fclose(fptr);
     fd = open("/data/test.txt", O_RDWR | O_CREAT, 0777);
-    if (fd < 0) {
-        printf("Error!4");
-        exit(1);
-    }
+    EXPECT_NE("mmap_0400", fd, -1);
     start = mmap(NULL, statbuff.st_size, PROT_EXEC, MAP_PRIVATE | MAP_LOCKED, fd, 0);
-    EXPECT_EQ("mmap_0400", number, 2);
     EXPECT_EQ("mmap_0400", back, SUCCESS);
-    bool flag = false;
-    if (start != MAP_FAILED) {
-        flag = true;
-    }
-    EXPECT_TRUE("mmap_0400", flag);
+    EXPECT_TRUE("mmap_0400", start != MAP_FAILED);
     mm = munmap(start, statbuff.st_size);
     EXPECT_EQ("mmap_0400", mm, SUCCESS);
     remove(ptr);
@@ -199,37 +161,27 @@ void mmap_0400(void)
  */
 void mmap_0500(void)
 {
-    int fd;
-    int mm;
+    int fd, mm;
     void *start;
     const char *ptr = "/data/test.txt";
     static char str[] = "this is a sample!";
-    int number = 0;
     FILE *fptr = fopen(ptr, "w+");
+    EXPECT_PTRNE("mmap_0500", fptr, NULL);
+
     struct stat statbuff;
     struct stat sb;
     fwrite(str, sizeof(char), strlen(str), fptr);
     fseek(fptr, 0L, SEEK_SET);
-    if (fgetc(fptr) == EOF) {
-        number = 1;
-    } else {
-        number = 2;
-    }
+    EXPECT_TRUE("mmap_0500", fgetc(fptr) != EOF);
+
     int back = stat(ptr, &statbuff);
     fclose(fptr);
     fd = open("/data/test.txt", O_RDWR | O_CREAT, 0777);
-    if (fd < 0) {
-        printf("Error!5");
-        exit(1);
-    }
+    EXPECT_NE("mmap_0500", fd, -1);
+
     start = mmap(NULL, statbuff.st_size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_DENYWRITE, fd, 0);
-    EXPECT_EQ("mmap_0500", number, 2);
     EXPECT_EQ("mmap_0500", back, SUCCESS);
-    bool flag = false;
-    if (start != MAP_FAILED) {
-        flag = true;
-    }
-    EXPECT_TRUE("mmap_0500", flag);
+    EXPECT_TRUE("mmap_0500", start != MAP_FAILED);
     mm = munmap(start, statbuff.st_size);
     EXPECT_EQ("mmap_0500", mm, SUCCESS);
     remove(ptr);
@@ -247,31 +199,24 @@ void mmap_0500(void)
  */
 void mmap_0600(void)
 {
-    int fd;
-    int mm;
+    int fd, mm;
     void *start;
     const char *ptr = "/data/test.txt";
     static char str[] = "this is a sample!";
-    int number = 0;
     FILE *fptr = fopen(ptr, "w+");
+    EXPECT_PTRNE("mmap_0600", fptr, NULL);
+
     struct stat statbuff;
     struct stat sb;
     fwrite(str, sizeof(char), strlen(str), fptr);
     fseek(fptr, 0L, SEEK_SET);
-    if (fgetc(fptr) == EOF) {
-        number = 1;
-    } else {
-        number = 2;
-    }
+    EXPECT_TRUE("mmap_0600", fgetc(fptr) != EOF);
+
     int back = stat(ptr, &statbuff);
     fclose(fptr);
     fd = open("/data/test.txt", O_RDONLY);
-    if (fd < 0) {
-        printf("Error!6");
-        exit(1);
-    }
+    EXPECT_NE("mmap_0600", fd, -1);
     start = mmap(NULL, statbuff.st_size, PROT_NONE, MAP_PRIVATE | MAP_FIXED, -1, 0);
-    EXPECT_EQ("mmap_0600", number, 2);
     EXPECT_EQ("mmap_0600", back, SUCCESS);
     EXPECT_EQ("mmap_0600", start, MAP_FAILED);
     remove(ptr);
@@ -293,26 +238,21 @@ void mmap_0700(void)
     void *start;
     const char *ptr = "/data/test.txt";
     static char str[] = "this is a sample!";
-    int number = 0;
     FILE *fptr = fopen(ptr, "w+");
+    EXPECT_PTRNE("mmap_0700", fptr, NULL);
+
     struct stat statbuff;
     struct stat sb;
     fwrite(str, sizeof(char), strlen(str), fptr);
     fseek(fptr, 0L, SEEK_SET);
-    if (fgetc(fptr) == EOF) {
-        number = 1;
-    } else {
-        number = 2;
-    }
+    EXPECT_TRUE("mmap_0700", fgetc(fptr) != EOF);
+
     int back = stat(ptr, &statbuff);
     fclose(fptr);
     fd = open("/data/test.txt", O_RDWR | O_CREAT, 0777);
-    if (fd < 0) {
-        printf("Error!7");
-        exit(1);
-    }
+    EXPECT_NE("mmap_0700", fd, -1);
+
     start = mmap(NULL, statbuff.st_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, OFF_MASK);
-    EXPECT_EQ("mmap_0700", number, 2);
     EXPECT_EQ("mmap_0700", back, SUCCESS);
     EXPECT_EQ("mmap_0700", start, MAP_FAILED);
     remove(ptr);
@@ -334,23 +274,18 @@ void mmap_0800(void)
     void *start;
     const char *ptr = "/data/test.txt";
     static char str[] = "this is a sample!";
-    int number = 0;
     FILE *fptr = fopen(ptr, "w+");
+    EXPECT_PTRNE("mmap_0800", fptr, NULL);
+
     fwrite(str, sizeof(char), strlen(str), fptr);
     fseek(fptr, 0L, SEEK_SET);
-    if (fgetc(fptr) == EOF) {
-        number = 1;
-    } else {
-        number = 2;
-    }
+    EXPECT_TRUE("mmap_0800", fgetc(fptr) != EOF);
+
     fclose(fptr);
     fd = open("/data/test.txt", O_RDWR | O_CREAT, 0777);
-    if (fd < 0) {
-        printf("Error!8");
-        exit(1);
-    }
+    EXPECT_NE("mmap_0800", fd, -1);
+
     start = mmap(NULL, PTRDIFF_MAX + 1, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-    EXPECT_EQ("mmap_0800", number, 2);
     EXPECT_EQ("mmap_0800", start, MAP_FAILED);
     remove(ptr);
     remove("/data/test.txt");
@@ -370,23 +305,18 @@ void mmap_0900(void)
     void *start;
     const char *ptr = "/data/test.txt";
     static char str[] = "this is a sample!";
-    int number = 0;
     FILE *fptr = fopen(ptr, "w+");
+    EXPECT_PTRNE("mmap_0900", fptr, NULL);
+
     fwrite(str, sizeof(char), strlen(str), fptr);
     fseek(fptr, 0L, SEEK_SET);
-    if (fgetc(fptr) == EOF) {
-        number = 1;
-    } else {
-        number = 2;
-    }
+    EXPECT_TRUE("mmap_0900", fgetc(fptr) != EOF);
+
     fclose(fptr);
     fd = open("/data/test.txt", O_RDWR | O_CREAT, 0777);
-    if (fd < 0) {
-        printf("Error!9");
-        exit(1);
-    }
+    EXPECT_NE("mmap_0900", fd, -1);
+
     start = mmap(NULL, 0, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-    EXPECT_EQ("mmap_0900", number, 2);
     EXPECT_EQ("mmap_0900", start, MAP_FAILED);
     remove(ptr);
     remove("/data/test.txt");
@@ -407,26 +337,21 @@ void mmap_1000(void)
     void *start;
     const char *ptr = "/data/test.txt";
     static char str[] = "this is a sample!";
-    int number = 0;
     FILE *fptr = fopen(ptr, "w+");
+    EXPECT_PTRNE("mmap_1000", fptr, NULL);
+
     struct stat statbuff;
     struct stat sb;
     fwrite(str, sizeof(char), strlen(str), fptr);
     fseek(fptr, 0L, SEEK_SET);
-    if (fgetc(fptr) == EOF) {
-        number = 1;
-    } else {
-        number = 2;
-    }
+    EXPECT_TRUE("mmap_1000", fgetc(fptr) != EOF);
+
     int back = stat(ptr, &statbuff);
     fclose(fptr);
     fd = open("/data/test.txt", O_RDWR | O_CREAT, 0777);
-    if (fd < 0) {
-        printf("Error!10");
-        exit(1);
-    }
+    EXPECT_NE("mmap_1000", fd, -1);
+
     start = mmap(NULL, statbuff.st_size, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANON, fd, getpagesize() - 1);
-    EXPECT_EQ("mmap_1000", number, 2);
     EXPECT_EQ("mmap_1000", back, SUCCESS);
     EXPECT_EQ("mmap_1000", start, MAP_FAILED);
     remove(ptr);
@@ -444,38 +369,28 @@ void mmap_1000(void)
  */
 void mmap_1100(void)
 {
-    int fd;
-    int mm;
+    int fd, mm;
     void *start;
     const char *ptr = "/data/test.txt";
     static char str[] = "this is a sample!";
-    int number = 0;
     FILE *fptr = fopen(ptr, "w+");
+    EXPECT_PTRNE("mmap_1100", fptr, NULL);
+
     struct stat statbuff;
     struct stat sb;
     fwrite(str, sizeof(char), strlen(str), fptr);
     fseek(fptr, 0L, SEEK_SET);
-    if (fgetc(fptr) == EOF) {
-        number = 1;
-    } else {
-        number = 2;
-    }
+    EXPECT_TRUE("mmap_1100", fgetc(fptr) != EOF);
+
     int back = stat(ptr, &statbuff);
     fclose(fptr);
     fd = open("/data/test.txt", O_RDWR | O_CREAT, 0777);
-    if (fd < 0) {
-        printf("Error!11");
-        exit(1);
-    }
+    EXPECT_NE("mmap_1100", fd, -1);
+
     int get = getpagesize() - 1;
     start = mmap((void *)(&get), statbuff.st_size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_DENYWRITE, fd, 0);
-    EXPECT_EQ("mmap_1100", number, 2);
     EXPECT_EQ("mmap_1100", back, SUCCESS);
-    bool flag = false;
-    if (start != MAP_FAILED) {
-        flag = true;
-    }
-    EXPECT_TRUE("mmap_1100", flag);
+    EXPECT_TRUE("mmap_1100", start != MAP_FAILED);
     mm = munmap(start, statbuff.st_size);
     EXPECT_EQ("mmap_1100", mm, SUCCESS);
     remove(ptr);

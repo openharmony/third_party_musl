@@ -67,7 +67,6 @@ functionalext_supplement_stdio_test = [
   "getc_unlocked",
   "__fbufsize",
   "__flbf",
-  "__fsetlocking",
   "__fseterr",
   "dprintf",
   "__fpending",

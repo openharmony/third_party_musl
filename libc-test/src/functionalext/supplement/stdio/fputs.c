@@ -13,50 +13,40 @@
  * limitations under the License.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdio.h>
 #include "functionalext.h"
-const int SUCCESS = 0;
+
+const char *path = "/data/fputs.txt";
 
 /**
  * @tc.name       : fputs_0100
- * @tc.desc       : Verify that an empty string is written in the specified file.
+ * @tc.desc       : Writes the string s to stream
  * @tc.level      : level 0.
  */
 void fputs_0100(void)
 {
-    char str[80] = "string\n";
-    FILE *fptr = NULL;
-    fptr = fopen("/data/tests/libc-test/src/functionalext/supplement/stdio/fputs.txt", "w+");
-    if (fptr == NULL) {
-        perror("fopen");
-    }
-    int len = fputs(str, fptr);
-    EXPECT_EQ("fputs_0100", len, SUCCESS);
+    FILE *fptr = fopen(path, "w+");
+    EXPECT_PTRNE("fputs_0100", fptr, NULL);
+
+    int len = fputs("this is a test string", fptr);
+    EXPECT_TRUE("fputs_0100", len >= 0);
     fclose(fptr);
-    remove("/data/tests/libc-test/src/functionalext/supplement/stdio/fputs.txt");
-    fptr = NULL;
+    remove(path);
 }
 
 /**
  * @tc.name       : fputs_0200
- * @tc.desc       : Verify that an empty string is written in the specified file （parameter is empty）.
+ * @tc.desc       : An empty string is written in the specified file.
  * @tc.level      : level 0.
  */
 void fputs_0200(void)
 {
-    FILE *fptr = NULL;
-    fptr = fopen("/data/tests/libc-test/src/functionalext/supplement/stdio/fputs.txt", "w+");
-    if (fptr == NULL) {
-        perror("fopen");
-    }
+    FILE *fptr = fopen(path, "w+");
+    EXPECT_PTRNE("fputs_0200", fptr, NULL);
+
     int len = fputs("", fptr);
-    EXPECT_EQ("fputs_02 00", len, SUCCESS);
+    EXPECT_TRUE("fputs_0200", len >= 0);
     fclose(fptr);
-    remove("/data/tests/libc-test/src/functionalext/supplement/stdio/fputs.txt");
-    fptr = NULL;
+    remove(path);
 }
 
 /**
@@ -66,14 +56,13 @@ void fputs_0200(void)
  */
 void fputs_0300(void)
 {
-    FILE *fptr = NULL;
-    FILE *p = fopen("/data/tests/libc-test/src/functionalext/supplement/stdio/fputs.txt", "w");
+    FILE *p = fopen(path, "w");
     fclose(p);
-    fptr = fopen("/data/tests/libc-test/src/functionalext/supplement/stdio/fputs.txt", "r");
-    int rsize = fputs("this is a test string", fptr);
-    EXPECT_EQ("fputs_0300", rsize, EOF);
-    remove("/data/tests/libc-test/src/functionalext/supplement/stdio/fputs.txt");
-    fptr = NULL;
+    p = fopen(path, "r");
+    int len = fputs("this is a test string", p);
+    EXPECT_EQ("fputs_0300", len, EOF);
+    fclose(p);
+    remove(path);
 }
 
 int main(int argc, char *argv[])

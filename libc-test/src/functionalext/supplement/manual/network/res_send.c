@@ -13,27 +13,37 @@
  * limitations under the License.
  */
 
-#include <stdio.h>
-#include <stdbool.h>
 #include <resolv.h>
-#include "functionalext.h"
+#include <stdio.h>
+#include <string.h>
+#include "test.h"
+
+const int op = QUERY;
+const int class = C_IN;
+const int type = T_TXT;
+const char dname[] = "www.example.com";
+const unsigned char *data = (const unsigned char *)"";
+const char qbuf[] = "\0\1\0\0\0\0\0\0";
+const char qname[] = "\3www\7example\3com";
 
 /**
  * @tc.name      : res_send_0100
- * @tc.desc      : Verify that the response can be sent (all parameters are valid)
+ * @tc.desc      : Send a preformatted query given in msg of length msglen
  * @tc.level     : Level 0
  */
 void res_send_0100(void)
 {
-    bool flag = false;
-    int result;
-    unsigned char buf1[1024] = "127.0.0.1";
-    unsigned char buf2[1024] = "\0";
-    result = res_send(buf1, 0, buf2, 10);
-    if (result >= 0) {
-        flag = true;
+    unsigned char buf[BUFSIZ] = {0};
+    unsigned char answer[512];
+    int ret = res_mkquery(op, dname, class, type, data, 0, NULL, buf, sizeof(buf));
+    if (ret < 0) {
+        t_error("%s failed: ret = %d\n", __func__, ret);
     }
-    EXPECT_TRUE("res_send_0100", flag);
+
+    int result = res_send(buf, ret, answer, sizeof(answer));
+    if (result == -1) {
+        t_error("%s res_send failed\n", __func__);
+    }
 }
 
 int main(int argc, char *argv[])

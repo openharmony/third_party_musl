@@ -14,16 +14,7 @@
  */
 
 #include <fcntl.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdbool.h>
-#include <sys/stat.h>
-#include <signal.h>
-#include <stdint.h>
-#include <unistd.h>
 #include "functionalext.h"
-
-const int32_t COUNT_NEGATIVE = -1;
 
 /**
  * @tc.name      : dprintf_0100
@@ -32,11 +23,9 @@ const int32_t COUNT_NEGATIVE = -1;
  */
 void dprintf_0100(void)
 {
-    int result;
-    result = dprintf(1, "This is a test!!QAZ@WSX12");
+    int result = dprintf(1, "This is a test!!QAZ@WSX12");
     printf("\n");
-    int ret;
-    ret = strlen("This is a test!!QAZ@WSX12");
+    int ret = strlen("This is a test!!QAZ@WSX12");
     EXPECT_EQ("dprintf_0100", result, ret);
 }
 
@@ -47,11 +36,9 @@ void dprintf_0100(void)
  */
 void dprintf_0200(void)
 {
-    int result;
-    result = dprintf(2, "This is a test!");
+    int result = dprintf(2, "This is a test!");
     printf("\n");
-    int ret;
-    ret = strlen("This is a test!");
+    int ret = strlen("This is a test!");
     EXPECT_EQ("dprintf_0200", result, ret);
 }
 
@@ -63,14 +50,17 @@ void dprintf_0200(void)
  */
 void dprintf_0300(void)
 {
-    int result;
-    int fd = open("test.txt", O_CREAT | O_WRONLY);
-    result = dprintf(fd, "This is a test!");
-    int ret;
-    ret = strlen("This is a test!");
-    close(fd);
-    remove("test.txt");
+    const char *path = "/data/test.txt";
+    int fd = open(path, O_CREAT | O_WRONLY);
+    EXPECT_NE("dprintf_0300", fd, -1);
+
+    int result = dprintf(fd, "This is a test!");
+    int ret = strlen("This is a test!");
+
     EXPECT_EQ("dprintf_0300", result, ret);
+
+    close(fd);
+    remove(path);
 }
 
 /**
@@ -81,12 +71,15 @@ void dprintf_0300(void)
  */
 void dprintf_0400(void)
 {
-    int result;
-    int fd = open("test.txt", O_CREAT | O_RDONLY);
-    result = dprintf(fd, "This is a test!");
+    const char *path = "/data/test.txt";
+    int fd = open(path, O_CREAT | O_RDONLY);
+    EXPECT_NE("dprintf_0400", fd, -1);
+
+    int result = dprintf(fd, "This is a test!");
+    EXPECT_EQ("dprintf_0400", result, -1);
+
     close(fd);
-    remove("test.txt");
-    EXPECT_EQ("dprintf_0400", result, COUNT_NEGATIVE);
+    remove(path);
 }
 
 int main(int argc, char *argv[])

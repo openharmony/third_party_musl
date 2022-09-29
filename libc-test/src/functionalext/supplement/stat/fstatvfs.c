@@ -14,48 +14,58 @@
  */
 
 #include <fcntl.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <signal.h>
-#include <sys/vfs.h>
-#include <sys/statfs.h>
-#include <unistd.h>
-#include "functionalext.h"
-
-const int32_t COUNT_ZERO = 0;
-const int32_t COUNT_NEGATIVE = -1;
+#include <sys/statvfs.h>
+#include "test.h"
 
 /**
  * @tc.name      : fstatvfs_0100
- * @tc.desc      : Verify that file system statistics can be obtained (all parameters are valid)
+ * @tc.desc      : Returns the same information about an open file referenced by descriptor fd
  * @tc.level     : Level 0
  */
 void fstatvfs_0100(void)
 {
-    struct statvfs buff;
-    int result;
-    int fd = open("test.txt", O_RDWR | O_CREAT);
-    result = fstatvfs(fd, &buff);
-    EXPECT_EQ("fstatvfs_0100", result, COUNT_ZERO);
+    struct statvfs sts;
+    int fd = open("/proc", O_RDONLY);
+    if (fd < 0) {
+        t_error("%s open failed\n", __func__);
+    }
+
+    int result = fstatvfs(fd, &sts);
+    if (result != 0) {
+        t_error("%s fstatvfs failed\n", __func__);
+    }
+
     close(fd);
-    remove("test.txt");
+
+    if (sts.f_bsize != 4096U) {
+        t_error("%s f_bsize invalid\n", __func__);
+    }
+    if (sts.f_bfree != 0U) {
+        t_error("%s f_bfree invalid\n", __func__);
+    }
+    if (sts.f_ffree != 0U) {
+        t_error("%s f_ffree invalid\n", __func__);
+    }
+    if (sts.f_fsid != 0U) {
+        t_error("%s f_fsid invalid\n", __func__);
+    }
+    if (sts.f_namemax != 255U) {
+        t_error("%s f_namemax invalid\n", __func__);
+    }
 }
 
 /**
  * @tc.name      : fstatvfs_0200
- * @tc.desc      : Verify that file system statistics cannot be obtained (fd argument is invalid)
+ * @tc.desc      : Test case when parameter is invalid
  * @tc.level     : Level 2
  */
 void fstatvfs_0200(void)
 {
-    struct statvfs buff;
-    int result;
-    int fd = open("test.txt", O_RDWR | O_CREAT);
-    result = fstatvfs(-1, &buff);
-    EXPECT_EQ("fstatvfs_0200", result, COUNT_NEGATIVE);
-    close(fd);
-    remove("test.txt");
+    struct statvfs sts;
+    int result = fstatvfs(-1, &sts);
+    if (result != -1) {
+        t_error("%s fstatvfs should be failed\n", __func__);
+    }
 }
 
 int main(int argc, char *argv[])

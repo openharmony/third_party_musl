@@ -17,8 +17,6 @@
 #include <sys/stat.h>
 #include "functionalext.h"
 
-typedef void (*TEST_FUN)();
-
 /**
  * @tc.name      : creat_0100
  * @tc.desc      : Each parameter is valid and a new file can be created.
@@ -27,7 +25,7 @@ typedef void (*TEST_FUN)();
 void creat_0100(void)
 {
     int fd = -1;
-    const char *ptr = "creattest.txt";
+    const char *ptr = "/data/creattest.txt";
     fd = creat(ptr, O_RDWR | O_CREAT);
     EXPECT_NE("creat_0100", fd, -1);
     close(fd);
@@ -59,7 +57,7 @@ void creat_0200(void)
 void creat_0300(void)
 {
     int fd = 0;
-    const char *ptr = "creattest.txt";
+    const char *ptr = "/data/creattest.txt";
     fd = open(ptr, O_WRONLY);
     EXPECT_EQ("creat_0300", fd, -1);
     close(fd);

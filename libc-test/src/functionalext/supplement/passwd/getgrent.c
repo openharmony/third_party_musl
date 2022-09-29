@@ -13,16 +13,8 @@
  * limitations under the License.
  */
 
-#include <fcntl.h>
 #include <grp.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <signal.h>
-#include <stdbool.h>
-#include <string.h>
-#include <netdb.h>
-#include <unistd.h>
-#include "functionalext.h"
+#include "test.h"
 
 /**
  * @tc.name      : getgrent_0100
@@ -31,13 +23,17 @@
  */
 void getgrent_0100(void)
 {
-    struct group *data;
-    bool flag = false;
-    data = getgrent();
-    if (data != NULL) {
-        flag = true;
+    struct group *grp;
+    setgrent();
+    while ((grp = getgrent()) != NULL) {
+        if (grp->gr_name == NULL) {
+            t_error("%s grp->gr_name is NULL\n", __func__);
+        }
+
+        if (grp->gr_mem == NULL) {
+            t_error("%s gr_mem is NULL\n", __func__);
+        }
     }
-    EXPECT_TRUE("getgrent_0100", flag);
     endgrent();
 }
 

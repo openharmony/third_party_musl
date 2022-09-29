@@ -13,11 +13,9 @@
  * limitations under the License.
  */
 
-#include <errno.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <stdio.h>
 #include "functionalext.h"
+
+const char *path = "/data/tests/libc-test/src/functionalext/supplement/stdio/fputc.txt";
 
 /**
  * @tc.name       : fputc_0100
@@ -26,12 +24,10 @@
  */
 void fputc_0100(void)
 {
-    FILE *fptr = NULL;
-    fptr = fopen("/data/tests/libc-test/src/functionalext/supplement/stdio/fputc.txt", "w");
+    FILE *fptr = fopen(path, "w");
     int Exit = fputc('a', fptr);
     EXPECT_EQ("fputc_0100", Exit, 97);
     fclose(fptr);
-    fptr = NULL;
 }
 
 /**
@@ -41,13 +37,11 @@ void fputc_0100(void)
  */
 void fputc_0200(void)
 {
-    FILE *fptr = NULL;
-    fptr = fopen("/data/tests/libc-test/src/functionalext/supplement/stdio/fputc.txt", "r");
+    FILE *fptr = fopen(path, "r");
     int Exit = fputc('a', fptr);
     EXPECT_EQ("fputc_0200", Exit, EOF);
     fclose(fptr);
-    remove("/data/tests/libc-test/src/functionalext/supplement/stdio/fputc.txt");
-    fptr = NULL;
+    remove(path);
 }
 
 int main(void)

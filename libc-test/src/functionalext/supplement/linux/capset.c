@@ -13,73 +13,46 @@
  * limitations under the License.
  */
 
-#include <unistd.h>
 #include <stdio.h>
-#include <netinet/in.h>
 #include <sys/capability.h>
-#include <sys/socket.h>
-#include "functionalext.h"
-
-#undef _POSIX_SOURCE
-const int32_t COUNT_ZERO = 0;
-const int32_t COUNT_NEGATIVE = -1;
+#include "test.h"
 
 /**
  * @tc.name      : capset_0100
- * @tc.desc      : Verify that process permissions can be set (parameter valid)
+ * @tc.desc      : Set capabilities of thread
  * @tc.level     : Level 0
  */
 void capset_0100(void)
 {
-    struct __user_cap_header_struct cap_header_data;
-    cap_user_header_t cap_header = &cap_header_data;
-    struct __user_cap_data_struct cap_data_data;
-    cap_user_data_t cap_data = &cap_data_data;
-    int result;
-    cap_header->pid = getpid();
-    cap_header->version = _LINUX_CAPABILITY_VERSION_1;
-    result = capset(cap_header, cap_data);
-#ifdef __POSIX_SOURCE
-    EXPECT_EQ("capset_0100", result, COUNT_ZERO);
-#endif
-}
+    struct __user_cap_header_struct cap_header;
+    struct __user_cap_data_struct cap_data;
 
-/**
- * @tc.name      : capset_0200
- * @tc.desc      : Validation cannot set process permissions (a parameter is invalid)
- * @tc.level     : Level 2
- */
-void capset_0200(void)
-{
-    struct __user_cap_data_struct cap_data_data;
-    cap_user_data_t cap_data = &cap_data_data;
-    int result;
-    result = capset(NULL, cap_data);
-    EXPECT_EQ("capset_0200", result, COUNT_NEGATIVE);
-}
+    cap_header.pid = getpid();
+    cap_header.version = _LINUX_CAPABILITY_VERSION_1;
 
-/**
- * @tc.name      : capset_0300
- * @tc.desc      : Validation cannot set process permissions (b parameter invalid)
- * @tc.level     : Level 2
- */
-void capset_0300(void)
-{
-    struct __user_cap_header_struct cap_header_data;
-    cap_user_header_t cap_header = &cap_header_data;
-    cap_header->pid = getpid();
-    cap_header->version = _LINUX_CAPABILITY_VERSION_1;
-    struct __user_cap_data_struct cap_data_data;
-    cap_user_data_t cap_data = NULL;
-    int result;
-    result = capset(cap_header, NULL);
-    EXPECT_EQ("capset_0300", result, COUNT_NEGATIVE);
+    if (capget(&cap_header, &cap_data) < 0) {
+        t_error("%s capget failed\n", __func__);
+    }
+
+    printf("capheader: %x  %d\n", cap_header.version, cap_header.pid);
+    printf("capdata: %x  %x  %x\n", cap_data.effective, cap_data.permitted, cap_data.inheritable);
+
+    __u32 cap_mask = 0;
+    cap_mask |= (1 << CAP_NET_BIND_SERVICE);
+    cap_data.effective = cap_mask;
+    cap_data.permitted = cap_mask;
+    cap_data.inheritable = 0;
+
+    if (capset(&cap_header, &cap_data) < 0) {
+        t_error("%s capset failed\n", __func__);
+    }
+    printf("%d\n", capget(&cap_header, &cap_data));
+    printf("capheader: %x  %d\n", cap_header.version, cap_header.pid);
+    printf("capdata: %x  %x  %x\n", cap_data.effective, cap_data.permitted, cap_data.inheritable);
 }
 
 int main(int argc, char *argv[])
 {
     capset_0100();
-    capset_0200();
-    capset_0300();
     return t_status;
 }

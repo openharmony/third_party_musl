@@ -13,57 +13,38 @@
  * limitations under the License.
  */
 
-#include <errno.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdbool.h>
-#include <sys/sysinfo.h>
+#include <malloc.h>
+#include <unistd.h>
 #include "functionalext.h"
 
 /**
  * @tc.name      : memalign_0100
- * @tc.desc      : Each parameter is valid, and align is obtained by getpagesize(),
- *                 which can allocate a memory block whose size is specified
- *                 by len and whose address is a multiple of align.
+ * @tc.desc      : Each parameter is valid, and align is obtained by getpagesize(), which can allocate a memory block
+ *                 whose size is specified by len and whose address is a multiple of align.
  * @tc.level     : Level 0
  */
 void memalign_0100(void)
 {
     int align = getpagesize();
-    void *buff = NULL;
-    if (align == -1) {
-        printf("getpagesize error!\n");
-    }
-    buff = (void *)memalign(align, 8 * align);
-    bool flag = false;
-    if (buff != NULL) {
-        flag = true;
-    }
-    EXPECT_TRUE("memalign_0100", flag);
+    EXPECT_NE("memalign_0100", align, -1);
+    void *buff = (void *)memalign(align, 8 * align);
+    EXPECT_TRUE("memalign_0100", buff != NULL);
     free(buff);
     buff = NULL;
 }
 
 /**
  * @tc.name      : memalign_0200
- * @tc.desc      : Each parameter is valid, and it can allocate a memory block
- *                 with the size specified by len and the address is a multiple of align
+ * @tc.desc      : Each parameter is valid, and it can allocate a memory block with the size specified by
+ *                 len and the address is a multiple of align
  * @tc.level     : Level 1
  */
 void memalign_0200(void)
 {
     int align = 16;
     void *buff = NULL;
-    if (align == -1) {
-        printf("getpagesize error!\n");
-    }
     buff = (void *)memalign(align, 8 * align);
-    bool flag = false;
-    if (buff != NULL) {
-        flag = true;
-    }
-    EXPECT_TRUE("memalign_0200", flag);
+    EXPECT_TRUE("memalign_0200", buff != NULL);
     free(buff);
     buff = NULL;
 }
@@ -77,11 +58,8 @@ void memalign_0200(void)
 void memalign_0300(void)
 {
     int align = getpagesize() - 1;
-    void *buff = NULL;
-    if (align == -1) {
-        printf("getpagesize error!\n");
-    }
-    buff = (void *)memalign(align, 128);
+    EXPECT_NE("memalign_0300", align, -1);
+    void *buff = (void *)memalign(align, 128);
     EXPECT_EQ("memalign_0300", buff, NULL);
     free(buff);
     buff = NULL;
@@ -96,11 +74,8 @@ void memalign_0300(void)
 void memalign_0400(void)
 {
     int align = getpagesize();
-    void *buff = NULL;
-    if (align == -1) {
-        printf("getpagesize error!\n");
-    }
-    buff = (void *)memalign(align, SIZE_MAX - align + 1);
+    EXPECT_NE("memalign_0400", align, -1);
+    void *buff = (void *)memalign(align, SIZE_MAX - align + 1);
     EXPECT_EQ("memalign_0400", buff, NULL);
     free(buff);
     buff = NULL;
@@ -115,11 +90,7 @@ void memalign_0400(void)
 void memalign_0500(void)
 {
     int align = (4 * sizeof(size_t)) + 1;
-    void *buff = NULL;
-    if (align == -1) {
-        printf("getpagesize error!\n");
-    }
-    buff = (void *)memalign(align, align * 1024);
+    void *buff = (void *)memalign(align, align * 1024);
     EXPECT_EQ("memalign_0500", buff, NULL);
     free(buff);
     buff = NULL;

@@ -14,7 +14,6 @@
  */
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <unistd.h>
 #include "functionalext.h"
 
@@ -33,6 +32,7 @@ void access_0100(void)
 {
     const char *ptr = "accesstest.txt";
     FILE *fptr = fopen(ptr, "w");
+    EXPECT_PTRNE("access_0100", fptr, NULL);
     int isExist = access(ptr, F_OK);
     EXPECT_EQ("access_0100", isExist, SUCCESS);
     fclose(fptr);
@@ -52,6 +52,7 @@ void access_0200(void)
     char passbuff[90];
     const char *ptr = "accesstest.txt";
     FILE *fptr = fopen(ptr, "w");
+    EXPECT_PTRNE("access_0200", fptr, NULL);
     getcwd(passbuff, sizeof(passbuff));
     int isExist = access(passbuff, F_OK);
     EXPECT_EQ("access_0200", isExist, SUCCESS);
@@ -99,7 +100,7 @@ void access_0500(void)
 {
     const char *ptr = "accesstest.txt";
     FILE *fptr = fopen(ptr, "w");
-    fptr = fopen(ptr, "w");
+    EXPECT_PTRNE("access_0500", fptr, NULL);
     int isRead = access(ptr, R_OK);
     EXPECT_EQ("access_0500", isRead, SUCCESS);
     fclose(fptr);
@@ -118,6 +119,7 @@ void access_0600(void)
 {
     const char *ptr = "accesstest.txt";
     FILE *fptr = fopen(ptr, "w");
+    EXPECT_PTRNE("access_0600", fptr, NULL);
     int isWrite = access(ptr, W_OK);
     EXPECT_EQ("access_0600", isWrite, SUCCESS);
     fclose(fptr);
@@ -136,6 +138,7 @@ void access_0700(void)
 {
     const char *ptr = "accesstest.txt";
     FILE *fptr = fopen(ptr, "w");
+    EXPECT_PTRNE("access_0700", fptr, NULL);
     system("chmod 777 ./accesstest.txt");
     int isExecute = access(ptr, X_OK);
     EXPECT_EQ("access_0700", isExecute, SUCCESS);
@@ -155,6 +158,7 @@ void access_0800(void)
 {
     const char *ptr = "accesstest.txt";
     FILE *fptr = fopen(ptr, "w");
+    EXPECT_PTRNE("access_0800", fptr, NULL);
     int isExecute = access(ptr, X_OK);
     EXPECT_EQ("access_0800", isExecute, FAILED);
     fclose(fptr);

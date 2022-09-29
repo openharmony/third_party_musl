@@ -14,12 +14,10 @@
  */
 
 #include <fcntl.h>
-#include <stdlib.h>
 #include <stdbool.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include "functionalext.h"
-
-typedef void (*TEST_FUN)();
 
 /**
  * @tc.name      : getpid_0100
@@ -56,16 +54,8 @@ void getpid_0100(void)
     remove(ptr);
 }
 
-TEST_FUN G_Fun_Array[] = {
-    getpid_0100,
-};
-
 int main(int argc, char *argv[])
 {
-    int num = sizeof(G_Fun_Array) / sizeof(TEST_FUN);
-    for (int pos = 0; pos < num; ++pos) {
-        G_Fun_Array[pos]();
-    }
-
+    getpid_0100();
     return t_status;
 }

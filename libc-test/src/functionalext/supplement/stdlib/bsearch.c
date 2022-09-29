@@ -14,8 +14,6 @@
  */
 
 #include <stdlib.h>
-#include <stdio.h>
-#include <stdbool.h>
 #include "functionalext.h"
 
 #define NUM 8
@@ -51,11 +49,7 @@ void bsearch_0200(void)
     int *p;
     qsort(array, NUM, sizeof(int), compare);
     p = (int *)bsearch(&key, array, 0, sizeof(int), compare);
-    bool flag = false;
-    if (p == NULL) {
-        flag = true;
-    }
-    EXPECT_TRUE("bsearch_0200", flag);
+    EXPECT_TRUE("bsearch_0200", p == NULL);
 }
 
 int main(int argc, char *argv[])

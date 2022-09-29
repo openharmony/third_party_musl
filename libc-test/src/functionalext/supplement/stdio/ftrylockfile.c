@@ -14,10 +14,7 @@
  */
 
 #include <limits.h>
-#include <stdio.h>
 #include "functionalext.h"
-
-typedef void (*TEST_FUN)();
 
 /**
  * @tc.name      : ftrylockfile_0100
@@ -28,6 +25,7 @@ void ftrylockfile_0100(void)
 {
     int ret = -1;
     FILE *fptr = fopen("ftrylockfile.txt", "w+");
+    EXPECT_PTRNE("ftrylockfile_0100", fptr, NULL);
     ret = ftrylockfile(fptr);
     EXPECT_EQ("ftrylockfile_0100", ret, 0);
     funlockfile(fptr);
@@ -35,16 +33,8 @@ void ftrylockfile_0100(void)
     remove("ftrylockfile.txt");
 }
 
-TEST_FUN G_Fun_Array[] = {
-    ftrylockfile_0100,
-};
-
 int main(int argc, char *argv[])
 {
-    int num = sizeof(G_Fun_Array) / sizeof(TEST_FUN);
-    for (int pos = 0; pos < num; ++pos) {
-        G_Fun_Array[pos]();
-    }
-
+    ftrylockfile_0100();
     return t_status;
 }

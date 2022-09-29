@@ -13,51 +13,46 @@
  * limitations under the License.
  */
 
-#include <stdio.h>
 #include <stdio_ext.h>
-#include <stdlib.h>
-#include <stddef.h>
-#include <stdbool.h>
 #include "functionalext.h"
-
-const size_t COUNT_ZERO = 0;
 
 /**
  * @tc.name      : __fbufsize_0100
- * @tc.desc      : Verify that you can get the size of the buffer used by the file
-                  (In bytes. Valid, file size greater than 0)
+ * @tc.desc      : Returns the size of the buffer currently used by the given stream
  * @tc.level     : Level 0
  */
 void __fbufsize_0100(void)
 {
-    bool flag = false;
-    FILE *fptr = fopen("test.txt", "w+");
-    fwrite("1", 1, 1, fptr);
-    size_t result = 0;
-    result = __fbufsize(fptr);
-    if (result > 0) {
-        flag = true;
-    }
-    EXPECT_TRUE("__fbufsize_0200", flag);
-    fclose(fptr);
-    remove("test.txt");
+    char buf[1024];
+    FILE *fp = fopen("/proc/version", "r");
+    EXPECT_PTRNE("__fbufsize_0100", fp, NULL);
+
+    int ret = setvbuf(fp, buf, _IOFBF, sizeof buf);
+    EXPECT_NE("__fbufsize_0100", ret, EOF);
+
+    size_t result = __fbufsize(fp);
+    EXPECT_TRUE("__fbufsize_0100", result <= sizeof buf);
+
+    fclose(fp);
 }
 
 /**
  * @tc.name      : __fbufsize_0200
- * @tc.desc      : Verify that you can get the size of the buffer used by the file
-                  (In bytes. File size = 0)
+ * @tc.desc      : Returns the size of the buffer currently used by the given stream when the file size is 0
  * @tc.level     : Level 0
  */
 void __fbufsize_0200(void)
 {
-    FILE *fptr = fopen("test.txt", "w+");
-    setbuf(fptr, NULL);
-    size_t result = 0;
-    result = __fbufsize(fptr);
-    EXPECT_EQ("__fbufsize_0200", result, COUNT_ZERO);
-    fclose(fptr);
-    remove("test.txt");
+    FILE *fp = fopen("/proc/version", "r");
+    EXPECT_PTRNE("__fbufsize_0200", fp, NULL);
+
+    int ret = setvbuf(fp, NULL, _IONBF, 0);
+    EXPECT_NE("__fbufsize_0100", ret, EOF);
+
+    size_t result = __fbufsize(fp);
+    EXPECT_EQ("__fbufsize_0200", result, 0U);
+
+    fclose(fp);
 }
 
 int main(int argc, char *argv[])

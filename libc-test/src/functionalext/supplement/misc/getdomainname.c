@@ -13,15 +13,9 @@
  * limitations under the License.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdint.h>
+#include <sys/utsname.h>
 #include <unistd.h>
 #include "functionalext.h"
-
-const int32_t SUCCESS = 0;
-const int32_t FAILED = -1;
 
 /**
  * @tc.name      : getdomainname_0100
@@ -30,11 +24,14 @@ const int32_t FAILED = -1;
  */
 void getdomainname_0100(void)
 {
-    int result;
-    char name[1024] = "\0";
-    result = getdomainname(name, 1024);
-    EXPECT_EQ("getdomainname_0100", result, SUCCESS);
-    EXPECT_TRUE("getdomainname_0100", strcmp(name, "\0") != 0);
+    struct utsname u;
+    int ret = uname(&u);
+    EXPECT_EQ("getdomainname_0100", ret, 0);
+
+    char buf[sizeof(u.domainname)];
+    int result = getdomainname(buf, sizeof(buf));
+    EXPECT_EQ("getdomainname_0100", result, 0);
+    EXPECT_STREQ("getdomainname_0100", u.domainname, buf);
 }
 
 /**
@@ -44,10 +41,13 @@ void getdomainname_0100(void)
  */
 void getdomainname_0200(void)
 {
-    int result;
-    char name[1024] = "\0";
-    result = getdomainname(name, 0);
-    EXPECT_EQ("getdomainname_0200", result, FAILED);
+    struct utsname u;
+    int ret = uname(&u);
+    EXPECT_EQ("getdomainname_0100", ret, 0);
+
+    char buf[sizeof(u.domainname)];
+    int result = getdomainname(buf, 0);
+    EXPECT_EQ("getdomainname_0200", result, -1);
 }
 
 /**
@@ -57,10 +57,13 @@ void getdomainname_0200(void)
  */
 void getdomainname_0300(void)
 {
-    int result;
-    char name[1024] = "\0";
-    result = getdomainname(name, 1);
-    EXPECT_EQ("getdomainname_0300", result, FAILED);
+    struct utsname u;
+    int ret = uname(&u);
+    EXPECT_EQ("getdomainname_0100", ret, 0);
+
+    char buf[sizeof(u.domainname)];
+    int result = getdomainname(buf, 1);
+    EXPECT_EQ("getdomainname_0300", result, -1);
 }
 
 int main(int argc, char *argv[])

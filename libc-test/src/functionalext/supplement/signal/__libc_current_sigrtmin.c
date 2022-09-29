@@ -15,7 +15,6 @@
 
 #include <signal.h>
 #include "functionalext.h"
-#define MAXPATH 1000
 
 /*
  * @tc.name      : libc_current_sigrtmin_0100
@@ -31,6 +30,5 @@ void libc_current_sigrtmin_0100(void)
 int main(int argc, char *argv[])
 {
     libc_current_sigrtmin_0100();
-
     return t_status;
 }

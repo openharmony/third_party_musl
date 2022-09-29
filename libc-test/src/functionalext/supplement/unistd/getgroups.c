@@ -13,56 +13,41 @@
  * limitations under the License.
  */
 
-#include <unistd.h>
-#include <stdlib.h>
-#include <signal.h>
-#include <fcntl.h>
-#include <stdarg.h>
-#include <sys/wait.h>
-#include <spawn.h>
-#include <errno.h>
 #include <limits.h>
-#include <string.h>
-#include "functionalext.h"
+#include <unistd.h>
+#include "test.h"
 
 /*
  * @tc.name      : getgroups_0100
- * @tc.desc      : Verify that the group ID can be obtained (parameter valid)
+ * @tc.desc      : Getlist of supplementary group IDs
  * @tc.level     : Level 0
  */
 void getgroups_0100(void)
 {
-    char buffer[1024] = {0};
-    gid_t list[500];
-    system("id -g > id.txt");
-    FILE *fptr = fopen("id.txt", "r");
-    fread(buffer, sizeof(buffer), 1, fptr);
-    int id = atoi(buffer);
-    int result = getgroups(id, list);
-    EXPECT_EQ("getgroups_0100", result, id);
+    gid_t list[NGROUPS_MAX];
+    int size = getgroups(sizeof(list) / sizeof(list[0]), list);
+    if (size < 0) {
+        t_error("%s getgroups failed\n", __func__);
+    }
 }
 
 /*
  * @tc.name      : getgroups_0200
- * @tc.desc      : Verify that the group ID cannot be obtained (parameter invalid)
- * @tc.level     : Level 2
+ * @tc.desc      : Test for invalid argument
+ * @tc.level     : Level 0
  */
 void getgroups_0200(void)
 {
-    char buffer[1024] = {0};
-    gid_t list[500];
-    system("id -g > id.txt");
-    FILE *fptr = fopen("id.txt", "r");
-    fread(buffer, sizeof(buffer), 1, fptr);
-    int id = atoi(buffer);
-    int result = getgroups(-1, list);
-    EXPECT_EQ("getgroups_0200", result, -1);
+    gid_t list[NGROUPS_MAX];
+    int size = getgroups(-1, list);
+    if (size != -1) {
+        t_error("%s getgroups should be failed\n", __func__);
+    }
 }
 
 int main(int argc, char *argv[])
 {
     getgroups_0100();
     getgroups_0200();
-
     return t_status;
 }

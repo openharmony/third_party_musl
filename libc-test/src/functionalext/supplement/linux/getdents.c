@@ -14,11 +14,8 @@
  */
 
 #include <dirent.h>
-#include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <unistd.h>
 #include "functionalext.h"
 
@@ -32,14 +29,10 @@ const int FAILED = -1;
  */
 void getdents_0100(void)
 {
-    int fd = -1;
-    int result = -1;
     struct dirent buf;
-    fd = open("/data/data", O_RDONLY);
-    if (fd < 0) {
-        printf("open failed!\n");
-    }
-    result = getdents(fd, &buf, INT_MAX);
+    int fd = open("/data/data", O_RDONLY);
+    EXPECT_NE("getdents_0100", fd, -1);
+    int result = getdents(fd, &buf, INT_MAX);
     EXPECT_TRUE("getdents_0100", result > 0);
 }
 
@@ -50,11 +43,9 @@ void getdents_0100(void)
  */
 void getdents_0200(void)
 {
-    int fd = 0;
-    int result = 0;
     struct dirent buf;
-    fd = open("/getdents", O_RDONLY);
-    result = getdents(fd, &buf, INT_MAX);
+    int fd = open("/getdents", O_RDONLY);
+    int result = getdents(fd, &buf, INT_MAX);
     EXPECT_EQ("getdents_0200", result, FAILED);
 }
 
@@ -65,14 +56,10 @@ void getdents_0200(void)
  */
 void getdents_0300(void)
 {
-    int fd = 0;
-    int result = 0;
     struct dirent buf;
-    fd = open("/data/data", O_RDONLY);
-    if (fd < 0) {
-        printf("open  failed!\n");
-    }
-    result = getdents(fd, NULL, INT_MAX);
+    int fd = open("/data/data", O_RDONLY);
+    EXPECT_NE("getdents_0300", fd, -1);
+    int result = getdents(fd, NULL, INT_MAX);
     EXPECT_EQ("getdents_0300", result, FAILED);
 }
 

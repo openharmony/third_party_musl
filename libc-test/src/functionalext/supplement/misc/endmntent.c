@@ -14,26 +14,20 @@
  */
 
 #include <mntent.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
 #include "functionalext.h"
-
-const int32_t COUNT_ONE = 1;
 
 /**
  * @tc.name      : endmntent_0100
  * @tc.desc      : Verify that the stream and its associated file system description file can be closed
- *                 (parameter valid)
  * @tc.level     : Level 0
  */
 void endmntent_0100(void)
 {
-    struct mntent *m;
-    int result = 0;
-    FILE *fptr = fopen("/data/test.txt", "w+");
-    result = endmntent(fptr);
-    EXPECT_EQ("endmntent_0100", result, COUNT_ONE);
+    FILE *fp = fopen("/data/test.txt", "w+");
+    EXPECT_PTRNE("endmntent_0100", fp, NULL);
+
+    int result = endmntent(fp);
+    EXPECT_EQ("endmntent_0100", result, 1);
     remove("/data/test.txt");
 }
 

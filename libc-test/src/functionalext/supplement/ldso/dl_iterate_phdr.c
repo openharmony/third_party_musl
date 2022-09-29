@@ -15,9 +15,7 @@
 
 #include <dlfcn.h>
 #include <link.h>
-#include <stdio.h>
 #include <stdlib.h>
-
 #include "functionalext.h"
 
 static int header_handler(struct dl_phdr_info *info, size_t size, void *data)

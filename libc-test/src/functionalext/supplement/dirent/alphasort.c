@@ -13,12 +13,8 @@
  * limitations under the License.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <dirent.h>
 #include "functionalext.h"
-
-#define MAXPATH 1000
 
 /**
  * @tc.name      : alphasort_0100
@@ -28,8 +24,7 @@
 void alphasort_0100(void)
 {
     struct dirent **namelist;
-    int n, total;
-    total = scandir("/", &namelist, 0, alphasort);
+    int total = scandir("/", &namelist, 0, alphasort);
     EXPECT_TRUE("alphasort_0100", total > 0);
 }
 
@@ -41,8 +36,7 @@ void alphasort_0100(void)
 void alphasort_0200(void)
 {
     struct dirent **namelist;
-    int n, total;
-    total = scandir(NULL, &namelist, 0, alphasort);
+    int total = scandir(NULL, &namelist, 0, alphasort);
     EXPECT_TRUE("alphasort_0100", total < 0);
 }
 

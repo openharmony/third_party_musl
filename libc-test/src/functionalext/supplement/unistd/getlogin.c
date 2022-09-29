@@ -13,9 +13,7 @@
  * limitations under the License.
  */
 
-#include <stdbool.h>
 #include <stdlib.h>
-#include <stdio.h>
 #include <unistd.h>
 #include "functionalext.h"
 

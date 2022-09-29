@@ -13,11 +13,8 @@
  * limitations under the License.
  */
 
-#include <stdio.h>
 #include <signal.h>
-#include <string.h>
 #include <sys/time.h>
-#include <errno.h>
 #include "functionalext.h"
 
 static int count = 0;

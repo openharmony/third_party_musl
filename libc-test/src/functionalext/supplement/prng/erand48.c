@@ -23,9 +23,8 @@
  */
 void erand48_0100(void)
 {
-    double result = 0;
     unsigned short xseed[3] = {1, 2, 3};
-    result = erand48(xseed);
+    double result = erand48(xseed);
     EXPECT_TRUE("erand48_0100", result >= 0.0 && result < 1.0);
 }
 
