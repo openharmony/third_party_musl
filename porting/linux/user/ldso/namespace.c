@@ -134,10 +134,26 @@ void ns_free(ns_t *ns)
     if (!ns) {
         return;
     }
-    internal_free(ns->ns_name);
-    internal_free(ns->env_paths);
-    internal_free(ns->lib_paths);
-    internal_free(ns->asan_lib_paths);
+    if (ns->ns_dsos) {
+        internal_free(ns->ns_dsos);
+        ns->ns_dsos = NULL;
+    }
+    if (ns->ns_name) {
+        internal_free(ns->ns_name);
+        ns->ns_name = NULL;
+    }
+    if (ns->env_paths) {
+        internal_free(ns->env_paths);
+        ns->env_paths = NULL;
+    }
+    if (ns->lib_paths) {
+        internal_free(ns->lib_paths);
+        ns->lib_paths = NULL;
+    }
+    if (ns->asan_lib_paths) {
+        internal_free(ns->asan_lib_paths);
+        ns->asan_lib_paths = NULL;
+    }
     strlist_free(ns->permitted_paths);
     strlist_free(ns->asan_permitted_paths);
     strlist_free(ns->allowed_libs);
