@@ -16,7 +16,8 @@
 #define MAX_TID_LEN 32
 #define BUFFER_SIZE 4096
 
-typedef struct {
+typedef struct
+{
     char stats_after_allocations[BUFFER_SIZE];
     char stats_after_free[BUFFER_SIZE];
     char threads[SIZES_COUNT][MAX_TID_LEN + 1];
@@ -33,39 +34,41 @@ static void print_to_file(void *fp, const char *s)
     fputs(s, fp);
 }
 
-int stats_to_buffer(char *buffer) 
+int stats_to_buffer(char *buffer)
 {
-  fflush(stderr);
-  int err_pipe[2];
-  int saved_stderr = dup(STDERR_FILENO);
-  if (pipe(err_pipe) != 0) {
-    perror("Can't create pipe");
-    return 0;
-  }
-  dup2(err_pipe[1], STDERR_FILENO);
-  close(err_pipe[1]);
-  stderr_stats_cb();
-  fflush(stderr);
-  read(err_pipe[0], buffer, BUFFER_SIZE);
-  dup2(saved_stderr, STDERR_FILENO);
-  return 1;
+    fflush(stderr);
+    int err_pipe[2];
+    int saved_stderr = dup(STDERR_FILENO);
+    if (pipe(err_pipe) != 0)
+    {
+        perror("Can't create pipe");
+        return 0;
+    }
+    dup2(err_pipe[1], STDERR_FILENO);
+    close(err_pipe[1]);
+    stderr_stats_cb();
+    fflush(stderr);
+    read(err_pipe[0], buffer, BUFFER_SIZE);
+    dup2(saved_stderr, STDERR_FILENO);
+    return 1;
 }
-
 
 static test_results_t get_main_thread_test_results(void)
 {
     test_results_t test_results = {{0},
                                    {0},
                                    {{0}}};
-    
-    snprintf(test_results.threads[0], MAX_TID_LEN, "%d", (pid_t) syscall(__NR_gettid));
+
+    snprintf(test_results.threads[0], MAX_TID_LEN, "%d", (pid_t)syscall(__NR_gettid));
 
     void *ptrs[SIZES_COUNT] = {0};
-    for (size_t i = 0; i < SIZES_COUNT; i++) {
+    for (size_t i = 0; i < SIZES_COUNT; i++)
+    {
         ptrs[i] = malloc(sizes[i]);
     }
     stats_to_buffer(test_results.stats_after_allocations);
-    for (size_t i = 0; i < SIZES_COUNT; i++) {
+    for (size_t i = 0; i < SIZES_COUNT; i++)
+    {
         free(ptrs[i]);
     }
     stats_to_buffer(test_results.stats_after_free);
@@ -78,30 +81,36 @@ static test_results_t get_different_threads_test_results(void)
                                    {0},
                                    {{0}}};
     pthread_barrier_t alloc_barrier, free_barrier;
-    if (pthread_barrier_init(&alloc_barrier, NULL, SIZES_COUNT + 1)) {
+    if (pthread_barrier_init(&alloc_barrier, NULL, SIZES_COUNT + 1))
+    {
         return test_results;
     }
-    if (pthread_barrier_init(&free_barrier, NULL, SIZES_COUNT + 1)) {
+    if (pthread_barrier_init(&free_barrier, NULL, SIZES_COUNT + 1))
+    {
         return test_results;
     }
 
     thread_data_t thread_data[SIZES_COUNT];
-    for (size_t i = 0; i < SIZES_COUNT; i++) {
-        thread_data[i] = (thread_data_t) {sizes[i], &alloc_barrier, &free_barrier, 0};
+    for (size_t i = 0; i < SIZES_COUNT; i++)
+    {
+        thread_data[i] = (thread_data_t){sizes[i], &alloc_barrier, &free_barrier, 0};
     }
     pthread_t threads[SIZES_COUNT];
-    for (size_t i = 0; i < SIZES_COUNT; i++) {
+    for (size_t i = 0; i < SIZES_COUNT; i++)
+    {
         pthread_create(&threads[i], NULL, allocate_wait_free, &thread_data[i]);
     }
     pthread_barrier_wait(&alloc_barrier);
 
-    for (size_t i = 0; i < SIZES_COUNT; i++) {
+    for (size_t i = 0; i < SIZES_COUNT; i++)
+    {
         snprintf(test_results.threads[i], MAX_TID_LEN, "%d", thread_data[i].self_id);
     }
     stats_to_buffer(test_results.stats_after_allocations);
 
     pthread_barrier_wait(&free_barrier);
-    for (size_t i = 0; i < SIZES_COUNT; i++) {
+    for (size_t i = 0; i < SIZES_COUNT; i++)
+    {
         pthread_join(threads[i], NULL);
     }
     stats_to_buffer(test_results.stats_after_free);
@@ -111,7 +120,8 @@ static test_results_t get_different_threads_test_results(void)
 static void *allocate_and_abandon(void *arg)
 {
     void **allocs = arg;
-    for (size_t i = 0; i < SIZES_COUNT; i++) {
+    for (size_t i = 0; i < SIZES_COUNT; i++)
+    {
         allocs[i] = malloc(sizes[i]);
     }
     return NULL;
@@ -127,7 +137,8 @@ static test_results_t get_abandoned_test_results(void)
     pthread_create(&t, NULL, allocate_and_abandon, &allocs);
     pthread_join(t, NULL);
     stats_to_buffer(test_results.stats_after_allocations);
-    for (size_t i = 0; i < SIZES_COUNT; i++) {
+    for (size_t i = 0; i < SIZES_COUNT; i++)
+    {
         free(allocs[i]);
     }
     stats_to_buffer(test_results.stats_after_free);
@@ -148,7 +159,8 @@ static int validate_main_thread_test_results(test_results_t *test_results)
 static int validate_allocated_size(size_t size, malloc_thread_stats_t *stats)
 {
     int result = expect_greater_equal(stats->total_allocated_memory, size, "allocated memory", "size");
-    if (size >= MMAP_THRESHOLD) {
+    if (size >= MMAP_THRESHOLD)
+    {
         result &= expect_greater_equal(stats->total_mmapped_memory, size, "mmapped memory", "size");
         result &= expect_equal(stats->mmapped_regions, 1, "mmapped regions");
     }
@@ -158,11 +170,13 @@ static int validate_allocated_size(size_t size, malloc_thread_stats_t *stats)
 static int validate_different_threads_test_results(test_results_t *test_results)
 {
     int result = 1;
-    for (size_t i = 0; i < SIZES_COUNT; i++) {
+    for (size_t i = 0; i < SIZES_COUNT; i++)
+    {
         malloc_thread_stats_t thread_stats;
         result &= populate_thread_stats(test_results->stats_after_allocations, test_results->threads[i], &thread_stats);
         result &= validate_allocated_size(sizes[i], &thread_stats);
-        if (strstr(test_results->stats_after_free, test_results->threads[i]) != NULL) {
+        if (strstr(test_results->stats_after_free, test_results->threads[i]) != NULL)
+        {
             t_error("Thread %s did not disappear from output\n", test_results->threads[i]);
             result = 0;
         }
@@ -180,12 +194,11 @@ static int validate_different_threads_test_results(test_results_t *test_results)
         free_heap_space_after_free,
         free_heap_space_after_allocations,
         "free heap space after free",
-        "free heap space after allocations"
-    );
+        "free heap space after allocations");
     return result;
 }
 
-static int validate_abandoned_test_results(test_results_t *test_results) 
+static int validate_abandoned_test_results(test_results_t *test_results)
 {
     malloc_thread_stats_t stats_after_allocations;
     malloc_thread_stats_t stats_after_free;
@@ -199,11 +212,11 @@ static int validate_abandoned_test_results(test_results_t *test_results)
 static int validate_and_report(
     test_results_t *test_results,
     int (*validate_test_results_func)(test_results_t *),
-    const char *message
-)
+    const char *message)
 {
     t_printf("%s...", message);
-    if (!validate_test_results_func(test_results)) {
+    if (!validate_test_results_func(test_results))
+    {
         t_error("Failed!\n");
         return 0;
     }
@@ -219,19 +232,16 @@ int main(void)
     int result = validate_and_report(
         &main_thread_test_results,
         validate_main_thread_test_results,
-        "Testing allocations in main thread"
-    );
+        "Testing allocations in main thread");
     result &= validate_and_report(
         &different_threads_test_results,
         validate_different_threads_test_results,
-        "Testing allocations in different threads"
-    );
+        "Testing allocations in different threads");
     result &= validate_and_report(
         &abandoned_test_results,
         validate_abandoned_test_results,
-        "Testing abandoned allocations"
-    );
+        "Testing abandoned allocations");
     return result == 0;
 }
 
-#endif //TEST_MALLOC_STATS_H
+#endif // TEST_MALLOC_STATS_H
