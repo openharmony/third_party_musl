@@ -6,7 +6,12 @@
 #include "syscall.h"
 #include "atomic.h"
 #include "libc.h"
+#include "pthread.h"
+#include "sys/mman.h"
+#include "malloc_impl.h"
 #include "pthread_impl.h"
+
+extern pthread_key_t occupied_bin_key;
 
 static void dummy(void) {}
 weak_alias(dummy, _init);
@@ -94,6 +99,15 @@ static int libc_start_main_stage2(int (*main)(int,char **,char **), int argc, ch
 	pthread_reserve_signal_stack();
 #endif
 	errno = 0;
+
+#ifdef MUSL_ITERATE_AND_STATS_API
+	__init_occupied_bin_key_once();
+	occupied_bin_t *occupied_bin = internal_calloc(sizeof(occupied_bin_t), 1);
+	if (occupied_bin == NULL) return ENOMEM;
+	pthread_setspecific(occupied_bin_key, occupied_bin);
+#endif
+	libc.initialized = 1;
+
 
 	/* Pass control to the application */
 	exit(main(argc, argv, envp));
