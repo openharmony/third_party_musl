@@ -10,11 +10,24 @@ hidden void __malloc_donate(char *, char *);
 
 hidden void *__memalign(size_t, size_t);
 
+typedef struct occupied_bin_s {
+	struct chunk *head, *tail;
+	volatile int lock[2];
+} occupied_bin_t;
+ 
 struct chunk {
 	size_t psize, csize;
+#ifdef MUSL_ITERATE_AND_STATS_API
+	occupied_bin_t *bin;
+#endif
+
 #ifdef MALLOC_RED_ZONE
 	size_t usize;
 	size_t state;
+#endif
+#ifdef MUSL_ITERATE_AND_STATS_API
+	size_t flag;
+	struct chunk *next_occupied, *prev_occupied;
 #endif
 	struct chunk *next, *prev;
 };
@@ -28,17 +41,38 @@ struct bin {
 #endif
 };
 
-#define SIZE_MASK (-SIZE_ALIGN)
-#ifndef MALLOC_RED_ZONE
-#define SIZE_ALIGN (4*sizeof(size_t))
-#define OVERHEAD (2*sizeof(size_t))
-#else
-#define SIZE_ALIGN (8*sizeof(size_t))
-#define OVERHEAD (4*sizeof(size_t))
+#ifdef MUSL_ITERATE_AND_STATS_API
+typedef void (*malloc_iterate_callback)(void* base, size_t size, void* arg);
+
+hidden occupied_bin_t *__get_occupied_bin(struct __pthread *p);
+hidden occupied_bin_t *__get_current_occupied_bin();
+hidden void __merge_bin_chunks(occupied_bin_t *target_bin, occupied_bin_t *source_bin);
+hidden void __init_occupied_bin_key_once(void);
+hidden void __push_chunk(struct chunk *c);
+hidden void __pop_chunk(struct chunk *c);
 #endif
+
+#define SIZE_MASK (-SIZE_ALIGN)
+
+#ifdef MUSL_ITERATE_AND_STATS_API
+#define OCCUPIED_LIST_OVERHEAD (2*sizeof(void*))
+#define ITERATE_AND_STATS_OVERHEAD (sizeof(size_t) + sizeof(void*) + OCCUPIED_LIST_OVERHEAD)
+#else
+#define ITERATE_AND_STATS_OVERHEAD (0)
+#endif
+
+#ifndef MALLOC_RED_ZONE
+#define SIZE_ALIGN (8*sizeof(size_t))
+#define OVERHEAD (2*sizeof(size_t) + ITERATE_AND_STATS_OVERHEAD)
+#else
+#define SIZE_ALIGN (16*sizeof(size_t))
+#define OVERHEAD (4*sizeof(size_t) + ITERATE_AND_STATS_OVERHEAD)
+#endif
+
+
 #define MMAP_THRESHOLD (0x1c00*SIZE_ALIGN)
 #ifndef MALLOC_RED_ZONE
-#define DONTCARE 16
+#define DONTCARE OVERHEAD
 #else
 #define DONTCARE OVERHEAD
 #define POINTER_USAGE (2*sizeof(void *))
