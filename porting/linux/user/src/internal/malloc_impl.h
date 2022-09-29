@@ -26,7 +26,6 @@ struct chunk {
 	size_t state;
 #endif
 #ifdef MUSL_ITERATE_AND_STATS_API
-	size_t flag;
 	struct chunk *next_occupied, *prev_occupied;
 #endif
 	struct chunk *next, *prev;
@@ -56,7 +55,7 @@ hidden void __pop_chunk(struct chunk *c);
 
 #ifdef MUSL_ITERATE_AND_STATS_API
 #define OCCUPIED_LIST_OVERHEAD (2*sizeof(void*))
-#define ITERATE_AND_STATS_OVERHEAD (sizeof(size_t) + sizeof(void*) + OCCUPIED_LIST_OVERHEAD)
+#define ITERATE_AND_STATS_OVERHEAD (sizeof(void*) + OCCUPIED_LIST_OVERHEAD)
 #else
 #define ITERATE_AND_STATS_OVERHEAD (0)
 #endif
