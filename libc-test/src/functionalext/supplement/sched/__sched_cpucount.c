@@ -34,10 +34,8 @@ void __sched_cpucount_0100(void)
     int num_cpus;
     num_cpus = sysconf(_SC_NPROCESSORS_CONF);
     cpusetp = CPU_ALLOC(num_cpus);
-    if (cpusetp == NULL) {
-        perror("CPU_ALLOC");
-        exit(EXIT_FAILURE);
-    }
+    EXPECT_PTRNE("__sched_cpucount_0100", cpusetp, NULL);
+
     size = CPU_ALLOC_SIZE(num_cpus);
     CPU_ZERO_S(size, cpusetp);
     for (int cpu = 0; cpu < num_cpus; cpu++) {
@@ -62,10 +60,8 @@ void __sched_cpucount_0200(void)
     int num_cpus;
     num_cpus = sysconf(_SC_NPROCESSORS_CONF);
     cpusetp = CPU_ALLOC(num_cpus);
-    if (cpusetp == NULL) {
-        perror("CPU_ALLOC");
-        exit(EXIT_FAILURE);
-    }
+    EXPECT_PTRNE("__sched_cpucount_0200", cpusetp, NULL);
+
     size = CPU_ALLOC_SIZE(num_cpus);
     CPU_ZERO_S(size, cpusetp);
     for (int cpu = 0; cpu < num_cpus; cpu++) {
@@ -90,10 +86,8 @@ void __sched_cpucount_0300(void)
     int num_cpus;
     num_cpus = sysconf(_SC_NPROCESSORS_CONF);
     cpusetp = CPU_ALLOC(num_cpus);
-    if (cpusetp == NULL) {
-        perror("CPU_ALLOC");
-        exit(EXIT_FAILURE);
-    }
+    EXPECT_PTRNE("__sched_cpucount_0300", cpusetp, NULL);
+
     size = CPU_ALLOC_SIZE(num_cpus);
     CPU_ZERO_S(size, cpusetp);
     ret = __sched_cpucount(size, cpusetp);

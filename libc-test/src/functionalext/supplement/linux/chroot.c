@@ -13,6 +13,7 @@
  * limitations under the License.
  */
 
+#include <errno.h>
 #include <unistd.h>
 #include "functionalext.h"
 
@@ -23,53 +24,26 @@
  */
 void chroot_0100(void)
 {
-    char *ftpr = "/";
-    int result = chroot(ftpr);
+    int result = chroot("/data");
     EXPECT_EQ("chroot_0100", result, 0);
 }
 
 /*
  * @tc.name      : chroot_0200
- * @tc.desc      : Verify that the file root directory cannot be changed (parameter is NULL)
+ * @tc.desc      : Verify that the file root directory cannot be changed (The file does not exist)
  * @tc.level     : Level 2
  */
 void chroot_0200(void)
 {
-    char *ftpr = "data/app";
-    int result = chroot(NULL);
-    EXPECT_EQ("chroot_0100", result, -1);
-}
-
-/*
- * @tc.name      : chroot_0300
- * @tc.desc      : Verify that the file root directory cannot be changed (parameter exceeds maximum length)
- * @tc.level     : Level 2
- */
-void chroot_0300(void)
-{
-    char *ftpr = "data/app/el1/bundle/public/com.example.disributedcalc/com.example.disributedcalc/assets/js";
-    int result = chroot(ftpr);
-    EXPECT_EQ("chroot_0100", result, -1);
-}
-
-/*
- * @tc.name      : chroot_0400
- * @tc.desc      : Verify that the file root directory cannot be changed (parameter invalid)
- * @tc.level     : Level 2
- */
-void chroot_0400(void)
-{
-    char *ftpr = "system/app";
-    int result = chroot(ftpr);
-    EXPECT_EQ("chroot_0100", result, -1);
+    errno = 0;
+    int result = chroot("/sub");
+    EXPECT_EQ("chroot_0200", result, -1);
+    EXPECT_EQ("chroot_0200", errno, ENOENT);
 }
 
 int main(int argc, char *argv[])
 {
     chroot_0100();
     chroot_0200();
-    chroot_0300();
-    chroot_0400();
-
     return t_status;
 }

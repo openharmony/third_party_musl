@@ -14,13 +14,10 @@
  */
 
 #include <fcntl.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <sys/xattr.h>
-#include <unistd.h>
 #include "functionalext.h"
 
-const int32_t COUNT_ZERO = 0;
+const char *path = "/data/test.txt";
 
 /**
  * @tc.name      : fremovexattr_0100
@@ -29,15 +26,27 @@ const int32_t COUNT_ZERO = 0;
  */
 void fremovexattr_0100(void)
 {
-    int fd = open("/data/test.txt", O_CREAT | O_WRONLY, 0667);
-    char name[] = "user.x";
-    char value[] = "the past is not dead.";
-    int result;
-    fsetxattr(fd, name, value, strlen(value), 0);
-    result = fremovexattr(fd, name);
-    EXPECT_EQ("fremovexattr_0100", result, COUNT_ZERO);
+    char buf[10];
+
+    int fd = open(path, O_CREAT | O_WRONLY, 0667);
+    EXPECT_NE("fremovexattr_0100", fd, -1);
+
+    int result = fsetxattr(fd, "user.foo", "bar", 4, 0);
+    EXPECT_EQ("fremovexattr_0100", result, 0);
+
+    result = fgetxattr(fd, "user.foo", buf, sizeof(buf));
+    EXPECT_EQ("fremovexattr_0100", result, 4);
+    EXPECT_STREQ("fremovexattr_0100", buf, "bar");
+
+    result = fremovexattr(fd, "user.foo");
+    EXPECT_EQ("fremovexattr_0100", result, 0);
+
+    memset(buf, 0, sizeof(buf));
+    result = fgetxattr(fd, "user.foo", buf, sizeof(buf));
+    EXPECT_EQ("fremovexattr_0100", result, -1);
+
     close(fd);
-    remove("/data/test.txt");
+    remove(path);
 }
 
 int main(int argc, char *argv[])

@@ -13,7 +13,6 @@
  * limitations under the License.
  */
 
-#include <stdio.h>
 #include "functionalext.h"
 
 /**

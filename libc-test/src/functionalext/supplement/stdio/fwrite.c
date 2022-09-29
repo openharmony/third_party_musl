@@ -13,13 +13,9 @@
  * limitations under the License.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <stdbool.h>
 #include "functionalext.h"
 
-const int32_t COUNT_ZERO = 0;
+const char *path = "/data/test.txt";
 
 /**
  * @tc.name      : fwrite_0100
@@ -28,17 +24,15 @@ const int32_t COUNT_ZERO = 0;
  */
 void fwrite_0100(void)
 {
-    bool flag = false;
-    FILE *fptr = fopen("test.txt", "w+");
-    int result = 0;
+    FILE *fptr = fopen(path, "w+");
+    EXPECT_PTRNE("fwrite_0100", fptr, NULL);
+
     char buf[] = "this is test";
-    result = fwrite(buf, sizeof(char), strlen(buf), fptr);
-    if (result > 0) {
-        flag = true;
-    }
+    int result = fwrite(buf, sizeof(char), strlen(buf), fptr);
+    EXPECT_TRUE("fwrite_0100", result == strlen(buf));
+
     fclose(fptr);
-    remove("test.txt");
-    EXPECT_TRUE("fwrite_0100", flag);
+    remove(path);
 }
 
 /**
@@ -48,17 +42,15 @@ void fwrite_0100(void)
  */
 void fwrite_0200(void)
 {
-    bool flag = false;
-    FILE *fptr = fopen("test.txt", "w+");
-    int result = 0;
+    FILE *fptr = fopen(path, "w+");
+    EXPECT_PTRNE("fwrite_0200", fptr, NULL);
+
     char buf[] = "this is test";
-    result = fwrite(buf, 0, strlen(buf), fptr);
-    if (result > 0) {
-        flag = true;
-    }
+    int result = fwrite(buf, 0, strlen(buf), fptr);
+    EXPECT_EQ("fwrite_0200", result, 0);
+
     fclose(fptr);
-    remove("test.txt");
-    EXPECT_EQ("fwrite_0200", result, COUNT_ZERO);
+    remove(path);
 }
 
 /**
@@ -68,17 +60,15 @@ void fwrite_0200(void)
  */
 void fwrite_0300(void)
 {
-    bool flag = false;
-    FILE *fptr = fopen("test.txt", "w+");
-    int result = 0;
+    FILE *fptr = fopen(path, "w+");
+    EXPECT_PTRNE("fwrite_0300", fptr, NULL);
+
     char buf[] = "this is test";
-    result = fwrite(buf, sizeof(char), 0, fptr);
-    if (result > 0) {
-        flag = true;
-    }
+    int result = fwrite(buf, sizeof(char), 0, fptr);
+    EXPECT_EQ("fwrite_0300", result, 0);
+
     fclose(fptr);
-    remove("test.txt");
-    EXPECT_EQ("fwrite_0300", result, COUNT_ZERO);
+    remove(path);
 }
 
 int main(int argc, char *argv[])

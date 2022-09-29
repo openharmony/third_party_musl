@@ -13,36 +13,24 @@
  * limitations under the License.
  */
 
-#include <stdio.h>
 #include <stdio_ext.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <stddef.h>
-#include <stdbool.h>
 #include "functionalext.h"
-
-const int32_t COUNT_ZERO = 0;
 
 /**
  * @tc.name      : __fseterr_0100
- * @tc.desc      : Validate errors that can specify streams (parameter valid)
+ * @tc.desc      : Set stream in error
  * @tc.level     : Level 0
  */
 void __fseterr_0100(void)
 {
-    bool flag = false;
-    int result1, result2;
-    FILE *fptr = fopen("test.txt", "w+");
-    result1 = ferror(fptr);
-    __fseterr(fptr);
-    result2 = ferror(fptr);
-    EXPECT_EQ("__fseterr_0100", result1, COUNT_ZERO);
-    if (result2 != 0) {
-        flag = true;
-    }
-    EXPECT_TRUE("__fseterr_0100", flag);
-    fclose(fptr);
-    remove("test.txt");
+    FILE *fp = fopen("/dev/null", "w");
+
+    EXPECT_FALSE("__fseterr_0100", ferror(fp));
+    __fseterr(fp);
+    EXPECT_TRUE("__fseterr_0100", ferror(fp));
+    clearerr(fp);
+    EXPECT_FALSE("__fseterr_0100", ferror(fp));
+    fclose(fp);
 }
 
 int main(int argc, char *argv[])

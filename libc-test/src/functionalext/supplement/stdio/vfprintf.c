@@ -45,6 +45,9 @@ char *getfileall(char *fname)
 void vfprintf_test(char *file_name, char *format, char *func_name, char *want_reuslt, ...)
 {
     FILE *file = fopen(file_name, "w");
+    if (!file) {
+        t_error("%s fopen failed\n", func_name);
+    }
     va_list ap;
     va_start(ap, want_reuslt);
     int result = vfprintf(file, format, ap);
@@ -57,12 +60,15 @@ void vfprintf_test(char *file_name, char *format, char *func_name, char *want_re
     if (strcmp(buffer, want_reuslt) != 0) {
         t_error("%s vfprintf get is '%s' not '%s'", func_name, buffer, want_reuslt);
     }
-    unlink(file_name);
+    remove(file_name);
 }
 
 void vfprintf_n_test(char *file_name, char *format, char *func_name, char *want_reuslt, ...)
 {
     FILE *file = fopen(file_name, "w");
+    if (!file) {
+        t_error("%s fopen failed\n", func_name);
+    }
     va_list ap;
     va_start(ap, want_reuslt);
     int result = vfprintf(file, format, ap);
@@ -75,7 +81,7 @@ void vfprintf_n_test(char *file_name, char *format, char *func_name, char *want_
     if (strcmp(buffer, want_reuslt) == 0) {
         t_error("%s vfprintf get is '%s'", func_name, buffer);
     }
-    unlink(file_name);
+    remove(file_name);
 }
 
 int main(int argc, char *argv[])

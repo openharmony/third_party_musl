@@ -13,53 +13,39 @@
  * limitations under the License.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/timex.h>
-#include <stdint.h>
-#include <stdbool.h>
 #include <time.h>
-#include <unistd.h>
 #include "functionalext.h"
-
-const int32_t COUNT_ZERO = 0;
-const int32_t COUNT_NEGATIVE = -1;
 
 /**
  * @tc.name      : clock_getcpuclockid_0100
- * @tc.desc      : Verify that the clock ID can be obtained (all parameters are valid)
+ * @tc.desc      : Verify that the clock ID can be obtained when parameters are valid
  * @tc.level     : Level 0
  */
 void clock_getcpuclockid_0100(void)
 {
-    bool flag = false;
-    clockid_t clk = 0;
-    int result = -1;
-    pid_t pid;
-    pid = getppid();
-    result = clock_getcpuclockid(pid, &clk);
-    if (clk != 0) {
-        flag = true;
-    }
-    EXPECT_TRUE("clock_getcpuclockid_0100", flag);
-    EXPECT_EQ("clock_getcpuclockid_0100", result, COUNT_ZERO);
+    clockid_t clk;
+    struct timespec ts;
+    pid_t pid = getppid();
+
+    int result = clock_getcpuclockid(pid, &clk);
+    EXPECT_EQ("clock_getcpuclockid_0100", result, 0);
+
+    result = clock_gettime(clk, &ts);
+    EXPECT_EQ("clock_getcpuclockid_0100", result, 0);
 }
 
 /**
  * @tc.name      : clock_getcpuclockid_0200
- * @tc.desc      : Verify could not get clock ID (pid parameter invalid)
+ * @tc.desc      : Verify could not get clock ID when pid parameter is invalid
  * @tc.level     : Level 2
  */
 void clock_getcpuclockid_0200(void)
 {
-    bool flag = false;
-    clockid_t clk = 0;
-    int result = 0;
-    result = clock_getcpuclockid(45000, &clk);
-    if (result != 0) {
-        flag = true;
-    }
-    EXPECT_TRUE("clock_getcpuclockid_0200", flag);
+    errno = 0;
+    clockid_t clk;
+
+    int result = clock_getcpuclockid(65536, &clk);
+    EXPECT_NE("clock_getcpuclockid_0200", result, 0);
 }
 
 int main(int argc, char *argv[])

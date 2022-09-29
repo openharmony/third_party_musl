@@ -13,15 +13,11 @@
  * limitations under the License.
  */
 
-#include <errno.h>
 #include <pty.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <sys/wait.h>
 #include <unistd.h>
 #include "functionalext.h"
-
-typedef void (*TEST_FUN)();
 
 /**
  * @tc.name      : forkpty_0100
@@ -39,7 +35,7 @@ void forkpty_0100(void)
     char list2[2];
     FILE *fp;
     if (pid < 0) {
-        printf("error in fork!");
+        t_error("%s error in fork!", __func__);
     } else if (pid == 0) {
         fp = fopen("test1.txt", "w+");
         fwrite(sign_r, sizeof(char), strlen(sign_r), fp);
@@ -62,16 +58,8 @@ void forkpty_0100(void)
     remove("test2.txt");
 }
 
-TEST_FUN G_Fun_Array[] = {
-    forkpty_0100,
-};
-
 int main(int argc, char *argv[])
 {
-    int num = sizeof(G_Fun_Array) / sizeof(TEST_FUN);
-    for (int pos = 0; pos < num; ++pos) {
-        G_Fun_Array[pos]();
-    }
-
+    forkpty_0100();
     return t_status;
 }

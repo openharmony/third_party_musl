@@ -13,9 +13,10 @@
  * limitations under the License.
  */
 
-#include <stdio.h>
 #include <stdio_ext.h>
 #include "functionalext.h"
+
+const char *path = "/data/freadable.txt";
 
 /**
  * @tc.name      : __freadable_0100
@@ -25,13 +26,17 @@
 void __freadable_0100(void)
 {
     char buf[100];
-    FILE *fp = fopen("freadable.txt", "w");
+    FILE *fp = fopen(path, "w");
+    EXPECT_PTRNE("__freadable_0100", fp, NULL);
     fclose(fp);
-    FILE *ffp = fopen("freadable.txt", "r");
+    FILE *ffp = fopen(path, "r");
+    EXPECT_PTRNE("__freadable_0100", ffp, NULL);
+
     size_t ret = __freadable(ffp);
     EXPECT_NE("__freadable_0100", ret, 0);
+
     fclose(ffp);
-    remove("freadable.txt");
+    remove(path);
 }
 
 /**
@@ -41,11 +46,14 @@ void __freadable_0100(void)
  */
 void __freadable_0200(void)
 {
-    FILE *fp = fopen("freadable.txt", "wb");
+    FILE *fp = fopen(path, "wb");
+    EXPECT_PTRNE("__freadable_0200", fp, NULL);
+
     size_t ret = __freadable(fp);
     EXPECT_EQ("__freadable_0200", ret, 0);
+
     fclose(fp);
-    remove("freadable.txt");
+    remove(path);
 }
 
 int main(int argc, char *argv[])

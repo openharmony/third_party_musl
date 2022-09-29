@@ -16,6 +16,5 @@ functionalext_supplement_exit_test = [
   "a_cxa_finalize",
   "at_quick_exit",
   "atexit",
-  "__aeabi_atexit",
   "quick_exit",
 ]

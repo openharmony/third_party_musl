@@ -14,10 +14,6 @@
  */
 
 #include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <inttypes.h>
-#include <errno.h>
 #include "functionalext.h"
 
 /**
@@ -27,15 +23,21 @@
  */
 void getdelim_0100(void)
 {
-    ssize_t result;
-    char *wrstring = "helloworld";
+    char *wrstring = "hello,world";
     char *line = NULL;
     size_t len = 0;
+
     FILE *fp = fopen("getdelim.txt", "w+");
+    EXPECT_PTRNE("getdelim_0100", fp, NULL);
+
     fwrite(wrstring, sizeof(char), strlen(wrstring), fp);
     fseek(fp, 0, SEEK_SET);
-    result = getdelim(&line, &len, 'l', fp);
+
+    ssize_t result = getdelim(&line, &len, ',', fp);
     EXPECT_TRUE("getdelim_0100", result > 0);
+    EXPECT_TRUE("getdelim_0100", strcmp(line, "hello,") == 0);
+    EXPECT_TRUE("getdelim_0100", len > strlen("hello,"));
+
     remove("getdelim.txt");
 }
 
@@ -46,12 +48,13 @@ void getdelim_0100(void)
  */
 void getdelim_0200(void)
 {
-    ssize_t result;
     char *line = NULL;
     char *wrstring = "helloworld";
-    size_t a = 0;
+
     FILE *fp = fopen("getdelim.txt", "w+");
-    result = getdelim(&line, NULL, 'l', fp);
+    EXPECT_PTRNE("getdelim_0200", fp, NULL);
+
+    ssize_t result = getdelim(&line, NULL, 'l', fp);
     EXPECT_EQ("getdelim_0200", result, -1);
     remove("getdelim.txt");
 }
@@ -63,11 +66,13 @@ void getdelim_0200(void)
  */
 void getdelim_0300(void)
 {
-    ssize_t result;
-    char *wrstring = "helloworld";
     size_t a = 0;
+    char *wrstring = "helloworld";
+
     FILE *fp = fopen("getdelim.txt", "w+");
-    result = getdelim(NULL, &a, 'l', fp);
+    EXPECT_PTRNE("getdelim_0300", fp, NULL);
+
+    ssize_t result = getdelim(NULL, &a, 'l', fp);
     EXPECT_EQ("getdelim_0300", result, -1);
     remove("getdelim.txt");
 }

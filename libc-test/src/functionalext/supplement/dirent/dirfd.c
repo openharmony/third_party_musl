@@ -14,45 +14,29 @@
  */
 
 #include <dirent.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdbool.h>
-#include <signal.h>
-#include <sys/stat.h>
 #include "test.h"
-#include "functionalext.h"
-
-struct __dirstream {
-    long long tell;
-    int fd;
-    int buf_pos;
-    int buf_end;
-    volatile int lock[1];
-    char buf[2048];
-};
-#define MAXPATH 1000
-const int COUNT_NEGATIVE = -1;
 
 /*
  * @tc.name      : dirfd_0100
- * @tc.desc      : Verify that the file descriptor for the directory file referred to by parameter d is available
- *                 (parameter valid)
+ * @tc.desc      : Get directory stream file descriptor
  * @tc.level     : Level 0
  */
 void dirfd_0100(void)
 {
-    bool flag = true;
-    char path[MAXPATH];
-    DIR *dir_ptr;
-    getcwd(path, MAXPATH);
-    dir_ptr = opendir(path);
-    int result = 0;
-    result = dirfd(dir_ptr);
-    if (result > 0) {
-        flag = true;
+    DIR *dir = opendir(".");
+    if (!dir) {
+        t_error("%s opendir failed\n", __func__);
     }
-    EXPECT_TRUE("dirfd_0100", flag);
-    closedir(dir_ptr);
+
+    int fd = dirfd(dir);
+    if (fd < 0) {
+        t_error("%s dirfd failed\n", __func__);
+    }
+
+    int result = close(fd);
+    if (result < 0) {
+        t_error("%s close fd failed\n", __func__);
+    }
 }
 
 int main(int argc, char *argv[])

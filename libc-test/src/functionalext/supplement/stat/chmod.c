@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#include <sys/stat.h>
 #include <fcntl.h>
+#include <sys/stat.h>
 #include "functionalext.h"
 
 /**
@@ -24,7 +24,6 @@
  */
 void chmod_0100(void)
 {
-
     struct stat buf;
     open("test.txt", O_RDWR | O_CREAT);
     int result = chmod("test.txt",
@@ -60,36 +59,10 @@ void chmod_0200(void)
  */
 void chmod_0300(void)
 {
-    char filename[80];
-    char buf[100] = "";
-    int file;
-    gets(filename);
-    file = creat(filename, 0);
-    int num = chmod("data/AAA.txt",
+    int result = chmod("data/AAA.txt",
         S_ISUID | S_ISGID | S_ISVTX | S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IXGRP | S_IROTH | S_IWOTH |
             S_IXOTH);
-    EXPECT_EQ("chmod_0300", num, -1);
-    struct stat res;
-    stat("/data/AAA.txt", &res);
-}
-
-/*
- * @tc.name      : chmod_0400
- * @tc.desc      : Verify that file permissions cannot be modified (parameter invalid)
- * @tc.level     : Level 2
- */
-void chmod_0400(void)
-{
-    char filename[80];
-    char buf[100] = "";
-    int file;
-    gets(filename);
-    file = creat(filename, 0);
-    int num = chmod("data/test.txt", -0000);
-    EXPECT_EQ("chmod_0400", num, -1);
-    struct stat res;
-    stat("/data/AAA.txt", &res);
-    remove("data/test.txt");
+    EXPECT_EQ("chmod_0300", result, -1);
 }
 
 int main(int argc, char *argv[])
@@ -97,7 +70,5 @@ int main(int argc, char *argv[])
     chmod_0100();
     chmod_0200();
     chmod_0300();
-    chmod_0400();
-
     return t_status;
 }

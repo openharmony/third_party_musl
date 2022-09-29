@@ -13,63 +13,78 @@
  * limitations under the License.
  */
 
+#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <pthread.h>
-#include "functionalext.h"
+#include <string.h>
+#include "test.h"
 
-void *pthreadFunc(FILE *fptr)
+const char *path = "/data/test.txt";
+
+void *child_func(void *p)
 {
-    pthread_t newthid;
-    newthid = pthread_self();
-    char buf[] = "test1";
-    fwrite(buf, 1, sizeof(buf), fptr);
-    fseek(fptr, 0, SEEK_END);
-    return NULL;
-}
-void *pthreadFunc1(FILE *fptr)
-{
-    pthread_t newthid;
-    newthid = pthread_self();
-    char buf[] = "test2";
-    fwrite(buf, 1, sizeof(buf), fptr);
-    fseek(fptr, 0, SEEK_END);
+    char buf[64];
+
+    FILE *filep = fopen(path, "r+");
+    if (filep == NULL) {
+        t_error("%s fopen failed\n", __func__);
+    }
+
+    flockfile(filep);
+
+    if (fseek(filep, 0L, SEEK_SET) == -1) {
+        t_error("%s fseek failed\n", __func__);
+    }
+    int ret = fread(buf, 64, 1, filep);
+
+    int count = atoi(buf);
+    ++count;
+
+    sprintf(buf, "%d", count);
+    if (fseek(filep, 0L, SEEK_SET) == -1) {
+        t_error("%s fseek failed\n", __func__);
+    }
+    ret = fwrite(buf, strlen(buf), 1, filep);
+
+    funlockfile(filep);
+
+    fclose(filep);
     return NULL;
 }
 
 /**
  * @tc.name      : funlockfile_0100
- * @tc.desc      : Verify that files can be locked
+ * @tc.desc      : Mutual exclusion has been tested in the test case of flockfile, so this test case tests that threads
+ *                 cannot be mutually exclusive for the case where each thread fopens a descriptor
  * @tc.level     : Level 0
  */
 void funlockfile_0100(void)
 {
-    FILE *fptr;
-    pthread_t tid;
-    pthread_t tid1;
-    char buf[] = "test";
-    char buff[1024] = "\0";
-    char bufff[] = "testtest1";
-    bzero(buff, sizeof(buf));
-    fptr = fopen("test.txt", "w+");
-    ftrylockfile(fptr);
-    fwrite(buf, 1, strlen(buf), fptr);
-    fseek(fptr, 0, SEEK_END);
-    int ret1 = pthread_create(&tid, NULL, (void *)pthreadFunc, fptr);
-    sleep(1);
-    fseek(fptr, 0, SEEK_END);
-    funlockfile(fptr);
-    int ret2 = pthread_create(&tid1, NULL, (void *)pthreadFunc1, fptr);
-    sleep(1);
-    rewind(fptr);
-    fgets(buff, 1024, fptr);
-    EXPECT_STREQ("funlockfile_0100", bufff, buff);
-    fclose(fptr);
-    remove("test.txt");
+    pthread_t tid[100];
+
+    for (int i = 0; i < 100; i++) {
+        if (pthread_create(tid + i, NULL, child_func, NULL) != 0) {
+            t_error("%s pthread_create failed\n", __func__);
+        }
+    }
+
+    for (int j = 0; j < 100; j++) {
+        if (pthread_join(tid[j], NULL) != 0) {
+            t_error("%s pthread_join failed\n", __func__);
+        }
+    }
 }
 
 int main(int argc, char *argv[])
 {
+    FILE *fp = fopen(path, "w+");
+    if (fp == NULL) {
+        t_error("%s fopen failed\n", __func__);
+    }
+    fclose(fp);
+
     funlockfile_0100();
+
+    remove(path);
     return t_status;
 }

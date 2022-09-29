@@ -13,36 +13,31 @@
  * limitations under the License.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdbool.h>
 #include <setjmp.h>
-#include "functionalext.h"
+#include "test.h"
 
-static jmp_buf buf;
-bool FLAG = false;
-void second()
+void FAIL(void)
 {
-    longjmp(buf, 1);
-}
-void first()
-{
-    FLAG = true;
-    second();
-    FLAG = false;
+    t_error("%s failed, this function should be unreachable\n", __func__);
 }
 
 /**
  * @tc.name      : _longjmp_0100
- * @tc.desc      : Verify that jumps between functions can be achieved
+ * @tc.desc      : Restore the environment saved by the  most recent invocation of setjmp() in the same process, with
+ *                 the corresponding jmp_buf argument
  * @tc.level     : Level 0
  */
 void _longjmp_0100(void)
 {
-    if (!setjmp(buf)) {
-        first();
+    jmp_buf jb;
+    int value = setjmp(jb);
+    if (value == 0) {
+        _longjmp(jb, 456);
+        FAIL();
     } else {
-        EXPECT_TRUE("_longjmp_0100", FLAG);
+        if (value != 456) {
+            t_error("%s _longjmp failed\n", __func__);
+        }
     }
 }
 

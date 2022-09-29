@@ -14,9 +14,6 @@
  */
 
 #include <wchar.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
 #include "functionalext.h"
 
 /**
@@ -26,13 +23,14 @@
  */
 void getwc_0100(void)
 {
-    const char *ptr = "/data/tests/libc-test/src/functionalext/supplement/stdio/test.txt";
+    const char *ptr = "/data//test.txt";
     FILE *fptr = fopen(ptr, "w+");
-    EXPECT_PTRNE("putwc_0100", fptr, NULL);
+    EXPECT_PTRNE("getwc_0100", fptr, NULL);
     wchar_t wc = L'p';
     char ret = fputwc(wc, fptr);
-    char result = getwc(fptr);
-    EXPECT_EQ("getwc_0100", result, 255);
+    rewind(fptr);
+    wint_t result = getwc(fptr);
+    EXPECT_EQ("getwc_0100", (wchar_t)result, wc);
     fclose(fptr);
     remove(ptr);
 }
@@ -40,6 +38,5 @@ void getwc_0100(void)
 int main(void)
 {
     getwc_0100();
-
     return t_status;
 }

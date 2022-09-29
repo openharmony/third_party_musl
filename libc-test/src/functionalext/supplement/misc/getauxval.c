@@ -13,10 +13,8 @@
  * limitations under the License.
  */
 
-#include <errno.h>
 #include <sys/auxv.h>
 #include "functionalext.h"
-int successsfly = 0;
 
 /*
  * @tc.name      : getauxval_0100
@@ -25,7 +23,7 @@ int successsfly = 0;
  */
 void getauxval_0100(void)
 {
-    long int result;
+    unsigned long int result;
     result = getauxval(AT_SECURE);
     EXPECT_EQ("getauxval_0100", result, 0);
 }
@@ -37,7 +35,7 @@ void getauxval_0100(void)
  */
 void getauxval_0200(void)
 {
-    long int result;
+    unsigned long int result;
     result = getauxval(AT_SYSINFO);
     EXPECT_EQ("getauxval_0200", result, 0);
 }
@@ -49,7 +47,7 @@ void getauxval_0200(void)
  */
 void getauxval_0300(void)
 {
-    long int result;
+    unsigned long int result;
     result = getauxval(AT_SYSINFO_EHDR);
     EXPECT_TRUE("getauxval_0300", result != 0);
 }

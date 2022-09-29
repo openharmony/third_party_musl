@@ -16,9 +16,6 @@
 #include <pthread.h>
 #include "functionalext.h"
 
-const int SUCCESS = 0;
-const int FAILED = -1;
-
 /**
  * @tc.name      : pthread_cond_destroy_0100
  * @tc.desc      : The parameter is valid, and the parameter assignment can be passed normally
@@ -40,6 +37,5 @@ void pthread_cond_destroy_0100()
 int main(int argc, char *argv[])
 {
     pthread_cond_destroy_0100();
-
     return t_status;
 }

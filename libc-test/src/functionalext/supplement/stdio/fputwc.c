@@ -14,7 +14,6 @@
  */
 
 #include <ctype.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <wchar.h>
@@ -45,15 +44,18 @@ void fputwc_0100()
             }
         }
     } else {
-        perror("File opening failed");
+        t_error("%s File opening failed", __func__);
     }
+
     fclose(fp);
     FILE *ffp = fopen("file.txt", "r");
+    EXPECT_PTRNE("fputwc_0100", ffp, NULL);
     fgetws(buf, wcslen(str) + 1, ffp);
     EXPECT_EQ("fputwc_0100", ri, 0);
     EXPECT_EQ("fputwc_0100", wcscoll(buf, str), STRING_EQUAL);
+
     fclose(ffp);
-    system("rm -rf file.txt");
+    remove("file.txt");
 }
 
 /**
@@ -77,15 +79,16 @@ void fputwc_0200()
             }
         }
     } else {
-        perror("File opening failed");
+        t_error("%s File opening failed", __func__);
     }
     fclose(fp);
     FILE *ffp = fopen("file.txt", "r");
+    EXPECT_PTRNE("fputwc_0200", ffp, NULL);
     fgetws(buf, wcslen(str) + 1, ffp);
     EXPECT_EQ("fputwc_0200", ri, 0);
     EXPECT_EQ("fputwc_0200", wcscoll(buf, str), STRING_EQUAL);
     fclose(ffp);
-    system("rm -rf file.txt");
+    remove("file.txt");
 }
 
 int main(int argc, char *argv[])

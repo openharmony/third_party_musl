@@ -13,9 +13,7 @@
  * limitations under the License.
  */
 
-#include <stdio.h>
 #include <stdio_ext.h>
-#include <string.h>
 #include "functionalext.h"
 
 /**
@@ -27,14 +25,17 @@ void __fpurge_0100()
 {
     char buf[100];
     char *str = "This is a test";
-    FILE *fp = fopen("fpurge.txt", "w");
+    FILE *fp = fopen("/data/fpurge.txt", "w");
+    EXPECT_PTRNE("__fpurge_0100", fp, NULL);
+
     fputs(str, fp);
     size_t ret = __fpurge(fp);
     fgets(buf, 100, fp);
     EXPECT_EQ("__fpurge_0100", strstr(buf, str), 0);
     EXPECT_EQ("__fpurge_0100", ret, 0);
+
     fclose(fp);
-    remove("fpurge.txt");
+    remove("/data/fpurge.txt");
 }
 
 int main(int argc, char *argv[])

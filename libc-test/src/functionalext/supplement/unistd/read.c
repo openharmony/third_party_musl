@@ -14,7 +14,6 @@
  */
 
 #include <fcntl.h>
-#include <stdio.h>
 #include "functionalext.h"
 
 const int SIZE = 20;
@@ -42,6 +41,5 @@ void read_0100(void)
 int main(int argc, char *argv[])
 {
     read_0100();
-
     return t_status;
 }

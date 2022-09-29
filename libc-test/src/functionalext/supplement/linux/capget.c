@@ -13,71 +13,53 @@
  * limitations under the License.
  */
 
-#include <unistd.h>
 #include <stdio.h>
-#include <netinet/in.h>
 #include <sys/capability.h>
-#include <sys/socket.h>
-#include "functionalext.h"
-
-#undef _POSIX_SOURCE
-const int32_t COUNT_ZERO = 0;
-const int32_t COUNT_NEGATIVE = -1;
+#include "test.h"
 
 /**
  * @tc.name      : capget_0100
- * @tc.desc      : Verify that you can obtain process permissions (parameter valid)
+ * @tc.desc      : Verify that this function can obtain process permissions
  * @tc.level     : Level 0
  */
 void capget_0100(void)
 {
     struct __user_cap_header_struct cap_header_data;
     cap_user_header_t cap_header = &cap_header_data;
+
     struct __user_cap_data_struct cap_data_data;
     cap_user_data_t cap_data = &cap_data_data;
-    int result;
+
     cap_header->pid = getpid();
     cap_header->version = _LINUX_CAPABILITY_VERSION_1;
-    result = capget(cap_header, cap_data);
-    EXPECT_EQ("capget_0100", result, COUNT_ZERO);
+
+    int result = capget(cap_header, cap_data);
+    if (result < 0) {
+        t_error("%s capget failed\n", __func__);
+    }
+
+    printf("Cap data 0x%x, 0x%x, 0x%x \n", cap_data->effective, cap_data->permitted, cap_data->inheritable);
 }
 
 /**
  * @tc.name      : capget_0200
- * @tc.desc      : Validation could not obtain process permissions (parameter a is invalid)
+ * @tc.desc      : Verify that this function could not obtain process permissions when parameter is invalid
  * @tc.level     : Level 2
  */
 void capget_0200(void)
 {
     struct __user_cap_data_struct cap_data_data;
     cap_user_data_t cap_data = &cap_data_data;
-    int result;
-    result = capget(NULL, cap_data);
-    EXPECT_EQ("capget_0200", result, COUNT_NEGATIVE);
-}
 
-/**
- * @tc.name      : capget_0300
- * @tc.desc      : Verify that the process permission can be obtained
- * @tc.level     : Level 1
- */
-void capget_0300(void)
-{
-    struct __user_cap_header_struct cap_header_data;
-    cap_user_header_t cap_header = &cap_header_data;
-    cap_header->pid = getpid();
-    cap_header->version = _LINUX_CAPABILITY_VERSION_1;
-    struct __user_cap_data_struct cap_data_data;
-    cap_user_data_t cap_data = NULL;
-    int result;
-    result = capget(cap_header, NULL);
-    EXPECT_EQ("capget_0300", result, COUNT_ZERO);
+    int result = capget(NULL, cap_data);
+    if (result != -1) {
+        t_error("%s capget should be failed\n", __func__);
+    }
 }
 
 int main(int argc, char *argv[])
 {
     capget_0100();
     capget_0200();
-    capget_0300();
     return t_status;
 }

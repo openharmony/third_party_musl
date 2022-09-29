@@ -13,15 +13,8 @@
  * limitations under the License.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <linux/membarrier.h>
+#include <sys/membarrier.h>
 #include "functionalext.h"
-
-const int32_t COUNT_ZERO = 0;
-const int32_t COUNT_NEGATIVE = -1;
-int membarrier(int, int);
 
 /**
  * @tc.name      : membarrier_0100
@@ -31,9 +24,8 @@ int membarrier(int, int);
  */
 void membarrier_0100(void)
 {
-    int result;
-    result = membarrier(MEMBARRIER_CMD_REGISTER_PRIVATE_EXPEDITED, 0);
-    EXPECT_EQ("membarrier_0100", result, COUNT_ZERO);
+    int result = membarrier(MEMBARRIER_CMD_REGISTER_PRIVATE_EXPEDITED, 0);
+    EXPECT_EQ("membarrier_0100", result, 0);
 }
 
 /**
@@ -43,9 +35,8 @@ void membarrier_0100(void)
  */
 void membarrier_0200(void)
 {
-    int result;
-    result = membarrier(MEMBARRIER_CMD_PRIVATE_EXPEDITED, 0);
-    EXPECT_EQ("membarrier_0200", result, COUNT_ZERO);
+    int result = membarrier(MEMBARRIER_CMD_PRIVATE_EXPEDITED, 0);
+    EXPECT_EQ("membarrier_0200", result, 0);
 }
 
 /**
@@ -55,9 +46,8 @@ void membarrier_0200(void)
  */
 void membarrier_0300(void)
 {
-    int result;
-    result = membarrier(-1, 0);
-    EXPECT_EQ("membarrier_0300", result, COUNT_NEGATIVE);
+    int result = membarrier(-1, 0);
+    EXPECT_EQ("membarrier_0300", result, -1);
 }
 
 int main(int argc, char *argv[])

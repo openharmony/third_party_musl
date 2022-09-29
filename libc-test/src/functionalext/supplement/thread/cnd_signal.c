@@ -41,9 +41,8 @@ void cnd_signal_0100(void)
     cnd_init(&cndPut);
     mtx_init(&mtx, 0);
     ret = thrd_create(&id1, (thrd_start_t)cnd_timedwaitfirst, (void *)1);
-    if (0 != ret) {
-        printf("thread 1 create failed!\n");
-    }
+    EXPECT_EQ("cnd_signal_0100", ret, 0);
+
     sleep(2);
     mtx_lock(&mtx);
     res = cnd_signal(&cndPut);

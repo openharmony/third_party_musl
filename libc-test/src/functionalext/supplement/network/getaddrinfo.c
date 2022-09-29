@@ -33,19 +33,12 @@ const int SOCKTYPE_NOTSUPPORTED = -8;
  */
 void getaddrinfo_0100(void)
 {
-    int ret = -1;
-    int num = -1;
     struct addrinfo *result, hint;
-    hint.ai_flags = AI_ALL;
+    hint.ai_flags = AI_PASSIVE;
     hint.ai_family = AF_UNSPEC;
-    ret = getaddrinfo("127.0.0.1", NULL, &hint, &result);
+    int ret = getaddrinfo("127.0.0.1", NULL, &hint, &result);
     EXPECT_EQ("getaddrinfo_0100", ret, GETADDRINFO_RESULT);
-    if (result->ai_addr != NULL) {
-        num = 1;
-    } else {
-        num = 2;
-    }
-    EXPECT_EQ("getaddrinfo_0100", num, 1);
+    EXPECT_TRUE("getaddrinfo_0100", result->ai_addr != NULL);
     freeaddrinfo(result);
     result = NULL;
 }
@@ -57,19 +50,12 @@ void getaddrinfo_0100(void)
  */
 void getaddrinfo_0200(void)
 {
-    int ret = -1;
-    int num = -1;
     struct addrinfo *result, hint;
     hint.ai_flags = AI_ALL;
     hint.ai_family = AF_UNSPEC;
-    ret = getaddrinfo("127.0.0.1", NULL, &hint, &result);
+    int ret = getaddrinfo("127.0.0.1", NULL, &hint, &result);
     EXPECT_EQ("getaddrinfo_0200", ret, GETADDRINFO_RESULT);
-    if (result->ai_addr != NULL) {
-        num = 1;
-    } else {
-        num = 2;
-    }
-    EXPECT_EQ("getaddrinfo_0200", num, 1);
+    EXPECT_TRUE("getaddrinfo_0200", result->ai_addr != NULL);
     freeaddrinfo(result);
     result = NULL;
 }
@@ -82,20 +68,13 @@ void getaddrinfo_0200(void)
  */
 void getaddrinfo_0300(void)
 {
-    int ret = -1;
-    int num = -1;
     struct addrinfo *result, hint;
     hint.ai_flags = AI_NUMERICHOST;
     hint.ai_family = AF_INET6;
     char buf[] = "fe80::bed5:4695:6cac:bef8";
-    ret = getaddrinfo(buf, NULL, &hint, &result);
+    int ret = getaddrinfo(buf, NULL, &hint, &result);
     EXPECT_EQ("getaddrinfo_0300", ret, GETADDRINFO_RESULT);
-    if (result->ai_addr != NULL) {
-        num = 1;
-    } else {
-        num = 2;
-    }
-    EXPECT_EQ("getaddrinfo_0300", num, 1);
+    EXPECT_TRUE("getaddrinfo_0300", result->ai_addr != NULL);
     freeaddrinfo(result);
     result = NULL;
 }
@@ -107,19 +86,12 @@ void getaddrinfo_0300(void)
  */
 void getaddrinfo_0400(void)
 {
-    int ret = -1;
-    int num = -1;
     struct addrinfo *result, hint;
     hint.ai_flags = AI_V4MAPPED;
     hint.ai_family = AF_INET6;
-    ret = getaddrinfo("127.0.0.1", NULL, &hint, &result);
+    int ret = getaddrinfo("127.0.0.1", NULL, &hint, &result);
     EXPECT_EQ("getaddrinfo_0400", ret, GETADDRINFO_RESULT);
-    if (result->ai_addr != NULL) {
-        num = 1;
-    } else {
-        num = 2;
-    }
-    EXPECT_EQ("getaddrinfo_0400", num, 1);
+    EXPECT_TRUE("getaddrinfo_0400", result->ai_addr != NULL);
     freeaddrinfo(result);
     result = NULL;
 }
@@ -131,19 +103,12 @@ void getaddrinfo_0400(void)
  */
 void getaddrinfo_0500(void)
 {
-    int ret = -1;
-    int num = -1;
     struct addrinfo *result, hint;
-    hint.ai_flags = AI_ALL;
+    hint.ai_flags = AI_V4MAPPED;
     hint.ai_family = AF_UNSPEC;
-    ret = getaddrinfo("127.0.0.1", NULL, &hint, &result);
+    int ret = getaddrinfo("127.0.0.1", NULL, &hint, &result);
     EXPECT_EQ("getaddrinfo_0500", ret, GETADDRINFO_RESULT);
-    if (result->ai_addr != NULL) {
-        num = 1;
-    } else {
-        num = 2;
-    }
-    EXPECT_EQ("getaddrinfo_0500", num, 1);
+    EXPECT_TRUE("getaddrinfo_0500", result->ai_addr != NULL);
     freeaddrinfo(result);
     result = NULL;
 }
@@ -156,19 +121,12 @@ void getaddrinfo_0500(void)
  */
 void getaddrinfo_0600(void)
 {
-    int ret = -1;
-    int num = -1;
     struct addrinfo *result, hint;
     hint.ai_flags = AI_ADDRCONFIG;
     hint.ai_family = AF_UNSPEC;
-    ret = getaddrinfo("127.0.0.1", NULL, &hint, &result);
+    int ret = getaddrinfo("127.0.0.1", NULL, &hint, &result);
     EXPECT_EQ("getaddrinfo_0600", ret, GETADDRINFO_RESULT);
-    if (result->ai_addr != NULL) {
-        num = 1;
-    } else {
-        num = 2;
-    }
-    EXPECT_EQ("getaddrinfo_0600", num, 1);
+    EXPECT_TRUE("getaddrinfo_0600", result->ai_addr != NULL);
     freeaddrinfo(result);
     result = NULL;
 }
@@ -181,19 +139,12 @@ void getaddrinfo_0600(void)
  */
 void getaddrinfo_0700(void)
 {
-    int ret = -1;
-    int num = -1;
     struct addrinfo *result, hint;
     hint.ai_flags = AI_NUMERICSERV;
     hint.ai_family = AF_UNSPEC;
-    ret = getaddrinfo("127.0.0.1", NULL, &hint, &result);
+    int ret = getaddrinfo("127.0.0.1", NULL, &hint, &result);
     EXPECT_EQ("getaddrinfo_0700", ret, GETADDRINFO_RESULT);
-    if (result->ai_addr != NULL) {
-        num = 1;
-    } else {
-        num = 2;
-    }
-    EXPECT_EQ("getaddrinfo_0700", num, 1);
+    EXPECT_TRUE("getaddrinfo_0700", result->ai_addr != NULL);
     freeaddrinfo(result);
     result = NULL;
 }
@@ -205,17 +156,10 @@ void getaddrinfo_0700(void)
  */
 void getaddrinfo_0800(void)
 {
-    int ret = -1;
-    int num = -1;
     struct addrinfo *result;
-    ret = getaddrinfo("127.0.0.1", NULL, NULL, &result);
+    int ret = getaddrinfo("127.0.0.1", NULL, NULL, &result);
     EXPECT_EQ("getaddrinfo_0800", ret, GETADDRINFO_RESULT);
-    if (result->ai_addr != NULL) {
-        num = 1;
-    } else {
-        num = 2;
-    }
-    EXPECT_EQ("getaddrinfo_0800", num, 1);
+    EXPECT_TRUE("getaddrinfo_0800", result->ai_addr != NULL);
     freeaddrinfo(result);
     result = NULL;
 }
@@ -227,11 +171,10 @@ void getaddrinfo_0800(void)
  */
 void getaddrinfo_0900(void)
 {
-    int ret = -1;
     struct addrinfo *result, hint;
     hint.ai_flags = 0x4000;
     hint.ai_family = AF_UNSPEC;
-    ret = getaddrinfo("127.0.0.1", NULL, &hint, &result);
+    int ret = getaddrinfo("127.0.0.1", NULL, &hint, &result);
     EXPECT_EQ("getaddrinfo_0900", ret, FLAGS_FIELD);
 }
 
@@ -242,11 +185,10 @@ void getaddrinfo_0900(void)
  */
 void getaddrinfo_1000(void)
 {
-    int ret = -1;
     struct addrinfo *result, hint;
     hint.ai_flags = AI_ALL;
     hint.ai_family = PF_AX25;
-    ret = getaddrinfo("127.0.0.1", NULL, &hint, &result);
+    int ret = getaddrinfo("127.0.0.1", NULL, &hint, &result);
     EXPECT_EQ("getaddrinfo_1000", ret, FAMILY_NOTSUPPORTED);
 }
 
@@ -258,7 +200,6 @@ void getaddrinfo_1000(void)
  */
 void getaddrinfo_1100(void)
 {
-    int ret = -1;
     struct addrinfo *result, hint;
     hint.ai_flags = AI_NUMERICHOST;
     hint.ai_family = AF_INET6;
@@ -269,7 +210,7 @@ void getaddrinfo_1100(void)
     strcat(one, two);
     strcat(one, three);
     strcat(one, four);
-    ret = getaddrinfo(one, NULL, &hint, &result);
+    int ret = getaddrinfo(one, NULL, &hint, &result);
     EXPECT_EQ("getaddrinfo_1100", ret, SERVICE_UNKNOEN);
 }
 
@@ -281,11 +222,10 @@ void getaddrinfo_1100(void)
  */
 void getaddrinfo_1200(void)
 {
-    int ret = -1;
     struct addrinfo *result, hint;
     hint.ai_flags = AI_NUMERICHOST;
     hint.ai_family = AF_INET6;
-    ret = getaddrinfo(NULL, NULL, &hint, &result);
+    int ret = getaddrinfo(NULL, NULL, &hint, &result);
     EXPECT_EQ("getaddrinfo_1200", ret, SERVICE_UNKNOEN);
 }
 
@@ -296,13 +236,12 @@ void getaddrinfo_1200(void)
  */
 void getaddrinfo_1300(void)
 {
-    int ret = -1;
     struct addrinfo *result, hint;
     hint.ai_flags = AI_CANONNAME;
     hint.ai_family = AF_INET;
     hint.ai_protocol = IPPROTO_UDP;
     hint.ai_socktype = SOCK_STREAM;
-    ret = getaddrinfo("127.0.0.1", NULL, &hint, &result);
+    int ret = getaddrinfo("127.0.0.1", NULL, &hint, &result);
     EXPECT_EQ("getaddrinfo_1300", ret, SOCKTYPE_NOTSUPPORTED);
 }
 
@@ -313,13 +252,12 @@ void getaddrinfo_1300(void)
  */
 void getaddrinfo_1400(void)
 {
-    int ret = -1;
     struct addrinfo *result, hint;
     hint.ai_flags = AI_CANONNAME;
     hint.ai_family = AF_INET;
     hint.ai_protocol = IPPROTO_TCP;
     hint.ai_socktype = SOCK_DGRAM;
-    ret = getaddrinfo("127.0.0.1", NULL, &hint, &result);
+    int ret = getaddrinfo("127.0.0.1", NULL, &hint, &result);
     EXPECT_EQ("getaddrinfo_1400", ret, SOCKTYPE_NOTSUPPORTED);
 }
 
@@ -330,12 +268,11 @@ void getaddrinfo_1400(void)
  */
 void getaddrinfo_1500(void)
 {
-    int ret = -1;
     struct addrinfo *result, hint;
     hint.ai_flags = AI_CANONNAME;
     hint.ai_family = AF_INET;
     hint.ai_socktype = SOCK_RAW;
-    ret = getaddrinfo("127.0.0.1", "2000", &hint, &result);
+    int ret = getaddrinfo("127.0.0.1", "2000", &hint, &result);
     EXPECT_EQ("getaddrinfo_1500", ret, SOCKTYPE_NOTSUPPORTED);
 }
 
