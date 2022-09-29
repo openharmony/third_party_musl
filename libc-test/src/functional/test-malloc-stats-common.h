@@ -12,7 +12,7 @@
 
 #define SIZES_COUNT 11
 #define SIZE_ALIGN (8*sizeof(size_t))
-#define MMAP_THRESHOLD (0x1c00*SIZE_ALIGN) - OVERHEAD
+#define MMAP_THRESHOLD ((0x1c00*SIZE_ALIGN) - OVERHEAD)
 #define LIST_OVERHEAD (2*sizeof(void*))
 #define OVERHEAD (2*sizeof(size_t) + sizeof(void*) + LIST_OVERHEAD)
 
