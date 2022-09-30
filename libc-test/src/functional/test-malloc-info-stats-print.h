@@ -14,12 +14,12 @@
 #include "test.h"
 
 #define MAX_TID_LEN 32
-#define BUFFER_SIZE 4096
+#define STATS_BUFFER_SIZE 4096
 
 typedef struct
 {
-    char stats_after_allocations[BUFFER_SIZE];
-    char stats_after_free[BUFFER_SIZE];
+    char stats_after_allocations[STATS_BUFFER_SIZE];
+    char stats_after_free[STATS_BUFFER_SIZE];
     char threads[SIZES_COUNT][MAX_TID_LEN + 1];
 } test_results_t;
 
@@ -48,7 +48,7 @@ int stats_to_buffer(char *buffer)
     close(err_pipe[1]);
     stderr_stats_cb();
     fflush(stderr);
-    read(err_pipe[0], buffer, BUFFER_SIZE);
+    read(err_pipe[0], buffer, STATS_BUFFER_SIZE);
     dup2(saved_stderr, STDERR_FILENO);
     return 1;
 }
