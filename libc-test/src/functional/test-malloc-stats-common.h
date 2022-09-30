@@ -16,12 +16,14 @@
 #define LIST_OVERHEAD (2*sizeof(void*))
 #define OVERHEAD (2*sizeof(size_t) + sizeof(void*) + LIST_OVERHEAD)
 
-static size_t sizes[SIZES_COUNT] = {23, 32, 
-									256, 3072, 
-									3584, 229376, 
-									262144, 327680, 
-									8 * 1024 * 1024, 16 * 1024 * 1024, 
-									32 * 1024 * 1024};
+static size_t sizes[SIZES_COUNT] = {
+	23, 32,
+	256, 3072,
+	3584, 229376,
+	262144, 327680,
+	8 * 1024 * 1024,16 * 1024 * 1024,
+	32 * 1024 * 1024
+};
 
 typedef struct {
 	long long mmapped_regions;

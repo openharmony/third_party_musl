@@ -26,13 +26,14 @@ typedef struct
 
 static const size_t allocs_sizes[ALLOCATIONS_NUMBER] = {
     8,
-    2048,
-    65536,
-    524288,
+    2 * 1024,
+    64 * 1024,
+    512 * 1024,
     2 * 1024 * 1024,
     8 * 1024 * 1024,
     16 * 1024 * 1024,
-    32 * 1024 * 1024};
+    32 * 1024 * 1024
+};
 
 void iterate_callback(void *base, size_t size, void *data)
 {
@@ -112,12 +113,7 @@ int iterate_wrapper(iterate_arg_t *iterate_arg)
     {
         if (iterate_arg->allocs_reported_number[i] != 1)
         {
-            //      printf("Error: failed on %p %lu %lu\n", (void*)iterate_arg->allocs[i], iterate_arg->allocs_actual_sizes[i], iterate_arg->allocs_reported_number[i]);
             ret = -1;
-        }
-        else
-        {
-            //      printf("Ok on %p %lu %lu\n", (void*)iterate_arg->allocs[i], iterate_arg->allocs_actual_sizes[i], iterate_arg->allocs_reported_number[i]);
         }
     }
     return ret;
