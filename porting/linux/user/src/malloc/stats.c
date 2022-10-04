@@ -7,6 +7,7 @@
 #ifdef MUSL_ITERATE_AND_STATS_API
 #define STAT_PRINTF_MAX_LEN 255
 #define ALLOCATOR_VERSION 1
+#define SEPARATOR_REPEATS 7
 
 typedef void (write_cb_fun)(void *, const char *);
 
@@ -20,10 +21,6 @@ typedef struct {
 	size_t total_allocated_memory;
 	size_t total_allocated_heap_space;
 } malloc_stats_t;
-
-extern size_t total_heap_space;
-
-extern occupied_bin_t detached_occupied_bin;
 
 static void stat_printf(write_cb_fun *write_cb, void *write_cb_arg, const char *fmt, ...)
 {
@@ -135,7 +132,7 @@ static void print_abandoned_stats_xml(write_cb_fun *write_cb, void *write_cb_arg
 
 static size_t print_abandoned(write_cb_fun *write_cb, void *write_cb_arg, print_mode mode)
 {
-	malloc_stats_t stats = add_up_chunks(&detached_occupied_bin);
+	malloc_stats_t stats = add_up_chunks(__get_detached_occupied_bin());
 	if (mode == TABLE) {
 		print_abandoned_stats_table(write_cb, write_cb_arg, &stats);
 	} else {
@@ -153,7 +150,7 @@ static void print_total_free_heap_space(
 {
 	if (mode == TABLE) {
 		stat_printf(write_cb, write_cb_arg, "\n");
-		for (size_t i = 0; i < 7; i++) {
+		for (size_t i = 0; i < SEPARATOR_REPEATS; i++) {
 			stat_printf(
 				write_cb,
 				write_cb_arg,
@@ -164,14 +161,14 @@ static void print_total_free_heap_space(
 			write_cb,
 			write_cb_arg,
 			"\ntotal free heap space: %zu\n",
-			total_heap_space - total_allocated_heap_space
+			__get_total_heap_space() - total_allocated_heap_space
 		);
 	} else {
 		print_amount_xml(
 			write_cb,
 			write_cb_arg,
 			"total_free_heap_space",
-			total_heap_space - total_allocated_heap_space
+			__get_total_heap_space() - total_allocated_heap_space
 		);
 	}
 }
@@ -243,14 +240,14 @@ struct mallinfo2 mallinfo2(void)
 		add_stats(&shared_stats, &stats);
 		it = it->next;
 	} while (it != self);
-	malloc_stats_t abandoned_stats = add_up_chunks(&detached_occupied_bin);
+	malloc_stats_t abandoned_stats = add_up_chunks(__get_detached_occupied_bin());
 	add_stats(&shared_stats, &abandoned_stats);
 
 	struct mallinfo2 res = {
 		.hblks = shared_stats.mmapped_regions,
 		.hblkhd = shared_stats.total_mmapped_memory,
 		.uordblks = shared_stats.total_allocated_memory,
-		.fordblks = total_heap_space - shared_stats.total_allocated_heap_space
+		.fordblks = __get_total_heap_space() - shared_stats.total_allocated_heap_space
 	};
 	malloc_enable();
 	return res;

@@ -2,6 +2,7 @@
 #define MALLOC_IMPL_H
 
 #include <sys/mman.h>
+#include "pthread.h"
 #include "malloc_config.h"
 
 hidden void *__expand_heap(size_t *);
@@ -49,7 +50,12 @@ hidden void __merge_bin_chunks(occupied_bin_t *target_bin, occupied_bin_t *sourc
 hidden void __init_occupied_bin_key_once(void);
 hidden void __push_chunk(struct chunk *c);
 hidden void __pop_chunk(struct chunk *c);
+hidden occupied_bin_t *__get_detached_occupied_bin(void);
+hidden pthread_key_t __get_occupied_bin_key(void);
+hidden size_t __get_total_heap_space(void);
 #endif
+
+#define BINS_COUNT 64
 
 #define SIZE_MASK (-SIZE_ALIGN)
 
