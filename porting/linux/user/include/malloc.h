@@ -1,6 +1,8 @@
 #ifndef _MALLOC_H
 #define _MALLOC_H
 
+#include <stdio.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -10,7 +12,6 @@ extern "C" {
 #define __NEED_uintptr_t
 
 #include <bits/alltypes.h>
-#include <stdio.h>
 
 void *malloc (size_t);
 void *calloc (size_t, size_t);
