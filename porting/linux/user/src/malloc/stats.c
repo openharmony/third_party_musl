@@ -1,6 +1,22 @@
+/*
+ * Copyright (C) 2022 Huawei Device Co., Ltd.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 #include <stdarg.h>
 #include <malloc.h>
 #include <errno.h>
+#include <string.h>
 #include "pthread_impl.h"
 #include "malloc_impl.h"
 
@@ -27,8 +43,11 @@ static void stat_printf(write_cb_fun *write_cb, void *write_cb_arg, const char *
 	va_list args;
 	va_start(args, fmt);
 	char buf[STAT_PRINTF_MAX_LEN + 1];
-	vsnprintf(buf, STAT_PRINTF_MAX_LEN, fmt, args);
-	write_cb(write_cb_arg, buf);
+	if (vsnprintf(buf, STAT_PRINTF_MAX_LEN, fmt, args)) {
+		write_cb(write_cb_arg, buf);
+	} else {
+		fprintf(stderr, "Error writing to buffer");
+	}
 	va_end(args);
 }
 
@@ -175,7 +194,9 @@ static void print_total_free_heap_space(
 
 static void print_to_file(void *fp, const char *s)
 {
-	fputs(s, fp);
+	if (fputs(s, fp) == EOF) {
+		fprintf(stderr, "Error writing to file stream: %s", strerror(errno));
+	}
 }
 
 static void add_stats(malloc_stats_t *destination, const malloc_stats_t *source)
