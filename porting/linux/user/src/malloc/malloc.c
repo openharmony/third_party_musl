@@ -20,6 +20,23 @@ pthread_key_t occupied_bin_key;
 
 occupied_bin_t detached_occupied_bin;
 
+/* Usable memory only, excluding overhead for chunks */
+size_t total_heap_space = 0;
+volatile int total_heap_space_inc_lock[2];
+volatile int pop_merge_lock[2];
+
+occupied_bin_t *__get_detached_occupied_bin(void) {
+	return &detached_occupied_bin;
+}
+
+pthread_key_t __get_detached_occupied_bin_key(void) {
+	return occupied_bin_key;
+}
+
+size_t __get_total_heap_space(void) {
+	return total_heap_space;
+}
+
 static pthread_once_t occupied_bin_key_is_initialized = PTHREAD_ONCE_INIT;
 
 static void occupied_bin_destructor(void *occupied_bin)
@@ -48,10 +65,9 @@ occupied_bin_t *__get_current_occupied_bin()
 	return __get_occupied_bin(__pthread_self());
 }
 
-/* Usable memory only, excluding overhead for chunks */
-size_t total_heap_space = 0;
-volatile int total_heap_space_inc_lock[2];
-volatile int pop_merge_lock[2];
+pthread_key_t __get_occupied_bin_key() {
+	return occupied_bin_key;
+}
 #endif
 
 #ifdef HOOK_ENABLE
@@ -61,14 +77,14 @@ void __libc_free(void *p);
 
 static struct {
 	volatile uint64_t binmap;
-	struct bin bins[64];
+	struct bin bins[BINS_COUNT];
 	volatile int free_lock[2];
 #ifdef MALLOC_FREELIST_QUARANTINE
 	struct bin quarantine[QUARANTINE_NUM];
 	size_t quarantined_count[QUARANTINE_NUM];
 	size_t quarantined_size[QUARANTINE_NUM];
 #ifdef MALLOC_RED_ZONE
-	char poison[64];
+	char poison[BINS_COUNT];
 	volatile int poison_lock[2];
 	int poison_count_down;
 #endif
@@ -191,7 +207,7 @@ void malloc_disable(void)
 #ifdef MUSL_ITERATE_AND_STATS_API
 	lock(mal.free_lock);
 	lock(total_heap_space_inc_lock);
-	for (size_t i = 0; i < 64; ++i) {
+	for (size_t i = 0; i < BINS_COUNT; ++i) {
 		lock(mal.bins[i].lock);
 	}
 	__tl_lock();
@@ -218,7 +234,7 @@ void malloc_enable(void)
 	} while (it != self);
 	unlock(detached_occupied_bin.lock);
 	__tl_unlock();
-	for (size_t i = 0; i < 64; ++i) {
+	for (size_t i = 0; i < BINS_COUNT; ++i) {
 		unlock(mal.bins[i].lock);
 	}
 	unlock(total_heap_space_inc_lock);
@@ -434,7 +450,7 @@ void __dump_heap(int x)
 			c, CHUNK_SIZE(c), bin_index(CHUNK_SIZE(c)),
 			c->csize & 15,
 			NEXT_CHUNK(c)->psize & 15);
-	for (i=0; i<64; i++) {
+	for (i=0; i<BINS_COUNT; i++) {
 		if (mal.bins[i].head != BIN_TO_CHUNK(i) && mal.bins[i].head) {
 			fprintf(stderr, "bin %d: %p\n", i, mal.bins[i].head);
 			if (!(mal.binmap & 1ULL<<i))

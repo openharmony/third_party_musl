@@ -7,6 +7,7 @@
 
 #include "test-malloc-api-common.h"
 
+#define BARRIER_HEIGHT 2
 #define ALLOCATIONS_NUMBER 8
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
 
@@ -32,8 +33,7 @@ static const size_t allocs_sizes[ALLOCATIONS_NUMBER] = {
     2 * 1024 * 1024,
     8 * 1024 * 1024,
     16 * 1024 * 1024,
-    32 * 1024 * 1024
-};
+    32 * 1024 * 1024};
 
 void iterate_callback(void *base, size_t size, void *data)
 {
@@ -152,8 +152,8 @@ int test_iterate_another_thread(void)
 {
     int ret;
     iterate_arg_t iterate_arg_routine = {{0}, {0}, {0}, {0}};
-    pthread_barrier_init(&routine_allocated, NULL, 2);
-    pthread_barrier_init(&routine_iterated, NULL, 2);
+    pthread_barrier_init(&routine_allocated, NULL, BARRIER_HEIGHT);
+    pthread_barrier_init(&routine_iterated, NULL, BARRIER_HEIGHT);
     pthread_t thread_id;
     pthread_create(&thread_id, NULL, allocate_routine, (void *)&iterate_arg_routine);
     pthread_barrier_wait(&routine_allocated);

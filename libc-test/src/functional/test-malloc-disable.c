@@ -8,6 +8,8 @@
 
 #include "test-malloc-api-common.h"
 
+#define BARRIER_HEIGHT 2
+
 pthread_barrier_t routine_disabled;
 pthread_barrier_t routine_allocated;
 
@@ -26,8 +28,8 @@ void *disable_routine(void *vargp)
 int test_malloc_while_disabled(void)
 {
 	int ret = 0;
-	pthread_barrier_init(&routine_disabled, NULL, 2);
-	pthread_barrier_init(&routine_allocated, NULL, 2);
+	pthread_barrier_init(&routine_disabled, NULL, BARRIER_HEIGHT);
+	pthread_barrier_init(&routine_allocated, NULL, BARRIER_HEIGHT);
 	pthread_t thread_id;
 	pthread_create(&thread_id, NULL, disable_routine, NULL);
 	pthread_barrier_wait(&routine_disabled);
