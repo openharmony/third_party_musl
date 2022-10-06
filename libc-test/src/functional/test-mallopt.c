@@ -18,10 +18,10 @@
 
 static int test_mallopt()
 {
-    return mallopt(0, 0) != 0;
+	return mallopt(0, 0) != 0;
 }
 
 int main()
 {
-    return check_and_report("Testing mallopt stub", test_mallopt);
+	return check_and_report("Testing mallopt stub", test_mallopt);
 }

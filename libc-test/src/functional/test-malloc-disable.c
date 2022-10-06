@@ -53,8 +53,7 @@ int test_malloc_while_disabled(void)
 	pthread_barrier_wait(&routine_allocated);
 	time_t end = time(0);
 	size_t seconds = end - start;
-	if (seconds < SLEEP_TIME_SECONDS)
-	{
+	if (seconds < SLEEP_TIME_SECONDS) {
 		ret = -1;
 	}
 	free(x);
