@@ -45,15 +45,13 @@ static size_t sizes[SIZES_COUNT] = {
 	32 * 1024 * 1024
 };
 
-typedef struct
-{
+typedef struct {
 	long long mmapped_regions;
 	long long total_mmapped_memory;
 	long long total_allocated_memory;
 } malloc_thread_stats_t;
 
-typedef struct
-{
+typedef struct {
 	size_t alloc_size;
 	pthread_barrier_t *alloc_barrier;
 	pthread_barrier_t *free_barrier;
@@ -63,10 +61,8 @@ typedef struct
 static malloc_thread_stats_t get_total_from_test_sizes()
 {
 	malloc_thread_stats_t total_stats = {0};
-	for (size_t i = 0; i < SIZES_COUNT; i++)
-	{
-		if (sizes[i] > MMAP_THRESHOLD)
-		{
+	for (size_t i = 0; i < SIZES_COUNT; i++) {
+		if (sizes[i] > MMAP_THRESHOLD) {
 			total_stats.total_mmapped_memory += sizes[i];
 			total_stats.mmapped_regions++;
 		}
@@ -77,8 +73,7 @@ static malloc_thread_stats_t get_total_from_test_sizes()
 
 static int expect_greater_equal(long long amt1, long long amt2, const char *amt1_name, const char *amt2_name)
 {
-	if (amt1 >= amt2)
-	{
+	if (amt1 >= amt2) {
 		return 1;
 	}
 	t_error("Expected %s(value: %lld) to be >= %s(value: %lld)\n", amt1_name, amt1, amt2_name, amt2);
@@ -87,8 +82,7 @@ static int expect_greater_equal(long long amt1, long long amt2, const char *amt1
 
 static int expect_equal(long long amt, long long value, const char *amt_name)
 {
-	if (amt == value)
-	{
+	if (amt == value) {
 		return 1;
 	}
 	t_error("Expected %s(value: %lld) to be %lld\n", amt_name, amt, value);
