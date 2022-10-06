@@ -103,24 +103,24 @@ static long long parse_amount(const char *s)
 	return result;
 }
 
-static int populate_thread_stats(const char *input, const char *thread_id, malloc_thread_stats_t *stats)
+static xmlNodePtr find_thread_in_document(xmlDocPtr doc_ptr, const char *thread_id)
 {
-	xmlDocPtr doc_ptr = xmlParseDoc((const xmlChar *)input);
+	xmlNodePtr root_element = xmlDocGetRootElement(doc_ptr);
+	if (strcmp(thread_id, "abandoned") == 0)
+	{
+		return find_child_node("abandoned", root_element);
+	}
+	return find_child_node_with_attr("thread", "id", thread_id, find_child_node("threads", root_element));
+}
+
+static int populate_thread_stats(const char *output, const char *thread_id, malloc_thread_stats_t *stats)
+{
+	xmlDocPtr doc_ptr = xmlParseDoc((const xmlChar *)output);
 	if (doc_ptr == NULL)
 	{
 		return 0;
 	}
-	xmlNodePtr root_element = xmlDocGetRootElement(doc_ptr);
-	xmlNodePtr thread_root;
-	if (strcmp(thread_id, "abandoned") == 0)
-	{
-		thread_root = find_child_node("abandoned", root_element);
-	}
-	else
-	{
-		xmlNodePtr threads = find_child_node("threads", root_element);
-		thread_root = find_child_node_with_attr("thread", "id", thread_id, threads);
-	}
+	xmlNodePtr thread_root = find_thread_in_document(doc_ptr, thread_id);
 	long long total_allocated_memory =
 		parse_amount(get_node_text(find_child_node("total_allocated_memory", thread_root)));
 	long long total_mmapped_memory =
@@ -139,9 +139,9 @@ static int populate_thread_stats(const char *input, const char *thread_id, mallo
 	return 1;
 }
 
-static int populate_total_free_heap_space(const char *input, long long *total_free_heap_space)
+static int populate_total_free_heap_space(const char *output, long long *total_free_heap_space)
 {
-	xmlDocPtr doc_ptr = xmlParseDoc((const xmlChar *)input);
+	xmlDocPtr doc_ptr = xmlParseDoc((const xmlChar *)output);
 	if (doc_ptr == NULL)
 	{
 		return 0;
@@ -156,4 +156,15 @@ static int populate_total_free_heap_space(const char *input, long long *total_fr
 	}
 	*total_free_heap_space = total_free_heap_space_parsed;
 	return 1;
+}
+static int is_thread_in_output(const char *output, const char *thread_id)
+{
+	xmlDocPtr doc_ptr = xmlParseDoc((const xmlChar *)output);
+	if (doc_ptr == NULL)
+	{
+		return 0;
+	}
+	int result = find_thread_in_document(doc_ptr, thread_id) != NULL;
+	xmlFreeDoc(doc_ptr);
+	return result;
 }

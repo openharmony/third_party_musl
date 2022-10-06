@@ -40,9 +40,11 @@ typedef struct
 
 static void stderr_stats_cb(void);
 
-static int populate_thread_stats(const char *input, const char *thread_id, malloc_thread_stats_t *stats);
+static int populate_thread_stats(const char *output, const char *thread_id, malloc_thread_stats_t *stats);
 
-static int populate_total_free_heap_space(const char *input, long long *total_free_heap_space);
+static int populate_total_free_heap_space(const char *output, long long *total_free_heap_space);
+
+static int is_thread_in_output(const char *output, const char *thread_id);
 
 static void print_to_file(void *fp, const char *s)
 {
@@ -190,7 +192,7 @@ static int validate_different_threads_test_results(test_results_t *test_results)
         malloc_thread_stats_t thread_stats;
         result &= populate_thread_stats(test_results->stats_after_allocations, test_results->threads[i], &thread_stats);
         result &= validate_allocated_size(sizes[i], &thread_stats);
-        if (strstr(test_results->stats_after_free, test_results->threads[i]) != NULL)
+        if (is_thread_in_output(test_results->stats_after_free, test_results->threads[i]))
         {
             t_error("Thread %s did not disappear from output\n", test_results->threads[i]);
             result = 0;
