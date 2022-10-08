@@ -100,8 +100,8 @@ action_foreach("strip") {
   no_default_deps = true
   deps = [ ":build_sysroot" ]
   script = "//build/lite/run_shell_cmd.py"
-  set_sources_assignment_filter([ "*.txt" ])
   sources = get_target_outputs(deps[0])
+  sources = filter_exclude(sources, [ "*.txt" ])
   outputs = [ "$root_out_dir/libs/{{source_file_part}}" ]
   args = [
     "$ohos_current_strip_command",
