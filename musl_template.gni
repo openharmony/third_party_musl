@@ -252,15 +252,46 @@ template("musl_libs") {
         "src/string/memchr.c",
         "src/string/strcmp.c",
         "src/string/strlen.c",
+        "src/math/sincosf.c",
+        "src/math/sinf.c",
+        "src/math/cosf.c",
+        "src/math/expf.c",
+        "src/math/exp2f.c",
+        "src/math/exp2l.c",
+        "src/math/exp2.c",
+        "src/math/log.c",
+        "src/math/logl.c",
+        "src/math/log2.c",
+        "src/math/log2f.c",
+        "src/math/log2l.c",
+        "src/math/logf.c",
+        "src/math/log_data.c",
+        "src/math/logf_data.c",
+        "src/math/log2_data.c",
+        "src/math/log2f_data.c",
+        "src/math/exp2f_data.c",
+        "src/math/pow.c",
+        "src/math/powf.c",
+        "src/math/powl.c",
       ]
     } else if (musl_arch == "aarch64") {
       sources_orig -= [
         "src/thread/${musl_arch}/__set_thread_area.s",
         "src/string/memcpy.c",
         "src/string/memchr.c",
+        "src/string/memcmp.c",
         "src/string/strcpy.c",
         "src/string/strcmp.c",
         "src/string/strlen.c",
+        "src/string/stpcpy.c",
+        "src/string/strchr.c",
+        "src/string/strrchr.c",
+        "src/string/strchrnul.c",
+        "src/string/strnlen.c",
+        "src/string/strncmp.c",
+        "src/math/sincosf.c",
+        "src/math/sinf.c",
+        "src/math/cosf.c",
       ]
     } else if (musl_arch == "x86_64") {
       sources_orig -= [ "src/thread/${musl_arch}/__set_thread_area.s" ]
@@ -285,62 +316,136 @@ template("musl_libs") {
     }
     if (musl_arch == "arm") {
       sources += [
+        "$OPTRTDIR/math/cosf.c",
+        "$OPTRTDIR/math/exp2.c",
+        "$OPTRTDIR/math/exp2f.c",
+        "$OPTRTDIR/math/exp2f_data.c",
+        "$OPTRTDIR/math/expf.c",
+        "$OPTRTDIR/math/log.c",
+        "$OPTRTDIR/math/log2.c",
+        "$OPTRTDIR/math/log2_data.c",
+        "$OPTRTDIR/math/log2f.c",
+        "$OPTRTDIR/math/log2f_data.c",
+        "$OPTRTDIR/math/log_data.c",
+        "$OPTRTDIR/math/logf.c",
+        "$OPTRTDIR/math/logf_data.c",
+        "$OPTRTDIR/math/pow.c",
+        "$OPTRTDIR/math/powf.c",
+        "$OPTRTDIR/math/sincosf.c",
+        "$OPTRTDIR/math/sincosf_data.c",
+        "$OPTRTDIR/math/sinf.c",
         "$OPTRTDIR/string/arm/memchr.S",
         "$OPTRTDIR/string/arm/memcpy.S",
+        "$OPTRTDIR/string/arm/memset.S",
         "$OPTRTDIR/string/arm/strcmp.S",
         "$OPTRTDIR/string/arm/strlen-armv6t2.S",
       ]
       asmflags = [
         "-D__memcpy_arm = memcpy",
         "-D__memchr_arm = memchr",
+        "-D__memset_arm = memset",
         "-D__strcmp_arm = strcmp",
         "-D__strlen_armv6t2 = strlen",
       ]
     } else if (musl_arch == "aarch64") {
+      sources += [
+        "$OPTRTDIR/math/cosf.c",
+        "$OPTRTDIR/math/sincosf.c",
+        "$OPTRTDIR/math/sincosf_data.c",
+        "$OPTRTDIR/math/sinf.c",
+      ]
       if (defined(ARM_FEATURE_SVE)) {
         sources += [
           "$OPTRTDIR/string/aarch64/memchr-sve.S",
+          "$OPTRTDIR/string/aarch64/memcmp-sve.S",
           "$OPTRTDIR/string/aarch64/memcpy.S",
+          "$OPTRTDIR/string/aarch64/memset.S",
+          "$OPTRTDIR/string/aarch64/stpcpy-sve.S",
+          "$OPTRTDIR/string/aarch64/strchr-sve.S",
+          "$OPTRTDIR/string/aarch64/strchrnul-sve.S",
           "$OPTRTDIR/string/aarch64/strcmp-sve.S",
           "$OPTRTDIR/string/aarch64/strcpy-sve.S",
           "$OPTRTDIR/string/aarch64/strlen-sve.S",
+          "$OPTRTDIR/string/aarch64/strncmp-sve.S",
+          "$OPTRTDIR/string/aarch64/strnlen-sve.S",
+          "$OPTRTDIR/string/aarch64/strrchr-sve.S",
         ]
         asmflags = [
           "-D__memcpy_aarch64 = memcpy",
+          "-D__memset_aarch64 = memset",
+          "-D__memcmp_aarch64_sve = memcmp",
           "-D__memchr_aarch64_sve = memchr",
           "-D__strcmp_aarch64_sve = strcmp",
           "-D__strlen_aarch64_sve = strlen",
           "-D__strcpy_aarch64_sve = strcpy",
+          "-D__stpcpy_aarch64_sve = stpcpy",
+          "-D__strchr_aarch64_sve = strchr",
+          "-D__strrchr_aarch64_sve = strrchr",
+          "-D__strchrnul_aarch64_sve = __strchrnul",
+          "-D__strnlen_aarch64_sve = strnlen",
+          "-D__strncmp_aarch64_sve = strncmp",
         ]
       } else if (defined(ARM_FEATURE_MTE)) {
         sources += [
           "$OPTRTDIR/string/aarch64/memchr-mte.S",
+          "$OPTRTDIR/string/aarch64/memcmp.S",
           "$OPTRTDIR/string/aarch64/memcpy.S",
+          "$OPTRTDIR/string/aarch64/memset.S",
+          "$OPTRTDIR/string/aarch64/stpcpy-mte.S",
+          "$OPTRTDIR/string/aarch64/strchr-mte.S",
+          "$OPTRTDIR/string/aarch64/strchrnul-mte.S",
           "$OPTRTDIR/string/aarch64/strcmp-mte.S",
           "$OPTRTDIR/string/aarch64/strcpy-mte.S",
           "$OPTRTDIR/string/aarch64/strlen-mte.S",
+          "$OPTRTDIR/string/aarch64/strncmp-mte.S",
+          "$OPTRTDIR/string/aarch64/strnlen.S",
+          "$OPTRTDIR/string/aarch64/strrchr-mte.S",
         ]
         asmflags = [
           "-D__memcpy_aarch64 = memcpy",
+          "-D__memset_aarch64 = memset",
+          "-D__memcmp_aarch64 = memcmp",
           "-D__memchr_aarch64_mte = memchr",
           "-D__strcmp_aarch64_mte = strcmp",
           "-D__strlen_aarch64_mte = strlen",
           "-D__strcpy_aarch64_mte = strcpy",
+          "-D__stpcpy_aarch64_mte = stpcpy",
+          "-D__strchr_aarch64_mte = strchr",
+          "-D__strrchr_aarch64_mte = strrchr",
+          "-D__strchrnul_aarch64_mte = __strchrnul",
+          "-D__strnlen_aarch64 = strnlen",
+          "-D__strncmp_aarch64_mte = strncmp",
         ]
       } else {
         sources += [
           "$OPTRTDIR/string/aarch64/memchr.S",
+          "$OPTRTDIR/string/aarch64/memcmp.S",
           "$OPTRTDIR/string/aarch64/memcpy.S",
+          "$OPTRTDIR/string/aarch64/memset.S",
+          "$OPTRTDIR/string/aarch64/stpcpy.S",
+          "$OPTRTDIR/string/aarch64/strchr.S",
+          "$OPTRTDIR/string/aarch64/strchrnul.S",
           "$OPTRTDIR/string/aarch64/strcmp.S",
           "$OPTRTDIR/string/aarch64/strcpy.S",
           "$OPTRTDIR/string/aarch64/strlen.S",
+          "$OPTRTDIR/string/aarch64/strncmp.S",
+          "$OPTRTDIR/string/aarch64/strnlen.S",
+          "$OPTRTDIR/string/aarch64/strrchr.S",
         ]
         asmflags = [
           "-D__memcpy_aarch64 = memcpy",
           "-D__memchr_aarch64 = memchr",
+          "-D__memset_aarch64 = memset",
+          "-D__memcmp_aarch64 = memcmp",
           "-D__strcmp_aarch64 = strcmp",
           "-D__strlen_aarch64 = strlen",
           "-D__strcpy_aarch64 = strcpy",
+          "-D__stpcpy_aarch64 = stpcpy",
+          "-D__strchr_aarch64 = strchr",
+          "-D__strrchr_aarch64 = strrchr",
+          "-D__strchrnul_aarch64 = __strchrnul",
+          "-D__strnlen_aarch64 = strnlen",
+          "-D__strncmp_aarch64 = strncmp",
         ]
       }
     }
@@ -380,7 +485,6 @@ template("musl_libs") {
     sources = []
     sources_orig = [
       "src/string/mempcpy.c",
-      "src/string/memset.c",
       "src/env/__init_tls.c",
       "src/env/__libc_start_main.c",
       "src/env/__stack_chk_fail.c",
@@ -391,7 +495,10 @@ template("musl_libs") {
     } else if (musl_arch == "aarch64") {
       sources_orig += [ "src/thread/${musl_arch}/__set_thread_area.s" ]
     } else if (musl_arch == "x86_64") {
-      sources_orig += [ "src/thread/${musl_arch}/__set_thread_area.s" ]
+      sources_orig += [
+        "src/thread/${musl_arch}/__set_thread_area.s",
+        "src/string/memset.c",
+      ]
     }
 
     foreach(s, sources_orig) {
