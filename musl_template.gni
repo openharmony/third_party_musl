@@ -483,6 +483,7 @@ template("musl_libs") {
     output_dir = "${target_out_dir}/${_libs_out_dir}"
     deps = [
       ":soft_musl_hook",
+      ":soft_musl_ldso",
       ":soft_musl_src",
       ":soft_musl_src_nossp",
     ]
@@ -558,6 +559,9 @@ template("musl_libs") {
 
     musl_lib_path = rebase_path("${target_out_dir}/${_libs_out_dir}")
 
+    libc_map_path =
+        rebase_path("${target_out_dir}/${musl_ported_dir}/libc.map.txt")
+
     ldflags = [
       "-nostdlib",
       "-Wl,-e,_dlstart",
@@ -567,6 +571,7 @@ template("musl_libs") {
       "-L${musl_lib_path}",
       "-ldl",
       "-lpthread",
+      "-Wl,--version-script=${libc_map_path}",
     ]
 
     configs -= musl_inherited_configs

@@ -478,6 +478,9 @@ static int check_vna_hash(Verdef *def, int16_t vsym, uint32_t vna_hash)
 			}
 			break;
 		}
+		if (matched) {
+			break;
+		}
 		if (verdef->vd_next == 0) {
 			break;
 		}
