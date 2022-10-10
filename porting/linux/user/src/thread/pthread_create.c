@@ -4,6 +4,7 @@
 #include "stdio_impl.h"
 #include "libc.h"
 #include "lock.h"
+#include "malloc_impl.h"
 #include <sys/mman.h>
 #include <sys/prctl.h>
 #include <string.h>
@@ -145,8 +146,6 @@ _Noreturn void __pthread_exit(void *result)
 		f(x);
 	}
 
-	__pthread_tsd_run_dtors();
-
 	/* Access to target the exiting thread with syscalls that use
 	 * its kernel tid is controlled by killlock. For detached threads,
 	 * any use past this point would have undefined behavior, but for
@@ -157,6 +156,13 @@ _Noreturn void __pthread_exit(void *result)
 	 * application signals to be blocked before it can be taken. */
 	__block_app_sigs(&set);
 	__tl_lock();
+
+#ifdef MUSL_ITERATE_AND_STATS_API
+	occupied_bin_t *self_tsd = __get_occupied_bin(self);
+	__merge_bin_chunks(__get_detached_occupied_bin(), self_tsd);
+#endif
+	__pthread_tsd_run_dtors();
+
 
 #ifdef RESERVE_SIGNAL_STACK
 	__pthread_release_signal_stack();
@@ -400,6 +406,15 @@ int __pthread_create(pthread_t *restrict res, const pthread_attr_t *restrict att
 	new->CANARY = self->CANARY;
 	new->sysinfo = self->sysinfo;
 
+#ifdef MUSL_ITERATE_AND_STATS_API
+	/* Initialize malloc tsd */
+	__init_occupied_bin_key_once();
+	occupied_bin_t *occupied_bin = internal_calloc(sizeof(occupied_bin_t), 1);
+	if (occupied_bin == NULL) goto fail;
+	new->tsd[__get_occupied_bin_key()] = occupied_bin;
+	new->tsd_used = 1;
+#endif
+
 	/* Setup argument structure for the new thread on its stack.
 	 * It's safe to access from the caller only until the thread
 	 * list is unlocked. */
@@ -472,7 +487,7 @@ weak_alias(__pthread_create, pthread_create);
 
 struct pthread* __pthread_list_find(pthread_t thread_id, const char* info)
 {
-    struct pthread *thread = (struct pthread *)thread_id; 
+    struct pthread *thread = (struct pthread *)thread_id;
     if (NULL == thread) {
         log_print("invalid pthread_t (0) passed to %s\n", info);
         return NULL;
@@ -488,7 +503,7 @@ struct pthread* __pthread_list_find(pthread_t thread_id, const char* info)
         if (t == thread) return thread;
         t = t->next ;
     }
-    log_print("invalid pthread_t %p passed to %s\n", thread, info); 
+    log_print("invalid pthread_t %p passed to %s\n", thread, info);
     return NULL;
 }
 

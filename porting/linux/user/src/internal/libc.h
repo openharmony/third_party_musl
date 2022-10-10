@@ -36,6 +36,7 @@ struct __libc {
     int can_do_threads;
     int threaded;
     int secure;
+    int initialized;
     volatile int threads_minus_1;
     size_t *auxv;
     struct tls_module *tls_head;
