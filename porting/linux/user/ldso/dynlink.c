@@ -24,6 +24,8 @@
 #include <dlfcn.h>
 #include <semaphore.h>
 #include <sys/membarrier.h>
+#include <sys/time.h>
+#include <time.h>
 
 #include "dlfcn_ext.h"
 #include "dynlink_rand.h"
@@ -1080,6 +1082,43 @@ static void unmap_library(struct dso *dso)
 	}
 }
 
+static bool get_random(void *buf, size_t buflen)
+{
+	int ret;
+	int fd = open("/dev/urandom", O_RDONLY);
+	if (fd < 0) {
+		return false;
+	}
+
+	ret = read(fd, buf, buflen);
+	if (ret < 0) {
+		close(fd);
+		return false;
+	}
+
+	close(fd);
+	return true;
+}
+
+static void fill_random_data(void *buf, size_t buflen)
+{
+	uint64_t x;
+	int i;
+	int pos = 0;
+	struct timespec ts;
+	/* Try to use urandom to get the random number first */
+	if (!get_random(buf, buflen)) {
+		/* Can't get random number from /dev/urandom, generate from addr based on ASLR and time */
+		for (i = 1; i <= (buflen / sizeof(x)); i++) {
+			(void)clock_gettime(CLOCK_REALTIME, &ts);
+			x = (((uint64_t)get_random) << 32) ^ (uint64_t)fill_random_data ^ ts.tv_nsec;
+			memcpy((char *)buf + pos, &x, sizeof(x));
+			pos += sizeof(x);
+		}
+	}
+	return;
+}
+
 static void *map_library(int fd, struct dso *dso, struct reserved_address_params *reserved_params)
 {
 	Ehdr buf[(896+sizeof(Ehdr))/sizeof(Ehdr)];
@@ -1234,6 +1273,10 @@ static void *map_library(int fd, struct dso *dso, struct reserved_address_params
 	dso->phdr = 0;
 	dso->phnum = 0;
 	for (ph=ph0, i=eh->e_phnum; i; i--, ph=(void *)((char *)ph+eh->e_phentsize)) {
+		if (ph->p_type == PT_OHOS_RANDOMDATA) {
+			fill_random_data((void *)(ph->p_vaddr + base), ph->p_memsz);
+			continue;
+		}
 		if (ph->p_type != PT_LOAD) continue;
 		/* Check if the programs headers are in this load segment, and
 		 * if so, record the address for use by dl_iterate_phdr. */
@@ -3818,6 +3861,10 @@ static bool task_map_library(struct loadtask *task, struct reserved_address_para
 	task->p->phdr = 0;
 	task->p->phnum = 0;
 	for (ph = task->ph0, i = task->eh->e_phnum; i; i--, ph = (void *)((char *)ph + task->eh->e_phentsize)) {
+		if (ph->p_type == PT_OHOS_RANDOMDATA) {
+			fill_random_data((void *)(ph->p_vaddr + base), ph->p_memsz);
+			continue;
+		}
 		if (ph->p_type != PT_LOAD) {
 			continue;
 		}
