@@ -79,13 +79,3 @@ functional_list = [
   "wcstol",
   "dlclose_reset",
 ]
-
-malloc_stats_list = [
-  "test-malloc-stats-print",
-  "test-malloc-info",
-  "test-mallinfo",
-  "test-iterate",
-  "test-malloc-disable",
-  "test-malloc-backtrace",
-  "test-mallopt",
-]
