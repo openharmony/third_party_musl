@@ -50,6 +50,7 @@ ohos_executable("dlns_set_fun_test") {
 
   sources = [ "dlns_set_fun.c" ]
   configs = [ "//third_party/musl/libc-test/src/common:config_runtest" ]
+  libs = [ "${musl_lib_dir}/libc.a" ]
 }
 
 ohos_executable("dlns_inherit_test") {
@@ -63,6 +64,7 @@ ohos_executable("dlns_inherit_test") {
 
   sources = [ "dlns_inherit.c" ]
   configs = [ "//third_party/musl/libc-test/src/common:config_runtest" ]
+  libs = [ "${musl_lib_dir}/libc.a" ]
 }
 
 ohos_executable("dlns_separated_test") {
@@ -76,6 +78,7 @@ ohos_executable("dlns_separated_test") {
 
   sources = [ "dlns_separated.c" ]
   configs = [ "//third_party/musl/libc-test/src/common:config_runtest" ]
+  libs = [ "${musl_lib_dir}/libc.a" ]
 }
 
 ohos_executable("dlns_special_scene_test") {
