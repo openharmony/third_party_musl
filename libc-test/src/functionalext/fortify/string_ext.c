@@ -21,6 +21,7 @@
 #include <sys/wait.h>
 #include "fortify_test.h"
 #include "test.h"
+#include "../../../../porting/linux/user/include/fortify/fortify.h"
 
 #define SIZE_1 1
 #define SIZE_5 5
@@ -412,7 +413,7 @@ static void test_strchr_0020()
     };
     sigaction(SIGABRT, &sigabrt, NULL);
 
-    char *s;
+    char str[0];
     int status;
     int pid = fork();
     switch (pid) {
@@ -420,7 +421,7 @@ static void test_strchr_0020()
             t_error("fork failed: %s\n", strerror(errno));
             break;
         case 0:
-            strchr(s, 'a');
+            strchr(str, 'a');
             exit(0);
         default:
             waitpid(pid, &status, WUNTRACED);
@@ -460,7 +461,7 @@ static void test_strrchr_0020()
     };
     sigaction(SIGABRT, &sigabrt, NULL);
 
-    char *s;
+    char str[0];
     int status;
     int pid = fork();
     switch (pid) {
@@ -468,7 +469,7 @@ static void test_strrchr_0020()
             t_error("fork failed: %s\n", strerror(errno));
             break;
         case 0:
-            strrchr(s, 'a');
+            strrchr(str, 'a');
             exit(0);
         default:
             waitpid(pid, &status, WUNTRACED);
@@ -557,7 +558,6 @@ static void test_strlcpy_0020()
         .sa_handler = SignalHandler,
     };
     sigaction(SIGABRT, &sigabrt, NULL);
-
 
     char src[SIZE_15];
     char dst[SIZE_10];
