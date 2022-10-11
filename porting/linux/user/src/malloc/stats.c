@@ -280,9 +280,9 @@ struct mallinfo mallinfo(void)
 {
 	struct mallinfo2 mallinfo2_res = mallinfo2();
 	return (struct mallinfo) {
-		.hblks = (int) mallinfo2_res.hblks,
-		.hblkhd = (int) mallinfo2_res.hblkhd,
-		.uordblks = (int) mallinfo2_res.uordblks,
-		.fordblks = (int) mallinfo2_res.fordblks,
+		.hblks = mallinfo2_res.hblks,
+		.hblkhd = mallinfo2_res.hblkhd,
+		.uordblks = mallinfo2_res.uordblks,
+		.fordblks = mallinfo2_res.fordblks,
 	};
 }
