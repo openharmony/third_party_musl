@@ -51,7 +51,7 @@ void wcpncpy_0200(void)
     if (wcscmp(result, dst + 2) != 0) {
         t_error("%s wcpncpy get result is %ls are not want %ls\n", __func__, result, dst + 2);
     }
-    if (wcscmp(src, dst) != 0) {
+    if (wcscmp(dst, L"So") != 0) {
         t_error("%s wcpncpy get dst is %ls are not want %ls\n", __func__, dst, src);
     }
 }

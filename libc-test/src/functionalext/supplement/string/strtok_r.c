@@ -49,7 +49,7 @@ void strtok_r_0200(void)
     char *p;
     char *outer_ptr = NULL;
     char *result = strtok_r(outer_ptr, ",", &p);
-    if (!result) {
+    if (result) {
         t_error("%s strtok_r error get result is %s not null\n", __func__, result);
     }
 }
