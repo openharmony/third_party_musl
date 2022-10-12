@@ -1969,7 +1969,7 @@ LIBC {
     shm_open;
     shm_unlink;
     # pthread_cancel;
-    pthread_setcancelstate;
+    # pthread_setcancelstate;
     pthread_setcanceltype;
     pthread_testcancel;
     pthread_mutex_consistent;
