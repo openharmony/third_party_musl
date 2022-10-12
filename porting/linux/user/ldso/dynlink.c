@@ -61,6 +61,7 @@ static void error(const char *, ...);
 #endif
 
 #define PARENTS_BASE_CAPACITY 8
+#define RELOC_CAN_SEARCH_DSO_BASE_CAPACITY 32
 
 struct debug {
 	int ver;
@@ -156,6 +157,9 @@ struct dso {
 	struct dso **parents;
 	size_t parents_count;
 	size_t parents_capacity;
+	struct dso **reloc_can_search_dso_list;
+	size_t reloc_can_search_dso_count;
+	size_t reloc_can_search_dso_capacity;
 	char buf[];
 };
 
@@ -715,6 +719,52 @@ static void remove_dso_parent(struct dso *p, struct dso *parent)
 	p->parents_count--;
 }
 
+static void add_reloc_can_search_dso(struct dso *p, struct dso *can_search_so)
+{
+	if (p->reloc_can_search_dso_count + 1 > p->reloc_can_search_dso_capacity) {
+		if (p->reloc_can_search_dso_capacity == 0) {
+			p->reloc_can_search_dso_list =
+				(struct dso **)internal_malloc(sizeof(struct dso *) * RELOC_CAN_SEARCH_DSO_BASE_CAPACITY);
+			if (!p->reloc_can_search_dso_list) {
+				return;
+			}
+			p->reloc_can_search_dso_capacity = RELOC_CAN_SEARCH_DSO_BASE_CAPACITY;
+		} else {
+			struct dso ** realloced = (struct dso **)internal_realloc(
+				p->reloc_can_search_dso_list,
+				sizeof(struct dso *) * (p->reloc_can_search_dso_capacity + RELOC_CAN_SEARCH_DSO_BASE_CAPACITY));
+			if (!realloced) {
+				return;
+			}
+			p->reloc_can_search_dso_list = realloced;
+			p->reloc_can_search_dso_capacity += RELOC_CAN_SEARCH_DSO_BASE_CAPACITY;
+		}
+	}
+	p->reloc_can_search_dso_list[p->reloc_can_search_dso_count] = can_search_so;
+	p->reloc_can_search_dso_count++;
+}
+
+static void free_reloc_can_search_dso(struct dso *p)
+{
+	if (p->reloc_can_search_dso_list) {
+		internal_free(p->reloc_can_search_dso_list);
+		p->reloc_can_search_dso_list = NULL;
+		p->reloc_can_search_dso_count = 0;
+		p->reloc_can_search_dso_capacity = 0;
+	}
+}
+
+static void add_can_search_so_list_in_dso(struct dso *dso, struct dso *start_check_dso) {
+	struct dso *check_dso = start_check_dso;
+	while (check_dso) {
+		if (dso->namespace && check_sym_accessible(check_dso, dso->namespace)) {
+			add_reloc_can_search_dso(dso, check_dso);
+		}
+		check_dso = check_dso->syms_next;
+	}
+	return;
+}
+
 #define OK_TYPES (1<<STT_NOTYPE | 1<<STT_OBJECT | 1<<STT_FUNC | 1<<STT_COMMON | 1<<STT_TLS)
 #define OK_BINDS (1<<STB_GLOBAL | 1<<STB_WEAK | 1<<STB_GNU_UNIQUE)
 
@@ -754,6 +804,41 @@ static inline struct symdef find_sym2(struct dso *dso, struct verinfo *verinfo, 
 		if (!(1<<(sym->st_info>>4) & OK_BINDS)) continue;
 		def.sym = sym;
 		def.dso = dso;
+		break;
+	}
+	return def;
+}
+
+static inline struct symdef find_sym_by_saved_so_list(
+	int sym_type, struct dso *dso, struct verinfo *verinfo, int need_def, struct dso *dso_relocating)
+{
+	uint32_t h = 0, gh = gnu_hash(verinfo->s), gho = gh / (8 * sizeof(size_t)), *ght;
+	size_t ghm = 1ul << gh % (8 * sizeof(size_t));
+	struct symdef def = {0};
+	// skip head dso.
+	int start_search_index = sym_type==REL_COPY ? 1 : 0;
+	struct dso *dso_searching = 0;
+	for (int i = start_search_index; i < dso_relocating->reloc_can_search_dso_count; i++) {
+		dso_searching = dso_relocating->reloc_can_search_dso_list[i];
+		Sym *sym;
+		if ((ght = dso_searching->ghashtab)) {
+			sym = gnu_lookup_filtered(gh, ght, dso_searching, verinfo, gho, ghm);
+		} else {
+			if (!h) h = sysv_hash(verinfo->s);
+			sym = sysv_lookup(verinfo, h, dso_searching);
+		}
+		if (!sym) continue;
+		if (!sym->st_shndx)
+			if (need_def || (sym->st_info&0xf) == STT_TLS
+				|| ARCH_SYM_REJECT_UND(sym))
+				continue;
+		if (!sym->st_value)
+			if ((sym->st_info&0xf) != STT_TLS)
+				continue;
+		if (!(1<<(sym->st_info&0xf) & OK_TYPES)) continue;
+		if (!(1<<(sym->st_info>>4) & OK_BINDS)) continue;
+		def.sym = sym;
+		def.dso = dso_searching;
 		break;
 	}
 	return def;
@@ -861,6 +946,7 @@ static void do_relocs(struct dso *dso, size_t *rel, size_t rel_size, size_t stri
 			vinfo.use_vna_hash = get_vna_hash(dso, sym_index, &vinfo.vna_hash);
 			def = (sym->st_info>>4) == STB_LOCAL
 				? (struct symdef){ .dso = dso, .sym = sym }
+				: dso != &ldso ? find_sym_by_saved_so_list(type, ctx, &vinfo, type==REL_PLT, dso)
 				: find_sym2(ctx, &vinfo, type==REL_PLT, 0, dso->namespace);
 			if (!def.sym && (sym->st_shndx != SHN_UNDEF
 				|| sym->st_info>>4 != STB_WEAK)) {
@@ -1990,6 +2076,7 @@ static void reloc_all(struct dso *p, const dl_extinfo *extinfo)
 	size_t dyn[DYN_CNT];
 	for (; p; p=p->next) {
 		if (p->relocated) continue;
+		add_can_search_so_list_in_dso(p, head);
 		decode_vec(p->dynv, dyn, DYN_CNT);
 		if (NEED_MIPS_GOT_RELOCS)
 			do_mips_relocs(p, laddr(p, dyn[DT_PLTGOT]));
@@ -2009,6 +2096,7 @@ static void reloc_all(struct dso *p, const dl_extinfo *extinfo)
 		handle_relro_sharing(p, extinfo, &relro_fd_offset);
 
 		p->relocated = 1;
+		free_reloc_can_search_dso(p);
 	}
 }
 
@@ -2785,6 +2873,7 @@ static void *dlopen_impl(
 			if (p->parents) {
 				internal_free(p->parents);
 			}
+			free_reloc_can_search_dso(p);
 			internal_free(p);
 		}
 		internal_free(ctor_queue);
@@ -3272,6 +3361,7 @@ static int do_dlclose(struct dso *p)
 		internal_free(p->parents);
 	}
 
+	free_reloc_can_search_dso(p);
 	if (p->tls.size == 0) {
 		internal_free(p);
 	}
