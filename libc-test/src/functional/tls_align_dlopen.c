@@ -1,7 +1,7 @@
 #include <dlfcn.h>
 #include "test.h"
 
-int main()
+int main(int argc, char *argv[])
 {
 	int i;
 	void *h;
@@ -11,8 +11,10 @@ int main()
 		unsigned align;
 		unsigned long addr;
 	} *t;
+	char buf[512];
 
-	h = dlopen("src/functional/tls_align_dso.so", RTLD_LAZY);
+	t_pathrel(buf, sizeof buf, argv[0], "libtls_align_dso.so");
+	h = dlopen(buf, RTLD_LAZY);
 	if (!h)
 		t_error("dlopen failed\n");
 	t = dlsym(h, "t");
