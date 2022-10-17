@@ -9,7 +9,7 @@ int main(int argc, char *argv[])
 	void (*f)(void);
 	char buf[512];
 
-	if (!t_pathrel(buf, sizeof buf, argv[0], "dlopen_dso.so")) {
+	if (!t_pathrel(buf, sizeof buf, argv[0], "libdlopen_dso.so")) {
 		t_error("failed to obtain relative path to dlopen_dso.so\n");
 		return 1;
 	}
@@ -47,7 +47,7 @@ int main(int argc, char *argv[])
 		t_error("reopened dso should have the same symbols, want %p, got %p\n", i, i2);
 	if (*i2 != 2)
 		t_error("reopened dso should have the same symbols, want i2==2, got i2==%d\n", *i2);
-	if (dlclose(g))
+	if (!dlclose(g))
 		t_error("dlclose failed: %s\n", dlerror());
 	if (dlclose(h))
 		t_error("dlclose failed: %s\n", dlerror());
