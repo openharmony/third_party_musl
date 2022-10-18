@@ -1,3 +1,4 @@
+import("//build/config/clang/clang.gni")
 import("//build/ohos.gni")
 import("//third_party/optimized-routines/optimized-routines.gni")
 import("musl_src.gni")
