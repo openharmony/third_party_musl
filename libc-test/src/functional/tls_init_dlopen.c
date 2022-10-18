@@ -2,13 +2,15 @@
 #include <dlfcn.h>
 #include "test.h"
 
-int main()
+int main(int argc, char *argv[])
 {
 	void *h;
 	char *(*f)(void);
 	char *s;
+	char buf[512];
 
-	h = dlopen("src/functional/tls_init_dso.so", RTLD_NOW|RTLD_GLOBAL);
+	t_pathrel(buf, sizeof buf, argv[0], "libtls_init_dso.so");
+	h = dlopen(buf, RTLD_NOW|RTLD_GLOBAL);
 	if (!h)
 		t_error("dlopen failed: %s\n", dlerror());
 	f = dlsym(h, "gettls");

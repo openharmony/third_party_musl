@@ -122,12 +122,12 @@ template("test_unittest") {
       }
 
       if (target_name == "tls_align") {
-        ldflags += [ "-Wl,-rpath=src/functional" ]
+        ldflags += [ "-Wl,-rpath=./" ]
         libs += [ "//${root_out_dir}/${test_lib_dir}/libtls_align_dso.so" ]
       }
 
       if (target_name == "tls_init") {
-        ldflags += [ "-Wl,-rpath=src/functional" ]
+        ldflags += [ "-Wl,-rpath=./" ]
         libs += [ "//${root_out_dir}/${test_lib_dir}/libtls_init_dso.so" ]
       }
     }
