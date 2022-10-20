@@ -20,6 +20,8 @@
 #include <stdio.h>
 
 #include "malloc_impl.h"
+/* Do not malloc in vsnprintf, thus the log api can be called inside signal handler*/
+#define HILOG_PROHIBIT_ALLOCATION
 
 /* Define the max length of the string */
 #ifndef SECUREC_STRING_MAX_LEN
@@ -137,8 +139,8 @@ typedef enum {
 #endif
 
 #else
-#define SECUREC_MALLOC(x) (nullptr)
-#define SECUREC_FREE(x)   { printf("Malloc is not allowed, so free should not be possible to execute!"); std::abort(); }
+#define SECUREC_MALLOC(x) (NULL)
+#define SECUREC_FREE(x) {}
 #endif
 
 #if (defined(_WIN32) || defined(_WIN64) || defined(_MSC_VER)) || defined(__ARMCC_VERSION)
