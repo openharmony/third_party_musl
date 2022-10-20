@@ -91,7 +91,8 @@ static int SendMessage(HilogMsg *header, const char *tag, uint16_t tagLen, const
     return ret;
 }
 
-static int HiLogAdapterPrintArgs(
+HILOG_LOCAL_API
+int HiLogAdapterPrintArgs(
     const LogType type, const LogLevel level, const unsigned int domain, const char *tag, const char *fmt, va_list ap)
 {
     char buf[MAX_LOG_LEN] = {0};
@@ -112,6 +113,7 @@ static int HiLogAdapterPrintArgs(
     return SendMessage(&header, tag, tagLen + 1, buf, logLen + 1);
 }
 
+HILOG_LOCAL_API
 int HiLogAdapterPrint(LogType type, LogLevel level, unsigned int domain, const char *tag, const char *fmt, ...)
 {
     if (!HiLogAdapterIsLoggable(domain, tag, level)) {
