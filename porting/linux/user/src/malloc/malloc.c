@@ -1,16 +1,15 @@
 #define _GNU_SOURCE
 #include <stdlib.h>
-#include <string.h>
 #include <limits.h>
 #include <stdint.h>
 #include <errno.h>
 #include <sys/mman.h>
+#include <sys/prctl.h>
 #include "libc.h"
 #include "atomic.h"
 #include "pthread_impl.h"
 #include "malloc_impl.h"
 #include "malloc_random.h"
-#include <sys/prctl.h>
 
 #if defined(__GNUC__) && defined(__PIC__)
 #define inline inline __attribute__((always_inline))
@@ -23,14 +22,17 @@ void __libc_free(void *p);
 
 static struct {
 	volatile uint64_t binmap;
-	struct bin bins[64];
+	struct bin bins[BINS_COUNT];
 	volatile int free_lock[2];
+#ifdef MUSL_ITERATE_AND_STATS_API
+	occupied_bin_t occupied_bins[OCCUPIED_BIN_COUNT];
+#endif
 #ifdef MALLOC_FREELIST_QUARANTINE
 	struct bin quarantine[QUARANTINE_NUM];
 	size_t quarantined_count[QUARANTINE_NUM];
 	size_t quarantined_size[QUARANTINE_NUM];
 #ifdef MALLOC_RED_ZONE
-	char poison[64];
+	char poison[BINS_COUNT];
 	volatile int poison_lock[2];
 	int poison_count_down;
 #endif
@@ -38,6 +40,48 @@ static struct {
 } mal;
 
 int __malloc_replaced;
+
+#ifdef MUSL_ITERATE_AND_STATS_API
+
+occupied_bin_t detached_occupied_bin;
+
+/* Usable memory only, excluding overhead for chunks */
+size_t total_heap_space = 0;
+volatile int total_heap_space_inc_lock[2];
+volatile int pop_merge_lock[2];
+
+
+size_t __get_total_heap_space(void) {
+	return total_heap_space;
+}
+
+static void occupied_bin_destructor(void *occupied_bin)
+{
+	internal_free(occupied_bin);
+}
+
+occupied_bin_t *__get_occupied_bin_by_idx(size_t bin_index)
+{
+	return &mal.occupied_bins[bin_index];
+}
+
+static inline size_t get_occupied_bin_index(pthread_t thread_id)
+{
+	return (size_t) ((size_t)thread_id % OCCUPIED_BIN_COUNT);
+}
+
+occupied_bin_t *__get_occupied_bin(struct chunk *c)
+{
+	size_t bin_index = get_occupied_bin_index(c->thread_id);
+	return &mal.occupied_bins[bin_index];
+}
+
+occupied_bin_t *__get_current_occupied_bin()
+{
+	size_t bin_index = get_occupied_bin_index(__pthread_self());
+	return &mal.occupied_bins[bin_index];
+}
+#endif
 
 /* Synchronization tools */
 
@@ -63,6 +107,122 @@ static inline void unlock(volatile int *lk)
 		a_store(lk, 0);
 		if (lk[1]) __wake(lk, 1, 1);
 	}
+}
+
+#ifdef MUSL_ITERATE_AND_STATS_API
+void __push_chunk(struct chunk *c)
+{
+	c->prev_occupied = c->next_occupied = NULL;
+	c->thread_id = 0;
+
+	occupied_bin_t *occupied_bin = __get_current_occupied_bin();
+	lock(occupied_bin->lock);
+
+	if (occupied_bin->head != NULL) {
+		occupied_bin->head->prev_occupied = c;
+		c->next_occupied = occupied_bin->head;
+	} else {
+		occupied_bin->tail = c;
+	}
+	occupied_bin->head = c;
+	c->thread_id = __pthread_self();
+
+	unlock(occupied_bin->lock);
+}
+
+void __pop_chunk(struct chunk *c)
+{
+	lock(pop_merge_lock);
+	
+	if (!c->thread_id) {
+		unlock(pop_merge_lock);
+		return;
+	}
+	occupied_bin_t *occupied_bin = __get_occupied_bin(c);
+	lock(occupied_bin->lock);
+
+	if (c == occupied_bin->head) {
+		occupied_bin->head = c->next_occupied;
+	} else {
+		c->prev_occupied->next_occupied = c->next_occupied;
+	}
+	if (c == occupied_bin->tail) {
+		occupied_bin->tail = c->prev_occupied;
+	} else {
+		c->next_occupied->prev_occupied = c->prev_occupied;
+	}
+	unlock(occupied_bin->lock);
+	unlock(pop_merge_lock);
+}
+#endif
+
+void malloc_disable(void)
+{
+#ifdef MUSL_ITERATE_AND_STATS_API
+	lock(mal.free_lock);
+	lock(total_heap_space_inc_lock);
+	for (size_t i = 0; i < BINS_COUNT; ++i) {
+		lock(mal.bins[i].lock);
+	}
+	// FIXME???
+	// __tl_lock();
+	for (size_t i = 0; i < OCCUPIED_BIN_COUNT; ++i) {
+		lock(mal.occupied_bins[i].lock);
+	}
+#endif
+}
+
+void malloc_enable(void)
+{
+#ifdef MUSL_ITERATE_AND_STATS_API
+	// FIXME???
+	// __tl_unlock();
+	for (size_t i = 0; i < OCCUPIED_BIN_COUNT; ++i) {
+		unlock(mal.occupied_bins[i].lock);
+	}
+	unlock(total_heap_space_inc_lock);
+	unlock(mal.free_lock);
+#endif
+}
+
+#ifdef MUSL_ITERATE_AND_STATS_API
+typedef struct iterate_info_s {
+	uintptr_t start_ptr;
+	uintptr_t end_ptr;
+	malloc_iterate_callback callback;
+	void *arg;
+} iterate_info_t;
+
+static void malloc_iterate_visitor(void *block, size_t block_size, void *arg)
+{
+	iterate_info_t *iterate_info = (iterate_info_t *)arg;
+	if ((uintptr_t)block >= iterate_info->start_ptr && (uintptr_t)block < iterate_info->end_ptr) {
+		iterate_info->callback(block, block_size, iterate_info->arg);
+	}
+}
+
+static void malloc_iterate_occupied_bin(occupied_bin_t *occupied_bin, iterate_info_t *iterate_info)
+{
+	for (struct chunk *c = occupied_bin->head; c != NULL; c = c->next_occupied) {
+		malloc_iterate_visitor(CHUNK_TO_MEM(c), CHUNK_SIZE(c) - OVERHEAD, iterate_info);
+	}
+}
+#endif
+
+int malloc_iterate(void* base, size_t size, void (*callback)(void* base, size_t size, void* arg), void* arg)
+{
+#ifdef MUSL_ITERATE_AND_STATS_API
+	uintptr_t ptr = (uintptr_t)base;
+	uintptr_t end_ptr = ptr + size;
+	iterate_info_t iterate_info = {ptr, end_ptr, callback, arg};
+
+	for (size_t i = 0; i < OCCUPIED_BIN_COUNT; ++i) {
+		occupied_bin_t *occupied_bin = &mal.occupied_bins[i];
+		malloc_iterate_occupied_bin(occupied_bin, &iterate_info);
+	}
+
+#endif
+	return 0;
 }
 
 static inline void lock_bin(int i)
@@ -228,7 +388,7 @@ void __dump_heap(int x)
 			c, CHUNK_SIZE(c), bin_index(CHUNK_SIZE(c)),
 			c->csize & 15,
 			NEXT_CHUNK(c)->psize & 15);
-	for (i=0; i<64; i++) {
+	for (i=0; i<BINS_COUNT; i++) {
 		if (mal.bins[i].head != BIN_TO_CHUNK(i) && mal.bins[i].head) {
 			fprintf(stderr, "bin %d: %p\n", i, mal.bins[i].head);
 			if (!(mal.binmap & 1ULL<<i))
@@ -253,8 +413,15 @@ static struct chunk *expand_heap(size_t n)
 
 	lock(heap_lock);
 
+#ifdef MUSL_ITERATE_AND_STATS_API
+	lock(total_heap_space_inc_lock);
+#endif
+
 	p = __expand_heap(&n);
 	if (!p) {
+#ifdef MUSL_ITERATE_AND_STATS_API
+		unlock(total_heap_space_inc_lock);
+#endif
 		unlock(heap_lock);
 		return 0;
 	}
@@ -283,6 +450,11 @@ static struct chunk *expand_heap(size_t n)
 	w->state = M_STATE_BRK;
 	w->usize = POINTER_USAGE;
 	chunk_checksum_set(w);
+#endif
+
+#ifdef MUSL_ITERATE_AND_STATS_API
+	total_heap_space += n - OVERHEAD;
+	unlock(total_heap_space_inc_lock);
 #endif
 
 	unlock(heap_lock);
@@ -473,6 +645,7 @@ void *internal_malloc(size_t n)
 		c = (void *)(base + SIZE_ALIGN - OVERHEAD);
 		c->csize = len - (SIZE_ALIGN - OVERHEAD);
 		c->psize = SIZE_ALIGN - OVERHEAD;
+
 #ifdef MALLOC_RED_ZONE
 		c->state = M_STATE_MMAP | M_STATE_USED;
 		c->usize = user_size;
@@ -480,6 +653,9 @@ void *internal_malloc(size_t n)
 			chunk_poison_set(c);
 		}
 		chunk_checksum_set(c);
+#endif
+#ifdef MUSL_ITERATE_AND_STATS_API
+		__push_chunk(c);
 #endif
 		return CHUNK_TO_MEM(c);
 	}
@@ -531,6 +707,9 @@ void *internal_malloc(size_t n)
 		c->state &= ~M_RZ_POISON;
 	}
 	chunk_checksum_set(c);
+#endif
+#ifdef MUSL_ITERATE_AND_STATS_API
+	__push_chunk(c);
 #endif
 	return CHUNK_TO_MEM(c);
 }
@@ -1044,6 +1223,9 @@ void internal_free(void *p)
 	if (!p) return;
 
 	struct chunk *self = MEM_TO_CHUNK(p);
+#ifdef MUSL_ITERATE_AND_STATS_API
+	__pop_chunk(self);
+#endif
 
 #ifdef MALLOC_RED_ZONE
 	/* This is not a valid chunk for freeing */
@@ -1084,5 +1266,22 @@ void __malloc_donate(char *start, char *end)
 	c->state = M_STATE_BRK;
 	chunk_checksum_set(c);
 #endif
+#ifdef MUSL_ITERATE_AND_STATS_API
+	lock(total_heap_space_inc_lock);
+	total_heap_space += CHUNK_SIZE(c) - OVERHEAD;
+#endif
 	__bin_chunk(c);
+#ifdef MUSL_ITERATE_AND_STATS_API
+	unlock(total_heap_space_inc_lock);
+#endif
+}
+
+int mallopt(int param, int value)
+{
+	return 0;
+}
+
+ssize_t malloc_backtrace(void* pointer, uintptr_t* frames, size_t frame_count)
+{
+	return 0;
 }

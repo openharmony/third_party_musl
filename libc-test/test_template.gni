@@ -130,6 +130,12 @@ template("test_unittest") {
         ldflags += [ "-Wl,-rpath=./" ]
         libs += [ "//${root_out_dir}/${test_lib_dir}/libtls_init_dso.so" ]
       }
+
+      if (target_name == "test-malloc-info") {
+        include_dirs += [ "//third_party/libxml2/include" ]
+        lib_dirs = [ "//${root_out_dir}/thirdparty/libxml2" ]
+        libs += [ "xml2.z" ]
+      }
     }
 
     if (target_dir == "functionalext/fortify") {
