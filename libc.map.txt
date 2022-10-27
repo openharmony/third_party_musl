@@ -1968,7 +1968,7 @@ LIBC {
     __mq_timedsend_time64;
     shm_open;
     shm_unlink;
-    # pthread_cancel;
+    pthread_cancel;
     # pthread_setcancelstate;
     pthread_setcanceltype;
     pthread_testcancel;
