@@ -3252,8 +3252,10 @@ static void *do_dlsym(struct dso *p, const char *s, const char *v, void *ra)
 		if (!p) p=head;
 		p = p->next;
 		ra2dso = true;
+#ifndef HANDLE_RANDOMIZATION
 	} else if (__dl_invalid_handle(p)) {
 		return 0;
+#endif
 	} else {
 		use_deps = 1;
 		ns = p->namespace;
