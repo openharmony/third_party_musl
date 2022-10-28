@@ -2487,7 +2487,6 @@ void __dls3(size_t *sp, size_t *auxv)
 #ifdef OHOS_ENABLE_PARAMETER
 	InitParameterClient();
 #endif
-	musl_log_reset();
 	ld_log_reset();
 	/* If the main program was already loaded by the kernel,
 	 * AT_PHDR will point to some location other than the dynamic
@@ -3489,7 +3488,6 @@ int dladdr(const void *addr_arg, Dl_info *info)
 hidden void *__dlsym(void *restrict p, const char *restrict s, void *restrict ra)
 {
 	void *res;
-	musl_log_reset();
 	ld_log_reset();
 	pthread_rwlock_rdlock(&lock);
 #ifdef HANDLE_RANDOMIZATION
@@ -3513,7 +3511,6 @@ hidden void *__dlsym(void *restrict p, const char *restrict s, void *restrict ra
 hidden void *__dlvsym(void *restrict p, const char *restrict s, const char *restrict v, void *restrict ra)
 {
 	void *res;
-	musl_log_reset();
 	ld_log_reset();
 	pthread_rwlock_rdlock(&lock);
 #ifdef HANDLE_RANDOMIZATION
