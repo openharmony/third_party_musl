@@ -217,12 +217,10 @@ template("musl_libs") {
       "${target_out_dir}/${musl_ported_dir}/src/include",
       "${target_out_dir}/${musl_ported_dir}/include",
       "${target_out_dir}/${musl_inc_out_dir}",
-      "${clang_base_path}/lib/clang/${clang_version}/include"
+      "${clang_base_path}/lib/clang/${clang_version}/include",
     ]
 
-    defines = [
-      "__OHOS__",
-    ]
+    defines = [ "__OHOS__" ]
 
     cflags = [
       "--target=${musl_target_triple}",
@@ -758,7 +756,7 @@ template("musl_libs") {
     }
 
     if (use_jemalloc) {
-      deps += [ ":soft_musl_jemalloc"]
+      deps += [ ":soft_musl_jemalloc" ]
     }
   }
 
