@@ -207,6 +207,63 @@ template("musl_libs") {
     }
   }
 
+  config("soft_jemalloc") {
+    configs = []
+
+    include_dirs = [
+      "${target_out_dir}/${musl_ported_dir}/arch/${musl_arch}",
+      "${target_out_dir}/${musl_ported_dir}/arch/generic",
+      "${target_out_dir}/${musl_ported_dir}/src/internal",
+      "${target_out_dir}/${musl_ported_dir}/src/include",
+      "${target_out_dir}/${musl_ported_dir}/include",
+      "${target_out_dir}/${musl_inc_out_dir}",
+      "${clang_base_path}/lib/clang/${clang_version}/include"
+    ]
+
+    defines = [
+      "__OHOS__",
+    ]
+
+    cflags = [
+      "--target=${musl_target_triple}",
+      "-D_GNU_SOURCE",
+      "-D_REENTRANT",
+      "-Wall",
+      "-Wshorten-64-to-32",
+      "-Wsign-compare",
+      "-Wundef",
+      "-Wno-format-zero-length",
+      "-pipe",
+      "-g3",
+      "-fvisibility=hidden",
+      "-O3",
+      "-funroll-loops",
+
+      # The following flags are for avoiding errors when compiling.
+      "-Wno-unused-parameter",
+      "-Wno-unused-function",
+      "-Wno-missing-field-initializers",
+
+      "-U_FORTIFY_SOURCE",
+
+      "-DOHOS_NUM_ARENAS=1",
+    ]
+
+    if (musl_arch == "arm") {
+      cflags += [ "-march=armv7-a" ]
+    } else if (musl_arch == "aarch64") {
+      cflags += [ "-march=armv8" ]
+    }
+
+    include_dirs += [
+      "//third_party",
+      "//third_party/musl/src/include/",
+      "//third_party/jemalloc/include/",
+      "//third_party/jemalloc/include/jemalloc/internal",
+      "//third_party/jemalloc/include/jemalloc",
+    ]
+  }
+
   source_set("soft_musl_crt") {
     sources = [
       "${target_out_dir}/${musl_ported_dir}/crt/${musl_arch}/crti.s",
@@ -452,6 +509,11 @@ template("musl_libs") {
       "-fstack-protector-strong",
     ]
 
+    if (use_jemalloc) {
+      defines += [ "USE_JEMALLOC" ]
+      include_dirs = [ "//third_party/jemalloc/include/jemalloc" ]
+    }
+
     configs -= musl_inherited_configs
     configs += [ ":soft_musl_config" ]
 
@@ -693,6 +755,10 @@ template("musl_libs") {
     deps += dfx_deps
     if (is_standard_system) {
       deps += [ "//base/startup/init/services/param/base:parameterbase" ]
+    }
+
+    if (use_jemalloc) {
+      deps += [ ":soft_musl_jemalloc"]
     }
   }
 
