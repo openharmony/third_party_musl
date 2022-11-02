@@ -1757,8 +1757,6 @@ struct dso *load_library(
 			ldso.namespace = namespace;
 			ns_add_dso(namespace, &ldso);
 		}
-		/* increase libc dlopen refcnt */
-		a_inc(&ldso.nr_dlopen);
 		return &ldso;
 	}
 	if (strchr(name, '/')) {
@@ -1777,8 +1775,6 @@ struct dso *load_library(
 		p = find_library_by_name(name, namespace, check_inherited);
 		if (p) {
 			LD_LOGD("load_library find_library_by_name found p, return it!");
-			/* increase dlopen refcnt */
-			a_inc(&p->nr_dlopen);
 			return p;
 		}
 		if (strlen(name) > NAME_MAX) {
@@ -1839,8 +1835,6 @@ struct dso *load_library(
 		if (!p->shortname && pathname != name)
 			p->shortname = strrchr(p->name, '/')+1;
 		close(fd);
-		/* increase dlopen refcnt */
-		a_inc(&p->nr_dlopen);
 		LD_LOGD("load_library find_library_by_fstat, found p and return it!");
 		return p;
 	}
@@ -1886,7 +1880,6 @@ struct dso *load_library(
 	p->ino = st.st_ino;
 	p->needed_by = needed_by;
 	p->name = p->buf;
-	p->nr_dlopen = 1;
 	p->runtime_loaded = runtime;
 	strcpy(p->name, pathname);
 	/* Add a shortname only if name arg was not an explicit pathname. */
@@ -2487,7 +2480,6 @@ void __dls3(size_t *sp, size_t *auxv)
 #ifdef OHOS_ENABLE_PARAMETER
 	InitParameterClient();
 #endif
-	musl_log_reset();
 	ld_log_reset();
 	/* If the main program was already loaded by the kernel,
 	 * AT_PHDR will point to some location other than the dynamic
@@ -2787,7 +2779,7 @@ static void prepare_lazy(struct dso *p)
 }
 
 /* add namespace function */
-static void *dlopen_impl(
+static void *dlopen_impl_orig(
 	const char *file, int mode, const char *namespace, const void *caller_addr, const dl_extinfo *extinfo)
 {
 	struct dso *volatile p, *orig_tail, *orig_syms_tail, *orig_lazy_head, *next;
@@ -2802,9 +2794,6 @@ static void *dlopen_impl(
 	bool reserved_address = false;
 	bool reserved_address_recursive = false;
 	struct reserved_address_params reserved_params = {0};
-#ifdef HANDLE_RANDOMIZATION
-	void *handle = 0;
-#endif
 #ifdef LOAD_ORDER_RANDOMIZATION
 	struct loadtasks *tasks = NULL;
 	struct loadtask *task = NULL;
@@ -2812,12 +2801,8 @@ static void *dlopen_impl(
 #endif
 
 	if (!file) {
-		LD_LOGD("dlopen_impl file is null, return head.");
-#ifdef HANDLE_RANDOMIZATION
-		return assign_valid_handle(head);
-#else
+		LD_LOGD("dlopen_impl_orig file is null, return head.");
 		return head;
-#endif
 	}
 
 	if (extinfo) {
@@ -2908,16 +2893,16 @@ static void *dlopen_impl(
 #ifdef LOAD_ORDER_RANDOMIZATION
 		tasks = create_loadtasks();
 		if (!tasks) {
-			LD_LOGE("dlopen_impl create loadtasks failed");
+			LD_LOGE("dlopen_impl_orig create loadtasks failed");
 			goto end;
 		}
 		task = create_loadtask(file, head, ns, true);
 		if (!task) {
-			LD_LOGE("dlopen_impl create loadtask failed");
+			LD_LOGE("dlopen_impl_orig create loadtask failed");
 			goto end;
 		}
 		if (!load_library_header(task)) {
-			LD_LOGE("dlopen_impl load library header failed for %{public}s", task->name);
+			LD_LOGE("dlopen_impl_orig load library header failed for %{public}s", task->name);
 			goto end;
 		}
 		if (reserved_address) {
@@ -2925,7 +2910,7 @@ static void *dlopen_impl(
 		}
 	}
 	if (!task->p) {
-		LD_LOGE("dlopen_impl load library failed for %{public}s", task->name);
+		LD_LOGE("dlopen_impl_orig load library failed for %{public}s", task->name);
 		error(noload ?
 			"Library %s is not already loaded" :
 			"Error loading shared library %s: %m",
@@ -3005,15 +2990,6 @@ static void *dlopen_impl(
 	if (tls_cnt != orig_tls_cnt)
 		install_new_tls();
 	orig_tail = tail;
-
-#ifdef HANDLE_RANDOMIZATION
-	handle = assign_valid_handle(p);
-	if (handle == 0) {
-		LD_LOGE("generate random handle failed");
-		do_dlclose(p);
-		p = 0;
-	}
-#endif
 end:
 	debug.state = RT_CONSISTENT;
 	_dl_debug_state();
@@ -3031,11 +3007,39 @@ end:
 		internal_free(ctor_queue);
 	}
 	pthread_setcancelstate(cs, 0);
-#ifdef HANDLE_RANDOMIZATION
-	return handle;
-#else
 	return p;
+}
+
+static void *dlopen_impl(
+	const char *file, int mode, const char *namespace, const void *caller_addr, const dl_extinfo *extinfo){
+	struct dso* p = (struct dso*)dlopen_impl_orig(file, mode, namespace, caller_addr, extinfo);
+
+	if (p == NULL) {
+		return p;
+	}
+
+	p->nr_dlopen++;
+	if (p->bfs_built) {
+		for (int i = 0; p->deps[i]; i++) {
+			p->deps[i]->nr_dlopen++;
+
+			if (mode & RTLD_NODELETE) {
+				p->deps[i]->flags |= DSO_FLAGS_NODELETE;
+			}
+		}
+	}
+
+#ifdef HANDLE_RANDOMIZATION
+	void *handle = assign_valid_handle(p);
+	if (handle == NULL) {
+		LD_LOGE("dlopen_impl: generate random handle failed");
+		do_dlclose(p);
+	}
+
+	return handle;
 #endif
+
+	return p;
 }
 
 void *dlopen(const char *file, int mode)
@@ -3252,8 +3256,10 @@ static void *do_dlsym(struct dso *p, const char *s, const char *v, void *ra)
 		if (!p) p=head;
 		p = p->next;
 		ra2dso = true;
+#ifndef HANDLE_RANDOMIZATION
 	} else if (__dl_invalid_handle(p)) {
 		return 0;
+#endif
 	} else {
 		use_deps = 1;
 		ns = p->namespace;
@@ -3278,9 +3284,8 @@ static void *do_dlsym(struct dso *p, const char *s, const char *v, void *ra)
 	return laddr(def.dso, def.sym->st_value);
 }
 
-static int do_dlclose(struct dso *p)
+static int dlclose_impl(struct dso *p)
 {
-	int old;
 	size_t n;
 	struct dso *d;
 
@@ -3297,8 +3302,7 @@ static int do_dlclose(struct dso *p)
 		return 0;
 	}
 
-	old = a_fetch_add(&p->nr_dlopen, -1);
-	if (old > 1)
+	if (--(p->nr_dlopen) > 0)
 		return 0;
 
 	/* call destructors if needed */
@@ -3382,6 +3386,46 @@ static int do_dlclose(struct dso *p)
 	}
 
 	return 0;
+}
+
+static char* dlclose_deps_black_list[] =
+{
+	"/system/lib64/libhidebug.so", 
+	"/system/lib64/libmsdp_neardetect_algorithm.z.so", 
+	"/vendor/lib64/libhril_hdf.z.so"
+};
+
+static int do_dlclose(struct dso *p)
+{
+	bool ldclose_deps = true;
+
+	for (int i = 0; i < sizeof(dlclose_deps_black_list)/sizeof(char*); i++) {
+		if (!strcmp(dlclose_deps_black_list[i], p->name)) {
+			ldclose_deps = false;
+			break;
+		}
+	}
+
+	size_t deps_num;
+
+	for (deps_num = 0; p->deps[deps_num]; deps_num++);
+
+	struct dso **deps_bak = malloc(deps_num*sizeof(struct dso*));
+	if (deps_bak != NULL) {
+		memcpy(deps_bak, p->deps, deps_num*sizeof(struct dso*));
+	}
+
+	LD_LOGI("do_dlclose name=%{public}s count=%{public}d by_dlopen=%{public}d", p->name, p->nr_dlopen, p->by_dlopen);	
+	dlclose_impl(p);
+
+	if (ldclose_deps) {
+		for (size_t i = 0; i < deps_num; i++) {
+			LD_LOGI("do_dlclose name=%{public}s count=%{public}d by_dlopen=%{public}d", deps_bak[i]->name, deps_bak[i]->nr_dlopen, deps_bak[i]->by_dlopen);
+			dlclose_impl(deps_bak[i]);
+		}
+	}
+
+	free(deps_bak);
 }
 
 hidden int __dlclose(void *p)
@@ -3487,7 +3531,6 @@ int dladdr(const void *addr_arg, Dl_info *info)
 hidden void *__dlsym(void *restrict p, const char *restrict s, void *restrict ra)
 {
 	void *res;
-	musl_log_reset();
 	ld_log_reset();
 	pthread_rwlock_rdlock(&lock);
 #ifdef HANDLE_RANDOMIZATION
@@ -3511,7 +3554,6 @@ hidden void *__dlsym(void *restrict p, const char *restrict s, void *restrict ra
 hidden void *__dlvsym(void *restrict p, const char *restrict s, const char *restrict v, void *restrict ra)
 {
 	void *res;
-	musl_log_reset();
 	ld_log_reset();
 	pthread_rwlock_rdlock(&lock);
 #ifdef HANDLE_RANDOMIZATION
@@ -4104,8 +4146,6 @@ static bool load_library_header(struct loadtask *task)
 			ns_add_dso(namespace, &ldso);
 		}
 		task->isloaded = true;
-		/* increase libc dlopen refcnt */
-		a_inc(&ldso.nr_dlopen);
 		task->p = &ldso;
 		return true;
 	}
@@ -4121,9 +4161,7 @@ static bool load_library_header(struct loadtask *task)
 		/* Search in namespace */
 		task->p = find_library_by_name(name, namespace, check_inherited);
 		if (task->p) {
-			/* increase dlopen refcnt */
 			task->isloaded = true;
-			a_inc(&task->p->nr_dlopen);
 			return true;
 		}
 		if (strlen(name) > NAME_MAX) {
@@ -4189,9 +4227,7 @@ static bool load_library_header(struct loadtask *task)
 		}
 		close(task->fd);
 		task->fd = -1;
-		/* increase dlopen refcnt */
 		task->isloaded = true;
-		a_inc(&task->p->nr_dlopen);
 		return true;
 	}
 
@@ -4297,7 +4333,6 @@ static void task_load_library(struct loadtask *task, struct reserved_address_par
 	if (!runtime) {
 		reclaim_gaps(task->p);
 	}
-	task->p->nr_dlopen = 1;
 	task->p->runtime_loaded = runtime;
 	if (runtime)
 		task->p->by_dlopen = 1;
