@@ -377,4 +377,7 @@ hidden void __procfdname(char __buf[static 15+3*sizeof(int)], unsigned);
 
 hidden void *__vdsosym(const char *, const char *);
 
+hidden void __get_vdso_info();
+hidden void *__get_vdso_addr(const char *, const char *);
+
 #endif

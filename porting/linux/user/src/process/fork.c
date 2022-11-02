@@ -25,7 +25,7 @@ pid_t fork(void)
 	if (!ret) {
 		pthread_t self = __pthread_self();
 		self->tid = __syscall(SYS_gettid);
-		self->cached_pid = self->tid;
+		self->pid = self->tid;
 		self->robust_list.off = 0;
 		self->robust_list.pending = 0;
 		self->next = self->prev = self;

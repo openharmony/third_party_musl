@@ -391,7 +391,7 @@ int __pthread_create(pthread_t *restrict res, const pthread_attr_t *restrict att
 	new->stack_size = stack - stack_limit;
 	new->guard_size = guard;
 	new->self = new;
-	new->cached_pid = getpid();
+	new->pid = getpid();
 	new->tsd = (void *)tsd;
 	new->locale = &libc.global_locale;
 	if (attr._a_detach) {
@@ -427,7 +427,7 @@ int __pthread_create(pthread_t *restrict res, const pthread_attr_t *restrict att
 
 	__tl_lock();
 	libc.threads_minus_1++;
-	ret = clone((c11 ? start_c11 : start), stack, flags, args, &new->tid, TP_ADJ(new), &__thread_list_lock);
+	ret = __clone((c11 ? start_c11 : start), stack, flags, args, &new->tid, TP_ADJ(new), &__thread_list_lock);
 
 	/* All clone failures translate to EAGAIN. If explicit scheduling
 	 * was requested, attempt it before unlocking the thread list so
