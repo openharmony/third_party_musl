@@ -93,6 +93,11 @@ struct verinfo {
 	uint32_t vna_hash;
 };
 
+struct sym_info_pair {
+	uint_fast32_t sym_h;
+	uint32_t sym_l;
+};
+
 struct dso {
 #if DL_FDPIC
 	struct fdpic_loadmap *loadmap;
@@ -556,35 +561,42 @@ static int check_verinfo(Verdef *def, int16_t *versym, uint32_t index, struct ve
 	return ret;
 }
 
-static uint32_t sysv_hash(const char *s0)
+static struct sym_info_pair sysv_hash(const char *s0)
 {
+	struct sym_info_pair s_info_p;
 	const unsigned char *s = (void *)s0;
 	uint_fast32_t h = 0;
 	while (*s) {
 		h = 16*h + *s++;
 		h ^= h>>24 & 0xf0;
 	}
-	return h & 0xfffffff;
+	s_info_p.sym_h = h & 0xfffffff;
+	s_info_p.sym_l = (char *)s - s0;
+	return s_info_p;
 }
 
-static uint32_t gnu_hash(const char *s0)
+static struct sym_info_pair gnu_hash(const char *s0)
 {
+	struct sym_info_pair s_info_p;
 	const unsigned char *s = (void *)s0;
 	uint_fast32_t h = 5381;
 	for (; *s; s++)
 		h += h*32 + *s;
-	return h;
+	s_info_p.sym_h = h;
+	s_info_p.sym_l = (char *)s - s0;
+	return s_info_p;
 }
 
-static Sym *sysv_lookup(struct verinfo *verinfo, uint32_t h, struct dso *dso)
+static Sym *sysv_lookup(struct verinfo *verinfo,  struct sym_info_pair s_info_p, struct dso *dso)
 {
 	size_t i;
+	uint32_t h = s_info_p.sym_h;
 	Sym *syms = dso->syms;
 	Elf_Symndx *hashtab = dso->hashtab;
 	char *strings = dso->strings;
 	for (i=hashtab[2+h%hashtab[0]]; i; i=hashtab[2+hashtab[0]+i]) {
 		if ((!dso->versym || (dso->versym[i] & 0x7fff) >= 0)
-			&& (!strcmp(verinfo->s, strings+syms[i].st_name))) {
+			&& (!memcmp(verinfo->s, strings+syms[i].st_name, s_info_p.sym_l))) {
 			if (!check_verinfo(dso->verdef, dso->versym, i, verinfo, dso->strings)) {
 				continue;
 			}
@@ -599,8 +611,9 @@ static Sym *sysv_lookup(struct verinfo *verinfo, uint32_t h, struct dso *dso)
 	return 0;
 }
 
-static Sym *gnu_lookup(uint32_t h1, uint32_t *hashtab, struct dso *dso, struct verinfo *verinfo)
+static Sym *gnu_lookup(struct sym_info_pair s_info_p, uint32_t *hashtab, struct dso *dso, struct verinfo *verinfo)
 {
+	uint32_t h1 = s_info_p.sym_h;
 	uint32_t nbuckets = hashtab[0];
 	uint32_t *buckets = hashtab + 4 + hashtab[2]*(sizeof(size_t)/4);
 	uint32_t i = buckets[h1 % nbuckets];
@@ -615,7 +628,7 @@ static Sym *gnu_lookup(uint32_t h1, uint32_t *hashtab, struct dso *dso, struct v
 	for (h1 |= 1; ; i++) {
 		uint32_t h2 = *hashval++;
 		if ((h1 == (h2|1)) && (!dso->versym || (dso->versym[i] & 0x7fff) >= 0)
-			&& !strcmp(verinfo->s, dso->strings + dso->syms[i].st_name)) {
+			&& !memcmp(verinfo->s, dso->strings + dso->syms[i].st_name, s_info_p.sym_l)) {
 			if (!check_verinfo(dso->verdef, dso->versym, i, verinfo, dso->strings)) {
 				continue;
 			}
@@ -632,9 +645,9 @@ static Sym *gnu_lookup(uint32_t h1, uint32_t *hashtab, struct dso *dso, struct v
 	return 0;
 }
 
-static Sym *gnu_lookup_filtered(uint32_t h1, uint32_t *hashtab, struct dso *dso, struct verinfo *verinfo, uint32_t fofs, size_t fmask)
+static Sym *gnu_lookup_filtered(struct sym_info_pair s_info_p, uint32_t *hashtab, struct dso *dso, struct verinfo *verinfo, uint32_t fofs, size_t fmask)
 {
-
+	uint32_t h1 = s_info_p.sym_h;
 	const size_t *bloomwords = (const void *)(hashtab+4);
 	size_t f = bloomwords[fofs & (hashtab[2]-1)];
 	if (!(f & fmask)) return 0;
@@ -642,7 +655,7 @@ static Sym *gnu_lookup_filtered(uint32_t h1, uint32_t *hashtab, struct dso *dso,
 	f >>= (h1 >> hashtab[3]) % (8 * sizeof f);
 	if (!(f & 1)) return 0;
 
-	return gnu_lookup(h1, hashtab, dso, verinfo);
+	return gnu_lookup(s_info_p, hashtab, dso, verinfo);
 }
 
 static bool check_sym_accessible(struct dso *dso, ns_t *ns)
@@ -777,7 +790,8 @@ __attribute__((always_inline))
 #endif
 static inline struct symdef find_sym2(struct dso *dso, struct verinfo *verinfo, int need_def, int use_deps, ns_t *ns)
 {
-	uint32_t h = 0, gh = gnu_hash(verinfo->s), gho = gh / (8*sizeof(size_t)), *ght;
+	struct sym_info_pair s_info_p = gnu_hash(verinfo->s);
+	uint32_t h = 0, gh = s_info_p.sym_h, gho = gh / (8*sizeof(size_t)), *ght;
 	size_t ghm = 1ul << gh % (8*sizeof(size_t));
 	struct symdef def = {0};
 	struct dso **deps = use_deps ? dso->deps : 0;
@@ -787,10 +801,10 @@ static inline struct symdef find_sym2(struct dso *dso, struct verinfo *verinfo, 
 			continue;
 		}
 		if ((ght = dso->ghashtab)) {
-			sym = gnu_lookup_filtered(gh, ght, dso, verinfo, gho, ghm);
+			sym = gnu_lookup_filtered(s_info_p, ght, dso, verinfo, gho, ghm);
 		} else {
-			if (!h) h = sysv_hash(verinfo->s);
-			sym = sysv_lookup(verinfo, h, dso);
+			if (!h) s_info_p = sysv_hash(verinfo->s);
+			sym = sysv_lookup(verinfo, s_info_p, dso);
 		}
 		if (!sym) continue;
 		if (!sym->st_shndx)
@@ -812,7 +826,8 @@ static inline struct symdef find_sym2(struct dso *dso, struct verinfo *verinfo, 
 static inline struct symdef find_sym_by_saved_so_list(
 	int sym_type, struct dso *dso, struct verinfo *verinfo, int need_def, struct dso *dso_relocating)
 {
-	uint32_t h = 0, gh = gnu_hash(verinfo->s), gho = gh / (8 * sizeof(size_t)), *ght;
+	struct sym_info_pair s_info_p = gnu_hash(verinfo->s);
+	uint32_t h = 0, gh = s_info_p.sym_h, gho = gh / (8 * sizeof(size_t)), *ght;
 	size_t ghm = 1ul << gh % (8 * sizeof(size_t));
 	struct symdef def = {0};
 	// skip head dso.
@@ -822,10 +837,10 @@ static inline struct symdef find_sym_by_saved_so_list(
 		dso_searching = dso_relocating->reloc_can_search_dso_list[i];
 		Sym *sym;
 		if ((ght = dso_searching->ghashtab)) {
-			sym = gnu_lookup_filtered(gh, ght, dso_searching, verinfo, gho, ghm);
+			sym = gnu_lookup_filtered(s_info_p, ght, dso_searching, verinfo, gho, ghm);
 		} else {
-			if (!h) h = sysv_hash(verinfo->s);
-			sym = sysv_lookup(verinfo, h, dso_searching);
+			if (!h) s_info_p = sysv_hash(verinfo->s);
+			sym = sysv_lookup(verinfo, s_info_p, dso_searching);
 		}
 		if (!sym) continue;
 		if (!sym->st_shndx)
@@ -2465,7 +2480,6 @@ void __dls3(size_t *sp, size_t *auxv)
 #ifdef OHOS_ENABLE_PARAMETER
 	InitParameterClient();
 #endif
-	musl_log_reset();
 	ld_log_reset();
 	/* If the main program was already loaded by the kernel,
 	 * AT_PHDR will point to some location other than the dynamic
@@ -3242,8 +3256,10 @@ static void *do_dlsym(struct dso *p, const char *s, const char *v, void *ra)
 		if (!p) p=head;
 		p = p->next;
 		ra2dso = true;
+#ifndef HANDLE_RANDOMIZATION
 	} else if (__dl_invalid_handle(p)) {
 		return 0;
+#endif
 	} else {
 		use_deps = 1;
 		ns = p->namespace;
@@ -3515,7 +3531,6 @@ int dladdr(const void *addr_arg, Dl_info *info)
 hidden void *__dlsym(void *restrict p, const char *restrict s, void *restrict ra)
 {
 	void *res;
-	musl_log_reset();
 	ld_log_reset();
 	pthread_rwlock_rdlock(&lock);
 #ifdef HANDLE_RANDOMIZATION
@@ -3539,7 +3554,6 @@ hidden void *__dlsym(void *restrict p, const char *restrict s, void *restrict ra
 hidden void *__dlvsym(void *restrict p, const char *restrict s, const char *restrict v, void *restrict ra)
 {
 	void *res;
-	musl_log_reset();
 	ld_log_reset();
 	pthread_rwlock_rdlock(&lock);
 #ifdef HANDLE_RANDOMIZATION

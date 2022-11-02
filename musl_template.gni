@@ -279,6 +279,7 @@ template("musl_libs") {
       sources_orig -= [
         "src/thread/${musl_arch}/__set_thread_area.s",
         "src/string/memcpy.c",
+        "src/string/memmove.c",
         "src/string/memchr.c",
         "src/string/memcmp.c",
         "src/string/strcpy.c",
@@ -428,6 +429,7 @@ template("musl_libs") {
           "$OPTRTDIR/string/aarch64/strrchr.S",
         ]
         asmflags = [
+          "-D__memmove_aarch64 = memmove",
           "-D__memcpy_aarch64 = memcpy",
           "-D__memchr_aarch64 = memchr",
           "-D__memset_aarch64 = memset",
