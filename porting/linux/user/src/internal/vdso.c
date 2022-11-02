@@ -66,6 +66,9 @@ struct __vdso_info {
 
 void __get_vdso_info()
 {
+	if (vdso_info.base != -1) {
+		return ;
+	}
 	size_t i;
 	for (i=0; libc.auxv[i] != AT_SYSINFO_EHDR; i+=2)
 		if (!libc.auxv[i]) return ;
