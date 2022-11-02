@@ -3238,6 +3238,7 @@ static int do_dlclose(struct dso *p)
 	}
 
 	free(deps_bak);
+	return 0;
 }
 
 hidden int __dlclose(void *p)
