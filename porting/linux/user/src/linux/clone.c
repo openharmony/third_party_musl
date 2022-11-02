@@ -50,8 +50,8 @@ int clone(int (*func)(void *), void *stack, int flags, void *arg, ...)
 	va_end(ap);
 
 	pthread_t self = __pthread_self();
-	pid_t parent_pid = self->cached_pid;
-	self->cached_pid = 0;
+	pid_t parent_pid = self->pid;
+	self->pid = 0;
 	pid_t caller_tid = self->tid;
 
 	if (!(flags & (CLONE_VM | CLONE_VFORK))) {
@@ -73,11 +73,11 @@ int clone(int (*func)(void *), void *stack, int flags, void *arg, ...)
 	}
 
 	if (ret != 0) {
-		self->cached_pid = parent_pid;
+		self->pid = parent_pid;
 		self->tid = caller_tid;
 	} else if (self->tid == -1) {
 		self->tid = __syscall(SYS_gettid);
-		self->cached_pid = self->tid;
+		self->pid = self->tid;
 	}
 	return ret;
 }

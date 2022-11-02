@@ -17,11 +17,11 @@ hidden pid_t __vfork(void)
 pid_t vfork(void)
 {
 	pthread_t self = __pthread_self();
-	pid_t parent_pid = self->cached_pid;
-	self->cached_pid = 0;
+	pid_t parent_pid = self->pid;
+	self->pid = 0;
 	pid_t ret = __vfork();
 	if (ret != 0) {
-		self->cached_pid = parent_pid;
+		self->pid = parent_pid;
 	}
 	return ret;
 }

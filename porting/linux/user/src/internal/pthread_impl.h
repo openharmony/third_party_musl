@@ -39,7 +39,7 @@ struct pthread {
 
     /* Part 2 -- implementation details, non-ABI. */
     int tid;
-    int cached_pid;
+    int pid;
     int errno_val;
     volatile int detach_state;
     volatile int cancel;
