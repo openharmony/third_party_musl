@@ -2125,6 +2125,7 @@ musl_src_porting_file = [
   "src/ldso/arm/dlvsym.s",
   "src/ldso/riscv64/dlvsym.s",
   "src/ldso/x86_64/dlvsym.s",
+  "src/stdio/__fdopen.c",
   "src/internal/vdso.c",
   "src/time/clock_gettime.c",
   "src/time/clock_getres.c",
