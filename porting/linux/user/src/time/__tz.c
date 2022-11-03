@@ -21,6 +21,10 @@
 #include "libc.h"
 #include "lock.h"
 #include "time_impl.h"
+#ifdef OHOS_ENABLE_PARAMETER
+#include "sys_param.h"
+#define SYSPARAM_LENGTH 40
+#endif
 
 #define __TZ_VERSION__ '2'
 
@@ -152,7 +156,18 @@ static void do_tzset()
 
     s = getenv("TZ");
     if (!s) {
+#ifdef OHOS_ENABLE_PARAMETER
+        uint32_t tz_param_value_len = SYSPARAM_LENGTH;
+        char tz_param_value[SYSPARAM_LENGTH + 1] = {0};
+        if (SystemReadParam("persist.time.timezone", tz_param_value, &tz_param_value_len) == 0) {
+            tz_param_value[tz_param_value_len] = 0;
+            s = tz_param_value;
+        } else {
+            s = "/etc/localtime";
+        }
+#else
         s = "/etc/localtime";
+#endif
     }
     if (!*s) {
         s = __utc;
