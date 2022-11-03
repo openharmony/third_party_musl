@@ -251,6 +251,8 @@ template("musl_libs") {
       cflags += [ "-march=armv7-a" ]
     } else if (musl_arch == "aarch64") {
       cflags += [ "-march=armv8" ]
+    } else if (musl_arch == "x86_64") {
+      cflags += [ "-march=x86-64" ]
     }
 
     include_dirs += [
