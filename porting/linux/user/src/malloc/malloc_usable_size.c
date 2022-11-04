@@ -5,10 +5,18 @@
 #include "atomic.h"
 #endif
 
+#ifdef USE_JEMALLOC
+extern size_t je_malloc_usable_size(void *p);
+#endif
+
 hidden void *(*const __realloc_dep)(void *, size_t) = realloc;
 
 size_t malloc_usable_size(void *p)
 {
+#ifdef USE_JEMALLOC
+	return je_malloc_usable_size(p);
+#endif
+
 #ifndef MALLOC_RED_ZONE
 	return p ? CHUNK_SIZE(MEM_TO_CHUNK(p)) - OVERHEAD : 0;
 #else
