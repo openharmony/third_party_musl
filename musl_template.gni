@@ -242,7 +242,11 @@ template("musl_libs") {
 
       "-U_FORTIFY_SOURCE",
 
-      "-DOHOS_NUM_ARENAS=1",
+      "-DOHOS_ENABLE_TCACHE",
+      "-DOHOS_LG_TCACHE_MAXCLASS_DEFAULT=16",
+      "-DOHOS_NUM_ARENAS=2",
+      "-DOHOS_TCACHE_NSLOTS_SMALL_MAX=8",
+      "-DOHOS_TCACHE_NSLOTS_LARGE=16",
     ]
 
     if (musl_arch == "arm") {
