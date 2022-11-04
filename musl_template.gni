@@ -637,6 +637,26 @@ template("musl_libs") {
     ]
   }
 
+  source_set("soft_musl_jemalloc") {
+    sources = [
+      "./porting/linux/user/src/malloc/jemalloc/jemalloc.c"
+    ]
+
+    deps = [
+      "//third_party/musl:create_alltypes_h",
+      "//third_party/musl:create_porting_src",
+      "//third_party/musl:create_syscall_h",
+      "//third_party/musl:create_version_h",
+      "//third_party/musl:musl_copy_inc_bits",
+      "//third_party/musl:musl_copy_inc_root",
+      "//third_party/musl:musl_copy_inc_sys",
+    ]
+
+    configs -= musl_inherited_configs
+
+    configs += [ ":soft_jemalloc" ]
+  }
+
   static_library("soft_libc_musl_static") {
     output_name = "libc"
     complete_static_lib = true
