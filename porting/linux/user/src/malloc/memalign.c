@@ -1,11 +1,19 @@
 #include <stdlib.h>
+
+#ifndef USE_JEMALLOC
 #include <stdint.h>
 #include <errno.h>
 #include "malloc_impl.h"
 #include "malloc_config.h"
+#else
+extern void* je_memalign(size_t align, size_t len);
+#endif
 
 void *__memalign(size_t align, size_t len)
 {
+#ifdef USE_JEMALLOC
+	return je_memalign(align, len);
+#else
 	unsigned char *mem, *new;
 
 	if ((align & -align) != align) {
@@ -66,6 +74,7 @@ void *__memalign(size_t align, size_t len)
 
 	__bin_chunk(c);
 	return new;
+#endif
 }
 
 weak_alias(__memalign, memalign);
