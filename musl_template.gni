@@ -220,8 +220,6 @@ template("musl_libs") {
       "${clang_base_path}/lib/clang/${clang_version}/include",
     ]
 
-    defines = [ "__OHOS__" ]
-
     cflags = [
       "--target=${musl_target_triple}",
       "-D_GNU_SOURCE",
