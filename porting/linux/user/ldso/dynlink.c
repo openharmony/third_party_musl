@@ -413,13 +413,6 @@ static void init_namespace(struct dso *app)
 	return;
 }
 
-static int dl_strcmp(const char *l, const char *r)
-{
-	for (; *l==*r && *l; l++, r++);
-	return *(unsigned char *)l - *(unsigned char *)r;
-}
-#define strcmp(l,r) dl_strcmp(l,r)
-
 /* Compute load address for a virtual address in a given dso. */
 #if DL_FDPIC
 static void *laddr(const struct dso *p, size_t v)
@@ -2480,7 +2473,6 @@ void __dls3(size_t *sp, size_t *auxv)
 #ifdef OHOS_ENABLE_PARAMETER
 	InitParameterClient();
 #endif
-	ld_log_reset();
 	/* If the main program was already loaded by the kernel,
 	 * AT_PHDR will point to some location other than the dynamic
 	 * linker's program headers. */
@@ -3534,7 +3526,6 @@ int dladdr(const void *addr_arg, Dl_info *info)
 hidden void *__dlsym(void *restrict p, const char *restrict s, void *restrict ra)
 {
 	void *res;
-	ld_log_reset();
 	pthread_rwlock_rdlock(&lock);
 #ifdef HANDLE_RANDOMIZATION
 	if ((p != RTLD_DEFAULT) && (p != RTLD_NEXT)) {
@@ -3557,7 +3548,6 @@ hidden void *__dlsym(void *restrict p, const char *restrict s, void *restrict ra
 hidden void *__dlvsym(void *restrict p, const char *restrict s, const char *restrict v, void *restrict ra)
 {
 	void *res;
-	ld_log_reset();
 	pthread_rwlock_rdlock(&lock);
 #ifdef HANDLE_RANDOMIZATION
 	if ((p != RTLD_DEFAULT) && (p != RTLD_NEXT)) {
