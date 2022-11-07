@@ -11,6 +11,14 @@
 #include "malloc_impl.h"
 #include "malloc_random.h"
 
+#ifdef USE_JEMALLOC
+#include <malloc.h>
+extern void* je_malloc(size_t size);
+extern void* je_calloc(size_t count, size_t size);
+extern void* je_realloc(void* p, size_t newsize);
+extern void je_free(void* p);
+#endif
+
 #if defined(__GNUC__) && defined(__PIC__)
 #define inline inline __attribute__((always_inline))
 #endif
@@ -131,7 +139,7 @@ void __push_chunk(struct chunk *c)
 void __pop_chunk(struct chunk *c)
 {
 	lock(pop_merge_lock);
-	
+
 	if (!c->thread_id) {
 		unlock(pop_merge_lock);
 		return;
@@ -617,6 +625,9 @@ void *__libc_malloc(size_t n)
 void *malloc(size_t n)
 #endif
 {
+#ifdef USE_JEMALLOC
+	return je_malloc(n);
+#endif
 	return internal_malloc(n);
 }
 
@@ -642,7 +653,6 @@ void *internal_malloc(size_t n)
 		c = (void *)(base + SIZE_ALIGN - OVERHEAD);
 		c->csize = len - (SIZE_ALIGN - OVERHEAD);
 		c->psize = SIZE_ALIGN - OVERHEAD;
-
 #ifdef MALLOC_RED_ZONE
 		c->state = M_STATE_MMAP | M_STATE_USED;
 		c->usize = user_size;
@@ -731,6 +741,9 @@ static size_t mal0_clear(char *p, size_t pagesz, size_t n)
 
 void *calloc(size_t m, size_t n)
 {
+#ifdef USE_JEMALLOC
+	return je_calloc(m, n);
+#endif
 	if(n && m > (size_t)-1/n){
 		errno=ENOMEM;
 		return 0;
@@ -767,6 +780,9 @@ void *internal_calloc(size_t m, size_t n)
 
 void *realloc(void *p, size_t n)
 {
+#ifdef USE_JEMALLOC
+	return je_realloc(p, n);
+#endif
 	struct chunk *self, *next;
 	size_t n0, n1;
 	void *new;
@@ -1212,6 +1228,9 @@ void __libc_free(void *p)
 void free(void *p)
 #endif
 {
+#ifdef USE_JEMALLOC
+	return je_free(p);
+#endif
 	return internal_free(p);
 }
 
@@ -1244,6 +1263,7 @@ void internal_free(void *p)
 
 void __malloc_donate(char *start, char *end)
 {
+#ifndef USE_JEMALLOC
 	size_t align_start_up = (SIZE_ALIGN-1) & (-(uintptr_t)start - OVERHEAD);
 	size_t align_end_down = (SIZE_ALIGN-1) & (uintptr_t)end;
 
@@ -1270,6 +1290,7 @@ void __malloc_donate(char *start, char *end)
 	__bin_chunk(c);
 #ifdef MUSL_ITERATE_AND_STATS_API
 	unlock(total_heap_space_inc_lock);
+#endif
 #endif
 }
 

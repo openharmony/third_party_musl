@@ -413,13 +413,6 @@ static void init_namespace(struct dso *app)
 	return;
 }
 
-static int dl_strcmp(const char *l, const char *r)
-{
-	for (; *l==*r && *l; l++, r++);
-	return *(unsigned char *)l - *(unsigned char *)r;
-}
-#define strcmp(l,r) dl_strcmp(l,r)
-
 /* Compute load address for a virtual address in a given dso. */
 #if DL_FDPIC
 static void *laddr(const struct dso *p, size_t v)
@@ -2480,7 +2473,6 @@ void __dls3(size_t *sp, size_t *auxv)
 #ifdef OHOS_ENABLE_PARAMETER
 	InitParameterClient();
 #endif
-	ld_log_reset();
 	/* If the main program was already loaded by the kernel,
 	 * AT_PHDR will point to some location other than the dynamic
 	 * linker's program headers. */
@@ -3390,6 +3382,7 @@ static int dlclose_impl(struct dso *p)
 
 static char* dlclose_deps_black_list[] =
 {
+	"/system/lib/libhidebug.so",
 	"/system/lib64/libhidebug.so", 
 	"/system/lib64/libmsdp_neardetect_algorithm.z.so", 
 	"/vendor/lib64/libhril_hdf.z.so"
@@ -3410,7 +3403,7 @@ static int do_dlclose(struct dso *p)
 
 	for (deps_num = 0; p->deps[deps_num]; deps_num++);
 
-	struct dso **deps_bak = malloc(deps_num*sizeof(struct dso*));
+	struct dso **deps_bak = internal_malloc(deps_num*sizeof(struct dso*));
 	if (deps_bak != NULL) {
 		memcpy(deps_bak, p->deps, deps_num*sizeof(struct dso*));
 	}
@@ -3425,7 +3418,9 @@ static int do_dlclose(struct dso *p)
 		}
 	}
 
-	free(deps_bak);
+	internal_free(deps_bak);
+
+	return 0;
 }
 
 hidden int __dlclose(void *p)
@@ -3531,7 +3526,6 @@ int dladdr(const void *addr_arg, Dl_info *info)
 hidden void *__dlsym(void *restrict p, const char *restrict s, void *restrict ra)
 {
 	void *res;
-	ld_log_reset();
 	pthread_rwlock_rdlock(&lock);
 #ifdef HANDLE_RANDOMIZATION
 	if ((p != RTLD_DEFAULT) && (p != RTLD_NEXT)) {
@@ -3554,7 +3548,6 @@ hidden void *__dlsym(void *restrict p, const char *restrict s, void *restrict ra
 hidden void *__dlvsym(void *restrict p, const char *restrict s, const char *restrict v, void *restrict ra)
 {
 	void *res;
-	ld_log_reset();
 	pthread_rwlock_rdlock(&lock);
 #ifdef HANDLE_RANDOMIZATION
 	if ((p != RTLD_DEFAULT) && (p != RTLD_NEXT)) {

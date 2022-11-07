@@ -35,12 +35,7 @@ struct handle_node {
 // linked list for handle randomization
 static struct handle_node *handle_map_list = NULL;
 
-static bool is_first_stage_init(void)
-{
-    static bool ret;
-    ret = (getpid() == 1 && access("/proc/self/exe", F_OK) == -1);
-    return ret;
-}
+static uintptr_t saved_handle = 0;
 
 void *add_handle_node(void *handle, struct dso *dso)
 {
@@ -101,12 +96,11 @@ void remove_handle_node(void *handle)
 
 static void *gen_handle(void)
 {
-    uintptr_t handle = 0;
+    uintptr_t handle = saved_handle;
     do {
-        if (!is_first_stage_init()) {
-            getrandom(&handle, sizeof handle, GRND_RANDOM);
-        } else {
+        if (getrandom(&handle, sizeof handle, GRND_RANDOM | GRND_NONBLOCK) == -1) {
             handle += HANDLE_INCREASE;
+            saved_handle = handle;
         }
     } while (find_dso_by_handle((void *)handle) || handle == 0);
     return (void *)handle;
@@ -220,15 +214,15 @@ void shuffle_loadtasks(struct loadtasks *tasks)
 {
     size_t index = 0;
     struct loadtask *task = NULL;
-    if (is_first_stage_init()) {
-        return;
-    }
     for (size_t i = 0; i < tasks->length; i++) {
-        getrandom(&index, sizeof index, GRND_RANDOM);
-        index %= tasks->length;
-        task = tasks->array[i];
-        tasks->array[i] = tasks->array[index];
-        tasks->array[index] = task;
+        if (getrandom(&index, sizeof index, GRND_RANDOM | GRND_NONBLOCK) == -1) {
+            return;
+        } else {
+            index %= tasks->length;
+            task = tasks->array[i];
+            tasks->array[i] = tasks->array[index];
+            tasks->array[index] = task;
+        }
     }
 }
 

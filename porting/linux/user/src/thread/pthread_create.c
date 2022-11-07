@@ -10,6 +10,8 @@
 #include <stddef.h>
 #include <stdarg.h>
 
+pid_t getpid(void);
+
 void log_print(const char* info,...)
 {
     va_list ap;
@@ -389,6 +391,7 @@ int __pthread_create(pthread_t *restrict res, const pthread_attr_t *restrict att
 	new->stack_size = stack - stack_limit;
 	new->guard_size = guard;
 	new->self = new;
+	new->pid = getpid();
 	new->tsd = (void *)tsd;
 	new->locale = &libc.global_locale;
 	if (attr._a_detach) {
