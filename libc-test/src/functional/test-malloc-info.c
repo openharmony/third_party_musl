@@ -93,9 +93,6 @@ static long long parse_amount(const char *s)
 static xmlNodePtr find_thread_in_document(xmlDocPtr doc_ptr, const char *thread_id)
 {
 	xmlNodePtr root_element = xmlDocGetRootElement(doc_ptr);
-	if (strcmp(thread_id, "abandoned") == 0) {
-		return find_child_node("abandoned", root_element);
-	}
 	return find_child_node_with_attr("thread", "id", thread_id, find_child_node("threads", root_element));
 }
 
