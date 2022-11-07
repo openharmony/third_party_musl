@@ -207,6 +207,66 @@ template("musl_libs") {
     }
   }
 
+  config("soft_jemalloc") {
+    configs = []
+
+    include_dirs = [
+      "${target_out_dir}/${musl_ported_dir}/arch/${musl_arch}",
+      "${target_out_dir}/${musl_ported_dir}/arch/generic",
+      "${target_out_dir}/${musl_ported_dir}/src/internal",
+      "${target_out_dir}/${musl_ported_dir}/src/include",
+      "${target_out_dir}/${musl_ported_dir}/include",
+      "${target_out_dir}/${musl_inc_out_dir}",
+      "${clang_base_path}/lib/clang/${clang_version}/include",
+    ]
+
+    cflags = [
+      "--target=${musl_target_triple}",
+      "-D_GNU_SOURCE",
+      "-D_REENTRANT",
+      "-Wall",
+      "-Wshorten-64-to-32",
+      "-Wsign-compare",
+      "-Wundef",
+      "-Wno-format-zero-length",
+      "-pipe",
+      "-g3",
+      "-fvisibility=hidden",
+      "-O3",
+      "-funroll-loops",
+
+      # The following flags are for avoiding errors when compiling.
+      "-Wno-unused-parameter",
+      "-Wno-unused-function",
+      "-Wno-missing-field-initializers",
+
+      "-U_FORTIFY_SOURCE",
+
+      "-DOHOS_ENABLE_TCACHE",
+      "-DOHOS_LG_TCACHE_MAXCLASS_DEFAULT=16",
+      "-DOHOS_NUM_ARENAS=2",
+      "-DOHOS_TCACHE_NSLOTS_SMALL_MAX=8",
+      "-DOHOS_TCACHE_NSLOTS_LARGE=16",
+    ]
+
+    if (musl_arch == "arm") {
+      cflags += [ "-march=armv7-a" ]
+    } else if (musl_arch == "aarch64") {
+      cflags += [ "-march=armv8" ]
+    } else if (musl_arch == "x86_64") {
+      cflags += [ "-march=x86-64" ]
+    }
+
+
+    include_dirs += [
+      "//third_party",
+      "//third_party/musl/src/include/",
+      "//third_party/jemalloc/include/",
+      "//third_party/jemalloc/include/jemalloc/internal",
+      "//third_party/jemalloc/include/jemalloc",
+    ]
+  }
+
   source_set("soft_musl_crt") {
     sources = [
       "${target_out_dir}/${musl_ported_dir}/crt/${musl_arch}/crti.s",
@@ -452,6 +512,11 @@ template("musl_libs") {
       "-fstack-protector-strong",
     ]
 
+    if (use_jemalloc) {
+      defines += [ "USE_JEMALLOC" ]
+      include_dirs = [ "//third_party/jemalloc/include/jemalloc" ]
+    }
+
     configs -= musl_inherited_configs
     configs += [ ":soft_musl_config" ]
 
@@ -577,6 +642,24 @@ template("musl_libs") {
     ]
   }
 
+  source_set("soft_musl_jemalloc") {
+    sources = [ "./porting/linux/user/src/malloc/jemalloc/jemalloc.c" ]
+
+    deps = [
+      "//third_party/musl:create_alltypes_h",
+      "//third_party/musl:create_porting_src",
+      "//third_party/musl:create_syscall_h",
+      "//third_party/musl:create_version_h",
+      "//third_party/musl:musl_copy_inc_bits",
+      "//third_party/musl:musl_copy_inc_root",
+      "//third_party/musl:musl_copy_inc_sys",
+    ]
+
+    configs -= musl_inherited_configs
+
+    configs += [ ":soft_jemalloc" ]
+  }
+
   static_library("soft_libc_musl_static") {
     output_name = "libc"
     complete_static_lib = true
@@ -693,6 +776,10 @@ template("musl_libs") {
     deps += dfx_deps
     if (is_standard_system) {
       deps += [ "//base/startup/init/services/param/base:parameterbase" ]
+    }
+
+    if (use_jemalloc) {
+      deps += [ ":soft_musl_jemalloc" ]
     }
   }
 

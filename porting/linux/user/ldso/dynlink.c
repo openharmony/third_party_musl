@@ -3390,6 +3390,7 @@ static int dlclose_impl(struct dso *p)
 
 static char* dlclose_deps_black_list[] =
 {
+	"/system/lib/libhidebug.so",
 	"/system/lib64/libhidebug.so", 
 	"/system/lib64/libmsdp_neardetect_algorithm.z.so", 
 	"/vendor/lib64/libhril_hdf.z.so"
@@ -3410,7 +3411,7 @@ static int do_dlclose(struct dso *p)
 
 	for (deps_num = 0; p->deps[deps_num]; deps_num++);
 
-	struct dso **deps_bak = malloc(deps_num*sizeof(struct dso*));
+	struct dso **deps_bak = internal_malloc(deps_num*sizeof(struct dso*));
 	if (deps_bak != NULL) {
 		memcpy(deps_bak, p->deps, deps_num*sizeof(struct dso*));
 	}
@@ -3425,7 +3426,9 @@ static int do_dlclose(struct dso *p)
 		}
 	}
 
-	free(deps_bak);
+	internal_free(deps_bak);
+
+	return 0;
 }
 
 hidden int __dlclose(void *p)
