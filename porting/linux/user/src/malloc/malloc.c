@@ -43,8 +43,6 @@ int __malloc_replaced;
 
 #ifdef MUSL_ITERATE_AND_STATS_API
 
-occupied_bin_t detached_occupied_bin;
-
 /* Usable memory only, excluding overhead for chunks */
 size_t total_heap_space = 0;
 volatile int total_heap_space_inc_lock[2];
@@ -65,7 +63,7 @@ occupied_bin_t *__get_occupied_bin_by_idx(size_t bin_index)
 	return &mal.occupied_bins[bin_index];
 }
 
-static inline size_t get_occupied_bin_index(pthread_t thread_id)
+static inline size_t get_occupied_bin_index(int thread_id)
 {
 	return (size_t) ((size_t)thread_id % OCCUPIED_BIN_COUNT);
 }
@@ -73,12 +71,12 @@ static inline size_t get_occupied_bin_index(pthread_t thread_id)
 occupied_bin_t *__get_occupied_bin(struct chunk *c)
 {
 	size_t bin_index = get_occupied_bin_index(c->thread_id);
-	return &mal.occupied_bins[bin_index];
+	return __get_occupied_bin_by_idx(bin_index);
 }
 
 occupied_bin_t *__get_current_occupied_bin()
 {
-	size_t bin_index = get_occupied_bin_index(__pthread_self());
+	size_t bin_index = get_occupied_bin_index(__pthread_self()->tid);
 	return &mal.occupied_bins[bin_index];
 }
 #endif
@@ -125,7 +123,7 @@ void __push_chunk(struct chunk *c)
 		occupied_bin->tail = c;
 	}
 	occupied_bin->head = c;
-	c->thread_id = __pthread_self();
+	c->thread_id = __pthread_self()->tid;
 
 	unlock(occupied_bin->lock);
 }
@@ -164,8 +162,6 @@ void malloc_disable(void)
 	for (size_t i = 0; i < BINS_COUNT; ++i) {
 		lock(mal.bins[i].lock);
 	}
-	// FIXME???
-	// __tl_lock();
 	for (size_t i = 0; i < OCCUPIED_BIN_COUNT; ++i) {
 		lock(mal.occupied_bins[i].lock);
 	}
@@ -175,10 +171,11 @@ void malloc_disable(void)
 void malloc_enable(void)
 {
 #ifdef MUSL_ITERATE_AND_STATS_API
-	// FIXME???
-	// __tl_unlock();
 	for (size_t i = 0; i < OCCUPIED_BIN_COUNT; ++i) {
 		unlock(mal.occupied_bins[i].lock);
+	}
+	for (size_t i = 0; i < BINS_COUNT; ++i) {
+		unlock(mal.bins[i].lock);
 	}
 	unlock(total_heap_space_inc_lock);
 	unlock(mal.free_lock);
