@@ -2130,6 +2130,7 @@ musl_src_porting_file = [
   "src/time/clock_getres.c",
   "src/time/gettimeofday.c",
   "src/time/time.c",
+  "src/stdio/__fdopen.c",
 ]
 
 musl_inc_hook_files = [
