@@ -33,6 +33,7 @@
 #include "los_config.h"
 #include "los_memory.h"
 
+#ifdef LOSCFG_LIBC_ICCARM_MALLOC
 void *calloc(size_t nitems, size_t size)
 {
     size_t real_size;
@@ -105,3 +106,4 @@ void *realloc(void *ptr, size_t size)
 
     return LOS_MemRealloc(OS_SYS_MEM_ADDR, ptr, size);
 }
+#endif
