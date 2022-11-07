@@ -48,19 +48,36 @@ int clone(int (*func)(void *), void *stack, int flags, void *arg, ...)
 	tls  = va_arg(ap, void *);
 	ctid = va_arg(ap, pid_t *);
 	va_end(ap);
-	if (!(flags & (CLONE_VM | CLONE_VFORK)) && func) {
-		clone_args = (struct __clone_args *)malloc(sizeof(struct __clone_args));
-		if (clone_args == NULL) {
-			errno = ENOMEM;
-			return -1;
+
+	pthread_t self = __pthread_self();
+	pid_t parent_pid = self->pid;
+	self->pid = 0;
+	pid_t caller_tid = self->tid;
+
+	if (!(flags & (CLONE_VM | CLONE_VFORK))) {
+		self->tid = -1;
+		if (func) {
+			clone_args = (struct __clone_args *)malloc(sizeof(struct __clone_args));
+			if (clone_args == NULL) {
+				errno = ENOMEM;
+				return -1;
+			}
+			clone_args->func = clone_func;
+			clone_args->arg = arg;
+			clone_func = __start_child;
 		}
-		clone_args->func = clone_func;
-		clone_args->arg = arg;
-		clone_func = __start_child;
 	}
 	ret = __syscall_ret(__clone(clone_func, stack, flags, (void *)clone_args, ptid, tls, ctid));
 	if (!(flags & (CLONE_VM | CLONE_VFORK)) && func) {
 		free(clone_args);
+	}
+
+	if (ret != 0) {
+		self->pid = parent_pid;
+		self->tid = caller_tid;
+	} else if (self->tid == -1) {
+		self->tid = __syscall(SYS_gettid);
+		self->pid = self->tid;
 	}
 	return ret;
 }
