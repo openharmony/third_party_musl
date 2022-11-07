@@ -15,7 +15,7 @@ typedef struct occupied_bin_s {
 	struct chunk *head, *tail;
 	volatile int lock[2];
 } occupied_bin_t;
- 
+
 struct chunk {
 	size_t psize, csize;
 #ifdef MALLOC_RED_ZONE
@@ -23,7 +23,7 @@ struct chunk {
 	size_t state;
 #endif
 #ifdef MUSL_ITERATE_AND_STATS_API
-	pthread_t thread_id;
+	size_t thread_id;
 	struct chunk *next_occupied, *prev_occupied;
 #endif
 	struct chunk *next, *prev;
@@ -57,7 +57,7 @@ hidden size_t __get_total_heap_space(void);
 #ifdef MUSL_ITERATE_AND_STATS_API
 #define OCCUPIED_BIN_COUNT 64
 #define OCCUPIED_LIST_OVERHEAD (2*sizeof(void*))
-#define ITERATE_AND_STATS_OVERHEAD (sizeof(void*) + OCCUPIED_LIST_OVERHEAD)
+#define ITERATE_AND_STATS_OVERHEAD (sizeof(size_t) + OCCUPIED_LIST_OVERHEAD)
 #else
 #define ITERATE_AND_STATS_OVERHEAD (0)
 #endif

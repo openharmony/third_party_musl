@@ -44,7 +44,11 @@ static void stat_printf(write_cb_fun *write_cb, void *write_cb_arg, const char *
 	va_start(args, fmt);
 	char buf[STAT_PRINTF_MAX_LEN + 1];
 	if (vsnprintf(buf, STAT_PRINTF_MAX_LEN, fmt, args)) {
-		write_cb(write_cb_arg, buf);
+		if (write_cb != NULL) {
+			write_cb(write_cb_arg, buf);
+		} else {
+			printf(buf);
+		}
 	} else {
 		fprintf(stderr, "Error writing to buffer");
 	}
@@ -109,20 +113,51 @@ static malloc_stats_t add_up_chunks(occupied_bin_t *occupied_bin)
 	return stats;
 }
 
+static malloc_stats_t add_up_chunks_by_threads(occupied_bin_t *occupied_bin, int tid)
+{
+	malloc_stats_t stats = {0, 0, 0, 0};
+	for (struct chunk *c = occupied_bin->head; c != NULL; c = c->next_occupied) {
+		if (c->thread_id == tid) {
+			size_t chunk_memory = CHUNK_SIZE(c) - OVERHEAD;
+			stats.total_allocated_memory += chunk_memory;
+			if (IS_MMAPPED(c)) {
+				stats.mmapped_regions++;
+				stats.total_mmapped_memory += chunk_memory;
+			} else {
+				stats.total_allocated_heap_space += chunk_memory;
+			}
+		}
+	}
+	return stats;
+}
+
 static size_t print_threads(write_cb_fun *write_cb, void *write_cb_arg, print_mode mode)
 {
 	size_t total_allocated_heap_space = 0;
-	
+
 	for (size_t i = 0; i < OCCUPIED_BIN_COUNT; ++i) {
 		occupied_bin_t *occupied_bin = __get_occupied_bin_by_idx(i);
-		malloc_stats_t stats = add_up_chunks(occupied_bin);
-		total_allocated_heap_space += stats.total_allocated_heap_space;
-		//FIXME: Egor, this is incorrect
-		if (mode == TABLE) {
-			print_thread_stats_table(write_cb, write_cb_arg, 0, &stats);
-		} else {
-			print_thread_stats_xml(write_cb, write_cb_arg, 0, &stats);
-		}
+		int min_id = 0;
+		int found;
+		do {
+			found = 0;
+			for (struct chunk *c = occupied_bin->head; c != NULL; c = c->next_occupied) {
+				if (c->thread_id > min_id) {
+					min_id = c->thread_id;
+					found = 1;
+				}
+			}
+			if (found) {
+				malloc_stats_t stats = add_up_chunks_by_threads(occupied_bin, min_id);
+				total_allocated_heap_space += stats.total_allocated_heap_space;
+
+				if (mode == TABLE) {
+					print_thread_stats_table(write_cb, write_cb_arg, min_id, &stats);
+				} else {
+					print_thread_stats_xml(write_cb, write_cb_arg, min_id, &stats);
+				}
+			}
+		} while (found);
 	}
 
 	return total_allocated_heap_space;
@@ -220,14 +255,10 @@ struct mallinfo2 mallinfo2(void)
 #ifdef MUSL_ITERATE_AND_STATS_API
 	malloc_disable();
 	malloc_stats_t shared_stats = {0, 0, 0, 0};
-	struct __pthread *self, *it;
-	self = it = __pthread_self();
-	//FIXME:
-	// do {
-	// 	malloc_stats_t stats = add_up_chunks(__get_occupied_bin(it));
-	// 	add_stats(&shared_stats, &stats);
-	// 	it = it->next;
-	// } while (it != self);
+	for (size_t i = 0; i < OCCUPIED_BIN_COUNT; ++i) {
+		malloc_stats_t stats = add_up_chunks(__get_occupied_bin_by_idx(i));
+		add_stats(&shared_stats, &stats);
+	}
 
 	struct mallinfo2 res = {
 		.hblks = shared_stats.mmapped_regions,
@@ -245,9 +276,9 @@ struct mallinfo mallinfo(void)
 {
 	struct mallinfo2 mallinfo2_res = mallinfo2();
 	return (struct mallinfo) {
-		.hblks = (int) mallinfo2_res.hblks,
-		.hblkhd = (int) mallinfo2_res.hblkhd,
-		.uordblks = (int) mallinfo2_res.uordblks,
-		.fordblks = (int) mallinfo2_res.fordblks,
+		.hblks = mallinfo2_res.hblks,
+		.hblkhd = mallinfo2_res.hblkhd,
+		.uordblks = mallinfo2_res.uordblks,
+		.fordblks = mallinfo2_res.fordblks,
 	};
 }
