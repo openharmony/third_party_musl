@@ -1555,7 +1555,7 @@ if (musl_arch == "arm") {
     "src/math/fmaf.c",
     "src/math/sqrt.c",
     "src/math/sqrtf.c",
-    "src/process/vfork.c",
+    "src/process/arm/vfork.s",
     "src/setjmp/longjmp.c",
     "src/setjmp/setjmp.c",
     "src/signal/restore.c",
@@ -1647,7 +1647,7 @@ if (musl_arch == "arm") {
     "src/math/sqrtf.c",
     "src/math/sqrtl.c",
     "src/math/truncl.c",
-    "src/process/vfork.c",
+    "src/process/x86_64/vfork.s",
     "src/setjmp/longjmp.c",
     "src/setjmp/setjmp.c",
     "src/signal/restore.c",
@@ -2062,6 +2062,7 @@ musl_src_porting_file = [
   "ldso/ns_config.h",
   "ldso/strops.h",
   "src/legacy/ulimit.c",
+  "src/linux/clone.c",
   "src/linux/gettid.c",
   "src/linux/reboot.c",
   "src/linux/tgkill.c",
@@ -2131,6 +2132,11 @@ musl_src_porting_file = [
   "src/time/clock_getres.c",
   "src/time/gettimeofday.c",
   "src/time/time.c",
+  "src/unistd/getpid.c",
+  "src/process/fork.c",
+  "src/process/vfork.c",
+  "src/process/arm/__vfork.s",
+  "src/process/x86_64/__vfork.s",
 ]
 
 musl_inc_hook_files = [
