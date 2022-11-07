@@ -37,18 +37,26 @@ static int test_main_thread(int use_mallinfo2)
 {
 	malloc_thread_stats_t total_stats = {0};
 
+	malloc_thread_stats_t total_stats_before_test = {0};
+	long long free_heap_space_before_test = 0;
+	int result = stats_from_mallinfo(&total_stats_before_test, &free_heap_space_before_test, use_mallinfo2);
+
 	void *ptrs[SIZES_COUNT];
+
 	for (size_t i = 0; i < SIZES_COUNT; i++) {
 		ptrs[i] = malloc(sizes[i]);
 	}
 	long long free_heap_space_after_allocations = 0;
-	int result = stats_from_mallinfo(&total_stats, &free_heap_space_after_allocations, use_mallinfo2);
+	result &= stats_from_mallinfo(&total_stats, &free_heap_space_after_allocations, use_mallinfo2);
 	result &= validate_total_allocated(&total_stats);
 	for (size_t i = 0; i < SIZES_COUNT; i++) {
 		free(ptrs[i]);
 	}
 	long long free_heap_space_after_free = 0;
 	result &= stats_from_mallinfo(&total_stats, &free_heap_space_after_free, use_mallinfo2);
+	total_stats.mmapped_regions -= total_stats_before_test.mmapped_regions;
+	total_stats.total_allocated_memory -= total_stats_before_test.total_allocated_memory;
+	total_stats.total_mmapped_memory -= total_stats_before_test.total_mmapped_memory;
 	result &= validate_all_freed(&total_stats);
 	result &= expect_greater_equal(
 		free_heap_space_after_free,
@@ -61,6 +69,10 @@ static int test_main_thread(int use_mallinfo2)
 static int test_different_threads(int use_mallinfo2)
 {
 	malloc_thread_stats_t total_stats = {0};
+	malloc_thread_stats_t total_stats_before_test = {0};
+	long long free_heap_space_before_test = 0;
+
+	int result = stats_from_mallinfo(&total_stats_before_test, &free_heap_space_before_test, use_mallinfo2);
 
 	pthread_barrier_t alloc_barrier, free_barrier;
 	if (pthread_barrier_init(&alloc_barrier, NULL, SIZES_COUNT + 1)) {
@@ -80,7 +92,7 @@ static int test_different_threads(int use_mallinfo2)
 	}
 	pthread_barrier_wait(&alloc_barrier);
 	long long free_heap_space_after_allocations = 0;
-	int result = stats_from_mallinfo(&total_stats, &free_heap_space_after_allocations, use_mallinfo2);
+	result &= stats_from_mallinfo(&total_stats, &free_heap_space_after_allocations, use_mallinfo2);
 	result &= validate_total_allocated(&total_stats);
 
 	pthread_barrier_wait(&free_barrier);
@@ -89,6 +101,9 @@ static int test_different_threads(int use_mallinfo2)
 	}
 	long long free_heap_space_after_free = 0;
 	result &= stats_from_mallinfo(&total_stats, &free_heap_space_after_free, use_mallinfo2);
+	total_stats.mmapped_regions -= total_stats_before_test.mmapped_regions;
+	total_stats.total_allocated_memory -= total_stats_before_test.total_allocated_memory;
+	total_stats.total_mmapped_memory -= total_stats_before_test.total_mmapped_memory;
 	result &= validate_all_freed(&total_stats);
 	result &= expect_greater_equal(
 		free_heap_space_after_free,

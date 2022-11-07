@@ -25,11 +25,11 @@
 #include <malloc.h>
 #include "test.h"
 
-#define SIZES_COUNT 11
+#define SIZES_COUNT 10
 #define SIZE_ALIGN (8 * sizeof(size_t))
 #define MMAP_THRESHOLD ((0x1c00 * SIZE_ALIGN) - OVERHEAD)
 #define LIST_OVERHEAD (2 * sizeof(void *))
-#define OVERHEAD (2 * sizeof(size_t) + sizeof(void *) + LIST_OVERHEAD)
+#define OVERHEAD (sizeof(size_t) + LIST_OVERHEAD)
 
 static size_t sizes[SIZES_COUNT] = {
 	23,
@@ -37,7 +37,6 @@ static size_t sizes[SIZES_COUNT] = {
 	256,
 	3072,
 	3584,
-	229376,
 	262144,
 	327680,
 	8 * 1024 * 1024,
