@@ -20,6 +20,8 @@
 #include <stdarg.h>
 #include <stdbool.h>
 
+#define hidden __attribute__((visibility("hidden")))
+
 // Log type
 typedef enum {
     LOG_TYPE_MIN = 0,
