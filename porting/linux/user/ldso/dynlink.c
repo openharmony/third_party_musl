@@ -3010,6 +3010,8 @@ static void *dlopen_impl(
 		return p;
 	}
 
+	pthread_rwlock_wrlock(&lock);
+
 	p->nr_dlopen++;
 	if (p->bfs_built) {
 		for (int i = 0; p->deps[i]; i++) {
@@ -3027,10 +3029,12 @@ static void *dlopen_impl(
 		LD_LOGE("dlopen_impl: generate random handle failed");
 		do_dlclose(p);
 	}
+	pthread_rwlock_unlock(&lock);
 
 	return handle;
 #endif
 
+	pthread_rwlock_unlock(&lock);
 	return p;
 }
 
