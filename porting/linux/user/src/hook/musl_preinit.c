@@ -34,6 +34,7 @@ which need be escaped.
 #include <assert.h>
 #include <string.h>
 #include <malloc.h>
+#include "musl_log.h"
 
 void* ohos_malloc_hook_init_function(size_t bytes);
 
@@ -252,7 +253,7 @@ void* load_malloc_hook_shared_library(const char* shared_lib, const char* prefix
 	shared_library_handle = dlopen(shared_lib, RTLD_NOW | RTLD_LOCAL);
 
 	if (shared_library_handle == NULL) {
-		printf("Unable to open shared library %s: %s\n", shared_lib, dlerror());
+		MUSL_LOGI("HiProfiler, Unable to open shared library %{public}s: %{public}s.", shared_lib, dlerror());
 		return NULL;
 	}
 
@@ -260,7 +261,7 @@ void* load_malloc_hook_shared_library(const char* shared_lib, const char* prefix
 		dlclose(shared_library_handle);
 		shared_library_handle = NULL;
 	}
-	// printf("load_malloc_hook_shared_library success new version test\n");
+	MUSL_LOGI("HiProfiler, load_malloc_hook_shared_library success.");
 	return shared_library_handle;
 }
 
@@ -342,6 +343,7 @@ void* ohos_malloc_hook_init_function(size_t bytes)
 {
 	if (atomic_exchange(&__musl_libc_globals.current_dispatch_table, (volatile const long long)NULL)) {
 		pthread_t thread_id;
+		MUSL_LOGI("HiProfiler, ohos_malloc_hook_init_function, pthread_create.");
 		if (pthread_create(&thread_id, NULL, init_ohos_malloc_hook, NULL) != 0) {
 			// __musl_log(__MUSL_LOG_ERROR, "%s: ohos_malloc_hook: failed to pthread_create\n", getprogname());
 		} else if (pthread_detach(thread_id) != 0) {
@@ -364,6 +366,7 @@ static void __install_malloc_hook()
 
 	volatile void* shared_library_handle = (volatile void* )atomic_load_explicit(&ohos_malloc_hook_shared_library, memory_order_acquire);
 	if (shared_library_handle == NULL) {
+		MUSL_LOGI("HiProfiler, __install_malloc_hook __hook_mode %{public}d", __hook_mode);
 		if (__hook_mode == STEP_HOOK_MODE) {
 			atomic_store_explicit(&__musl_libc_globals.current_dispatch_table, (volatile const long long)&__ohos_malloc_hook_init_dispatch, memory_order_seq_cst);
 			atomic_store_explicit(&ohos_malloc_hook_shared_library, (volatile long long)-1, memory_order_seq_cst);
@@ -417,6 +420,7 @@ __attribute__((constructor(1))) static void __musl_initialize()
 	__set_default_malloc();
 	char hook_process_path[MAX_PROC_NAME_SIZE + 1] = {0};
 	parse_hook_variable(&__hook_mode, hook_process_path, sizeof(hook_process_path) - 1);
+	MUSL_LOGI("HiProfiler, __musl_initialize %{public}d", __hook_mode);
 	if (__hook_mode == STARTUP_HOOK_MODE) {
 		char proc_name[MAX_PROC_NAME_SIZE + 1] = {0};
 		if (get_proc_name(getpid(), proc_name, sizeof(proc_name) - 1)) {
@@ -427,6 +431,7 @@ __attribute__((constructor(1))) static void __musl_initialize()
 			} else {
 				file_name = proc_name;
 			}
+			MUSL_LOGI("HiProfiler, current proc %{public}s, , target proc %{public}s", file_name, hook_process_path);
 			if (strncmp(file_name, hook_process_path, strlen(hook_process_path)) == 0) {
 				atomic_store_explicit(&__hook_enable_hook_flag, (volatile bool)true, memory_order_seq_cst);
 				init_ohos_malloc_hook();
