@@ -70,8 +70,6 @@ static int parse_hook_variable(enum EnumHookMode* mode, char* path, int size)
 	if (!mode || !path || size <= 0) {
 		return -1;
 	}
-
-	bool flag = __set_hook_flag(false);
 	char* hook_param_value = get_native_hook_param();
 	if (hook_param_value == NULL || hook_param_value[0] == '\0') {
 		*mode = STEP_HOOK_MODE;
@@ -115,7 +113,6 @@ static int parse_hook_variable(enum EnumHookMode* mode, char* path, int size)
 			}
 		}
 	}
-	__set_hook_flag(flag);
 	return 0;
 }
 
@@ -340,9 +337,7 @@ static void install_ohos_malloc_hook(struct musl_libc_globals* globals)
 
 static void* init_ohos_malloc_hook()
 {
-	bool flag = __set_hook_flag(false);
 	install_ohos_malloc_hook(&__musl_libc_globals);
-	__set_hook_flag(flag);
 	return NULL;
 }
 
@@ -379,12 +374,10 @@ static void __install_malloc_hook()
 			init_ohos_malloc_hook();
 		}
 	} else if (shared_library_handle != (void*)-1) {
-		bool flag = __set_hook_flag(false);
 		on_start_func_t start_func = (on_start_func_t)(function_of_shared_lib[ON_START_FUNCTION]);
 		if (start_func && !start_func()) {
 			// __musl_log(__MUSL_LOG_ERROR, "%s: failed to enable malloc\n", getprogname());
 		}
-		__set_hook_flag(flag);
 		volatile const struct MallocDispatchType* so_dispatch_value = (volatile const struct MallocDispatchType* )atomic_load_explicit(&__musl_libc_globals.so_dispatch_table, memory_order_acquire);
 		atomic_store_explicit(&__musl_libc_globals.current_dispatch_table, (volatile long long)so_dispatch_value, memory_order_seq_cst);
 	}
@@ -393,14 +386,12 @@ static void __install_malloc_hook()
 static void __uninstal_malloc_hook()
 {
 	atomic_store_explicit(&__hook_enable_hook_flag, (volatile bool)false, memory_order_seq_cst);
-
 	bool flag = __set_hook_flag(false);
 	__set_default_malloc();
 	on_end_func_t end_func = (on_end_func_t)(function_of_shared_lib[ON_END_FUNCTION]);
 	if (end_func) {
 		end_func();
 	}
-	__set_hook_flag(flag);
 }
 
 static void __install_malloc_hook_signal_handler()
