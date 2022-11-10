@@ -12,6 +12,8 @@ struct MallocDispatchType __libc_malloc_default_dispatch = {
 	.free = MuslMalloc(free),
 	.mmap = MuslMalloc(mmap),
 	.munmap = MuslMalloc(munmap),
+	.calloc = MuslMalloc(calloc),
+	.realloc = MuslMalloc(realloc),
 };
 
 volatile atomic_bool __hook_enable_hook_flag;
