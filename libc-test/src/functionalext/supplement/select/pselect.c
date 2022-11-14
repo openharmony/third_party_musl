@@ -20,6 +20,10 @@
 #include <unistd.h>
 #include "functionalext.h"
 
+extern int __pselect_time64 (int, fd_set *__restrict, fd_set *__restrict, fd_set *__restrict, 
+                    const struct timespec *__restrict, const sigset_t *__restrict);
+
+
 /**
  * @tc.name      : pselect_fdset_0100
  * @tc.desc      : Determine whether the fdset macro is normal
@@ -105,12 +109,32 @@ void pselect_timeout_0100(void)
     }
 }
 
+/**
+ * @tc.name      : pselect_time64_normal_0100
+ * @tc.desc      : Monitor stdout file for writability (normal)
+ * @tc.level     : Level 0
+ */
+void pselect_time64_normal_0100(void)
+{
+    fd_set set;
+    struct timespec timeout;
+    timeout.tv_sec = 5;
+    timeout.tv_nsec = 0;
+    FD_ZERO(&set);
+    FD_SET(STDOUT_FILENO, &set);
+
+    int ret = __pselect_time64(STDOUT_FILENO + 1, NULL, &set, NULL, &timeout, NULL);
+    EXPECT_EQ("pselect_time64_normal_0100", ret, 1);
+    EXPECT_TRUE("pselect_time64_normal_0100", FD_ISSET(STDOUT_FILENO, &set));
+}
+
 int main(void)
 {
     pselect_fdset_0100();
     pselect_normal_0100();
     pselect_error_0100();
     pselect_timeout_0100();
+    pselect_time64_normal_0100();
 
     return t_status;
 }

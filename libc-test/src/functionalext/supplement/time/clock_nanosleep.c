@@ -19,6 +19,8 @@
 
 const int SUCCESS = 0;
 
+extern int __clock_nanosleep_time64(clockid_t, int, const struct timespec *, struct timespec *);
+
 /**
  * @tc.name      : clock_nanosleep_0100
  * @tc.desc      : Each parameter is valid, clk is CLOCK_REALTIME, which can specify the sleep of the clock.
@@ -111,6 +113,21 @@ void clock_nanosleep_0600(void)
     EXPECT_EQ("clock_nanosleep_0600", ret, EINVAL);
 }
 
+/**
+ * @tc.name      : clock_nanosleep_time64_0100
+ * @tc.desc      : Each parameter is valid, clk is CLOCK_REALTIME, which can specify the sleep of the clock.
+ * @tc.level     : Level 0
+ */
+void clock_nanosleep_time64_0100(void)
+{
+    struct timespec ts;
+    ts.tv_sec = ts.tv_nsec / 1000000000;
+    ts.tv_nsec = 200000000;
+    int ret = -1;
+    ret = __clock_nanosleep_time64(CLOCK_REALTIME, TIMER_ABSTIME, &ts, NULL);
+    EXPECT_EQ("clock_nanosleep_time64_0100", ret, SUCCESS);
+}
+
 int main(int argc, char *argv[])
 {
     clock_nanosleep_0100();
@@ -119,5 +136,6 @@ int main(int argc, char *argv[])
     clock_nanosleep_0400();
     clock_nanosleep_0500();
     clock_nanosleep_0600();
+    clock_nanosleep_time64_0100();
     return t_status;
 }

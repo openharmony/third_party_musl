@@ -21,6 +21,8 @@
 #include <time.h>
 #include "test.h"
 
+extern int __utimes_time64(const char *, const struct timeval [2]);
+
 /**
  * @tc.name      : utimes_0100
  * @tc.desc      : Change file last access and modification times
@@ -56,7 +58,7 @@ void utimes_0100(void)
 }
 
 /**
- * @tc.name      : utimes_0100
+ * @tc.name      : utimes_0200
  * @tc.desc      : Specify time to change file last access and modification time
  * @tc.level     : Level 1
  */
@@ -84,9 +86,44 @@ void utimes_0200(void)
     remove(path);
 }
 
+/**
+ * @tc.name      : utimes_time64_0100
+ * @tc.desc      : Change file last access and modification times
+ * @tc.level     : Level 0
+ */
+void utimes_time64_0100(void)
+{
+    const char *path = "/data/utimes_time64.txt";
+    int fd = open(path, O_RDWR | O_RSYNC | O_CREAT, 0664);
+    if (fd == -1) {
+        t_error("%s write create file error", __func__);
+        return;
+    }
+    close(fd);
+    struct stat buf1;
+    struct stat buf2;
+    time_t t_mold, t_aold, t_now, t_new;
+    stat(path, &buf1);
+
+    t_mold = buf1.st_mtime;
+    t_aold = buf1.st_atime;
+    t_now = time(NULL);
+    if (__utimes_time64(path, NULL) != 0) {
+        t_error("%s __utimes_time64 failed", __func__);
+    } else {
+        stat(path, &buf2);
+        t_new = buf2.st_mtime;
+        if (t_new != t_now) {
+            t_error("%s __utimes_time64 failed", __func__);
+        }
+    }
+    remove(path);
+}
+
 int main(int argc, char *argv[])
 {
     utimes_0100();
     utimes_0200();
+    utimes_time64_0100();
     return t_status;
 }

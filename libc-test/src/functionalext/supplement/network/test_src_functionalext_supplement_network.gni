@@ -12,6 +12,7 @@
 # limitations under the License.
 
 functionalext_supplement_network_test = [
+  "__recvmmsg_time64",
   "__h_errno_location",
   "res_mkquery",
   "res_query",

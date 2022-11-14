@@ -20,6 +20,8 @@
 
 #include "test.h"
 
+extern int __semtimedop_time64(int, struct sembuf *, size_t, const struct timespec *);
+
 const char *path = "/data/tests/libc-test/src/file.txt";
 
 /**
@@ -102,10 +104,29 @@ void semtimedop_0200(void)
     }
 }
 
+/**
+ * @tc.name      : semtimedop_time64_0200
+ * @tc.desc      : System V semaphore operations with invalid parameters
+ * @tc.level     : Level 2
+ */
+void semtimedop_time64_0200(void)
+{
+    errno = 0;
+    int result = __semtimedop_time64(-1, NULL, -1, NULL);
+    if (result == 0) {
+        t_error("%s failed: result = %d\n", __func__, result);
+    }
+
+    if (errno == 0) {
+        t_error("%s failed: errno = %d\n", __func__, errno);
+    }
+}
+
 int main(int argc, char *argv[])
 {
     // semtimedop_0100();
     // semtimedop_0200();
+    // semtimedop_time64_0200();
 
     return t_status;
 }

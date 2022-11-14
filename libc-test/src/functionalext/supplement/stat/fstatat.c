@@ -20,6 +20,8 @@
 
 const int SUCCESS = 0;
 
+extern int __fstatat_time64(int, const char *__restrict, struct stat *__restrict, int);
+
 /**
  * @tc.name      : fstatat_0100
  * @tc.desc      : The parameter fd is equal to AT_FDCWD, the flag is 0,
@@ -98,10 +100,35 @@ void fstatat_0300(void)
     ptr = NULL;
 }
 
+/**
+ * @tc.name      : fstatat_time64_0100
+ * @tc.desc      : The parameter fd is equal to AT_FDCWD, the flag is 0,
+ *                 and the information of the file can be obtained.
+ * @tc.level     : Level 0
+ */
+void fstatat_time64_0100(void)
+{
+    const char *ptr = "fstatat_time64_test.txt";
+    struct stat st;
+    int fd = open(ptr, O_RDWR | O_CREAT);
+    EXPECT_TRUE("fstatat_0100", fd >= 0);
+    lseek(fd, 0, SEEK_SET);
+    int ret = __fstatat_time64(AT_FDCWD, ptr, &st, 0);
+    EXPECT_EQ("fstatat_0100", ret, SUCCESS);
+    uid_t uid = getuid();
+    EXPECT_EQ("fstatat_0100", st.st_uid, uid);
+    gid_t gid = getgid();
+    EXPECT_EQ("fstatat_0100", st.st_gid, gid);
+    close(fd);
+    remove(ptr);
+    ptr = NULL;
+}
+
 int main(int argc, char *argv[])
 {
     fstatat_0100();
     fstatat_0200();
     fstatat_0300();
+    fstatat_time64_0100();
     return t_status;
 }
