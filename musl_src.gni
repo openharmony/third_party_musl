@@ -2010,6 +2010,7 @@ musl_inc_root_files = [
 ]
 
 musl_src_porting_file = [
+  "arch/aarch64/syscall_arch.h",
   "arch/arm/bits/fenv.h",
   "arch/generic/bits/shm.h",
   "arch/generic/crtbrand.s",
@@ -2124,6 +2125,11 @@ musl_src_porting_file = [
   "src/ldso/arm/dlvsym.s",
   "src/ldso/riscv64/dlvsym.s",
   "src/ldso/x86_64/dlvsym.s",
+  "src/internal/vdso.c",
+  "src/time/clock_gettime.c",
+  "src/time/clock_getres.c",
+  "src/time/gettimeofday.c",
+  "src/time/time.c",
   "src/stdio/__fdopen.c",
 ]
 
