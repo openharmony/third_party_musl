@@ -51,14 +51,24 @@ static struct MallocDispatchType __ohos_malloc_hook_init_dispatch = {
 static char *__malloc_hook_shared_lib = "libnative_hook.z.so";
 static char *__malloc_hook_function_prefix = "ohos_malloc_hook";
 volatile atomic_llong ohos_malloc_hook_shared_library;
+static char *kMemTrackSharedLib = "libmemleak_tracker.so";
+static char *kMemTrackPrefix = "track";
+static char *kMemTrackPropertyEnable = "const.hiview.memleak_tracker.enable";
+static char *kMemTrackSign = "true";
+bool checkLoadMallocMemTrack = false;
 void* function_of_shared_lib[LAST_FUNCTION];
 static enum EnumHookMode __hook_mode = STEP_HOOK_MODE;
+static char __memleak_param_value[OHOS_PARAM_MAX_SIZE + 1] = {0};
 
 static void  get_native_hook_param(char *buf, unsigned int buf_len)
 {
 #ifdef OHOS_ENABLE_PARAMETER
 	const char *key =  MUSL_HOOK_PARAM_NAME;
 	unsigned int len = buf_len;
+	(void)SystemReadParam(kMemTrackPropertyEnable, __memleak_param_value, &len);
+	if (strncmp(__memleak_param_value, kMemTrackSign, strlen(kMemTrackSign)) == 0) {
+		checkLoadMallocMemTrack = true;
+	}
 	(void)SystemReadParam(key, buf, &len);
 #else
 	return;
@@ -213,6 +223,17 @@ static bool init_realloc_function(void* malloc_shared_library_handler, MallocRea
 	return true;
 }
 
+static bool init_malloc_usable_size_function(void* malloc_shared_library_handler, MallocMallocUsableSizeType* func, const char* prefix)
+{
+	char symbol[MAX_SYM_NAME_SIZE];
+	snprintf(symbol, sizeof(symbol), "%s_%s", prefix, "malloc_usable_size");
+	*func = (MallocMallocUsableSizeType)(dlsym(malloc_shared_library_handler, symbol));
+	if (*func == NULL) {
+		return false;
+	}
+	return true;
+}
+
 static bool init_hook_functions(void* shared_library_handler, struct MallocDispatchType* table, const char* prefix)
 {
 	if (!init_malloc_function(shared_library_handler, &table->malloc, prefix)) {
@@ -234,6 +255,9 @@ static bool init_hook_functions(void* shared_library_handler, struct MallocDispa
 		return false;
 	}
 	if (!init_memorytag_function(shared_library_handler, prefix)) {
+		return false;
+	}
+	if (!init_malloc_usable_size_function(shared_library_handler, &table->malloc_usable_size, prefix)) {
 		return false;
 	}
 	return true;
@@ -344,11 +368,11 @@ static bool is_empty_string(const char* str)
 	return true;
 }
 
-static void install_ohos_malloc_hook(struct musl_libc_globals* globals)
+static void install_ohos_malloc_hook(struct musl_libc_globals* globals, const char* shared_lib, const char* prefix)
 {
 	volatile void* shared_library_handle = (volatile void *)atomic_load_explicit(&ohos_malloc_hook_shared_library, memory_order_acquire);
 	assert(shared_library_handle == NULL || shared_library_handle == (volatile void*)-1);
-	shared_library_handle = (volatile void*)load_malloc_hook_shared_library(__malloc_hook_shared_lib, __malloc_hook_function_prefix, &globals->malloc_dispatch_table);
+	shared_library_handle = (volatile void*)load_malloc_hook_shared_library(shared_lib, prefix, &globals->malloc_dispatch_table);
 	if (shared_library_handle == NULL) {
 		// __musl_log(__MUSL_LOG_ERROR, "Can't load shared library '%s'\n", __malloc_hook_shared_lib);
 		return;
@@ -365,7 +389,11 @@ static void install_ohos_malloc_hook(struct musl_libc_globals* globals)
 
 static void* init_ohos_malloc_hook()
 {
-	install_ohos_malloc_hook(&__musl_libc_globals);
+	if (checkLoadMallocMemTrack) {
+		install_ohos_malloc_hook(&__musl_libc_globals, kMemTrackSharedLib, kMemTrackPrefix);
+	} else {
+		install_ohos_malloc_hook(&__musl_libc_globals, __malloc_hook_shared_lib, __malloc_hook_function_prefix);
+	}
 	return NULL;
 }
 
@@ -471,6 +499,10 @@ __attribute__((constructor(1))) static void __musl_initialize()
 		} else {
 			__hook_mode = STEP_HOOK_MODE;
 		}
+	}
+	volatile bool hook_disable = atomic_load_explicit(&__hook_enable_hook_flag, memory_order_acquire);
+	if (!hook_disable && checkLoadMallocMemTrack) {
+		init_ohos_malloc_hook();
 	}
 	__initialize_malloc();
 	errno = 0;
