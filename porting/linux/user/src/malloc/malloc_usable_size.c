@@ -11,7 +11,16 @@ extern size_t je_malloc_usable_size(void *p);
 
 hidden void *(*const __realloc_dep)(void *, size_t) = realloc;
 
+#ifdef HOOK_ENABLE
+size_t __libc_malloc_usable_size(void* p)
+#else
 size_t malloc_usable_size(void *p)
+#endif
+{
+	return internal_malloc_usable_size(p);
+}
+
+size_t internal_malloc_usable_size(void* p)
 {
 #ifdef USE_JEMALLOC
 	return je_malloc_usable_size(p);
