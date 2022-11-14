@@ -11,6 +11,8 @@ extern struct MallocDispatchType __libc_malloc_default_dispatch;
 
 extern volatile atomic_bool __hook_enable_hook_flag;
 
+extern bool checkLoadMallocMemTrack;
+
 enum EnumFunc {
 	INITIALIZE_FUNCTION,
 	FINALIZE_FUNCTION,
@@ -94,6 +96,9 @@ inline volatile const struct MallocDispatchType* get_current_dispatch_table()
 #ifdef HOOK_ENABLE
 	volatile const struct MallocDispatchType* ret = (struct MallocDispatchType *)atomic_load_explicit(&__musl_libc_globals.current_dispatch_table, memory_order_acquire);
 	if (ret != NULL) {
+		if (checkLoadMallocMemTrack) {
+			return ret;
+		}
 		if (!__get_global_hook_flag()) {
 			ret = NULL;
 		}

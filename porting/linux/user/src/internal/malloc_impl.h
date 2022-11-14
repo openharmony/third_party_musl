@@ -95,6 +95,8 @@ hidden void *internal_calloc(size_t m, size_t n);
 
 hidden void *internal_realloc(void *p, size_t n);
 
+hidden size_t internal_malloc_usable_size(void *p);
+
 #ifdef MALLOC_RED_ZONE
 hidden void chunk_checksum_set(struct chunk *c);
 
