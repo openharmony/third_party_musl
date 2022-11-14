@@ -16,6 +16,9 @@
 #include <pthread.h>
 #include "pthread_util.h"
 
+extern int __pthread_cond_timedwait_time64(pthread_cond_t *__restrict, 
+                            pthread_mutex_t *__restrict, const struct timespec *__restrict);
+
 // pthread_cond_clockwait
 static pthread_mutex_t c_mtx1 = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t c_cond1 = PTHREAD_COND_INITIALIZER;
@@ -87,6 +90,33 @@ void pthread_cond_timedwait_0020(void)
 
     ts.tv_nsec = NSEC_PER_SEC;
     EXPECT_EQ(pthread_cond_timedwait(&cond, &mutex, &ts), EINVAL);
+    EXPECT_EQ(pthread_mutex_unlock(&mutex), 0);
+    EXPECT_EQ(pthread_cond_destroy(&cond), 0);
+    EXPECT_EQ(pthread_mutex_destroy(&mutex), 0);
+}
+
+/**
+ * @tc.number    : pthread_cond_timedwait_time64_0010
+ * @tc.desc      : Test whether the pthread_cond_timedwait is normal
+ * @tc.level     : Level 0
+ */
+void pthread_cond_timedwait_time64_0010(void)
+{
+    pthread_condattr_t a;
+    EXPECT_EQ(pthread_condattr_init(&a), 0);
+    pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
+    EXPECT_EQ(pthread_cond_init(&cond, &a), 0);
+    pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+    struct timespec ts = {0};
+    EXPECT_EQ(pthread_mutex_lock(&mutex), 0);
+    EXPECT_EQ(clock_gettime(CLOCK_REALTIME, &ts), 0);
+
+    ts.tv_nsec += SLEEP_10_MS*MS_PER_S*MS_PER_S;
+    if (ts.tv_nsec >= MS_PER_S*MS_PER_S*MS_PER_S) {
+        ts.tv_nsec -= MS_PER_S*MS_PER_S*MS_PER_S;
+        ts.tv_sec += 1;
+    }
+    EXPECT_EQ(__pthread_cond_timedwait_time64(&cond, &mutex, &ts), ETIMEDOUT);
     EXPECT_EQ(pthread_mutex_unlock(&mutex), 0);
     EXPECT_EQ(pthread_cond_destroy(&cond), 0);
     EXPECT_EQ(pthread_mutex_destroy(&mutex), 0);
@@ -675,6 +705,7 @@ void timeoutnp_timewait_0020(void)
 TEST_FUN G_Fun_Array[] = {
     pthread_cond_timedwait_0010,
     pthread_cond_timedwait_0020,
+    pthread_cond_timedwait_time64_0010,
     pthread_cond_timedwait_monotonic_np_0010,
     pthread_cond_timeout_np_0010,
     pthread_cond_clockwait_0010,

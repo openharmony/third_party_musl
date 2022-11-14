@@ -24,6 +24,8 @@
 const int EXIT_CODE = 66;
 const int SLEEP_TIME = 2;
 
+extern pid_t __wait4_time64(pid_t, int *, int, struct rusage *);
+
 /**
  * @tc.name      : wait4_0100
  * @tc.desc      : Test the wait4 function to wait4 for the child process
@@ -78,10 +80,37 @@ void wait4_0200(void)
     }
 }
 
+/**
+ * @tc.name      : wait4_time64_0100
+ * @tc.desc      : Test the __wait4_time64 function to __wait4_time64 for the child process
+ * @tc.level     : Level 0
+ */
+void wait4_time64_0100(void)
+{
+    pid_t pid = fork();
+    if (pid > 0) {
+        int status = 0;
+        int options = 0;
+        struct rusage ru;
+        pid_t wait4_for_pind = __wait4_time64(pid, &status, options, &ru);
+        if (wait4_for_pind != pid) {
+            t_error("%s __wait4_time64 get pid is %d are not want %d\n", __func__, wait4_for_pind, pid);
+        }
+        if (status != 0) {
+            t_error("%s __wait4_time64 get status is %d are not 0\n", __func__, status);
+        }
+    } else if (pid == 0) {
+        sleep(1);
+        exit(0);
+    } else {
+        t_error("%s __wait4_time64 fork error\n");
+    }
+}
+
 int main(int argc, char *argv[])
 {
     wait4_0100();
-    sleep(SLEEP_TIME);
     wait4_0200();
+    wait4_time64_0100();
     return t_status;
 }

@@ -19,6 +19,8 @@
 #include <stdlib.h>
 #include "functionalext.h"
 
+extern int __lstat_time64(const char *__restrict, struct stat *__restrict);
+
 typedef void (*TEST_FUN)();
 
 /*
@@ -35,6 +37,26 @@ void lstat_0100(void)
     fwrite(str, sizeof(char), strlen(str), fptr);
     fseek(fptr, 0L, SEEK_SET);
     int32_t back = lstat(ptr, &statbuff);
+    EXPECT_EQ("lstat_0100", back, 0);
+    EXPECT_EQ("lstat_0100", statbuff.st_size, 17);
+    fclose(fptr);
+    remove(ptr);
+}
+
+/*
+ * @tc.name      : lstat_time64_0100
+ * @tc.desc      : Verify that the parameters are valid, get the file status successfully
+ * @tc.level     : Level 0
+ */
+void lstat_time64_0100(void)
+{
+    const char *ptr = "/data/tests/libc-test/src/functionalext/supplement/stattest.txt";
+    const char str[] = "this is a sample!";
+    FILE *fptr = fopen(ptr, "w+");
+    struct stat statbuff;
+    fwrite(str, sizeof(char), strlen(str), fptr);
+    fseek(fptr, 0L, SEEK_SET);
+    int32_t back = __lstat_time64(ptr, &statbuff);
     EXPECT_EQ("lstat_0100", back, 0);
     EXPECT_EQ("lstat_0100", statbuff.st_size, 17);
     fclose(fptr);
@@ -86,7 +108,7 @@ TEST_FUN G_Fun_Array[] = {
     lstat_0100,
     lstat_0200,
     lstat_0300,
-
+    lstat_time64_0100,
 };
 
 int main(int argc, char *argv[])

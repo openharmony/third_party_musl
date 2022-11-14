@@ -8,6 +8,8 @@
 #define TESTR(r, f, m) ( \
 	((r) = (f)) == 0 || (t_error("%s failed: %s (" m ")\n", #f, strerror(r)), 0) )
 
+extern int __sem_timedwait_time64(sem_t *__restrict, const struct timespec *__restrict);
+
 static sem_t sem1, sem2;
 
 static int seqno;
@@ -32,6 +34,14 @@ static void *start_sem_timedwait(void *arg)
 {
 	wait_cancel(arg);
 	sem_timedwait(&sem2, &(struct timespec){1, 0});
+	seqno = 2;
+	return 0;
+}
+
+static void *start_sem_timedwait_time64(void *arg)
+{
+	wait_cancel(arg);
+	__sem_timedwait_time64(&sem2, &(struct timespec){1, 0});
 	seqno = 2;
 	return 0;
 }
@@ -83,6 +93,16 @@ int main(void)
 	TESTR(r, pthread_join(td, &res), "joining canceled thread after blocking sem_timedwait");
 	TESTC(res == PTHREAD_CANCELED, "canceled thread exit status after blocking sem_timedwait");
 	TESTC(seqno == 1, "blocking sem_timedwait");
+
+	/* Cancellation on blocking __sem_timedwait_time64 */
+	seqno = 0;
+	sem_trywait(&sem2);
+	TESTR(r, pthread_create(&td, 0, start_sem_timedwait_time64, 0), "failed to create thread");
+	TESTR(r, pthread_cancel(td), "canceling");
+	sem_post(&sem1);
+	TESTR(r, pthread_join(td, &res), "joining canceled thread after blocking __sem_timedwait_time64");
+	TESTC(res == PTHREAD_CANCELED, "canceled thread exit status after blocking __sem_timedwait_time64");
+	TESTC(seqno == 1, "blocking __sem_timedwait_time64");
 
 	return t_status;
 }

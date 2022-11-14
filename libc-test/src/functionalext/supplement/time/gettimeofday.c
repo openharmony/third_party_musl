@@ -21,6 +21,8 @@
 
 const int SUCCESS = 0;
 
+extern int __gettimeofday_time64(struct timeval *__restrict, void *__restrict);
+
 /**
  * @tc.name      : gettimeofday_0100
  * @tc.desc      : Each parameter is valid, and the current system time can be obtained.
@@ -52,10 +54,30 @@ void gettimeofday_0200(void)
     EXPECT_EQ("gettimeofday_0200", returnflag, SUCCESS);
 }
 
+/**
+ * @tc.name      : gettimeofday_time64_0100
+ * @tc.desc      : Each parameter is valid, and the current system time can be obtained.
+ * @tc.level     : Level 0
+ */
+void gettimeofday_time64_0100(void)
+{
+    struct timeval tv;
+    char str[10];
+    system("date +%s > ./time.txt");
+    FILE *fptr = fopen("time.txt", "r");
+    fflush(fptr);
+    fread(str, sizeof(str), 1, fptr);
+    int sec = atoi(str);
+    int returnflag = __gettimeofday_time64(&tv, NULL);
+    EXPECT_EQ("gettimeofday_time64_0100", returnflag, SUCCESS);
+    EXPECT_EQ("gettimeofday_time64_0100", (long)sec, (long)tv.tv_sec);
+    remove("time.txt");
+}
+
 int main(int argc, char *argv[])
 {
     gettimeofday_0100();
     gettimeofday_0200();
-
+    gettimeofday_time64_0100();
     return t_status;
 }
