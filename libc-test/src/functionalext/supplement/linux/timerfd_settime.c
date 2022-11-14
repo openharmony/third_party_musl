@@ -23,6 +23,8 @@
 #define MICROSECONDS (1000000)
 #define DATA_TWO (2)
 
+extern int __timerfd_settime64(int, int, const struct itimerspec *, struct itimerspec *);
+
 void exception_handler(int sig)
 {
     exit(t_status);
@@ -79,9 +81,49 @@ void timerfd_settime_0200(void)
     timerfd_settime(-1, 0, NULL, NULL);
 }
 
+/**
+ * @tc.name      : timerfd_settime64_0100
+ * @tc.desc      : Start the timer specified by fd
+ * @tc.level     : Level 0
+ */
+void timerfd_settime64_0100(void)
+{
+    struct itimerspec its = {{0, 0}, {DATA_TWO, 0}};
+    struct itimerspec val;
+    int fd, result;
+
+    fd = timerfd_create(CLOCK_REALTIME, 0);
+    if (fd < 0) {
+        t_error("%s timerfd_create failed\n", __func__);
+        return;
+    }
+
+    result = __timerfd_settime64(fd, 0, &its, NULL);
+    if (result != 0) {
+        t_error("%s __timerfd_settime64 failed\n", __func__);
+        return;
+    }
+
+    result = usleep(MICROSECONDS);
+    if (result != 0) {
+        t_error("%s usleep failed\n", __func__);
+        return;
+    }
+
+    result = timerfd_gettime(fd, &val);
+    if (result != 0) {
+        t_error("%s timerfd_gettime failed\n", __func__);
+        return;
+    }
+    if (val.it_value.tv_nsec > NANOSECOND) {
+        t_error("%s timerfd error\n");
+    }
+}
+
 int main(int argc, char *argv[])
 {
     timerfd_settime_0100();
     timerfd_settime_0200();
+    timerfd_settime64_0100();
     return t_status;
 }

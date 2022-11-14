@@ -20,6 +20,8 @@
 
 static time_t gTime = 1659177614;
 
+extern char *__ctime64 (const time_t *);
+
 /**
  * @tc.name      : ctime_0100
  * @tc.desc      : according to different time zones,covert date and time to string
@@ -46,8 +48,35 @@ void ctime_0100(void)
     }
 }
 
+/**
+ * @tc.name      : ctime64_0100
+ * @tc.desc      : according to different time zones,covert date and time to string
+ * @tc.level     : Level 0
+ */
+void ctime64_0100(void)
+{
+    for (int32_t i = 0; i < (int32_t)(sizeof(test_asctime_data) / sizeof(test_asctime_data[0])); i++) {
+        const char *handlerChar = test_handle_path(test_asctime_data[i].tz);
+        if (!handlerChar) {
+            t_error("ctime_0100 failed: handlerChar is NULL\n");
+            continue;
+        }
+
+        setenv("TZ", handlerChar, 1);
+        tzset();
+        char *returnStr = __ctime64(&gTime);
+        if (returnStr == NULL) {
+            EXPECT_FALSE("ctime_0100", returnStr == NULL);
+            return;
+        }
+        returnStr[strlen(returnStr) - 1] = 0x00;
+        EXPECT_STREQ("ctime_0100", returnStr, test_asctime_data[i].result);
+    }
+}
+
 int main(void)
 {
     ctime_0100();
+    ctime64_0100();
     return t_status;
 }
