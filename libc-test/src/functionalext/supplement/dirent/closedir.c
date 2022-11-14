@@ -14,9 +14,12 @@
  */
 
 #include <dirent.h>
+#include <string.h>
+#include <malloc.h>
 #include "functionalext.h"
 
 #define MAXPATH 1000
+#define BUFFSIZE 4096
 
 /**
  * @tc.name      : closedir_0100
@@ -42,9 +45,13 @@ void closedir_0100(void)
  */
 void closedir_0200(void)
 {
-    DIR *dir = (DIR *)"/notexist";
     int ret = 0;
-    ret = closedir(dir);
+    DIR *dir = (DIR *)malloc(BUFFSIZE);
+    if (dir != NULL) {
+        // fill to set dir->fd = -1 (intentionally incorrect file descriptor)
+        memset(dir, 0xFF, BUFFSIZE);
+        ret = closedir(dir);
+    }
     EXPECT_EQ("closedir_0200", ret, -1);
 }
 
