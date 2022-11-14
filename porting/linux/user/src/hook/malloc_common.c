@@ -50,4 +50,14 @@ int munmap(void* addr, size_t length)
 		return MuslMalloc(munmap)(addr, length);
 	}
 }
+
+size_t malloc_usable_size(void* addr)
+{
+	volatile const struct MallocDispatchType* dispatch_table = get_current_dispatch_table();
+	if (__predict_false(dispatch_table != NULL)) {
+		return dispatch_table->malloc_usable_size(addr);
+	} else {
+		return MuslMalloc(malloc_usable_size)(addr);
+	}
+}
 #endif
