@@ -20,6 +20,8 @@
 #include <utime.h>
 #include "test.h"
 
+extern int __utime64(const char *, const struct utimbuf *);
+
 /**
  * @tc.name      : utime_0100
  * @tc.desc      : Specify file modification and access times
@@ -84,9 +86,41 @@ void utime_0200(void)
     remove(path);
 }
 
+/**
+ * @tc.name      : utime64_0100
+ * @tc.desc      : Specify file modification and access times
+ * @tc.level     : Level 0
+ */
+void utime64_0100(void)
+{
+    int fd;
+    char file[] = "/data/utime641.txt";
+    struct utimbuf ubuf;
+    struct stat info;
+
+    if ((fd = creat(file, S_IWUSR)) < 0) {
+        t_error("%s creat failed", __func__);
+    } else {
+        close(fd);
+        stat(file, &info);
+        ubuf.modtime = 0;
+        time(&ubuf.actime);
+        if (__utime64(file, &ubuf) != 0) {
+            t_error("%s __utime64 failed", __func__);
+        } else {
+            stat(file, &info);
+            if (info.st_mtim.tv_sec != 0) {
+                t_error("%s modify file time failed", __func__);
+            }
+        }
+    }
+    remove(file);
+}
+
 int main(int argc, char *argv[])
 {
     utime_0100();
     utime_0200();
+    utime64_0100();
     return t_status;
 }

@@ -9,6 +9,8 @@
 
 #define TEST(c, ...) ((c) ? 1 : (t_error(#c" failed: " __VA_ARGS__),0))
 
+extern int __stat_time64(const char *__restrict, struct stat *__restrict);
+
 int main(void)
 {
 	struct stat st;
@@ -16,6 +18,15 @@ int main(void)
 	time_t t;
 
 	if (TEST(stat(".",&st)==0, "errno = %s\n", strerror(errno))) {
+		TEST(S_ISDIR(st.st_mode), "\n");
+		TEST(st.st_nlink>0, "%ju\n", (uintmax_t)st.st_nlink);
+		t = time(0);
+		TEST(st.st_ctime<=t, "%jd > %jd\n", (intmax_t)st.st_ctime, (intmax_t)t);
+		TEST(st.st_mtime<=t, "%jd > %jd\n", (intmax_t)st.st_mtime, (intmax_t)t);
+		TEST(st.st_atime<=t, "%jd > %jd\n", (intmax_t)st.st_atime, (intmax_t)t);
+	}
+
+	if (TEST(__stat_time64(".",&st)==0, "errno = %s\n", strerror(errno))) {
 		TEST(S_ISDIR(st.st_mode), "\n");
 		TEST(st.st_nlink>0, "%ju\n", (uintmax_t)st.st_nlink);
 		t = time(0);

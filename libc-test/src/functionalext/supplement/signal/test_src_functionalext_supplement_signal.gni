@@ -32,4 +32,6 @@ functionalext_supplement_signal_test = [
   "__libc_current_sigrtmax",
   "__libc_current_sigrtmin",
   "getitimer",
+  "__getitimer_time64",
+  "__setitimer_time64",
 ]

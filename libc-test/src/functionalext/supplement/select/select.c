@@ -24,6 +24,8 @@
 #include <fcntl.h>
 #include "functionalext.h"
 
+extern int __select_time64(int, fd_set *__restrict, fd_set *__restrict, fd_set *__restrict, struct timeval *__restrict);
+
 const int32_t COUNT_ZERO = 0;
 const int32_t COUNT_FAILED = -1;
 
@@ -88,10 +90,31 @@ void select_0300(void)
     EXPECT_EQ("select_0300", result, COUNT_ZERO);
 }
 
+/**
+ * @tc.name      : select_time64_0100
+ * @tc.desc      : Verify that the monitoring descriptor is successful (valid parameters)
+ * @tc.level     : Level 0
+ */
+void select_time64_0100(void)
+{
+    struct timeval timeout;
+    timeout.tv_sec = 5;
+    timeout.tv_usec = 0;
+    fd_set readfds, writefds;
+    FD_ZERO(&readfds);
+    FD_ZERO(&writefds);
+    FD_SET(0, &readfds);
+    FD_SET(1, &writefds);
+    int result;
+    result = __select_time64(2, &readfds, &writefds, 0, &timeout);
+    EXPECT_TRUE("select_time64_0100", result > 0);
+}
+
 int main(void)
 {
     select_0100();
     select_0200();
     select_0300();
+    select_time64_0100();
     return t_status;
 }

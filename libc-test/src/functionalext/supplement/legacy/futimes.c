@@ -22,6 +22,8 @@
 const int FAIL = -1;
 const int SUCCESS = 0;
 
+extern int __futimes_time64(int, const struct timeval [2]);
+
 /**
  * @tc.name      : futimes_0100
  * @tc.desc      : All parameters are valid, TV is not 0, and futimes can modify the timestamp of the file.
@@ -70,10 +72,31 @@ void futimes_0300(void)
     EXPECT_EQ("futimes_0300", ret, FAIL);
 }
 
+/**
+ * @tc.name      : futimes_time64_0100
+ * @tc.desc      : All parameters are valid, TV is not 0, and futimes can modify the timestamp of the file.
+ * @tc.level     : Level 0
+ */
+void futimes_time64_0100(void)
+{
+    int ret = -1;
+    struct stat s;
+    static struct timeval tv[2] = {{0L, 0L}, {0L, 0L}};
+    tv[0].tv_sec = s.st_atime;
+    tv[0].tv_usec = 0;
+    tv[1].tv_sec = s.st_mtime;
+    tv[1].tv_usec = 0;
+    int fd = open("futimes.txt", O_RDWR | O_CREAT, 777);
+    ret = __futimes_time64(fd, tv);
+    EXPECT_EQ("futimes_time64_0100", ret, SUCCESS);
+    remove("futimes.txt");
+}
+
 int main(int argc, char *argv[])
 {
     futimes_0100();
     futimes_0200();
     futimes_0300();
+    futimes_time64_0100();
     return t_status;
 }

@@ -21,6 +21,8 @@
 static time_t gTime = 1659177614;
 static int16_t gBufferSize = 256;
 
+extern char *__ctime64_r (const time_t *, char *);
+
 /**
  * @tc.name      : ctime_r_0100
  * @tc.desc      : according to different time zones, covert date and time to string
@@ -49,8 +51,37 @@ void ctime_r_0100(void)
     }
 }
 
+/**
+ * @tc.name      : ctime64_r_0100
+ * @tc.desc      : according to different time zones, covert date and time to string
+ * @tc.level     : Level 0
+ */
+void ctime64_r_0100(void)
+{
+    for (int32_t i = 0;i < (int32_t)(sizeof(test_asctime_data) / sizeof(test_asctime_data[0])); i++) {
+        const char *handlerChar = test_handle_path(test_asctime_data[i].tz);
+        if (!handlerChar) {
+            t_error("ctime64_r_0100 failed: handlerChar is NULL\n");
+            continue;
+        }
+
+        setenv("TZ", handlerChar, 1);
+        tzset();
+        char s[gBufferSize];
+        char *returnStr = __ctime64_r(&gTime, s);
+        if (returnStr == NULL) {
+            EXPECT_FALSE("ctime64_r_0100", returnStr == NULL);
+            return;
+        }
+        returnStr[strlen(returnStr) - 1] = 0x00;
+        EXPECT_STREQ("ctime64_r_0100", returnStr, test_asctime_data[i].result);
+        EXPECT_STREQ("ctime64_r_0100", returnStr, s);
+    }
+}
+
 int main(void)
 {
     ctime_r_0100();
+    ctime64_r_0100();
     return t_status;
 }

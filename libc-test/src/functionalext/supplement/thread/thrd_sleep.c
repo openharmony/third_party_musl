@@ -18,6 +18,8 @@
 #include <threads.h>
 #include "test.h"
 
+extern int __thrd_sleep_time64(const struct timespec *, struct timespec *);
+
 static int count = 0;
 
 void exception_handler(int sig)
@@ -89,10 +91,24 @@ void thrd_sleep_0300(void)
     thrd_sleep(NULL, NULL);
 }
 
+/**
+ * @tc.name      : thrd_sleep_time64_0200
+ * @tc.desc      : Negative value
+ * @tc.level     : Level 1
+ */
+void thrd_sleep_time64_0200(void)
+{
+    int result = __thrd_sleep_time64(&(struct timespec){.tv_sec = -1}, NULL);
+    if (result != -2) {
+        t_error("%s negative value", __func__);
+    }
+}
+
 int main(int argc, char *argv[])
 {
     thrd_sleep_0100();
     thrd_sleep_0200();
     thrd_sleep_0300();
+    thrd_sleep_time64_0200();
     return t_status;
 }

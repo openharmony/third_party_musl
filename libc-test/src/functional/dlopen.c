@@ -47,7 +47,7 @@ int main(int argc, char *argv[])
 		t_error("reopened dso should have the same symbols, want %p, got %p\n", i, i2);
 	if (*i2 != 2)
 		t_error("reopened dso should have the same symbols, want i2==2, got i2==%d\n", *i2);
-	if (!dlclose(g))
+	if (dlclose(g))
 		t_error("dlclose failed: %s\n", dlerror());
 	if (dlclose(h))
 		t_error("dlclose failed: %s\n", dlerror());
