@@ -456,7 +456,9 @@ static void decode_vec(size_t *v, size_t *a, size_t cnt)
 	size_t i;
 	for (i=0; i<cnt; i++) a[i] = 0;
 	for (; v[0]; v+=2) if (v[0]-1<cnt-1) {
-		a[0] |= 1UL<<v[0];
+		if (v[0] < 8*sizeof(long)) {
+			a[0] |= 1UL<<v[0];
+		}
 		a[v[0]] = v[1];
 	}
 }
@@ -2071,6 +2073,139 @@ static void do_mips_relocs(struct dso *p, size_t *got)
 	}
 }
 
+static uint8_t* sleb128_decoder(uint8_t* current, uint8_t* end, size_t* value)
+{    
+	size_t result = 0;
+	static const size_t size = CHAR_BIT * sizeof(result);
+
+	size_t shift = 0;
+	uint8_t byte;
+
+	do {
+		if (current >= end) {
+			a_crash();
+		}
+
+		byte = *current++;
+		result |= ((size_t)(byte & 127) << shift);
+		shift += 7;
+	} while (byte & 128);
+
+	if (shift < size && (byte & 64)) {
+		result |= -((size_t)(1) << shift);
+	}
+
+	*value = result;
+	
+	return current;
+}
+
+static void do_android_relocs(struct dso *p, size_t dt_name, size_t dt_size)
+{
+	size_t android_rel_addr = 0, android_rel_size = 0;
+	uint8_t *android_rel_curr, *android_rel_end;
+
+	search_vec(p->dynv, &android_rel_addr, dt_name);
+	search_vec(p->dynv, &android_rel_size, dt_size);
+
+	if (!android_rel_addr || (android_rel_size < 4)) {
+		return;
+	}
+
+	android_rel_curr = laddr(p, android_rel_addr);
+	if (memcmp(android_rel_curr, "APS2", ANDROID_REL_SIGN_SIZE)) {
+		return;
+	}
+
+	android_rel_curr += ANDROID_REL_SIGN_SIZE;
+	android_rel_size -= ANDROID_REL_SIGN_SIZE;
+
+	android_rel_end = android_rel_curr + android_rel_size;
+	
+	size_t relocs_num;
+	size_t rel[3] = {0};
+
+	android_rel_curr = sleb128_decoder(android_rel_curr, android_rel_end, &relocs_num);
+	android_rel_curr = sleb128_decoder(android_rel_curr, android_rel_end, &rel[0]);
+
+	for (size_t i = 0; i < relocs_num;) {
+
+		size_t group_size, group_flags;
+
+		android_rel_curr = sleb128_decoder(android_rel_curr, android_rel_end, &group_size);
+		android_rel_curr = sleb128_decoder(android_rel_curr, android_rel_end, &group_flags);
+
+		size_t group_r_offset_delta = 0;
+
+		if (group_flags & RELOCATION_GROUPED_BY_OFFSET_DELTA_FLAG) {
+			android_rel_curr = sleb128_decoder(android_rel_curr, android_rel_end, &group_r_offset_delta);
+		}
+		
+		if (group_flags & RELOCATION_GROUPED_BY_INFO_FLAG) {
+			android_rel_curr = sleb128_decoder(android_rel_curr, android_rel_end, &rel[1]);
+		}
+
+		const size_t addend_flags = group_flags & (RELOCATION_GROUP_HAS_ADDEND_FLAG | RELOCATION_GROUPED_BY_ADDEND_FLAG);
+
+		if (addend_flags == RELOCATION_GROUP_HAS_ADDEND_FLAG) {
+		} else if (addend_flags == (RELOCATION_GROUP_HAS_ADDEND_FLAG | RELOCATION_GROUPED_BY_ADDEND_FLAG)) {
+			size_t addend;
+			android_rel_curr = sleb128_decoder(android_rel_curr, android_rel_end, &addend);
+			rel[2] += addend;
+		} else {
+			rel[2] = 0;
+		}
+
+		for (size_t j = 0; j < group_size; j++) {
+			if (group_flags & RELOCATION_GROUPED_BY_OFFSET_DELTA_FLAG) {
+				rel[0] += group_r_offset_delta;
+			} else {
+				size_t offset_detla;
+				android_rel_curr = sleb128_decoder(android_rel_curr, android_rel_end, &offset_detla);
+
+				rel[0] += offset_detla;
+			}
+
+			if ((group_flags & RELOCATION_GROUPED_BY_INFO_FLAG) == 0) {
+				android_rel_curr = sleb128_decoder(android_rel_curr, android_rel_end, &rel[1]);
+			}
+
+			if (addend_flags == RELOCATION_GROUP_HAS_ADDEND_FLAG) {
+				size_t addend;
+				android_rel_curr = sleb128_decoder(android_rel_curr, android_rel_end, &addend);
+				rel[2] += addend;
+			}
+
+			if (dt_name == DT_ANDROID_REL) {
+				LD_LOGI("do_android_relocs REL %{public}x %{public}x", rel[0], rel[1]);
+				do_relocs(p, rel, sizeof(size_t)*2, 2);
+			} else {
+				LD_LOGI("do_android_relocs RELA %{public}x %{public}x %{public}x", rel[0], rel[1], rel[2]);
+				do_relocs(p, rel, sizeof(size_t)*3, 3);
+			}
+		}
+
+		i += group_size;
+	}
+}
+
+static void do_relr_relocs(struct dso *dso, size_t *relr, size_t relr_size)
+{
+	unsigned char *base = dso->base;
+	size_t *reloc_addr;
+	for (; relr_size; relr++, relr_size-=sizeof(size_t))
+		if ((relr[0]&1) == 0) {
+			reloc_addr = laddr(dso, relr[0]);
+			*reloc_addr++ += (size_t)base;
+		} else {
+			int i = 0;
+			for (size_t bitmap=relr[0]; (bitmap>>=1); i++)
+				if (bitmap&1)
+					reloc_addr[i] += (size_t)base;
+			reloc_addr += 8*sizeof(size_t)-1;
+		}
+}
+
 static void reloc_all(struct dso *p, const dl_extinfo *extinfo)
 {
 	ssize_t relro_fd_offset = 0;
@@ -2085,6 +2220,11 @@ static void reloc_all(struct dso *p, const dl_extinfo *extinfo)
 			2+(dyn[DT_PLTREL]==DT_RELA));
 		do_relocs(p, laddr(p, dyn[DT_REL]), dyn[DT_RELSZ], 2);
 		do_relocs(p, laddr(p, dyn[DT_RELA]), dyn[DT_RELASZ], 3);
+		if (!DL_FDPIC)
+			do_relr_relocs(p, laddr(p, dyn[DT_RELR]), dyn[DT_RELRSZ]);
+
+		do_android_relocs(p, DT_ANDROID_REL, DT_ANDROID_RELSZ);
+		do_android_relocs(p, DT_ANDROID_RELA, DT_ANDROID_RELASZ);
 
 		if (head != &ldso && p->relro_start != p->relro_end &&
 			mprotect(laddr(p, p->relro_start), p->relro_end-p->relro_start, PROT_READ)
