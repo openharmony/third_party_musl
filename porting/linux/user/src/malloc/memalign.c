@@ -38,11 +38,6 @@ void *__memalign(size_t align, size_t len)
 	struct chunk *c = MEM_TO_CHUNK(mem);
 	struct chunk *n = MEM_TO_CHUNK(new);
 
-#ifdef MUSL_ITERATE_AND_STATS_API
-	__pop_chunk(c);
-	__push_chunk(n);
-#endif
-
 	if (IS_MMAPPED(c)) {
 		/* Apply difference between aligned and original
 		 * address to the "extra" field of mmapped chunk.
