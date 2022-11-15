@@ -57,7 +57,6 @@ declare_args() {
   if (!is_standard_system) {
     enable_musl_log = false
   }
-  musl_iterate_and_stats_api = true
   musl_secure_level = 1
 }
 
