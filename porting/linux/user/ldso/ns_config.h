@@ -62,6 +62,7 @@ typedef struct _ns_configor_ {
   char *(*get_permitted_paths)(const char *ns_name);
   char *(*get_asan_permitted_paths)(const char *ns_name);
   bool (*get_separated)(const char *ns_name);
+  bool (*get_ignore_global_library)(const char *ns_name);
   strlist *(*get_inherits)(const char *ns_name);
   char *(*get_allowed_libs)(const char *ns_name);
   char *(*get_inherit_shared_libs)(const char *ns_name, const char *inherited_ns_name);
