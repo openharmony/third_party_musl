@@ -361,6 +361,7 @@ static ns_configor g_configor;
 #define ATTR_NS_PERMITTED_PATHS "permitted.paths"         /* when separated, permitted dir paths of libs, including sub dirs */
 #define ATTR_NS_INHERITS "inherits"          /* inherited namespace */
 #define ATTR_NS_SEPARATED "separated"         /* if separated */
+#define ATTR_NS_IGNORE_GLOBAL_LIBRARY "ignore_global_library"  /* when true, RTLD_GLOBAL will be invalid in current ns. */
 #define ATTR_ADDED_NSLIST "added.nslist"      /* all namespace names except default */
 #define ATTR_NS_DEFAULT "default"           /* default namespace name */
 #define ATTR_NS_ACQUIESCENCE "acquiescence"           /* acquiescence section name */
@@ -598,7 +599,22 @@ static bool config_get_separated(const char *ns_name)
     if (val && !strcmp("true", val)) return true;
     return false;  /* default false */
 }
-
+/* get ignore_global_library */
+static bool config_get_ignore_global_library(const char *ns_name)
+{
+    if (ns_name == NULL) {
+        return false;
+    }
+    config_key_join(ATTR_NS_PREFIX, true);
+    config_key_join(".", false);
+    config_key_join(ns_name, false);
+    config_key_join(".", false);
+    char *key = config_key_join(ATTR_NS_IGNORE_GLOBAL_LIBRARY, false);
+    char *val = config_get_value(key);
+    strlwc(val);
+    if (val && !strcmp("true", val)) return true;
+    return false;  /* default false */
+}
 /* get allowed libs */
 static char *config_get_allowed_libs(const char *ns_name)
 {
@@ -648,6 +664,7 @@ ns_configor *configor_init()
     g_configor.get_permitted_paths = config_get_permitted_paths;
     g_configor.get_asan_permitted_paths = config_get_asan_permitted_paths;
     g_configor.get_separated = config_get_separated;
+    g_configor.get_ignore_global_library = config_get_ignore_global_library;
     g_configor.get_inherits = config_get_inherits;
     g_configor.get_allowed_libs = config_get_allowed_libs;
     g_configor.get_inherit_shared_libs = config_get_inherit_shared_libs;
