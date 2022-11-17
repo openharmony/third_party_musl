@@ -43,6 +43,8 @@ static struct MallocDispatchType __ohos_malloc_hook_init_dispatch = {
 	.free = MuslMalloc(free),
 	.mmap = MuslMalloc(mmap),
 	.munmap = MuslMalloc(munmap),
+	.calloc = MuslMalloc(calloc),
+	.realloc = MuslMalloc(realloc),
 };
 #define MAX_SYM_NAME_SIZE 1000
 #define MAX_PROC_NAME_SIZE 256
@@ -199,6 +201,28 @@ static bool init_memorytag_function(void* malloc_shared_library_handler, const c
 	return true;
 }
 
+static bool init_calloc_function(void* malloc_shared_library_handler, MallocCallocType* func, const char* prefix)
+{
+	char symbol[MAX_SYM_NAME_SIZE];
+	snprintf(symbol, sizeof(symbol), "%s_%s", prefix, "calloc");
+	*func = (MallocCallocType)(dlsym(malloc_shared_library_handler, symbol));
+	if (*func == NULL) {
+		return false;
+	}
+	return true;
+}
+
+static bool init_realloc_function(void* malloc_shared_library_handler, MallocReallocType* func, const char* prefix)
+{
+	char symbol[MAX_SYM_NAME_SIZE];
+	snprintf(symbol, sizeof(symbol), "%s_%s", prefix, "realloc");
+	*func = (MallocReallocType)(dlsym(malloc_shared_library_handler, symbol));
+	if (*func == NULL) {
+		return false;
+	}
+	return true;
+}
+
 static bool init_malloc_usable_size_function(void* malloc_shared_library_handler, MallocMallocUsableSizeType* func, const char* prefix)
 {
 	char symbol[MAX_SYM_NAME_SIZE];
@@ -222,6 +246,12 @@ static bool init_hook_functions(void* shared_library_handler, struct MallocDispa
 		return false;
 	}
 	if (!init_munmap_function(shared_library_handler, &table->munmap, prefix)) {
+		return false;
+	}
+	if (!init_calloc_function(shared_library_handler, &table->calloc, prefix)) {
+		return false;
+	}
+	if (!init_realloc_function(shared_library_handler, &table->realloc, prefix)) {
 		return false;
 	}
 	if (!init_memorytag_function(shared_library_handler, prefix)) {
