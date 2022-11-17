@@ -25,6 +25,8 @@ void exception_handler(int sig)
     exit(t_status);
 }
 
+extern int __clock_adjtime64(clockid_t, struct timex *);
+
 /**
  * @tc.name      : clock_adjtime_0100
  * @tc.desc      : Verify that the kernel time can be adjusted (all parameters are valid, clock_id is CLOCK_REALTIME)
@@ -98,6 +100,20 @@ void clock_adjtime_0500(void)
     EXPECT_EQ("clock_adjtime_0500", errno, EFAULT);
 }
 
+/**
+ * @tc.name      : clock_adjtime64_0100
+ * @tc.desc      : Verify that the kernel time can be adjusted (all parameters are valid, clock_id is CLOCK_REALTIME)
+ * @tc.level     : Level 0
+ */
+void clock_adjtime64_0100(void)
+{
+    struct timex tx;
+    memset(&tx, 0, sizeof(tx));
+
+    int result = __clock_adjtime64(CLOCK_REALTIME, &tx);
+    EXPECT_NE("clock_adjtime64_0100", result, -1);
+}
+
 int main(int argc, char *argv[])
 {
     clock_adjtime_0100();
@@ -105,5 +121,6 @@ int main(int argc, char *argv[])
     clock_adjtime_0300();
     clock_adjtime_0400();
     clock_adjtime_0500();
+    clock_adjtime64_0100();
     return t_status;
 }

@@ -17,6 +17,8 @@
 #include <time.h>
 #include "functionalext.h"
 
+struct tm *__gmtime64_r (const time_t *__restrict, struct tm *__restrict);
+
 struct gmtime_r_struct {
     const char *tz;
     const char *result;
@@ -509,8 +511,52 @@ void gmtime_r_0100(void)
     }
 }
 
+/**
+ * @tc.name      : gmtime64_r_0100
+ * @tc.desc      : according to different time zones, convert date and time to GMT time
+ * @tc.level     : Level 0
+ */
+void gmtime64_r_0100(void)
+{
+    for (int32_t i = 0; i < (int32_t)(sizeof(gResultData) / sizeof(gResultData[0])); i++) {
+        const char *tz = gResultData[i].tz;
+        const char *handlerChar;
+#ifdef TIME_ZONE_SUB_TAG
+        char *str = strrchr(tz, TIME_ZONE_SUB_TAG);
+        if (str) {
+            handlerChar = ++str;
+        } else {
+            handlerChar = tz;
+        }
+#else
+        handlerChar = tz;
+#endif
+        setenv("TZ", handlerChar, 1);
+        tzset();
+        struct tm res = {0};
+        struct tm *gmtm = __gmtime64_r(&gTime, &res);
+        char buff[gBufferSize];
+        int cnt = sprintf(buff,
+            "%d-%d-%d %d:%d:%d wday=%d,yday=%d,isdst=%d,gmtoff=%ld,zone=%s",
+            (gmtm->tm_year + gYearBase),
+            gmtm->tm_mon,
+            gmtm->tm_mday,
+            gmtm->tm_hour,
+            gmtm->tm_min,
+            gmtm->tm_sec,
+            gmtm->tm_wday,
+            gmtm->tm_yday,
+            gmtm->tm_isdst,
+            gmtm->tm_gmtoff,
+            gmtm->tm_zone);
+        EXPECT_TRUE("gmtime64_r_0100", cnt > 0);
+        EXPECT_STREQ("gmtime64_r_0100", gResultData[i].result, buff);
+    }
+}
+
 int main(void)
 {
     gmtime_r_0100();
+    gmtime64_r_0100();
     return t_status;
 }

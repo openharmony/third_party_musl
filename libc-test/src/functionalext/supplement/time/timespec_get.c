@@ -19,6 +19,8 @@
 
 #define NANOSECOND (1000000000)
 
+extern int __timespec_get_time64(struct timespec *, int);
+
 /**
  * @tc.name      : timespec_get_0100
  * @tc.desc      : Base is not TIME_UTC
@@ -50,9 +52,27 @@ void timespec_get_0200(void)
     }
 }
 
+/**
+ * @tc.name      : timespec_get_time64_0200
+ * @tc.desc      : Base is TIME_UTC
+ * @tc.level     : Level 1
+ */
+void timespec_get_time64_0200(void)
+{
+    struct timespec ts;
+    int result = __timespec_get_time64(&ts, TIME_UTC);
+    if (result != TIME_UTC) {
+        t_error("%s __timespec_get_time64 failed, result is %d", __func__, result);
+    }
+    if (ts.tv_nsec < 0 || ts.tv_nsec >= NANOSECOND) {
+        t_error("%s ts invalid", __func__);
+    }
+}
+
 int main(int argc, char *argv[])
 {
     timespec_get_0100();
     timespec_get_0200();
+    timespec_get_time64_0200();
     return t_status;
 }

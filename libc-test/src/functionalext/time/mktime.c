@@ -20,6 +20,8 @@
 
 static time_t gTime = 1659177614;
 
+extern time_t __mktime64 (struct tm *);
+
 /**
  * @tc.name      : mktime_0100
  * @tc.desc      : according to different time zones, convert time to seconds in duration since 1970-1-1
@@ -46,8 +48,35 @@ void mktime_0100(void)
     }
 }
 
+/**
+ * @tc.name      : mktime64_0100
+ * @tc.desc      : according to different time zones, convert time to seconds in duration since 1970-1-1
+ * @tc.level     : Level 0
+ */
+void mktime64_0100(void)
+{
+    for (int32_t i = 0; i < (int32_t)(sizeof(test_mktime_data) / sizeof(test_mktime_data[0])); i++) {
+        const char *handlerChar = test_handle_path(test_mktime_data[i].tz);
+        if (!handlerChar) {
+            t_error("mktime64_0100 failed: handlerChar is NULL\n");
+            continue;
+        }
+
+        setenv("TZ", handlerChar, 1);
+        tzset();
+        struct tm *timeptr = localtime(&gTime);
+        if (!timeptr) {
+            EXPECT_PTRNE("mktime64_0100", timeptr, NULL);
+            return;
+        }
+        time_t mk = __mktime64(timeptr);
+        EXPECT_EQ("mktime64_0100", mk, test_mktime_data[i].result);
+    }
+}
+
 int main(void)
 {
     mktime_0100();
+    mktime64_0100();
     return t_status;
 }

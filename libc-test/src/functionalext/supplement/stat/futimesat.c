@@ -20,6 +20,8 @@
 
 const char *path = "/data";
 
+extern int __futimesat_time64(int, const char *, const struct timeval [2]);
+
 /**
  * @tc.name      : futimesat_0100
  * @tc.desc      : Change timestamps of a file relative to a directory file descriptor
@@ -127,11 +129,41 @@ void futimesat_0400(void)
     }
 }
 
+/**
+ * @tc.name      : futimesat_time64_0200
+ * @tc.desc      : Test the return value of the function when timeval is NULL
+ * @tc.level     : Level 1
+ */
+void futimesat_time64_0200(void)
+{
+    int dir_fd = open(path, O_RDONLY | O_DIRECTORY);
+    if (dir_fd < 0) {
+        t_error("%s open failed\n", __func__);
+    }
+
+    int fd = openat(dir_fd, "test.txt", O_CREAT | O_RDWR | O_EXCL, 0666);
+    if (fd < 0) {
+        t_error("%s openat failed\n", __func__);
+    }
+
+    int result = __futimesat_time64(dir_fd, "test.txt", NULL);
+    if (result != 0) {
+        t_error("%s __futimesat_time64 failed\n", __func__);
+    }
+
+    if (unlinkat(dir_fd, "test.txt", 0) != 0) {
+        t_error("%s unlinkat failed\n", __func__);
+    }
+
+    close(dir_fd);
+}
+
 int main(int argc, char *argv[])
 {
     futimesat_0100();
     futimesat_0200();
     futimesat_0300();
     futimesat_0400();
+    futimesat_time64_0200();
     return t_status;
 }
