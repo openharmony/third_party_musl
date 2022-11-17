@@ -313,8 +313,6 @@ template("musl_libs") {
         "src/string/strcmp.c",
         "src/string/strlen.c",
         "src/math/sincosf.c",
-        "src/math/sinf.c",
-        "src/math/cosf.c",
         "src/math/expf.c",
         "src/math/exp2f.c",
         "src/math/exp2l.c",
@@ -350,8 +348,6 @@ template("musl_libs") {
         "src/string/strnlen.c",
         "src/string/strncmp.c",
         "src/math/sincosf.c",
-        "src/math/sinf.c",
-        "src/math/cosf.c",
       ]
     } else if (musl_arch == "x86_64") {
       sources_orig -= [ "src/thread/${musl_arch}/__set_thread_area.s" ]
@@ -376,7 +372,6 @@ template("musl_libs") {
     }
     if (musl_arch == "arm") {
       sources += [
-        "$OPTRTDIR/math/cosf.c",
         "$OPTRTDIR/math/exp2.c",
         "$OPTRTDIR/math/exp2f.c",
         "$OPTRTDIR/math/exp2f_data.c",
@@ -393,7 +388,6 @@ template("musl_libs") {
         "$OPTRTDIR/math/powf.c",
         "$OPTRTDIR/math/sincosf.c",
         "$OPTRTDIR/math/sincosf_data.c",
-        "$OPTRTDIR/math/sinf.c",
         "$OPTRTDIR/string/arm/memchr.S",
         "$OPTRTDIR/string/arm/memcpy.S",
         "$OPTRTDIR/string/arm/memset.S",
@@ -409,10 +403,8 @@ template("musl_libs") {
       ]
     } else if (musl_arch == "aarch64") {
       sources += [
-        "$OPTRTDIR/math/cosf.c",
         "$OPTRTDIR/math/sincosf.c",
         "$OPTRTDIR/math/sincosf_data.c",
-        "$OPTRTDIR/math/sinf.c",
       ]
       if (defined(ARM_FEATURE_SVE)) {
         sources += [
