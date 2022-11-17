@@ -16,6 +16,8 @@
 #include <sys/timex.h>
 #include "functionalext.h"
 
+extern int __adjtimex_time64(struct timex *);
+
 const int32_t NUM_NEG = -1;
 
 /**
@@ -46,9 +48,38 @@ void adjtimex_0100(void)
     EXPECT_NE("adjtimex_0100", result, NUM_NEG);
 }
 
+/**
+ * @tc.name      : adjtimex_time64_0100
+ * @tc.desc      : Verify the time to tune the kernel.
+ * @tc.level     : Level 0
+ */
+void adjtimex_time64_0100(void)
+{
+    struct timex tx;
+    tx.offset = ADJ_OFFSET;
+    tx.tick = ADJ_TICK;
+    tx.maxerror = ADJ_MAXERROR;
+    tx.esterror = ADJ_ESTERROR;
+    tx.constant = ADJ_TIMECONST;
+    tx.freq = ADJ_FREQUENCY;
+    tx.status = ADJ_STATUS;
+    tx.precision = 1;
+    tx.tolerance = 1;
+    tx.ppsfreq = 1;
+    tx.jitter = 1;
+    tx.stabil = 1;
+    tx.jitcnt = 1;
+    tx.calcnt = 1;
+    tx.errcnt = 1;
+    tx.stbcnt = 1;
+    int result = __adjtimex_time64(&tx);
+    EXPECT_NE("adjtimex_time64_0100", result, NUM_NEG);
+}
+
 int main(int argc, char *argv[])
 {
     adjtimex_0100();
+    adjtimex_time64_0100();
 
     return t_status;
 }

@@ -16,6 +16,8 @@
 #include <time.h>
 #include "functionalext.h"
 
+extern int __clock_getres_time64 (clockid_t, struct timespec *);
+
 /**
  * @tc.name      : clock_getres_0100
  * @tc.desc      : Verify that the resolution in the specified poem can be found (the parameter is CLOCK_REALTIME)
@@ -76,6 +78,18 @@ void clock_getres_0500(void)
     EXPECT_EQ("clock_getres_0500", result, -1);
 }
 
+/**
+ * @tc.name      : clock_getres_time64_0100
+ * @tc.desc      : Verify that the resolution in the specified poem can be found (the parameter is CLOCK_REALTIME)
+ * @tc.level     : Level 0
+ */
+void clock_getres_time64_0100(void)
+{
+    struct timespec ts;
+    int result = __clock_getres_time64(CLOCK_REALTIME, &ts);
+    EXPECT_EQ("clock_getres_time64_0100", result, 0);
+}
+
 int main(void)
 {
     clock_getres_0100();
@@ -83,5 +97,6 @@ int main(void)
     clock_getres_0300();
     clock_getres_0400();
     clock_getres_0500();
+    clock_getres_time64_0100();
     return t_status;
 }

@@ -23,6 +23,8 @@
 #define Nanoseconds (1000000000)
 static int count = 0;
 
+extern int __timer_gettime64(timer_t, struct itimerspec *);
+
 void timerHandler(int sig)
 {
     count++;
@@ -96,9 +98,23 @@ void timer_gettime_0200(void)
     }
 }
 
+/**
+ * @tc.name      : timer_gettime64_0200
+ * @tc.desc      : The return value of the function when the parameter is abnormal
+ * @tc.level     : Level 2
+ */
+void timer_gettime64_0200(void)
+{
+    int result = __timer_gettime64(NULL, NULL);
+    if (result != -1 && errno != EINVAL) {
+        t_error("%s failed result = %d", __func__, result);
+    }
+}
+
 int main(int argc, char *argv[])
 {
     timer_gettime_0100();
     timer_gettime_0200();
+    timer_gettime64_0200();
     return t_status;
 }

@@ -74,6 +74,7 @@ functional_list = [
   "udiv",
   "ungetc",
   "utime",
+  "utime64",
   "vfork",
   "wcsstr",
   "wcstol",

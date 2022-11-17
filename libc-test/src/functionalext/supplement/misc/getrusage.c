@@ -16,6 +16,8 @@
 #include <sys/resource.h>
 #include "functionalext.h"
 
+extern int __getrusage_time64 (int, struct rusage *);
+
 /**
  * @tc.name      : getrusage_0100
  * @tc.desc      : Verify the program running time (parameter is RUSAGE_SELF)
@@ -76,6 +78,18 @@ void getrusage_0500(void)
     EXPECT_EQ("getrusage_0500", result, -1);
 }
 
+/**
+ * @tc.name      : getrusage_time64_0100
+ * @tc.desc      : Verify the program running time (parameter is RUSAGE_SELF)
+ * @tc.level     : Level 0
+ */
+void getrusage_time64_0100(void)
+{
+    struct rusage usage;
+    int result = __getrusage_time64(RUSAGE_SELF, &usage);
+    EXPECT_EQ("getrusage_time64_0100", result, 0);
+}
+
 int main(void)
 {
     getrusage_0100();
@@ -83,5 +97,6 @@ int main(void)
     getrusage_0300();
     getrusage_0400();
     getrusage_0500();
+    getrusage_time64_0100();
     return t_status;
 }

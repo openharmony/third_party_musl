@@ -24,6 +24,8 @@
 #define __TEST_DATA_HOUR__ 9
 #define __TEST_DATA_MINUTE__ 12
 
+extern time_t __time64(time_t *);
+
 struct time_struct {
     const char *tz;
 };
@@ -69,8 +71,42 @@ void time_0100(void)
     }
 }
 
+/**
+ * @tc.name      : time64_0100
+ * @tc.desc      : according to different time zones, get time
+ * @tc.level     : Level 0
+ */
+void time64_0100(void)
+{
+    for (int32_t i = 0; i < (int32_t)(sizeof(gResultData) / sizeof(gResultData[0])); i++) {
+        const char *handlerChar = test_handle_path(gResultData[i].tz);
+        if (!handlerChar) {
+            t_error("time64_0100 failed: handlerChar is NULL\n");
+            continue;
+        }
+
+        setenv("TZ", handlerChar, 1);
+        tzset();
+        system("date '2021-10-3 9:12:12' > /dev/NULL");
+        time_t curClock;
+        time_t t = __time64(&curClock);
+        EXPECT_TRUE("time64_0100", t > 0);
+        struct tm *localtm = localtime(&curClock);
+        if (!localtm) {
+            EXPECT_PTRNE("time64_0100", localtm, NULL);
+            return;
+        }
+        EXPECT_EQ("time64_0100", __TEST_DATA_YEAR__, localtm->tm_year);
+        EXPECT_EQ("time64_0100", __TEST_DATA_MONTH__, localtm->tm_mon);
+        EXPECT_EQ("time64_0100", __TEST_DATA_DAY__, localtm->tm_mday);
+        EXPECT_EQ("time64_0100", __TEST_DATA_HOUR__, localtm->tm_hour);
+        EXPECT_EQ("time64_0100", __TEST_DATA_MINUTE__, localtm->tm_min);
+    }
+}
+
 int main(void)
 {
     time_0100();
+    time64_0100();
     return t_status;
 }

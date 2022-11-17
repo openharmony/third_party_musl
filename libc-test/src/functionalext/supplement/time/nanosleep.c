@@ -16,6 +16,8 @@
 #include <time.h>
 #include "functionalext.h"
 
+extern int __nanosleep_time64(const struct timespec *, struct timespec *);
+
 /*
  * @tc.name      : nanosleep_0100
  * @tc.desc      : Verify that the execution of the program can be paused
@@ -30,8 +32,23 @@ void nanosleep_0100(void)
     EXPECT_EQ("nanosleep_0100", data, 0);
 }
 
+/*
+ * @tc.name      : nanosleep_time64_0100
+ * @tc.desc      : Verify that the execution of the program can be paused with time64
+ * @tc.level     : Level 0
+ */
+void nanosleep_time64_0100(void)
+{
+    struct timespec n_sleep;
+    n_sleep.tv_sec = 0;
+    n_sleep.tv_nsec = 5e8L;
+    int data = __nanosleep_time64(&n_sleep, NULL);
+    EXPECT_EQ("nanosleep_time64_0100", data, 0);
+}
+
 int main(int argc, char *argv[])
 {
     nanosleep_0100();
+    nanosleep_time64_0100();
     return t_status;
 }
