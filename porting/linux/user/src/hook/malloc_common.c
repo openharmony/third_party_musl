@@ -51,6 +51,26 @@ int munmap(void* addr, size_t length)
 	}
 }
 
+void* calloc(size_t m, size_t n)
+{
+	volatile const struct MallocDispatchType* dispatch_table = get_current_dispatch_table();
+	if (__predict_false(dispatch_table != NULL)) {
+		return dispatch_table->calloc(m, n);
+	} else {
+		return MuslMalloc(calloc)(m, n);
+	}
+}
+
+void* realloc(void *p, size_t n)
+{
+	volatile const struct MallocDispatchType* dispatch_table = get_current_dispatch_table();
+	if (__predict_false(dispatch_table != NULL)) {
+		return dispatch_table->realloc(p, n);
+	} else {
+		return MuslMalloc(realloc)(p, n);
+	}
+}
+
 size_t malloc_usable_size(void* addr)
 {
 	volatile const struct MallocDispatchType* dispatch_table = get_current_dispatch_table();
