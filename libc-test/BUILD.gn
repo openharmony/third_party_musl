@@ -6,7 +6,6 @@ group("musl_libc_test") {
   deps = [
     "src/api:main",
     "src/common:runtest",
-    "src/eabi:eabi_test",
     "src/functional:functional_test",
     "src/functionalext:functionalext_test",
     "src/math:math_test",
@@ -14,4 +13,8 @@ group("musl_libc_test") {
     "src/nativehook:nativehook_test",
     "src/regression:regression_test",
   ]
+
+  if (current_cpu == "arm") {
+    deps += [ "src/eabi:eabi_test" ]
+  }
 }
