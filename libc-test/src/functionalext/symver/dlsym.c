@@ -20,6 +20,8 @@
 #include "dso_no_symver.h"
 #include "dso_symver.h"
 
+extern void  *__dlsym_time64(void *__restrict, const char *__restrict);
+
 /**
  * @tc.name      : dlsym_no_symver_0100
  * @tc.desc      : invoke a symbol programmatically
@@ -247,12 +249,46 @@ void dlsym_hard_symver_0300(void)
     symver_log("end");
 }
 
+/**
+ * @tc.name      : dlsym_time64_no_symver_0100
+ * @tc.desc      : invoke a symbol programmatically
+ * @tc.level     : Level 0
+ */
+void dlsym_time64_no_symver_0100(void)
+{
+    symver_log("start");
+
+    void *handle = dlopen(dso_no_symver_name, RTLD_LAZY);
+    if (!handle) {
+        symver_error("%s", dlerror());
+        return;
+    }
+
+    // Clear any existing error
+    dlerror();
+
+    functype func = (functype)__dlsym_time64(handle, dso_no_symver_symbol);
+    const char *error = dlerror();
+    if (error != NULL) {
+        symver_error("%s", error);
+        return;
+    }
+
+    const char *result = func();
+    symver_streq(result, dso_no_symver_symbol);
+
+    dlclose(handle);
+
+    symver_log("end");
+}
+
 int main(int argc, char *argv[])
 {
     symver_log("start");
 
     dlsym_no_symver_0100();
     dlsym_no_symver_0200();
+    dlsym_time64_no_symver_0100();
 
     dlsym_easy_symver_0100();
     dlsym_easy_symver_0200();

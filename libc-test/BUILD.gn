@@ -6,6 +6,7 @@ group("musl_libc_test") {
   deps = [
     "src/api:main",
     "src/common:runtest",
+    "src/eabi:eabi_test",
     "src/functional:functional_test",
     "src/functionalext:functionalext_test",
     "src/math:math_test",

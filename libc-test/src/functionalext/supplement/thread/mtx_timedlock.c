@@ -20,6 +20,8 @@
 
 const int TWO = 2;
 
+extern int __mtx_timedlock_time64(mtx_t *__restrict, const struct timespec *__restrict);
+
 /**
  * @tc.name      : mtx_timedlock_0100
  * @tc.desc      : Provide correct parameters, test timeout and lock
@@ -79,9 +81,37 @@ void mtx_timedlock_0200(void)
     mtx_destroy(&mutex);
 }
 
+/**
+ * @tc.name      : mtx_timedlock_time64_0100
+ * @tc.desc      : Provide correct parameters, test timeout and lock
+ * @tc.level     : Level 0
+ */
+void mtx_timedlock_time64_0100(void)
+{
+    struct timespec timeout;
+    timeout.tv_sec = TWO;
+    timeout.tv_nsec = 0;
+    mtx_t mutex;
+    int ret = 0;
+    ret = mtx_init(&mutex, mtx_timed);
+    if (ret != thrd_success) {
+        t_error("%s mtx_init failed", __func__);
+        return;
+    }
+    ret = __mtx_timedlock_time64(&mutex, &timeout);
+    EXPECT_EQ("mtx_timedlock_time64_0100", ret, thrd_success);
+    ret = mtx_unlock(&mutex);
+    if (ret != thrd_success) {
+        t_error("%s mtx_unlock failed", __func__);
+        return;
+    }
+    mtx_destroy(&mutex);
+}
+
 int main(void)
 {
     mtx_timedlock_0100();
     mtx_timedlock_0200();
+    mtx_timedlock_time64_0100();
     return t_status;
 }

@@ -23,6 +23,8 @@
 
 static int count = 0;
 
+extern int __timer_settime64(timer_t, int, const struct itimerspec *__restrict, struct itimerspec *__restrict);
+
 void handler(int sig)
 {
     count++;
@@ -89,10 +91,53 @@ void timer_settime_0200(void)
     timer_settime(NULL, 0, NULL, NULL);
 }
 
+/**
+ * @tc.name      : timer_settime64_0100
+ * @tc.desc      : arms the timer
+ * @tc.level     : Level 0
+ */
+void timer_settime64_0100(void)
+{
+    struct sigevent sev;
+    timer_t timerid;
+
+    sev.sigev_notify = SIGEV_SIGNAL;
+    sev.sigev_signo = SIGRTMIN;
+    sev.sigev_value.sival_ptr = &timerid;
+
+    signal(SIGRTMIN, handler);
+
+    int result = timer_create(CLOCK_REALTIME, &sev, &timerid);
+    if (result != 0) {
+        t_error("%s failed: result = %d\n", __func__, result);
+    }
+
+    struct itimerspec its;
+    its.it_value.tv_sec = 1;
+    its.it_value.tv_nsec = 0;
+    its.it_interval.tv_sec = 0;
+    its.it_interval.tv_nsec = 0;
+
+    result = __timer_settime64(timerid, 0, &its, NULL);
+    if (result != 0) {
+        t_error("%s failed: result = %d\n", __func__, result);
+    }
+
+    while (count <= 0) {
+        sleep(1);
+    }
+
+    result = timer_delete(timerid);
+    if (result != 0) {
+        t_error("%s failed: result = %d\n", __func__, result);
+    }
+}
+
 int main(int argc, char *argv[])
 {
     timer_settime_0100();
     timer_settime_0200();
+    timer_settime64_0100();
 
     return t_status;
 }
