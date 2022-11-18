@@ -43,6 +43,7 @@ typedef struct _namespace_t_ {
     strlist *asan_permitted_paths;    /* when asan is enable and separated,the same as above.  */
 
     bool separated;           /* if separated */
+    bool ignore_global_library;  /* when true, RTLD_GLOBAL will be invalid in current ns. */
     strlist *allowed_libs;       /* when separated, allowed library names splited by ':'. */
     dsolist *ns_dsos;         /* dso list in this namespace */
     struct _ns_inherit_list_ *ns_inherits;   /* inherit list in this namespace */
@@ -78,6 +79,7 @@ void ns_set_asan_lib_paths(ns_t *ns, const char *asan_lib_paths);
 void ns_set_permitted_paths(ns_t *ns, const char *permitted_paths);
 void ns_set_asan_permitted_paths(ns_t *ns, const char *asan_permitted_paths);
 void ns_set_separated(ns_t *ns, bool separated);
+void ns_set_ignore_global_library(ns_t *ns, bool ignore_global_library);
 void ns_set_allowed_libs(ns_t *ns, const char *allowed_libs);
 void ns_add_dso(ns_t *ns, struct dso *dso);
 void nslist_add_ns(ns_t *ns);
