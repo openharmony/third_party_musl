@@ -370,6 +370,10 @@ template("musl_libs") {
       defines += [ "MALLOC_SECURE_ALL" ]
     }
 
+    if (musl_iterate_and_stats_api) {
+      defines += [ "MUSL_ITERATE_AND_STATS_API" ]
+    }
+
     foreach(s, sources_orig) {
       sources += [ "${target_out_dir}/${musl_ported_dir}/${s}" ]
     }
@@ -548,6 +552,11 @@ template("musl_libs") {
       "src/env/__libc_start_main.c",
       "src/env/__stack_chk_fail.c",
     ]
+
+    defines = []
+    if (musl_iterate_and_stats_api) {
+      defines += [ "MUSL_ITERATE_AND_STATS_API" ]
+    }
 
     if (musl_arch == "arm") {
       sources_orig += [ "src/thread/${musl_arch}/__set_thread_area.c" ]
