@@ -101,7 +101,20 @@ struct fdpic_dummy_loadmap {
 #endif
 
 #define AUX_CNT 32
-#define DYN_CNT 32
+#define DYN_CNT 37
+
+#define DT_ANDROID_REL (DT_LOOS + 2)
+#define DT_ANDROID_RELSZ (DT_LOOS + 3)
+
+#define DT_ANDROID_RELA (DT_LOOS + 4)
+#define DT_ANDROID_RELASZ (DT_LOOS + 5)
+
+#define ANDROID_REL_SIGN_SIZE 4
+
+#define RELOCATION_GROUPED_BY_INFO_FLAG 1
+#define RELOCATION_GROUPED_BY_OFFSET_DELTA_FLAG 2
+#define RELOCATION_GROUPED_BY_ADDEND_FLAG 4
+#define RELOCATION_GROUP_HAS_ADDEND_FLAG 8
 
 typedef void (*stage2_func)(unsigned char *, size_t *);
 
