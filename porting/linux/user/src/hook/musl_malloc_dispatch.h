@@ -18,6 +18,17 @@ typedef void* (*MallocVallocType)(size_t);
 typedef void (*MallocFreeType)(void*);
 typedef void* (*MallocMemalignType)(size_t, size_t);
 typedef size_t (*MallocMallocUsableSizeType)(void*);
+
+typedef struct mallinfo (*MallinfoType)(void);
+typedef struct mallinfo2 (*Mallinfo2Type)(void);
+typedef int (*MallocIterateType)(void*, size_t, void (*callback)(void*, size_t, void*), void*);
+typedef void (*MallocDisableType)(void);
+typedef void (*MallocEnableType)(void);
+typedef int (*MallocInfoType)(int, FILE*);
+typedef void (*MallocStatsPrintType)(void (*) (void *, const char *), void *, const char *);
+typedef int (*MalloptType)(int, int);
+typedef ssize_t (*MallocBacktraceType)(void*, uintptr_t*, size_t);
+
 typedef bool (*GetHookFlagType)();
 typedef bool (*SetHookFlagType)(bool);
 
@@ -31,6 +42,15 @@ struct MallocDispatchType {
 	MallocFreeType free;
 	MallocMemalignType memalign;
 	MallocMallocUsableSizeType malloc_usable_size;
+	MallinfoType mallinfo;
+	Mallinfo2Type mallinfo2;
+	MallocIterateType malloc_iterate;
+	MallocDisableType malloc_disable;
+	MallocEnableType malloc_enable;
+	MallocInfoType malloc_info;
+	MallocStatsPrintType malloc_stats_print;
+	MalloptType mallopt;
+	MallocBacktraceType malloc_backtrace;
 	GetHookFlagType get_hook_flag;
 	SetHookFlagType set_hook_flag;
 };
