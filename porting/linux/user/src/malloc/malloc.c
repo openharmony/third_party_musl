@@ -564,7 +564,11 @@ static size_t mal0_clear(char *p, size_t pagesz, size_t n)
 	}
 }
 
+#ifdef HOOK_ENABLE
+void *__libc_calloc(size_t m, size_t n)
+#else
 void *calloc(size_t m, size_t n)
+#endif
 {
 #ifdef USE_JEMALLOC
 	return je_calloc(m, n);
@@ -603,7 +607,11 @@ void *internal_calloc(size_t m, size_t n)
 	return memset(p, 0, n);
 }
 
+#ifdef HOOK_ENABLE
+void *__libc_realloc(void *p, size_t n)
+#else
 void *realloc(void *p, size_t n)
+#endif
 {
 #ifdef USE_JEMALLOC
 	return je_realloc(p, n);
