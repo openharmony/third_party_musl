@@ -274,15 +274,13 @@ static void init_default_namespace(struct dso *app)
 	if (env_path) ns_set_env_paths(default_ns, env_path);
 	ns_set_lib_paths(default_ns, sys_path);
 	ns_set_separated(default_ns, false);
-	ns_set_ignore_global_library(default_ns, true);
 	app->namespace = default_ns;
 	ns_add_dso(default_ns, app);
 	LD_LOGD("init_default_namespace default_namespace:"
 			"nsname: default ,"
 			"lib_paths:%{public}s ,"
 			"env_path:%{public}s ,"
-			"separated: false ,"
-			"ignore_global_library: true.",
+			"separated: false.",
 			sys_path, env_path);
 	return;
 }
@@ -296,8 +294,6 @@ static void set_ns_attrs(ns_t *ns, ns_configor *conf)
 	char *lib_paths, *asan_lib_paths, *permitted_paths, *asan_permitted_paths, *allowed_libs;
 
 	ns_set_separated(ns, conf->get_separated(ns->ns_name));
-
-	ns_set_ignore_global_library(ns, conf->get_ignore_global_library(ns->ns_name));
 
 	lib_paths = conf->get_lib_paths(ns->ns_name);
 	if (lib_paths) ns_set_lib_paths(ns, lib_paths);
@@ -646,11 +642,11 @@ static Sym *gnu_lookup(struct sym_info_pair s_info_p, uint32_t *hashtab, struct 
 
 static Sym *gnu_lookup_filtered(struct sym_info_pair s_info_p, uint32_t *hashtab, struct dso *dso, struct verinfo *verinfo, uint32_t fofs, size_t fmask)
 {
+	uint32_t h1 = s_info_p.sym_h;
 	const size_t *bloomwords = (const void *)(hashtab+4);
 	size_t f = bloomwords[fofs & (hashtab[2]-1)];
 	if (!(f & fmask)) return 0;
 
-	uint32_t h1 = s_info_p.sym_h;
 	f >>= (h1 >> hashtab[3]) % (8 * sizeof f);
 	if (!(f & 1)) return 0;
 
@@ -2742,7 +2738,6 @@ void __dls3(size_t *sp, size_t *auxv)
 
 	/* Initial dso chain consists only of the app. */
 	head = tail = syms_tail = &app;
-	struct dso *orig_syms_tail = syms_tail;
 
 	/* Donate unused parts of app and library mapping to malloc */
 	reclaim_gaps(&app);
@@ -2888,9 +2883,6 @@ void __dls3(size_t *sp, size_t *auxv)
 	DFX_InstallSignalHandler();
 #endif
 	errno = 0;
-	if (app.namespace->ignore_global_library) {
-		revert_syms(orig_syms_tail);
-	}
 
 	CRTJMP((void *)aux[AT_ENTRY], argv-1);
 	for(;;);
@@ -3113,9 +3105,8 @@ static void *dlopen_impl_orig(
 
 	/* If RTLD_GLOBAL was not specified, undo any new additions
 	 * to the global symbol table. This is a nop if the library was
-	 * previously loaded and already global. If it is default namespace,
-	 * we also undo any new additions to the global symbol table. */
-	if (!(mode & RTLD_GLOBAL) || p->namespace->ignore_global_library)
+	 * previously loaded and already global. */
+	if (!(mode & RTLD_GLOBAL))
 		revert_syms(orig_syms_tail);
 
 	/* Processing of deferred lazy relocations must not happen until
