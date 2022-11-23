@@ -327,15 +327,6 @@ void ns_set_separated(ns_t *ns, bool separated)
     LD_LOGD("ns_set_separated ns[%{public}s] separated:%{public}d.", ns->ns_name, ns->separated);
 }
 
-void ns_set_ignore_global_library(ns_t *ns, bool ignore_global_library)
-{
-    if (!ns) {
-        return;
-    }
-    ns->ignore_global_library = ignore_global_library;
-    LD_LOGD("ns_set_ignore_global_library ns[%{public}s] ignore_global_library:%{public}d.", ns->ns_name, ns->ignore_global_library);
-}
-
 void ns_set_allowed_libs(ns_t *ns, const char *allowed_libs)
 {
     if (!ns) {
