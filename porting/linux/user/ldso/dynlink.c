@@ -2910,8 +2910,37 @@ static void prepare_lazy(struct dso *p)
 	lazy_head = p;
 }
 
+static void *dlopen_post(struct dso* p, int mode) {
+	if (p == NULL) {
+		return p;
+	}
+
+	p->nr_dlopen++;
+	if (p->bfs_built) {
+		for (int i = 0; p->deps[i]; i++) {
+			p->deps[i]->nr_dlopen++;
+
+			if (mode & RTLD_NODELETE) {
+				p->deps[i]->flags |= DSO_FLAGS_NODELETE;
+			}
+		}
+	}
+
+#ifdef HANDLE_RANDOMIZATION
+	void *handle = assign_valid_handle(p);
+	if (handle == NULL) {
+		LD_LOGE("dlopen_post: generate random handle failed");
+		do_dlclose(p);
+	}
+
+	return handle;
+#endif
+
+	return p;
+}
+
 /* add namespace function */
-static void *dlopen_impl_orig(
+static void *dlopen_impl(
 	const char *file, int mode, const char *namespace, const void *caller_addr, const dl_extinfo *extinfo)
 {
 	struct dso *volatile p, *orig_tail, *orig_syms_tail, *orig_lazy_head, *next;
@@ -2933,8 +2962,8 @@ static void *dlopen_impl_orig(
 #endif
 
 	if (!file) {
-		LD_LOGD("dlopen_impl_orig file is null, return head.");
-		return head;
+		LD_LOGD("dlopen_impl file is null, return head.");
+		return dlopen_post(head, mode);
 	}
 
 	if (extinfo) {
@@ -3025,16 +3054,16 @@ static void *dlopen_impl_orig(
 #ifdef LOAD_ORDER_RANDOMIZATION
 		tasks = create_loadtasks();
 		if (!tasks) {
-			LD_LOGE("dlopen_impl_orig create loadtasks failed");
+			LD_LOGE("dlopen_impl create loadtasks failed");
 			goto end;
 		}
 		task = create_loadtask(file, head, ns, true);
 		if (!task) {
-			LD_LOGE("dlopen_impl_orig create loadtask failed");
+			LD_LOGE("dlopen_impl create loadtask failed");
 			goto end;
 		}
 		if (!load_library_header(task)) {
-			LD_LOGE("dlopen_impl_orig load library header failed for %{public}s", task->name);
+			LD_LOGE("dlopen_impl load library header failed for %{public}s", task->name);
 			goto end;
 		}
 		if (reserved_address) {
@@ -3042,7 +3071,7 @@ static void *dlopen_impl_orig(
 		}
 	}
 	if (!task->p) {
-		LD_LOGE("dlopen_impl_orig load library failed for %{public}s", task->name);
+		LD_LOGE("dlopen_impl load library failed for %{public}s", task->name);
 		error(noload ?
 			"Library %s is not already loaded" :
 			"Error loading shared library %s: %m",
@@ -3122,6 +3151,8 @@ static void *dlopen_impl_orig(
 	if (tls_cnt != orig_tls_cnt)
 		install_new_tls();
 	orig_tail = tail;
+
+	p = dlopen_post(p, mode);
 end:
 	debug.state = RT_CONSISTENT;
 	_dl_debug_state();
@@ -3139,42 +3170,6 @@ end:
 		internal_free(ctor_queue);
 	}
 	pthread_setcancelstate(cs, 0);
-	return p;
-}
-
-static void *dlopen_impl(
-	const char *file, int mode, const char *namespace, const void *caller_addr, const dl_extinfo *extinfo){
-	struct dso* p = (struct dso*)dlopen_impl_orig(file, mode, namespace, caller_addr, extinfo);
-
-	if (p == NULL) {
-		return p;
-	}
-
-	pthread_rwlock_wrlock(&lock);
-
-	p->nr_dlopen++;
-	if (p->bfs_built) {
-		for (int i = 0; p->deps[i]; i++) {
-			p->deps[i]->nr_dlopen++;
-
-			if (mode & RTLD_NODELETE) {
-				p->deps[i]->flags |= DSO_FLAGS_NODELETE;
-			}
-		}
-	}
-
-#ifdef HANDLE_RANDOMIZATION
-	void *handle = assign_valid_handle(p);
-	if (handle == NULL) {
-		LD_LOGE("dlopen_impl: generate random handle failed");
-		do_dlclose(p);
-	}
-	pthread_rwlock_unlock(&lock);
-
-	return handle;
-#endif
-
-	pthread_rwlock_unlock(&lock);
 	return p;
 }
 
