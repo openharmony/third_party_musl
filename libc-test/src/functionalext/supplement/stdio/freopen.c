@@ -23,8 +23,11 @@
  */
 void freopen_0100(void)
 {
+    char ptr[128] = {0};
+    char *cwd = getcwd(ptr, sizeof(ptr));
+    strcat(ptr, "/freopen.txt");
+
     FILE *fp;
-    const char *ptr = "/data/tests/libc-test/src/functionalext/supplement/stdio/freopen.txt";
     fp = freopen(ptr, "w+", stdin);
     EXPECT_PTRNE("freopen_0100", fp, NULL);
 

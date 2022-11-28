@@ -19,8 +19,6 @@
 
 #include "test.h"
 
-const char *name = "/data/tests/libc-test/src";
-
 void handler(int sig)
 {
     exit(t_status);
@@ -33,6 +31,8 @@ void handler(int sig)
  */
 void readdir_r_0100(void)
 {
+    char name[128] = {0};
+    char *cwd = getcwd(name, sizeof(name));
     DIR *dir = opendir(name);
     if (dir == NULL) {
         t_error("%s failed: opendir. name = %s\n", __func__, name);

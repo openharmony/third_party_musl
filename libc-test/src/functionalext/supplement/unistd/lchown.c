@@ -25,8 +25,10 @@
  */
 void lchown_0100(void)
 {
-    const char *pathname = "/data/tests/libc-test/src/functionalext/supplement/unistd/lchown";
-    int ret = lchown(pathname, TEST_ID_VALUE, TEST_ID_VALUE);
+    char path[128] = {0};
+    char *cwd = getcwd(path, sizeof(path));
+    strcat(path, "/lchown");
+    int ret = lchown(path, TEST_ID_VALUE, TEST_ID_VALUE);
     EXPECT_EQ("lchown_0100", ret, CMPFLAG);
 }
 

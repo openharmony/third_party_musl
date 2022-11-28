@@ -25,7 +25,10 @@ const int32_t NUM_ZERO = 0;
  */
 void __fwritable_0100(void)
 {
-    const char *ptr = "/data/tests/libc-test/src/functionalext/supplement/stdio/Freadtest.txt";
+    char ptr[128] = {0};
+    char *cwd = getcwd(ptr, sizeof(ptr));
+    strcat(ptr, "/Freadtest.txt");
+
     FILE *fptr = fopen(ptr, "w+");
     if (!fptr) {
         t_error("%s fopen failed\n", __func__);
@@ -42,7 +45,10 @@ void __fwritable_0100(void)
  */
 void __fwritable_0200(void)
 {
-    const char *ptr = "/data/tests/libc-test/src/functionalext/supplement/stdio/Freadtest.txt";
+    char ptr[128] = {0};
+    char *cwd = getcwd(ptr, sizeof(ptr));
+    strcat(ptr, "/Freadtest.txt");
+
     FILE *fptr = fopen(ptr, "r");
     if (!fptr) {
         t_error("%s fopen failed\n", __func__);

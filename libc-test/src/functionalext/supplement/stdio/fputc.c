@@ -15,8 +15,6 @@
 
 #include "functionalext.h"
 
-const char *path = "/data/tests/libc-test/src/functionalext/supplement/stdio/fputc.txt";
-
 /**
  * @tc.name       : fputc_0100
  * @tc.desc       : Verify that a character can be written to the file
@@ -24,6 +22,10 @@ const char *path = "/data/tests/libc-test/src/functionalext/supplement/stdio/fpu
  */
 void fputc_0100(void)
 {
+    char path[128] = {0};
+    char *cwd = getcwd(path, sizeof(path));
+    strcat(path, "/fputc.txt");
+
     FILE *fptr = fopen(path, "w");
     int Exit = fputc('a', fptr);
     EXPECT_EQ("fputc_0100", Exit, 97);
@@ -37,6 +39,10 @@ void fputc_0100(void)
  */
 void fputc_0200(void)
 {
+    char path[128] = {0};
+    char *cwd = getcwd(path, sizeof(path));
+    strcat(path, "/fputc.txt");
+
     FILE *fptr = fopen(path, "r");
     int Exit = fputc('a', fptr);
     EXPECT_EQ("fputc_0200", Exit, EOF);

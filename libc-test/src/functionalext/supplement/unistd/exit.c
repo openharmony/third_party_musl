@@ -24,7 +24,11 @@
  */
 void exit_0100(void)
 {
-    system("cd /data/tests/libc-test/src/functionalext/supplement/unistd/; ./exittest01");
+    char path[128] = {0};
+    char *cwd = getcwd(path, sizeof(path));
+    char cmd[256] = {0};
+    snprintf(cmd, sizeof(cmd), "cd %s; ./exittest01", path);
+    system(cmd);
 
     char str[100] = {0};
     const char *ptr = "/data/Exittest01.txt";
@@ -54,7 +58,11 @@ void exit_0100(void)
  */
 void exit_0200(void)
 {
-    system("cd /data/tests/libc-test/src/functionalext/supplement/unistd/; ./exittest02");
+    char path[128] = {0};
+    char *cwd = getcwd(path, sizeof(path));
+    char cmd[256] = {0};
+    snprintf(cmd, sizeof(cmd), "cd %s; ./exittest02", path);
+    system(cmd);
 
     char abc[100] = {0};
     const char *ptr = "/data/Exittest02.txt";

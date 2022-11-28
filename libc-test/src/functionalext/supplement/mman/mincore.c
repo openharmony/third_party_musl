@@ -30,7 +30,10 @@
 void mincore_0100(void)
 {
     struct stat st;
-    const char *pathname = "/data/tests/libc-test/src/functionalext/supplement/mman/mincore";
+    char pathname[128] = {0};
+    char *cwd = getcwd(pathname, sizeof(pathname));
+    strcat(pathname, "/mincore");
+    
     int ret = stat(pathname, &st);
     EXPECT_EQ("mincore_0100", ret, CMPFLAG);
     if (ret != 0) {

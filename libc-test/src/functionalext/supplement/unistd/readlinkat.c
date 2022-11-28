@@ -21,14 +21,11 @@
 
 #include "test.h"
 
-const char *path = "/data/tests/file.txt";
-const char *linkpath = "/data/tests/linkfile.txt";
 const char buf[] = "hello";
-const char *dirname = "/data/tests";
 const char *filename = "./file.txt";
 const char *linkfilename = "./linkfile.txt";
 
-int create_file(void)
+int create_file(char *path)
 {
     int fd = open(path, O_RDWR | O_CREAT);
     if (fd < 0) {
@@ -55,12 +52,18 @@ int create_file(void)
  */
 void readlinkat_0100(void)
 {
-    int result = create_file();
+    char path[128] = {0};
+    char *cwd = getcwd(path, sizeof(path));
+    strcat(path, "/file.txt");
+    int result = create_file(path);
     if (result != 0) {
         t_error("%s failed: result = %d\n", __func__, result);
         return;
     }
 
+    char linkpath[128] = {0};
+    cwd = getcwd(linkpath, sizeof(linkpath));
+    strcat(linkpath, "/linkfile.txt");
     remove(linkpath);
 
     result = symlink(path, linkpath);
@@ -96,12 +99,17 @@ void readlinkat_0100(void)
  */
 void readlinkat_0200(void)
 {
-    int result = create_file();
+    char path[128] = {0};
+    char *cwd = getcwd(path, sizeof(path));
+    strcat(path, "/file.txt");
+    int result = create_file(path);
     if (result != 0) {
         t_error("%s failed: result = %d\n", __func__, result);
         return;
     }
 
+    char dirname[128] = {0};
+    cwd = getcwd(dirname, sizeof(dirname));
     DIR *dir = opendir(dirname);
     if (dir == NULL) {
         t_error("%s failed: dirname = %s\n", __func__, dirname);
@@ -113,6 +121,9 @@ void readlinkat_0200(void)
         t_error("%s failed: fd = %d\n", __func__, fd);
     }
 
+    char linkpath[128] = {0};
+    cwd = getcwd(linkpath, sizeof(linkpath));
+    strcat(linkpath, "/linkfile.txt");
     remove(linkpath);
 
     result = symlinkat(filename, fd, linkfilename);
