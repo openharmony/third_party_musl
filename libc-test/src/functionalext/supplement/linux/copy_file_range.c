@@ -19,8 +19,6 @@
 #include <string.h>
 #include "test.h"
 
-const char *path_in = "/data/tests/libc-test/src/file_in.txt";
-const char *path_out = "/data/tests/libc-test/src/file_out.txt";
 const char *str = "Hello";
 
 /**
@@ -32,6 +30,13 @@ void copy_file_range_0100(void)
 {
     int fd_in, fd_out, wlen, result;
     char buffer[BUFSIZ];
+
+    char path_in[128] = {0};
+    char path_out[128] = {0};
+    char *cwd = getcwd(path_in, sizeof(path_in));
+    cwd = getcwd(path_out, sizeof(path_out));
+    strcat(path_in, "/file_in.txt");
+    strcat(path_out, "/file_out.txt");
 
     fd_in = open(path_in, O_RDWR | O_CREAT);
     if (fd_in == -1) {
@@ -107,6 +112,13 @@ void copy_file_range_0300(void)
     int fd_in, fd_out, wlen, result;
     char buffer[BUFSIZ];
 
+    char path_in[128] = {0};
+    char path_out[128] = {0};
+    char *cwd = getcwd(path_in, sizeof(path_in));
+    cwd = getcwd(path_out, sizeof(path_out));
+    strcat(path_in, "/file_in.txt");
+    strcat(path_out, "/file_out.txt");
+    
     fd_in = open(path_in, O_WRONLY | O_CREAT);
     if (fd_in == -1) {
         t_error("%s open path_in failed\n", __func__);

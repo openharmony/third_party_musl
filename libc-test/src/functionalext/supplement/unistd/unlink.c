@@ -26,14 +26,17 @@
  */
 void unlink_0100(void)
 {
-    int fd = open("/data/tests/libc-test/src/test_unlink.txt", O_CREAT);
+    char path[128] = {0};
+    char *cwd = getcwd(path, sizeof(path));
+    strcat(path, "/test_unlink.txt");
+    int fd = open(path, O_CREAT);
     int error_code = -1;
     if (fd == error_code) {
         t_error("%s unlink create file error", __func__);
         return;
     }
     close(fd);
-    int result = unlink("/data/tests/libc-test/src/test_unlink.txt");
+    int result = unlink(path);
     if (result != 0) {
         t_error("%s unlink get result is %d not want 0", __func__, result);
     }
@@ -46,7 +49,10 @@ void unlink_0100(void)
  */
 void unlink_0200(void)
 {
-    int result = unlink("/data/tests/libc-test/src/unexist_test_unlink.txt");
+    char path[128] = {0};
+    char *cwd = getcwd(path, sizeof(path));
+    strcat(path, "/unexist_test_unlink.txt");
+    int result = unlink(path);
     int error_code = -1;
     if (result != error_code) {
         t_error("%s unlink get result is %d not want -1", __func__, result);

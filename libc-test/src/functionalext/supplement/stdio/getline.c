@@ -16,8 +16,6 @@
 #include <fcntl.h>
 #include "functionalext.h"
 
-const char *ptr = "/data/tests/libc-test/src/functionalext/supplement/stdio/test.txt";
-
 /**
  * @tc.name      : getline_0100
  * @tc.desc      : Verify that a row of data can be read (parameters are valid).
@@ -28,8 +26,11 @@ void getline_0100(void)
     char *wrstring = "helloworld";
     char *line = NULL;
     size_t len = 0;
+    char path[128] = {0};
+    char *cwd = getcwd(path, sizeof(path));
+    strcat(path, "/test.txt");
 
-    FILE *fp = fopen(ptr, "w+");
+    FILE *fp = fopen(path, "w+");
     EXPECT_PTRNE("getline_0100", fp, NULL);
     fwrite(wrstring, sizeof(char), strlen(wrstring), fp);
     fseek(fp, 0, SEEK_SET);
@@ -39,7 +40,7 @@ void getline_0100(void)
     EXPECT_STREQ("getline_0100", line, "helloworld");
 
     fclose(fp);
-    remove(ptr);
+    remove(path);
 }
 
 /**
@@ -50,14 +51,17 @@ void getline_0100(void)
 void getline_0200(void)
 {
     size_t len = 0;
-    FILE *fp = fopen(ptr, "w+");
+    char path[128] = {0};
+    char *cwd = getcwd(path, sizeof(path));
+    strcat(path, "/file.txt");
+    FILE *fp = fopen(path, "w+");
     EXPECT_PTRNE("getline_0100", fp, NULL);
 
     ssize_t read = getline(NULL, &len, fp);
     EXPECT_EQ("getline_0200", read, -1);
 
     fclose(fp);
-    remove(ptr);
+    remove(path);
 }
 
 /**
@@ -68,13 +72,16 @@ void getline_0200(void)
 void getline_0300(void)
 {
     char *line = NULL;
-    FILE *fp = fopen(ptr, "w+");
+    char path[128] = {0};
+    char *cwd = getcwd(path, sizeof(path));
+    strcat(path, "/file.txt");
+    FILE *fp = fopen(path, "w+");
     EXPECT_PTRNE("getline_0100", fp, NULL);
 
     ssize_t read = getline(&line, 0, fp);
     EXPECT_EQ("getline_0300", read, -1);
     fclose(fp);
-    remove(ptr);
+    remove(path);
 }
 
 int main(int argc, char *argv[])

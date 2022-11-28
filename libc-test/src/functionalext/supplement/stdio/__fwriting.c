@@ -29,7 +29,10 @@ const int32_t NUM_ZERO = 0;
  */
 void __fwriting_0100(void)
 {
-    const char *ptr = "/data/tests/libc-test/src/functionalext/supplement/stdio/Freadtest.txt";
+    char ptr[128] = {0};
+    char *cwd = getcwd(ptr, sizeof(ptr));
+    strcat(ptr, "/Freadtest.txt");
+
     FILE *fptr = fopen(ptr, "w");
     int result = __fwriting(fptr);
     EXPECT_NE("__fwriting_0100", result, NUM_ZERO);
@@ -44,8 +47,11 @@ void __fwriting_0100(void)
  */
 void __fwriting_0200(void)
 {
+    char ptr[128] = {0};
+    char *cwd = getcwd(ptr, sizeof(ptr));
+    strcat(ptr, "/Freadtest.txt");
+
     const char *wrstring = "helloworld";
-    const char *ptr = "/data/tests/libc-test/src/functionalext/supplement/stdio/Freadtest.txt";
     FILE *fptr = fopen(ptr, "w+");
     fwrite(wrstring, sizeof(char), strlen(wrstring), fptr);
     int result = __fwriting(fptr);
@@ -61,9 +67,12 @@ void __fwriting_0200(void)
  */
 void __fwriting_0300(void)
 {
+    char ptr[128] = {0};
+    char *cwd = getcwd(ptr, sizeof(ptr));
+    strcat(ptr, "/Freadtest.txt");
+
     char abc[100] = {0};
     const char *wrstring = "helloworld";
-    const char *ptr = "/data/tests/libc-test/src/functionalext/supplement/stdio/Freadtest.txt";
     FILE *fptr = fopen(ptr, "w+");
     fwrite(wrstring, sizeof(char), strlen(wrstring), fptr);
     fseek(fptr, 0, SEEK_SET);

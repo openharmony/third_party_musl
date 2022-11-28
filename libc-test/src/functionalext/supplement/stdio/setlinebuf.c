@@ -18,7 +18,6 @@
 #include <string.h>
 #include "test.h"
 
-const char *path = "/data/tests/libc-test/src/file.txt";
 const char *str = "Hello";
 
 /**
@@ -28,6 +27,9 @@ const char *str = "Hello";
  */
 void setlinebuf_0100(void)
 {
+    char path[128] = {0};
+    char *cwd = getcwd(path, sizeof(path));
+    strcat(path, "/file.txt");
     FILE *f = fopen(path, "w+");
     char buffer[BUFSIZ];
     errno = 0;

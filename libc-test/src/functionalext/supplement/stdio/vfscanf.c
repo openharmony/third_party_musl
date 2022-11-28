@@ -18,8 +18,6 @@
 #include <string.h>
 #include "test.h"
 
-const char *file = "/data/tests/libc-test/src/functionalext/supplement/stdio/vfscanf.txt";
-
 int readFile(FILE *stream, char *fmt, ...)
 {
     va_list ap;
@@ -39,6 +37,9 @@ void vfscanf_0100(void)
     FILE *fp = NULL;
     int val = 0;
     char buffer[BUFSIZ];
+    char file[128] = {0};
+    char *cwd = getcwd(file, sizeof(file));
+    strcat(file, "/vfscanf.txt");
     fp = fopen(file, "w+");
     if (fp == NULL) {
         t_error("%s fopen failed\n", __func__);
@@ -74,6 +75,9 @@ void vfscanf_0200(void)
     FILE *fp = NULL;
     char val[BUFSIZ];
     char buffer[BUFSIZ];
+    char file[128] = {0};
+    char *cwd = getcwd(file, sizeof(file));
+    strcat(file, "/vfscanf.txt");
     fp = fopen(file, "w+");
     if (fp == NULL) {
         t_error("%s fopen failed\n", __func__);
@@ -109,6 +113,9 @@ void vfscanf_0300(void)
     FILE *fp = NULL;
     int val1 = 0;
     int val2 = 0;
+    char file[128] = {0};
+    char *cwd = getcwd(file, sizeof(file));
+    strcat(file, "/vfscanf.txt");
     fp = fopen(file, "w+");
     if (fp == NULL) {
         t_error("%s fopen failed", __func__);

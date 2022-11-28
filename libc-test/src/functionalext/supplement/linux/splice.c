@@ -21,8 +21,6 @@
 
 #include "test.h"
 
-const char *fromfile = "/data/tests/libc-test/src/fromfile.txt";
-const char *tofile = "/data/tests/libc-test/src/tofile.txt";
 const char *path = "/proc/version";
 
 /**
@@ -32,6 +30,13 @@ const char *path = "/proc/version";
  */
 void splice_0100(void)
 {
+    char fromfile[128] = {0};
+    char tofile[128] = {0};
+    char *cwd = getcwd(fromfile, sizeof(fromfile));
+    cwd = getcwd(tofile, sizeof(tofile));
+    strcat(fromfile, "/fromfile.txt");
+    strcat(tofile, "/tofile.txt");
+
     int fromfd = open(fromfile, O_RDWR | O_CREAT);
     if (fromfd < 0) {
         t_error("%s failed: fromfd = %d\n", __func__, fromfd);

@@ -17,6 +17,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/swap.h>
+#include <string.h>
 #include "test.h"
 
 /**
@@ -26,12 +27,18 @@
  */
 void swapon_0100(void)
 {
+    char dir_path[128] = {0};
+    char *cwd = getcwd(dir_path, sizeof(dir_path));
+
     errno = 0;
-    system("cd /data/tests/libc-test/src; dd if=/dev/zero of=swapfile count=1 bs=1k; mkswap swapfile");
-    int result = swapon("/data/tests/libc-test/src/swapfile", SWAP_FLAG_PREFER);
+    char cmd[256] = {0};
+    snprintf(cmd, sizeof(cmd), "cd %s; dd if=/dev/zero of=swapfile count=1 bs=1k; mkswap swapfile", dir_path);
+    system(cmd);
+    strcat(dir_path, "/swapfile");
+    int result = swapon(dir_path, SWAP_FLAG_PREFER);
     if (result == -1) {
         t_error("%s swapon failed\n", __func__);
-        remove("/data/tests/libc-test/src/swapfile");
+        remove(dir_path);
     }
 
     if (errno == ENOSYS) {

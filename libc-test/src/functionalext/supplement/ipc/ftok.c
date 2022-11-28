@@ -23,7 +23,10 @@
  */
 void ftok_0100(void)
 {
-    key_t result = ftok("/data/tests/libc-test/src/functionalext/supplement/ipc/ftok", 1);
+    char dir_path[128] = {0};
+    char *cwd = getcwd(dir_path, sizeof(dir_path));
+    strcat(dir_path, "/ftok");
+    key_t result = ftok(dir_path, 1);
     EXPECT_NE("ftok_0100", result, -1);
 }
 

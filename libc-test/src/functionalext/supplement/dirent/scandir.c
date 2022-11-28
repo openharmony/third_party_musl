@@ -18,8 +18,6 @@
 
 #include "test.h"
 
-const char *name = "/data/tests/libc-test/src";
-
 int filter(const struct dirent *entry)
 {
     return !0;
@@ -33,6 +31,8 @@ int filter(const struct dirent *entry)
 void scandir_0100(void)
 {
     struct dirent **namelist;
+    char name[128] = {0};
+    char *cwd = getcwd(name, sizeof(name));
     int n = scandir(name, &namelist, NULL, alphasort);
     if (n < 0) {
         t_error("%s failed: scandir. n = %d\n", __func__, n);
@@ -53,6 +53,8 @@ void scandir_0100(void)
 void scandir_0200(void)
 {
     struct dirent **namelist;
+    char name[128] = {0};
+    char *cwd = getcwd(name, sizeof(name));
     int n = scandir(name, &namelist, NULL, versionsort);
     if (n < 0) {
         t_error("%s failed: scandir. n = %d\n", __func__, n);
@@ -73,6 +75,8 @@ void scandir_0200(void)
 void scandir_0300(void)
 {
     struct dirent **namelist;
+    char name[128] = {0};
+    char *cwd = getcwd(name, sizeof(name));
     int n = scandir(name, &namelist, filter, versionsort);
     if (n < 0) {
         t_error("%s failed: scandir. n = %d\n", __func__, n);

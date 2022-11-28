@@ -84,7 +84,10 @@ void fstatat_0200(void)
  */
 void fstatat_0300(void)
 {
-    const char *ptr = "/data/tests/libc-test/src/functionalext/supplement/stat/fstatattest.txt";
+    char ptr[128] = {0};
+    char *cwd = getcwd(ptr, sizeof(ptr));
+    strcat(ptr, "/fstatattest.txt");
+
     struct stat st;
     int fd = open(ptr, O_RDWR | O_CREAT);
     EXPECT_TRUE("fstatat_0300", fd >= 0);
@@ -97,7 +100,6 @@ void fstatat_0300(void)
     EXPECT_EQ("fstatat_0300", st.st_gid, gid);
     close(fd);
     remove(ptr);
-    ptr = NULL;
 }
 
 /**

@@ -30,7 +30,10 @@ typedef void (*TEST_FUN)();
  */
 void lstat_0100(void)
 {
-    const char *ptr = "/data/tests/libc-test/src/functionalext/supplement/stattest.txt";
+    char ptr[128] = {0};
+    char *cwd = getcwd(ptr, sizeof(ptr));
+    strcat(ptr, "/stattest.txt");
+
     const char str[] = "this is a sample!";
     FILE *fptr = fopen(ptr, "w+");
     struct stat statbuff;
@@ -50,7 +53,10 @@ void lstat_0100(void)
  */
 void lstat_time64_0100(void)
 {
-    const char *ptr = "/data/tests/libc-test/src/functionalext/supplement/stattest.txt";
+    char ptr[128] = {0};
+    char *cwd = getcwd(ptr, sizeof(ptr));
+    strcat(ptr, "/stattest.txt");
+
     const char str[] = "this is a sample!";
     FILE *fptr = fopen(ptr, "w+");
     struct stat statbuff;
@@ -82,13 +88,18 @@ void lstat_0200(void)
  */
 void lstat_0300(void)
 {
+    char ptr[128] = {0};
+    char ptrlink[128] = {0};
+    char *cwd = getcwd(ptr, sizeof(ptr));
+    cwd = getcwd(ptrlink, sizeof(ptrlink));
+    strcat(ptr, "/tests.txt");
+    strcat(ptrlink, "/tests.txt.soft");   
     struct stat buf[3];
-    const char *ptr = "/data/tests/libc-test/src/functionalext/supplement/stat/tests.txt";
-    const char *ptrlink = "/data/tests/libc-test/src/functionalext/supplement/stat/tests.txt.soft";
 
     FILE *fptr = fopen(ptr, "w+");
-    system("ln -s /data/tests/libc-test/src/functionalext/supplement/stat/tests.txt "
-           "/data/tests/libc-test/src/functionalext/supplement/stat/tests.txt.soft");
+    char cmd[256] = {0};
+    snprintf(cmd, sizeof(cmd), "ln -s %s %s", ptr, ptrlink);
+    system(cmd);
     struct stat statbuff;
     int32_t back = lstat(ptrlink, &statbuff);
     EXPECT_EQ("lstat_0300", back, 0);

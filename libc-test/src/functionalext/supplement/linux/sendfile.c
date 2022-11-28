@@ -21,9 +21,6 @@
 
 #include "test.h"
 
-const char *fromfile = "/data/tests/libc-test/src/fromfile.txt";
-const char *tofile = "/data/tests/libc-test/src/tofile.txt";
-
 /**
  * @tc.name      : sendfile_0100
  * @tc.desc      : transfer data between file descriptors
@@ -31,6 +28,13 @@ const char *tofile = "/data/tests/libc-test/src/tofile.txt";
  */
 void sendfile_0100(void)
 {
+    char fromfile[128] = {0};
+    char tofile[128] = {0};
+    char *cwd = getcwd(fromfile, sizeof(fromfile));
+    cwd = getcwd(tofile, sizeof(tofile));
+    strcat(fromfile, "/fromfile.txt");
+    strcat(tofile, "/tofile.txt");
+
     FILE *f = fopen(fromfile, "w+");
     const char src[] = "A";
     fwrite(src, strlen(src), 1, f);

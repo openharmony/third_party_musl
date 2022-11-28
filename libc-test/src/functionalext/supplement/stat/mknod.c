@@ -25,7 +25,10 @@
  */
 void mknod_0100(void)
 {
-    const char *pathname = "/data/tests/libc-test/src/functionalext/supplement/stat/mknod";
+    char pathname[128] = {0};
+    char *cwd = getcwd(pathname, sizeof(pathname));
+    strcat(pathname, "/mknod");
+
     int ret = mknod(pathname, TEST_MODE, 0);
     EXPECT_EQ("mknod_0100", ret, ERREXPECT);
 }

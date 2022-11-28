@@ -74,7 +74,9 @@ void tee_0200(void)
 {
     char buf[BUFF_SIZE];
     char *text = "Hello";
-    char *path = "/data/tests/libc-test/src/file.txt";
+    char path[128] = {0};
+    char *cwd = getcwd(path, sizeof(path));
+    strcat(path, "/file.txt");
     int result;
 
     int fd = open(path, O_CREAT | O_WRONLY | O_TRUNC, 0666);

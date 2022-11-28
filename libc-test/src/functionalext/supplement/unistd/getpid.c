@@ -26,12 +26,15 @@
  */
 void getpid_0100(void)
 {
-    system("ps -eo command,pid | grep -E \"PID|getpid\" > "
-           "/data/tests/libc-test/src/functionalext/supplement/unistd/ps.txt");
+    char path[128] = {0};
+    char *cwd = getcwd(path, sizeof(path));
+    strcat(path, "/ps.txt");
+    char cmd[256] = {0};
+    snprintf(cmd, sizeof(cmd), "ps -eo command,pid | grep -E \"PID|getpid\" > %s", path);
+    system(cmd);
     char abc[256] = {0};
     bool successflag = false;
-    const char *ptr = "/data/tests/libc-test/src/functionalext/supplement/unistd/ps.txt";
-    FILE *fptr = fopen(ptr, "r");
+    FILE *fptr = fopen(path, "r");
     if (fptr) {
         while (!feof(fptr)) {
             fread(abc, sizeof(abc), 1, fptr);
@@ -51,7 +54,7 @@ void getpid_0100(void)
     }
     EXPECT_TRUE("getpid_0100", successflag);
     fclose(fptr);
-    remove(ptr);
+    remove(path);
 }
 
 int main(int argc, char *argv[])

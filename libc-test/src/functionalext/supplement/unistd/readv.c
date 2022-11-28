@@ -21,8 +21,6 @@
 
 #include "test.h"
 
-const char *path = "/data/tests/libc-test/src/file.txt";
-
 /**
  * @tc.name      : readv_0100
  * @tc.desc      : read data into multiple buffers
@@ -30,6 +28,9 @@ const char *path = "/data/tests/libc-test/src/file.txt";
  */
 void readv_0100(void)
 {
+    char path[128] = {0};
+    char *cwd = getcwd(path, sizeof(path));
+    strcat(path, "/file.txt");
     int fd = open(path, O_RDWR | O_CREAT);
 
     char buf1[] = "hello";

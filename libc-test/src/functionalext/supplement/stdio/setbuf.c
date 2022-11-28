@@ -19,7 +19,6 @@
 
 #include "test.h"
 
-const char *path = "/data/tests/libc-test/src/file.txt";
 const char *str = "Hello";
 
 /**
@@ -30,6 +29,9 @@ const char *str = "Hello";
 void setbuf_0100(void)
 {
     char buf[BUFSIZ] = {0};
+    char path[128] = {0};
+    char *cwd = getcwd(path, sizeof(path));
+    strcat(path, "/file.txt");
     FILE *f = fopen(path, "w+");
     errno = 0;
     setbuf(f, buf);
@@ -56,6 +58,9 @@ void setbuf_0100(void)
  */
 void setbuf_0200(void)
 {
+    char path[128] = {0};
+    char *cwd = getcwd(path, sizeof(path));
+    strcat(path, "/file.txt");
     FILE *f = fopen(path, "w+");
 
     errno = 0;

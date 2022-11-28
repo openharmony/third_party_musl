@@ -17,9 +17,8 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <string.h>
 #include "test.h"
-
-const char *path = "/data/tests/libc-test/src/sync_file_range.txt";
 
 /**
  * @tc.name      : sync_file_range_0100
@@ -28,6 +27,10 @@ const char *path = "/data/tests/libc-test/src/sync_file_range.txt";
  */
 void sync_file_range_0100(void)
 {
+    char path[128] = {0};
+    char *cwd = getcwd(path, sizeof(path));
+    strcat(path, "/sync_file_range.txt");
+
     errno = 0;
     int result, fd;
 
@@ -71,6 +74,10 @@ void sync_file_range_0200(void)
  */
 void sync_file_range_0300(void)
 {
+    char path[128] = {0};
+    char *cwd = getcwd(path, sizeof(path));
+    strcat(path, "/sync_file_range.txt");
+
     errno = 0;
     int result, fd;
 
@@ -98,6 +105,10 @@ void sync_file_range_0300(void)
  */
 void sync_file_range_0400(void)
 {
+    char path[128] = {0};
+    char *cwd = getcwd(path, sizeof(path));
+    strcat(path, "/sync_file_range.txt");
+
     errno = 0;
     int result, fd;
 

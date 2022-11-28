@@ -17,9 +17,8 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <string.h>
 #include "test.h"
-
-const char *path = "/data/tests/libc-test/src/syncfs.txt";
 
 /**
  * @tc.name      : syncfs_0100
@@ -28,6 +27,10 @@ const char *path = "/data/tests/libc-test/src/syncfs.txt";
  */
 void syncfs_0100(void)
 {
+    char path[128] = {0};
+    char *cwd = getcwd(path, sizeof(path));
+    strcat(path, "/syncfs.txt");
+
     errno = 0;
     int fd = open(path, O_RDWR | O_CREAT);
     if (fd == -1) {

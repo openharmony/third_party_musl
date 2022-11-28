@@ -27,7 +27,9 @@
 void write_0100(void)
 {
     const char *msg = "This is a c test code for write function";
-    const char *path = "/data/tests/libc-test/src/test_write.txt";
+    char path[128] = {0};
+    char *cwd = getcwd(path, sizeof(path));
+    strcat(path, "/test_write.txt");
     int len = strlen(msg);
     char buf[1024] = {0};
     int fd = open(path, O_RDWR | O_RSYNC | O_CREAT, 0664);
@@ -61,7 +63,9 @@ void write_0100(void)
 void write_0200(void)
 {
     const char *msg = "This is a c test code for write function";
-    const char *path = "/data/tests/libc-test/src/test_write.txt";
+    char path[128] = {0};
+    char *cwd = getcwd(path, sizeof(path));
+    strcat(path, "/test_write.txt");
     int len = 0;
     int fd = open(path, O_RDWR | O_RSYNC | O_CREAT, 0664);
     if (fd == -1) {
@@ -84,7 +88,9 @@ void write_0200(void)
 void write_0300(void)
 {
     const char *msg = "This is a c test code for write function";
-    const char *path = "/data/tests/libc-test/src/test_write.txt";
+    char path[128] = {0};
+    char *cwd = getcwd(path, sizeof(path));
+    strcat(path, "/test_write.txt");
     int len = strlen(msg) + 1;
     int fd = open(path, O_RDWR | O_RSYNC | O_CREAT, 0664);
     if (fd == -1) {
@@ -107,7 +113,9 @@ void write_0300(void)
 void write_0400(void)
 {
     const char *msg = "This is a c test code for write function";
-    const char *path = "/data/tests/libc-test/src/test_write.txt";
+    char path[128] = {0};
+    char *cwd = getcwd(path, sizeof(path));
+    strcat(path, "/test_write.txt");
     int len = strlen(msg);
     int fd = open(path, O_RDWR);
     int result = write(fd, msg, len);
@@ -126,7 +134,9 @@ void write_0400(void)
 void write_0500(void)
 {
     const char *msg = NULL;
-    const char *path = "/data/tests/libc-test/src/test_write.txt";
+    char path[128] = {0};
+    char *cwd = getcwd(path, sizeof(path));
+    strcat(path, "/test_write.txt");
     int len = 1;
     int fd = open(path, O_RDWR | O_RSYNC | O_CREAT, 0664);
     if (fd == -1) {
