@@ -42,7 +42,6 @@ regression_list = [
   "pthread_atfork-errno-clobber",
   "pthread_cancel-sem_wait",
   "pthread_cond-smasher",
-  "pthread_cond_wait-cancel_ignored",
   "pthread_condattr_setclock",
   "pthread_create-oom",
   "pthread_exit-cancel",
