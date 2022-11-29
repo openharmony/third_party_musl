@@ -23,7 +23,6 @@
 #include <string.h>
 #include "test.h"
 
-#define TIME_ZONE_SUB_TAG '/'
 #define EPS (0.00001)
 #define CMPFLAG 0
 #define ERREXPECT (-1)
