@@ -2842,9 +2842,12 @@ void __dls3(size_t *sp, size_t *auxv)
 	/* Actual copying to new TLS needs to happen after relocations,
 	 * since the TLS images might have contained relocated addresses. */
 	if (initial_tls != builtin_tls) {
-		if (__init_tp(__copy_tls(initial_tls)) < 0) {
+		pthread_t self = __pthread_self();
+		pthread_t td = __copy_tls(initial_tls);
+		if (__init_tp(td) < 0) {
 			a_crash();
 		}
+		td->tsd = self->tsd;
 	} else {
 		size_t tmp_tls_size = libc.tls_size;
 		pthread_t self = __pthread_self();
