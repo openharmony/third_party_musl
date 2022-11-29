@@ -27,6 +27,10 @@ void lchown_0100(void)
 {
     char path[128] = {0};
     char *cwd = getcwd(path, sizeof(path));
+    if (!cwd) {
+        t_error("%s getcwd failed\n", __func__);
+        return;
+    }
     strcat(path, "/lchown");
     int ret = lchown(path, TEST_ID_VALUE, TEST_ID_VALUE);
     EXPECT_EQ("lchown_0100", ret, CMPFLAG);

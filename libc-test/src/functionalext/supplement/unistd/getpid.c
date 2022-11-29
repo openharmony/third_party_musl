@@ -28,6 +28,10 @@ void getpid_0100(void)
 {
     char path[128] = {0};
     char *cwd = getcwd(path, sizeof(path));
+    if (!cwd) {
+        t_error("%s getcwd failed\n", __func__);
+        return;
+    }
     strcat(path, "/ps.txt");
     char cmd[256] = {0};
     snprintf(cmd, sizeof(cmd), "ps -eo command,pid | grep -E \"PID|getpid\" > %s", path);

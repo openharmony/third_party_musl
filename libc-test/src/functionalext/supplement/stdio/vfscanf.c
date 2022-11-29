@@ -39,6 +39,10 @@ void vfscanf_0100(void)
     char buffer[BUFSIZ];
     char file[128] = {0};
     char *cwd = getcwd(file, sizeof(file));
+    if (!cwd) {
+        t_error("%s getcwd failed\n", __func__);
+        return;
+    }
     strcat(file, "/vfscanf.txt");
     fp = fopen(file, "w+");
     if (fp == NULL) {
@@ -77,6 +81,10 @@ void vfscanf_0200(void)
     char buffer[BUFSIZ];
     char file[128] = {0};
     char *cwd = getcwd(file, sizeof(file));
+    if (!cwd) {
+        t_error("%s getcwd failed\n", __func__);
+        return;
+    }
     strcat(file, "/vfscanf.txt");
     fp = fopen(file, "w+");
     if (fp == NULL) {
@@ -115,6 +123,10 @@ void vfscanf_0300(void)
     int val2 = 0;
     char file[128] = {0};
     char *cwd = getcwd(file, sizeof(file));
+    if (!cwd) {
+        t_error("%s getcwd failed\n", __func__);
+        return;
+    }
     strcat(file, "/vfscanf.txt");
     fp = fopen(file, "w+");
     if (fp == NULL) {

@@ -30,6 +30,10 @@ void fchmodat_0100(void)
 {
     char path[128] = {0};
     char *cwd = getcwd(path, sizeof(path));
+    if (!cwd) {
+        t_error("%s getcwd failed\n", __func__);
+        return;
+    }
     strcat(path, "/test.txt");
 
     int fd;
@@ -56,6 +60,10 @@ void fchmodat_0200(void)
 {
     char path[128] = {0};
     char *cwd = getcwd(path, sizeof(path));
+    if (!cwd) {
+        t_error("%s getcwd failed\n", __func__);
+        return;
+    }
     strcat(path, "/test.txt");
 
     int fd;

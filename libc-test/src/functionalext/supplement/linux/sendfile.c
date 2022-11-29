@@ -31,7 +31,15 @@ void sendfile_0100(void)
     char fromfile[128] = {0};
     char tofile[128] = {0};
     char *cwd = getcwd(fromfile, sizeof(fromfile));
+    if (!cwd) {
+        t_error("%s getcwd fromfile failed\n", __func__);
+        return;
+    }
     cwd = getcwd(tofile, sizeof(tofile));
+    if (!cwd) {
+        t_error("%s getcwd tofile failed\n", __func__);
+        return;
+    }
     strcat(fromfile, "/fromfile.txt");
     strcat(tofile, "/tofile.txt");
 

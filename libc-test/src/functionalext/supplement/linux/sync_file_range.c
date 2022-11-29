@@ -29,6 +29,10 @@ void sync_file_range_0100(void)
 {
     char path[128] = {0};
     char *cwd = getcwd(path, sizeof(path));
+    if (!cwd) {
+        t_error("%s getcwd failed\n", __func__);
+        return;
+    }
     strcat(path, "/sync_file_range.txt");
 
     errno = 0;
@@ -76,6 +80,10 @@ void sync_file_range_0300(void)
 {
     char path[128] = {0};
     char *cwd = getcwd(path, sizeof(path));
+    if (!cwd) {
+        t_error("%s getcwd failed\n", __func__);
+        return;
+    }
     strcat(path, "/sync_file_range.txt");
 
     errno = 0;
@@ -107,6 +115,10 @@ void sync_file_range_0400(void)
 {
     char path[128] = {0};
     char *cwd = getcwd(path, sizeof(path));
+    if (!cwd) {
+        t_error("%s getcwd failed\n", __func__);
+        return;
+    }
     strcat(path, "/sync_file_range.txt");
 
     errno = 0;

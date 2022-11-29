@@ -29,6 +29,10 @@ void swapon_0100(void)
 {
     char dir_path[128] = {0};
     char *cwd = getcwd(dir_path, sizeof(dir_path));
+    if (!cwd) {
+        t_error("%s getcwd failed\n", __func__);
+        return;
+    }
 
     errno = 0;
     char cmd[256] = {0};

@@ -27,6 +27,10 @@ void mknod_0100(void)
 {
     char pathname[128] = {0};
     char *cwd = getcwd(pathname, sizeof(pathname));
+    if (!cwd) {
+        t_error("%s getcwd failed\n", __func__);
+        return;
+    }
     strcat(pathname, "/mknod");
 
     int ret = mknod(pathname, TEST_MODE, 0);

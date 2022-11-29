@@ -27,6 +27,10 @@ void __fwritable_0100(void)
 {
     char ptr[128] = {0};
     char *cwd = getcwd(ptr, sizeof(ptr));
+    if (!cwd) {
+        t_error("%s getcwd failed\n", __func__);
+        return;
+    }
     strcat(ptr, "/Freadtest.txt");
 
     FILE *fptr = fopen(ptr, "w+");
@@ -47,6 +51,10 @@ void __fwritable_0200(void)
 {
     char ptr[128] = {0};
     char *cwd = getcwd(ptr, sizeof(ptr));
+    if (!cwd) {
+        t_error("%s getcwd failed\n", __func__);
+        return;
+    }
     strcat(ptr, "/Freadtest.txt");
 
     FILE *fptr = fopen(ptr, "r");

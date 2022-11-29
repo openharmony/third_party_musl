@@ -26,6 +26,10 @@ void exit_0100(void)
 {
     char path[128] = {0};
     char *cwd = getcwd(path, sizeof(path));
+    if (!cwd) {
+        t_error("%s getcwd failed\n", __func__);
+        return;
+    }
     char cmd[256] = {0};
     snprintf(cmd, sizeof(cmd), "cd %s; ./exittest01", path);
     system(cmd);
@@ -60,6 +64,10 @@ void exit_0200(void)
 {
     char path[128] = {0};
     char *cwd = getcwd(path, sizeof(path));
+    if (!cwd) {
+        t_error("%s getcwd failed\n", __func__);
+        return;
+    }
     char cmd[256] = {0};
     snprintf(cmd, sizeof(cmd), "cd %s; ./exittest02", path);
     system(cmd);

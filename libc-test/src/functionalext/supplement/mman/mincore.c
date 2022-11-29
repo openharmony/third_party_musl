@@ -32,6 +32,10 @@ void mincore_0100(void)
     struct stat st;
     char pathname[128] = {0};
     char *cwd = getcwd(pathname, sizeof(pathname));
+    if (!cwd) {
+        t_error("%s getcwd failed\n", __func__);
+        return;
+    }
     strcat(pathname, "/mincore");
     
     int ret = stat(pathname, &st);

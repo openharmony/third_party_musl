@@ -31,6 +31,10 @@ void __fwriting_0100(void)
 {
     char ptr[128] = {0};
     char *cwd = getcwd(ptr, sizeof(ptr));
+    if (!cwd) {
+        t_error("%s getcwd failed\n", __func__);
+        return;
+    }
     strcat(ptr, "/Freadtest.txt");
 
     FILE *fptr = fopen(ptr, "w");
@@ -49,6 +53,10 @@ void __fwriting_0200(void)
 {
     char ptr[128] = {0};
     char *cwd = getcwd(ptr, sizeof(ptr));
+    if (!cwd) {
+        t_error("%s getcwd failed\n", __func__);
+        return;
+    }
     strcat(ptr, "/Freadtest.txt");
 
     const char *wrstring = "helloworld";
@@ -69,6 +77,10 @@ void __fwriting_0300(void)
 {
     char ptr[128] = {0};
     char *cwd = getcwd(ptr, sizeof(ptr));
+    if (!cwd) {
+        t_error("%s getcwd failed\n", __func__);
+        return;
+    }
     strcat(ptr, "/Freadtest.txt");
 
     char abc[100] = {0};

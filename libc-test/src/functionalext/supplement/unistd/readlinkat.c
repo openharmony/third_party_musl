@@ -54,6 +54,10 @@ void readlinkat_0100(void)
 {
     char path[128] = {0};
     char *cwd = getcwd(path, sizeof(path));
+    if (!cwd) {
+        t_error("%s getcwd file failed\n", __func__);
+        return;
+    }
     strcat(path, "/file.txt");
     int result = create_file(path);
     if (result != 0) {
@@ -63,6 +67,10 @@ void readlinkat_0100(void)
 
     char linkpath[128] = {0};
     cwd = getcwd(linkpath, sizeof(linkpath));
+    if (!cwd) {
+        t_error("%s getcwd link failed\n", __func__);
+        return;
+    }
     strcat(linkpath, "/linkfile.txt");
     remove(linkpath);
 
@@ -101,6 +109,10 @@ void readlinkat_0200(void)
 {
     char path[128] = {0};
     char *cwd = getcwd(path, sizeof(path));
+    if (!cwd) {
+        t_error("%s getcwd file failed\n", __func__);
+        return;
+    }
     strcat(path, "/file.txt");
     int result = create_file(path);
     if (result != 0) {
@@ -110,6 +122,10 @@ void readlinkat_0200(void)
 
     char dirname[128] = {0};
     cwd = getcwd(dirname, sizeof(dirname));
+    if (!cwd) {
+        t_error("%s getcwd dir failed\n", __func__);
+        return;
+    }
     DIR *dir = opendir(dirname);
     if (dir == NULL) {
         t_error("%s failed: dirname = %s\n", __func__, dirname);
@@ -123,6 +139,10 @@ void readlinkat_0200(void)
 
     char linkpath[128] = {0};
     cwd = getcwd(linkpath, sizeof(linkpath));
+    if (!cwd) {
+        t_error("%s getcwd link failed\n", __func__);
+        return;
+    }
     strcat(linkpath, "/linkfile.txt");
     remove(linkpath);
 

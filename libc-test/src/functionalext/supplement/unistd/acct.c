@@ -37,6 +37,10 @@ void acct_0200(void)
 {
     char filePath[128] = {0};
     char *cwd = getcwd(filePath, sizeof(filePath));
+    if (!cwd) {
+        t_error("%s getcwd failed\n", __func__);
+        return;
+    }
     strcat(filePath, "/accttest.txt");
 
     int result = acct(filePath);

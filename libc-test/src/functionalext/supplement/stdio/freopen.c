@@ -25,6 +25,10 @@ void freopen_0100(void)
 {
     char ptr[128] = {0};
     char *cwd = getcwd(ptr, sizeof(ptr));
+    if (!cwd) {
+        t_error("%s getcwd failed\n", __func__);
+        return;
+    }
     strcat(ptr, "/freopen.txt");
 
     FILE *fp;

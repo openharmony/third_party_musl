@@ -32,6 +32,10 @@ void lstat_0100(void)
 {
     char ptr[128] = {0};
     char *cwd = getcwd(ptr, sizeof(ptr));
+    if (!cwd) {
+        t_error("%s getcwd failed\n", __func__);
+        return;
+    }
     strcat(ptr, "/stattest.txt");
 
     const char str[] = "this is a sample!";
@@ -55,6 +59,10 @@ void lstat_time64_0100(void)
 {
     char ptr[128] = {0};
     char *cwd = getcwd(ptr, sizeof(ptr));
+    if (!cwd) {
+        t_error("%s getcwd failed\n", __func__);
+        return;
+    }
     strcat(ptr, "/stattest.txt");
 
     const char str[] = "this is a sample!";
@@ -91,7 +99,15 @@ void lstat_0300(void)
     char ptr[128] = {0};
     char ptrlink[128] = {0};
     char *cwd = getcwd(ptr, sizeof(ptr));
+    if (!cwd) {
+        t_error("%s getcwd file failed\n", __func__);
+        return;
+    }
     cwd = getcwd(ptrlink, sizeof(ptrlink));
+    if (!cwd) {
+        t_error("%s getcwd link failed\n", __func__);
+        return;
+    }
     strcat(ptr, "/tests.txt");
     strcat(ptrlink, "/tests.txt.soft");   
     struct stat buf[3];
