@@ -33,6 +33,10 @@ void readdir_r_0100(void)
 {
     char name[128] = {0};
     char *cwd = getcwd(name, sizeof(name));
+    if (!cwd) {
+        t_error("%s getcwd failed\n", __func__);
+        return;
+    }
     DIR *dir = opendir(name);
     if (dir == NULL) {
         t_error("%s failed: opendir. name = %s\n", __func__, name);

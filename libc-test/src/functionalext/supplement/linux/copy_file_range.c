@@ -34,7 +34,15 @@ void copy_file_range_0100(void)
     char path_in[128] = {0};
     char path_out[128] = {0};
     char *cwd = getcwd(path_in, sizeof(path_in));
+    if (!cwd) {
+        t_error("%s getcwd path_in failed\n", __func__);
+        return;
+    }
     cwd = getcwd(path_out, sizeof(path_out));
+    if (!cwd) {
+        t_error("%s getcwd path_out failed\n", __func__);
+        return;
+    }
     strcat(path_in, "/file_in.txt");
     strcat(path_out, "/file_out.txt");
 
@@ -115,7 +123,15 @@ void copy_file_range_0300(void)
     char path_in[128] = {0};
     char path_out[128] = {0};
     char *cwd = getcwd(path_in, sizeof(path_in));
+    if (!cwd) {
+        t_error("%s getcwd path_in failed\n", __func__);
+        return;
+    }
     cwd = getcwd(path_out, sizeof(path_out));
+    if (!cwd) {
+        t_error("%s getcwd path_out failed\n", __func__);
+        return;
+    }
     strcat(path_in, "/file_in.txt");
     strcat(path_out, "/file_out.txt");
     

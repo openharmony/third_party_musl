@@ -27,6 +27,10 @@ void fchownat_0100(void)
 {
     char ptr[128] = {0};
     char *cwd = getcwd(ptr, sizeof(ptr));
+    if (!cwd) {
+        t_error("%s getcwd failed\n", __func__);
+        return;
+    }
     strcat(ptr, "/fchownattest.txt");
     int fd = open(ptr, O_RDWR | O_CREAT);
     EXPECT_TRUE("fchownat_0100", fd >= 0);
@@ -50,6 +54,10 @@ void fchownat_0200(void)
 {
     char ptr[128] = {0};
     char *cwd = getcwd(ptr, sizeof(ptr));
+    if (!cwd) {
+        t_error("%s getcwd failed\n", __func__);
+        return;
+    }
     strcat(ptr, "/fchownattest.txt");
     int fd = open(ptr, O_RDWR | O_CREAT);
     EXPECT_TRUE("fchownat_0200", fd >= 0);

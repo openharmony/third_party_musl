@@ -86,6 +86,10 @@ void fstatat_0300(void)
 {
     char ptr[128] = {0};
     char *cwd = getcwd(ptr, sizeof(ptr));
+    if (!cwd) {
+        t_error("%s getcwd failed\n", __func__);
+        return;
+    }
     strcat(ptr, "/fstatattest.txt");
 
     struct stat st;

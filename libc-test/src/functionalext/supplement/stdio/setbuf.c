@@ -31,6 +31,10 @@ void setbuf_0100(void)
     char buf[BUFSIZ] = {0};
     char path[128] = {0};
     char *cwd = getcwd(path, sizeof(path));
+    if (!cwd) {
+        t_error("%s getcwd failed\n", __func__);
+        return;
+    }
     strcat(path, "/file.txt");
     FILE *f = fopen(path, "w+");
     errno = 0;
@@ -60,6 +64,10 @@ void setbuf_0200(void)
 {
     char path[128] = {0};
     char *cwd = getcwd(path, sizeof(path));
+    if (!cwd) {
+        t_error("%s getcwd failed\n", __func__);
+        return;
+    }
     strcat(path, "/file.txt");
     FILE *f = fopen(path, "w+");
 

@@ -28,6 +28,10 @@ void getline_0100(void)
     size_t len = 0;
     char path[128] = {0};
     char *cwd = getcwd(path, sizeof(path));
+    if (!cwd) {
+        t_error("%s getcwd failed\n", __func__);
+        return;
+    }
     strcat(path, "/test.txt");
 
     FILE *fp = fopen(path, "w+");
@@ -53,6 +57,10 @@ void getline_0200(void)
     size_t len = 0;
     char path[128] = {0};
     char *cwd = getcwd(path, sizeof(path));
+    if (!cwd) {
+        t_error("%s getcwd failed\n", __func__);
+        return;
+    }
     strcat(path, "/file.txt");
     FILE *fp = fopen(path, "w+");
     EXPECT_PTRNE("getline_0100", fp, NULL);
@@ -74,6 +82,10 @@ void getline_0300(void)
     char *line = NULL;
     char path[128] = {0};
     char *cwd = getcwd(path, sizeof(path));
+    if (!cwd) {
+        t_error("%s getcwd failed\n", __func__);
+        return;
+    }
     strcat(path, "/file.txt");
     FILE *fp = fopen(path, "w+");
     EXPECT_PTRNE("getline_0100", fp, NULL);

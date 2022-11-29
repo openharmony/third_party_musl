@@ -35,6 +35,10 @@ void truncate_0100(void)
 {
     char path_n[128] = {0};
     char *cwd = getcwd(path_n, sizeof(path_n));
+    if (!cwd) {
+        t_error("%s getcwd failed\n", __func__);
+        return;
+    }
     strcat(path_n, "/files.txt");
     FILE *f = fopen(path_n, "a");
     if (f == NULL) {
@@ -60,6 +64,10 @@ void truncate_0200(void)
 {
     char path[128] = {0};
     char *cwd = getcwd(path, sizeof(path));
+    if (!cwd) {
+        t_error("%s getcwd failed\n", __func__);
+        return;
+    }
     strcat(path, "/file.txt");
     FILE *f = fopen(path, "a");
     if (f == NULL) {
@@ -105,6 +113,10 @@ void truncate_0300(void)
 {
     char path[128] = {0};
     char *cwd = getcwd(path, sizeof(path));
+    if (!cwd) {
+        t_error("%s getcwd failed\n", __func__);
+        return;
+    }
     strcat(path, "/file.txt");
     int result = truncate(path, nlen);
     if (result == 0) {

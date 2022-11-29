@@ -33,6 +33,10 @@ void utimensat_0100(void)
 {
     char path[128] = {0};
     char *cwd = getcwd(path, sizeof(path));
+    if (!cwd) {
+        t_error("%s getcwd failed\n", __func__);
+        return;
+    }
     strcat(path, "/file.txt");
 
     int fd = open(path, O_RDWR | O_CREAT);
@@ -85,6 +89,10 @@ void utimensat_time64_0100(void)
 {
     char path[128] = {0};
     char *cwd = getcwd(path, sizeof(path));
+    if (!cwd) {
+        t_error("%s getcwd failed\n", __func__);
+        return;
+    }
     strcat(path, "/file.txt");
 
     int fd = open(path, O_RDWR | O_CREAT);

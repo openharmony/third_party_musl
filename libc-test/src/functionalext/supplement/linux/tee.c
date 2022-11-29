@@ -76,6 +76,10 @@ void tee_0200(void)
     char *text = "Hello";
     char path[128] = {0};
     char *cwd = getcwd(path, sizeof(path));
+    if (!cwd) {
+        t_error("%s getcwd failed\n", __func__);
+        return;
+    }
     strcat(path, "/file.txt");
     int result;
 

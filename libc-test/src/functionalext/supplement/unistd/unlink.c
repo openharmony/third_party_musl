@@ -28,6 +28,10 @@ void unlink_0100(void)
 {
     char path[128] = {0};
     char *cwd = getcwd(path, sizeof(path));
+    if (!cwd) {
+        t_error("%s getcwd failed\n", __func__);
+        return;
+    }
     strcat(path, "/test_unlink.txt");
     int fd = open(path, O_CREAT);
     int error_code = -1;
@@ -51,6 +55,10 @@ void unlink_0200(void)
 {
     char path[128] = {0};
     char *cwd = getcwd(path, sizeof(path));
+    if (!cwd) {
+        t_error("%s getcwd failed\n", __func__);
+        return;
+    }
     strcat(path, "/unexist_test_unlink.txt");
     int result = unlink(path);
     int error_code = -1;
