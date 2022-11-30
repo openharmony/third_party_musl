@@ -18,7 +18,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "test.h"
+#include "filepath_util.h"
 
 void handler(int sig)
 {
@@ -32,13 +32,8 @@ void handler(int sig)
  */
 void rewinddir_0100(void)
 {
-    char name[128] = {0};
-    char *cwd = getcwd(name, sizeof(name));
-    if (!cwd) {
-        t_error("%s getcwd failed\n", __func__);
-        return;
-    }
-
+    char name[PATH_MAX] = {0};
+    FILE_ABSOLUTE_DIR(name);
     DIR *dir = opendir(name);
     if (dir == NULL) {
         t_error("%s failed: opendir. name = %s\n", __func__, name);

@@ -15,6 +15,7 @@
 
 #include <sys/stat.h>
 #include "functionalext.h"
+#include "filepath_util.h"
 
 #define TEST_MODE 0666
 
@@ -25,14 +26,8 @@
  */
 void mknod_0100(void)
 {
-    char pathname[128] = {0};
-    char *cwd = getcwd(pathname, sizeof(pathname));
-    if (!cwd) {
-        t_error("%s getcwd failed\n", __func__);
-        return;
-    }
-    strcat(pathname, "/mknod");
-
+    char pathname[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH("mknod", pathname);
     int ret = mknod(pathname, TEST_MODE, 0);
     EXPECT_EQ("mknod_0100", ret, ERREXPECT);
 }

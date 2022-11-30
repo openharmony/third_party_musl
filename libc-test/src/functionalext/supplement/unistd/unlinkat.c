@@ -15,8 +15,8 @@
 
 #include <errno.h>
 #include <fcntl.h>
-#include <string.h>
-#include "test.h"
+
+#include "filepath_util.h"
 
 /**
  * @tc.name      : unlinkat_0100
@@ -25,14 +25,8 @@
  */
 void unlinkat_0100(void)
 {
-    char path[128] = {0};
-    char *cwd = getcwd(path, sizeof(path));
-    if (!cwd) {
-        t_error("%s getcwd failed\n", __func__);
-        return;
-    }
-    strcat(path, "/file.txt");
-
+    char path[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH(STR_FILE_TXT, path);
     int fd = open(path, O_CREAT, 0664);
 
     int result = unlinkat(fd, path, 0);
@@ -51,13 +45,8 @@ void unlinkat_0100(void)
 void unlinkat_0200(void)
 {
     errno = 0;
-    char path[128] = {0};
-    char *cwd = getcwd(path, sizeof(path));
-    if (!cwd) {
-        t_error("%s getcwd failed\n", __func__);
-        return;
-    }
-    strcat(path, "/file.txt");
+    char path[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH(STR_FILE_TXT, path);
     int result = unlinkat(AT_FDCWD, path, AT_REMOVEDIR);
     if (result == 0) {
         t_error("%s failed: result = %d\n", __func__, result);

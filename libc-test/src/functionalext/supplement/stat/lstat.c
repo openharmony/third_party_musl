@@ -18,6 +18,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include "functionalext.h"
+#include "filepath_util.h"
 
 extern int __lstat_time64(const char *__restrict, struct stat *__restrict);
 
@@ -30,13 +31,8 @@ typedef void (*TEST_FUN)();
  */
 void lstat_0100(void)
 {
-    char ptr[128] = {0};
-    char *cwd = getcwd(ptr, sizeof(ptr));
-    if (!cwd) {
-        t_error("%s getcwd failed\n", __func__);
-        return;
-    }
-    strcat(ptr, "/stattest.txt");
+    char ptr[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH(STR_STAT_TEST_TXT, ptr);
 
     const char str[] = "this is a sample!";
     FILE *fptr = fopen(ptr, "w+");
@@ -57,13 +53,8 @@ void lstat_0100(void)
  */
 void lstat_time64_0100(void)
 {
-    char ptr[128] = {0};
-    char *cwd = getcwd(ptr, sizeof(ptr));
-    if (!cwd) {
-        t_error("%s getcwd failed\n", __func__);
-        return;
-    }
-    strcat(ptr, "/stattest.txt");
+    char ptr[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH(STR_STAT_TEST_TXT, ptr);
 
     const char str[] = "this is a sample!";
     FILE *fptr = fopen(ptr, "w+");
@@ -85,7 +76,7 @@ void lstat_time64_0100(void)
 void lstat_0200(void)
 {
     struct stat statbuff;
-    int32_t back = lstat("test.txt", &statbuff);
+    int32_t back = lstat(STR_TEST_TXT, &statbuff);
     EXPECT_EQ("lstat_0200", back, -1);
 }
 
@@ -96,24 +87,14 @@ void lstat_0200(void)
  */
 void lstat_0300(void)
 {
-    char ptr[128] = {0};
-    char ptrlink[128] = {0};
-    char *cwd = getcwd(ptr, sizeof(ptr));
-    if (!cwd) {
-        t_error("%s getcwd file failed\n", __func__);
-        return;
-    }
-    cwd = getcwd(ptrlink, sizeof(ptrlink));
-    if (!cwd) {
-        t_error("%s getcwd link failed\n", __func__);
-        return;
-    }
-    strcat(ptr, "/tests.txt");
-    strcat(ptrlink, "/tests.txt.soft");   
     struct stat buf[3];
+    char ptr[PATH_MAX] = {0};
+    char ptrlink[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH("tests.txt", ptr);
+    FILE_ABSOLUTE_PATH("tests.txt.soft", ptrlink);
 
     FILE *fptr = fopen(ptr, "w+");
-    char cmd[256] = {0};
+    char cmd[PATH_MAX] = {0};
     snprintf(cmd, sizeof(cmd), "ln -s %s %s", ptr, ptrlink);
     system(cmd);
     struct stat statbuff;

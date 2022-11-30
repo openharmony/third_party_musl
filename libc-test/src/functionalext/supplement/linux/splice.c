@@ -19,7 +19,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "test.h"
+#include "filepath_util.h"
 
 const char *path = "/proc/version";
 
@@ -30,20 +30,10 @@ const char *path = "/proc/version";
  */
 void splice_0100(void)
 {
-    char fromfile[128] = {0};
-    char tofile[128] = {0};
-    char *cwd = getcwd(fromfile, sizeof(fromfile));
-    if (!cwd) {
-        t_error("%s getcwd fromfile failed\n", __func__);
-        return;
-    }
-    cwd = getcwd(tofile, sizeof(tofile));
-    if (!cwd) {
-        t_error("%s getcwd tofile failed\n", __func__);
-        return;
-    }
-    strcat(fromfile, "/fromfile.txt");
-    strcat(tofile, "/tofile.txt");
+    char fromfile[PATH_MAX] = {0};
+    char tofile[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH(STR_FILE_FROM_TXT, fromfile);
+    FILE_ABSOLUTE_PATH(STR_FILE_TO_TXT, tofile);
 
     int fromfd = open(fromfile, O_RDWR | O_CREAT);
     if (fromfd < 0) {

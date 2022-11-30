@@ -17,8 +17,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <wchar.h>
-#include <string.h>
-#include "test.h"
+
+#include "filepath_util.h"
 
 void handler(int sig)
 {
@@ -32,13 +32,8 @@ void handler(int sig)
  */
 void ungetwc_0100(void)
 {
-    char path[128] = {0};
-    char *cwd = getcwd(path, sizeof(path));
-    if (!cwd) {
-        t_error("%s getcwd failed\n", __func__);
-        return;
-    }
-    strcat(path, "/file.txt");
+    char path[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH(STR_FILE_TXT, path);
     FILE *file = fopen(path, "a+");
     if (!file) {
         t_error("%s failed: fopen\n", __func__);

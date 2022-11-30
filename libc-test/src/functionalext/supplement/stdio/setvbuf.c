@@ -14,6 +14,7 @@
  */
 
 #include "functionalext.h"
+#include "filepath_util.h"
 
 /**
  * @tc.name      : setvbuf_0100
@@ -23,13 +24,8 @@
 void setvbuf_0100(void)
 {
     char buff[1024] = {0};
-    char path[128] = {0};
-    char *cwd = getcwd(path, sizeof(path));
-    if (!cwd) {
-        t_error("%s getcwd failed\n", __func__);
-        return;
-    }
-    strcat(path, "/file.txt");
+    char path[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH(STR_FILE_TXT, path);
     FILE *fptr = fopen(path, "w+");
     EXPECT_PTRNE("setvbuf_0100", fptr, NULL);
 
@@ -48,13 +44,8 @@ void setvbuf_0100(void)
 void setvbuf_0200(void)
 {
     char buff[1024] = {0};
-    char path[128] = {0};
-    char *cwd = getcwd(path, sizeof(path));
-    if (!cwd) {
-        t_error("%s getcwd failed\n", __func__);
-        return;
-    }
-    strcat(path, "/file.txt");
+    char path[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH(STR_FILE_TXT, path);
     FILE *fptr = fopen(path, "w+");
     EXPECT_PTRNE("setvbuf_0100", fptr, NULL);
 

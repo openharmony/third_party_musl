@@ -19,6 +19,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include "functionalext.h"
+#include "filepath_util.h"
 
 const int32_t NUM_ZERO = 0;
 
@@ -29,14 +30,8 @@ const int32_t NUM_ZERO = 0;
  */
 void __fwriting_0100(void)
 {
-    char ptr[128] = {0};
-    char *cwd = getcwd(ptr, sizeof(ptr));
-    if (!cwd) {
-        t_error("%s getcwd failed\n", __func__);
-        return;
-    }
-    strcat(ptr, "/Freadtest.txt");
-
+    char ptr[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH(STR_FREAD_TEST_TXT, ptr);
     FILE *fptr = fopen(ptr, "w");
     int result = __fwriting(fptr);
     EXPECT_NE("__fwriting_0100", result, NUM_ZERO);
@@ -51,15 +46,9 @@ void __fwriting_0100(void)
  */
 void __fwriting_0200(void)
 {
-    char ptr[128] = {0};
-    char *cwd = getcwd(ptr, sizeof(ptr));
-    if (!cwd) {
-        t_error("%s getcwd failed\n", __func__);
-        return;
-    }
-    strcat(ptr, "/Freadtest.txt");
-
     const char *wrstring = "helloworld";
+    char ptr[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH(STR_FREAD_TEST_TXT, ptr);
     FILE *fptr = fopen(ptr, "w+");
     fwrite(wrstring, sizeof(char), strlen(wrstring), fptr);
     int result = __fwriting(fptr);
@@ -75,16 +64,10 @@ void __fwriting_0200(void)
  */
 void __fwriting_0300(void)
 {
-    char ptr[128] = {0};
-    char *cwd = getcwd(ptr, sizeof(ptr));
-    if (!cwd) {
-        t_error("%s getcwd failed\n", __func__);
-        return;
-    }
-    strcat(ptr, "/Freadtest.txt");
-
     char abc[100] = {0};
     const char *wrstring = "helloworld";
+    char ptr[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH(STR_FREAD_TEST_TXT, ptr);
     FILE *fptr = fopen(ptr, "w+");
     fwrite(wrstring, sizeof(char), strlen(wrstring), fptr);
     fseek(fptr, 0, SEEK_SET);

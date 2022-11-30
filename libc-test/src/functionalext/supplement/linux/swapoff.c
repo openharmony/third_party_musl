@@ -17,8 +17,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/swap.h>
-#include <string.h>
-#include "test.h"
+
+#include "filepath_util.h"
 
 /**
  * @tc.name      : swapoff_0100
@@ -27,22 +27,19 @@
  */
 void swapoff_0100(void)
 {
-    char dir_path[128] = {0};
-    char *cwd = getcwd(dir_path, sizeof(dir_path));
-    if (!cwd) {
-        t_error("%s getcwd failed\n", __func__);
-        return;
-    }
-
+    char dir_path[PATH_MAX] = {0};
+    FILE_ABSOLUTE_DIR(dir_path);
     errno = 0;
-    char cmd[256] = {0};
+    char cmd[PATH_MAX] = {0};
     snprintf(cmd, sizeof(cmd), "cd %s; dd if=/dev/zero of=swapfile count=1 bs=1k; mkswap swapfile", dir_path);
     system(cmd);
-    strcat(dir_path, "/swapfile");
-    int result = swapon(dir_path, SWAP_FLAG_PREFER);
+
+    char path[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH(STR_FILE_SWAP, path);
+    int result = swapon(path, SWAP_FLAG_PREFER);
     if (result == -1) {
         t_error("%s swapon failed\n", __func__);
-        remove(dir_path);
+        remove(path);
         return;
     }
     if (errno == ENOSYS) {
@@ -50,7 +47,7 @@ void swapoff_0100(void)
         return;
     }
 
-    result = swapoff(dir_path);
+    result = swapoff(path);
     if (result == -1) {
         t_error("%s swapoff failed", __func__);
     }
