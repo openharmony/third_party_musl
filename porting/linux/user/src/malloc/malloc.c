@@ -827,10 +827,16 @@ void *realloc(void *p, size_t n)
 		}
 		newlen = (newlen + PAGE_SIZE-1) & -PAGE_SIZE;
 		if (oldlen == newlen) return p;
+#ifndef MUSL_ITERATE_AND_STATS_API
 		base = __mremap(base, oldlen, newlen, MREMAP_MAYMOVE);
+#else
+		base = __mremap(base, oldlen, newlen, 0);
+#endif
 		if (base == (void *)-1)
 			goto copy_realloc;
+#ifndef MUSL_ITERATE_AND_STATS_API
 		self = (void *)(base + extra);
+#endif
 		self->csize = newlen - extra;
 #ifdef MALLOC_RED_ZONE
 		self->usize = user_size;
