@@ -16,6 +16,7 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 #include "functionalext.h"
+#include "filepath_util.h"
 
 int success = 36863;
 int SUCCESS = 33279;
@@ -28,16 +29,10 @@ int failed = -1;
  */
 void fchmodat_0100(void)
 {
-    char path[128] = {0};
-    char *cwd = getcwd(path, sizeof(path));
-    if (!cwd) {
-        t_error("%s getcwd failed\n", __func__);
-        return;
-    }
-    strcat(path, "/test.txt");
-
     int fd;
     struct stat buf;
+    char path[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH(STR_TEST_TXT, path);
     fd = open(path, O_RDWR | O_CREAT);
     int result = fchmodat(fd,
         path,
@@ -58,16 +53,10 @@ void fchmodat_0100(void)
  */
 void fchmodat_0200(void)
 {
-    char path[128] = {0};
-    char *cwd = getcwd(path, sizeof(path));
-    if (!cwd) {
-        t_error("%s getcwd failed\n", __func__);
-        return;
-    }
-    strcat(path, "/test.txt");
-
     int fd;
     struct stat buf;
+    char path[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH(STR_TEST_TXT, path);
     fd = open(path, O_RDWR | O_CREAT);
     int result = fchmodat(fd,
         path,

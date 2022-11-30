@@ -17,8 +17,8 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <unistd.h>
-#include <string.h>
-#include "test.h"
+
+#include "filepath_util.h"
 
 /**
  * @tc.name      : syncfs_0100
@@ -27,15 +27,9 @@
  */
 void syncfs_0100(void)
 {
-    char path[128] = {0};
-    char *cwd = getcwd(path, sizeof(path));
-    if (!cwd) {
-        t_error("%s getcwd failed\n", __func__);
-        return;
-    }
-    strcat(path, "/syncfs.txt");
-
     errno = 0;
+    char path[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH("syncfs.txt", path);
     int fd = open(path, O_RDWR | O_CREAT);
     if (fd == -1) {
         t_error("%s open failed\n", __func__);

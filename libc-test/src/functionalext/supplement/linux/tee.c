@@ -17,7 +17,7 @@
 #include <fcntl.h>
 #include <string.h>
 #include <unistd.h>
-#include "test.h"
+#include "filepath_util.h"
 
 #define BUFF_SIZE (20)
 
@@ -74,14 +74,9 @@ void tee_0200(void)
 {
     char buf[BUFF_SIZE];
     char *text = "Hello";
-    char path[128] = {0};
-    char *cwd = getcwd(path, sizeof(path));
-    if (!cwd) {
-        t_error("%s getcwd failed\n", __func__);
-        return;
-    }
-    strcat(path, "/file.txt");
     int result;
+    char path[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH(STR_FILE_TXT, path);
 
     int fd = open(path, O_CREAT | O_WRONLY | O_TRUNC, 0666);
     if (fd < 0) {

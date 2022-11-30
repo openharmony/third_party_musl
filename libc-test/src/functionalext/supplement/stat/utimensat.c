@@ -17,8 +17,7 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <sys/stat.h>
-#include <string.h>
-#include "test.h"
+#include "filepath_util.h"
 
 const long sec = 123840;
 
@@ -31,14 +30,8 @@ extern int __utimensat_time64(int, const char *, const struct timespec [2], int)
  */
 void utimensat_0100(void)
 {
-    char path[128] = {0};
-    char *cwd = getcwd(path, sizeof(path));
-    if (!cwd) {
-        t_error("%s getcwd failed\n", __func__);
-        return;
-    }
-    strcat(path, "/file.txt");
-
+    char path[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH(STR_FILE_TXT, path);
     int fd = open(path, O_RDWR | O_CREAT);
     struct timespec times[] = {{.tv_sec = 0}, {.tv_sec = sec}};
 
@@ -87,14 +80,8 @@ void utimensat_0200(void)
  */
 void utimensat_time64_0100(void)
 {
-    char path[128] = {0};
-    char *cwd = getcwd(path, sizeof(path));
-    if (!cwd) {
-        t_error("%s getcwd failed\n", __func__);
-        return;
-    }
-    strcat(path, "/file.txt");
-
+    char path[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH(STR_FILE_TXT, path);
     int fd = open(path, O_RDWR | O_CREAT);
     struct timespec times[] = {{.tv_sec = 0}, {.tv_sec = sec}};
 

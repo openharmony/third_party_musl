@@ -17,7 +17,7 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <string.h>
-#include "test.h"
+#include "filepath_util.h"
 
 const char *str = "Hello";
 
@@ -31,20 +31,10 @@ void copy_file_range_0100(void)
     int fd_in, fd_out, wlen, result;
     char buffer[BUFSIZ];
 
-    char path_in[128] = {0};
-    char path_out[128] = {0};
-    char *cwd = getcwd(path_in, sizeof(path_in));
-    if (!cwd) {
-        t_error("%s getcwd path_in failed\n", __func__);
-        return;
-    }
-    cwd = getcwd(path_out, sizeof(path_out));
-    if (!cwd) {
-        t_error("%s getcwd path_out failed\n", __func__);
-        return;
-    }
-    strcat(path_in, "/file_in.txt");
-    strcat(path_out, "/file_out.txt");
+    char path_in[PATH_MAX] = {0};
+    char path_out[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH(STR_FILE_IN_TXT, path_in);
+    FILE_ABSOLUTE_PATH(STR_FILE_OUT_TXT, path_out);
 
     fd_in = open(path_in, O_RDWR | O_CREAT);
     if (fd_in == -1) {
@@ -120,21 +110,11 @@ void copy_file_range_0300(void)
     int fd_in, fd_out, wlen, result;
     char buffer[BUFSIZ];
 
-    char path_in[128] = {0};
-    char path_out[128] = {0};
-    char *cwd = getcwd(path_in, sizeof(path_in));
-    if (!cwd) {
-        t_error("%s getcwd path_in failed\n", __func__);
-        return;
-    }
-    cwd = getcwd(path_out, sizeof(path_out));
-    if (!cwd) {
-        t_error("%s getcwd path_out failed\n", __func__);
-        return;
-    }
-    strcat(path_in, "/file_in.txt");
-    strcat(path_out, "/file_out.txt");
-    
+    char path_in[PATH_MAX] = {0};
+    char path_out[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH(STR_FILE_IN_TXT, path_in);
+    FILE_ABSOLUTE_PATH(STR_FILE_OUT_TXT, path_out);
+
     fd_in = open(path_in, O_WRONLY | O_CREAT);
     if (fd_in == -1) {
         t_error("%s open path_in failed\n", __func__);

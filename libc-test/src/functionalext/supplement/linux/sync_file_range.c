@@ -17,8 +17,8 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <unistd.h>
-#include <string.h>
-#include "test.h"
+
+#include "filepath_util.h"
 
 /**
  * @tc.name      : sync_file_range_0100
@@ -27,16 +27,10 @@
  */
 void sync_file_range_0100(void)
 {
-    char path[128] = {0};
-    char *cwd = getcwd(path, sizeof(path));
-    if (!cwd) {
-        t_error("%s getcwd failed\n", __func__);
-        return;
-    }
-    strcat(path, "/sync_file_range.txt");
-
     errno = 0;
     int result, fd;
+    char path[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH(STR_FILE_SYNC_TXT, path);
 
     fd = open(path, O_RDWR | O_CREAT);
     if (fd == -1) {
@@ -78,17 +72,11 @@ void sync_file_range_0200(void)
  */
 void sync_file_range_0300(void)
 {
-    char path[128] = {0};
-    char *cwd = getcwd(path, sizeof(path));
-    if (!cwd) {
-        t_error("%s getcwd failed\n", __func__);
-        return;
-    }
-    strcat(path, "/sync_file_range.txt");
-
     errno = 0;
     int result, fd;
 
+    char path[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH(STR_FILE_SYNC_TXT, path);
     fd = open(path, O_RDWR | O_CREAT);
     if (fd == -1) {
         t_error("%s open failed\n", __func__);
@@ -113,17 +101,11 @@ void sync_file_range_0300(void)
  */
 void sync_file_range_0400(void)
 {
-    char path[128] = {0};
-    char *cwd = getcwd(path, sizeof(path));
-    if (!cwd) {
-        t_error("%s getcwd failed\n", __func__);
-        return;
-    }
-    strcat(path, "/sync_file_range.txt");
-
     errno = 0;
     int result, fd;
 
+    char path[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH(STR_FILE_SYNC_TXT, path);
     fd = open(path, O_RDWR | O_CREAT);
     if (fd == -1) {
         t_error("%s open failed\n", __func__);

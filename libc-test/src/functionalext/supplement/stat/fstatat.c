@@ -17,6 +17,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include "functionalext.h"
+#include "filepath_util.h"
 
 const int SUCCESS = 0;
 
@@ -84,13 +85,8 @@ void fstatat_0200(void)
  */
 void fstatat_0300(void)
 {
-    char ptr[128] = {0};
-    char *cwd = getcwd(ptr, sizeof(ptr));
-    if (!cwd) {
-        t_error("%s getcwd failed\n", __func__);
-        return;
-    }
-    strcat(ptr, "/fstatattest.txt");
+    char ptr[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH("fstatattest.txt", ptr);
 
     struct stat st;
     int fd = open(ptr, O_RDWR | O_CREAT);

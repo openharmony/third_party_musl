@@ -14,6 +14,7 @@
  */
 
 #include "functionalext.h"
+#include "filepath_util.h"
 
 /**
  * @tc.name       : fputc_0100
@@ -22,14 +23,8 @@
  */
 void fputc_0100(void)
 {
-    char path[128] = {0};
-    char *cwd = getcwd(path, sizeof(path));
-    if (!cwd) {
-        t_error("%s getcwd failed\n", __func__);
-        return;
-    }
-    strcat(path, "/fputc.txt");
-
+    char path[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH(STR_FPUTC_TXT, path);
     FILE *fptr = fopen(path, "w");
     int Exit = fputc('a', fptr);
     EXPECT_EQ("fputc_0100", Exit, 97);
@@ -43,14 +38,8 @@ void fputc_0100(void)
  */
 void fputc_0200(void)
 {
-    char path[128] = {0};
-    char *cwd = getcwd(path, sizeof(path));
-    if (!cwd) {
-        t_error("%s getcwd failed\n", __func__);
-        return;
-    }
-    strcat(path, "/fputc.txt");
-
+    char path[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH(STR_FPUTC_TXT, path);
     FILE *fptr = fopen(path, "r");
     int Exit = fputc('a', fptr);
     EXPECT_EQ("fputc_0200", Exit, EOF);

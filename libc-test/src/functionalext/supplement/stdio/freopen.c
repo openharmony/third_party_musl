@@ -15,6 +15,7 @@
 
 #include <fcntl.h>
 #include "functionalext.h"
+#include "filepath_util.h"
 
 /**
  * @tc.name      : freopen_0100
@@ -23,13 +24,8 @@
  */
 void freopen_0100(void)
 {
-    char ptr[128] = {0};
-    char *cwd = getcwd(ptr, sizeof(ptr));
-    if (!cwd) {
-        t_error("%s getcwd failed\n", __func__);
-        return;
-    }
-    strcat(ptr, "/freopen.txt");
+    char ptr[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH("freopen.txt", ptr);
 
     FILE *fp;
     fp = freopen(ptr, "w+", stdin);

@@ -15,6 +15,7 @@
 
 #include <fcntl.h>
 #include "functionalext.h"
+#include "filepath_util.h"
 
 /**
  * @tc.name      : getline_0100
@@ -26,15 +27,9 @@ void getline_0100(void)
     char *wrstring = "helloworld";
     char *line = NULL;
     size_t len = 0;
-    char path[128] = {0};
-    char *cwd = getcwd(path, sizeof(path));
-    if (!cwd) {
-        t_error("%s getcwd failed\n", __func__);
-        return;
-    }
-    strcat(path, "/test.txt");
-
-    FILE *fp = fopen(path, "w+");
+    char ptr[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH(STR_TEST_TXT, ptr);
+    FILE *fp = fopen(ptr, "w+");
     EXPECT_PTRNE("getline_0100", fp, NULL);
     fwrite(wrstring, sizeof(char), strlen(wrstring), fp);
     fseek(fp, 0, SEEK_SET);
@@ -44,7 +39,7 @@ void getline_0100(void)
     EXPECT_STREQ("getline_0100", line, "helloworld");
 
     fclose(fp);
-    remove(path);
+    remove(ptr);
 }
 
 /**
@@ -55,21 +50,16 @@ void getline_0100(void)
 void getline_0200(void)
 {
     size_t len = 0;
-    char path[128] = {0};
-    char *cwd = getcwd(path, sizeof(path));
-    if (!cwd) {
-        t_error("%s getcwd failed\n", __func__);
-        return;
-    }
-    strcat(path, "/file.txt");
-    FILE *fp = fopen(path, "w+");
+    char ptr[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH(STR_FILE_TXT, ptr);
+    FILE *fp = fopen(ptr, "w+");
     EXPECT_PTRNE("getline_0100", fp, NULL);
 
     ssize_t read = getline(NULL, &len, fp);
     EXPECT_EQ("getline_0200", read, -1);
 
     fclose(fp);
-    remove(path);
+    remove(ptr);
 }
 
 /**
@@ -80,20 +70,15 @@ void getline_0200(void)
 void getline_0300(void)
 {
     char *line = NULL;
-    char path[128] = {0};
-    char *cwd = getcwd(path, sizeof(path));
-    if (!cwd) {
-        t_error("%s getcwd failed\n", __func__);
-        return;
-    }
-    strcat(path, "/file.txt");
-    FILE *fp = fopen(path, "w+");
+    char ptr[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH(STR_FILE_TXT, ptr);
+    FILE *fp = fopen(ptr, "w+");
     EXPECT_PTRNE("getline_0100", fp, NULL);
 
     ssize_t read = getline(&line, 0, fp);
     EXPECT_EQ("getline_0300", read, -1);
     fclose(fp);
-    remove(path);
+    remove(ptr);
 }
 
 int main(int argc, char *argv[])

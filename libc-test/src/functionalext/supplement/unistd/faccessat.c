@@ -17,6 +17,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "functionalext.h"
+#include "filepath_util.h"
 
 typedef void (*TEST_FUN)();
 const int SUCCESS = 0;
@@ -29,13 +30,8 @@ const int FAILED = -1;
  */
 void faccessat_0100(void)
 {
-    char ptr[128] = {0};
-    char *cwd = getcwd(ptr, sizeof(ptr));
-    if (!cwd) {
-        t_error("%s getcwd failed\n", __func__);
-        return;
-    }
-    strcat(ptr, "/faccessattest.txt");
+    char ptr[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH(STR_FACCESSAT_TEST_TXT, ptr);
     int fd = open(ptr, O_RDWR | O_CREAT);
     EXPECT_TRUE("faccessat_0100", fd >= 0);
     int isExist = faccessat(fd, ptr, F_OK, 0);
@@ -51,13 +47,8 @@ void faccessat_0100(void)
  */
 void faccessat_0200(void)
 {
-    char ptr[128] = {0};
-    char *cwd = getcwd(ptr, sizeof(ptr));
-    if (!cwd) {
-        t_error("%s getcwd failed\n", __func__);
-        return;
-    }
-    strcat(ptr, "/faccessattest.txt");
+    char ptr[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH(STR_FACCESSAT_TEST_TXT, ptr);
     int fd = -1;
     int isExist = faccessat(fd, ptr, F_OK, 0);
     EXPECT_EQ("faccessat_0200", isExist, FAILED);
@@ -72,13 +63,8 @@ void faccessat_0200(void)
  */
 void faccessat_0300(void)
 {
-    char ptr[128] = {0};
-    char *cwd = getcwd(ptr, sizeof(ptr));
-    if (!cwd) {
-        t_error("%s getcwd failed\n", __func__);
-        return;
-    }
-    strcat(ptr, "/faccessattest.txt");
+    char ptr[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH(STR_FACCESSAT_TEST_TXT, ptr);
     int fd = open(ptr, O_RDWR | O_CREAT, 00040);
     EXPECT_TRUE("faccessat_0300", fd >= 0);
     int isRead = faccessat(fd, ptr, R_OK, 0);
@@ -94,13 +80,8 @@ void faccessat_0300(void)
  */
 void faccessat_0400(void)
 {
-    char ptr[128] = {0};
-    char *cwd = getcwd(ptr, sizeof(ptr));
-    if (!cwd) {
-        t_error("%s getcwd failed\n", __func__);
-        return;
-    }
-    strcat(ptr, "/faccessattest.txt");
+    char ptr[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH(STR_FACCESSAT_TEST_TXT, ptr);
     int fd = open(ptr, O_RDWR | O_CREAT, 00020);
     EXPECT_TRUE("faccessat_0400", fd >= 0);
     int isWrite = faccessat(fd, ptr, W_OK, 0);
@@ -116,13 +97,8 @@ void faccessat_0400(void)
  */
 void faccessat_0500(void)
 {
-    char ptr[128] = {0};
-    char *cwd = getcwd(ptr, sizeof(ptr));
-    if (!cwd) {
-        t_error("%s getcwd failed\n", __func__);
-        return;
-    }
-    strcat(ptr, "/faccessattest.txt");
+    char ptr[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH(STR_FACCESSAT_TEST_TXT, ptr);
     int fd = open(ptr, O_RDWR | O_CREAT, 00010);
     char cmd[256] = {0};
     snprintf(cmd, sizeof(cmd), "chmod 777 %s", ptr);
@@ -141,13 +117,8 @@ void faccessat_0500(void)
  */
 void faccessat_0600(void)
 {
-    char ptr[128] = {0};
-    char *cwd = getcwd(ptr, sizeof(ptr));
-    if (!cwd) {
-        t_error("%s getcwd failed\n", __func__);
-        return;
-    }
-    strcat(ptr, "/faccessattest.txt");
+    char ptr[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH(STR_FACCESSAT_TEST_TXT, ptr);
     int fd = open(ptr, O_RDWR | O_CREAT);
     EXPECT_TRUE("faccessat_0600", fd >= 0);
     int isExecute = faccessat(fd, ptr, X_OK, 0);
@@ -163,13 +134,8 @@ void faccessat_0600(void)
  */
 void faccessat_0700(void)
 {
-    char ptr[128] = {0};
-    char *cwd = getcwd(ptr, sizeof(ptr));
-    if (!cwd) {
-        t_error("%s getcwd failed\n", __func__);
-        return;
-    }
-    strcat(ptr, "/faccessattest.txt");
+    char ptr[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH(STR_FACCESSAT_TEST_TXT, ptr);
     int fd = open(ptr, O_RDWR | O_CREAT, 00070);
     EXPECT_TRUE("faccessat_0700", fd >= 0);
     int isExecute = faccessat(fd, ptr, R_OK | W_OK | X_OK, 0);
@@ -185,13 +151,8 @@ void faccessat_0700(void)
  */
 void faccessat_0800(void)
 {
-    char ptr[128] = {0};
-    char *cwd = getcwd(ptr, sizeof(ptr));
-    if (!cwd) {
-        t_error("%s getcwd failed\n", __func__);
-        return;
-    }
-    strcat(ptr, "/faccessattest.txt");
+    char ptr[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH(STR_FACCESSAT_TEST_TXT, ptr);
     int fd = open(ptr, O_RDWR | O_CREAT);
     EXPECT_TRUE("faccessat_0800", fd >= 0);
     int isExecute = faccessat(fd, ptr, R_OK | W_OK | X_OK, 0);
@@ -207,13 +168,8 @@ void faccessat_0800(void)
  */
 void faccessat_0900(void)
 {
-    char ptr[128] = {0};
-    char *cwd = getcwd(ptr, sizeof(ptr));
-    if (!cwd) {
-        t_error("%s getcwd failed\n", __func__);
-        return;
-    }
-    strcat(ptr, "/faccessattest.txt");
+    char ptr[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH(STR_FACCESSAT_TEST_TXT, ptr);
     int fd = open(ptr, O_RDWR | O_CREAT, 00070);
     EXPECT_TRUE("faccessat_0900", fd >= 0);
     int ret = faccessat(fd, ptr, R_OK, AT_SYMLINK_NOFOLLOW);
@@ -231,13 +187,8 @@ void faccessat_0900(void)
  */
 void faccessat_1000(void)
 {
-    char ptr[128] = {0};
-    char *cwd = getcwd(ptr, sizeof(ptr));
-    if (!cwd) {
-        t_error("%s getcwd failed\n", __func__);
-        return;
-    }
-    strcat(ptr, "/faccessattest.txt");
+    char ptr[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH(STR_FACCESSAT_TEST_TXT, ptr);
     int fd = open(ptr, O_RDWR | O_CREAT, 00070);
     EXPECT_TRUE("faccessat_1000", fd >= 0);
     int isExecute = faccessat(AT_FDCWD, ptr, R_OK | W_OK | X_OK, AT_EACCESS);
@@ -254,13 +205,8 @@ void faccessat_1000(void)
  */
 void faccessat_1100(void)
 {
-    char ptr[128] = {0};
-    char *cwd = getcwd(ptr, sizeof(ptr));
-    if (!cwd) {
-        t_error("%s getcwd failed\n", __func__);
-        return;
-    }
-    strcat(ptr, "/faccessattest.txt");
+    char ptr[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH(STR_FACCESSAT_TEST_TXT, ptr);
     int fd = open(ptr, O_RDWR | O_CREAT);
     EXPECT_TRUE("faccessat_1100", fd >= 0);
     int isExecute = faccessat(AT_FDCWD, ptr, R_OK | W_OK | X_OK, AT_EACCESS);

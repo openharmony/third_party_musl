@@ -16,6 +16,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include "functionalext.h"
+#include "filepath_util.h"
 
 /**
  * @tc.name      : acct_0100
@@ -35,14 +36,8 @@ void acct_0100(void)
  */
 void acct_0200(void)
 {
-    char filePath[128] = {0};
-    char *cwd = getcwd(filePath, sizeof(filePath));
-    if (!cwd) {
-        t_error("%s getcwd failed\n", __func__);
-        return;
-    }
-    strcat(filePath, "/accttest.txt");
-
+    char filePath[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH("accttest.txt", filePath);
     int result = acct(filePath);
     EXPECT_EQ("acct_0300", result, -1);
     remove(filePath);

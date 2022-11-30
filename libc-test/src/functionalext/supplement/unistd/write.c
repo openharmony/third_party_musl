@@ -17,7 +17,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-#include "test.h"
+#include "filepath_util.h"
 
 /**
  * @tc.name      : write_0100
@@ -27,13 +27,8 @@
 void write_0100(void)
 {
     const char *msg = "This is a c test code for write function";
-    char path[128] = {0};
-    char *cwd = getcwd(path, sizeof(path));
-    if (!cwd) {
-        t_error("%s getcwd failed\n", __func__);
-        return;
-    }
-    strcat(path, "/test_write.txt");
+    char path[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH(STR_WRITE_TEST_TXT, path);
     int len = strlen(msg);
     char buf[1024] = {0};
     int fd = open(path, O_RDWR | O_RSYNC | O_CREAT, 0664);
@@ -67,13 +62,8 @@ void write_0100(void)
 void write_0200(void)
 {
     const char *msg = "This is a c test code for write function";
-    char path[128] = {0};
-    char *cwd = getcwd(path, sizeof(path));
-    if (!cwd) {
-        t_error("%s getcwd failed\n", __func__);
-        return;
-    }
-    strcat(path, "/test_write.txt");
+    char path[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH(STR_WRITE_TEST_TXT, path);
     int len = 0;
     int fd = open(path, O_RDWR | O_RSYNC | O_CREAT, 0664);
     if (fd == -1) {
@@ -96,13 +86,8 @@ void write_0200(void)
 void write_0300(void)
 {
     const char *msg = "This is a c test code for write function";
-    char path[128] = {0};
-    char *cwd = getcwd(path, sizeof(path));
-    if (!cwd) {
-        t_error("%s getcwd failed\n", __func__);
-        return;
-    }
-    strcat(path, "/test_write.txt");
+    char path[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH(STR_WRITE_TEST_TXT, path);
     int len = strlen(msg) + 1;
     int fd = open(path, O_RDWR | O_RSYNC | O_CREAT, 0664);
     if (fd == -1) {
@@ -125,13 +110,8 @@ void write_0300(void)
 void write_0400(void)
 {
     const char *msg = "This is a c test code for write function";
-    char path[128] = {0};
-    char *cwd = getcwd(path, sizeof(path));
-    if (!cwd) {
-        t_error("%s getcwd failed\n", __func__);
-        return;
-    }
-    strcat(path, "/test_write.txt");
+    char path[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH(STR_WRITE_TEST_TXT, path);
     int len = strlen(msg);
     int fd = open(path, O_RDWR);
     int result = write(fd, msg, len);
@@ -150,13 +130,8 @@ void write_0400(void)
 void write_0500(void)
 {
     const char *msg = NULL;
-    char path[128] = {0};
-    char *cwd = getcwd(path, sizeof(path));
-    if (!cwd) {
-        t_error("%s getcwd failed\n", __func__);
-        return;
-    }
-    strcat(path, "/test_write.txt");
+    char path[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH(STR_WRITE_TEST_TXT, path);
     int len = 1;
     int fd = open(path, O_RDWR | O_RSYNC | O_CREAT, 0664);
     if (fd == -1) {

@@ -19,7 +19,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "test.h"
+#include "filepath_util.h"
 
 const char buf[] = "hello";
 const char *filename = "./file.txt";
@@ -52,26 +52,16 @@ int create_file(char *path)
  */
 void readlinkat_0100(void)
 {
-    char path[128] = {0};
-    char *cwd = getcwd(path, sizeof(path));
-    if (!cwd) {
-        t_error("%s getcwd file failed\n", __func__);
-        return;
-    }
-    strcat(path, "/file.txt");
+    char path[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH(STR_FILE_TXT, path);
     int result = create_file(path);
     if (result != 0) {
         t_error("%s failed: result = %d\n", __func__, result);
         return;
     }
 
-    char linkpath[128] = {0};
-    cwd = getcwd(linkpath, sizeof(linkpath));
-    if (!cwd) {
-        t_error("%s getcwd link failed\n", __func__);
-        return;
-    }
-    strcat(linkpath, "/linkfile.txt");
+    char linkpath[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH(STR_FILE_LINK_TXT, linkpath);
     remove(linkpath);
 
     result = symlink(path, linkpath);
@@ -107,25 +97,16 @@ void readlinkat_0100(void)
  */
 void readlinkat_0200(void)
 {
-    char path[128] = {0};
-    char *cwd = getcwd(path, sizeof(path));
-    if (!cwd) {
-        t_error("%s getcwd file failed\n", __func__);
-        return;
-    }
-    strcat(path, "/file.txt");
+    char path[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH(STR_FILE_TXT, path);
     int result = create_file(path);
     if (result != 0) {
         t_error("%s failed: result = %d\n", __func__, result);
         return;
     }
 
-    char dirname[128] = {0};
-    cwd = getcwd(dirname, sizeof(dirname));
-    if (!cwd) {
-        t_error("%s getcwd dir failed\n", __func__);
-        return;
-    }
+    char dirname[PATH_MAX] = {0};
+    FILE_ABSOLUTE_DIR(dirname);
     DIR *dir = opendir(dirname);
     if (dir == NULL) {
         t_error("%s failed: dirname = %s\n", __func__, dirname);
@@ -137,13 +118,8 @@ void readlinkat_0200(void)
         t_error("%s failed: fd = %d\n", __func__, fd);
     }
 
-    char linkpath[128] = {0};
-    cwd = getcwd(linkpath, sizeof(linkpath));
-    if (!cwd) {
-        t_error("%s getcwd link failed\n", __func__);
-        return;
-    }
-    strcat(linkpath, "/linkfile.txt");
+    char linkpath[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH(STR_FILE_LINK_TXT, linkpath);
     remove(linkpath);
 
     result = symlinkat(filename, fd, linkfilename);

@@ -18,7 +18,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "test.h"
+#include "filepath_util.h"
 
 const int nlen = -1;
 const int vlen = 5;
@@ -33,13 +33,8 @@ const char *content = "Hello world!";
  */
 void truncate_0100(void)
 {
-    char path_n[128] = {0};
-    char *cwd = getcwd(path_n, sizeof(path_n));
-    if (!cwd) {
-        t_error("%s getcwd failed\n", __func__);
-        return;
-    }
-    strcat(path_n, "/files.txt");
+    char path_n[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH("files.txt", path_n);
     FILE *f = fopen(path_n, "a");
     if (f == NULL) {
         t_error("%s failed: fopen\n", __func__);
@@ -62,13 +57,8 @@ void truncate_0100(void)
  */
 void truncate_0200(void)
 {
-    char path[128] = {0};
-    char *cwd = getcwd(path, sizeof(path));
-    if (!cwd) {
-        t_error("%s getcwd failed\n", __func__);
-        return;
-    }
-    strcat(path, "/file.txt");
+    char path[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH(STR_FILE_TXT, path);
     FILE *f = fopen(path, "a");
     if (f == NULL) {
         t_error("%s failed: fopen\n", __func__);
@@ -111,13 +101,8 @@ void truncate_0200(void)
  */
 void truncate_0300(void)
 {
-    char path[128] = {0};
-    char *cwd = getcwd(path, sizeof(path));
-    if (!cwd) {
-        t_error("%s getcwd failed\n", __func__);
-        return;
-    }
-    strcat(path, "/file.txt");
+    char path[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH(STR_FILE_TXT, path);
     int result = truncate(path, nlen);
     if (result == 0) {
         t_error("%s failed: result = %d\n", __func__, result);

@@ -15,6 +15,7 @@
 
 #include <sys/ipc.h>
 #include "functionalext.h"
+#include "filepath_util.h"
 
 /*
  * @tc.name      : ftok_0100
@@ -23,14 +24,9 @@
  */
 void ftok_0100(void)
 {
-    char dir_path[128] = {0};
-    char *cwd = getcwd(dir_path, sizeof(dir_path));
-    if (!cwd) {
-        t_error("%s getcwd failed\n", __func__);
-        return;
-    }
-    strcat(dir_path, "/ftok");
-    key_t result = ftok(dir_path, 1);
+    char path[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH("ftok", path);
+    key_t result = ftok(path, 1);
     EXPECT_NE("ftok_0100", result, -1);
 }
 

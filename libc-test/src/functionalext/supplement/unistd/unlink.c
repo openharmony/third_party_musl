@@ -17,7 +17,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include "test.h"
+#include "filepath_util.h"
 
 /**
  * @tc.name      : unlink_0100
@@ -26,13 +26,8 @@
  */
 void unlink_0100(void)
 {
-    char path[128] = {0};
-    char *cwd = getcwd(path, sizeof(path));
-    if (!cwd) {
-        t_error("%s getcwd failed\n", __func__);
-        return;
-    }
-    strcat(path, "/test_unlink.txt");
+    char path[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH("test_unlink.txt", path);
     int fd = open(path, O_CREAT);
     int error_code = -1;
     if (fd == error_code) {
@@ -53,13 +48,8 @@ void unlink_0100(void)
  */
 void unlink_0200(void)
 {
-    char path[128] = {0};
-    char *cwd = getcwd(path, sizeof(path));
-    if (!cwd) {
-        t_error("%s getcwd failed\n", __func__);
-        return;
-    }
-    strcat(path, "/unexist_test_unlink.txt");
+    char path[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH("unexist_test_unlink.txt", path);
     int result = unlink(path);
     int error_code = -1;
     if (result != error_code) {
