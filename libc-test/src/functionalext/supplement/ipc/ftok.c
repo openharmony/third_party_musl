@@ -15,6 +15,7 @@
 
 #include <sys/ipc.h>
 #include "functionalext.h"
+#include "filepath_util.h"
 
 /*
  * @tc.name      : ftok_0100
@@ -23,7 +24,9 @@
  */
 void ftok_0100(void)
 {
-    key_t result = ftok("/data/tests/libc-test/src/functionalext/supplement/ipc/ftok", 1);
+    char path[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH("ftok", path);
+    key_t result = ftok(path, 1);
     EXPECT_NE("ftok_0100", result, -1);
 }
 

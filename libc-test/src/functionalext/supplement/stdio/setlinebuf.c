@@ -16,9 +16,8 @@
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
-#include "test.h"
+#include "filepath_util.h"
 
-const char *path = "/data/tests/libc-test/src/file.txt";
 const char *str = "Hello";
 
 /**
@@ -28,6 +27,8 @@ const char *str = "Hello";
  */
 void setlinebuf_0100(void)
 {
+    char path[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH(STR_FILE_TXT, path);
     FILE *f = fopen(path, "w+");
     char buffer[BUFSIZ];
     errno = 0;

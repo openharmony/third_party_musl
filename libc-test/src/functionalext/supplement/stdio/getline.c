@@ -15,8 +15,7 @@
 
 #include <fcntl.h>
 #include "functionalext.h"
-
-const char *ptr = "/data/tests/libc-test/src/functionalext/supplement/stdio/test.txt";
+#include "filepath_util.h"
 
 /**
  * @tc.name      : getline_0100
@@ -28,7 +27,8 @@ void getline_0100(void)
     char *wrstring = "helloworld";
     char *line = NULL;
     size_t len = 0;
-
+    char ptr[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH(STR_TEST_TXT, ptr);
     FILE *fp = fopen(ptr, "w+");
     EXPECT_PTRNE("getline_0100", fp, NULL);
     fwrite(wrstring, sizeof(char), strlen(wrstring), fp);
@@ -50,6 +50,8 @@ void getline_0100(void)
 void getline_0200(void)
 {
     size_t len = 0;
+    char ptr[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH(STR_FILE_TXT, ptr);
     FILE *fp = fopen(ptr, "w+");
     EXPECT_PTRNE("getline_0100", fp, NULL);
 
@@ -68,6 +70,8 @@ void getline_0200(void)
 void getline_0300(void)
 {
     char *line = NULL;
+    char ptr[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH(STR_FILE_TXT, ptr);
     FILE *fp = fopen(ptr, "w+");
     EXPECT_PTRNE("getline_0100", fp, NULL);
 

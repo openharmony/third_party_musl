@@ -19,10 +19,7 @@
 #include <string.h>
 #include <sys/sendfile.h>
 
-#include "test.h"
-
-const char *fromfile = "/data/tests/libc-test/src/fromfile.txt";
-const char *tofile = "/data/tests/libc-test/src/tofile.txt";
+#include "filepath_util.h"
 
 /**
  * @tc.name      : sendfile_0100
@@ -31,6 +28,11 @@ const char *tofile = "/data/tests/libc-test/src/tofile.txt";
  */
 void sendfile_0100(void)
 {
+    char fromfile[PATH_MAX] = {0};
+    char tofile[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH(STR_FILE_FROM_TXT, fromfile);
+    FILE_ABSOLUTE_PATH(STR_FILE_TO_TXT, tofile);
+
     FILE *f = fopen(fromfile, "w+");
     const char src[] = "A";
     fwrite(src, strlen(src), 1, f);

@@ -16,9 +16,7 @@
 #include <dirent.h>
 #include <stdlib.h>
 
-#include "test.h"
-
-const char *name = "/data/tests/libc-test/src";
+#include "filepath_util.h"
 
 int filter(const struct dirent *entry)
 {
@@ -33,6 +31,9 @@ int filter(const struct dirent *entry)
 void scandir_0100(void)
 {
     struct dirent **namelist;
+    char name[PATH_MAX] = {0};
+    FILE_ABSOLUTE_DIR(name);
+
     int n = scandir(name, &namelist, NULL, alphasort);
     if (n < 0) {
         t_error("%s failed: scandir. n = %d\n", __func__, n);
@@ -53,6 +54,9 @@ void scandir_0100(void)
 void scandir_0200(void)
 {
     struct dirent **namelist;
+    char name[PATH_MAX] = {0};
+    FILE_ABSOLUTE_DIR(name);
+
     int n = scandir(name, &namelist, NULL, versionsort);
     if (n < 0) {
         t_error("%s failed: scandir. n = %d\n", __func__, n);
@@ -73,6 +77,8 @@ void scandir_0200(void)
 void scandir_0300(void)
 {
     struct dirent **namelist;
+    char name[PATH_MAX] = {0};
+    FILE_ABSOLUTE_DIR(name);
     int n = scandir(name, &namelist, filter, versionsort);
     if (n < 0) {
         t_error("%s failed: scandir. n = %d\n", __func__, n);

@@ -18,9 +18,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "test.h"
-
-const char *name = "/data/tests/libc-test/src";
+#include "filepath_util.h"
 
 void handler(int sig)
 {
@@ -34,6 +32,8 @@ void handler(int sig)
  */
 void rewinddir_0100(void)
 {
+    char name[PATH_MAX] = {0};
+    FILE_ABSOLUTE_DIR(name);
     DIR *dir = opendir(name);
     if (dir == NULL) {
         t_error("%s failed: opendir. name = %s\n", __func__, name);

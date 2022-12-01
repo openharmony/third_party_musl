@@ -17,9 +17,8 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <unistd.h>
-#include "test.h"
 
-const char *path = "/data/tests/libc-test/src/sync_file_range.txt";
+#include "filepath_util.h"
 
 /**
  * @tc.name      : sync_file_range_0100
@@ -30,6 +29,8 @@ void sync_file_range_0100(void)
 {
     errno = 0;
     int result, fd;
+    char path[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH(STR_FILE_SYNC_TXT, path);
 
     fd = open(path, O_RDWR | O_CREAT);
     if (fd == -1) {
@@ -74,6 +75,8 @@ void sync_file_range_0300(void)
     errno = 0;
     int result, fd;
 
+    char path[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH(STR_FILE_SYNC_TXT, path);
     fd = open(path, O_RDWR | O_CREAT);
     if (fd == -1) {
         t_error("%s open failed\n", __func__);
@@ -101,6 +104,8 @@ void sync_file_range_0400(void)
     errno = 0;
     int result, fd;
 
+    char path[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH(STR_FILE_SYNC_TXT, path);
     fd = open(path, O_RDWR | O_CREAT);
     if (fd == -1) {
         t_error("%s open failed\n", __func__);

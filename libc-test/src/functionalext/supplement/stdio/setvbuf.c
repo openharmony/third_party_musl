@@ -14,8 +14,7 @@
  */
 
 #include "functionalext.h"
-
-const char *ptr = "/data/tests/libc-test/src/functionalext/supplement/stdio/test.txt";
+#include "filepath_util.h"
 
 /**
  * @tc.name      : setvbuf_0100
@@ -24,15 +23,17 @@ const char *ptr = "/data/tests/libc-test/src/functionalext/supplement/stdio/test
  */
 void setvbuf_0100(void)
 {
-    char buff[1024];
-    FILE *fptr = fopen(ptr, "w+");
+    char buff[1024] = {0};
+    char path[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH(STR_FILE_TXT, path);
+    FILE *fptr = fopen(path, "w+");
     EXPECT_PTRNE("setvbuf_0100", fptr, NULL);
 
     int result = setvbuf(fptr, buff, _IOFBF, 1024);
     EXPECT_EQ("setvbuf_0100", result, 0);
 
     fclose(fptr);
-    remove(ptr);
+    remove(path);
 }
 
 /**
@@ -42,15 +43,17 @@ void setvbuf_0100(void)
  */
 void setvbuf_0200(void)
 {
-    char buff[1024];
-    FILE *fptr = fopen(ptr, "w+");
+    char buff[1024] = {0};
+    char path[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH(STR_FILE_TXT, path);
+    FILE *fptr = fopen(path, "w+");
     EXPECT_PTRNE("setvbuf_0100", fptr, NULL);
 
     int result = setvbuf(fptr, buff, -1, 1024);
     EXPECT_EQ("setvbuf_0200", result, -1);
 
     fclose(fptr);
-    remove(ptr);
+    remove(path);
 }
 
 int main(int argc, char *argv[])

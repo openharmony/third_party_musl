@@ -19,10 +19,8 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "test.h"
+#include "filepath_util.h"
 
-const char *fromfile = "/data/tests/libc-test/src/fromfile.txt";
-const char *tofile = "/data/tests/libc-test/src/tofile.txt";
 const char *path = "/proc/version";
 
 /**
@@ -32,6 +30,11 @@ const char *path = "/proc/version";
  */
 void splice_0100(void)
 {
+    char fromfile[PATH_MAX] = {0};
+    char tofile[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH(STR_FILE_FROM_TXT, fromfile);
+    FILE_ABSOLUTE_PATH(STR_FILE_TO_TXT, tofile);
+
     int fromfd = open(fromfile, O_RDWR | O_CREAT);
     if (fromfd < 0) {
         t_error("%s failed: fromfd = %d\n", __func__, fromfd);
