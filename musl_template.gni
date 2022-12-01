@@ -134,8 +134,6 @@ template("musl_libs") {
     cflags_c99fse = [
       "-std=c99",
       "-nostdinc",
-      "-ffreestanding",
-      "-frounding-math",
       "-Wa,--noexecstack",
     ]
 
@@ -283,6 +281,7 @@ template("musl_libs") {
     configs += [ ":soft_musl_config" ]
     cflags = [
       "-fPIC",
+      "-ffreestanding",
       "-fno-stack-protector",
     ]
 
@@ -331,6 +330,8 @@ template("musl_libs") {
         "src/math/pow.c",
         "src/math/powf.c",
         "src/math/powl.c",
+        "src/math/sinf.c",
+        "src/math/cosf.c",
       ]
     } else if (musl_arch == "aarch64") {
       sources_orig -= [
@@ -348,6 +349,23 @@ template("musl_libs") {
         "src/string/strnlen.c",
         "src/string/strncmp.c",
         "src/math/sincosf.c",
+        "src/math/sinf.c",
+        "src/math/cosf.c",
+        "src/math/cos.c",
+        "src/math/exp.c",
+        "src/math/exp2.c",
+        "src/math/exp2f.c",
+        "src/math/expf.c",
+        "src/math/log.c",
+        "src/math/log10.c",
+        "src/math/log2.c",
+        "src/math/log2f.c",
+        "src/math/logb.c",
+        "src/math/logf.c",
+        "src/math/sin.c",
+        "src/math/sincos.c",
+        "src/math/pow.c",
+        "src/math/powf.c",
       ]
     } else if (musl_arch == "x86_64") {
       sources_orig -= [ "src/thread/${musl_arch}/__set_thread_area.s" ]
@@ -376,6 +394,7 @@ template("musl_libs") {
     }
     if (musl_arch == "arm") {
       sources += [
+        "$OPTRTDIR/math/cosf.c",
         "$OPTRTDIR/math/exp2.c",
         "$OPTRTDIR/math/exp2f.c",
         "$OPTRTDIR/math/exp2f_data.c",
@@ -392,6 +411,7 @@ template("musl_libs") {
         "$OPTRTDIR/math/powf.c",
         "$OPTRTDIR/math/sincosf.c",
         "$OPTRTDIR/math/sincosf_data.c",
+        "$OPTRTDIR/math/sinf.c",
         "$OPTRTDIR/string/arm/memchr.S",
         "$OPTRTDIR/string/arm/memcpy.S",
         "$OPTRTDIR/string/arm/memset.S",
@@ -406,10 +426,6 @@ template("musl_libs") {
         "-D__strlen_armv6t2 = strlen",
       ]
     } else if (musl_arch == "aarch64") {
-      sources += [
-        "$OPTRTDIR/math/sincosf.c",
-        "$OPTRTDIR/math/sincosf_data.c",
-      ]
       if (defined(ARM_FEATURE_SVE)) {
         sources += [
           "$OPTRTDIR/string/aarch64/memchr-sve.S",
@@ -504,6 +520,7 @@ template("musl_libs") {
     cflags = [
       "-O3",
       "-fPIC",
+      "-ffreestanding",
       "-fstack-protector-strong",
     ]
 
@@ -535,6 +552,57 @@ template("musl_libs") {
       defines += [ "OHOS_ENABLE_PARAMETER" ]
       deps += [ "//base/startup/init/services/param/base:parameterbase" ]
     }
+  }
+
+  source_set("soft_musl_src_optimize") {
+    sources = []
+    sources_orig = []
+
+    if (musl_arch == "aarch64") {
+      sources_orig += [
+        "src/math/cos.c",
+        "src/math/exp.c",
+        "src/math/exp2.c",
+        "src/math/exp2f.c",
+        "src/math/expf.c",
+        "src/math/log.c",
+        "src/math/log10.c",
+        "src/math/log2.c",
+        "src/math/log2f.c",
+        "src/math/logb.c",
+        "src/math/logf.c",
+        "src/math/sin.c",
+        "src/math/sincos.c",
+        "src/math/pow.c",
+        "src/math/powf.c",
+      ]
+    }
+
+    foreach(s, sources_orig) {
+      sources += [ "${target_out_dir}/${musl_ported_dir}/${s}" ]
+    }
+
+    if (musl_arch == "aarch64") {
+      sources += [
+        "$OPTRTDIR/math/cosf.c",
+        "$OPTRTDIR/math/sincosf.c",
+        "$OPTRTDIR/math/sincosf_data.c",
+        "$OPTRTDIR/math/sinf.c",
+      ]
+    }
+
+    configs -= musl_inherited_configs
+    configs += [ ":soft_musl_config" ]
+    cflags = [
+      "-mllvm",
+      "-instcombine-max-iterations=0",
+      "-ffast-math",
+      "-O3",
+      "-fPIC",
+      "-fstack-protector-strong",
+    ]
+
+    deps = porting_deps
   }
 
   source_set("soft_musl_src_nossp") {
@@ -571,6 +639,7 @@ template("musl_libs") {
     cflags = [
       "-O3",
       "-fPIC",
+      "-ffreestanding",
       "-fno-stack-protector",
     ]
 
@@ -589,6 +658,7 @@ template("musl_libs") {
     configs += [ ":soft_musl_config" ]
     cflags = [
       "-fPIC",
+      "-ffreestanding",
       "-fno-stack-protector",
     ]
     if (is_asan) {
@@ -672,6 +742,7 @@ template("musl_libs") {
       ":soft_musl_ldso",
       ":soft_musl_src",
       ":soft_musl_src_nossp",
+      ":soft_musl_src_optimize",
     ]
     deps += dfx_deps
     if (!startup_init_with_param_base) {
@@ -772,6 +843,7 @@ template("musl_libs") {
       ":soft_musl_ldso",
       ":soft_musl_src",
       ":soft_musl_src_nossp",
+      ":soft_musl_src_optimize",
     ]
     deps += dfx_deps
     if (!startup_init_with_param_base) {
