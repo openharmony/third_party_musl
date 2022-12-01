@@ -91,7 +91,6 @@ math_list = [
   "j0",
   "j0f",
   "j1",
-  "j1f",
   "jn",
   "jnf",
   "ldexp",
