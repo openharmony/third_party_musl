@@ -15,6 +15,7 @@
 
 #include <fcntl.h>
 #include "functionalext.h"
+#include "filepath_util.h"
 
 /**
  * @tc.name      : freopen_0100
@@ -23,8 +24,10 @@
  */
 void freopen_0100(void)
 {
+    char ptr[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH("freopen.txt", ptr);
+
     FILE *fp;
-    const char *ptr = "/data/tests/libc-test/src/functionalext/supplement/stdio/freopen.txt";
     fp = freopen(ptr, "w+", stdin);
     EXPECT_PTRNE("freopen_0100", fp, NULL);
 

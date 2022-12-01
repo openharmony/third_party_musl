@@ -16,6 +16,7 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 #include "functionalext.h"
+#include "filepath_util.h"
 
 int success = 36863;
 int SUCCESS = 33279;
@@ -30,17 +31,19 @@ void fchmodat_0100(void)
 {
     int fd;
     struct stat buf;
-    fd = open("/data/tests/libc-test/src/functionalext/supplement/stat/test.txt", O_RDWR | O_CREAT);
+    char path[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH(STR_TEST_TXT, path);
+    fd = open(path, O_RDWR | O_CREAT);
     int result = fchmodat(fd,
-        "/data/tests/libc-test/src/functionalext/supplement/stat/test.txt",
+        path,
         S_ISUID | S_ISGID | S_ISVTX | S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IXGRP | S_IROTH | S_IWOTH |
             S_IXOTH,
         AT_SYMLINK_NOFOLLOW);
-    stat("/data/tests/libc-test/src/functionalext/supplement/stat/test.txt", &buf);
+    stat(path, &buf);
     EXPECT_EQ("fchmodat_0100", result, 0);
     EXPECT_EQ("fchmodat_0100", buf.st_mode, success);
     close(fd);
-    remove("/data/tests/libc-test/src/functionalext/supplement/stat/test.txt");
+    remove(path);
 }
 
 /**
@@ -52,16 +55,18 @@ void fchmodat_0200(void)
 {
     int fd;
     struct stat buf;
-    fd = open("/data/tests/libc-test/src/functionalext/supplement/stat/test.txt", O_RDWR | O_CREAT);
+    char path[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH(STR_TEST_TXT, path);
+    fd = open(path, O_RDWR | O_CREAT);
     int result = fchmodat(fd,
-        "/data/tests/libc-test/src/functionalext/supplement/stat/test.txt",
+        path,
         S_IRWXU | S_IRWXG | S_IRWXO,
         AT_SYMLINK_NOFOLLOW);
-    stat("/data/tests/libc-test/src/functionalext/supplement/stat/test.txt", &buf);
+    stat(path, &buf);
     EXPECT_EQ("fchmodat_0200", result, 0);
     EXPECT_EQ("fchmodat_0200", buf.st_mode, SUCCESS);
     close(fd);
-    remove("/data/tests/libc-test/src/functionalext/supplement/stat/test.txt");
+    remove(path);
 }
 
 /**

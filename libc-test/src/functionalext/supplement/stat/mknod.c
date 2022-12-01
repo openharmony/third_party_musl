@@ -15,6 +15,7 @@
 
 #include <sys/stat.h>
 #include "functionalext.h"
+#include "filepath_util.h"
 
 #define TEST_MODE 0666
 
@@ -25,7 +26,8 @@
  */
 void mknod_0100(void)
 {
-    const char *pathname = "/data/tests/libc-test/src/functionalext/supplement/stat/mknod";
+    char pathname[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH("mknod", pathname);
     int ret = mknod(pathname, TEST_MODE, 0);
     EXPECT_EQ("mknod_0100", ret, ERREXPECT);
 }

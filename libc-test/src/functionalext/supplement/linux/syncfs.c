@@ -17,9 +17,8 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <unistd.h>
-#include "test.h"
 
-const char *path = "/data/tests/libc-test/src/syncfs.txt";
+#include "filepath_util.h"
 
 /**
  * @tc.name      : syncfs_0100
@@ -29,6 +28,8 @@ const char *path = "/data/tests/libc-test/src/syncfs.txt";
 void syncfs_0100(void)
 {
     errno = 0;
+    char path[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH("syncfs.txt", path);
     int fd = open(path, O_RDWR | O_CREAT);
     if (fd == -1) {
         t_error("%s open failed\n", __func__);

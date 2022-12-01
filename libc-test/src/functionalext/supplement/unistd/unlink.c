@@ -17,7 +17,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include "test.h"
+#include "filepath_util.h"
 
 /**
  * @tc.name      : unlink_0100
@@ -26,14 +26,16 @@
  */
 void unlink_0100(void)
 {
-    int fd = open("/data/tests/libc-test/src/test_unlink.txt", O_CREAT);
+    char path[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH("test_unlink.txt", path);
+    int fd = open(path, O_CREAT);
     int error_code = -1;
     if (fd == error_code) {
         t_error("%s unlink create file error", __func__);
         return;
     }
     close(fd);
-    int result = unlink("/data/tests/libc-test/src/test_unlink.txt");
+    int result = unlink(path);
     if (result != 0) {
         t_error("%s unlink get result is %d not want 0", __func__, result);
     }
@@ -46,7 +48,9 @@ void unlink_0100(void)
  */
 void unlink_0200(void)
 {
-    int result = unlink("/data/tests/libc-test/src/unexist_test_unlink.txt");
+    char path[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH("unexist_test_unlink.txt", path);
+    int result = unlink(path);
     int error_code = -1;
     if (result != error_code) {
         t_error("%s unlink get result is %d not want -1", __func__, result);

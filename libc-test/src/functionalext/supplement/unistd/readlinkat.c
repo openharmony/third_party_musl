@@ -19,16 +19,13 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "test.h"
+#include "filepath_util.h"
 
-const char *path = "/data/tests/file.txt";
-const char *linkpath = "/data/tests/linkfile.txt";
 const char buf[] = "hello";
-const char *dirname = "/data/tests";
 const char *filename = "./file.txt";
 const char *linkfilename = "./linkfile.txt";
 
-int create_file(void)
+int create_file(char *path)
 {
     int fd = open(path, O_RDWR | O_CREAT);
     if (fd < 0) {
@@ -55,12 +52,16 @@ int create_file(void)
  */
 void readlinkat_0100(void)
 {
-    int result = create_file();
+    char path[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH(STR_FILE_TXT, path);
+    int result = create_file(path);
     if (result != 0) {
         t_error("%s failed: result = %d\n", __func__, result);
         return;
     }
 
+    char linkpath[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH(STR_FILE_LINK_TXT, linkpath);
     remove(linkpath);
 
     result = symlink(path, linkpath);
@@ -96,12 +97,16 @@ void readlinkat_0100(void)
  */
 void readlinkat_0200(void)
 {
-    int result = create_file();
+    char path[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH(STR_FILE_TXT, path);
+    int result = create_file(path);
     if (result != 0) {
         t_error("%s failed: result = %d\n", __func__, result);
         return;
     }
 
+    char dirname[PATH_MAX] = {0};
+    FILE_ABSOLUTE_DIR(dirname);
     DIR *dir = opendir(dirname);
     if (dir == NULL) {
         t_error("%s failed: dirname = %s\n", __func__, dirname);
@@ -113,6 +118,8 @@ void readlinkat_0200(void)
         t_error("%s failed: fd = %d\n", __func__, fd);
     }
 
+    char linkpath[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH(STR_FILE_LINK_TXT, linkpath);
     remove(linkpath);
 
     result = symlinkat(filename, fd, linkfilename);

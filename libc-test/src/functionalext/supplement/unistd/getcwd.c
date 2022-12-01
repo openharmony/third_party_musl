@@ -20,7 +20,7 @@
 #include "functionalext.h"
 
 // Manual test result
-char *manual = "/data/tests/libc-test/src/functionalext/supplement/unistd";
+char *manual = "/data/tests/libc-test/src/";
 // hdc shell test result
 char *hdc_auto = "/";
 
@@ -33,7 +33,7 @@ char *hdc_auto = "/";
 void getcwd_0100(void)
 {
     char *result;
-    char buf[200];
+    char buf[200] = {0};
     result = getcwd(buf, sizeof(buf));
 
     if (!(strcmp(result, manual) ^ strcmp(result, hdc_auto))) {
@@ -63,7 +63,7 @@ void getcwd_0200(void)
 void getcwd_0300(void)
 {
     char *result;
-    char buf[200];
+    char buf[200] = {0};
     result = getcwd(buf, 0);
     if (result) {
         t_error("%s getcwd should failed, the result should be null\n", __func__);

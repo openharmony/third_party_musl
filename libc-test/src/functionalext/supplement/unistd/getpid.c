@@ -18,6 +18,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include "functionalext.h"
+#include "filepath_util.h"
 
 /**
  * @tc.name      : getpid_0100
@@ -26,11 +27,13 @@
  */
 void getpid_0100(void)
 {
-    system("ps -eo command,pid | grep -E \"PID|getpid\" > "
-           "/data/tests/libc-test/src/functionalext/supplement/unistd/ps.txt");
+    char ptr[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH("ps.txt", ptr);
+    char cmd[PATH_MAX] = {0};
+    snprintf(cmd, sizeof(cmd), "ps -eo command,pid | grep -E \"PID|getpid\" > %s", ptr);
+    system(cmd);
     char abc[256] = {0};
     bool successflag = false;
-    const char *ptr = "/data/tests/libc-test/src/functionalext/supplement/unistd/ps.txt";
     FILE *fptr = fopen(ptr, "r");
     if (fptr) {
         while (!feof(fptr)) {

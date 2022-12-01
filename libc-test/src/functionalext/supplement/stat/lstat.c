@@ -18,6 +18,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include "functionalext.h"
+#include "filepath_util.h"
 
 extern int __lstat_time64(const char *__restrict, struct stat *__restrict);
 
@@ -30,7 +31,9 @@ typedef void (*TEST_FUN)();
  */
 void lstat_0100(void)
 {
-    const char *ptr = "/data/tests/libc-test/src/functionalext/supplement/stattest.txt";
+    char ptr[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH(STR_STAT_TEST_TXT, ptr);
+
     const char str[] = "this is a sample!";
     FILE *fptr = fopen(ptr, "w+");
     struct stat statbuff;
@@ -50,7 +53,9 @@ void lstat_0100(void)
  */
 void lstat_time64_0100(void)
 {
-    const char *ptr = "/data/tests/libc-test/src/functionalext/supplement/stattest.txt";
+    char ptr[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH(STR_STAT_TEST_TXT, ptr);
+
     const char str[] = "this is a sample!";
     FILE *fptr = fopen(ptr, "w+");
     struct stat statbuff;
@@ -71,7 +76,7 @@ void lstat_time64_0100(void)
 void lstat_0200(void)
 {
     struct stat statbuff;
-    int32_t back = lstat("test.txt", &statbuff);
+    int32_t back = lstat(STR_TEST_TXT, &statbuff);
     EXPECT_EQ("lstat_0200", back, -1);
 }
 
@@ -83,12 +88,15 @@ void lstat_0200(void)
 void lstat_0300(void)
 {
     struct stat buf[3];
-    const char *ptr = "/data/tests/libc-test/src/functionalext/supplement/stat/tests.txt";
-    const char *ptrlink = "/data/tests/libc-test/src/functionalext/supplement/stat/tests.txt.soft";
+    char ptr[PATH_MAX] = {0};
+    char ptrlink[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH("tests.txt", ptr);
+    FILE_ABSOLUTE_PATH("tests.txt.soft", ptrlink);
 
     FILE *fptr = fopen(ptr, "w+");
-    system("ln -s /data/tests/libc-test/src/functionalext/supplement/stat/tests.txt "
-           "/data/tests/libc-test/src/functionalext/supplement/stat/tests.txt.soft");
+    char cmd[PATH_MAX] = {0};
+    snprintf(cmd, sizeof(cmd), "ln -s %s %s", ptr, ptrlink);
+    system(cmd);
     struct stat statbuff;
     int32_t back = lstat(ptrlink, &statbuff);
     EXPECT_EQ("lstat_0300", back, 0);

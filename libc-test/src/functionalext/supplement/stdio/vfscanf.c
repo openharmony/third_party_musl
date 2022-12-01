@@ -16,9 +16,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
-#include "test.h"
-
-const char *file = "/data/tests/libc-test/src/functionalext/supplement/stdio/vfscanf.txt";
+#include "filepath_util.h"
 
 int readFile(FILE *stream, char *fmt, ...)
 {
@@ -39,6 +37,8 @@ void vfscanf_0100(void)
     FILE *fp = NULL;
     int val = 0;
     char buffer[BUFSIZ];
+    char file[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH(STR_VFSCANF_TXT, file);
     fp = fopen(file, "w+");
     if (fp == NULL) {
         t_error("%s fopen failed\n", __func__);
@@ -74,6 +74,8 @@ void vfscanf_0200(void)
     FILE *fp = NULL;
     char val[BUFSIZ];
     char buffer[BUFSIZ];
+    char file[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH(STR_VFSCANF_TXT, file);
     fp = fopen(file, "w+");
     if (fp == NULL) {
         t_error("%s fopen failed\n", __func__);
@@ -109,6 +111,8 @@ void vfscanf_0300(void)
     FILE *fp = NULL;
     int val1 = 0;
     int val2 = 0;
+    char file[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH(STR_VFSCANF_TXT, file);
     fp = fopen(file, "w+");
     if (fp == NULL) {
         t_error("%s fopen failed", __func__);

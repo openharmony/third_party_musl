@@ -16,6 +16,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include "functionalext.h"
+#include "filepath_util.h"
 
 /**
  * @tc.name      : acct_0100
@@ -35,7 +36,8 @@ void acct_0100(void)
  */
 void acct_0200(void)
 {
-    const char *filePath = "/data/tests/libc-test/src/functionalext/supplement/unistd/accttest.txt";
+    char filePath[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH("accttest.txt", filePath);
     int result = acct(filePath);
     EXPECT_EQ("acct_0300", result, -1);
     remove(filePath);

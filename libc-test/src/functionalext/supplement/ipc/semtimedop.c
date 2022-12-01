@@ -18,11 +18,9 @@
 #include <string.h>
 #include <sys/sem.h>
 
-#include "test.h"
+#include "filepath_util.h"
 
 extern int __semtimedop_time64(int, struct sembuf *, size_t, const struct timespec *);
-
-const char *path = "/data/tests/libc-test/src/file.txt";
 
 /**
  * @tc.name      : semtimedop_0100
@@ -31,6 +29,8 @@ const char *path = "/data/tests/libc-test/src/file.txt";
  */
 void semtimedop_0100(void)
 {
+    char path[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH(STR_FILE_TXT, path);
     int fd = open(path, O_RDWR | O_CREAT);
     if (fd < 0) {
         t_error("%s failed: fd = %d\n", __func__, fd);

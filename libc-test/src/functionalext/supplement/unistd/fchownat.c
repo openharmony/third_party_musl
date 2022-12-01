@@ -17,6 +17,7 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include "functionalext.h"
+#include "filepath_util.h"
 
 /**
  * @tc.name      : fchownat_0100
@@ -25,7 +26,8 @@
  */
 void fchownat_0100(void)
 {
-    const char *ptr = "/data/tests/libc-test/src/functionalext/supplement/unistd/fchownattest.txt";
+    char ptr[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH(STR_FCHOWNAT_TEST_TXT, ptr);
     int fd = open(ptr, O_RDWR | O_CREAT);
     EXPECT_TRUE("fchownat_0100", fd >= 0);
     int ret = fchownat(fd, ptr, 0, 0, AT_SYMLINK_NOFOLLOW);
@@ -37,7 +39,6 @@ void fchownat_0100(void)
     EXPECT_EQ("fchownat_0100", buf.st_gid, 0);
     close(fd);
     remove(ptr);
-    ptr = NULL;
 }
 
 /**
@@ -47,7 +48,8 @@ void fchownat_0100(void)
  */
 void fchownat_0200(void)
 {
-    const char *ptr = "/data/tests/libc-test/src/functionalext/supplement/unistd/fchownattest.txt";
+    char ptr[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH(STR_FCHOWNAT_TEST_TXT, ptr);
     int fd = open(ptr, O_RDWR | O_CREAT);
     EXPECT_TRUE("fchownat_0200", fd >= 0);
     int ret = fchownat(AT_FDCWD, ptr, 0, 0, AT_SYMLINK_NOFOLLOW);
@@ -59,7 +61,6 @@ void fchownat_0200(void)
     EXPECT_EQ("fchownat_0200", buf.st_gid, 0);
     close(fd);
     remove(ptr);
-    ptr = NULL;
 }
 
 int main(int argc, char *argv[])

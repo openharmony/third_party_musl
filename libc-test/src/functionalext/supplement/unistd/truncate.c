@@ -18,12 +18,10 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "test.h"
+#include "filepath_util.h"
 
 const int nlen = -1;
 const int vlen = 5;
-const char *path = "/data/tests/libc-test/src/file.txt";
-const char *path_n = "/data/tests/libc-test/src/files.txt";
 const char *content = "Hello world!";
 
 #define CONTENT_LENGTH (13)
@@ -35,6 +33,8 @@ const char *content = "Hello world!";
  */
 void truncate_0100(void)
 {
+    char path_n[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH("files.txt", path_n);
     FILE *f = fopen(path_n, "a");
     if (f == NULL) {
         t_error("%s failed: fopen\n", __func__);
@@ -57,6 +57,8 @@ void truncate_0100(void)
  */
 void truncate_0200(void)
 {
+    char path[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH(STR_FILE_TXT, path);
     FILE *f = fopen(path, "a");
     if (f == NULL) {
         t_error("%s failed: fopen\n", __func__);
@@ -99,6 +101,8 @@ void truncate_0200(void)
  */
 void truncate_0300(void)
 {
+    char path[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH(STR_FILE_TXT, path);
     int result = truncate(path, nlen);
     if (result == 0) {
         t_error("%s failed: result = %d\n", __func__, result);

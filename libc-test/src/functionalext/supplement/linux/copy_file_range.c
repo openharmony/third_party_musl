@@ -17,10 +17,8 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <string.h>
-#include "test.h"
+#include "filepath_util.h"
 
-const char *path_in = "/data/tests/libc-test/src/file_in.txt";
-const char *path_out = "/data/tests/libc-test/src/file_out.txt";
 const char *str = "Hello";
 
 /**
@@ -32,6 +30,11 @@ void copy_file_range_0100(void)
 {
     int fd_in, fd_out, wlen, result;
     char buffer[BUFSIZ];
+
+    char path_in[PATH_MAX] = {0};
+    char path_out[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH(STR_FILE_IN_TXT, path_in);
+    FILE_ABSOLUTE_PATH(STR_FILE_OUT_TXT, path_out);
 
     fd_in = open(path_in, O_RDWR | O_CREAT);
     if (fd_in == -1) {
@@ -106,6 +109,11 @@ void copy_file_range_0300(void)
 {
     int fd_in, fd_out, wlen, result;
     char buffer[BUFSIZ];
+
+    char path_in[PATH_MAX] = {0};
+    char path_out[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH(STR_FILE_IN_TXT, path_in);
+    FILE_ABSOLUTE_PATH(STR_FILE_OUT_TXT, path_out);
 
     fd_in = open(path_in, O_WRONLY | O_CREAT);
     if (fd_in == -1) {

@@ -18,9 +18,7 @@
 #include <stdlib.h>
 #include <wchar.h>
 
-#include "test.h"
-
-const char *path = "/data/tests/libc-test/src/file.txt";
+#include "filepath_util.h"
 
 void handler(int sig)
 {
@@ -34,6 +32,8 @@ void handler(int sig)
  */
 void ungetwc_0100(void)
 {
+    char path[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH(STR_FILE_TXT, path);
     FILE *file = fopen(path, "a+");
     if (!file) {
         t_error("%s failed: fopen\n", __func__);

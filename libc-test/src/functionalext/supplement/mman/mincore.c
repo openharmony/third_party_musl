@@ -19,6 +19,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include "functionalext.h"
+#include "filepath_util.h"
 
 #define TEST_SIZE 4096
 
@@ -30,7 +31,9 @@
 void mincore_0100(void)
 {
     struct stat st;
-    const char *pathname = "/data/tests/libc-test/src/functionalext/supplement/mman/mincore";
+    char pathname[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH("mincore", pathname);
+
     int ret = stat(pathname, &st);
     EXPECT_EQ("mincore_0100", ret, CMPFLAG);
     if (ret != 0) {

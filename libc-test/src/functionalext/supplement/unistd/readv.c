@@ -19,9 +19,7 @@
 #include <string.h>
 #include <sys/uio.h>
 
-#include "test.h"
-
-const char *path = "/data/tests/libc-test/src/file.txt";
+#include "filepath_util.h"
 
 /**
  * @tc.name      : readv_0100
@@ -30,6 +28,8 @@ const char *path = "/data/tests/libc-test/src/file.txt";
  */
 void readv_0100(void)
 {
+    char path[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH(STR_FILE_TXT, path);
     int fd = open(path, O_RDWR | O_CREAT);
 
     char buf1[] = "hello";

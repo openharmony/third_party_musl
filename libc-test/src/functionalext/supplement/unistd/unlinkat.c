@@ -16,9 +16,7 @@
 #include <errno.h>
 #include <fcntl.h>
 
-#include "test.h"
-
-const char *path = "/data/tests/libc-test/src/file.txt";
+#include "filepath_util.h"
 
 /**
  * @tc.name      : unlinkat_0100
@@ -27,6 +25,8 @@ const char *path = "/data/tests/libc-test/src/file.txt";
  */
 void unlinkat_0100(void)
 {
+    char path[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH(STR_FILE_TXT, path);
     int fd = open(path, O_CREAT, 0664);
 
     int result = unlinkat(fd, path, 0);
@@ -45,6 +45,8 @@ void unlinkat_0100(void)
 void unlinkat_0200(void)
 {
     errno = 0;
+    char path[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH(STR_FILE_TXT, path);
     int result = unlinkat(AT_FDCWD, path, AT_REMOVEDIR);
     if (result == 0) {
         t_error("%s failed: result = %d\n", __func__, result);

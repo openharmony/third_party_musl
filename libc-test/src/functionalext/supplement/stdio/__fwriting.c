@@ -19,6 +19,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include "functionalext.h"
+#include "filepath_util.h"
 
 const int32_t NUM_ZERO = 0;
 
@@ -29,7 +30,8 @@ const int32_t NUM_ZERO = 0;
  */
 void __fwriting_0100(void)
 {
-    const char *ptr = "/data/tests/libc-test/src/functionalext/supplement/stdio/Freadtest.txt";
+    char ptr[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH(STR_FREAD_TEST_TXT, ptr);
     FILE *fptr = fopen(ptr, "w");
     int result = __fwriting(fptr);
     EXPECT_NE("__fwriting_0100", result, NUM_ZERO);
@@ -45,7 +47,8 @@ void __fwriting_0100(void)
 void __fwriting_0200(void)
 {
     const char *wrstring = "helloworld";
-    const char *ptr = "/data/tests/libc-test/src/functionalext/supplement/stdio/Freadtest.txt";
+    char ptr[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH(STR_FREAD_TEST_TXT, ptr);
     FILE *fptr = fopen(ptr, "w+");
     fwrite(wrstring, sizeof(char), strlen(wrstring), fptr);
     int result = __fwriting(fptr);
@@ -63,7 +66,8 @@ void __fwriting_0300(void)
 {
     char abc[100] = {0};
     const char *wrstring = "helloworld";
-    const char *ptr = "/data/tests/libc-test/src/functionalext/supplement/stdio/Freadtest.txt";
+    char ptr[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH(STR_FREAD_TEST_TXT, ptr);
     FILE *fptr = fopen(ptr, "w+");
     fwrite(wrstring, sizeof(char), strlen(wrstring), fptr);
     fseek(fptr, 0, SEEK_SET);

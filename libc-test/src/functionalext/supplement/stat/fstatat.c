@@ -17,6 +17,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include "functionalext.h"
+#include "filepath_util.h"
 
 const int SUCCESS = 0;
 
@@ -84,7 +85,9 @@ void fstatat_0200(void)
  */
 void fstatat_0300(void)
 {
-    const char *ptr = "/data/tests/libc-test/src/functionalext/supplement/stat/fstatattest.txt";
+    char ptr[PATH_MAX] = {0};
+    FILE_ABSOLUTE_PATH("fstatattest.txt", ptr);
+
     struct stat st;
     int fd = open(ptr, O_RDWR | O_CREAT);
     EXPECT_TRUE("fstatat_0300", fd >= 0);
@@ -97,7 +100,6 @@ void fstatat_0300(void)
     EXPECT_EQ("fstatat_0300", st.st_gid, gid);
     close(fd);
     remove(ptr);
-    ptr = NULL;
 }
 
 /**
