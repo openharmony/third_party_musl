@@ -20,8 +20,6 @@
 #include <string.h>
 #include <time.h>
 
-#define TIME_ZONE_SUB_TAG '/'
-
 struct time_test_string_struct {
     const char *tz;
     const char *result;
