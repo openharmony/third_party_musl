@@ -109,7 +109,7 @@ inline volatile const struct MallocDispatchType* get_current_dispatch_table()
 #ifdef HOOK_ENABLE
 	volatile const struct MallocDispatchType* ret = (struct MallocDispatchType *)atomic_load_explicit(&__musl_libc_globals.current_dispatch_table, memory_order_acquire);
 	if (ret != NULL) {
-		if (checkLoadMallocMemTrack) {
+		if (__get_memleak_hook_flag()) {
 			return ret;
 		}
 		if (!__get_global_hook_flag()) {

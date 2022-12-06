@@ -69,7 +69,7 @@ static void  get_native_hook_param(char *buf, unsigned int buf_len)
 #ifdef OHOS_ENABLE_PARAMETER
 	const char *key =  MUSL_HOOK_PARAM_NAME;
 	unsigned int len = buf_len;
-	(void)SystemReadParam(kMemTrackPropertyEnable, __memleak_param_value, &len);
+	(void)SystemReadParam(key, buf, &len);
 #else
 	return;
 #endif
@@ -376,7 +376,8 @@ bool finish_install_ohos_malloc_hooks(struct musl_libc_globals* globals, const c
 		}
 		atomic_store_explicit(&__musl_libc_globals.so_dispatch_table, (volatile long long)&globals->malloc_dispatch_table, memory_order_seq_cst);
 		atomic_store_explicit(&__musl_libc_globals.current_dispatch_table, (volatile long long)&globals->malloc_dispatch_table, memory_order_seq_cst);
-	} else if (__get_memleak_hook_flag() && checkLoadMallocMemTrack) {
+	}
+	if (__get_memleak_hook_flag() && checkLoadMallocMemTrack) {
 		if (!start_func(memLeakTypeContent)) {
 			clear_function_table();
 			return false;
@@ -437,7 +438,7 @@ static void* init_ohos_malloc_hook()
 			install_ohos_malloc_hook(&__musl_libc_globals, kMemTrackSharedLib, kMemTrackPrefix);
 		}
 	}
-	if (__get_global_hook_flag())
+	if (__get_global_hook_flag()) {
 		install_ohos_malloc_hook(&__musl_libc_globals, __malloc_hook_shared_lib, __malloc_hook_function_prefix);
 	}
 	return NULL;
@@ -554,7 +555,8 @@ static void __install_memleak_tracker_hook(int32_t sigNum, siginfo_t *info, void
 				atomic_store_explicit(&__musl_libc_globals.current_dispatch_table, (volatile long long)memleak_tracker_so_dispatch_value, memory_order_seq_cst);
 			}
 			if (start_func && !start_func(memLeakTypeContent)) {
-			// __musl_log(__MUSL_LOG_ERROR, "%s: failed to enable malloc\n", getprogname());
+				// __musl_log(__MUSL_LOG_ERROR, "%s: failed to enable malloc\n", getprogname());
+				clear_function_table();
 			}
 			if (memLeakTypeContent & ADDR_NATIVE_ENABLE) {
 				atomic_store_explicit(&__memleak_hook_flag, (volatile bool)false, memory_order_seq_cst);
