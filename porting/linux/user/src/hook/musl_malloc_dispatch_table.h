@@ -7,7 +7,9 @@
 struct musl_libc_globals {
 	volatile atomic_llong current_dispatch_table;
 	volatile atomic_llong so_dispatch_table;
+	volatile atomic_llong memleak_tracker_so_dispatch_table;
 	struct MallocDispatchType malloc_dispatch_table;
+	struct MallocDispatchType memleak_tracker_malloc_dispatch_table;
 };
 
 #endif
