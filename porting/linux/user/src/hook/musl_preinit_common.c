@@ -14,8 +14,10 @@ struct MallocDispatchType __libc_malloc_default_dispatch = {
 	.munmap = MuslMalloc(munmap),
 	.calloc = MuslMalloc(calloc),
 	.realloc = MuslMalloc(realloc),
+	.malloc_usable_size = MuslMalloc(malloc_usable_size),
 };
 
 volatile atomic_bool __hook_enable_hook_flag;
+volatile atomic_bool __memleak_hook_flag;
 
 #endif
