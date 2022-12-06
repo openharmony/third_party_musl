@@ -48,6 +48,10 @@ static struct MallocDispatchType __ohos_malloc_hook_init_dispatch = {
 };
 #define MAX_SYM_NAME_SIZE 1000
 #define MAX_PROC_NAME_SIZE 256
+#define ADDR_NATIVE_ENABLE (1<<4)
+#define ADDR_NATIVE_DISABLE (1<<5)
+#define ADDR_NATIVE_SAVE (1<<6)
+#define ADDR_NATIVE_CLEAR (1<<7)
 static char *__malloc_hook_shared_lib = "libnative_hook.z.so";
 static char *__malloc_hook_function_prefix = "ohos_malloc_hook";
 volatile atomic_llong ohos_malloc_hook_shared_library;
@@ -591,10 +595,10 @@ static void __install_malloc_hook_signal_handler()
 	actionInstallMemleakHook.sa_handler = NULL;
 	actionInstallMemleakHook.sa_sigaction = __install_memleak_tracker_hook;
 	sigemptyset(&actionInstallMemleakHook.sa_mask);
-	sigaddset(&actionInstallMemleakHook.sa_mask, SIGNO_MEMCHECK);
+	sigaddset(&actionInstallMemleakHook.sa_mask, MUSL_SIGNAL_MEMCHECK);
 	actionInstallMemleakHook.sa_flags = SA_SIGINFO;
 	actionInstallMemleakHook.sa_restorer = NULL;
-	sigaction(SIGNO_MEMCHECK, &actionInstallMemleakHook, NULL);
+	sigaction(MUSL_SIGNAL_MEMCHECK, &actionInstallMemleakHook, NULL);
 }
 
 static void __initialize_malloc()
