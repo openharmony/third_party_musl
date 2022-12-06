@@ -18,5 +18,6 @@ struct MallocDispatchType __libc_malloc_default_dispatch = {
 };
 
 volatile atomic_bool __hook_enable_hook_flag;
+volatile atomic_bool __memleak_hook_flag;
 
 #endif
