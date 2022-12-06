@@ -202,6 +202,7 @@ int __libc_current_sigrtmax(void);
 #define MUSL_SIGNAL_NATIVE_LOCAL (SIGRTMIN + 3)
 #define MUSL_SIGNAL_JSHEAP (SIGRTMIN + 4)
 #define MUSL_SIGNAL_JSHEAP_PRIV (SIGRTMIN + 5)
+#define MUSL_SIGNAL_MEMCHECK (SIGRTMIN + 9)
 
 int kill(pid_t, int);
 int sigemptyset(sigset_t *);
