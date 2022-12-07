@@ -127,7 +127,7 @@ typedef struct pthread_cond {
      { (struct LOS_DL_LIST *)NULL, (struct LOS_DL_LIST *)NULL }, \
      (VOID *)NULL, 0 }
 #endif
-#define PTHREAD_RWLOCK_INITIALIZER {{{0}}}
+#define PTHREAD_RWLOCK_INITIALIZER {0}
 #define PTHREAD_COND_INITIALIZER { -1, { 0, { NULL, NULL } } , NULL, -1 }
 #define PTHREAD_ONCE_INIT 0
 
