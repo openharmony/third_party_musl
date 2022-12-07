@@ -3078,6 +3078,10 @@ static void *dlopen_impl(
 			goto end;
 		}
 		if (!load_library_header(task)) {
+			error(noload ?
+				"Library %s is not already loaded" :
+				"Error loading shared library %s: %m",
+				file);
 			LD_LOGE("dlopen_impl load library header failed for %{public}s", task->name);
 			goto end;
 		}
