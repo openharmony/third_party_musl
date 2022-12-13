@@ -33,9 +33,9 @@ void malloc_usable_size_0100(void)
     }
     size_t ret = malloc_usable_size(p);
 #ifdef _ARM64_
-    EXPECT_EQ("malloc_usable_size_0100", ret, TEST_MALLOC_SIZE + TEST_MALLOC_PLACEHOLDER64_SIZE);
+    EXPECT_GTE("malloc_usable_size_0100", ret, TEST_MALLOC_SIZE + TEST_MALLOC_PLACEHOLDER64_SIZE);
 #else
-    EXPECT_EQ("malloc_usable_size_0100", ret, TEST_MALLOC_SIZE + TEST_MALLOC_PLACEHOLDER_SIZE);
+    EXPECT_GTE("malloc_usable_size_0100", ret, TEST_MALLOC_SIZE + TEST_MALLOC_PLACEHOLDER_SIZE);
 #endif
     free(p);
 }
