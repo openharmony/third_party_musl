@@ -118,6 +118,10 @@ struct dso {
 	/* mark the dso status */
 	unsigned int flags;
 
+	int cache_sym_index;
+	struct dso *cache_dso;
+	Sym *cache_sym;
+
 	Phdr *phdr;
 	int phnum;
 	size_t phentsize;
@@ -957,10 +961,18 @@ static void do_relocs(struct dso *dso, size_t *rel, size_t rel_size, size_t stri
 			ctx = type==REL_COPY ? head->syms_next : head;
 			struct verinfo vinfo = { .s = name, .v = "" };
 			vinfo.use_vna_hash = get_vna_hash(dso, sym_index, &vinfo.vna_hash);
-			def = (sym->st_info>>4) == STB_LOCAL
-				? (struct symdef){ .dso = dso, .sym = sym }
-				: dso != &ldso ? find_sym_by_saved_so_list(type, ctx, &vinfo, type==REL_PLT, dso)
-				: find_sym2(ctx, &vinfo, type==REL_PLT, 0, dso->namespace);
+			if (dso->cache_sym_index == sym_index) {
+				def = (struct symdef){ .dso = dso->cache_dso, .sym = dso->cache_sym };
+			} else {
+				def = (sym->st_info>>4) == STB_LOCAL
+					? (struct symdef){ .dso = dso, .sym = sym }
+					: dso != &ldso ? find_sym_by_saved_so_list(type, ctx, &vinfo, type==REL_PLT, dso)
+					: find_sym2(ctx, &vinfo, type==REL_PLT, 0, dso->namespace);
+				dso->cache_sym_index = sym_index;
+				dso->cache_dso = def.dso;
+				dso->cache_sym = def.sym;
+			}
+
 			if (!def.sym && (sym->st_shndx != SHN_UNDEF
 				|| sym->st_info>>4 != STB_WEAK)) {
 				if (dso->lazy && (type==REL_PLT || type==REL_GOT)) {
