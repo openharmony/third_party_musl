@@ -50,7 +50,11 @@ weak_alias(__mmap, mmap);
 weak_alias(mmap, mmap64);
 #endif // HOOK_ENABLE
 
-/* Adapter function for lldb to not deal with 64-bit arguments on 32-bit systems */
+/* 
+Adapter function for lldb to not deal with 64-bit arguments on 32-bit systems 
+Issue I661Z1
+Test: Build and boot devices.
+*/
 void *__lldb_mmap(void *start, size_t len, int prot, int flags, int fd, intptr_t off) {
 	return mmap(start, len, prot, flags, fd, off);
 }
