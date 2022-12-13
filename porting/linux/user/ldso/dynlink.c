@@ -162,8 +162,6 @@ struct dso {
 	struct dso **parents;
 	size_t parents_count;
 	size_t parents_capacity;
-	bool is_global;
-	bool is_reloc_head_so_dep;
 	struct dso **reloc_can_search_dso_list;
 	size_t reloc_can_search_dso_count;
 	size_t reloc_can_search_dso_capacity;
@@ -764,20 +762,14 @@ static void free_reloc_can_search_dso(struct dso *p)
 	}
 }
 
-static void add_can_search_so_list_in_dso(struct dso *dso_relocating, struct dso *start_check_dso) {
-	struct dso *p = start_check_dso;
-	for (; p; p = p->syms_next) {
-		if (p->is_global) { /* main exe, ld prelaod so, ldso. */
-			add_reloc_can_search_dso(dso_relocating, p);
-			continue;
+static void add_can_search_so_list_in_dso(struct dso *dso, struct dso *start_check_dso) {
+	struct dso *check_dso = start_check_dso;
+	while (check_dso) {
+		if (dso->namespace && check_sym_accessible(check_dso, dso->namespace)) {
+			add_reloc_can_search_dso(dso, check_dso);
 		}
-		if (p->is_reloc_head_so_dep) {
-			if (dso_relocating->namespace && check_sym_accessible(p, dso_relocating->namespace)) {
-				add_reloc_can_search_dso(dso_relocating, p);
-			}
-		}
+		check_dso = check_dso->syms_next;
 	}
-
 	return;
 }
 
@@ -2220,9 +2212,7 @@ static void reloc_all(struct dso *p, const dl_extinfo *extinfo)
 	size_t dyn[DYN_CNT];
 	for (; p; p=p->next) {
 		if (p->relocated) continue;
-		if (p != &ldso) {
-			add_can_search_so_list_in_dso(p, head);
-		}
+		add_can_search_so_list_in_dso(p, head);
 		decode_vec(p->dynv, dyn, DYN_CNT);
 		if (NEED_MIPS_GOT_RELOCS)
 			do_mips_relocs(p, laddr(p, dyn[DT_PLTGOT]));
@@ -2529,7 +2519,6 @@ hidden void __dls2(unsigned char *base, size_t *sp)
 	ldso.phnum = ehdr->e_phnum;
 	ldso.phdr = laddr(&ldso, ehdr->e_phoff);
 	ldso.phentsize = ehdr->e_phentsize;
-	ldso.is_global = true;
 	kernel_mapped_dso(&ldso);
 	decode_dyn(&ldso);
 
@@ -2746,7 +2735,6 @@ void __dls3(size_t *sp, size_t *auxv)
 		}
 		argv[-3] = (void *)app.loadmap;
 	}
-	app.is_global = true;
 
 	/* Initial dso chain consists only of the app. */
 	head = tail = syms_tail = &app;
@@ -2776,9 +2764,6 @@ void __dls3(size_t *sp, size_t *auxv)
 	if (env_preload) {
 		load_preload(env_preload, get_default_ns(), tasks);
 	}
-	for (struct dso *q=head; q; q=q->next) {
-		q->is_global = true;
-	}
 	preload_deps(&app, tasks);
 	unmap_preloaded_sections(tasks);
 	shuffle_loadtasks(tasks);
@@ -2787,16 +2772,11 @@ void __dls3(size_t *sp, size_t *auxv)
 	assign_tls(app.next);
 #else
 	if (env_preload) load_preload(env_preload, get_default_ns());
-	for (struct dso *q=head; q; q=q->next) {
-		q->is_global = true;
-	}
  	load_deps(&app, NULL);
 #endif
 
-	for (struct dso *p=head; p; p=p->next) {
-		p->is_reloc_head_so_dep = true;
+	for (struct dso *p=head; p; p=p->next)
 		add_syms(p);
-	}
 
 	/* Attach to vdso, if provided by the kernel, last so that it does
 	 * not become part of the global namespace.  */
@@ -2858,9 +2838,6 @@ void __dls3(size_t *sp, size_t *auxv)
 	 * copy relocations which depend on libraries' relocations. */
 	reloc_all(app.next, NULL);
 	reloc_all(&app, NULL);
-	for (struct dso *q=head; q; q=q->next) {
-		q->is_reloc_head_so_dep = false;
-	}
 
 	/* Actual copying to new TLS needs to happen after relocations,
 	 * since the TLS images might have contained relocated addresses. */
@@ -3151,19 +3128,11 @@ static void *dlopen_impl(
 		/* Make new symbols global, at least temporarily, so we can do
 		 * relocations. If not RTLD_GLOBAL, this is reverted below. */
 		add_syms(p);
-		p->is_reloc_head_so_dep = true;
-		for (i=0; p->deps[i]; i++) {
-			p->deps[i]->is_reloc_head_so_dep = true;
+		for (i=0; p->deps[i]; i++)
 			add_syms(p->deps[i]);
-		}
 	}
-	struct dso *reloc_head_so = p;
 	if (!p->relocated) {
 		reloc_all(p, extinfo);
-	}
-	reloc_head_so->is_reloc_head_so_dep = false;
-	for (size_t i=0; reloc_head_so->deps[i]; i++) {
-		reloc_head_so->deps[i]->is_reloc_head_so_dep = false;
 	}
 
 	/* If RTLD_GLOBAL was not specified, undo any new additions
