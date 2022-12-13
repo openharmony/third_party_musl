@@ -133,6 +133,7 @@
     __libc_mmap;
     __libc_munmap;
     __libc_start_main;
+    __lldb_mmap;
     __localtime64;
     __localtime64_r;
     __lstat_time64;
