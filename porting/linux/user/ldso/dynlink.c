@@ -44,6 +44,12 @@ static void error(const char *, ...);
 
 #define MAXP2(a,b) (-(-(a)&-(b)))
 #define ALIGN(x,y) ((x)+(y)-1 & -(y))
+#define GNU_HASH_FILTER(ght, ghm, gho)                \
+	const size_t *bloomwords = (const void *)(ght+4); \
+	size_t f = bloomwords[gho & (ght[2]-1)];          \
+	if (!(f & ghm)) continue;                         \
+	f >>= (gh >> ght[3]) % (8 * sizeof f);            \
+	if (!(f & 1)) continue;
 
 #define container_of(p,t,m) ((t*)((char *)(p)-offsetof(t,m)))
 #define countof(a) ((sizeof (a))/(sizeof (a)[0]))
@@ -647,19 +653,6 @@ static Sym *gnu_lookup(struct sym_info_pair s_info_p, uint32_t *hashtab, struct 
 	return 0;
 }
 
-static Sym *gnu_lookup_filtered(struct sym_info_pair s_info_p, uint32_t *hashtab, struct dso *dso, struct verinfo *verinfo, uint32_t fofs, size_t fmask)
-{
-	uint32_t h1 = s_info_p.sym_h;
-	const size_t *bloomwords = (const void *)(hashtab+4);
-	size_t f = bloomwords[fofs & (hashtab[2]-1)];
-	if (!(f & fmask)) return 0;
-
-	f >>= (h1 >> hashtab[3]) % (8 * sizeof f);
-	if (!(f & 1)) return 0;
-
-	return gnu_lookup(s_info_p, hashtab, dso, verinfo);
-}
-
 static bool check_sym_accessible(struct dso *dso, ns_t *ns)
 {
 	if (!dso || !dso->namespace || !ns) {
@@ -803,11 +796,13 @@ static inline struct symdef find_sym2(struct dso *dso, struct verinfo *verinfo, 
 			continue;
 		}
 		if ((ght = dso->ghashtab)) {
-			sym = gnu_lookup_filtered(s_info_p, ght, dso, verinfo, gho, ghm);
+			GNU_HASH_FILTER(ght, ghm, gho)
+			sym = gnu_lookup(s_info_p, ght, dso, verinfo);
 		} else {
 			if (!h) s_info_p = sysv_hash(verinfo->s);
 			sym = sysv_lookup(verinfo, s_info_p, dso);
 		}
+
 		if (!sym) continue;
 		if (!sym->st_shndx)
 			if (need_def || (sym->st_info&0xf) == STT_TLS
@@ -839,7 +834,8 @@ static inline struct symdef find_sym_by_saved_so_list(
 		dso_searching = dso_relocating->reloc_can_search_dso_list[i];
 		Sym *sym;
 		if ((ght = dso_searching->ghashtab)) {
-			sym = gnu_lookup_filtered(s_info_p, ght, dso_searching, verinfo, gho, ghm);
+			GNU_HASH_FILTER(ght, ghm, gho)
+			sym = gnu_lookup(s_info_p, ght, dso_searching, verinfo);
 		} else {
 			if (!h) s_info_p = sysv_hash(verinfo->s);
 			sym = sysv_lookup(verinfo, s_info_p, dso_searching);
