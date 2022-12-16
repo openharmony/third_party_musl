@@ -439,7 +439,7 @@ static const struct time_test_string_struct test_strftime_data[] = {
     {"Pacific/Saipan", "Sat Jul 30 20:40:14 2022 ChST+1000"},
     {"Pacific/Guadalcanal", "Sat Jul 30 21:40:14 2022 +11+1100"},
     {"Pacific/Nauru", "Sat Jul 30 22:40:14 2022 +12+1200"},
-    {"Pacific/Enderbury", "Sat Jul 30 23:40:14 2022 +13+1300"},
+    {"Pacific/Kanton", "Sat Jul 30 23:40:14 2022 +13+1300"},
     {"Pacific/Bougainville", "Sat Jul 30 21:40:14 2022 +11+1100"},
     {"Pacific/Tarawa", "Sat Jul 30 22:40:14 2022 +12+1200"},
     {"Pacific/Kiritimati", "Sun Jul 31 00:40:14 2022 +14+1400"},

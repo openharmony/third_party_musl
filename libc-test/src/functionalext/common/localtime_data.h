@@ -54,7 +54,7 @@ static const struct time_test_string_struct test_localtime_data[] = {
     {"Pacific/Efate", "2022-6-30 21:40:14 wday=6,yday=210,isdst=0,gmtoff=39600,zone=+11"},
     {"Pacific/Midway", "2022-6-29 23:40:14 wday=5,yday=209,isdst=0,gmtoff=-39600,zone=SST"},
     {"Pacific/Niue", "2022-6-29 23:40:14 wday=5,yday=209,isdst=0,gmtoff=-39600,zone=-11"},
-    {"Pacific/Enderbury", "2022-6-30 23:40:14 wday=6,yday=210,isdst=0,gmtoff=46800,zone=+13"},
+    {"Pacific/Kanton", "2022-6-30 23:40:14 wday=6,yday=210,isdst=0,gmtoff=46800,zone=+13"},
     {"Pacific/Funafuti", "2022-6-30 22:40:14 wday=6,yday=210,isdst=0,gmtoff=43200,zone=+12"},
     {"Pacific/Gambier", "2022-6-30 1:40:14 wday=6,yday=210,isdst=0,gmtoff=-32400,zone=-09"},
     {"EET", "2022-6-30 13:40:14 wday=6,yday=210,isdst=1,gmtoff=10800,zone=EEST"},

@@ -54,7 +54,7 @@ static const struct time_test_time_struct test_timegm_data[] = {
     {"Pacific/Efate", 1659217214},
     {"Pacific/Midway", 1659138014},
     {"Pacific/Niue", 1659138014},
-    {"Pacific/Enderbury", 1659224414},
+    {"Pacific/Kanton", 1659224414},
     {"Pacific/Funafuti", 1659220814},
     {"Pacific/Gambier", 1659145214},
     {"EET", 1659188414},

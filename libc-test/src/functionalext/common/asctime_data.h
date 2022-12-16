@@ -54,7 +54,7 @@ static const struct time_test_string_struct test_asctime_data[] = {
     {"Pacific/Efate", "Sat Jul 30 21:40:14 2022"},
     {"Pacific/Midway", "Fri Jul 29 23:40:14 2022"},
     {"Pacific/Niue", "Fri Jul 29 23:40:14 2022"},
-    {"Pacific/Enderbury", "Sat Jul 30 23:40:14 2022"},
+    {"Pacific/Kanton", "Sat Jul 30 23:40:14 2022"},
     {"Pacific/Funafuti", "Sat Jul 30 22:40:14 2022"},
     {"Pacific/Gambier", "Sat Jul 30 01:40:14 2022"},
     {"EET", "Sat Jul 30 13:40:14 2022"},
