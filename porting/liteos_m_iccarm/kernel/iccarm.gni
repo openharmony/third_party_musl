@@ -31,7 +31,6 @@ MUSLPORTINGDIR = get_path_info(".", "abspath")
 ICCARM_ADAPT_INCLUDE_DIRS = [ "$MUSLPORTINGDIR/include" ]
 
 ICCARM_ADAPT_SRC_COMMON = [
-  "$MUSLPORTINGDIR/src/fs.c",
   "$MUSLPORTINGDIR/src/misc/realpath.c",
   "$MUSLPORTINGDIR/src/network/htonl.c",
   "$MUSLPORTINGDIR/src/network/htons.c",
