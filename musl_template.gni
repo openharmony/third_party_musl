@@ -596,7 +596,7 @@ template("musl_libs") {
     cflags = [
       "-mllvm",
       "-instcombine-max-iterations=0",
-      "-ffast-math",
+      "-ffp-contract=fast",
       "-O3",
       "-fPIC",
       "-fstack-protector-strong",
