@@ -635,10 +635,6 @@ __attribute__((constructor(1))) static void __musl_initialize()
 			__hook_mode = STEP_HOOK_MODE;
 		}
 	}
-	volatile bool hook_disable = atomic_load_explicit(&__hook_enable_hook_flag, memory_order_acquire);
-	if (!hook_disable && checkLoadMallocMemTrack) {
-		init_ohos_malloc_hook();
-	}
 	__initialize_malloc();
 	errno = 0;
 }
