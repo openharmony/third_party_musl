@@ -562,7 +562,7 @@ static void __install_memleak_tracker_hook(int32_t sigNum, siginfo_t *info, void
 				// __musl_log(__MUSL_LOG_ERROR, "%s: failed to enable malloc\n", getprogname());
 				clear_function_table();
 			}
-			if (memLeakTypeContent & ADDR_NATIVE_ENABLE) {
+			if (memLeakTypeContent & ADDR_NATIVE_CLEAR) {
 				atomic_store_explicit(&__memleak_hook_flag, (volatile bool)false, memory_order_seq_cst);
 				bool flag = __set_hook_flag(false);
 				__set_default_malloc();
