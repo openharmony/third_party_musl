@@ -660,6 +660,7 @@ template("musl_libs") {
       "-fPIC",
       "-ffreestanding",
       "-fno-stack-protector",
+      "-O3",
     ]
     if (is_asan) {
       defines = [
