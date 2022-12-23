@@ -2131,6 +2131,8 @@ musl_src_porting_file = [
   "src/time/gettimeofday.c",
   "src/time/time.c",
   "src/stdio/__fdopen.c",
+  "src/linux/cache.c",
+  "src/sched/sched_getcpu.c",
 ]
 
 musl_inc_hook_files = [
