@@ -2261,6 +2261,11 @@ static int do_dlclose(struct dso *p)
 		d->fini_next = p->fini_next;
 	}
 
+	/* empty tls image */
+	if (p->tls.size != 0) {
+		p->tls.image = NULL;
+	}
+
 	/* remove dso from global dso list */
 	if (p == tail) {
 		tail = p->prev;
@@ -2275,7 +2280,9 @@ static int do_dlclose(struct dso *p)
 	if (p->deps != no_deps)
 		free(p->deps);
 	unmap_library(p);
-	free(p);
+	if (p->tls.size == 0) {
+		free(p);
+	}
 
 	return 0;
 }
