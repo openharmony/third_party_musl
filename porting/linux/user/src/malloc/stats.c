@@ -262,14 +262,14 @@ struct mallinfo2 mallinfo2(void)
 {
 #ifdef USE_JEMALLOC_DFX_INTF
 	struct mallinfo info = je_mallinfo();
-	struct mallinfo2 ret = {
+	struct mallinfo2 res = {
 		.hblks = info.hblks,
 		.hblkhd = info.hblkhd,
 		.usmblks = info.usmblks,
 		.uordblks = info.uordblks,
 		.fordblks = info.fordblks,
 	};
-	return ret;
+	return res;
 #elif defined(MUSL_ITERATE_AND_STATS_API)
 	malloc_disable();
 	malloc_stats_t shared_stats = {0, 0, 0, 0};
