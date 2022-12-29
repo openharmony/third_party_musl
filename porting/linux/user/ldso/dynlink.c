@@ -761,17 +761,6 @@ static void free_reloc_can_search_dso(struct dso *p)
 	}
 }
 
-static char* reloc_white_list[] = {
-	"/usr/lib/libace_lite.so",
-	"/usr/lib/libsec_shared.so",
-	"/usr/lib/libisp.so",
-	"/usr/lib/lib_hiae.so",
-	"/usr/lib/lib_hiawb.so",
-	"/usr/lib/libmedia_hal_common.so",
-	"/usr/lib/libhi_osal.so",
-	"/usr/lib/libmpi.so"
-};
-
 /* The list of so that can be accessed during relocation include:
  * - The is_global flag of the so is true which means accessible by default.
  *   Global so includes exe, ld preload so and ldso.
@@ -791,14 +780,6 @@ static void add_can_search_so_list_in_dso(struct dso *dso_relocating, struct dso
 		if (p->is_reloc_head_so_dep) {
 			if (dso_relocating->namespace && check_sym_accessible(p, dso_relocating->namespace)) {
 				add_reloc_can_search_dso(dso_relocating, p);
-				continue;
-			}
-		}
-
-		for (size_t i = 0; i < sizeof(reloc_white_list) / sizeof(char*); i++) {
-			if (strcmp(reloc_white_list[i], p->name) == 0) {
-				add_reloc_can_search_dso(dso_relocating, p);
-				break;
 			}
 		}
 	}
