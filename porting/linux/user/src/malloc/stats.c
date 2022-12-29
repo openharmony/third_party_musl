@@ -231,9 +231,17 @@ int malloc_info(int options, FILE* fp)
 	return 0;
 }
 
+#ifdef USE_JEMALLOC_DFX_INTF
+extern struct mallinfo je_mallinfo();
+extern je_malloc_stats_print(void (*write_cb)(void *, const char *), void *cbopaque,
+	const char *opts);
+#endif
+
 void malloc_stats_print(void (*write_cb) (void *, const char *), void *cbopaque, const char *opts)
 {
-#ifdef MUSL_ITERATE_AND_STATS_API
+#ifdef USE_JEMALLOC_DFX_INTF
+	je_malloc_stats_print(write_cb, cbopaque, opts);
+#elif defined(MUSL_ITERATE_AND_STATS_API)
 	malloc_disable();
 	stat_printf(
 		write_cb,
@@ -252,7 +260,17 @@ void malloc_stats_print(void (*write_cb) (void *, const char *), void *cbopaque,
 
 struct mallinfo2 mallinfo2(void)
 {
-#ifdef MUSL_ITERATE_AND_STATS_API
+#ifdef USE_JEMALLOC_DFX_INTF
+	struct mallinfo info = je_mallinfo();
+	struct mallinfo2 ret = {
+		.hblks = info.hblks,
+		.hblkhd = info.hblkhd,
+		.usmblks = info.usmblks,
+		.uordblks = info.uordblks,
+		.fordblks = info.fordblks,
+	};
+	return ret;
+#elif defined(MUSL_ITERATE_AND_STATS_API)
 	malloc_disable();
 	malloc_stats_t shared_stats = {0, 0, 0, 0};
 	for (size_t i = 0; i < OCCUPIED_BIN_COUNT; ++i) {

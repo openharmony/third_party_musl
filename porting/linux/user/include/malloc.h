@@ -49,6 +49,17 @@ void malloc_enable(void);
 int malloc_info(int options, FILE* fp);
 void malloc_stats_print(void (*write_cb) (void *, const char *), void *cbopaque, const char *opts);
 
+
+#define M_SET_THREAD_CACHE -1001
+#define M_THREAD_CACHE_ENABLE 1
+#define M_THREAD_CACHE_DISABLE 0
+
+#define M_FLUSH_THREAD_CACHE -1002
+
+#define M_DELAYED_FREE -1003
+#define M_DELAYED_FREE_ENABLE 1
+#define M_DELAYED_FREE_DISABLE 0
+
 int mallopt(int param, int value);
 ssize_t malloc_backtrace(void* pointer, uintptr_t* frames, size_t frame_count);
 
