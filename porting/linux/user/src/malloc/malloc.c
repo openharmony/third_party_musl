@@ -17,6 +17,13 @@ extern void* je_malloc(size_t size);
 extern void* je_calloc(size_t count, size_t size);
 extern void* je_realloc(void* p, size_t newsize);
 extern void je_free(void* p);
+#ifdef USE_JEMALLOC_DFX_INTF
+extern void je_malloc_disable();
+extern void je_malloc_enable();
+extern int je_iterate(uintptr_t base, size_t size,
+	void (*callback)(uintptr_t ptr, size_t size, void* arg), void* arg);
+extern int je_mallopt(int param, int value);
+#endif
 #endif
 
 #if defined(__GNUC__) && defined(__PIC__)
@@ -159,7 +166,9 @@ void __pop_chunk(struct chunk *c)
 
 void malloc_disable(void)
 {
-#ifdef MUSL_ITERATE_AND_STATS_API
+#ifdef USE_JEMALLOC_DFX_INTF
+	je_malloc_disable();
+#elif defined(MUSL_ITERATE_AND_STATS_API)
 	lock(mal.free_lock);
 	lock(total_heap_space_inc_lock);
 	for (size_t i = 0; i < BINS_COUNT; ++i) {
@@ -173,7 +182,9 @@ void malloc_disable(void)
 
 void malloc_enable(void)
 {
-#ifdef MUSL_ITERATE_AND_STATS_API
+#ifdef USE_JEMALLOC_DFX_INTF
+	je_malloc_enable();
+#elif defined(MUSL_ITERATE_AND_STATS_API)
 	for (size_t i = 0; i < OCCUPIED_BIN_COUNT; ++i) {
 		unlock(mal.occupied_bins[i].lock);
 	}
@@ -211,7 +222,9 @@ static void malloc_iterate_occupied_bin(occupied_bin_t *occupied_bin, iterate_in
 
 int malloc_iterate(void* base, size_t size, void (*callback)(void* base, size_t size, void* arg), void* arg)
 {
-#ifdef MUSL_ITERATE_AND_STATS_API
+#ifdef USE_JEMALLOC_DFX_INTF
+	return je_iterate(base, size, callback, arg);
+#elif defined(MUSL_ITERATE_AND_STATS_API)
 	uintptr_t ptr = (uintptr_t)base;
 	uintptr_t end_ptr = ptr + size;
 	iterate_info_t iterate_info = {ptr, end_ptr, callback, arg};
@@ -1303,8 +1316,15 @@ void __malloc_donate(char *start, char *end)
 #endif
 }
 
+#ifdef HOOK_ENABLE
+int __libc_mallopt(int param, int value)
+#else
 int mallopt(int param, int value)
+#endif
 {
+#ifdef USE_JEMALLOC_DFX_INTF
+	return je_mallopt(int param, int value);
+#endif
 	return 0;
 }
 
