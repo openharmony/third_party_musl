@@ -1323,7 +1323,7 @@ int mallopt(int param, int value)
 #endif
 {
 #ifdef USE_JEMALLOC_DFX_INTF
-	return je_mallopt(int param, int value);
+	return je_mallopt(param, value);
 #endif
 	return 0;
 }
