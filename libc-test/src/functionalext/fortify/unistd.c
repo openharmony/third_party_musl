@@ -46,7 +46,6 @@ static void unistd_dynamic_chk_001(void)
         case 0:
             getcwd(buf, n);
             exit(0);
-            break;
         default:
             waitpid(pid, &status, WUNTRACED);
             TEST(WIFEXITED(status) == 0);
@@ -55,6 +54,7 @@ static void unistd_dynamic_chk_001(void)
             kill(pid, SIGCONT);
             break;
     }
+    return;
 }
 
 /**
@@ -84,7 +84,7 @@ static void unistd_dynamic_chk_002(void)
             break;
         case 0:
             pread(fd, buf, n, 0);
-            break;
+            exit(0);
         default:
             waitpid(pid, &status, WUNTRACED);
             TEST(WIFEXITED(status) == 0);
@@ -94,6 +94,7 @@ static void unistd_dynamic_chk_002(void)
             break;
     }
     close(fd);
+    return;
 }
 
 /**
@@ -123,7 +124,7 @@ static void unistd_dynamic_chk_003(void)
             break;
         case 0:
             pread(fd, buf, n, 0);
-            break;
+            exit(0);
         default:
             waitpid(pid, &status, WUNTRACED);
             TEST(WIFEXITED(status) == 0);
@@ -133,6 +134,7 @@ static void unistd_dynamic_chk_003(void)
             break;
     }
     close(fd);
+    return;
 }
 
 
@@ -163,7 +165,7 @@ static void unistd_dynamic_chk_004(void)
             break;
         case 0:
             pread64(fd, buf, n, 0);
-            break;
+            exit(0);
         default:
             waitpid(pid, &status, WUNTRACED);
             TEST(WIFEXITED(status) == 0);
@@ -173,6 +175,7 @@ static void unistd_dynamic_chk_004(void)
             break;
     }
     close(fd);
+    return;
 }
 
 /**
@@ -202,7 +205,7 @@ static void unistd_dynamic_chk_005(void)
             break;
         case 0:
             pread64(fd, buf, n, 0);
-            break;
+            exit(0);
         default:
             waitpid(pid, &status, WUNTRACED);
             TEST(WIFEXITED(status) == 0);
@@ -212,6 +215,7 @@ static void unistd_dynamic_chk_005(void)
             break;
     }
     close(fd);
+    return;
 }
 
 /**
@@ -240,7 +244,7 @@ static void unistd_dynamic_chk_006(void)
             break;
         case 0:
             pwrite64(fd, buf, n, 0);
-            break;
+            exit(0);
         default:
             waitpid(pid, &status, WUNTRACED);
             TEST(WIFEXITED(status) == 0);
@@ -250,6 +254,7 @@ static void unistd_dynamic_chk_006(void)
             break;
     }
     close(fd);
+    return;
 }
 
 /**
@@ -278,7 +283,7 @@ static void unistd_dynamic_chk_007(void)
             break;
         case 0:
             pwrite64(fd, buf, n, 0);
-            break;
+            exit(0);
         default:
             waitpid(pid, &status, WUNTRACED);
             TEST(WIFEXITED(status) == 0);
@@ -288,6 +293,7 @@ static void unistd_dynamic_chk_007(void)
             break;
     }
     close(fd);
+    return;
 }
 
 
@@ -318,7 +324,7 @@ static void unistd_dynamic_chk_008(void)
             break;
         case 0:
             pwrite(fd, buf, n, 0);
-            break;
+            exit(0);
         default:
             waitpid(pid, &status, WUNTRACED);
             TEST(WIFEXITED(status) == 0);
@@ -328,6 +334,7 @@ static void unistd_dynamic_chk_008(void)
             break;
     }
     close(fd);
+    return;
 }
 
 /**
@@ -357,7 +364,7 @@ static void unistd_dynamic_chk_009(void)
             break;
         case 0:
             pwrite(fd, buf, n, 0);
-            break;
+            exit(0);
         default:
             waitpid(pid, &status, WUNTRACED);
             TEST(WIFEXITED(status) == 0);
@@ -367,6 +374,7 @@ static void unistd_dynamic_chk_009(void)
             break;
     }
     close(fd);
+    return;
 }
 
 /**
@@ -394,7 +402,7 @@ static void unistd_dynamic_chk_010(void)
             break;
         case 0:
             read(fd, buf, n);
-            break;
+            exit(0);
         default:
             waitpid(pid, &status, WUNTRACED);
             TEST(WIFEXITED(status) == 0);
@@ -404,6 +412,7 @@ static void unistd_dynamic_chk_010(void)
             break;
     }
     close(fd);
+    return;
 }
 
 /**
@@ -431,7 +440,7 @@ static void unistd_dynamic_chk_011(void)
             break;
         case 0:
             read(fd, buf, n);
-            break;
+            exit(0);
         default:
             waitpid(pid, &status, WUNTRACED);
             TEST(WIFEXITED(status) == 0);
@@ -441,6 +450,7 @@ static void unistd_dynamic_chk_011(void)
             break;
     }
     close(fd);
+    return;
 }
 
 /**
@@ -470,7 +480,7 @@ static void unistd_dynamic_chk_012(void)
             break;
         case 0:
             write(fd, buf, n);
-            break;
+            exit(0);
         default:
             waitpid(pid, &status, WUNTRACED);
             TEST(WIFEXITED(status) == 0);
@@ -480,6 +490,7 @@ static void unistd_dynamic_chk_012(void)
             break;
     }
     close(fd);
+    return;
 }
 
 /**
@@ -509,7 +520,7 @@ static void unistd_dynamic_chk_013(void)
             break;
         case 0:
             write(fd, buf, n);
-            break;
+            exit(0);
         default:
             waitpid(pid, &status, WUNTRACED);
             TEST(WIFEXITED(status) == 0);
@@ -519,6 +530,7 @@ static void unistd_dynamic_chk_013(void)
             break;
     }
     close(fd);
+    return;
 }
 
 /**
@@ -546,7 +558,7 @@ static void unistd_dynamic_chk_014(void)
             break;
         case 0:
             readlink(path, buf, n);
-            break;
+            exit(0);
         default:
             waitpid(pid, &status, WUNTRACED);
             TEST(WIFEXITED(status) == 0);
@@ -555,6 +567,7 @@ static void unistd_dynamic_chk_014(void)
             kill(pid, SIGCONT);
             break;
     }
+    return;
 }
 
 /**
@@ -582,7 +595,7 @@ static void unistd_dynamic_chk_015(void)
             break;
         case 0:
             readlink(path, buf, n);
-            break;
+            exit(0);
         default:
             waitpid(pid, &status, WUNTRACED);
             TEST(WIFEXITED(status) == 0);
@@ -591,6 +604,7 @@ static void unistd_dynamic_chk_015(void)
             kill(pid, SIGCONT);
             break;
     }
+    return;
 }
 /**
  * @tc.name     : readlinkat
@@ -618,7 +632,7 @@ static void unistd_dynamic_chk_016(void)
             break;
         case 0:
             readlinkat(AT_FDCWD, path, buf, n);
-            break;
+            exit(0);
         default:
             waitpid(pid, &status, WUNTRACED);
             TEST(WIFEXITED(status) == 0);
@@ -627,6 +641,7 @@ static void unistd_dynamic_chk_016(void)
             kill(pid, SIGCONT);
             break;
     }
+    return;
 }
 
 /**
@@ -655,7 +670,7 @@ static void unistd_dynamic_chk_017(void)
             break;
         case 0:
             readlinkat(AT_FDCWD, path, buf, n);
-            break;
+            exit(0);
         default:
             waitpid(pid, &status, WUNTRACED);
             TEST(WIFEXITED(status) == 0);
@@ -664,6 +679,7 @@ static void unistd_dynamic_chk_017(void)
             kill(pid, SIGCONT);
             break;
     }
+    return;
 }
 int main(int argc, char *argv[])
 {

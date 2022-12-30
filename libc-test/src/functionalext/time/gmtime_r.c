@@ -15,6 +15,7 @@
 
 #include <stdlib.h>
 #include <time.h>
+#include <limits.h>
 #include "gmtime_data.h"
 #include "functionalext.h"
 
@@ -50,8 +51,22 @@ void gmtime_r_0100(void)
     }
 }
 
+/**
+ * @tc.name      : gmtime_r_0200
+ * @tc.desc      : test gmtime_r() with invalid input paramter
+ * @tc.level     : Level 2
+ */
+void gmtime_r_0200(void)
+{
+    time_t invalid_time = INT_MAX * 31622400LL + 1;
+    struct tm res = {0};
+    struct tm *gmtm = gmtime_r(&invalid_time, &res);
+    EXPECT_TRUE("gmtime_r_0200", NULL == (void *)gmtm);
+}
+
 int main(void)
 {
     gmtime_r_0100();
+    gmtime_r_0200();
     return t_status;
 }

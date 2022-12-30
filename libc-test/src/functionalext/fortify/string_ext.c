@@ -852,6 +852,11 @@ static void test_memset_0020()
     return;
 }
 
+/**
+ * @tc.name     : test_strlen_0010
+ * @tc.desc     : Ability to test the strlen normal condition
+ * @tc.level    : Level 0
+ */
 static void test_strlen_0010()
 {
     struct sigaction sigabrt = {
@@ -875,6 +880,36 @@ static void test_strlen_0010()
             TEST(WIFEXITED(status) == 0);
             TEST(WIFSTOPPED(status) == 1);
             TEST(WSTOPSIG(status) == SIGSTOP);
+            kill(pid, SIGCONT);
+            break;
+    }
+    return;
+}
+
+/**
+ * @tc.name     : test_strlen_0020
+ * @tc.desc     : Ability to test the strlen with NULL
+ * @tc.level    : Level 2
+ */
+static void test_strlen_0020()
+{
+    struct sigaction sigabrt = {
+        .sa_handler = SignalHandler,
+    };
+    sigaction(SIGABRT, &sigabrt, NULL);
+
+    int status;
+    int pid = fork();
+    switch (pid) {
+        case -1:
+            t_error("fork failed: %s\n", strerror(errno));
+            break;
+        case 0:
+            strlen(NULL);
+            exit(0);
+        default:
+            waitpid(pid, &status, WUNTRACED);
+            TEST(WIFEXITED(status) == 0);
             kill(pid, SIGCONT);
             break;
     }
@@ -907,7 +942,8 @@ int main(int argc, char *argv[]) {
     test_memcpy_0010();
     test_memcpy_0020();
     test_strlen_0010();
-
+    test_strlen_0020();
+    
     #ifdef _GNU_SOURCE
     test_mempcpy_0010();
     test_mempcpy_0020();

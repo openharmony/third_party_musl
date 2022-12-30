@@ -26,6 +26,9 @@ int main(int argc, char **argv)
     char set_thread_name[] = "THREADFOO";
     char default_name[] = "pthread_getname";
 
+    rc = pthread_getname_np(pthread_self(), thread_name, 0);
+    if (rc != ERANGE) errExitEN(rc, "pthread_getname_np(invalid args[len]) failed");
+
     rc = pthread_getname_np(pthread_self(), thread_name, NAMELEN);
     if (rc != 0) errExitEN(rc, "pthread_getname_np failed");
     if(strcmp(thread_name, default_name) != 0) perror("pthread name comparison failed");

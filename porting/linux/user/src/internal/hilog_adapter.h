@@ -20,7 +20,9 @@
 #include <stdarg.h>
 #include <stdbool.h>
 
+#ifndef hidden
 #define hidden __attribute__((visibility("hidden")))
+#endif
 
 // Log type
 typedef enum {

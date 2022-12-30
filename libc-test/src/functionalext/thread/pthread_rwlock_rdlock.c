@@ -269,6 +269,17 @@ static void pthread_rwlock_timedrdlock_monotonic_np_0020(void)
     TEST(pthread_rwlock_destroy(&g_rwlock6) == 0);
 }
 
+/**
+ * @tc.name     : pthread_rwlock_timedrdlock_monotonic_np_0030
+ * @tc.desc     : test pthread_rwlock_timedrdlock_monotonic_np with invalid rwlock
+ * @tc.level    : Level 2
+ */
+static void pthread_rwlock_timedrdlock_monotonic_np_0030(void)
+{
+    struct timespec ts = {0};
+    TEST(pthread_rwlock_timedrdlock_monotonic_np((pthread_rwlock_t *)NULL, &ts) == EINVAL);
+}
+
 int main(void)
 {
     pthread_rwlock_clockrdlock_0010();
@@ -277,6 +288,7 @@ int main(void)
     pthread_rwlock_clockrdlock_0040();
     pthread_rwlock_timedrdlock_monotonic_np_0010();
     pthread_rwlock_timedrdlock_monotonic_np_0020();
+    pthread_rwlock_timedrdlock_monotonic_np_0030();
 
 	return t_status;
 }
