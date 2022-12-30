@@ -714,6 +714,10 @@ template("musl_libs") {
       defines = [ "OHOS_ENABLE_PARAMETER" ]
       deps += [ "//base/startup/init/services/param/base:parameterbase" ]
     }
+    
+    if(musl_unit_test_flag){
+      defines += [ "UNIT_TEST_STATIC" ]
+    }
 
     configs -= musl_inherited_configs
 

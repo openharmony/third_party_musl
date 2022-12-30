@@ -301,6 +301,20 @@ static void pthread_mutex_timedlock_monotonic_np_0020(void)
 
 /********************************************* Test case dividing line ***********************************************/
 
+/**
+ * @tc.name     : pthread_mutex_timedlock_monotonic_np_0030
+ * @tc.desc     : test pthread_mutex_timedlock_monotonic_np_0030 with invalid args
+ * @tc.level    : Level 2
+ */
+static void pthread_mutex_timedlock_monotonic_np_0030(void)
+{
+    pthread_mutex_t *mtx = (pthread_mutex_t *)NULL;
+    struct timespec ts = {0};
+    TEST(pthread_mutex_timedlock_monotonic_np(mtx, &ts) == EINVAL);
+}
+
+/********************************************* Test case dividing line ***********************************************/
+
 static void *PthreadLockTimeoutNPOut(void *arg)
 {
     pthread_mutex_t *mtx = (pthread_mutex_t*)arg;
@@ -379,6 +393,7 @@ int main(void)
     pthread_mutex_clocklock_0060();
     pthread_mutex_timedlock_monotonic_np_0010();
     pthread_mutex_timedlock_monotonic_np_0020();
+    pthread_mutex_timedlock_monotonic_np_0030();
     pthread_mutex_lock_timeout_np_0010();
     pthread_mutex_lock_timeout_np_0020();
 
