@@ -165,7 +165,7 @@ ohos_executable("unittest_hook_preinit") {
 
   deps = [ "//third_party/musl:create_porting_src" ]
 
-  if(musl_unit_test_flag){
+  if (musl_unit_test_flag) {
     defines = [ "UNIT_TEST_STATIC" ]
   }
 
