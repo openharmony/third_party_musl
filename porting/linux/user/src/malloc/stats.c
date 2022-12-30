@@ -233,7 +233,7 @@ int malloc_info(int options, FILE* fp)
 
 #ifdef USE_JEMALLOC_DFX_INTF
 extern struct mallinfo je_mallinfo();
-extern je_malloc_stats_print(void (*write_cb)(void *, const char *), void *cbopaque,
+extern void je_malloc_stats_print(void (*write_cb)(void *, const char *), void *cbopaque,
 	const char *opts);
 #endif
 
