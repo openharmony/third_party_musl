@@ -2073,6 +2073,7 @@ musl_src_porting_file = [
   "src/malloc/malloc_random.c",
   "src/multibyte/wcsnrtombs.c",
   "src/network/inet_legacy.c",
+  "src/network/socket.c",
   "src/passwd/getspnam_r.c",
   "src/sched/sched_setparam.c",
   "src/sched/sched_getparam.c",
