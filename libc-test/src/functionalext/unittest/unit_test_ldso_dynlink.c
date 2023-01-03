@@ -22,7 +22,7 @@ typedef void (*TEST_FUN)(void);
 
 /**
  * @tc.name      : dynlink_test_0010
- * @tc.desc      : dlns_set_namespace_lib_path test
+ * @tc.desc      : Test dlns_set_namespace_lib_path with invalid input 
  * @tc.level     : Level 2
  */
 static void dynlink_test_0010(void)
@@ -33,7 +33,7 @@ static void dynlink_test_0010(void)
 
 /**
  * @tc.name      : dynlink_test_0020
- * @tc.desc      : dlns_set_namespace_lib_path test
+ * @tc.desc      : Test dlns_set_namespace_lib_path with invalid input 
  * @tc.level     : Level 2
  */
 static void dynlink_test_0020(void)
@@ -44,7 +44,7 @@ static void dynlink_test_0020(void)
 
 /**
  * @tc.name      : dynlink_test_0030
- * @tc.desc      : dlns_set_namespace_lib_path test
+ * @tc.desc      : Set path for default lib use dlns_set_namespace_lib_path 
  * @tc.level     : Level 1
  */
 static void dynlink_test_0030(void)
@@ -55,7 +55,7 @@ static void dynlink_test_0030(void)
 
 /**
  * @tc.name      : dynlink_test_0040
- * @tc.desc      : dlns_set_namespace_separated test
+ * @tc.desc      : Test dlns_set_namespace_separated with invalid input
  * @tc.level     : Level 2
  */
 static void dynlink_test_0040(void)
@@ -66,7 +66,7 @@ static void dynlink_test_0040(void)
 
 /**
  * @tc.name      : dynlink_test_0050
- * @tc.desc      : dlns_set_namespace_separated test
+ * @tc.desc      : Test dlns_set_namespace_separated with invalid input
  * @tc.level     : Level 2
  */
 static void dynlink_test_0050(void)
@@ -77,7 +77,7 @@ static void dynlink_test_0050(void)
 
 /**
  * @tc.name      : dynlink_test_0060
- * @tc.desc      : dlns_set_namespace_separated test
+ * @tc.desc      : Set separated for default lib use dlns_set_namespace_separated
  * @tc.level     : Level 0
  */
 static void dynlink_test_0060(void)
@@ -88,7 +88,7 @@ static void dynlink_test_0060(void)
 
 /**
  * @tc.name      : dynlink_test_0070
- * @tc.desc      : dlns_set_namespace_permitted_paths test
+ * @tc.desc      : Test dlns_set_namespace_permitted_paths with invalid input
  * @tc.level     : Level 2
  */
 static void dynlink_test_0070(void)
@@ -99,7 +99,7 @@ static void dynlink_test_0070(void)
 
 /**
  * @tc.name      : dynlink_test_0080
- * @tc.desc      : dlns_set_namespace_permitted_paths test
+ * @tc.desc      : Test dlns_set_namespace_permitted_paths with invalid input
  * @tc.level     : Level 2
  */
 static void dynlink_test_0080(void)
@@ -110,7 +110,7 @@ static void dynlink_test_0080(void)
 
 /**
  * @tc.name      : dynlink_test_0090
- * @tc.desc      : dlns_set_namespace_permitted_paths test
+ * @tc.desc      : Set path for default lib use dlns_set_namespace_permitted_paths
  * @tc.level     : Level 0
  */
 static void dynlink_test_0090(void)
@@ -121,7 +121,7 @@ static void dynlink_test_0090(void)
 
 /**
  * @tc.name      : dynlink_test_0100
- * @tc.desc      : dlns_set_namespace_allowed_libs test
+ * @tc.desc      : Test dlns_set_namespace_allowed_libs with invalid input
  * @tc.level     : Level 2
  */
 static void dynlink_test_0100(void)
@@ -132,7 +132,7 @@ static void dynlink_test_0100(void)
 
 /**
  * @tc.name      : dynlink_test_0110
- * @tc.desc      : dlns_set_namespace_allowed_libs test
+ * @tc.desc      : Test dlns_set_namespace_allowed_libs with invalid input
  * @tc.level     : Level 2
  */
 static void dynlink_test_0110(void)
@@ -143,7 +143,7 @@ static void dynlink_test_0110(void)
 
 /**
  * @tc.name      : dynlink_test_0120
- * @tc.desc      : dlns_set_namespace_allowed_libs test
+ * @tc.desc      : Set allowed libs for default lib use dlns_set_namespace_allowed_libs
  * @tc.level     : Level 0
  */
 static void dynlink_test_0120(void)

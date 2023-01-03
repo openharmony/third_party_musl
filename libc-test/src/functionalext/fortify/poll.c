@@ -75,7 +75,7 @@ static void poll_0020(void)
 
 /**
  * @tc.name     : poll_0030
- * @tc.desc     : test poll with two fds and param count is 1
+ * @tc.desc     : test poll with buf's size greater than fd_count, return fd_count
  * @tc.level    : Level 1
  */
 static void poll_0030(void)
@@ -143,7 +143,7 @@ static void ppoll_0020(void)
 
 /**
  * @tc.name     : ppoll_0030
- * @tc.desc     : test ppoll with two fds and param count is 1
+ * @tc.desc     : test poll with buf's size greater than fd_count, return fd_count
  * @tc.level    : Level 1
  */
 static void ppoll_0030(void)

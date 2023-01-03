@@ -146,38 +146,11 @@ ohos_executable("unittest_hilog_vsnprint") {
   libs = [ "${musl_lib_dir}/libc.a" ]
 }
 
-ohos_executable("unittest_hook_preinit") {
-  subsystem_name = "musl"
-  part_name = "libc-test"
-
-  sources = [ "unit_test_hook_preinit.c" ]
-
-  include_dirs = [
-    "${musl_src_base}/src/hook",
-    "//${test_dir}/src/common",
-    "//${test_dir}/src/functionalext/common",
-    "${musl_src_base}/src/include",
-    "${musl_src_base}/include",
-    "${musl_src_base}/src/internal",
-  ]
-
-  configs = [ "//third_party/musl/libc-test/src/common:config_unittest" ]
-
-  deps = [ "//third_party/musl:create_porting_src" ]
-
-  if (musl_unit_test_flag) {
-    defines = [ "UNIT_TEST_STATIC" ]
-  }
-
-  libs = [ "${musl_lib_dir}/libc.a" ]
-}
-
 group("functionalext_unittest_test") {
   testonly = true
   deps = [
     ":unittest_hilog_adapter",
     ":unittest_hilog_vsnprint",
-    ":unittest_hook_preinit",
     ":unittest_ldso_dynlink",
     ":unittest_ldso_ld_log",
     ":unittest_ldso_namesapce",

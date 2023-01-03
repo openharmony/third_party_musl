@@ -19,8 +19,8 @@
 typedef void (*TEST_FUN)(void);
 
 /**
- * @tc.name      : strops_test_0010
- * @tc.desc      : strlwc test args null
+ * @tc.name      : ld_log_test_0010
+ * @tc.desc      : test ld_log_reset normal condition.
  * @tc.level     : Level 0
  */
 static void ld_log_test_0010(void)

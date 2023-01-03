@@ -20,7 +20,7 @@ typedef void (*TEST_FUN)(void);
 
 /**
  * @tc.name      : ns_config_0010
- * @tc.desc      : test error config
+ * @tc.desc      : Set default error callback for configor
  * @tc.level     : Level 1
  */
 static void ns_config_test_0010(void)
@@ -40,7 +40,7 @@ int errorback(const char* format, ...)
 
 /**
  * @tc.name      : ns_config_0030
- * @tc.desc      : test error config
+ * @tc.desc      : Set custom error callback for configor
  * @tc.level     : Level 0
  */
 static void ns_config_test_0020(void)
@@ -55,7 +55,7 @@ static void ns_config_test_0020(void)
 
 /**
  * @tc.name      : ns_config_0030
- * @tc.desc      : test parse config
+ * @tc.desc      : Test parse with invalid input
  * @tc.level     : Level 2
  */
 static void ns_config_test_0030(void)
@@ -70,7 +70,7 @@ static void ns_config_test_0030(void)
 
 /**
  * @tc.name      : ns_config_0040
- * @tc.desc      : test get_namespaces
+ * @tc.desc      : Test get_namespaces with invalid input
  * @tc.level     : Level 2
  */
 static void ns_config_test_0040(void)
@@ -84,7 +84,7 @@ static void ns_config_test_0040(void)
 
 /**
  * @tc.name      : ns_config_0050
- * @tc.desc      : test get_namespaces
+ * @tc.desc      : Test get_namespaces with invalid input
  * @tc.level     : Level 2
  */
 static void ns_config_test_0050(void)
@@ -105,7 +105,7 @@ static void ns_config_test_0050(void)
 
 /**
  * @tc.name      : ns_config_0060
- * @tc.desc      : test get_namespaces
+ * @tc.desc      : Test get_namespaces with invalid input
  * @tc.level     : Level 2
  */
 static void ns_config_test_0060(void)
@@ -126,7 +126,7 @@ static void ns_config_test_0060(void)
 
 /**
  * @tc.name      : ns_config_0070
- * @tc.desc      : test get_lib_paths
+ * @tc.desc      : Test get_lib_paths with invalid input
  * @tc.level     : Level 2
  */
 static void ns_config_test_0070(void)
@@ -140,7 +140,7 @@ static void ns_config_test_0070(void)
 
 /**
  * @tc.name      : ns_config_0080
- * @tc.desc      : test get_lib_paths
+ * @tc.desc      : Test get_lib_paths with invalid input
  * @tc.level     : Level 2
  */
 static void ns_config_test_0080(void)
@@ -154,7 +154,7 @@ static void ns_config_test_0080(void)
 
 /**
  * @tc.name      : ns_config_0090
- * @tc.desc      : test get_asan_lib_paths
+ * @tc.desc      : Test get_asan_lib_paths with invalid input
  * @tc.level     : Level 2
  */
 static void ns_config_test_0090(void)
@@ -168,7 +168,7 @@ static void ns_config_test_0090(void)
 
 /**
  * @tc.name      : ns_config_0100
- * @tc.desc      : test get_asan_lib_paths
+ * @tc.desc      : Test get_asan_lib_paths with invalid input
  * @tc.level     : Level 2
  */
 static void ns_config_test_0100(void)
