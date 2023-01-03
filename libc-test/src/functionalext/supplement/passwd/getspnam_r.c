@@ -37,6 +37,12 @@ void getspnam_r_0100(void)
     if (result != 0) {
         t_error("%s getgrnam_r failed\n", __func__);
     }
+    if (!spwd) {
+        t_error("%s failed, spwd is NULL\n", __func__);
+    }
+    if (strcmp(spwd_name, spwd->sp_namp)) {
+        t_error("%s spwd->sp_namp is %s\n", __func__, spwd->sp_namp);
+    }
 }
 
 int main(int argc, char *argv[])

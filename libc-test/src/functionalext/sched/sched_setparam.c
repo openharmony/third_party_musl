@@ -24,7 +24,7 @@ typedef void (*TEST_FUN)(void);
 
 /**
  * @tc.name      : sched_setparam
- * @tc.desc      : Test the function of sched_setparam.
+ * @tc.desc      : When param is NULL, call sched_setparam.
  * @tc.level     : Level 2
  */
 static void sched_setparam_0010(void)

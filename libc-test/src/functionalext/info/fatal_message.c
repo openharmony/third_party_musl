@@ -232,7 +232,6 @@ static void fatal_message_0060(void)
     const char* msg = NULL;
     fatal_msg_t *fatal_message = NULL;
 
-    int pidParent = 0;
     int pidChild = 0;
 
     pid_t fpid;

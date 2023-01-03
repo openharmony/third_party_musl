@@ -36,12 +36,6 @@ which need be escaped.
 #include <malloc.h>
 #include "musl_log.h"
 
-#ifdef UNIT_TEST_STATIC
-    #define UT_STATIC
-#else
-    #define UT_STATIC static
-#endif
-
 void* ohos_malloc_hook_init_function(size_t bytes);
 
 static struct MallocDispatchType __ohos_malloc_hook_init_dispatch = {
@@ -85,7 +79,7 @@ static void  get_native_hook_param(char *buf, unsigned int buf_len)
 #endif
 }
 
-UT_STATIC void  get_memleak_hook_param()
+static void  get_memleak_hook_param()
 {
 #ifdef OHOS_ENABLE_PARAMETER
 	const char *key =  kMemTrackPropertyEnable;
@@ -100,7 +94,7 @@ UT_STATIC void  get_memleak_hook_param()
 #endif
 }
 
-UT_STATIC int parse_hook_variable(enum EnumHookMode* mode, char* path, int size)
+static int parse_hook_variable(enum EnumHookMode* mode, char* path, int size)
 {
 	if (!mode || !path || size <= 0) {
 		return -1;
@@ -151,7 +145,7 @@ UT_STATIC int parse_hook_variable(enum EnumHookMode* mode, char* path, int size)
 	return 0;
 }
 
-UT_STATIC bool get_proc_name(pid_t pid, char *buf, unsigned int buf_len)
+static bool get_proc_name(pid_t pid, char *buf, unsigned int buf_len)
 {
 	if (pid <= 0) {
 		return false;
@@ -288,7 +282,7 @@ static bool init_hook_functions(void* shared_library_handler, struct MallocDispa
 	return true;
 }
 
-UT_STATIC void clear_function_table()
+static void clear_function_table()
 {
 	for (size_t i = 0; i < LAST_FUNCTION; i++) {
 		function_of_shared_lib[i] = NULL;
@@ -475,7 +469,7 @@ static void __set_default_malloc()
 	atomic_store_explicit(&__musl_libc_globals.current_dispatch_table, (volatile const long long)NULL, memory_order_seq_cst);
 }
 
-UT_STATIC void __restore_hook_function_table()
+static void __restore_hook_function_table()
 {
 	for (size_t i = 0; i < LAST_FUNCTION; i++) {
 		if (__get_memleak_hook_flag()) {
@@ -486,7 +480,7 @@ UT_STATIC void __restore_hook_function_table()
 	}
 }
 
-UT_STATIC void __install_malloc_hook()
+static void __install_malloc_hook()
 {
 	if (__get_memleak_hook_flag()) {
 		return;

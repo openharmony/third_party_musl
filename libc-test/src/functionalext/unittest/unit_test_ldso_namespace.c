@@ -35,7 +35,7 @@ static void namespace_test_0010(void)
 
 /**
  * @tc.name      : namespace_test_0020
- * @tc.desc      : ns_free test
+ * @tc.desc      : ns_free test normal condition
  * @tc.level     : Level 0
  */
 static void namespace_test_0020(void)
@@ -64,7 +64,7 @@ static void namespace_test_0020(void)
 
 /**
  * @tc.name      : namespace_test_0030
- * @tc.desc      : ns_free test
+ * @tc.desc      : ns_free test arg ns's memebers are NULL 
  * @tc.level     : Level 2
  */
 static void namespace_test_0030(void)
@@ -86,7 +86,7 @@ static void namespace_test_0030(void)
 
 /**
  * @tc.name      : namespace_test_0040
- * @tc.desc      : ns_add_dso test
+ * @tc.desc      : ns_add_dso test args are NULL
  * @tc.level     : Level 2
  */
 static void namespace_test_0040(void)
@@ -97,7 +97,7 @@ static void namespace_test_0040(void)
 
 /**
  * @tc.name      : namespace_test_0050
- * @tc.desc      : ns_add_dso test
+ * @tc.desc      : ns_add_dso test arg dso is NULL
  * @tc.level     : Level 2
  */
 static void namespace_test_0050(void)
@@ -109,7 +109,7 @@ static void namespace_test_0050(void)
 
 /**
  * @tc.name      : namespace_test_0060
- * @tc.desc      : ns_add_dso test
+ * @tc.desc      : ns_add_dso test arg ns is NULL
  * @tc.level     : Level 2
  */
 static void namespace_test_0060(void)
@@ -121,7 +121,7 @@ static void namespace_test_0060(void)
 
 /**
  * @tc.name      : namespace_test_0070
- * @tc.desc      : ns_add_dso test
+ * @tc.desc      : ns_add_dso test normal condition
  * @tc.level     : Level 1
  */
 static void namespace_test_0070(void)
@@ -138,7 +138,7 @@ static void namespace_test_0070(void)
 
 /**
  * @tc.name      : namespace_test_0080
- * @tc.desc      : nslist_add_ns test
+ * @tc.desc      : nslist_add_ns test many times
  * @tc.level     : Level 1
  */
 static void namespace_test_0080(void)
@@ -166,7 +166,7 @@ static void namespace_test_0080(void)
 
 /**
  * @tc.name      : namespace_test_0090
- * @tc.desc      : nslist_add_ns test
+ * @tc.desc      : nslist_add_ns test arg is NULL
  * @tc.level     : Level 2
  */
 static void namespace_test_0090(void)
@@ -177,7 +177,7 @@ static void namespace_test_0090(void)
 
 /**
  * @tc.name      : namespace_test_0100
- * @tc.desc      : ns_set_name test
+ * @tc.desc      : ns_set_name test args are NULL
  * @tc.level     : Level 2
  */
 static void namespace_test_0100(void)
@@ -188,7 +188,7 @@ static void namespace_test_0100(void)
 
 /**
  * @tc.name      : namespace_test_0110
- * @tc.desc      : ns_set_name test
+ * @tc.desc      : ns_set_name test arg name is NULL
  * @tc.level     : Level 2
  */
 static void namespace_test_0110(void)
@@ -200,7 +200,7 @@ static void namespace_test_0110(void)
 
 /**
  * @tc.name      : namespace_test_0120
- * @tc.desc      : ns_set_name test
+ * @tc.desc      : ns_set_name test arg ns is NULL
  * @tc.level     : Level 2
  */
 static void namespace_test_0120(void)
@@ -211,7 +211,7 @@ static void namespace_test_0120(void)
 
 /**
  * @tc.name      : namespace_test_0130
- * @tc.desc      : ns_set_env_paths test
+ * @tc.desc      : ns_set_env_paths test arg ns is NULL
  * @tc.level     : Level 2
  */
 static void namespace_test_0130(void)
@@ -222,7 +222,7 @@ static void namespace_test_0130(void)
 
 /**
  * @tc.name      : namespace_test_0140
- * @tc.desc      : ns_set_env_paths test
+ * @tc.desc      : ns_set_env_paths test arg ns.env_paths is NULL
  * @tc.level     : Level 1
  */
 static void namespace_test_0140(void)
@@ -235,7 +235,7 @@ static void namespace_test_0140(void)
 
 /**
  * @tc.name      : namespace_test_0150
- * @tc.desc      : ns_set_env_paths test
+ * @tc.desc      : ns_set_env_paths test arg ns.env_paths is equal to arg name
  * @tc.level     : Level 1
  */
 static void namespace_test_0150(void)
@@ -248,7 +248,7 @@ static void namespace_test_0150(void)
 
 /**
  * @tc.name      : namespace_test_0160
- * @tc.desc      : ns_set_env_paths test
+ * @tc.desc      : ns_set_env_paths test arg name is NULL and ns.env_paths is NULL
  * @tc.level     : Level 2
  */
 static void namespace_test_0160(void)
@@ -261,7 +261,7 @@ static void namespace_test_0160(void)
 
 /**
  * @tc.name      : namespace_test_0170
- * @tc.desc      : ns_set_env_paths test
+ * @tc.desc      : ns_set_env_paths test arg name is NULL and ns.env_paths is not NULL
  * @tc.level     : Level 2
  */
 static void namespace_test_0170(void)
@@ -274,7 +274,7 @@ static void namespace_test_0170(void)
 
 /**
  * @tc.name      : namespace_test_0180
- * @tc.desc      : ns_set_asan_lib_paths test
+ * @tc.desc      : ns_set_asan_lib_paths test arg ns is NULL
  * @tc.level     : Level 2
  */
 static void namespace_test_0180(void)
@@ -285,7 +285,7 @@ static void namespace_test_0180(void)
 
 /**
  * @tc.name      : namespace_test_0190
- * @tc.desc      : ns_set_asan_lib_paths test
+ * @tc.desc      : ns_set_asan_lib_paths test arg ns.asan_lib_paths is NULL
  * @tc.level     : Level 1
  */
 static void namespace_test_0190(void)
@@ -298,7 +298,7 @@ static void namespace_test_0190(void)
 
 /**
  * @tc.name      : namespace_test_0200
- * @tc.desc      : ns_set_asan_lib_paths test
+ * @tc.desc      : ns_set_asan_lib_paths test arg ns.asan_lib_paths is equal to arg name
  * @tc.level     : Level 1
  */
 static void namespace_test_0200(void)
@@ -311,7 +311,7 @@ static void namespace_test_0200(void)
 
 /**
  * @tc.name      : namespace_test_0210
- * @tc.desc      : ns_set_asan_lib_paths test
+ * @tc.desc      : ns_set_asan_lib_paths test arg name is NULL and ns.asan_lib_paths is NULL
  * @tc.level     : Level 2
  */
 static void namespace_test_0210(void)
@@ -324,7 +324,7 @@ static void namespace_test_0210(void)
 
 /**
  * @tc.name      : namespace_test_0220
- * @tc.desc      : ns_set_asan_lib_paths test
+ * @tc.desc      : ns_set_asan_lib_paths test arg name is NULL and ns.asan_lib_paths is not NULL
  * @tc.level     : Level 1
  */
 static void namespace_test_0220(void)
@@ -337,7 +337,7 @@ static void namespace_test_0220(void)
 
 /**
  * @tc.name      : namespace_test_0230
- * @tc.desc      : ns_set_permitted_paths test
+ * @tc.desc      : ns_set_permitted_paths test arg permitted_paths is NULL and ns.permitted_paths is not NULL
  * @tc.level     : Level 1
  */
 static void namespace_test_0230(void)
@@ -351,7 +351,7 @@ static void namespace_test_0230(void)
 
 /**
  * @tc.name      : namespace_test_0240
- * @tc.desc      : ns_set_permitted_paths test
+ * @tc.desc      : ns_set_permitted_paths test args are NULL
  * @tc.level     : Level 2
  */
 static void namespace_test_0240(void)
@@ -362,7 +362,7 @@ static void namespace_test_0240(void)
 
 /**
  * @tc.name      : namespace_test_0250
- * @tc.desc      : ns_set_permitted_paths test
+ * @tc.desc      : ns_set_permitted_paths test arg permitted_paths is NULL and ns.permitted_paths is NULL
  * @tc.level     : Level 2
  */
 static void namespace_test_0250(void)
@@ -375,7 +375,7 @@ static void namespace_test_0250(void)
 
 /**
  * @tc.name      : namespace_test_0260
- * @tc.desc      : ns_set_asan_permitted_paths test
+ * @tc.desc      : ns_set_asan_permitted_paths test arg asan_permitted_paths is NULL and ns.asan_permitted_paths is not NULL
  * @tc.level     : Level 1
  */
 static void namespace_test_0260(void)
@@ -389,7 +389,7 @@ static void namespace_test_0260(void)
 
 /**
  * @tc.name      : namespace_test_0270
- * @tc.desc      : ns_set_asan_permitted_paths test
+ * @tc.desc      : ns_set_asan_permitted_paths test args are NULL
  * @tc.level     : Level 2
  */
 static void namespace_test_0270(void)
@@ -400,7 +400,7 @@ static void namespace_test_0270(void)
 
 /**
  * @tc.name      : namespace_test_0280
- * @tc.desc      : ns_set_asan_permitted_paths test
+ * @tc.desc      : ns_set_asan_permitted_paths test arg asan_permitted_paths is NULL and ns.asan_permitted_paths is NULL
  * @tc.level     : Level 1
  */
 static void namespace_test_0280(void)
@@ -413,7 +413,7 @@ static void namespace_test_0280(void)
 
 /**
  * @tc.name      : namespace_test_0290
- * @tc.desc      : ns_set_separated test
+ * @tc.desc      : ns_set_separated test arg ns is NULL and separated is false
  * @tc.level     : Level 2
  */
 static void namespace_test_0290(void)
@@ -424,7 +424,7 @@ static void namespace_test_0290(void)
 
 /**
  * @tc.name      : namespace_test_0300
- * @tc.desc      : ns_set_allowed_libs test
+ * @tc.desc      : ns_set_allowed_libs test arg ns is NULL
  * @tc.level     : Level 2
  */
 static void namespace_test_0300(void)
@@ -435,7 +435,7 @@ static void namespace_test_0300(void)
 
 /**
  * @tc.name      : namespace_test_0310
- * @tc.desc      : ns_set_allowed_libs test
+ * @tc.desc      : ns_set_allowed_libs test arg ns is ns.allowed_libs NULL
  * @tc.level     : Level 1
  */
 static void namespace_test_0310(void)
@@ -448,7 +448,7 @@ static void namespace_test_0310(void)
 
 /**
  * @tc.name      : namespace_test_0320
- * @tc.desc      : ns_set_allowed_libs test
+ * @tc.desc      : ns_set_allowed_libs test normal condition
  * @tc.level     : Level 0
  */
 static void namespace_test_0320(void)
@@ -462,7 +462,7 @@ static void namespace_test_0320(void)
 
 /**
  * @tc.name      : namespace_test_0330
- * @tc.desc      : ns_set_allowed_libs test
+ * @tc.desc      : ns_set_allowed_libs test allowed_libs is NULL and ns.allowed_libs is NULL
  * @tc.level     : Level 1
  */
 static void namespace_test_0330(void)
@@ -475,7 +475,7 @@ static void namespace_test_0330(void)
 
 /**
  * @tc.name      : namespace_test_0400
- * @tc.desc      : ns_set_allowed_libs test
+ * @tc.desc      : ns_set_allowed_libs test allowed_libs is NULL and ns.allowed_libs is not NULL
  * @tc.level     : Level 1
  */
 static void namespace_test_0400(void)
@@ -489,7 +489,7 @@ static void namespace_test_0400(void)
 
 /**
  * @tc.name      : namespace_test_0340
- * @tc.desc      : ns_add_inherit test
+ * @tc.desc      : ns_add_inherit test arg ns_inherited and shared_libs are NULL
  * @tc.level     : Level 2
  */
 static void namespace_test_0340(void)
@@ -501,7 +501,7 @@ static void namespace_test_0340(void)
 
 /**
  * @tc.name      : namespace_test_0350
- * @tc.desc      : ns_add_inherit test
+ * @tc.desc      : ns_add_inherit test args are NULL
  * @tc.level     : Level 2
  */
 static void namespace_test_0350(void)
@@ -513,7 +513,7 @@ static void namespace_test_0350(void)
 
 /**
  * @tc.name      : namespace_test_0360
- * @tc.desc      : ns_add_inherit test
+ * @tc.desc      : ns_add_inherit test arg ns and shared_libs are NULL
  * @tc.level     : Level 2
  */
 static void namespace_test_0360(void)
@@ -525,7 +525,7 @@ static void namespace_test_0360(void)
 
 /**
  * @tc.name      : namespace_test_0370
- * @tc.desc      : is_accessible test
+ * @tc.desc      : is_accessible test arg lib_pathname is NULL
  * @tc.level     : Level 1
  */
 static void namespace_test_0370(void)
@@ -538,7 +538,7 @@ static void namespace_test_0370(void)
 
 /**
  * @tc.name      : namespace_test_0380
- * @tc.desc      : is_accessible test
+ * @tc.desc      : is_accessible test args is (&ns, NULL, true, false) and ns.separated is false
  * @tc.level     : Level 1
  */
 static void namespace_test_0380(void)
@@ -551,7 +551,7 @@ static void namespace_test_0380(void)
 
 /**
  * @tc.name      : namespace_test_0390
- * @tc.desc      : is_accessible test
+ * @tc.desc      : is_accessible test args is (&ns, "/data/test.so", true, false) and ns.separated is false
  * @tc.level     : Level 1
  */
 static void namespace_test_0390(void)
@@ -575,7 +575,7 @@ static void namespace_test_0390(void)
 
 /**
  * @tc.name      : namespace_test_0410
- * @tc.desc      : is_sharable test
+ * @tc.desc      : is_sharable test args are NULL
  * @tc.level     : Level 0
  */
 static void namespace_test_0410(void)
