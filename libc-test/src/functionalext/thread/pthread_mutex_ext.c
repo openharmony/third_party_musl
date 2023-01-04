@@ -310,7 +310,7 @@ static void pthread_mutex_timedlock_monotonic_np_0030(void)
 {
     pthread_mutex_t *mtx = (pthread_mutex_t *)NULL;
     struct timespec ts = {0};
-    TEST(pthread_mutex_timedlock_monotonic_np(mtx, &ts) == EINVAL);
+    EXPECT_EQ(pthread_mutex_timedlock_monotonic_np(mtx, &ts), EINVAL);
 }
 
 /********************************************* Test case dividing line ***********************************************/

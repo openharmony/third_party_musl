@@ -19,6 +19,7 @@
 #include <string.h>
 #include <sys/wait.h>
 #include "fortify_test.h"
+#include "functionalext.h"
 #include "test.h"
 
 #define PPOLL_TIMESPEC_NSEC (100)
@@ -82,7 +83,7 @@ static void poll_0030(void)
 {
     nfds_t fd_count = atoi("1");
     struct pollfd buf[2] = {{0, POLLIN, 0}, {1, POLLIN, 0}};
-    TEST(poll(buf, fd_count, 1) == 1);
+    EXPECT_EQ(poll_0030, poll(buf, fd_count, 1), 1);
     return;
 }
 
@@ -151,7 +152,7 @@ static void ppoll_0030(void)
     nfds_t fd_count = atoi("1");
     struct pollfd buf[2] = {{0, POLLIN, 0}, {1, POLLIN, 0}};
     struct timespec ts = { .tv_nsec = PPOLL_TIMESPEC_NSEC };
-    TEST(ppoll(buf, fd_count, &ts, NULL) == 1);
+    EXPECT_EQ(ppoll_0030, ppoll(buf, fd_count, &ts, NULL), 1);
     return;
 }
 
