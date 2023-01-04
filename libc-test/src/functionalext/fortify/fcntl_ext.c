@@ -18,6 +18,7 @@
 #include <string.h>
 #include <sys/wait.h>
 #include "fortify_test.h"
+#include "functionalext.h"
 #include "test.h"
 
 #define FILE_MODE_ALL (0777)
@@ -120,7 +121,7 @@ static void open_0030(void)
 static void open_0040(void)
 {
     int fd = open("/proc/version", O_RDWR);
-    TEST(fd != -1);
+    EXPECT_NE(open_0040, fd, -1);
     close(fd);
 
     return;
@@ -216,7 +217,7 @@ static void openat_0030(void)
 static void openat_0040(void)
 {
     int fd = openat(AT_FDCWD, "/proc/version", O_RDWR);
-    TEST(fd != -1);
+    EXPECT_NE(openat_0040, fd, -1);
     close(fd);
 
     return;
@@ -313,7 +314,7 @@ static void open64_0030(void)
 static void open64_0040(void)
 {
     int fd = open64("/proc/version", O_RDWR);
-    TEST(fd != -1);
+    EXPECT_NE(open64_0040, fd, -1);
     close(fd);
 
     return;
@@ -409,7 +410,7 @@ static void openat64_0030(void)
 static void openat64_0040(void)
 {
     int fd = openat64(AT_FDCWD, "/proc/version", O_RDWR);
-    TEST(fd != -1);
+    EXPECT_NE(openat64_0040, fd, -1);
     close(fd);
 
     return;

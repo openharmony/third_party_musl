@@ -277,7 +277,7 @@ static void pthread_rwlock_timedrdlock_monotonic_np_0020(void)
 static void pthread_rwlock_timedrdlock_monotonic_np_0030(void)
 {
     struct timespec ts = {0};
-    TEST(pthread_rwlock_timedrdlock_monotonic_np((pthread_rwlock_t *)NULL, &ts) == EINVAL);
+    EXPECT_EQ(pthread_rwlock_timedrdlock_monotonic_np((pthread_rwlock_t *)NULL, &ts), EINVAL);
 }
 
 int main(void)

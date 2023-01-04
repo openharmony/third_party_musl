@@ -20,6 +20,7 @@
 #include <string.h>
 #include <sys/wait.h>
 #include "fortify_test.h"
+#include "functionalext.h"
 #include "test.h"
 #include "../../../../porting/linux/user/include/fortify/fortify.h"
 
@@ -909,7 +910,7 @@ static void test_strlen_0020()
             exit(0);
         default:
             waitpid(pid, &status, WUNTRACED);
-            TEST(WIFEXITED(status) == 0);
+            EXPECT_EQ(test_strlen_0020, WIFEXITED(status), 0);
             kill(pid, SIGCONT);
             break;
     }

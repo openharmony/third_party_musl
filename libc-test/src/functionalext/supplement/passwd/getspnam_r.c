@@ -16,6 +16,7 @@
 #include <errno.h>
 #include <shadow.h>
 #include <string.h>
+#include "functionalext.h"
 #include "test.h"
 
 /**
@@ -34,15 +35,9 @@ void getspnam_r_0100(void)
     const char *spwd_name = "root";
 
     int result = getspnam_r(spwd_name, &spwd_storage, buf, sizeof(buf), &spwd);
-    if (result != 0) {
-        t_error("%s getgrnam_r failed\n", __func__);
-    }
-    if (!spwd) {
-        t_error("%s failed, spwd is NULL\n", __func__);
-    }
-    if (strcmp(spwd_name, spwd->sp_namp)) {
-        t_error("%s spwd->sp_namp is %s\n", __func__, spwd->sp_namp);
-    }
+    EXPECT_EQ(getspnam_r_0100, result, 0);
+    EXPECT_PTRNE(getspnam_r_0100, spwd, NULL);
+    EXPECT_EQ(getspnam_r_0100, strcmp(spwd_name, spwd->sp_namp), 0);
 }
 
 int main(int argc, char *argv[])
