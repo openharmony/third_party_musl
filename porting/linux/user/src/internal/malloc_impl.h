@@ -10,10 +10,12 @@ hidden void __malloc_donate(char *, char *);
 
 hidden void *__memalign(size_t, size_t);
 
+#ifdef MUSL_ITERATE_AND_STATS_API 
 typedef struct occupied_bin_s {
 	struct chunk *head, *tail;
 	volatile int lock[2];
 } occupied_bin_t;
+#endif
 
 struct chunk {
 	size_t psize, csize;
@@ -60,6 +62,7 @@ hidden size_t __get_total_heap_space(void);
 #define ITERATE_AND_STATS_OVERHEAD (0)
 #endif
 
+#ifdef MUSL_ITERATE_AND_STATS_API
 #ifndef MALLOC_RED_ZONE
 #define SIZE_ALIGN (8*sizeof(size_t))
 #define OVERHEAD (2*sizeof(size_t) + ITERATE_AND_STATS_OVERHEAD)
@@ -67,11 +70,23 @@ hidden size_t __get_total_heap_space(void);
 #define SIZE_ALIGN (16*sizeof(size_t))
 #define OVERHEAD (4*sizeof(size_t) + ITERATE_AND_STATS_OVERHEAD)
 #endif
-
+#else
+#ifndef MALLOC_RED_ZONE
+#define SIZE_ALIGN (4*sizeof(size_t))
+#define OVERHEAD (2*sizeof(size_t))
+#else
+#define SIZE_ALIGN (8*sizeof(size_t))
+#define OVERHEAD (4*sizeof(size_t))
+#endif
+#endif
 
 #define MMAP_THRESHOLD (0x1c00*SIZE_ALIGN)
 #ifndef MALLOC_RED_ZONE
+#ifdef MUSL_ITERATE_AND_STATS_API
 #define DONTCARE OVERHEAD
+#else
+#define DONTCARE 16
+#endif
 #else
 #define DONTCARE OVERHEAD
 #define POINTER_USAGE (2*sizeof(void *))

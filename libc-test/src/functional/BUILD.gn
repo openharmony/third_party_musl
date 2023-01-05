@@ -1,7 +1,7 @@
 import("../../test_template.gni")
 import("test_src_functional.gni")
 
-if (is_standard_system) {
+if (is_standard_system && musl_iterate_and_stats_api) {
   functional_list += malloc_stats_list
 }
 
