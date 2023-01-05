@@ -125,7 +125,10 @@ template("musl_libs") {
     ]
 
     if (!is_asan) {
-      cflags_auto += [ "-DHOOK_ENABLE" ]
+      cflags_auto += [
+        "-DHOOK_ENABLE",
+        "-DOHOS_SOCKET_HOOK_ENABLE",
+      ]
     }
 
     cflags_auto += [ "-DRESERVE_SIGNAL_STACK" ]
@@ -195,7 +198,10 @@ template("musl_libs") {
     ]
 
     if (!is_asan) {
-      defines += [ "HOOK_ENABLE" ]
+      defines += [
+        "HOOK_ENABLE",
+        "OHOS_SOCKET_HOOK_ENABLE",
+      ]
     }
     ldflags = [ "-nostdlib" ]
 
@@ -698,6 +704,9 @@ template("musl_libs") {
       "./porting/linux/user/src/hook/memory_tag.c",
       "./porting/linux/user/src/hook/musl_preinit.c",
       "./porting/linux/user/src/hook/musl_preinit_common.c",
+      "./porting/linux/user/src/hook/musl_socket_preinit.c",
+      "./porting/linux/user/src/hook/musl_socket_preinit_common.c",
+      "./porting/linux/user/src/hook/socket_common.c",
     ]
 
     deps = [
