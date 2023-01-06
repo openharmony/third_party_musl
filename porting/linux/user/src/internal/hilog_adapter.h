@@ -48,6 +48,11 @@ hidden int HiLogAdapterPrint(LogType type, LogLevel level, unsigned int domain, 
 
 hidden bool HiLogAdapterIsLoggable(unsigned int domain, const char *tag, LogLevel level);
 
+#ifdef OHOS_ENABLE_PARAMETER
+#include "sys_param.h"
+hidden bool get_bool_sysparam(CachedHandle cachedhandle);
+#endif
+
 hidden bool is_musl_log_enable();
 hidden void musl_log_reset();
 

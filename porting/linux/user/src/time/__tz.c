@@ -157,10 +157,12 @@ static void do_tzset()
     s = getenv("TZ");
     if (!s) {
 #ifdef OHOS_ENABLE_PARAMETER
-        uint32_t tz_param_value_len = SYSPARAM_LENGTH;
-        char tz_param_value[SYSPARAM_LENGTH + 1] = {0};
-        if (SystemReadParam("persist.time.timezone", tz_param_value, &tz_param_value_len) == 0) {
-            tz_param_value[tz_param_value_len] = 0;
+        static CachedHandle tz_param_handle = NULL;
+        if (tz_param_handle == NULL) {
+            tz_param_handle = CachedParameterCreate("persist.time.timezone", "/etc/localtime");
+        }
+        const char *tz_param_value = CachedParameterGet(tz_param_handle);
+        if (tz_param_value != NULL){
             s = tz_param_value;
         } else {
             s = "/etc/localtime";
