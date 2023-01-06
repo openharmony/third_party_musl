@@ -148,19 +148,27 @@ bool HiLogAdapterIsLoggable(unsigned int domain, const char *tag, LogLevel level
     return true;
 }
 
+#ifdef OHOS_ENABLE_PARAMETER
+bool get_bool_sysparam(CachedHandle cachedhandle)
+{
+    char *param_value = CachedParameterGet(cachedhandle);
+    if (param_value != NULL) {
+        if (strcmp(param_value, "true") == 0) {
+            return true;
+        }
+    }
+    return false;
+}
+#endif
+
 void musl_log_reset()
 {
 #if (defined(OHOS_ENABLE_PARAMETER))
-    char param_value[SYSPARAM_LENGTH];
-    uint32_t length = SYSPARAM_LENGTH;
-    if (SystemReadParam(param_name, param_value, &length) == 0) {
-        param_value[length] = 0;
-        if (strcmp(param_value, "true") == 0) {
-            musl_log_enable = true;
-            return;
-        }
+    static CachedHandle musl_log_Handle = NULL;
+    if (musl_log_Handle == NULL) {
+        musl_log_Handle = CachedParameterCreate(param_name, "false");
     }
-    musl_log_enable = false;
+    musl_log_enable = get_bool_sysparam(musl_log_Handle);
 #elif (defined(ENABLE_MUSL_LOG))
     musl_log_enable = true;
 #endif
