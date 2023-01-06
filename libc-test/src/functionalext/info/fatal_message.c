@@ -22,19 +22,13 @@
 #include <test.h>
 #include <pthread.h>
 #include <unistd.h>
+#include <sys/wait.h>
 
 #define EXPECT_TRUE(c)                \
     do                                \
     {                                 \
         if (!(c))                     \
             t_error("[%s] failed\n"); \
-    } while (0)
-// val1 == val2
-#define EXPECT_EQ(a, b)                          \
-    do                                           \
-    {                                            \
-        if ((a) != (b))                          \
-            t_error("failed %d != %d \n", a, b); \
     } while (0)
 
 typedef void (*TEST_FUN)(void);
@@ -61,6 +55,7 @@ static void fatal_message_0020(void)
     const char msg[1024] = {"abcdefghijklmnopqrstuvwxyz1234567890"};
     fatal_msg_t *fatal_message = NULL;
 
+    int childRet = 0;
     int pidParent = 0;
     int pidChild = 0;
 
@@ -73,8 +68,10 @@ static void fatal_message_0020(void)
         set_fatal_message(msg);
         fatal_message = get_fatal_message();
         EXPECT_TRUE(strcmp(fatal_message->msg, msg) == 0);
-        exit(pidChild);
+        exit(0);
     }
+    waitpid(fpid, &childRet, 0);
+    EXPECT_TRUE(childRet == 0);
 }
 
 /**
@@ -89,6 +86,7 @@ static void fatal_message_0030(void)
     const char msgChild[1024] = {"msgChild"};
     const char msgParent[1024] = {"msgParent"};
 
+    int childRet = 0;
     int pidChild = 0;
     int pidParent = 0;
     int pidCParent = 0;
@@ -115,13 +113,14 @@ static void fatal_message_0030(void)
             set_fatal_message(msgParent);
             fatal_message = get_fatal_message();
             EXPECT_TRUE(strcmp(fatal_message->msg, msgParent) == 0);
-            exit(pidCChild);
+            exit(0);
         } else {
             pidCParent = getpid();
             set_fatal_message(msgChild);
             fatal_message = get_fatal_message();
             EXPECT_TRUE(strcmp(fatal_message->msg, msgChild) == 0);
-            exit(pidCParent);
+            waitpid(fpidChild, &childRet, 0);
+            EXPECT_TRUE(childRet == 0);
         }
     }
 }
@@ -139,6 +138,7 @@ static void fatal_message_0040(void)
     const char msgChild[1024] = {"msgChild004"};
     const char msgParent[1024] = {"msgParent004"};
 
+    int childRet = 0;
     int pidChild = 0;
     int pidParent = 0;
     int pidCParent = 0;
@@ -170,7 +170,8 @@ static void fatal_message_0040(void)
             set_fatal_message(msgParent);
             fatal_message = get_fatal_message();
             EXPECT_TRUE(strcmp(fatal_message->msg, msgParent) == 0);
-            exit(pidCParent);
+            waitpid(fpidChild, &childRet, 0);
+            EXPECT_TRUE(childRet != 0);
         }
     }
 }
@@ -231,9 +232,17 @@ TEST_FUN G_Fun_Array[] = {
 
 int main(void)
 {
+    int childPid, childRet;
     int num = sizeof(G_Fun_Array) / sizeof(TEST_FUN);
     for (int pos = 0; pos < num; ++pos) {
-        G_Fun_Array[pos]();
+        // Run each function in a new process to
+        // keep the initial state of fatal_message.
+        if ((childPid = fork()) == 0) {
+            G_Fun_Array[pos]();
+            exit(0);
+        }
+        waitpid(childPid, &childRet, 0);
+        EXPECT_TRUE(childRet == 0);
     }
 
     return t_status;
