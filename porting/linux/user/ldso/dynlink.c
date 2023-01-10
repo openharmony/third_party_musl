@@ -3297,6 +3297,21 @@ void *dlopen_ns(Dl_namespace *dlns, const char *file, int mode)
 	return dlopen_impl(file, mode, dlns->name, caller_addr, NULL);
 }
 
+void *dlopen_ns_ext(Dl_namespace *dlns, const char *file, int mode, const dl_extinfo *extinfo)
+{
+	const void *caller_addr = __builtin_return_address(0);
+	musl_log_reset();
+	ld_log_reset();
+	LD_LOGI("dlopen_ns_ext file:%{public}s, mode:%{public}x , caller_addr:%{public}p , "
+			"dlns->name:%{public}s. , extinfo->flag:%{public}x",
+		file,
+		mode,
+		caller_addr,
+		dlns->name,
+		extinfo ? extinfo->flag : 0);
+	return dlopen_impl(file, mode, dlns->name, caller_addr, extinfo);
+}
+
 int dlns_create2(Dl_namespace *dlns, const char *lib_path, int flags)
 {
 	if (!dlns) {
