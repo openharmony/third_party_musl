@@ -31,6 +31,14 @@
             t_error("[%s] failed\n"); \
     } while (0)
 
+#define FORK(fpid)                    \
+    do                                \
+    {                                 \
+        if (fpid < 0) {               \
+            t_error("error in fork!");\
+        }                             \
+    } while (0)
+
 typedef void (*TEST_FUN)(void);
 static const int WAIT_TIME = 1;
 
@@ -61,9 +69,8 @@ static void fatal_message_0020(void)
 
     pid_t fpid;
     fpid = fork();
-    if (fpid < 0) {
-        t_printf("error in fork!");
-    } else if (fpid == 0) {
+    FORK(fpid);
+    if (fpid == 0) {
         pidChild = getpid();
         set_fatal_message(msg);
         fatal_message = get_fatal_message();
@@ -96,9 +103,8 @@ static void fatal_message_0030(void)
 
     // start process
     fpid = fork();
-    if (fpid < 0) {
-        t_printf("error in fork!");
-    } else if (fpid == 0) {
+    FORK(fpid);
+    if (fpid == 0) {
         pidChild = getpid();
     } else {
         pidParent = getpid();
@@ -148,9 +154,8 @@ static void fatal_message_0040(void)
 
     // start process
     fpid = fork();
-    if (fpid < 0) {
-        t_printf("error in fork!");
-    } else if (fpid == 0) {
+    FORK(fpid);
+    if (fpid == 0) {
         pidChild = getpid();
     } else {
         pidParent = getpid();
@@ -236,13 +241,12 @@ static void fatal_message_0060(void)
 
     pid_t fpid;
     fpid = fork();
-    if (fpid < 0) {
-        t_printf("error in fork!");
-    } else if (fpid == 0) {
+    FORK(fpid);
+    if (fpid == 0) {
         pidChild = getpid();
         set_fatal_message(msg);
         fatal_message = get_fatal_message();
-        EXPECT_TRUE(fatal_message->msg == msg);
+        EXPECT_TRUE(fatal_message == NULL);
         exit(pidChild);
     }
 }
