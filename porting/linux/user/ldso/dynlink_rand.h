@@ -46,6 +46,7 @@ struct loadtask {
     const char *pathname;
     struct dso *p;
     int fd;
+    uint64_t file_offset; /* Used to read an uncompress library from a zip file, file_offset is relative offset of start of zip file. */
 
     // variables for map library
     Ehdr ehdr_buf[(READ_ELF_LENGTH + sizeof(Ehdr)) / sizeof(Ehdr)];
