@@ -41,10 +41,7 @@ static void socket_finalize()
 	((finalize_func_type)shared_lib_func[FINALIZE_FUNC])();
 	__current_dispatch = NULL;
 	__socket_hook_begin_flag = false;
-	void* library_handle = (void *)__ohos_socket_hook_shared_library;
-	if (library_handle != NULL) {
-		dlclose(library_handle);
-	}
+	// Don't dlclose because hidumper crash
 }
 
 static bool finish_install_ohos_socket_hooks(const char* options)
