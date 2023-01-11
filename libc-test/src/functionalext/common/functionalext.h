@@ -123,10 +123,17 @@
             t_error("[%s] failed %lld != %lld \n", fun, a, b); \
     } while (0)
 
-#define EXPECT_GT(fun, a, b)                              \
+#define EXPECT_GT(fun, a, b)                               \
+    do {                                                   \
+        if ((a) <= (b)) {                                  \
+            t_error("[%s] failed %d <= %d \n", fun, a, b); \
+        }                                                  \
+    } while (0)
+
+#define EXPECT_GTE(fun, a, b)                             \
     do {                                                  \
-        if ((a) <= (b)) {                                 \
-            t_error("[%s] failed %d > %d \n", fun, a, b); \
+        if ((a) < (b)) {                                  \
+            t_error("[%s] failed %d < %d \n", fun, a, b); \
         }                                                 \
     } while (0)
 
