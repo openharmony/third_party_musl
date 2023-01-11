@@ -39,7 +39,9 @@
 #ifdef OHOS_ENABLE_PARAMETER
 #include "sys_param.h"
 #endif
+#ifdef LOAD_ORDER_RANDOMIZATION
 #include "zip_archive.h"
+#endif
 
 static void error(const char *, ...);
 
@@ -255,6 +257,8 @@ static void preload_deps(struct dso *p, struct loadtasks *tasks);
 static void run_loadtasks(struct loadtasks *tasks, struct reserved_address_params *reserved_params);
 static void assign_tls(struct dso *p);
 static void load_preload(char *s, ns_t *ns, struct loadtasks *tasks);
+static void open_library_by_path(const char *name, const char *s, struct loadtask *task, struct zip_info *z_info);
+static void handle_asan_path_open_by_task(int fd, const char *name, ns_t *namespace, struct loadtask *task, struct zip_info *z_info);
 #endif
 
 /* Sharing relro */
@@ -3984,6 +3988,194 @@ void* dlopen_ext(const char *file, int mode, const dl_extinfo *extinfo)
 }
 
 #ifdef LOAD_ORDER_RANDOMIZATION
+static void open_library_by_path(const char *name, const char *s, struct loadtask *task, struct zip_info *z_info)
+{
+	char *buf = task->buf;
+	size_t buf_size = sizeof task->buf;
+	size_t l;
+	for (;;) {
+		s += strspn(s, ":\n");
+		l = strcspn(s, ":\n");
+		if (l-1 >= INT_MAX) return;
+		if (snprintf(buf, buf_size, "%.*s/%s", (int)l, s, name) < buf_size) {
+			char *separator = strstr(buf, ZIP_FILE_PATH_SEPARATOR);
+			if (separator != NULL) {
+				int res = open_uncompressed_library_in_zipfile(buf, z_info, separator);
+				if (res == 0) {
+					task->fd = z_info->fd;
+					task->file_offset = z_info->file_offset;
+					break;
+				} else {
+					memset(z_info->path_buf, 0, sizeof(z_info->path_buf));
+				}
+			} else {
+				if ((task->fd = open(buf, O_RDONLY|O_CLOEXEC))>=0) break;
+			}
+		}
+		s += l;
+	}
+	return;
+}
+
+static void handle_asan_path_open_by_task(int fd, const char *name, ns_t *namespace, struct loadtask *task,
+										  struct zip_info *z_info)
+{
+	LD_LOGD("handle_asan_path_open_by_task fd:%{public}d, name:%{public}s , namespace:%{public}s .",
+			fd,
+			name,
+			namespace ? namespace->ns_name : "NULL");
+	if (fd == -1 && (namespace->asan_lib_paths || namespace->lib_paths)) {
+		if (namespace->lib_paths && namespace->asan_lib_paths) {
+			size_t newlen = strlen(namespace->asan_lib_paths) + strlen(namespace->lib_paths) + 2;
+			char *new_lib_paths = internal_malloc(newlen);
+			memset(new_lib_paths, 0, newlen);
+			strcpy(new_lib_paths, namespace->asan_lib_paths);
+			strcat(new_lib_paths, ":");
+			strcat(new_lib_paths, namespace->lib_paths);
+			open_library_by_path(name, new_lib_paths, task, z_info);
+			LD_LOGD("handle_asan_path_open_by_task open_library_by_path new_lib_paths:%{public}s ,fd: %{public}d.",
+					new_lib_paths,
+					task->fd);
+			internal_free(new_lib_paths);
+		} else if (namespace->asan_lib_paths) {
+			open_library_by_path(name, namespace->asan_lib_paths, task, z_info);
+			LD_LOGD("handle_asan_path_open_by_task open_library_by_path asan_lib_paths:%{public}s ,fd: %{public}d.",
+					namespace->asan_lib_paths,
+					task->fd);
+		} else {
+			open_library_by_path(name, namespace->lib_paths, task, z_info);
+			LD_LOGD("handle_asan_path_open_by_task open_library_by_path lib_paths:%{public}s ,fd: %{public}d.",
+					namespace->lib_paths,
+					task->fd);
+		}
+	}
+	return;
+}
+
+/* Used to get an uncompress library offset in zip file, then we can use the offset to mmap the library directly. */
+int open_uncompressed_library_in_zipfile(const char *path, struct zip_info *z_info, char *separator)
+{
+	struct local_file_header zip_file_header;
+	struct central_dir_entry c_dir_entry;
+	struct zip_end_locator end_locator;
+
+	/* Use "'!/' to split the path into zipfile path and library path in zipfile.
+	 * For example:
+	 * - path: x/xx/xxx.zip!/x/xx/xxx.so
+	 * - zipfile path: x/xx/xxx.zip
+	 * - library path in zipfile: x/xx/xxx.so  */
+	if (strlcpy(z_info->path_buf, path, PATH_BUF_SIZE) >= PATH_BUF_SIZE) {
+		LD_LOGE("Open uncompressed library: input path %{public}s is too long.", path);
+		return -1;
+	}
+	z_info->path_buf[separator - path] = '\0';
+	z_info->file_path_index = separator - path + 2;
+	char *zip_file_path = z_info->path_buf;
+	char *lib_path = &z_info->path_buf[z_info->file_path_index];
+	if (zip_file_path == NULL || lib_path == NULL) {
+		LD_LOGE("Open uncompressed library: get zip and lib path failed.");
+		return -1;
+	}
+	LD_LOGD("Open uncompressed library: input path: %{public}s, zip file path: %{public}s, library path: %{public}s.",
+			path, zip_file_path, lib_path);
+
+	// Get zip file length
+	FILE *zip_file = fopen(zip_file_path, "re");
+	if (zip_file == NULL) {
+		LD_LOGE("Open uncompressed library: fopen %{public}s failed.", zip_file_path);
+		return -1;
+	}
+	if (fseek(zip_file, 0, SEEK_END) != 0) {
+		LD_LOGE("Open uncompressed library: fseek SEEK_END failed.");
+		fclose(zip_file);
+		return -1;
+	}
+	int64_t zip_file_len = ftell(zip_file);
+	if (zip_file_len == -1) {
+		LD_LOGE("Open uncompressed library: get zip file length failed.");
+		fclose(zip_file);
+		return -1;
+	}
+
+	// Read end of central directory record.
+	size_t end_locator_len = sizeof(end_locator);
+	size_t end_locator_pos = zip_file_len - end_locator_len;
+	if (fseek(zip_file, end_locator_pos, SEEK_SET) != 0) {
+		LD_LOGE("Open uncompressed library: fseek end locator position failed.");
+		fclose(zip_file);
+		return -1;
+	}
+	if (fread(&end_locator, sizeof(end_locator), 1, zip_file) != 1 || end_locator.signature != EOCD_SIGNATURE) {
+		LD_LOGE("Open uncompressed library: fread end locator failed.");
+		fclose(zip_file);
+		return -1;
+	}
+
+	char file_name[PATH_BUF_SIZE];
+	uint64_t current_dir_pos = end_locator.offset;
+	for (uint16_t i = 0; i < end_locator.total_entries; i++) {
+		// Read central dir entry.
+		if (fseek(zip_file, current_dir_pos, SEEK_SET) != 0) {
+			LD_LOGE("Open uncompressed library: fseek current centra dir entry position failed.");
+			fclose(zip_file);
+			return -1;
+		}
+		if (fread(&c_dir_entry, sizeof(c_dir_entry), 1, zip_file) != 1 || c_dir_entry.signature != CENTRAL_SIGNATURE) {
+			LD_LOGE("Open uncompressed library: fread centra dir entry failed.");
+			fclose(zip_file);
+			return -1;
+		}
+
+		if (fread(file_name, c_dir_entry.name_size, 1, zip_file) != 1) {
+			LD_LOGE("Open uncompressed library: fread file name failed.");
+			fclose(zip_file);
+			return -1;
+		}
+		if (strcmp(file_name, lib_path) == 0) {
+			// Read local file header.
+			if (fseek(zip_file, c_dir_entry.local_header_offset, SEEK_SET) != 0) {
+				LD_LOGE("Open uncompressed library: fseek local file header failed.");
+				fclose(zip_file);
+				return -1;
+			}
+			if (fread(&zip_file_header, sizeof(zip_file_header), 1, zip_file) != 1) {
+				LD_LOGE("Open uncompressed library: fread local file header failed.");
+				fclose(zip_file);
+				return -1;
+			}
+			if (zip_file_header.signature != LOCAL_FILE_HEADER_SIGNATURE) {
+				LD_LOGE("Open uncompressed library: read local file header signature error.");
+				fclose(zip_file);
+				return -1;
+			}
+
+			z_info->file_offset = c_dir_entry.local_header_offset + sizeof(zip_file_header) +
+									zip_file_header.name_size + zip_file_header.extra_size;
+			if (zip_file_header.compression_method != COMPRESS_STORED || z_info->file_offset % PAGE_SIZE != 0) {
+				LD_LOGE("Open uncompressed library: open %{public}s in %{public}s failed because of misalignment or saved with compression."
+						"compress method %{public}d, file offset %{public}lu",
+						lib_path, zip_file_path, zip_file_header.compression_method, z_info->file_offset);
+				fclose(zip_file);
+				return -2;
+			}
+			z_info->found = true;
+			break;
+		}
+
+		memset(file_name, 0, sizeof(file_name));
+		current_dir_pos += sizeof(c_dir_entry);
+		current_dir_pos += c_dir_entry.name_size + c_dir_entry.extra_size + c_dir_entry.comment_size;
+	}
+	if(!z_info->found) {
+		LD_LOGE("Open uncompressed library: %{public}s was not found in %{public}s.", lib_path, zip_file_path);
+		fclose(zip_file);
+		return -3;
+	}
+	z_info->fd = fileno(zip_file);
+
+	return 0;
+}
+
 static bool map_library_header(struct loadtask *task)
 {
 	off_t off_start;
@@ -4378,7 +4570,7 @@ static bool load_library_header(struct loadtask *task)
 					task->file_offset = z_info.file_offset;
 				}
 			} else {
-				LD_LOGE("Open uncompressed library in zip file failed, res = %{public}d", res);
+				LD_LOGE("Open uncompressed library in zip file failed, name:%{public}s res:%{public}d", name, res);
 				return false;
 			}
 		} else {
@@ -4403,22 +4595,22 @@ static bool load_library_header(struct loadtask *task)
 		}
 		task->fd = -1;
 		if (namespace->env_paths) {
-			task->fd = path_open(name, namespace->env_paths, task->buf, sizeof task->buf);
+			open_library_by_path(name, namespace->env_paths, task, &z_info);
 		}
 		for (task->p = needed_by; task->fd == -1 && task->p; task->p = task->p->needed_by) {
 			if (fixup_rpath(task->p, task->buf, sizeof task->buf) < 0) {
 				task->fd = INVALID_FD_INHIBIT_FURTHER_SEARCH; /* Inhibit further search. */
 			}
 			if (task->p->rpath) {
-				task->fd = path_open(name, task->p->rpath, task->buf, sizeof task->buf);
+				open_library_by_path(name, task->p->rpath, task, &z_info);
 			}
 		}
 		if (g_is_asan) {
-			task->fd = handle_asan_path_open(task->fd, name, namespace, task->buf, sizeof task->buf);
-			LD_LOGD("load_library handle_asan_path_open fd:%{public}d.", task->fd);
+			handle_asan_path_open_by_task(task->fd, name, namespace, task, &z_info);
+			LD_LOGD("load_library handle_asan_path_open_by_task fd:%{public}d.", task->fd);
 		} else {
 			if (task->fd == -1 && namespace->lib_paths) {
-				task->fd = path_open(name, namespace->lib_paths, task->buf, sizeof task->buf);
+				open_library_by_path(name, namespace->lib_paths, task, &z_info);
 				LD_LOGD("load_library no asan lib_paths path_open fd:%{public}d.", task->fd);
 			}
 		}
@@ -4883,127 +5075,4 @@ static void handle_relro_sharing(struct dso *p, const dl_extinfo *extinfo, ssize
 			if (runtime) longjmp(*rtld_fail, 1);
 		}
 	}
-}
-
-/* Used to get an uncompress library offset in zip file, then we can use the offset to mmap the library directly. */
-int open_uncompressed_library_in_zipfile(const char *path, struct zip_info *z_info, char *separator)
-{
-	struct local_file_header zip_file_header;
-	struct central_dir_entry c_dir_entry;
-	struct zip_end_locator end_locator;
-
-	/* Use "'!/' to split the path into zipfile path and library path in zipfile.
-	 * For example:
-	 * - path: x/xx/xxx.zip!/x/xx/xxx.so
-	 * - zipfile path: x/xx/xxx.zip
-	 * - library path in zipfile: x/xx/xxx.so  */
-	if (strlcpy(z_info->path_buf, path, PATH_BUF_SIZE) >= PATH_BUF_SIZE) {
-		LD_LOGE("Open uncompressed library: input path %{public}s is too long.", path);
-		return -1;
-	}
-	z_info->path_buf[separator - path] = '\0';
-	z_info->file_path_index = separator - path + 2;
-	char *zip_file_path = z_info->path_buf;
-	char *lib_path = &z_info->path_buf[z_info->file_path_index];
-	if (zip_file_path == NULL || lib_path == NULL) {
-		LD_LOGE("Open uncompressed library: get zip and lib path failed.");
-		return -1;
-	}
-	LD_LOGD("Open uncompressed library: zip file path %{public}s library path %{public}s.", zip_file_path, lib_path);
-
-	// Get zip file length
-	FILE *zip_file = fopen(zip_file_path, "re");
-	if (zip_file == NULL) {
-		LD_LOGE("Open uncompressed library: fopen %{public}s failed.", zip_file_path);
-		return -1;
-	}
-	if (fseek(zip_file, 0, SEEK_END) != 0) {
-		LD_LOGE("Open uncompressed library: fseek SEEK_END failed.");
-		fclose(zip_file);
-		return -1;
-	}
-	int64_t zip_file_len = ftell(zip_file);
-	if (zip_file_len == -1) {
-		LD_LOGE("Open uncompressed library: get zip file length failed.");
-		fclose(zip_file);
-		return -1;
-	}
-
-	// Read end of central directory record.
-	size_t end_locator_len = sizeof(end_locator);
-	size_t end_locator_pos = zip_file_len - end_locator_len;
-	if (fseek(zip_file, end_locator_pos, SEEK_SET) != 0) {
-		LD_LOGE("Open uncompressed library: fseek end locator position failed.");
-		fclose(zip_file);
-		return -1;
-	}
-	if (fread(&end_locator, sizeof(end_locator), 1, zip_file) != 1 || end_locator.signature != EOCD_SIGNATURE) {
-		LD_LOGE("Open uncompressed library: fread end locator failed.");
-		fclose(zip_file);
-		return -1;
-	}
-
-	char file_name[PATH_BUF_SIZE];
-	uint64_t current_dir_pos = end_locator.offset;
-	for (uint16_t i = 0; i < end_locator.total_entries; i++) {
-		// Read central dir entry.
-		if (fseek(zip_file, current_dir_pos, SEEK_SET) != 0) {
-			LD_LOGE("Open uncompressed library: fseek current centra dir entry position failed.");
-			fclose(zip_file);
-			return -1;
-		}
-		if (fread(&c_dir_entry, sizeof(c_dir_entry), 1, zip_file) != 1 || c_dir_entry.signature != CENTRAL_SIGNATURE) {
-			LD_LOGE("Open uncompressed library: fread centra dir entry failed.");
-			fclose(zip_file);
-			return -1;
-		}
-
-		if (fread(file_name, c_dir_entry.name_size, 1, zip_file) != 1) {
-			LD_LOGE("Open uncompressed library: fread file name failed.");
-			fclose(zip_file);
-			return -1;
-		}
-		if (strcmp(file_name, lib_path) == 0) {
-			// Read local file header.
-			if (fseek(zip_file, c_dir_entry.local_header_offset, SEEK_SET) != 0) {
-				LD_LOGE("Open uncompressed library: fseek local file header failed.");
-				fclose(zip_file);
-				return -1;
-			}
-			if (fread(&zip_file_header, sizeof(zip_file_header), 1, zip_file) != 1) {
-				LD_LOGE("Open uncompressed library: fread local file header failed.");
-				fclose(zip_file);
-				return -1;
-			}
-			if (zip_file_header.signature != LOCAL_FILE_HEADER_SIGNATURE) {
-				LD_LOGE("Open uncompressed library: read local file header signature error.");
-				fclose(zip_file);
-				return -1;
-			}
-
-			z_info->file_offset = c_dir_entry.local_header_offset + sizeof(zip_file_header) +
-									zip_file_header.name_size + zip_file_header.extra_size;
-			if (zip_file_header.compression_method != COMPRESS_STORED || z_info->file_offset % PAGE_SIZE != 0) {
-				LD_LOGE("Open uncompressed library: open %{public}s in %{public}s failed because of misalignment or saved with compression."
-						"compress method %{public}d, file offset %{public}lu",
-						lib_path, zip_file_path, zip_file_header.compression_method, z_info->file_offset);
-				fclose(zip_file);
-				return -2;
-			}
-			z_info->found = true;
-			break;
-		}
-
-		memset(file_name, 0, sizeof(file_name));
-		current_dir_pos += sizeof(c_dir_entry);
-		current_dir_pos += c_dir_entry.name_size + c_dir_entry.extra_size + c_dir_entry.comment_size;
-	}
-	if(!z_info->found) {
-		LD_LOGE("Open uncompressed library: %{public}s was not found in %{public}s.", lib_path, zip_file_path);
-		fclose(zip_file);
-		return -3;
-	}
-	z_info->fd = fileno(zip_file);
-
-	return 0;
 }
