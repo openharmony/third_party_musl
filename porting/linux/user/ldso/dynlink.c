@@ -26,10 +26,12 @@
 #include <sys/membarrier.h>
 #include <sys/time.h>
 #include <time.h>
+#include <sys/prctl.h>
 
 #include "dlfcn_ext.h"
 #include "dynlink_rand.h"
 #include "ld_log.h"
+#include "cfi.h"
 #include "libc.h"
 #include "malloc_impl.h"
 #include "namespace.h"
@@ -88,103 +90,9 @@ struct reserved_address_params {
 #endif
 };
 
-struct td_index {
-	size_t args[2];
-	struct td_index *next;
-};
-
-struct verinfo {
-	const char *s;
-	const char *v;
-	bool use_vna_hash;
-	uint32_t vna_hash;
-};
-
 struct sym_info_pair {
 	uint_fast32_t sym_h;
 	uint32_t sym_l;
-};
-
-struct dso {
-#if DL_FDPIC
-	struct fdpic_loadmap *loadmap;
-#else
-	unsigned char *base;
-#endif
-	char *name;
-	size_t *dynv;
-	struct dso *next, *prev;
-	/* add namespace */
-	ns_t *namespace;
-	/* mark the dso status */
-	unsigned int flags;
-
-	int cache_sym_index;
-	struct dso *cache_dso;
-	Sym *cache_sym;
-
-	Phdr *phdr;
-	int phnum;
-	size_t phentsize;
-	Sym *syms;
-	Elf_Symndx *hashtab;
-	uint32_t *ghashtab;
-	int16_t *versym;
-	Verdef *verdef;
-	Verneed *verneed;
-	char *strings;
-	struct dso *syms_next, *lazy_next;
-	size_t *lazy, lazy_cnt;
-	unsigned char *map;
-	size_t map_len;
-	dev_t dev;
-	ino_t ino;
-	uint64_t file_offset;
-	char relocated;
-	char constructed;
-	char kernel_mapped;
-	char mark;
-	char bfs_built;
-	char runtime_loaded;
-	char by_dlopen;
-	struct dso **deps, *needed_by;
-	size_t ndeps_direct;
-	size_t next_dep;
-	int ctor_visitor;
-	int nr_dlopen;
-	char *rpath_orig, *rpath;
-	struct tls_module tls;
-	size_t tls_id;
-	size_t relro_start, relro_end;
-	uintptr_t *new_dtv;
-	unsigned char *new_tls;
-	struct td_index *td_index;
-	struct dso *fini_next;
-	char *shortname;
-#if DL_FDPIC
-	unsigned char *base;
-#else
-	struct fdpic_loadmap *loadmap;
-#endif
-	struct funcdesc {
-		void *addr;
-		size_t *got;
-	} *funcdescs;
-	size_t *got;
-	struct dso **parents;
-	size_t parents_count;
-	size_t parents_capacity;
-	bool is_global;
-	bool is_reloc_head_so_dep;
-	struct dso **reloc_can_search_dso_list;
-	size_t reloc_can_search_dso_count;
-	size_t reloc_can_search_dso_capacity;
-	char buf[];
-};
-
-struct symdef {
-	Sym *sym;
-	struct dso *dso;
 };
 
 typedef void (*stage3_func)(size_t *, size_t *);
@@ -264,7 +172,6 @@ static void handle_relro_sharing(struct dso *p, const dl_extinfo *extinfo, ssize
 int handle_asan_path_open(int fd, const char *name, ns_t *namespace, char *buf, size_t buf_size);
 
 /* add namespace function */
-static void *addr2dso(size_t a);
 static void get_sys_path(ns_configor *conf);
 static void dlclose_ns(struct dso *p);
 static bool get_app_path(char *path, size_t size)
@@ -429,7 +336,7 @@ static void init_namespace(struct dso *app)
 
 /* Compute load address for a virtual address in a given dso. */
 #if DL_FDPIC
-static void *laddr(const struct dso *p, size_t v)
+void *laddr(const struct dso *p, size_t v)
 {
 	size_t j=0;
 	if (!p->loadmap) return p->base + v;
@@ -799,7 +706,7 @@ static void add_can_search_so_list_in_dso(struct dso *dso_relocating, struct dso
 #if defined(__GNUC__)
 __attribute__((always_inline))
 #endif
-static inline struct symdef find_sym2(struct dso *dso, struct verinfo *verinfo, int need_def, int use_deps, ns_t *ns)
+struct symdef find_sym2(struct dso *dso, struct verinfo *verinfo, int need_def, int use_deps, ns_t *ns)
 {
 	struct sym_info_pair s_info_p = gnu_hash(verinfo->s);
 	uint32_t h = 0, gh = s_info_p.sym_h, gho = gh / (8*sizeof(size_t)), *ght;
@@ -1373,19 +1280,45 @@ static void *map_library(int fd, struct dso *dso, struct reserved_address_params
 			map_flags |= MAP_FIXED;
 		}
 	}
-	/* The first time, we map too much, possibly even more than
-	 * the length of the file. This is okay because we will not
-	 * use the invalid part; we just need to reserve the right
-	 * amount of virtual address space to map over later. */
-	map = DL_NOMMU_SUPPORT
-		? mmap((void *)start_addr, map_len, PROT_READ|PROT_WRITE|PROT_EXEC,
-			MAP_PRIVATE|MAP_ANONYMOUS, -1, 0)
-		: mmap((void *)start_addr, map_len, prot,
-			map_flags, fd, off_start);
-	if (map==MAP_FAILED) goto error;
-	if (reserved_params && map_len < reserved_params->reserved_size) {
-		reserved_params->reserved_size -= (map_len + (start_addr - (size_t)reserved_params->start_addr));
-		reserved_params->start_addr = (void *)((uint8_t *)map + map_len);
+
+	/* we will find a LIBRARY_ALIGNMENT aligned address as the start of dso
+	 * so we need a tmp_map_len as map_len + LIBRARY_ALIGNMENT to make sure
+	 * we have enough space to shift the dso to the correct location*/
+	size_t tmp_map_len = ALIGN(map_len, LIBRARY_ALIGNMENT) + LIBRARY_ALIGNMENT - PAGE_SIZE;
+
+	/* if reserved_params exists, we should use start_addr as prefered result to do the mmap operation */
+	if (reserved_params) {
+		map = DL_NOMMU_SUPPORT
+			? mmap((void *)start_addr, map_len, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0)
+			: mmap((void *)start_addr, map_len, prot, map_flags, fd, off_start);
+		if (map == MAP_FAILED) {
+			goto error;
+		}
+		if (reserved_params && map_len < reserved_params->reserved_size) {
+			reserved_params->reserved_size -= (map_len + (start_addr - (size_t)reserved_params->start_addr));
+			reserved_params->start_addr = (void *)((uint8_t *)map + map_len);
+		}
+	/* if reserved_params does not exist, we should use real_map as prefered result to do the mmap operation */
+	} else {
+		/* use tmp_map_len to mmap enough space for the dso with anonymous mapping */
+		unsigned char *temp_map = mmap((void *)NULL, tmp_map_len, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+		if (temp_map == MAP_FAILED) {
+			goto error;
+		}
+
+		/* find the LIBRARY_ALIGNMENT aligned address */
+		unsigned char *real_map = (unsigned char*)ALIGN((uintptr_t)temp_map, LIBRARY_ALIGNMENT);
+
+		/* mummap the space we mmap before so that we can mmap correct space again */
+		munmap(temp_map, tmp_map_len);
+
+		map = DL_NOMMU_SUPPORT
+			? mmap(real_map, map_len, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0)
+			/* use map_len to mmap correct space for the dso with file mapping */
+			: mmap(real_map, map_len, prot, map_flags, fd, off_start);
+		if (map == MAP_FAILED) {
+			goto error;
+		}
 	}
 	dso->map = map;
 	dso->map_len = map_len;
@@ -2902,6 +2835,13 @@ void __dls3(size_t *sp, size_t *auxv)
 		libc.tls_size = tmp_tls_size;
 	}
 
+	if (!init_cfi_shadow(head)) {
+		error("[%s] init_cfi_shadow failed: %m", __FUNCTION__);
+		if (runtime) {
+			longjmp(*rtld_fail, 1);
+		}
+	}
+
 	if (ldso_fail) _exit(127);
 	if (ldd_mode) _exit(0);
 
@@ -3202,6 +3142,13 @@ static void *dlopen_impl(
 	 * relocations resolved to symbol definitions that get removed. */
 	redo_lazy_relocs();
 
+	if (!map_dso_to_cfi_shadow(p)) {
+		error("[%s] map_dso_to_cfi_shadow failed: %m", __FUNCTION__);
+		if (runtime) {
+			longjmp(*rtld_fail, 1);
+		}
+	}
+
 	if (mode & RTLD_NODELETE) {
 		p->flags |= DSO_FLAGS_NODELETE;
 	}
@@ -3399,7 +3346,7 @@ hidden int __dl_invalid_handle(void *h)
 	return 1;
 }
 
-static void *addr2dso(size_t a)
+void *addr2dso(size_t a)
 {
 	struct dso *p;
 	size_t i;
@@ -3554,6 +3501,8 @@ static int dlclose_impl(struct dso *p)
 
 	/* remove dso from namespace */
 	dlclose_ns(p);
+
+	unmap_dso_from_cfi_shadow(p);
 	
 	if (p->lazy != NULL)
 		internal_free(p->lazy);
@@ -4177,20 +4126,48 @@ static bool task_map_library(struct loadtask *task, struct reserved_address_para
 			map_flags |= MAP_FIXED;
 		}
 	}
-	/* The first time, we map too much, possibly even more than
-	 * the length of the file. This is okay because we will not
-	 * use the invalid part; we just need to reserve the right
-	 * amount of virtual address space to map over later. */
-	map = DL_NOMMU_SUPPORT
+
+	/* we will find a LIBRARY_ALIGNMENT aligned address as the start of dso
+	 * so we need a tmp_map_len as map_len + LIBRARY_ALIGNMENT to make sure
+	 * we have enough space to shift the dso to the correct location*/
+	size_t tmp_map_len = ALIGN(map_len, LIBRARY_ALIGNMENT) + LIBRARY_ALIGNMENT - PAGE_SIZE;
+
+	/* if reserved_params exists, we should use start_addr as prefered result to do the mmap operation */
+	if (reserved_params) {
+		map = DL_NOMMU_SUPPORT
 			? mmap((void *)start_addr, map_len, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0)
 			: mmap((void *)start_addr, map_len, prot, map_flags, task->fd, off_start + task->file_offset);
-	if (map == MAP_FAILED) {
-		LD_LOGE("Error mapping library %{public}s: failed to map fd", task->name);
-		goto error;
-	}
-	if (reserved_params && map_len < reserved_params->reserved_size) {
-		reserved_params->reserved_size -= (map_len + (start_addr - (size_t)reserved_params->start_addr));
-		reserved_params->start_addr = (void *)((uint8_t *)map + map_len);
+		if (map == MAP_FAILED) {
+			LD_LOGE("Error mapping library %{public}s: failed to map fd", task->name);
+			goto error;
+		}
+		if (reserved_params && map_len < reserved_params->reserved_size) {
+			reserved_params->reserved_size -= (map_len + (start_addr - (size_t)reserved_params->start_addr));
+			reserved_params->start_addr = (void *)((uint8_t *)map + map_len);
+		}
+	/* if reserved_params does not exist, we should use real_map as prefered result to do the mmap operation */
+	} else {
+		/* use tmp_map_len to mmap enough space for the dso with anonymous mapping */
+		unsigned char *temp_map = mmap((void *)NULL, tmp_map_len, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+		if (temp_map == MAP_FAILED) {
+			LD_LOGE("Error mapping library 1 %{public}s: failed to map fd", task->name);
+			goto error;
+		}
+
+		/* find the LIBRARY_ALIGNMENT aligned address */
+		unsigned char *real_map = (unsigned char*)ALIGN((uintptr_t)temp_map, LIBRARY_ALIGNMENT);
+
+		/* mummap the space we mmap before so that we can mmap correct space again */
+		munmap(temp_map, tmp_map_len);
+
+		map = DL_NOMMU_SUPPORT
+			? mmap(real_map, map_len, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0)
+			/* use map_len to mmap correct space for the dso with file mapping */
+			: mmap(real_map, map_len, prot, map_flags, task->fd, off_start + task->file_offset);
+		if (map == MAP_FAILED) {
+			LD_LOGE("Error mapping library 3 %{public}s: failed to map fd", task->name);
+			goto error;
+		}
 	}
 	task->p->map = map;
 	task->p->map_len = map_len;

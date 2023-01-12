@@ -1,0 +1,96 @@
+# Copyright (c) 2022 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("../../../test_template.gni")
+
+group("ldso_cfi_test") {
+  testonly = true
+  deps = [
+    ":ldso_cfi_check",
+    ":ldso_cfi_test_exe",
+    ":ldso_cfi_test_lib",
+    ":ldso_cfi_test_bad_lib",
+  ]
+}
+
+ohos_executable("ldso_cfi_check") {
+#  cflags = [
+#    "-fsanitize=cfi",
+#    "-fsanitize-trap=all",
+#   "-fno-sanitize-trap=cfi",
+#    "-flto",
+#   "-fvisibility=hidden"
+#  ]
+
+#  ldflags = [
+#    "-fsanitize=cfi",
+#    "-flto",
+#    "-fsanitize-trap=all",
+#    "-fno-sanitize-trap=cfi",
+#  ]
+#  cflags_c = ["--coverage"]
+#  ldflags = ["--coverage"]
+  subsystem_name = "musl"
+  part_name = "libc-test"
+  include_dirs = [
+    "../common",
+    "//third_party/musl/porting/linux/user/include",
+    "//third_party/musl/porting/linux/user/ldso",
+    "//third_party/musl/libc-test/src/common",
+  ]
+
+  sources = [ 
+    "ldso_cfi_check.c",
+  ]
+  configs = [ "//third_party/musl/libc-test/src/common:config_runtest" ]
+}
+
+ohos_executable("ldso_cfi_test_exe") {
+  #cflags = [ "-fPIE","-fvisibility=default" ]
+  #ldflags = [ "-pie","-fvisibility=default" ]
+  subsystem_name = "musl"
+  part_name = "libc-test"
+  include_dirs = [
+    "../common",
+    "//third_party/musl/porting/linux/user/include",
+    "//third_party/musl/porting/linux/user/ldso",
+    "//third_party/musl/libc-test/src/common",
+  ]
+
+  sources = [ 
+    "ldso_cfi_test_exe.c",
+  ]
+  configs = [ "//third_party/musl/libc-test/src/common:config_runtest" ]
+}
+
+ohos_shared_library("ldso_cfi_test_lib") {
+  include_dirs = [ "." ]
+  sources = [ "ldso_cfi_test_lib.c" ]
+#  cflags_c = ["--coverage"]
+#  ldflags = ["--coverage"]
+  output_name = "ldso_cfi_test_lib"
+  output_extension = "so"
+  subsystem_name = "musl"
+  part_name = "libc-test-lib"
+}
+
+ohos_shared_library("ldso_cfi_test_bad_lib") {
+  include_dirs = [ "." ]
+  sources = [ "ldso_cfi_test_bad_lib.c" ]
+#  cflags_c = ["--coverage"]
+#  ldflags = ["--coverage"]
+  output_name = "ldso_cfi_test_bad_lib"
+  output_extension = "so"
+  subsystem_name = "musl"
+  part_name = "libc-test-lib"
+}

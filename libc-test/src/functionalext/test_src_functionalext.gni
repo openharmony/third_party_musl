@@ -25,4 +25,5 @@ functionalext_list = [
   "supplement:functionalext_supplement_test",
   "fortify:functionalext_fortify_test",
   "symver:functionalext_symver_test",
+  "ldso_cfi:ldso_cfi_test",
 ]
