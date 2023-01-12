@@ -55,6 +55,25 @@ typedef struct {
  */
 void *dlopen_ext(const char *file, int mode, const dl_extinfo *extinfo);
 
+/**
+  * @brief open dso in given namespace which has own lib search paths,
+  *        when namespace is null, it's same to dlopen_ext().
+  *        avoid using "default" as namespace, which is the default namespace.
+  * @param Dl_namespace * Carry the naming information of the namespace.
+  * @param char * the name of the so file you want to open.
+  * @param int open file mode.
+  *    -- RTLD_LAZY.
+  *    -- RTLD_NOW.
+  *    -- RTLD_NOLOAD.
+  *    -- RTLD_NODELETE.
+  *    -- RTLD_GLOBAL.
+  *    -- RTLD_LOCAL.
+  * @param dl_extinfo * indicates the dl_extinfo struct,include flag and relro_fd.
+  * @return success: dynamic library handleoid,failed: NULL.
+  * @retval none.
+  */
+void *dlopen_ns_ext(Dl_namespace *, const char *, int, const dl_extinfo *);
+
 #ifdef __cplusplus
 }
 #endif
