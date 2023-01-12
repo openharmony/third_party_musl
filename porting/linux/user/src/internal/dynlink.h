@@ -6,6 +6,11 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <stdarg.h>
+#include <link.h>
+#include <sys/types.h>
+#include <stdlib.h>
+#include "libc.h"
+#include "../../ldso/namespace.h"
 
 #if UINTPTR_MAX == 0xffffffff
 typedef Elf32_Ehdr Ehdr;
@@ -51,6 +56,100 @@ enum {
 	REL_TLSDESC,
 	REL_FUNCDESC,
 	REL_FUNCDESC_VAL,
+};
+
+struct dso {
+#if DL_FDPIC
+	struct fdpic_loadmap *loadmap;
+#else
+	unsigned char *base;
+#endif
+	char *name;
+	size_t *dynv;
+	struct dso *next, *prev;
+	/* add namespace */
+	ns_t *namespace;
+	/* mark the dso status */
+	unsigned int flags;
+
+	int cache_sym_index;
+	struct dso *cache_dso;
+	Sym *cache_sym;
+
+	Phdr *phdr;
+	int phnum;
+	size_t phentsize;
+	Sym *syms;
+	Elf_Symndx *hashtab;
+	uint32_t *ghashtab;
+	int16_t *versym;
+	Verdef *verdef;
+	Verneed *verneed;
+	char *strings;
+	struct dso *syms_next, *lazy_next;
+	size_t *lazy, lazy_cnt;
+	unsigned char *map;
+	size_t map_len;
+	dev_t dev;
+	ino_t ino;
+	uint64_t file_offset;
+	char relocated;
+	char constructed;
+	char kernel_mapped;
+	char mark;
+	char bfs_built;
+	char runtime_loaded;
+	char by_dlopen;
+	struct dso **deps, *needed_by;
+	size_t ndeps_direct;
+	size_t next_dep;
+	int ctor_visitor;
+	int nr_dlopen;
+	char *rpath_orig, *rpath;
+	struct tls_module tls;
+	size_t tls_id;
+	size_t relro_start, relro_end;
+	uintptr_t *new_dtv;
+	unsigned char *new_tls;
+	struct td_index *td_index;
+	struct dso *fini_next;
+	char *shortname;
+#if DL_FDPIC
+	unsigned char *base;
+#else
+	struct fdpic_loadmap *loadmap;
+#endif
+	struct funcdesc {
+		void *addr;
+		size_t *got;
+	} *funcdescs;
+	size_t *got;
+	struct dso **parents;
+	size_t parents_count;
+	size_t parents_capacity;
+	bool is_global;
+	bool is_reloc_head_so_dep;
+	struct dso **reloc_can_search_dso_list;
+	size_t reloc_can_search_dso_count;
+	size_t reloc_can_search_dso_capacity;
+	char buf[];
+};
+
+struct symdef {
+	Sym *sym;
+	struct dso *dso;
+};
+
+struct verinfo {
+	const char *s;
+	const char *v;
+	bool use_vna_hash;
+	uint32_t vna_hash;
+};
+
+struct td_index {
+	size_t args[2];
+	struct td_index *next;
 };
 
 struct fdpic_loadseg {
@@ -117,6 +216,13 @@ struct fdpic_dummy_loadmap {
 #define RELOCATION_GROUP_HAS_ADDEND_FLAG 8
 
 typedef void (*stage2_func)(unsigned char *, size_t *);
+
+#if DL_FDPIC
+void *laddr(const struct dso *p, size_t v);
+#endif
+
+void *addr2dso(size_t a);
+struct symdef find_sym2(struct dso *dso, struct verinfo *verinfo, int need_def, int use_deps, ns_t *ns);
 
 hidden void *__dlsym(void *restrict, const char *restrict, void *restrict);
 hidden void *__dlvsym(void *restrict, const char *restrict, const char *restrict, void *restrict);
