@@ -1,8 +1,24 @@
+/*
+ * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 #include <sigchain.h>
 #include <locale.h>
 #include <pthread.h>
 #include <errno.h>
 #include <stdio.h>
+#include <threads.h>
 
 extern int __libc_sigaction(int sig, const struct sigaction *restrict sa,
                             struct sigaction *restrict old);
@@ -10,7 +26,7 @@ extern int __libc_sigaction(int sig, const struct sigaction *restrict sa,
 #define SIG_CHAIN_KEY_VALUE_1 1
 #define SIGNAL_CHAIN_SPECIAL_ACTION_MAX 2
 
-#if SIGCHAIN_DEBUG
+#ifdef SIGCHAIN_DEBUG
 #ifndef SIGCHAIN_PRINT_DEBUG
 #define SIGCHAIN_PRINT_DEBUG(fmt, ...) printf("SIGCHAIN D " fmt "\n", ##__VA_ARGS__)
 #endif
@@ -33,37 +49,44 @@ struct sc_signal_chain {
 /* Signal chain set, from 0 to 63. */
 static struct sc_signal_chain sig_chains[_NSIG - 1];
 /* static thread Keyword */
-static pthread_key_t sigchain_key;
+static pthread_key_t g_sigchain_key;
+/* This is once flag! */
+static once_flag g_flag = ONCE_FLAG_INIT;
+
+/**
+  * @brief Create the thread key
+  * @retval void
+  */
+void do_once(void)
+{
+    int rc = pthread_key_create(&g_sigchain_key, NULL);
+    if (rc != 0) {
+        SIGCHAIN_PRINT_ERROR("%s failed to create sigchain pthread key",
+                __func__,  rc);
+    }
+}
+
 
 /**
   * @brief Get the key of the signal thread.
   * @retval int32_t, the value of the sigchain key.
   */
 static pthread_key_t get_handling_signal_key() {
-    static bool isCreated = false;
-    if (!isCreated) {
-        /* Create a thread key. */
-        int rc = pthread_key_create(&sigchain_key, NULL);
-        if (rc != 0) {
-            SIGCHAIN_PRINT_ERROR("%s failed to create sigchain pthread key",
-                    __func__,  rc);
-        } else {
-            isCreated = true;
-            int32_t value = 0;
-            pthread_setspecific(sigchain_key, &value);
-        }
-    }
-
-    return sigchain_key;
+    call_once(&g_flag, do_once);
+    return g_sigchain_key;
 }
 
 /**
   * @brief Get the value of the sigchain key
-  * @retval int32_t, the value of the sigchain key.
+  * @retval bool, true if set the value of the key，or false.
   */
-static int32_t get_handling_signal() {
-  int32_t *result = pthread_getspecific(get_handling_signal_key());
-  return *result;
+static bool get_handling_signal() {
+    void *result = pthread_getspecific(get_handling_signal_key());
+    if (result == NULL) {
+        return false;
+    } else {
+        return true;
+    }
 }
 
 /**
@@ -71,9 +94,10 @@ static int32_t get_handling_signal() {
   * @param[in] value, the value of the sigchain key
   * @retval void.
   */
-static void set_handling_signal(int32_t value) {
+static void set_handling_signal(bool value)
+{
     pthread_setspecific(get_handling_signal_key(),
-                      &value);
+                        (void *)((uintptr_t)(value)));
 }
 
 /**
@@ -98,7 +122,7 @@ static void signal_chain_handler(int signo, siginfo_t* siginfo, void* ucontext_r
 {
     SIGCHAIN_PRINT_DEBUG("%s signo: %d", __func__, signo);
     /* Try to call the special handlers first. */
-    if (get_handling_signal() == 0){
+    if (!get_handling_signal()){
         int len = SIGNAL_CHAIN_SPECIAL_ACTION_MAX;
         for (int i = 0; i < len; i++) {
             if (sig_chains[signo - 1].sca_special_actions[i].sca_sigaction == NULL) {
@@ -111,9 +135,9 @@ static void signal_chain_handler(int signo, siginfo_t* siginfo, void* ucontext_r
             pthread_sigmask(SIG_SETMASK, &sig_chains[signo - 1].sca_special_actions[i].sca_mask,
                             &previous_mask);
 
-            int32_t previous_value =  get_handling_signal();
+            bool previous_value =  get_handling_signal();
             if (!noreturn) {
-                set_handling_signal(SIG_CHAIN_KEY_VALUE_1);
+                set_handling_signal(true);
             }
 
             if (sig_chains[signo - 1].sca_special_actions[i].sca_sigaction(signo,
@@ -328,7 +352,7 @@ bool intercept_sigaction(int signo, const struct sigaction *restrict sa,
 void intercept_sigprocmask(int how, sigset_t *restrict set)
 {
     SIGCHAIN_PRINT_DEBUG("%s how: %d", __func__, how);
-    if (get_handling_signal() != 0) {
+    if (get_handling_signal()) {
         return;
     }
 

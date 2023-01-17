@@ -1,7 +1,7 @@
 #include <signal.h>
 #include <errno.h>
 #include <string.h>
-#include <sigchain.h>
+#include <stdbool.h>
 #include "syscall.h"
 #include "pthread_impl.h"
 #include "libc.h"
@@ -85,7 +85,6 @@ int __sigaction(int sig, const struct sigaction *restrict sa, struct sigaction *
 		errno = EINVAL;
 		return -1;
 	}
-
 	if (intercept_sigaction(sig, sa, old)) {
 		return 0;
 	}
