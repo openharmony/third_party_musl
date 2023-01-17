@@ -622,6 +622,18 @@ static void trim(struct chunk *self, size_t n)
 	__bin_chunk(split);
 }
 
+#ifdef HOOK_ENABLE
+
+#else
+void *malloc(size_t n)
+{
+#ifdef USE_JEMALLOC
+	return je_malloc(n);
+#endif
+	return internal_malloc(n);
+}
+#endif
+
 void *internal_malloc(size_t n)
 {
 	struct chunk *c;
@@ -1224,6 +1236,18 @@ static void quarantine_bin(struct chunk *self)
 	chunk_checksum_set(self);
 #endif
 	unlock_quarantine(i);
+}
+#endif
+
+#ifdef HOOK_ENABLE
+
+#else
+void free(void *p)
+{
+#ifdef USE_JEMALLOC
+	return je_free(p);
+#endif
+	return internal_free(p);
 }
 #endif
 
