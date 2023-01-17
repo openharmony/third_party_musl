@@ -33,14 +33,18 @@ void free(void* mem)
 	if (__predict_false(dispatch_table != NULL)) {
 		if (__get_memleak_hook_flag()) {
 			dispatch_table->free(mem);
+			return;
 		}
 		if (!__get_global_hook_flag()) {
 			MuslFunc(free)(mem);
+			return;
 		}
 		else if (!__get_hook_flag()) {
 			MuslFunc(free)(mem);
+			return;
 		}
 		dispatch_table->free(mem);
+		return;
 	}
 	MuslFunc(free)(mem);
 }
