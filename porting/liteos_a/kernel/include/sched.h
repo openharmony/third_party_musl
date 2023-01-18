@@ -38,6 +38,7 @@ int     sched_yield(void);
 #define __CPU_BITTYPE  unsigned long int  /* mandated by the kernel  */
 #ifdef _GNU_SOURCE
 #define CSIGNAL		0x000000ff
+#define CLONE_NEWTIME	0x00000080
 #define CLONE_VM	0x00000100
 #define CLONE_FS	0x00000200
 #define CLONE_FILES	0x00000400
