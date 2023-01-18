@@ -18,7 +18,7 @@ void* malloc(size_t bytes)
 		if (!__get_global_hook_flag()) {
 			return MuslFunc(malloc)(bytes);
 		}
-		else if (!__get_hook_flag()) {
+		if (!__get_hook_flag()) {
 			return MuslFunc(malloc)(bytes);
 		}
 		return dispatch_table->malloc(bytes);
@@ -39,7 +39,7 @@ void free(void* mem)
 			MuslFunc(free)(mem);
 			return;
 		}
-		else if (!__get_hook_flag()) {
+		if (!__get_hook_flag()) {
 			MuslFunc(free)(mem);
 			return;
 		}
