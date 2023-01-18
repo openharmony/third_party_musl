@@ -82,9 +82,10 @@ ohos_executable("unittest_ldso_ld_log") {
 
   configs = [ "//third_party/musl/libc-test/src/common:config_unittest" ]
 
-  deps = [ "//third_party/musl:create_porting_src",
-           "//base/startup/init/services/param/base:parameterbase",
-         ]
+  deps = [
+    "//base/startup/init/services/param/base:parameterbase",
+    "//third_party/musl:create_porting_src",
+  ]
   defines = [ "OHOS_ENABLE_PARAMETER" ]
 }
 
