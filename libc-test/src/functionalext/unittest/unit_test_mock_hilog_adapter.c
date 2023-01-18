@@ -14,26 +14,13 @@
  */
 
 #include <hilog_adapter.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <stdint.h>
-#include <string.h>
-
-#define SECOND_CALLED 2
-static int flag = 0;
 
 bool is_musl_log_enable()
 {
     return true;
 }
 
-int SystemReadParam(char *name, char *buffer, uint32_t *length) 
+bool get_bool_sysparam(CachedHandle cachedhandle)
 {
-    flag++;
-    if (flag == SECOND_CALLED)
-    {
-        return 1;
-    } else {
-        return 0;
-    }
+    return true;
 }
