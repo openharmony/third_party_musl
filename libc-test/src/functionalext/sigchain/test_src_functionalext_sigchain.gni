@@ -1,0 +1,49 @@
+# Copyright (c) 2022 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+functionalext_sigchain_list = [
+  "sigchain_add_special_handler_a",
+  "sigchain_add_special_handler_b",
+  "sigchain_add_special_handler_c",
+  "sigchain_add_special_handler_d",
+  "sigchain_add_special_handler_e",
+  "sigchain_add_special_handler_f",
+  "sigchain_add_special_handler_g",
+  "sigchain_add_special_handler_h",
+  "sigchain_add_special_handler_i",
+  "sigchain_add_special_handler_j",
+  "sigchain_add_special_handler_k",
+  "sigchain_add_special_handler_l",
+  "sigchain_add_special_handler_m",
+  "sigchain_rm_special_handler_a",
+  "sigchain_rm_special_handler_b",
+  "sigchain_rm_special_handler_c",
+  "sigchain_rm_special_handler_d",
+  "sigchain_rm_special_handler_f",
+  "sigchain_rm_special_handler_g",
+  "sigchain_rm_special_handler_h",
+  "sigchain_rm_special_handler_i",
+  "sigchain_rm_special_handler_j",
+  "sigchain_rm_special_handler_k",
+  "sigchain_rm_special_handler_l",
+  "sigchain_rm_special_handler_m",
+  "sigchain_intercept_sigaction_a",
+  "sigchain_intercept_sigaction_b",
+  "sigchain_intercept_sigaction_c",
+  "sigchain_intercept_signal_a",
+  "sigchain_intercept_signal_b",
+  "sigchain_intercept_signal_c",
+  "sigchain_intercept_sigprocmask_a",
+  "sigchain_intercept_sigprocmask_b",
+  "sigchain_intercept_sigprocmask_c",
+  "sigchain_intercept_sigprocmask_d",
+]
