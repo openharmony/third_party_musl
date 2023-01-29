@@ -19,6 +19,7 @@
 #include <string.h>
 #include <sys/wait.h>
 #include "fortify_test.h"
+#include "functionalext.h"
 #include "test.h"
 
 #define PPOLL_TIMESPEC_NSEC (100)
@@ -73,6 +74,20 @@ static void poll_0020(void)
     return;
 }
 
+/**
+ * @tc.name     : poll_0030
+ * @tc.desc     : test poll with buf's size greater than fd_count, return fd_count
+ * @tc.level    : Level 1
+ */
+static void poll_0030(void)
+{
+    nfds_t fd_count = atoi("1");
+    struct pollfd buf[2] = {{0, POLLIN, 0}, {1, POLLIN, 0}};
+    EXPECT_EQ(poll_0030, poll(buf, fd_count, 1), 1);
+    return;
+}
+
+
 #ifdef _GNU_SOURCE
 /**
  * @tc.name     : ppoll_0010
@@ -126,14 +141,31 @@ static void ppoll_0020(void)
 
     return;
 }
+
+/**
+ * @tc.name     : ppoll_0030
+ * @tc.desc     : test poll with buf's size greater than fd_count, return fd_count
+ * @tc.level    : Level 1
+ */
+static void ppoll_0030(void)
+{
+    nfds_t fd_count = atoi("1");
+    struct pollfd buf[2] = {{0, POLLIN, 0}, {1, POLLIN, 0}};
+    struct timespec ts = { .tv_nsec = PPOLL_TIMESPEC_NSEC };
+    EXPECT_EQ(ppoll_0030, ppoll(buf, fd_count, &ts, NULL), 1);
+    return;
+}
+
 #endif
 
 int main(int argc, char *argv[]) {
     poll_0010();
     poll_0020();
+    poll_0030();
 #ifdef _GNU_SOURCE
     ppoll_0010();
     ppoll_0020();
+    ppoll_0030();
 #endif
 
     return t_status;

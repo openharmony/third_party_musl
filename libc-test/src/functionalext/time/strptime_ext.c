@@ -229,6 +229,40 @@ void strptime_0900(void)
     EXPECT_STREQ("strptime_0900", "2021-9-30", buffResult);
 }
 
+/**
+ * @tc.name      : strptime_1000
+ * @tc.desc      : according to different time zones, convert a string to a time
+ * type according to a specific time format
+ * @tc.level     : Level 1
+ */
+void strptime_1000(void)
+{
+    const char *buffer = "2021-01-23";
+    struct tm tmTime = {0};
+    char *result = strptime(buffer, "%G", &tmTime);
+    char buffResult[gBufferSize];
+    int cnt = sprintf(buffResult, "%s", result);
+    EXPECT_TRUE("strptime_1000", cnt > 0);
+    EXPECT_STREQ("strptime_1000", "-01-23", buffResult);
+}
+
+/**
+ * @tc.name      : strptime_1100
+ * @tc.desc      : according to different time zones, convert a string to a time
+ * type according to a specific time format
+ * @tc.level     : Level 1
+ */
+void strptime_1100(void)
+{
+    const char *buffer = "23";
+    struct tm tmTime = {0};
+    strptime(buffer, "%j", &tmTime);
+    char buffResult[gBufferSize];
+    int cnt = sprintf(buffResult, "%d", tmTime.tm_yday);
+    EXPECT_TRUE("strptime_1100", cnt > 0);
+    EXPECT_STREQ("strptime_1100", "22", buffResult);
+}
+
 int main(void)
 {
     strptime_0100();
@@ -240,5 +274,7 @@ int main(void)
     strptime_0700();
     strptime_0800();
     strptime_0900();
+    strptime_1000();
+    strptime_1100();
     return t_status;
 }

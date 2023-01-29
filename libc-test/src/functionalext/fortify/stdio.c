@@ -56,6 +56,7 @@ static void stdio_dynamic_chk_001(void)
     EXPECT_STREQ(hello_world, buf);
 
     fclose(fp);
+    return;
 }
 
 /**
@@ -89,7 +90,7 @@ static void stdio_dynamic_chk_002(void)
     for (size_t i = read_size; i < bufferSize; ++i) {
         EXPECT_EQ('\xff', buf[i]);
     }
-
+    return;
 }
 
 /**
@@ -117,7 +118,7 @@ static void stdio_dynamic_chk_003(void)
             break;
         case 0:
             fread(buf, 1, ct, fp);
-            break;
+            exit(0);
         default:
             waitpid(pid, &status, WUNTRACED);
             TEST(WIFEXITED(status) == 0);
@@ -127,6 +128,7 @@ static void stdio_dynamic_chk_003(void)
             break;
     }
     fclose(fp);
+    return;
 }
 
 /**
@@ -155,7 +157,7 @@ static void stdio_dynamic_chk_004(void)
             break;
         case 0:
             fwrite(buf, 1, ct, fp);
-            break;
+            exit(0);
         default:
             waitpid(pid, &status, WUNTRACED);
             TEST(WIFEXITED(status) == 0);
@@ -165,6 +167,7 @@ static void stdio_dynamic_chk_004(void)
             break;
     }
     fclose(fp);
+    return;
 }
 
 /**
@@ -184,6 +187,7 @@ static void stdio_dynamic_chk_005(void)
     EXPECT_TRUE(get != NULL);
     EXPECT_TRUE(strcmp(hello_world, get) == 0);
     fclose(fp);
+    return;
 }
 
 /**
@@ -212,6 +216,7 @@ static void stdio_dynamic_chk_006(void)
     EXPECT_TRUE(get3 != NULL);
     EXPECT_TRUE(strcmp("hello boy!", get3) == 0);
     fclose(fp);
+    return;
 }
 
 /**
@@ -240,7 +245,7 @@ static void stdio_dynamic_chk_007(void)
             break;
         case 0:
             fgets(buf, n, fp);
-            break;
+            exit(0);
         default:
             waitpid(pid, &status, WUNTRACED);
             TEST(WIFEXITED(status) == 0);
@@ -250,6 +255,7 @@ static void stdio_dynamic_chk_007(void)
             break;
     }
     fclose(fp);
+    return;
 }
 
 /**
@@ -262,6 +268,7 @@ static void stdio_dynamic_chk_008(void)
     char buf[] = "world";
     sprintf(buf, "hello");
     EXPECT_TRUE(strcmp(buf, "hello") == 0);
+    return;
 }
 
 /**
@@ -277,6 +284,7 @@ static void stdio_dynamic_chk_009(void)
 
     char value[] = "hello : world!";
     EXPECT_TRUE(strcmp(buf, value) == 0);
+    return;
 }
 
 
@@ -303,7 +311,7 @@ static void stdio_dynamic_chk_010(void)
             break;
         case 0:
             sprintf(buf, "hello : %s", "world!");
-            break;
+            exit(0);
         default:
             waitpid(pid, &status, WUNTRACED);
             TEST(WIFEXITED(status) == 0);
@@ -312,6 +320,7 @@ static void stdio_dynamic_chk_010(void)
             kill(pid, SIGCONT);
             break;
     }
+    return;
 }
 
 /**
@@ -339,7 +348,7 @@ static void stdio_dynamic_chk_011(void)
             break;
         case 0: // 10 > sizeof buf
             snprintf(buf, printSize, "hello : %s", "world!");
-            break;
+            exit(0);
         default:
             waitpid(pid, &status, WUNTRACED);
             TEST(WIFEXITED(status) == 0);
@@ -348,6 +357,7 @@ static void stdio_dynamic_chk_011(void)
             kill(pid, SIGCONT);
             break;
     }
+    return;
 }
 
 
@@ -394,7 +404,7 @@ static void stdio_dynamic_chk_012(void)
             break;
         case 0:
             vsnprintf_test("hello : %s", "world!");
-            break;
+            exit(0);
         default:
             waitpid(pid, &status, WUNTRACED);
             TEST(WIFEXITED(status) == 0);
@@ -403,6 +413,7 @@ static void stdio_dynamic_chk_012(void)
             kill(pid, SIGCONT);
             break;
     }
+    return;
 }
 
 /**
@@ -425,7 +436,7 @@ static void stdio_dynamic_chk_013(void)
             break;
         case 0:
             vsprintf_test("%s", "0123456789");
-            break;
+            exit(0);
         default:
             waitpid(pid, &status, WUNTRACED);
             TEST(WIFEXITED(status) == 0);
@@ -434,6 +445,7 @@ static void stdio_dynamic_chk_013(void)
             kill(pid, SIGCONT);
             break;
     }
+    return;
 }
 
 int main()

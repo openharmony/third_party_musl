@@ -25,4 +25,7 @@ functionalext_list = [
   "supplement:functionalext_supplement_test",
   "fortify:functionalext_fortify_test",
   "symver:functionalext_symver_test",
+  "sched:functionalext_sched_test",
+  "unittest:functionalext_unittest_test",
+  "legacy:functionalext_legacy_test",
 ]

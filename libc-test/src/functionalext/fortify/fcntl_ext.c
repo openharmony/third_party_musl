@@ -18,9 +18,18 @@
 #include <string.h>
 #include <sys/wait.h>
 #include "fortify_test.h"
+#include "functionalext.h"
 #include "test.h"
 
 #define FILE_MODE_ALL (0777)
+
+#ifdef open64
+#undef open64
+#endif
+
+#ifdef openat64
+#undef openat64
+#endif
 
 /**
  * @tc.name     : open_0010
@@ -104,6 +113,19 @@ static void open_0030(void)
     return;
 }
 
+/**
+ * @tc.name     : open_0040
+ * @tc.desc     : test open only O_RDWR
+ * @tc.level    : Level 1
+ */
+static void open_0040(void)
+{
+    int fd = open("/proc/version", O_RDWR);
+    EXPECT_NE(open_0040, fd, -1);
+    close(fd);
+
+    return;
+}
 
 /**
  * @tc.name     : openat_0010
@@ -183,6 +205,20 @@ static void openat_0030(void)
             kill(pid, SIGCONT);
             break;
     }
+
+    return;
+}
+
+/**
+ * @tc.name     : openat_0040
+ * @tc.desc     : test openat only O_RDWR
+ * @tc.level    : Level 1
+ */
+static void openat_0040(void)
+{
+    int fd = openat(AT_FDCWD, "/proc/version", O_RDWR);
+    EXPECT_NE(openat_0040, fd, -1);
+    close(fd);
 
     return;
 }
@@ -270,6 +306,19 @@ static void open64_0030(void)
     return;
 }
 
+/**
+ * @tc.name     : open64_0040
+ * @tc.desc     : test open64 only O_RDWR
+ * @tc.level    : Level 1
+ */
+static void open64_0040(void)
+{
+    int fd = open64("/proc/version", O_RDWR);
+    EXPECT_NE(open64_0040, fd, -1);
+    close(fd);
+
+    return;
+}
 
 /**
  * @tc.name     : openat64_0010
@@ -352,22 +401,40 @@ static void openat64_0030(void)
 
     return;
 }
+
+/**
+ * @tc.name     : openat64_0040
+ * @tc.desc     : test openat64 only O_RDWR
+ * @tc.level    : Level 1
+ */
+static void openat64_0040(void)
+{
+    int fd = openat64(AT_FDCWD, "/proc/version", O_RDWR);
+    EXPECT_NE(openat64_0040, fd, -1);
+    close(fd);
+
+    return;
+}
 #endif
 
 int main(int argc, char *argv[]) {
     open_0010();
     open_0020();
     open_0030();
+    open_0040();
     openat_0010();
     openat_0020();
     openat_0030();
+    openat_0040();
 #if defined(_LARGEFILE64_SOURCE) || defined(_GNU_SOURCE)
     open64_0010();
     open64_0020();
     open64_0030();
+    open64_0040();
     openat64_0010();
     openat64_0020();
     openat64_0030();
+    openat64_0040();
 #endif
     return t_status;
 }
