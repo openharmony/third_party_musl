@@ -28,10 +28,10 @@
 #include <time.h>
 #include <sys/prctl.h>
 
+#include "cfi.h"
 #include "dlfcn_ext.h"
 #include "dynlink_rand.h"
 #include "ld_log.h"
-#include "cfi.h"
 #include "libc.h"
 #include "malloc_impl.h"
 #include "namespace.h"
@@ -88,11 +88,6 @@ struct reserved_address_params {
 #ifdef LOAD_ORDER_RANDOMIZATION
 	struct dso *target;
 #endif
-};
-
-struct sym_info_pair {
-	uint_fast32_t sym_h;
-	uint32_t sym_l;
 };
 
 typedef void (*stage3_func)(size_t *, size_t *);
@@ -491,7 +486,7 @@ static struct sym_info_pair sysv_hash(const char *s0)
 	return s_info_p;
 }
 
-static struct sym_info_pair gnu_hash(const char *s0)
+struct sym_info_pair gnu_hash(const char *s0)
 {
 	struct sym_info_pair s_info_p;
 	const unsigned char *s = (void *)s0;
@@ -706,7 +701,61 @@ static void add_can_search_so_list_in_dso(struct dso *dso_relocating, struct dso
 #if defined(__GNUC__)
 __attribute__((always_inline))
 #endif
-struct symdef find_sym2(struct dso *dso, struct verinfo *verinfo, int need_def, int use_deps, ns_t *ns)
+
+struct symdef find_sym_impl(
+	struct dso *dso, struct verinfo *verinfo, struct sym_info_pair s_info_p, int need_def, ns_t *ns)
+{
+	Sym *sym;
+	uint32_t *ght;
+	uint32_t h = 0;
+	uint32_t gh = s_info_p.sym_h;
+	uint32_t gho = gh / (8 * sizeof(size_t));
+	size_t ghm = 1ul << gh % (8 * sizeof(size_t));
+	struct symdef def = {0};
+	if (ns && !check_sym_accessible(dso, ns))
+		return def;
+
+	if ((ght = dso->ghashtab)) {
+		const size_t *bloomwords = (const void *)(ght + 4);
+		size_t f = bloomwords[gho & (ght[2] - 1)];
+		if (!(f & ghm))
+			return def;
+
+		f >>= (gh >> ght[3]) % (8 * sizeof f);
+		if (!(f & 1))
+			return def;
+
+		sym = gnu_lookup(s_info_p, ght, dso, verinfo);
+	} else {
+		if (!h)
+			s_info_p = sysv_hash(verinfo->s);
+
+		sym = sysv_lookup(verinfo, s_info_p, dso);
+	}
+
+	if (!sym)
+		return def;
+
+	if (!sym->st_shndx)
+		if (need_def || (sym->st_info & 0xf) == STT_TLS || ARCH_SYM_REJECT_UND(sym))
+			return def;
+
+	if (!sym->st_value)
+		if ((sym->st_info & 0xf) != STT_TLS)
+			return def;
+
+	if (!(1 << (sym->st_info & 0xf) & OK_TYPES))
+		return def;
+
+	if (!(1 << (sym->st_info >> 4) & OK_BINDS))
+		return def;
+
+	def.sym = sym;
+	def.dso = dso;
+	return def;
+}
+
+static inline struct symdef find_sym2(struct dso *dso, struct verinfo *verinfo, int need_def, int use_deps, ns_t *ns)
 {
 	struct sym_info_pair s_info_p = gnu_hash(verinfo->s);
 	uint32_t h = 0, gh = s_info_p.sym_h, gho = gh / (8*sizeof(size_t)), *ght;
@@ -2835,11 +2884,8 @@ void __dls3(size_t *sp, size_t *auxv)
 		libc.tls_size = tmp_tls_size;
 	}
 
-	if (!init_cfi_shadow(head)) {
+	if (init_cfi_shadow(head) == CFI_FAILED) {
 		error("[%s] init_cfi_shadow failed: %m", __FUNCTION__);
-		if (runtime) {
-			longjmp(*rtld_fail, 1);
-		}
 	}
 
 	if (ldso_fail) _exit(127);
@@ -3142,11 +3188,9 @@ static void *dlopen_impl(
 	 * relocations resolved to symbol definitions that get removed. */
 	redo_lazy_relocs();
 
-	if (!map_dso_to_cfi_shadow(p)) {
+	if (map_dso_to_cfi_shadow(p) == CFI_FAILED) {
 		error("[%s] map_dso_to_cfi_shadow failed: %m", __FUNCTION__);
-		if (runtime) {
-			longjmp(*rtld_fail, 1);
-		}
+		longjmp(*rtld_fail, 1);
 	}
 
 	if (mode & RTLD_NODELETE) {
@@ -4138,7 +4182,6 @@ static bool task_map_library(struct loadtask *task, struct reserved_address_para
 			? mmap((void *)start_addr, map_len, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0)
 			: mmap((void *)start_addr, map_len, prot, map_flags, task->fd, off_start + task->file_offset);
 		if (map == MAP_FAILED) {
-			LD_LOGE("Error mapping library %{public}s: failed to map fd", task->name);
 			goto error;
 		}
 		if (reserved_params && map_len < reserved_params->reserved_size) {
@@ -4150,7 +4193,6 @@ static bool task_map_library(struct loadtask *task, struct reserved_address_para
 		/* use tmp_map_len to mmap enough space for the dso with anonymous mapping */
 		unsigned char *temp_map = mmap((void *)NULL, tmp_map_len, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
 		if (temp_map == MAP_FAILED) {
-			LD_LOGE("Error mapping library 1 %{public}s: failed to map fd", task->name);
 			goto error;
 		}
 
@@ -4165,7 +4207,6 @@ static bool task_map_library(struct loadtask *task, struct reserved_address_para
 			/* use map_len to mmap correct space for the dso with file mapping */
 			: mmap(real_map, map_len, prot, map_flags, task->fd, off_start + task->file_offset);
 		if (map == MAP_FAILED) {
-			LD_LOGE("Error mapping library 3 %{public}s: failed to map fd", task->name);
 			goto error;
 		}
 	}

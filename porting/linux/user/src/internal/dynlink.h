@@ -58,6 +58,23 @@ enum {
 	REL_FUNCDESC_VAL,
 };
 
+struct td_index {
+	size_t args[2];
+	struct td_index *next;
+};
+
+struct verinfo {
+	const char *s;
+	const char *v;
+	bool use_vna_hash;
+	uint32_t vna_hash;
+};
+
+struct sym_info_pair {
+	uint_fast32_t sym_h;
+	uint32_t sym_l;
+};
+
 struct dso {
 #if DL_FDPIC
 	struct fdpic_loadmap *loadmap;
@@ -132,24 +149,13 @@ struct dso {
 	struct dso **reloc_can_search_dso_list;
 	size_t reloc_can_search_dso_count;
 	size_t reloc_can_search_dso_capacity;
+	bool is_mapped_to_shadow;
 	char buf[];
 };
 
 struct symdef {
 	Sym *sym;
 	struct dso *dso;
-};
-
-struct verinfo {
-	const char *s;
-	const char *v;
-	bool use_vna_hash;
-	uint32_t vna_hash;
-};
-
-struct td_index {
-	size_t args[2];
-	struct td_index *next;
 };
 
 struct fdpic_loadseg {
@@ -222,7 +228,9 @@ void *laddr(const struct dso *p, size_t v);
 #endif
 
 void *addr2dso(size_t a);
-struct symdef find_sym2(struct dso *dso, struct verinfo *verinfo, int need_def, int use_deps, ns_t *ns);
+struct sym_info_pair gnu_hash(const char *s0);
+struct symdef find_sym_impl(
+	struct dso *dso, struct verinfo *verinfo, struct sym_info_pair s_info_p, int need_def, ns_t *ns);
 
 hidden void *__dlsym(void *restrict, const char *restrict, void *restrict);
 hidden void *__dlvsym(void *restrict, const char *restrict, const char *restrict, void *restrict);

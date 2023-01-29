@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -25,10 +25,12 @@
 
 struct dso {
 	char *mock;
+    unsigned char *map;
+	size_t map_len;
 };
 
-extern bool init_cfi_shadow(struct dso *dso_list);
-extern bool map_dso_to_cfi_shadow(struct dso *dso);
+extern int init_cfi_shadow(struct dso *dso_list);
+extern int map_dso_to_cfi_shadow(struct dso *dso);
 extern void unmap_dso_from_cfi_shadow(struct dso *dso);
 extern void __cfi_slowpath(uint64_t CallSiteTypeId, void *Ptr);
 extern void __cfi_slowpath_diag(uint64_t CallSiteTypeId, void *Ptr, void *DiagData);
@@ -60,7 +62,7 @@ static void test_func() {}
 void cfi_init_test_0001(void)
 {
     printf("["__FILE__"][Line: %d][%s]: entry\n", __LINE__, __func__);
-    EXPECT_TRUE("cfi_init_test_0001", init_cfi_shadow(NULL));
+    EXPECT_EQ("cfi_init_test_0001", init_cfi_shadow(NULL), 0);
 }
 
 /**
@@ -71,7 +73,7 @@ void cfi_init_test_0001(void)
 void cfi_init_test_0002(void)
 {
     printf("["__FILE__"][Line: %d][%s]: entry\n", __LINE__, __func__);
-    EXPECT_TRUE("cfi_init_test_0002", map_dso_to_cfi_shadow(NULL));
+    EXPECT_EQ("cfi_init_test_0002", map_dso_to_cfi_shadow(NULL), 0);
 }
 
 /**
@@ -320,6 +322,37 @@ void cfi_slowpath_diag_function_test_0001(void)
     printf("["__FILE__"][Line: %d][%s]: end\n", __LINE__, __func__);
 }
 
+/**
+ * @tc.name      : cfi_unmap_dso_from_cfi_shadow_001
+ * @tc.desc      : If dso map is NULL while unmapping from the CFI shadow, do nothing.
+ * @tc.level     : Level 2
+ */
+void cfi_unmap_dso_from_cfi_shadow_001(void)
+{
+    printf("["__FILE__"][Line: %d][%s]: entry\n", __LINE__, __func__);
+    struct dso test_dso = {};
+    test_dso.map = 0;
+    test_dso.map_len = 1;
+    unmap_dso_from_cfi_shadow(&test_dso);
+    printf("["__FILE__"][Line: %d][%s]: end\n", __LINE__, __func__);
+}
+
+/**
+ * @tc.name      : cfi_unmap_dso_from_cfi_shadow_002
+ * @tc.desc      : If dso map_len is NULL while unmapping from the CFI shadow, do nothing.
+ * @tc.level     : Level 2
+ */
+void cfi_unmap_dso_from_cfi_shadow_002(void)
+{
+    printf("["__FILE__"][Line: %d][%s]: entry\n", __LINE__, __func__);
+    struct dso test_dso = {};
+    int a = 9;
+    test_dso.map = (unsigned char *)a;
+    test_dso.map_len = 0;
+    unmap_dso_from_cfi_shadow(&test_dso);
+    printf("["__FILE__"][Line: %d][%s]: end\n", __LINE__, __func__);
+}
+
 TEST_FUN G_Fun_Array[] = {
     cfi_init_test_0001,
     cfi_init_test_0002,
@@ -332,6 +365,8 @@ TEST_FUN G_Fun_Array[] = {
     cfi_slowpath_function_test_0007,
     cfi_slowpath_function_test_0008,
     cfi_slowpath_diag_function_test_0001,
+    cfi_unmap_dso_from_cfi_shadow_001,
+    cfi_unmap_dso_from_cfi_shadow_002,
 };
 
 int main(void)

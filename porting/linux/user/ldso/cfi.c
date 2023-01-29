@@ -1,3 +1,18 @@
+/*
+ * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 #define _GNU_SOURCE
 #include <sys/mman.h>
 #include <sys/prctl.h>
@@ -7,13 +22,48 @@
 
 /* This module provides support for LLVM CFI Cross-DSO by implementing the __cfi_slowpath() and __cfi_slowpath_diag()
  * functions. These two functions will be called before visiting other dso's resources. The responsibility is to
- * calculate the __cfi_check() of the target dso, and call it.
- * The relationship between __cfi_check and dso addr is:
- *     __cfi_check = AlignDown(addr, shadow_alignment) + shadow_alignment - (shadow_value - 2) * 4096;
- * The shadow_alignment presents the size of memory mapped by one shadow value.
- * The shadow_value presents the distance between the __cfi_check() and the the end address of each shadow alignment
- * in the dso. It can be presented as a multiple of 4096.
- * The CFI shadow is used to store shadow value(s) of each dso.
+ * calculate the __cfi_check() of the target dso, and call it. So use CFI shadow and shadow value to store the
+ * relationship between dso and its __cfi_check addr while loading a dso. CFI shadow is an array which stores shadow
+ * values. Shadow value is used to store the relationship. A shadow value can map 1 LIBRARY_ALIGNMENT memory range. So
+ * each dso will be mapped to one or more shadow values in the CFI shadow, this depends on the address range of the
+ * dso.
+ * There are 3 types for shadow value:
+ * - invalid(0) : the target addr does not belongs to any loaded dso.
+ * - uncheck(1) : this LIBRARY_ALIGNMENT memory range belongs to a dso but it is no need to do the CFI check.
+ * - valid(2 - 0xFFFF) : this LIBRARY_ALIGNMENT memory range belongs to a dso and need to do the CFI check.
+ * The valid shadow value records the distance from the end of a LIBRARY_ALIGNMENT memory range to the __cfi_check addr
+ * of the dso (The unit is 4096, because the __cfi_check is aligned with 4096).
+ * The valid shadow value is calculated as below:
+ *      sv = (AlignUp(__cfi_check, LIBRARY_ALIGNMENT) - cfi_check_addr + N * LIBRARY_ALIGNMENT) / 4096 + 2;
+ *
+ *      N   : starts at 0, is the index of LIBRARY_ALIGNMENT memory range that belongs to a dso.
+ *      + 2 : to avoid conflict with invalid and uncheck shadow value.
+ * 
+ * Below is a example for calculating shadow values of a dso.
+ *                                               liba.so
+ *                                                /\
+ *           /''''''''''''''''''''''''''''''''''''  '''''''''''''''''''''''''''''''''''''\
+ *           0x40000  __cfi_check addr = 0x42000               0x80000                  0xA0000                0xC0000
+ *           +---------^----------------------------------------^-------------------------^-------------------------+
+ *  Memory   |         |                                        |                         |                         |
+ *           +------------------------------------------------------------------------------------------------------+
+ *           \........... LIBRARY_ALIGNMENT ..................../\........... LIBRARY_ALIGNMENT ..................../                                                   /
+ *             \                                              /                                               /
+ *               \                                          /                                          /
+ *                 \                                      /                                     /
+ *                   \                                  /                                /
+ *                     \                              /                            /
+ *            +-----------------------------------------------------------------------------------------------------+
+ * CFI shadow |  invalid |           sv1              |           sv2              |            invalid             |
+ *            +-----------------------------------------------------------------------------------------------------+
+ *                          sv1 = (0x80000 - 0x42000 + 0 * LIBRARY_ALIGNMENT) / 4096 + 2 = 64
+ *                          sv2 = (0x80000 - 0x42000 + 1 * LIBRARY_ALIGNMENT) / 4096 + 2 = 126
+ * 
+ * Calculating the __cfi_check address is a reverse process:
+ * - First align up the target addr with LIBRARY_ALIGNMENT to locate the corresponding shadow value.
+ * - Then calculate the __cfi_check addr.
+ * 
+ * In order for the algorithm to work well, the start addr of each dso should be aligned with LIBRARY_ALIGNMENT.
  */
 
 #define MAX(a,b)                (((a) > (b)) ? (a) : (b))
@@ -39,8 +89,20 @@ static char *cfi_shadow_start = NULL;
 static struct dso *dso_list_head = NULL;
 
 /* Shadow value */
+/* The related shadow value(s) will be set to `sv_invalid` when:
+ * - init CFI shadow.
+ * - removing a dso.
+ */
 static const uint16_t sv_invalid = 0;
+/* The related shadow value(s) will be set to `sv_uncheck` if:
+ * - the DSO does not enable CFI Cross-Dso.
+ * - the DSO enabled CFI Cross-Dso, but this DSO is larger than 16G, for the part of the dso that exceeds 16G,
+ *   its shadow value will be set to `sv_uncheck`.
+ */
 static const uint16_t sv_uncheck = 1;
+/* If a DSO enabled CFI Cross-Dso, the DSO's shadow value should be valid. Because of the defination of `sv_invalid`
+ * and `sv_unchecked`, the valid shadow value should be at least 2.
+ */
 static const uint16_t sv_valid_min = 2;
 
 #if defined(__LP64__)
@@ -50,11 +112,11 @@ static const uintptr_t max_target_addr = 0xffffffff;
 #endif
 
 /* Create a cfi shadow */
-static bool create_cfi_shadow(void);
+static int create_cfi_shadow(void);
 
 /* Map dsos to CFI shadow */
-static bool add_dso_to_cfi_shadow(struct dso *dso);
-static bool fill_shadow_value_to_shadow(uintptr_t begin, uintptr_t end, uintptr_t cfi_check, uint16_t type);
+static int add_dso_to_cfi_shadow(struct dso *dso);
+static int fill_shadow_value_to_shadow(uintptr_t begin, uintptr_t end, uintptr_t cfi_check, uint16_t type);
 
 /* Find the __cfi_check() of target dso and call it */
 void __cfi_slowpath(uint64_t call_site_type_id, void *func_ptr);
@@ -68,37 +130,24 @@ static inline uintptr_t addr_to_offset(uintptr_t addr, int bits)
     return (addr >> bits) << 1;
 }
 
-static void set_cfi_shadow_name()
-{
-    LD_LOGI("[%{public}s] start!\n", __FUNCTION__);
-
-    prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, cfi_shadow_start, shadow_size, "cfi_shadow:musl");
-
-    return;
-}
-
 static struct symdef find_cfi_check_sym(struct dso *p)
 {
-    LD_LOGI("[%{public}s] start!\n", __FUNCTION__);
-	if (p == NULL) {
-        LD_LOGE("[%{public}s] has null param!\n", __FUNCTION__);
-        struct symdef emptysym = {0};
-        return emptysym;
-    }
-    ns_t *ns = p->namespace;
+    LD_LOGD("[%{public}s] start!\n", __FUNCTION__);
+
     struct verinfo verinfo = { .s = "__cfi_check", .v = "", .use_vna_hash = false };
-    return find_sym2(p, &verinfo, 0, 1, ns);
+    struct sym_info_pair s_info_p = gnu_hash(verinfo.s);
+    return find_sym_impl(p, &verinfo, s_info_p, 0, p->namespace);
 }
 
 static uintptr_t get_cfi_check_addr(uint16_t value, void* func_ptr)
 {
-    LD_LOGI("[%{public}s] start!\n", __FUNCTION__);
+    LD_LOGD("[%{public}s] start!\n", __FUNCTION__);
 
     uintptr_t addr = (uintptr_t)func_ptr;
     uintptr_t aligned_addr = ALIGN_DOWN(addr, shadow_alignment) + shadow_alignment;
     uintptr_t cfi_check_func_addr = aligned_addr - ((uintptr_t)(value - sv_valid_min) << cfi_check_granularity);
 #ifdef __arm__
-    LD_LOGI("[%{public}s] __arm__ defined!\n", __FUNCTION__);
+    LD_LOGD("[%{public}s] __arm__ defined!\n", __FUNCTION__);
     cfi_check_func_addr++;
 #endif
     LD_LOGI("[%{public}s] the cfi_check_func_addr is %{public}p!\n", __FUNCTION__, cfi_check_func_addr);
@@ -108,21 +157,27 @@ static uintptr_t get_cfi_check_addr(uint16_t value, void* func_ptr)
 
 static void cfi_slowpath_common(uint64_t call_site_type_id, void *func_ptr, void *diag_data)
 {
-    LD_LOGI("[%{public}s] start!\n", __FUNCTION__);
+    LD_LOGD("[%{public}s] start!\n", __FUNCTION__);
     LD_LOGI("[%{public}s] func_ptr[%{public}p] !\n", __FUNCTION__, func_ptr);
 
     uint16_t value = sv_invalid;
 
 #if defined(__aarch64__)
-    LD_LOGI("[%{public}s] __aarch64__ defined!\n", __FUNCTION__);
+    LD_LOGD("[%{public}s] __aarch64__ defined!\n", __FUNCTION__);
     uintptr_t addr = (uintptr_t)func_ptr & ((1ULL << 56) - 1);
 #else
-    LD_LOGI("[%{public}s] __aarch64__ not defined!\n", __FUNCTION__);
+    LD_LOGD("[%{public}s] __aarch64__ not defined!\n", __FUNCTION__);
     uintptr_t addr = func_ptr;
 #endif
 
     /* Get shadow value */
     uintptr_t offset = addr_to_offset(addr, shadow_granularity);
+
+    if (cfi_shadow_start == NULL) {
+        LD_LOGE("[%{public}s] the cfi_shadow_start is null!\n", __FUNCTION__);
+        __builtin_trap();
+    }
+
     if (offset > shadow_size) {
         value = sv_invalid;
     } else {
@@ -146,7 +201,7 @@ static void cfi_slowpath_common(uint64_t call_site_type_id, void *func_ptr, void
             LD_LOGE("[%{public}s] can not find the __cfi_check in the dso!\n", __FUNCTION__);
             __builtin_trap();
         }
-        LD_LOGI("[%{public}s] cfi_check addr[%{public}p]!\n",
+        LD_LOGD("[%{public}s] cfi_check addr[%{public}p]!\n",
             __FUNCTION__, LADDR(cfi_check_sym.dso, cfi_check_sym.sym->st_value));
         ((cfi_check_t)LADDR(cfi_check_sym.dso, cfi_check_sym.sym->st_value))(call_site_type_id, func_ptr, diag_data);
         break;
@@ -160,13 +215,13 @@ static void cfi_slowpath_common(uint64_t call_site_type_id, void *func_ptr, void
     return;
 }
 
-bool init_cfi_shadow(struct dso *dso_list)
+int init_cfi_shadow(struct dso *dso_list)
 {
     LD_LOGI("[%{public}s] start!\n", __FUNCTION__);
 
     if (dso_list == NULL) {
         LD_LOGW("[%{public}s] has null param!\n", __FUNCTION__);
-        return true;
+        return CFI_SUCCESS;
     }
 
     /* Save the head node of dso list */
@@ -175,15 +230,15 @@ bool init_cfi_shadow(struct dso *dso_list)
     return map_dso_to_cfi_shadow(dso_list);
 }
 
-bool map_dso_to_cfi_shadow(struct dso *dso)
+int map_dso_to_cfi_shadow(struct dso *dso)
 {
     LD_LOGI("[%{public}s] start!\n", __FUNCTION__);
 
     bool has_cfi_check = false;
 
     if (dso == NULL) {
-        LD_LOGE("[%{public}s] has null param!\n", __FUNCTION__);
-        return true;
+        LD_LOGW("[%{public}s] has null param!\n", __FUNCTION__);
+        return CFI_SUCCESS;
     }
 
     /* Find __cfi_check symbol in dso list */
@@ -198,27 +253,27 @@ bool map_dso_to_cfi_shadow(struct dso *dso)
     /* If the cfi shadow does not exist, create it and map all the dsos and its dependents to it. */
     if (cfi_shadow_start == NULL) {
         if (has_cfi_check) {
-            if (!create_cfi_shadow()) {
+            if (create_cfi_shadow() == CFI_FAILED) {
                 LD_LOGE("[%{public}s] create cfi shadow failed!\n", __FUNCTION__);
-                return false;
+                return CFI_FAILED;
             }
-            LD_LOGI("[%{public}s] add_dso_to_cfi_shadow with dso_list_head!\n", __FUNCTION__);
+            LD_LOGD("[%{public}s] add_dso_to_cfi_shadow with dso_list_head!\n", __FUNCTION__);
             add_dso_to_cfi_shadow(dso_list_head);
-            set_cfi_shadow_name();
+            prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, cfi_shadow_start, shadow_size, "cfi_shadow:musl");
         }
     /* If the cfi shadow exists, map the current dso and its dependents to it. */
     } else {
-        LD_LOGI("[%{public}s] add_dso_to_cfi_shadow with dso!\n", __FUNCTION__);
+        LD_LOGD("[%{public}s] add_dso_to_cfi_shadow with dso!\n", __FUNCTION__);
         add_dso_to_cfi_shadow(dso);
-        set_cfi_shadow_name();
+        prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, cfi_shadow_start, shadow_size, "cfi_shadow:musl");
     }
 
-    return true;
+    return CFI_SUCCESS;
 }
 
 void unmap_dso_from_cfi_shadow(struct dso *dso)
 {
-    LD_LOGI("[%{public}s] start!\n", __FUNCTION__);
+    LD_LOGD("[%{public}s] start!\n", __FUNCTION__);
 
     if (dso == NULL) {
         LD_LOGE("[%{public}s] has null param!\n", __FUNCTION__);
@@ -233,16 +288,20 @@ void unmap_dso_from_cfi_shadow(struct dso *dso)
     if (dso->map == 0 || dso->map_len == 0)
         return;
 
+    if (dso->is_mapped_to_shadow == false)
+        return;
+
     /* Set the dso's shadow value as invalid. */
     fill_shadow_value_to_shadow(dso->map, dso->map + dso->map_len, 0, sv_invalid);
-    set_cfi_shadow_name();
+    dso->is_mapped_to_shadow = false;
+    prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, cfi_shadow_start, shadow_size, "cfi_shadow:musl");
 
     return;
 }
 
-static bool create_cfi_shadow(void)
+static int create_cfi_shadow(void)
 {
-    LD_LOGI("[%{public}s] start!\n", __FUNCTION__);
+    LD_LOGD("[%{public}s] start!\n", __FUNCTION__);
 
     /* Each process can load up to (max_target_addr >> shadow_granularity) dsos. Shift left 1 bit because the shadow 
      * value is uint16_t. The size passed to mmap() should be aligned with 4096, so shadow_size should be aligned.
@@ -253,65 +312,66 @@ static bool create_cfi_shadow(void)
 
     if (mmap_addr == MAP_FAILED) {
         LD_LOGE("[%{public}s] mmap failed!\n", __FUNCTION__);
-        return false;
+        return CFI_FAILED;
     }
 
     cfi_shadow_start = (char*)mmap_addr;
     LD_LOGI("[%{public}s] the cfi_shadow_start addr is %{public}p!\n", __FUNCTION__, cfi_shadow_start);
 
-    return true;
+    return CFI_SUCCESS;
 }
 
-static bool add_dso_to_cfi_shadow(struct dso *dso)
+static int add_dso_to_cfi_shadow(struct dso *dso)
 {
     LD_LOGI("[%{public}s] start!\n", __FUNCTION__);
 
     for (struct dso *p = dso; p; p = p->next) {
         LD_LOGI("[%{public}s] start to deal with dso %{public}s!\n", __FUNCTION__, p->name);
         if (p->map == 0 || p->map_len == 0) {
-            LD_LOGI("[%{public}s] the dso has no data!\n", __FUNCTION__);
+            LD_LOGW("[%{public}s] the dso has no data!\n", __FUNCTION__);
+            continue;
+        }
+
+        if (p->is_mapped_to_shadow == true) {
+            LD_LOGW("[%{public}s] the dso is already in shadow!\n", __FUNCTION__);
             continue;
         }
 
         struct symdef cfi_check_sym = find_cfi_check_sym(p);
         /* If the dso doesn't have __cfi_check(), set it's shadow value unchecked. */
         if (!cfi_check_sym.sym) {
-            LD_LOGI("[%{public}s] the dso has no __cfi_check func, call fill_shadow_value_to_shadow!\n", __FUNCTION__);
-            if (!fill_shadow_value_to_shadow(p->map, p->map + p->map_len, 0, sv_uncheck)) {
+            LD_LOGI("[%{public}s] the dso has no __cfi_check()!\n", __FUNCTION__);
+            if (fill_shadow_value_to_shadow(p->map, p->map + p->map_len, 0, sv_uncheck) == CFI_FAILED) {
                 LD_LOGE("[%{public}s] add dso to cfi shadow failed!\n", __FUNCTION__);
-                return false;
+                return CFI_FAILED;
             }
         /* If the dso has __cfi_check(), set it's shadow value valid. */
         } else {
-            LD_LOGI("[%{public}s] the dso has __cfi_check func,call fill_shadow_value_to_shadow!\n", __FUNCTION__);
+            LD_LOGI("[%{public}s] the dso has __cfi_check()!\n", __FUNCTION__);
             uintptr_t end = p->map + p->map_len;
             uintptr_t cfi_check = LADDR(cfi_check_sym.dso, cfi_check_sym.sym->st_value);
 
             if (cfi_check == 0) {
                 LD_LOGE("[%{public}s] the dso has null cfi_check func!\n", __FUNCTION__);
-                return false;
+                return CFI_FAILED;
             }
-            if (!fill_shadow_value_to_shadow(p->map, end, cfi_check, sv_valid_min)) {
+            if (fill_shadow_value_to_shadow(p->map, end, cfi_check, sv_valid_min) == CFI_FAILED) {
                 LD_LOGE("[%{public}s] add dso to cfi shadow failed!\n", __FUNCTION__);
-                return false;
+                return CFI_FAILED;
             }
         }
+        p->is_mapped_to_shadow = true;
         LD_LOGI("[%{public}s] finish to deal with dso %{public}s!\n", __FUNCTION__, p->name);
     }
 
-    return true;
+    return CFI_SUCCESS;
 }
 
-static bool fill_shadow_value_to_shadow(uintptr_t begin, uintptr_t end, uintptr_t cfi_check, uint16_t type)
+static int fill_shadow_value_to_shadow(uintptr_t begin, uintptr_t end, uintptr_t cfi_check, uint16_t type)
 {
-    LD_LOGI("[%{public}s] start!\n", __FUNCTION__);
+    LD_LOGD("[%{public}s] start!\n", __FUNCTION__);
     LD_LOGI("[%{public}s] begin[%{public}x] end[%{public}x] cfi_check[%{public}x] type[%{public}x]!\n",
         __FUNCTION__, begin, end, cfi_check, type);
-
-    if (begin == 0 || end == 0) {
-        LD_LOGE("[%{public}s] has error param!\n", __FUNCTION__);
-        return false;
-    }
 
     /* To ensure the atomicity of the CFI shadow operation, we create a temp_shadow, write the shadow value to 
      * the temp_shadow, and then write it back to the CFI shadow by mremap().*/
@@ -330,10 +390,10 @@ static bool fill_shadow_value_to_shadow(uintptr_t begin, uintptr_t end, uintptr_
 
     if (tmp_shadow_start == MAP_FAILED) {
         LD_LOGE("[%{public}s] mmap failed!\n", __FUNCTION__);
-        return false;
+        return CFI_FAILED;
     }
 
-    LD_LOGI("[%{public}s] tmp_shadow_start is %{public}p\t tmp_shadow_size is 0x%{public}x!\n",
+    LD_LOGD("[%{public}s] tmp_shadow_start is %{public}p\t tmp_shadow_size is 0x%{public}x!\n",
         __FUNCTION__, tmp_shadow_start, tmp_shadow_size);
     memcpy(tmp_shadow_start, aligned_shadow_begin, offset_begin);
     memcpy(tmp_shadow_start + offset_end, shadow_end, aligned_shadow_end - shadow_end);
@@ -354,11 +414,14 @@ static bool fill_shadow_value_to_shadow(uintptr_t begin, uintptr_t end, uintptr_
         /* Set shadow_value */
         for (uint16_t *shadow_addr = tmp_shadow_start + offset_begin;
             shadow_addr != tmp_shadow_start + offset_end; shadow_addr++) {
+            /* If a dso is larger than 16G( = max_shadow_value * shadow_alignment / 1G),
+             * the excess is not checked.
+             */
             if (shadow_value < shadow_value_begin) {
                 *shadow_addr = sv_uncheck;
                 continue;
             }
-            *shadow_addr = shadow_value;
+            *shadow_addr = (*shadow_addr == sv_invalid) ? shadow_value : sv_uncheck;
             shadow_value += shadow_value_step;
         }
     /* in these cases, shadow_value will always be sv_uncheck or sv_invalid */
@@ -370,7 +433,8 @@ static bool fill_shadow_value_to_shadow(uintptr_t begin, uintptr_t end, uintptr_
         }
     } else {
         LD_LOGE("[%{public}s] has error param!\n", __FUNCTION__);
-        return false;
+        munmap(tmp_shadow_start, tmp_shadow_size);
+        return CFI_FAILED;
     }
 
     mprotect(tmp_shadow_start, tmp_shadow_size, PROT_READ);
@@ -378,28 +442,23 @@ static bool fill_shadow_value_to_shadow(uintptr_t begin, uintptr_t end, uintptr_
     uint16_t* mremap_addr = mremap(tmp_shadow_start, tmp_shadow_size, tmp_shadow_size,
         MREMAP_MAYMOVE | MREMAP_FIXED, aligned_shadow_begin);
 
-    if (mremap_addr == MAP_FAILED)
-    {
+    if (mremap_addr == MAP_FAILED) {
         LD_LOGE("[%{public}s] mremap failed!\n", __FUNCTION__);
-        return false;
+        munmap(tmp_shadow_start, tmp_shadow_size);
+        return CFI_FAILED;
     }
 
-    LD_LOGI("[%{public}s] fill completed!\n", __FUNCTION__);
-    return true;
+    LD_LOGD("[%{public}s] fill completed!\n", __FUNCTION__);
+    return CFI_SUCCESS;
 }
 
 void __cfi_slowpath(uint64_t call_site_type_id, void *func_ptr)
 {
-    LD_LOGI("[%{public}s] start!\n", __FUNCTION__);
+    LD_LOGD("[%{public}s] start!\n", __FUNCTION__);
 
     if (func_ptr == NULL) {
         LD_LOGE("[%{public}s] has error param!\n", __FUNCTION__);
         return;
-    }
-
-    if (cfi_shadow_start == NULL) {
-        LD_LOGE("[%{public}s] the cfi_shadow_start is null!\n", __FUNCTION__);
-        __builtin_trap();
     }
 
     cfi_slowpath_common(call_site_type_id, func_ptr, NULL);
@@ -409,16 +468,11 @@ void __cfi_slowpath(uint64_t call_site_type_id, void *func_ptr)
 
 void __cfi_slowpath_diag(uint64_t call_site_type_id, void *func_ptr, void *diag_data)
 {
-    LD_LOGI("[%{public}s] start!\n", __FUNCTION__);
+    LD_LOGD("[%{public}s] start!\n", __FUNCTION__);
 
     if (func_ptr == NULL) {
         LD_LOGE("[%{public}s] has error param!\n", __FUNCTION__);
         return;
-    }
-
-    if (cfi_shadow_start == NULL) {
-        LD_LOGE("[%{public}s] the cfi_shadow_start is null!\n", __FUNCTION__);
-        __builtin_trap();
     }
 
     cfi_slowpath_common(call_site_type_id, func_ptr, diag_data);
