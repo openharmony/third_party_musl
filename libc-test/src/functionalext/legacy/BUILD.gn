@@ -11,16 +11,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-functionalext_supplement_passwd_test = [
-  "getgrnam",
-  "getgrgid",
-  "getpwent",
-  "setgrent",
-  "setpwent",
-  "getpw_r",
-  "getgrent",
-  "getgrouplist",
-  "getgrgid_r",
-  "getgrnam_r",
-  "getspnam_r",
-]
+import("//build/test.gni")
+import("../../../test_template.gni")
+import("test_src_functionalext_legacy.gni")
+
+foreach(s, functionalext_legacy_test) {
+  test_unittest(s) {
+    target_dir = "functionalext/legacy"
+  }
+}
+
+group("functionalext_legacy_test") {
+  testonly = true
+  deps = []
+  foreach(s, functionalext_legacy_test) {
+    deps += [ ":${s}" ]
+  }
+}

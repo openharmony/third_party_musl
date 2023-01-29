@@ -328,6 +328,17 @@ void pthread_rwlock_timedwrlock_0100(void)
     EXPECT_EQ(pthread_rwlock_destroy(&w_rwlock4), 0);
 }
 
+/**
+ * @tc.number    : pthread_rwlock_timedwrlock_0110
+ * @tc.desc      : Test the case of pthread_rwlock_timedwrlock_monotonic_np with invalid rwlock
+ * @tc.level     : Level 2
+ */
+void pthread_rwlock_timedwrlock_0110(void)
+{
+    struct timespec ts = {0};
+    EXPECT_EQ(pthread_rwlock_timedwrlock_monotonic_np((pthread_rwlock_t *)NULL, &ts), EINVAL);
+}
+
 TEST_FUN G_Fun_Array[] = {
     pthread_rwlock_timedwrlock_0010,
     pthread_rwlock_timedwrlock_0020,
@@ -339,6 +350,7 @@ TEST_FUN G_Fun_Array[] = {
     pthread_rwlock_timedwrlock_0080,
     pthread_rwlock_timedwrlock_0090,
     pthread_rwlock_timedwrlock_0100,
+    pthread_rwlock_timedwrlock_0110,
 };
 
 int main(void)
