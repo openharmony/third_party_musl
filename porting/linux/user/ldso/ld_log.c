@@ -16,6 +16,7 @@
 #include "ld_log.h"
 
 static bool ld_log_enable = false;
+static bool ld_dlclose_debug = false;
 
 #ifdef OHOS_ENABLE_PARAMETER
 #include <fcntl.h>
@@ -73,11 +74,21 @@ static bool get_ld_log_value()
     }
     return (get_bool_sysparam(app_param_handle) || get_bool_sysparam(all_param_handle));
 }
+
+static bool get_ld_debug_dlclose_value()
+{
+    static CachedHandle param_handle = NULL;
+    if (param_handle == NULL) {
+        param_handle = CachedParameterCreate("musl.ld.debug.dlclose", "false");
+    }
+    return get_bool_sysparam(param_handle);
+}
 #endif
 
 void ld_log_reset()
 {
 #if (defined(OHOS_ENABLE_PARAMETER))
+    ld_dlclose_debug = get_ld_debug_dlclose_value();
     if (!is_musl_log_enable()) {
         ld_log_enable = false;
         return;
@@ -91,4 +102,9 @@ void ld_log_reset()
 bool get_ld_log_enable()
 {
     return ld_log_enable;
+}
+
+bool is_dlclose_debug_enable()
+{
+    return ld_dlclose_debug;
 }
