@@ -1229,12 +1229,21 @@ static void unmap_library(struct dso *dso)
 		for (i=0; i<dso->loadmap->nsegs; i++) {
 			if (!dso->loadmap->segs[i].p_memsz)
 				continue;
-			munmap((void *)dso->loadmap->segs[i].addr,
-				dso->loadmap->segs[i].p_memsz);
+			if (!is_dlclose_debug_enable()) {
+				munmap((void *)dso->loadmap->segs[i].addr,
+					dso->loadmap->segs[i].p_memsz);
+			} else {
+				(void)mprotect((void *)dso->loadmap->segs[i].addr,
+					dso->loadmap->segs[i].p_memsz, PROT_NONE);
+			}
 		}
 		internal_free(dso->loadmap);
 	} else if (dso->map && dso->map_len) {
-		munmap(dso->map, dso->map_len);
+		if (!is_dlclose_debug_enable()) {
+			munmap(dso->map, dso->map_len);
+		} else {
+			mprotect(dso->map, dso->map_len, PROT_NONE);
+		}
 	}
 }
 
