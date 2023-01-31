@@ -17,8 +17,8 @@
 #include <locale.h>
 #include <pthread.h>
 #include <errno.h>
-#include <stdio.h>
 #include <threads.h>
+#include <hilog_adapter.h>
 
 extern int __libc_sigaction(int sig, const struct sigaction *restrict sa,
                             struct sigaction *restrict old);
@@ -26,18 +26,17 @@ extern int __libc_sigaction(int sig, const struct sigaction *restrict sa,
 #define SIG_CHAIN_KEY_VALUE_1 1
 #define SIGNAL_CHAIN_SPECIAL_ACTION_MAX 2
 
-#ifdef SIGCHAIN_DEBUG
-#ifndef SIGCHAIN_PRINT_DEBUG
-#define SIGCHAIN_PRINT_DEBUG(fmt, ...) printf("SIGCHAIN D " fmt "\n", ##__VA_ARGS__)
-#endif
+#define SIGCHAIN_LOG_DOMAIN 0xD003F00
+#define SIGCHAIN_LOG_TAG "SIGCHAIN"
+
+#if (defined(OHOS_ENABLE_PARAMETER) || defined(ENABLE_MUSL_LOG))
+#define SIGCHAIN_PRINT_ERROR(...) ((void)HiLogAdapterPrint(LOG_CORE, LOG_ERROR, SIGCHAIN_LOG_DOMAIN, SIGCHAIN_LOG_TAG, __VA_ARGS__))
+#define SIGCHAIN_PRINT_INFO(...) ((void)HiLogAdapterPrint(LOG_CORE, LOG_INFO, SIGCHAIN_LOG_DOMAIN, SIGCHAIN_LOG_TAG, __VA_ARGS__))
+#define SIGCHAIN_PRINT_DEBUG(...) ((void)HiLogAdapterPrint(LOG_CORE, LOG_DEBUG, SIGCHAIN_LOG_DOMAIN, SIGCHAIN_LOG_TAG, __VA_ARGS__))
 #else
-#define SIGCHAIN_PRINT_DEBUG(fmt, ...)
-#endif
-#ifndef SIGCHAIN_PRINT_INFO
-#define SIGCHAIN_PRINT_INFO(fmt, ...) printf("SIGCHAIN I " fmt "\n", ##__VA_ARGS__)
-#endif
-#ifndef SIGCHAIN_PRINT_ERROR
-#define SIGCHAIN_PRINT_ERROR(fmt, ...) printf("SIGCHAIN E " fmt "\n", ##__VA_ARGS__)
+#define SIGCHAIN_PRINT_ERROR(...)
+#define SIGCHAIN_PRINT_INFO(...)
+#define SIGCHAIN_PRINT_DEBUG(...)
 #endif
 
 struct sc_signal_chain {
@@ -57,11 +56,12 @@ static once_flag g_flag = ONCE_FLAG_INIT;
   * @brief Create the thread key
   * @retval void
   */
-void do_once(void)
+void create_pthread_key(void)
 {
+    SIGCHAIN_PRINT_INFO("%{public}s create the thread key!", __func__);
     int rc = pthread_key_create(&g_sigchain_key, NULL);
     if (rc != 0) {
-        SIGCHAIN_PRINT_ERROR("%s failed to create sigchain pthread key",
+        SIGCHAIN_PRINT_ERROR("%{public}s failed to create sigchain pthread key, rc:%{public}d",
                 __func__,  rc);
     }
 }
@@ -72,7 +72,7 @@ void do_once(void)
   * @retval int32_t, the value of the sigchain key.
   */
 static pthread_key_t get_handling_signal_key() {
-    call_once(&g_flag, do_once);
+    call_once(&g_flag, create_pthread_key);
     return g_sigchain_key;
 }
 
@@ -107,7 +107,6 @@ static void set_handling_signal(bool value)
   */
 bool ismarked(int signo)
 {
-    SIGCHAIN_PRINT_DEBUG("%s signo: %d", __func__, signo);
     return sig_chains[signo - 1].marked;
 }
 
@@ -120,11 +119,11 @@ bool ismarked(int signo)
   */
 static void signal_chain_handler(int signo, siginfo_t* siginfo, void* ucontext_raw)
 {
-    SIGCHAIN_PRINT_DEBUG("%s signo: %d", __func__, signo);
+    SIGCHAIN_PRINT_DEBUG("%{public}s signo: %{public}d", __func__, signo);
     /* Try to call the special handlers first. */
+    /* If one of them crashes, we'll reenter this handler and pass that crash onto the user handler. */
     if (!get_handling_signal()){
-        int len = SIGNAL_CHAIN_SPECIAL_ACTION_MAX;
-        for (int i = 0; i < len; i++) {
+        for (int i = 0; i < SIGNAL_CHAIN_SPECIAL_ACTION_MAX; i++) {
             if (sig_chains[signo - 1].sca_special_actions[i].sca_sigaction == NULL) {
                 break;
             }
@@ -169,7 +168,7 @@ static void signal_chain_handler(int signo, siginfo_t* siginfo, void* ucontext_r
         if (sig_chains[signo - 1].sig_action.sa_handler == SIG_IGN) {
             return;
         } else if (sig_chains[signo - 1].sig_action.sa_handler == SIG_DFL) {
-            SIGCHAIN_PRINT_INFO("%s exiting due to SIG_DFL handler for signal: %d",
+            SIGCHAIN_PRINT_INFO("%{public}s exiting due to SIG_DFL handler for signal: %{public}d",
                     __func__, signo);
         } else {
             sig_chains[signo - 1].sig_action.sa_handler(signo);
@@ -186,7 +185,7 @@ static void signal_chain_handler(int signo, siginfo_t* siginfo, void* ucontext_r
   */
 void sigchain_register(int signo)
 {
-    SIGCHAIN_PRINT_DEBUG("%s signo: %d", __func__, signo);
+    SIGCHAIN_PRINT_INFO("%{public}s signo: %{public}d", __func__, signo);
     struct sigaction signal_action = {};
     sigfillset(&signal_action.sa_mask);
 
@@ -200,9 +199,9 @@ void sigchain_register(int signo)
   * @param[in] signo, the value of the signal.
   * @retval void
   */
-void mark(int signo)
+void mark_signal_to_sigchain(int signo)
 {
-    SIGCHAIN_PRINT_DEBUG("%s signo: %d", __func__, signo);
+    SIGCHAIN_PRINT_INFO("%{public}s signo: %{public}d", __func__, signo);
     if (!sig_chains[signo - 1].marked) {
         sigchain_register(signo);
         sig_chains[signo - 1].marked = true;
@@ -217,7 +216,7 @@ void mark(int signo)
   */
 void setaction(int signo, const struct sigaction *restrict new_sa)
 {
-    SIGCHAIN_PRINT_DEBUG("%s signo: %d", __func__, signo);
+    SIGCHAIN_PRINT_DEBUG("%{public}s signo: %{public}d", __func__, signo);
     sig_chains[signo - 1].sig_action = *new_sa;
 }
 
@@ -228,7 +227,7 @@ void setaction(int signo, const struct sigaction *restrict new_sa)
   */
 struct sigaction getaction(int signo)
 {
-    SIGCHAIN_PRINT_DEBUG("%s signo: %d", __func__, signo);
+    SIGCHAIN_PRINT_DEBUG("%{public}s signo: %{public}d", __func__, signo);
     return sig_chains[signo - 1].sig_action;
 }
 
@@ -240,11 +239,11 @@ struct sigaction getaction(int signo)
   */
 void add_special_handler(int signo, struct signal_chain_action* sa)
 {
-    SIGCHAIN_PRINT_DEBUG("%s signo: %d", __func__, signo);
-    int len = SIGNAL_CHAIN_SPECIAL_ACTION_MAX;
-    for (int i = 0; i < len; i++) {
+    SIGCHAIN_PRINT_INFO("%{public}s signo: %{public}d", __func__, signo);
+    for (int i = 0; i < SIGNAL_CHAIN_SPECIAL_ACTION_MAX; i++) {
         if (sig_chains[signo - 1].sca_special_actions[i].sca_sigaction == NULL) {
             sig_chains[signo - 1].sca_special_actions[i] = *sa;
+            SIGCHAIN_PRINT_INFO("%{public}s signo %{public}d is registered with special handler!", __func__, signo);
             return;
         }
     }
@@ -258,7 +257,7 @@ void add_special_handler(int signo, struct signal_chain_action* sa)
   */
 void rm_special_handler(int signo, bool (*fn)(int, siginfo_t*, void*))
 {
-    SIGCHAIN_PRINT_DEBUG("%s signo: %d", __func__, signo);
+    SIGCHAIN_PRINT_INFO("%{public}s signo: %{public}d", __func__, signo);
     int len = SIGNAL_CHAIN_SPECIAL_ACTION_MAX;
     for (int i = 0; i < len; i++) {
         if (sig_chains[signo - 1].sca_special_actions[i].sca_sigaction == fn) {
@@ -271,7 +270,7 @@ void rm_special_handler(int signo, bool (*fn)(int, siginfo_t*, void*))
         }
     }
 
-    SIGCHAIN_PRINT_INFO("%s failed to find special handler!. signo: %d",
+    SIGCHAIN_PRINT_INFO("%{public}s failed to find special handler!. signo: %{public}d",
             __func__, signo);
 }
 
@@ -284,15 +283,15 @@ void rm_special_handler(int signo, bool (*fn)(int, siginfo_t*, void*))
   */
 void add_special_signal_handler(int signo, struct signal_chain_action* sa)
 {
-    SIGCHAIN_PRINT_DEBUG("%s signo: %d", __func__, signo);
+    SIGCHAIN_PRINT_INFO("%{public}s signo: %{public}d", __func__, signo);
     if (signo <= 0 || signo >= _NSIG) {
-        SIGCHAIN_PRINT_ERROR("%s Invalid signal %d", __func__, signo);
+        SIGCHAIN_PRINT_ERROR("%{public}s Invalid signal %{public}d", __func__, signo);
         return;
     }
 
     // Set the special handler.
     add_special_handler(signo, sa);
-    mark(signo);
+    mark_signal_to_sigchain(signo);
 }
 
 /**
@@ -303,9 +302,9 @@ void add_special_signal_handler(int signo, struct signal_chain_action* sa)
   */
 void remove_special_signal_handler(int signo, bool (*fn)(int, siginfo_t*, void*))
 {
-    SIGCHAIN_PRINT_DEBUG("%s signo: %d", __func__, signo);
+    SIGCHAIN_PRINT_INFO("%{public}s signo: %{public}d", __func__, signo);
     if (signo <= 0 || signo >= _NSIG) {
-        SIGCHAIN_PRINT_ERROR("%s Invalid signal %d", __func__, signo);
+        SIGCHAIN_PRINT_ERROR("%{public}s Invalid signal %{public}d", __func__, signo);
         return;
     }
     // remove the special handler.
@@ -322,9 +321,9 @@ void remove_special_signal_handler(int signo, bool (*fn)(int, siginfo_t*, void*)
 bool intercept_sigaction(int signo, const struct sigaction *restrict sa,
                          struct sigaction *restrict old)
 {
-    SIGCHAIN_PRINT_DEBUG("%s signo: %d", __func__, signo);
+    SIGCHAIN_PRINT_DEBUG("%{public}s signo: %{public}d", __func__, signo);
     if (signo <= 0 || signo >= _NSIG) {
-        SIGCHAIN_PRINT_ERROR("%s Invalid signal %d", __func__, signo);
+        SIGCHAIN_PRINT_ERROR("%{public}s Invalid signal %{public}d", __func__, signo);
         return false;
     }
 
@@ -351,7 +350,7 @@ bool intercept_sigaction(int signo, const struct sigaction *restrict sa,
   */
 void intercept_sigprocmask(int how, sigset_t *restrict set)
 {
-    SIGCHAIN_PRINT_DEBUG("%s how: %d", __func__, how);
+    SIGCHAIN_PRINT_DEBUG("%{public}s how: %{public}d", __func__, how);
     if (get_handling_signal()) {
         return;
     }
