@@ -13,12 +13,19 @@ extern "C" {
 #define MuslMalloc(func) func
 #endif
 
+#ifdef USE_JEMALLOC
+#define MuslFunc(func) je_ ## func
+#else
+#define MuslFunc(func) internal_ ## func
+#endif
+
+extern void *internal_malloc(size_t);
+extern void internal_free(void*);
+
 void *__libc_mmap(void*, size_t, int, int, int, off_t);
 int __libc_munmap(void*, size_t);
-void *__libc_malloc(size_t);
 void *__libc_calloc(size_t, size_t);
 void *__libc_realloc(void *, size_t);
-void __libc_free(void *);
 void *__libc_valloc(size_t);
 void *__libc_memalign(size_t, size_t);
 size_t __libc_malloc_usable_size(void *);
