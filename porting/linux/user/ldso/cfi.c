@@ -47,7 +47,7 @@
  *           +---------^----------------------------------------^-------------------------^-------------------------+
  *  Memory   |         |                                        |                         |                         |
  *           +------------------------------------------------------------------------------------------------------+
- *           \........... LIBRARY_ALIGNMENT ..................../\........... LIBRARY_ALIGNMENT ..................../                                                   /
+ *           \........... LIBRARY_ALIGNMENT ..................../\........... LIBRARY_ALIGNMENT ..................../
  *             \                                              /                                               /
  *               \                                          /                                          /
  *                 \                                      /                                     /
@@ -87,6 +87,7 @@ static uintptr_t shadow_size = 0;
 static char *cfi_shadow_start = NULL;
 /* List head of all the DSOs loaded by the process */
 static struct dso *dso_list_head = NULL;
+static char* ldso_name = NULL;
 
 /* Shadow value */
 /* The related shadow value(s) will be set to `sv_invalid` when:
@@ -155,12 +156,16 @@ static uintptr_t get_cfi_check_addr(uint16_t value, void* func_ptr)
     return cfi_check_func_addr;
 }
 
-static void cfi_slowpath_common(uint64_t call_site_type_id, void *func_ptr, void *diag_data)
+static inline void cfi_slowpath_common(uint64_t call_site_type_id, void *func_ptr, void *diag_data)
 {
-    LD_LOGD("[%{public}s] start!\n", __FUNCTION__);
     LD_LOGI("[%{public}s] func_ptr[%{public}p] !\n", __FUNCTION__, func_ptr);
 
     uint16_t value = sv_invalid;
+
+    if (func_ptr == NULL) {
+        LD_LOGE("[%{public}s] func_ptr is NULL!\n", __FUNCTION__);
+        return;
+    }
 
 #if defined(__aarch64__)
     LD_LOGD("[%{public}s] __aarch64__ defined!\n", __FUNCTION__);
@@ -196,13 +201,21 @@ static void cfi_slowpath_common(uint64_t call_site_type_id, void *func_ptr, void
         }
         LD_LOGI("[%{public}s] dso name[%{public}s]!\n", __FUNCTION__, dso->name);
 
+        /* The ldso is an exception because it is loaded by kernel and is not mapped to the CFI shadow.
+         * Do not check it.
+         */
+        if (strcmp(ldso_name, dso->name) == 0) {
+            LD_LOGI("[%{public}s] uncheck for ldso\n", __FUNCTION__);
+            return;
+        }
+
         struct symdef cfi_check_sym = find_cfi_check_sym(dso);
         if (!cfi_check_sym.sym) {
             LD_LOGE("[%{public}s] can not find the __cfi_check in the dso!\n", __FUNCTION__);
             __builtin_trap();
         }
-        LD_LOGD("[%{public}s] cfi_check addr[%{public}p]!\n",
-            __FUNCTION__, LADDR(cfi_check_sym.dso, cfi_check_sym.sym->st_value));
+        LD_LOGD("[%{public}s] cfi_check addr[%{public}p]!\n", __FUNCTION__,
+                LADDR(cfi_check_sym.dso, cfi_check_sym.sym->st_value));
         ((cfi_check_t)LADDR(cfi_check_sym.dso, cfi_check_sym.sym->st_value))(call_site_type_id, func_ptr, diag_data);
         break;
     case sv_uncheck:
@@ -215,7 +228,7 @@ static void cfi_slowpath_common(uint64_t call_site_type_id, void *func_ptr, void
     return;
 }
 
-int init_cfi_shadow(struct dso *dso_list)
+int init_cfi_shadow(struct dso *dso_list, char *so_name)
 {
     LD_LOGI("[%{public}s] start!\n", __FUNCTION__);
 
@@ -226,6 +239,7 @@ int init_cfi_shadow(struct dso *dso_list)
 
     /* Save the head node of dso list */
     dso_list_head = dso_list;
+    ldso_name = so_name;
 
     return map_dso_to_cfi_shadow(dso_list);
 }
@@ -328,7 +342,8 @@ static int add_dso_to_cfi_shadow(struct dso *dso)
     for (struct dso *p = dso; p; p = p->next) {
         LD_LOGI("[%{public}s] start to deal with dso %{public}s!\n", __FUNCTION__, p->name);
         if (p->map == 0 || p->map_len == 0) {
-            LD_LOGW("[%{public}s] the dso has no data!\n", __FUNCTION__);
+            LD_LOGW("[%{public}s] the dso has no data! map[%{public}p] map_len[0x%{public}x]\n",
+                    __FUNCTION__, p->map, p->map_len);
             continue;
         }
 
@@ -369,9 +384,8 @@ static int add_dso_to_cfi_shadow(struct dso *dso)
 
 static int fill_shadow_value_to_shadow(uintptr_t begin, uintptr_t end, uintptr_t cfi_check, uint16_t type)
 {
-    LD_LOGD("[%{public}s] start!\n", __FUNCTION__);
     LD_LOGI("[%{public}s] begin[%{public}x] end[%{public}x] cfi_check[%{public}x] type[%{public}x]!\n",
-        __FUNCTION__, begin, end, cfi_check, type);
+            __FUNCTION__, begin, end, cfi_check, type);
 
     /* To ensure the atomicity of the CFI shadow operation, we create a temp_shadow, write the shadow value to 
      * the temp_shadow, and then write it back to the CFI shadow by mremap().*/
@@ -456,11 +470,6 @@ void __cfi_slowpath(uint64_t call_site_type_id, void *func_ptr)
 {
     LD_LOGD("[%{public}s] start!\n", __FUNCTION__);
 
-    if (func_ptr == NULL) {
-        LD_LOGE("[%{public}s] has error param!\n", __FUNCTION__);
-        return;
-    }
-
     cfi_slowpath_common(call_site_type_id, func_ptr, NULL);
 
     return;
@@ -469,11 +478,6 @@ void __cfi_slowpath(uint64_t call_site_type_id, void *func_ptr)
 void __cfi_slowpath_diag(uint64_t call_site_type_id, void *func_ptr, void *diag_data)
 {
     LD_LOGD("[%{public}s] start!\n", __FUNCTION__);
-
-    if (func_ptr == NULL) {
-        LD_LOGE("[%{public}s] has error param!\n", __FUNCTION__);
-        return;
-    }
 
     cfi_slowpath_common(call_site_type_id, func_ptr, diag_data);
 

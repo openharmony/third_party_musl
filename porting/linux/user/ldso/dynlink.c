@@ -2897,7 +2897,7 @@ void __dls3(size_t *sp, size_t *auxv)
 		libc.tls_size = tmp_tls_size;
 	}
 
-	if (init_cfi_shadow(head) == CFI_FAILED) {
+	if (init_cfi_shadow(head, ldso.name) == CFI_FAILED) {
 		error("[%s] init_cfi_shadow failed: %m", __FUNCTION__);
 	}
 
