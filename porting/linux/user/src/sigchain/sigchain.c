@@ -351,6 +351,7 @@ bool intercept_sigaction(int signo, const struct sigaction *restrict sa,
 void intercept_sigprocmask(int how, sigset_t *restrict set)
 {
     SIGCHAIN_PRINT_DEBUG("%{public}s how: %{public}d", __func__, how);
+    // Forward directly to the pthread_sigmask When this sigchain is inside a signal handler
     if (get_handling_signal()) {
         return;
     }
