@@ -25,7 +25,7 @@
 #define LIBRARY_ALIGNMENT       (1UL << LIBRARY_ALIGNMENT_BITS)
 
 /* map all the dso and the dependents to cfi shadow */
-int init_cfi_shadow(struct dso *dso_list);
+int init_cfi_shadow(struct dso *dso_list, char *so_name);
 /* map a dso and the dependents to cfi shadow */
 int map_dso_to_cfi_shadow(struct dso *dso);
 /* unmap a dso from cfi shadow */
