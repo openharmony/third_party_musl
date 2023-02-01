@@ -78,3 +78,36 @@ config("config_runtest") {
 
   libs = [ "//${target_out_dir}/libtest.a" ]
 }
+
+config("config_unittest") {
+  include_dirs = [ "." ]
+
+  cflags_c = [
+    "-pipe",
+    "-std=c99",
+    "-ffreestanding",
+    "-nostdinc",
+    "-D_POSIX_C_SOURCE=200809L",
+    "-Wall",
+    "-Wno-unused",
+    "-Wno-unused-function",
+    "-Wno-missing-braces",
+    "-Wno-overflow",
+    "-Wno-unknown-pragmas",
+    "-Wno-unsupported-floating-point-opt",
+    "-Wno-parentheses",
+    "-fno-builtin",
+    "-frounding-math",
+    "-Werror=implicit-function-declaration",
+    "-Werror=implicit-int",
+    "-Werror=pointer-sign",
+    "-Werror=pointer-arith",
+    "-Wno-error=unused-function",
+    "-g",
+    "-D_FILE_OFFSET_BITS=64",
+  ]
+
+  ldflags = [ "-nostdlib" ]
+
+  libs = [ "//${target_out_dir}/libtest.a" ]
+}
