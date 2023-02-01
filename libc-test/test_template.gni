@@ -20,6 +20,8 @@ musl_lib_dir =
 
 test_lib_dir = "musl/libc-test-lib"
 
+musl_src_base = "${root_out_dir}/obj/${musl_base_dir}/${musl_ported_dir}"
+
 template("test_unittest") {
   assert(defined(invoker.target_name),
          "file name is required in target ${target_name}")

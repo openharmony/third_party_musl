@@ -12,6 +12,7 @@
 # limitations under the License.
 
 functionalext_locale_test = [
+  "dcngettext",
   "duplocale",
   "langinfo",
   "localeconv",
