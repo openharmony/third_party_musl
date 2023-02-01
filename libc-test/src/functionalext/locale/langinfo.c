@@ -127,6 +127,23 @@ void nl_langinfo_0500()
     EXPECT_STREQ("nl_langinfo_0500", ptr, "UTF-8");
 }
 
+/**
+ * @tc.name      : nl_langinfo_0600
+ * @tc.desc      : Assert whether the return value result is not "C.UTF-8"
+ * when the function nl_langinfo passes in the "65535" parameter
+ * @tc.level     : Level 2
+ */
+void nl_langinfo_0600()
+{
+    char *lo = setlocale(LC_ALL, "");
+    if (!lo) {
+        EXPECT_PTRNE("nl_langinfo_0600", lo, NULL);
+        return;
+    }
+    char *ptr = nl_langinfo(RADIXCHAR - 1);
+    EXPECT_STREQ("nl_langinfo_0600", ptr, "C.UTF-8");
+}
+
 int main(void)
 {
     langinfo_0100();
@@ -134,5 +151,6 @@ int main(void)
     nl_langinfo_0300();
     nl_langinfo_0400();
     nl_langinfo_0500();
+    nl_langinfo_0600();
     return t_status;
 }

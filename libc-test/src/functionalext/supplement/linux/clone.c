@@ -40,8 +40,23 @@ void clone_0100(void)
     EXPECT_NE("clone_0100", cpid, -1);
 }
 
+/**
+ * @tc.name      : clone_0200
+ * @tc.desc      : Parameter flags is 0.
+ * @tc.level     : Level 2
+ */
+void clone_0200(void)
+{
+    void *stack = malloc(STACK_SIZE);
+    int cpid = -1;
+    cpid = clone((int (*)(void *))test, (char *)stack + STACK_SIZE, 0, NULL);
+    sleep(1);
+    EXPECT_NE("clone_0200", cpid, -1);
+}
+
 int main(int argc, char *argv[])
 {
     clone_0100();
+    clone_0200();
     return t_status;
 }
