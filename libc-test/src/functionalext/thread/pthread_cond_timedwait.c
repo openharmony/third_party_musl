@@ -148,6 +148,19 @@ void pthread_cond_timedwait_monotonic_np_0010(void)
 }
 
 /**
+ * @tc.number    : pthread_cond_timedwait_monotonic_np_0020
+ * @tc.desc      : Test whether the pthread_cond_timedwait_monotonic_np is invalid
+ * @tc.level     : Level 2
+ */
+void pthread_cond_timedwait_monotonic_np_0020(void)
+{
+    pthread_cond_t *cond = (pthread_cond_t *)NULL;
+    pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+    struct timespec ts = {0};
+    EXPECT_EQ(pthread_cond_timedwait_monotonic_np(cond, &mutex, &ts), EINVAL);
+}
+
+/**
  * @tc.number    : pthread_cond_timeout_np_0010
  * @tc.desc      : Test whether the pthread_cond_timeout_np is normal
  * @tc.level     : Level 0
@@ -707,6 +720,7 @@ TEST_FUN G_Fun_Array[] = {
     pthread_cond_timedwait_0020,
     pthread_cond_timedwait_time64_0010,
     pthread_cond_timedwait_monotonic_np_0010,
+    pthread_cond_timedwait_monotonic_np_0020,
     pthread_cond_timeout_np_0010,
     pthread_cond_clockwait_0010,
     pthread_cond_timedwait_Time_0010,

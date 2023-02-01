@@ -11,16 +11,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-functionalext_supplement_passwd_test = [
-  "getgrnam",
-  "getgrgid",
-  "getpwent",
-  "setgrent",
-  "setpwent",
-  "getpw_r",
-  "getgrent",
-  "getgrouplist",
-  "getgrgid_r",
-  "getgrnam_r",
-  "getspnam_r",
-]
+functionalext_legacy_test = [ "ulimit" ]
