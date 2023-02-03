@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-#define SIGCHIAN_TEST_SET_MASK(set, fun, signo, num)  do{ \
+#define SIGCHAIN_TEST_SET_MASK(set, fun, signo, num)  do{ \
     int result = sigemptyset(&set);                       \
     if (result != 0) {                                    \
         EXPECT_FALSE(fun, (result == 0));                 \
@@ -29,3 +29,14 @@
         EXPECT_FALSE(fun, (result == 0));                 \
     }                                                     \
 } while (0)
+
+#define SIGCHIAN_TEST_SIGNAL_NUM_1 1
+#define SIGCHIAN_TEST_SIGNAL_NUM_2 2
+#define SIGCHIAN_TEST_SIGNAL_NUM_10 10
+
+#define SIGCHAIN_SIGNAL_37 37
+#define SIGCHAIN_SIGNAL_43 43
+#define SIGCHAIN_SIGNAL_50 50
+#define SIGCHAIN_SIGNAL_56 56
+#define SIGCHAIN_SIGNAL_64 64
+#define SIGCHAIN_SIGNAL_65 65

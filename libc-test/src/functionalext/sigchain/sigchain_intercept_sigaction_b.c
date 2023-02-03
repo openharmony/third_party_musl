@@ -87,8 +87,8 @@ static void sigchain_intercept_sigaction_002()
     sigaction(SIGSEGV, &siga2, NULL);
 
     sigset_t set = {0};
-    int signo[2] = {SIGSEGV, SIGHUP};
-    SIGCHIAN_TEST_SET_MASK(set, "sigchain_intercept_sigaction_002", signo, 2);
+    int signo[SIGCHIAN_TEST_SIGNAL_NUM_2] = {SIGSEGV, SIGHUP};
+    SIGCHAIN_TEST_SET_MASK(set, "sigchain_intercept_sigaction_002", signo, SIGCHIAN_TEST_SIGNAL_NUM_2);
 }
 
 int main(void)

@@ -16,9 +16,6 @@
 #ifndef _SIGCHAIN_H
 #define _SIGCHAIN_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
 #endif
@@ -26,13 +23,17 @@ extern "C" {
 #include <stdint.h>
 #include <stdbool.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 static const int SIGCHAIN_ALLOW_NORETURN = 0x1UL;
 
 /* The action of the sigchain. */
 struct signal_chain_action {
-  bool (*sca_sigaction)(int, siginfo_t*, void*);
-  sigset_t sca_mask;
-  int sca_flags;
+    bool (*sca_sigaction)(int, siginfo_t*, void*);
+    sigset_t sca_mask;
+    int sca_flags;
 };
 
 /* Mark the signal to the sigchain, add the special handler to the sigchain. */

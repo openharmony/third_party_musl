@@ -83,8 +83,8 @@ static void sigchain_rm_special_handler_009()
     add_special_signal_handler(SIGHUP, &sighup);
 
     sigset_t set = {0};
-    int signo[2] = {SIGSEGV, SIGHUP};
-    SIGCHIAN_TEST_SET_MASK(set, "sigchain_rm_special_handler_009", signo, 2);
+    int signo[SIGCHIAN_TEST_SIGNAL_NUM_2] = {SIGSEGV, SIGHUP};
+    SIGCHAIN_TEST_SET_MASK(set, "sigchain_rm_special_handler_009", signo, SIGCHIAN_TEST_SIGNAL_NUM_2);
 
     remove_special_signal_handler(SIGHUP, sigchain_special_handler2);
     remove_special_signal_handler(SIGSEGV, sigchain_special_handler1);
