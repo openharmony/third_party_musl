@@ -21,15 +21,14 @@
 #include "functionalext.h"
 
 #define LIB_PATH "/data/tests/libc-test/src/libldso_cfi_test_lib.so"
-#define BAD_LIB_PATH "/data/tests/libc-test/src/libldso_cfi_test_bad_lib.so"
 
 struct dso {
-	char *mock;
+    char *mock;
     unsigned char *map;
-	size_t map_len;
+    size_t map_len;
 };
 
-extern int init_cfi_shadow(struct dso *dso_list);
+extern int init_cfi_shadow(struct dso *dso_list, struct dso *ldso);
 extern int map_dso_to_cfi_shadow(struct dso *dso);
 extern void unmap_dso_from_cfi_shadow(struct dso *dso);
 extern void __cfi_slowpath(uint64_t CallSiteTypeId, void *Ptr);
@@ -62,7 +61,7 @@ static void test_func() {}
 void cfi_init_test_0001(void)
 {
     printf("["__FILE__"][Line: %d][%s]: entry\n", __LINE__, __func__);
-    EXPECT_EQ("cfi_init_test_0001", init_cfi_shadow(NULL), 0);
+    EXPECT_EQ("cfi_init_test_0001", init_cfi_shadow(NULL, NULL), 0);
 }
 
 /**
@@ -88,7 +87,7 @@ void cfi_init_test_0003(void)
 }
 
 /**
- * @tc.name      : cfi_slowpath_function_test_0001
+ * @tc.name      : cfi_slowpath_function_test_0002
  * @tc.desc      : Loading a dso that contains __cfi_check() symbol, call the __cfi_slowpath() function with 
  *                 address inside the DSO, the __cfi_check() function is called.
  * @tc.level     : Level 1
@@ -96,6 +95,7 @@ void cfi_init_test_0003(void)
 void cfi_slowpath_function_test_0002(void)
 {
     printf("["__FILE__"][Line: %d][%s]: entry\n", __LINE__, __func__);
+    uint64_t expected_call_site_type_id = 20;
     void* handle = dlopen(LIB_PATH, RTLD_LAZY);
     EXPECT_PTRNE("cfi_slowpath_function_test_0002", handle, NULL);
 
@@ -107,8 +107,8 @@ void cfi_slowpath_function_test_0002(void)
 
     size_t count = (*get_count)();
 
-    __cfi_slowpath(20, (*get_global_address)());
-    EXPECT_EQ("cfi_slowpath_function_test_0002", 20, (*get_type_id)());
+    __cfi_slowpath(expected_call_site_type_id, (*get_global_address)());
+    EXPECT_EQ("cfi_slowpath_function_test_0002", expected_call_site_type_id, (*get_type_id)());
     EXPECT_EQ("cfi_slowpath_function_test_0002", (*get_global_address)(), (*get_address)());
     EXPECT_EQ("cfi_slowpath_function_test_0002", NULL, (*get_diag)());
     EXPECT_EQ("cfi_slowpath_function_test_0002", ++count, (*get_count)());
@@ -127,6 +127,8 @@ void cfi_slowpath_function_test_0002(void)
 void cfi_slowpath_function_test_0003(void)
 {
     printf("["__FILE__"][Line: %d][%s]: entry\n", __LINE__, __func__);
+    uint64_t expected_call_site_type_id = 30;
+    uint64_t unexpected_call_site_type_id = 40;
     void* handle = dlopen(LIB_PATH, RTLD_LAZY);
     EXPECT_PTRNE("cfi_slowpath_function_test_0003", handle, NULL);
 
@@ -136,10 +138,10 @@ void cfi_slowpath_function_test_0003(void)
     *(void **)(&get_diag) = dlsym(handle, "get_diag");
     *(void **)(&get_global_address) = dlsym(handle, "get_global_address");
 
-    __cfi_slowpath(30, (*get_global_address)());
+    __cfi_slowpath(expected_call_site_type_id, (*get_global_address)());
     size_t count = (*get_count)();
-    __cfi_slowpath(40, (void*)(&test_func));
-    EXPECT_EQ("cfi_slowpath_function_test_0003", 30, (*get_type_id)());
+    __cfi_slowpath(unexpected_call_site_type_id, (void*)(&test_func));
+    EXPECT_EQ("cfi_slowpath_function_test_0003", expected_call_site_type_id, (*get_type_id)());
     EXPECT_EQ("cfi_slowpath_function_test_0003", (*get_global_address)(), (*get_address)());
     EXPECT_EQ("cfi_slowpath_function_test_0003", NULL, (*get_diag)());
     EXPECT_EQ("cfi_slowpath_function_test_0003", count, (*get_count)());
@@ -156,13 +158,14 @@ void cfi_slowpath_function_test_0003(void)
 void cfi_slowpath_function_test_0004(void)
 {
     printf("["__FILE__"][Line: %d][%s]: entry\n", __LINE__, __func__);
+    uint64_t call_site_type_id = 30;
     void* handle = dlopen(LIB_PATH, RTLD_LAZY);
     EXPECT_PTRNE("cfi_slowpath_function_test_0004", handle, NULL);
 
     *(void **)(&get_count) = dlsym(handle, "get_count");
 
     size_t count = (*get_count)();
-    __cfi_slowpath(30, NULL);
+    __cfi_slowpath(call_site_type_id, NULL);
     EXPECT_EQ("cfi_slowpath_function_test_0004", count, (*get_count)());
     
     dlclose(handle);
@@ -173,12 +176,12 @@ void cfi_slowpath_function_test_0004(void)
  * @tc.name      : cfi_slowpath_function_test_0005
  * @tc.desc      : Loading a dso that contains __cfi_check() symbol, call the __cfi_slowpath() function with 
  *                 invalid address, coredump happened.
- *                 not called.
  * @tc.level     : Level 2
  */
 void cfi_slowpath_function_test_0005(void)
 {
     printf("["__FILE__"][Line: %d][%s]: entry\n", __LINE__, __func__);
+    uint64_t call_site_type_id = 30;
     void* handle = dlopen(LIB_PATH, RTLD_LAZY);
     EXPECT_PTRNE("cfi_slowpath_function_test_0005", handle, NULL);
 
@@ -192,12 +195,12 @@ void cfi_slowpath_function_test_0005(void)
     int status;
     pid_t pid;
     pid = fork();
-    if(pid > 0) {
+    if (pid > 0) {
         printf("["__FILE__"][Line: %d][%s]: parent process pid = %d\n", __LINE__, __func__, getppid());
         wait(&status);
-    } else if(pid == 0) {
+    } else if (pid == 0) {
         printf("["__FILE__"][Line: %d][%s]: child pid = %d\n", __LINE__, __func__, pid);
-        __cfi_slowpath(30, (void*)&count);
+        __cfi_slowpath(call_site_type_id, (void*)&count);
     } else {
         printf("["__FILE__"][Line: %d][%s]: fork failed!\n", __LINE__, __func__);
     }
@@ -214,6 +217,7 @@ void cfi_slowpath_function_test_0005(void)
 void cfi_slowpath_function_test_0006(void)
 {
     printf("["__FILE__"][Line: %d][%s]: entry\n", __LINE__, __func__);
+    uint64_t call_site_type_id = 50;
     void* handle = dlopen(LIB_PATH, RTLD_LAZY);
     EXPECT_PTRNE("cfi_slowpath_function_test_0006", handle, NULL);
 
@@ -224,7 +228,7 @@ void cfi_slowpath_function_test_0006(void)
     const size_t bss_size = 1024 * 1024;
 
     for (size_t i = 0; i < bss_size; ++i) {
-        __cfi_slowpath(50, (char*)buf_check + i);
+        __cfi_slowpath(call_site_type_id, (char*)buf_check + i);
         EXPECT_EQ("cfi_slowpath_function_test_0006", ++count, (*get_count)());
     }
 
@@ -240,12 +244,14 @@ void cfi_slowpath_function_test_0006(void)
 void cfi_slowpath_function_test_0007(void)
 {
     printf("["__FILE__"][Line: %d][%s]: entry\n", __LINE__, __func__);
+    uint64_t call_site_type_id1 = 10;
+    uint64_t call_site_type_id2 = 20;
     void* handle = dlopen(LIB_PATH, RTLD_LAZY);
     EXPECT_PTRNE("cfi_slowpath_function_test_0007", handle, NULL);
 
     *(void **)(&get_count) = dlsym(handle, "get_count");
     *(void **)(&get_global_address) = dlsym(handle, "get_global_address");
-    __cfi_slowpath(10, (*get_global_address)());
+    __cfi_slowpath(call_site_type_id1, (*get_global_address)());
 
     void* handle2 = dlopen(LIB_PATH, RTLD_LAZY);
     EXPECT_PTREQ("cfi_slowpath_function_test_0007", handle, handle2);
@@ -256,10 +262,10 @@ void cfi_slowpath_function_test_0007(void)
     *(void **)(&get_global_address) = dlsym(handle2, "get_global_address");
 
     size_t count = (*get_count)();
-    __cfi_slowpath(20, (*get_global_address)());
-    EXPECT_EQ("cfi_slowpath_function_test_0002", 20, (*get_type_id)());
-    EXPECT_EQ("cfi_slowpath_function_test_0002", (*get_global_address)(), (*get_address)());
-    EXPECT_EQ("cfi_slowpath_function_test_0002", ++count, (*get_count)());
+    __cfi_slowpath(call_site_type_id2, (*get_global_address)());
+    EXPECT_EQ("cfi_slowpath_function_test_0007", call_site_type_id2, (*get_type_id)());
+    EXPECT_EQ("cfi_slowpath_function_test_0007", (*get_global_address)(), (*get_address)());
+    EXPECT_EQ("cfi_slowpath_function_test_0007", ++count, (*get_count)());
 
     dlclose(handle);
     dlclose(handle2);
@@ -274,6 +280,7 @@ void cfi_slowpath_function_test_0007(void)
 void cfi_slowpath_function_test_0008(void)
 {
     printf("["__FILE__"][Line: %d][%s]: entry\n", __LINE__, __func__);
+    uint64_t call_site_type_id = 30;
     void* handle = dlopen(LIB_PATH, RTLD_LAZY);
     EXPECT_PTRNE("cfi_slowpath_function_test_0008", handle, NULL);
     *(void **)(&get_global_address) = dlsym(handle, "get_global_address");
@@ -282,12 +289,12 @@ void cfi_slowpath_function_test_0008(void)
     int status;
     pid_t pid;
     pid = fork();
-    if(pid > 0) {
+    if (pid > 0) {
         printf("["__FILE__"][Line: %d][%s]: parent process pid = %d\n", __LINE__, __func__, getppid());
         wait(&status);
-    } else if(pid == 0) {
+    } else if (pid == 0) {
         printf("["__FILE__"][Line: %d][%s]: child pid = %d\n", __LINE__, __func__, pid);
-        __cfi_slowpath(30, (*get_global_address)());
+        __cfi_slowpath(call_site_type_id, (*get_global_address)());
     } else {
         printf("["__FILE__"][Line: %d][%s]: fork failed!\n", __LINE__, __func__);
     }
@@ -303,20 +310,25 @@ void cfi_slowpath_function_test_0008(void)
 void cfi_slowpath_diag_function_test_0001(void)
 {
     printf("["__FILE__"][Line: %d][%s]: entry\n", __LINE__, __func__);
+    uint64_t call_site_type_id = 10;
+    uint64_t diag_info = 0;
     void* handle = dlopen(LIB_PATH, RTLD_LAZY);
-    EXPECT_PTRNE("cfi_slowpath_diag_function_test_0002", handle, NULL);
+    EXPECT_PTRNE("cfi_slowpath_diag_function_test_0001", handle, NULL);
 
     *(void **)(&get_count) = dlsym(handle, "get_count");
+    *(void **)(&get_type_id) = dlsym(handle, "get_type_id");
+    *(void **)(&get_diag) = dlsym(handle, "get_diag");
     *(void **)(&get_global_address) = dlsym(handle, "get_global_address");
 
     size_t count = (*get_count)();
-    void* diag_ptr = (void*)(5678);
 
-    __cfi_slowpath_diag(10, NULL, diag_ptr);
-    EXPECT_EQ("cfi_slowpath_diag_function_test_0002", count, (*get_count)());
+    __cfi_slowpath_diag(call_site_type_id, NULL, &diag_info);
+    EXPECT_EQ("cfi_slowpath_diag_function_test_0001", count, (*get_count)());
 
-    __cfi_slowpath_diag(10, (*get_global_address)(), NULL);
-    EXPECT_EQ("cfi_slowpath_diag_function_test_0002", ++count, (*get_count)());
+    __cfi_slowpath_diag(call_site_type_id, (*get_global_address)(), &diag_info);
+    EXPECT_EQ("cfi_slowpath_diag_function_test_0001", ++count, (*get_count)());
+    EXPECT_EQ("cfi_slowpath_diag_function_test_0001", call_site_type_id, (*get_type_id)());
+    EXPECT_EQ("cfi_slowpath_diag_function_test_0001", (*get_diag)(), &diag_info);
 
     dlclose(handle);
     printf("["__FILE__"][Line: %d][%s]: end\n", __LINE__, __func__);
@@ -372,7 +384,7 @@ TEST_FUN G_Fun_Array[] = {
 int main(void)
 {
     printf("["__FILE__"][Line: %d][%s]: entry\n", __LINE__, __func__);
-    int num = sizeof(G_Fun_Array)/sizeof(TEST_FUN);
+    int num = sizeof(G_Fun_Array) / sizeof(TEST_FUN);
     for (int pos = 0; pos < num; ++pos) {
         G_Fun_Array[pos]();
     }
