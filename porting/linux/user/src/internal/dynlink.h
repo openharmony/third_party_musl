@@ -228,6 +228,7 @@ void *laddr(const struct dso *p, size_t v);
 #endif
 
 void *addr2dso(size_t a);
+size_t count_syms(struct dso *p);
 struct sym_info_pair gnu_hash(const char *s0);
 struct symdef find_sym_impl(
 	struct dso *dso, struct verinfo *verinfo, struct sym_info_pair s_info_p, int need_def, ns_t *ns);

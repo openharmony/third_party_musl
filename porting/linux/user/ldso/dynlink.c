@@ -1345,7 +1345,7 @@ static void *map_library(int fd, struct dso *dso, struct reserved_address_params
 
 	/* we will find a LIBRARY_ALIGNMENT aligned address as the start of dso
 	 * so we need a tmp_map_len as map_len + LIBRARY_ALIGNMENT to make sure
-	 * we have enough space to shift the dso to the correct location*/
+	 * we have enough space to shift the dso to the correct location. */
 	size_t tmp_map_len = ALIGN(map_len, LIBRARY_ALIGNMENT) + LIBRARY_ALIGNMENT - PAGE_SIZE;
 
 	/* if reserved_params exists, we should use start_addr as prefered result to do the mmap operation */
@@ -1574,7 +1574,7 @@ static void decode_dyn(struct dso *p)
 		p->verneed = laddr(p, *dyn);
 }
 
-static size_t count_syms(struct dso *p)
+size_t count_syms(struct dso *p)
 {
 	if (p->hashtab) return p->hashtab[1];
 
@@ -2897,7 +2897,7 @@ void __dls3(size_t *sp, size_t *auxv)
 		libc.tls_size = tmp_tls_size;
 	}
 
-	if (init_cfi_shadow(head, ldso.name) == CFI_FAILED) {
+	if (init_cfi_shadow(head, &ldso) == CFI_FAILED) {
 		error("[%s] init_cfi_shadow failed: %m", __FUNCTION__);
 	}
 
@@ -4389,7 +4389,7 @@ static bool task_map_library(struct loadtask *task, struct reserved_address_para
 
 	/* we will find a LIBRARY_ALIGNMENT aligned address as the start of dso
 	 * so we need a tmp_map_len as map_len + LIBRARY_ALIGNMENT to make sure
-	 * we have enough space to shift the dso to the correct location*/
+	 * we have enough space to shift the dso to the correct location. */
 	size_t tmp_map_len = ALIGN(map_len, LIBRARY_ALIGNMENT) + LIBRARY_ALIGNMENT - PAGE_SIZE;
 
 	/* if reserved_params exists, we should use start_addr as prefered result to do the mmap operation */
