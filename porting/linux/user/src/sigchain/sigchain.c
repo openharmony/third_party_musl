@@ -30,9 +30,12 @@ extern int __libc_sigaction(int sig, const struct sigaction *restrict sa,
 #define SIGCHAIN_LOG_TAG "SIGCHAIN"
 
 #if (defined(OHOS_ENABLE_PARAMETER) || defined(ENABLE_MUSL_LOG))
-#define SIGCHAIN_PRINT_ERROR(...) ((void)HiLogAdapterPrint(LOG_CORE, LOG_ERROR, SIGCHAIN_LOG_DOMAIN, SIGCHAIN_LOG_TAG, __VA_ARGS__))
-#define SIGCHAIN_PRINT_INFO(...) ((void)HiLogAdapterPrint(LOG_CORE, LOG_INFO, SIGCHAIN_LOG_DOMAIN, SIGCHAIN_LOG_TAG, __VA_ARGS__))
-#define SIGCHAIN_PRINT_DEBUG(...) ((void)HiLogAdapterPrint(LOG_CORE, LOG_DEBUG, SIGCHAIN_LOG_DOMAIN, SIGCHAIN_LOG_TAG, __VA_ARGS__))
+#define SIGCHAIN_PRINT_ERROR(...) ((void)HiLogAdapterPrint(LOG_CORE, LOG_ERROR, \
+    SIGCHAIN_LOG_DOMAIN, SIGCHAIN_LOG_TAG, __VA_ARGS__))
+#define SIGCHAIN_PRINT_INFO(...) ((void)HiLogAdapterPrint(LOG_CORE, LOG_INFO, \
+    SIGCHAIN_LOG_DOMAIN, SIGCHAIN_LOG_TAG, __VA_ARGS__))
+#define SIGCHAIN_PRINT_DEBUG(...) ((void)HiLogAdapterPrint(LOG_CORE, LOG_DEBUG, \
+    SIGCHAIN_LOG_DOMAIN, SIGCHAIN_LOG_TAG, __VA_ARGS__))
 #else
 #define SIGCHAIN_PRINT_ERROR(...)
 #define SIGCHAIN_PRINT_INFO(...)
@@ -71,7 +74,8 @@ void create_pthread_key(void)
   * @brief Get the key of the signal thread.
   * @retval int32_t, the value of the sigchain key.
   */
-static pthread_key_t get_handling_signal_key() {
+static pthread_key_t get_handling_signal_key()
+{
     call_once(&g_flag, create_pthread_key);
     return g_sigchain_key;
 }
@@ -80,7 +84,8 @@ static pthread_key_t get_handling_signal_key() {
   * @brief Get the value of the sigchain key
   * @retval bool, true if set the value of the key，or false.
   */
-static bool get_handling_signal() {
+static bool get_handling_signal()
+{
     void *result = pthread_getspecific(get_handling_signal_key());
     if (result == NULL) {
         return false;
@@ -120,14 +125,14 @@ bool ismarked(int signo)
 static void signal_chain_handler(int signo, siginfo_t* siginfo, void* ucontext_raw)
 {
     SIGCHAIN_PRINT_DEBUG("%{public}s signo: %{public}d", __func__, signo);
-    /* Try to call the special handlers first. */
-    /* If one of them crashes, we'll reenter this handler and pass that crash onto the user handler. */
-    if (!get_handling_signal()){
+    /* First call special handler. */
+    /* If a process crashes, the sigchain'll call the corresponding  handler */
+    if (!get_handling_signal()) {
         for (int i = 0; i < SIGNAL_CHAIN_SPECIAL_ACTION_MAX; i++) {
             if (sig_chains[signo - 1].sca_special_actions[i].sca_sigaction == NULL) {
                 break;
             }
-            /* The native bridge signal handler might not return. */
+            /* The special handler might not return. */
             bool noreturn = (sig_chains[signo - 1].sca_special_actions[i].sca_flags &
                              SIGCHAIN_ALLOW_NORETURN);
             sigset_t previous_mask;
@@ -149,7 +154,7 @@ static void signal_chain_handler(int signo, siginfo_t* siginfo, void* ucontext_r
             set_handling_signal(previous_value);
         }
     }
-
+    /* Then Call the user's signal handler */
     int sa_flags = sig_chains[signo - 1].sig_action.sa_flags;
     ucontext_t* ucontext = (ucontext_t*)(ucontext_raw);
 
@@ -289,7 +294,7 @@ void add_special_signal_handler(int signo, struct signal_chain_action* sa)
         return;
     }
 
-    // Set the special handler.
+    // Add the special hander to the sigchain
     add_special_handler(signo, sa);
     mark_signal_to_sigchain(signo);
 }
@@ -307,7 +312,7 @@ void remove_special_signal_handler(int signo, bool (*fn)(int, siginfo_t*, void*)
         SIGCHAIN_PRINT_ERROR("%{public}s Invalid signal %{public}d", __func__, signo);
         return;
     }
-    // remove the special handler.
+    // remove the special handler from the sigchain.
     rm_special_handler(signo, fn);
 }
 
@@ -351,7 +356,7 @@ bool intercept_sigaction(int signo, const struct sigaction *restrict sa,
 void intercept_sigprocmask(int how, sigset_t *restrict set)
 {
     SIGCHAIN_PRINT_DEBUG("%{public}s how: %{public}d", __func__, how);
-    // Forward directly to the pthread_sigmask When this sigchain is inside a signal handler
+    // Forward directly to the pthread_sigmask When this sigchain is handling a signal.
     if (get_handling_signal()) {
         return;
     }

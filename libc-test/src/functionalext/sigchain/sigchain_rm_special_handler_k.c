@@ -18,6 +18,7 @@
 #include <stdlib.h>
 #include "test.h"
 #include "functionalext.h"
+#include "sigchain_util.h"
 
 /**
  * @brief the special handler
@@ -124,16 +125,16 @@ static void signal_handler(int signo)
         EXPECT_EQ("sigchain_rm_special_handler_011", signo, SIGURG);
     } else if (signo == SIGSYS) {
         EXPECT_EQ("sigchain_rm_special_handler_011", signo, SIGSYS);
-    } else if (signo == 37) {
-        EXPECT_EQ("sigchain_rm_special_handler_011", signo, 37);
-    } else if (signo == 43) {
-        EXPECT_EQ("sigchain_rm_special_handler_011", signo, 43);
-    } else if (signo == 50) {
-        EXPECT_EQ("sigchain_rm_special_handler_011", signo, 50);
-    } else if (signo == 56) {
-        EXPECT_EQ("sigchain_rm_special_handler_011", signo, 56);
+    } else if (signo == SIGCHAIN_SIGNAL_37) {
+        EXPECT_EQ("sigchain_rm_special_handler_011", signo, SIGCHAIN_SIGNAL_37);
+    } else if (signo == SIGCHAIN_SIGNAL_43) {
+        EXPECT_EQ("sigchain_rm_special_handler_011", signo, SIGCHAIN_SIGNAL_43);
+    } else if (signo == SIGCHAIN_SIGNAL_50) {
+        EXPECT_EQ("sigchain_rm_special_handler_011", signo, SIGCHAIN_SIGNAL_50);
+    } else if (signo == SIGCHAIN_SIGNAL_56) {
+        EXPECT_EQ("sigchain_rm_special_handler_011", signo, SIGCHAIN_SIGNAL_56);
     } else {
-        EXPECT_EQ("sigchain_rm_special_handler_011", signo, 64);
+        EXPECT_EQ("sigchain_rm_special_handler_011", signo, SIGCHAIN_SIGNAL_64);
     }
 }
 
@@ -150,11 +151,11 @@ static void sigchain_rm_special_handler_011()
     signal(SIGSEGV, signal_handler);
     signal(SIGURG, signal_handler);
     signal(SIGSYS, signal_handler);
-    signal(37, signal_handler);
-    signal(43, signal_handler);
-    signal(50, signal_handler);
-    signal(56, signal_handler);
-    signal(64, signal_handler);
+    signal(SIGCHAIN_SIGNAL_37, signal_handler);
+    signal(SIGCHAIN_SIGNAL_43, signal_handler);
+    signal(SIGCHAIN_SIGNAL_50, signal_handler);
+    signal(SIGCHAIN_SIGNAL_56, signal_handler);
+    signal(SIGCHAIN_SIGNAL_64, signal_handler);
 
     struct signal_chain_action sigsegv = {
         .sca_sigaction = sigchain_special_handler1,
@@ -196,46 +197,46 @@ static void sigchain_rm_special_handler_011()
         .sca_mask = {},
         .sca_flags = 0,
     };
-    add_special_signal_handler(37, &sigsegv5);
+    add_special_signal_handler(SIGCHAIN_SIGNAL_37, &sigsegv5);
 
     struct signal_chain_action sigsegv6 = {
         .sca_sigaction = sigchain_special_handler7,
         .sca_mask = {},
         .sca_flags = 0,
     };
-    add_special_signal_handler(43, &sigsegv6);
+    add_special_signal_handler(SIGCHAIN_SIGNAL_43, &sigsegv6);
 
     struct signal_chain_action sigsegv7 = {
         .sca_sigaction = sigchain_special_handler8,
         .sca_mask = {},
         .sca_flags = 0,
     };
-    add_special_signal_handler(50, &sigsegv7);
+    add_special_signal_handler(SIGCHAIN_SIGNAL_50, &sigsegv7);
 
     struct signal_chain_action sigsegv8 = {
         .sca_sigaction = sigchain_special_handler9,
         .sca_mask = {},
         .sca_flags = 0,
     };
-    add_special_signal_handler(56, &sigsegv8);
+    add_special_signal_handler(SIGCHAIN_SIGNAL_56, &sigsegv8);
 
     struct signal_chain_action sigsegv9 = {
         .sca_sigaction = sigchain_special_handler10,
         .sca_mask = {},
         .sca_flags = 0,
     };
-    add_special_signal_handler(64, &sigsegv9);
+    add_special_signal_handler(SIGCHAIN_SIGNAL_64, &sigsegv9);
 
     remove_special_signal_handler(SIGHUP, sigchain_special_handler1);
     remove_special_signal_handler(SIGABRT, sigchain_special_handler2);
     remove_special_signal_handler(SIGSEGV, sigchain_special_handler3);
     remove_special_signal_handler(SIGURG, sigchain_special_handler4);
     remove_special_signal_handler(SIGSYS, sigchain_special_handler5);
-    remove_special_signal_handler(37, sigchain_special_handler6);
-    remove_special_signal_handler(43, sigchain_special_handler7);
-    remove_special_signal_handler(50, sigchain_special_handler8);
-    remove_special_signal_handler(56, sigchain_special_handler9);
-    remove_special_signal_handler(64, sigchain_special_handler10);
+    remove_special_signal_handler(SIGCHAIN_SIGNAL_37, sigchain_special_handler6);
+    remove_special_signal_handler(SIGCHAIN_SIGNAL_43, sigchain_special_handler7);
+    remove_special_signal_handler(SIGCHAIN_SIGNAL_50, sigchain_special_handler8);
+    remove_special_signal_handler(SIGCHAIN_SIGNAL_56, sigchain_special_handler9);
+    remove_special_signal_handler(SIGCHAIN_SIGNAL_64, sigchain_special_handler10);
 }
 
 int main(void)
@@ -246,10 +247,10 @@ int main(void)
     raise(SIGSEGV);
     raise(SIGURG);
     raise(SIGSYS);
-    raise(37);
-    raise(43);
-    raise(50);
-    raise(56);
-    raise(64);
+    raise(SIGCHAIN_SIGNAL_37);
+    raise(SIGCHAIN_SIGNAL_43);
+    raise(SIGCHAIN_SIGNAL_50);
+    raise(SIGCHAIN_SIGNAL_56);
+    raise(SIGCHAIN_SIGNAL_64);
     return t_status;
 }

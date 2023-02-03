@@ -88,8 +88,8 @@ static void sigchain_intercept_sigprocmask_004()
     add_special_signal_handler(SIGSEGV, &sigsegv1);
 
     sigset_t set = {0};
-    int signo[2] = {SIGHUP, SIGSEGV};
-    SIGCHIAN_TEST_SET_MASK(set, "sigchain_intercept_sigprocmask_004", signo, 2);
+    int signo[SIGCHIAN_TEST_SIGNAL_NUM_2] = {SIGHUP, SIGSEGV};
+    SIGCHAIN_TEST_SET_MASK(set, "sigchain_intercept_sigprocmask_004", signo, SIGCHIAN_TEST_SIGNAL_NUM_2);
 }
 
 void thread_func(void *data)

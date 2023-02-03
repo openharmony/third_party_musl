@@ -18,6 +18,7 @@
 #include <stdlib.h>
 #include "test.h"
 #include "functionalext.h"
+#include "sigchain_util.h"
 
 /**
  * @brief the special handler
@@ -56,10 +57,10 @@ static void sigchain_rm_special_handler_013()
         .sca_mask = {},
         .sca_flags = 0,
     };
-    add_special_signal_handler(65, &sigsegv1);
+    add_special_signal_handler(SIGCHAIN_SIGNAL_65, &sigsegv1);
 
     remove_special_signal_handler(0, sigchain_special_handler);
-    remove_special_signal_handler(65, sigchain_special_handler1);
+    remove_special_signal_handler(SIGCHAIN_SIGNAL_65, sigchain_special_handler1);
 }
 
 int main(void)
