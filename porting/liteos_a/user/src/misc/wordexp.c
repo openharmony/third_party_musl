@@ -115,7 +115,7 @@ static int do_wordexp(const char *s, wordexp_t *we, int flags)
 		_exit(1);
 	}
 	close(p[1]);
-	
+
 	f = fdopen(p[0], "r");
 	if (!f) {
 		close(p[0]);
