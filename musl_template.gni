@@ -730,13 +730,6 @@ template("musl_libs") {
       "//build/config/compiler:compiler",
       ":soft_hook",
     ]
-
-    cflags = [
-      "-mllvm",
-      "--instcombine-max-iterations=0",
-      "-ffp-contract=fast",
-      "-O3",
-    ]
   }
 
   source_set("soft_musl_jemalloc") {
