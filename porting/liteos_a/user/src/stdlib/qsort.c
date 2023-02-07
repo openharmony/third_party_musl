@@ -19,15 +19,16 @@
  * IN THE SOFTWARE.
  */
 
+#define _BSD_SOURCE
 #include <stdlib.h>
 #include <string.h>
 
-typedef int (*cmpfun)(const void *, const void *);
+typedef int (*cmpfun)(const void *, const void *, void *);
 
-#define MIDDLE_ONE(a, b, c)                                      \
-    (*cmp)(a, b) < 0 ?                                           \
-    ((*cmp)(b, c) < 0 ? (b) : ((*cmp)(a, c) < 0 ? (c) : (a))):   \
-    ((*cmp)(b, c) > 0 ? (b) : ((*cmp)(a, c) < 0 ? (a) : (c)))
+#define MIDDLE_ONE(a, b, c, arg)                                    \
+    cmp(a, b, arg) < 0 ?                                            \
+    (cmp(b, c, arg) < 0 ? (b) : (cmp(a, c, arg) < 0 ? (c) : (a))):  \
+    (cmp(b, c, arg) > 0 ? (b) : (cmp(a, c, arg) < 0 ? (a) : (c)))
 
 #define SWAPN(a, b, n)                                           \
     do {                                                         \
@@ -42,7 +43,7 @@ typedef int (*cmpfun)(const void *, const void *);
         }                                                        \
     } while (0)
 
-void qsort(void *base, size_t nel, size_t width, cmpfun cmp)
+void __qsort_r(void *base, size_t nel, size_t width, cmpfun cmp, void *arg)
 {
     char *start, *end, *m, *l, *r;
     int i, j, swapflag = 0;
@@ -60,7 +61,7 @@ insertqort:
         for (l = start + width; l <= end; l += width) {
             memcpy(temp, l, width);
             for (m = l - width; m >= start; m -= width) {
-                if ((*cmp)(m, temp) > 0) {
+                if (cmp(m, temp, arg) > 0) {
                     memcpy((m + width), m, width);
                 } else {
                     break;
@@ -73,7 +74,7 @@ insertqort:
 
     // quick sort
     m = start + (nel >> 1) * width;
-    m = MIDDLE_ONE(start, m, end);
+    m = MIDDLE_ONE(start, m, end, arg);
     if (m != start) {
         SWAPN(start, m, width);
         m = start;
@@ -82,10 +83,10 @@ insertqort:
     r = end;
 
     while (l <= r) {
-        while (l <= r && (*cmp)(l, m) < 0) {
+        while (l <= r && cmp(l, m, arg) < 0) {
             l += width;
         }
-        while (l <= r && (*cmp)(r, m) >= 0) {
+        while (l <= r && cmp(r, m, arg) >= 0) {
             r -= width;
         }
         if (l < r) {
@@ -102,7 +103,7 @@ insertqort:
     }
 
     if (m - start > end - m) {
-        qsort(start, (m - start) / width, width, (*cmp));
+        __qsort_r(start, (m - start) / width, width, cmp, arg);
         if (m == end) {
             return;
         }
@@ -110,7 +111,7 @@ insertqort:
         nel = (end - start) / width + 1;
         goto loop;
     } else {
-        qsort(m + width, (end - m) / width, width, (*cmp));
+        __qsort_r(m + width, (end - m) / width, width, cmp, arg);
         if (m == start) {
             return;
         }
@@ -119,3 +120,5 @@ insertqort:
         goto loop;
     }
 }
+
+weak_alias(__qsort_r, qsort_r);

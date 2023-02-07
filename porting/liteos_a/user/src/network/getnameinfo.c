@@ -70,7 +70,7 @@ static void reverse_hosts(char *buf, const unsigned char *a, unsigned scopeid, i
 
 		if (memcmp(a, iplit.addr, 16) || iplit.scopeid != scopeid)
 			continue;
-			
+
 		for (; *p && isspace(*p); p++);
 		for (z=p; *z && !isspace(*z); z++);
 		*z = 0;
@@ -115,7 +115,7 @@ static int dns_parse_callback(void *c, int rr, const void *data, int len, const 
 	    data, c, 256) <= 0)
 		*(char *)c = 0;
 	return 0;
-	
+
 }
 
 int getnameinfo(const struct sockaddr *restrict sa, socklen_t sl,
@@ -158,6 +158,7 @@ int getnameinfo(const struct sockaddr *restrict sa, socklen_t sl,
 			unsigned char query[18+PTR_MAX], reply[512];
 			int qlen = __res_mkquery(0, ptr, 1, RR_PTR,
 				0, 0, 0, query, sizeof query);
+			query[3] = 0; /* don't need AD flag */
 			int rlen = __res_send(query, qlen, reply, sizeof reply);
 			buf[0] = 0;
 			if (rlen > 0)
