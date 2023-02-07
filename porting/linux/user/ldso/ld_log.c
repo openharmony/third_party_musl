@@ -53,40 +53,26 @@ static char *get_app_name(char *buf, size_t length)
     return app;
 }
 
-static bool get_ld_log_app_value(char *buffer, uint32_t *length)
+static bool get_ld_log_value()
 {
     char buf[PROCESS_NAME_LEN];
     char *path = get_app_name(buf, PROCESS_NAME_LEN);
     if (!path) {
-        buffer[0] = 0;
         return false;
     }
 
     char app_param_name[PROCESS_NAME_LEN] = "musl.log.ld.app.";
     strcat(app_param_name, path);
-    if (SystemReadParam(app_param_name, buffer, length) == 0) {
-        buffer[*length] = 0;
-        return true;
+    static CachedHandle app_param_handle = NULL;
+    static CachedHandle all_param_handle = NULL;
+    if (app_param_handle == NULL) {
+        app_param_handle = CachedParameterCreate(app_param_name, "false");
     }
-    buffer[0] = 0;
-    return false;
-}
-
-static bool get_ld_log_all_value(char *buffer, uint32_t *length)
-{
-    if (SystemReadParam("musl.log.ld.all", buffer, length) == 0) {
-        buffer[*length] = 0;
-        return true;
+    if (all_param_handle == NULL) {
+        all_param_handle = CachedParameterCreate("musl.log.ld.all", "false");
     }
-    buffer[0] = 0;
-    return false;
+    return (get_bool_sysparam(app_param_handle) || get_bool_sysparam(all_param_handle));
 }
-
-static inline void assign_ld_log_enable(char *param_value, const char *expect_value)
-{
-    ld_log_enable = (strcmp(param_value, expect_value) == 0);
-}
-
 #endif
 
 void ld_log_reset()
@@ -96,21 +82,7 @@ void ld_log_reset()
         ld_log_enable = false;
         return;
     }
-
-    char app_param_value[SYSPARAM_LENGTH];
-    uint32_t app_param_value_len = SYSPARAM_LENGTH;
-    char all_param_value[SYSPARAM_LENGTH];
-    uint32_t all_param_value_len = SYSPARAM_LENGTH;
-
-    if (get_ld_log_app_value(app_param_value, &app_param_value_len)) {
-        assign_ld_log_enable(app_param_value, "true");
-    } else {
-        if (get_ld_log_all_value(all_param_value, &all_param_value_len)) {
-            assign_ld_log_enable(all_param_value, "true");
-        } else {
-            ld_log_enable = false;
-        }
-    }
+    ld_log_enable = get_ld_log_value();
 #else
     ld_log_enable = is_musl_log_enable();
 #endif
