@@ -208,15 +208,15 @@ static bool init_munmap_function(void* malloc_shared_library_handler, MallocMunm
 	return true;
 }
 
-static bool init_memorytag_function(void* malloc_shared_library_handler, const char* prefix)
+static bool init_memtrace_function(void* malloc_shared_library_handler, const char* prefix)
 {
 	char symbol[MAX_SYM_NAME_SIZE];
-	snprintf(symbol, sizeof(symbol), "%s_%s", prefix, "memtag");
-	__mem_typeset = (mtypeset)(dlsym(malloc_shared_library_handler, symbol));
-
-	if (__mem_typeset == NULL) {
+	snprintf(symbol, sizeof(symbol), "%s_%s", prefix, "memtrace");
+	mmemtrace func = (mmemtrace)(dlsym(malloc_shared_library_handler, symbol));
+	if (func == NULL) {
 		return false;
 	}
+	atomic_store_explicit(&__mem_trace, (volatile long long)func, memory_order_seq_cst);
 	return true;
 }
 
@@ -273,7 +273,7 @@ static bool init_hook_functions(void* shared_library_handler, struct MallocDispa
 	if (!init_realloc_function(shared_library_handler, &table->realloc, prefix)) {
 		return false;
 	}
-	if (!init_memorytag_function(shared_library_handler, prefix)) {
+	if (!init_memtrace_function(shared_library_handler, prefix)) {
 		return false;
 	}
 	if (!init_malloc_usable_size_function(shared_library_handler, &table->malloc_usable_size, prefix)) {
@@ -610,6 +610,7 @@ __attribute__((constructor(1))) static void __musl_initialize()
 {
 	atomic_store_explicit(&__hook_enable_hook_flag, (volatile bool)false, memory_order_seq_cst);
 	atomic_store_explicit(&__memleak_hook_flag, (volatile bool)false, memory_order_seq_cst);
+	atomic_store_explicit(&__mem_trace, (volatile const long long)NULL, memory_order_seq_cst);
 	__set_default_malloc();
 	char hook_process_path[MAX_PROC_NAME_SIZE + 1] = {0};
 	parse_hook_variable(&__hook_mode, hook_process_path, sizeof(hook_process_path) - 1);

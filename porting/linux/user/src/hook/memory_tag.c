@@ -1,3 +1,3 @@
 #include "memory_tag.h"
 
-mtypeset __mem_typeset = NULL;
+volatile atomic_llong __mem_trace;
