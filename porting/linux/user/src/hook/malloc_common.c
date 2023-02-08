@@ -9,44 +9,26 @@
 
 void* malloc(size_t bytes)
 {
-	struct MallocDispatchType* dispatch_table = (struct MallocDispatchType *)atomic_load_explicit(
-		&__musl_libc_globals.current_dispatch_table, memory_order_acquire);
+	volatile const struct MallocDispatchType* dispatch_table = get_current_dispatch_table();
 	if (__predict_false(dispatch_table != NULL)) {
-		if (__get_memleak_hook_flag()) {
-			return dispatch_table->malloc(bytes);
-		}
-		if (!__get_global_hook_flag()) {
-			return MuslFunc(malloc)(bytes);
-		}
-		if (!__get_hook_flag()) {
-			return MuslFunc(malloc)(bytes);
-		}
-		return dispatch_table->malloc(bytes);
+		void*ret = dispatch_table->malloc(bytes);
+		return ret;
 	}
-	return MuslFunc(malloc)(bytes);
+	void* result = MuslMalloc(malloc)(bytes);
+	if (__predict_false(result == NULL)) {
+		//__musl_log(__MUSL_LOG_WARN, "malloc(%zu) failed: returning null pointer\n", bytes);
+	}
+	return result;
 }
 
 void free(void* mem)
 {
-	struct MallocDispatchType* dispatch_table = (struct MallocDispatchType *)atomic_load_explicit(
-		&__musl_libc_globals.current_dispatch_table, memory_order_acquire);
+	volatile const struct MallocDispatchType* dispatch_table = get_current_dispatch_table();
 	if (__predict_false(dispatch_table != NULL)) {
-		if (__get_memleak_hook_flag()) {
-			dispatch_table->free(mem);
-			return;
-		}
-		if (!__get_global_hook_flag()) {
-			MuslFunc(free)(mem);
-			return;
-		}
-		if (!__get_hook_flag()) {
-			MuslFunc(free)(mem);
-			return;
-		}
 		dispatch_table->free(mem);
-		return;
+	} else {
+		MuslMalloc(free)(mem);
 	}
-	MuslFunc(free)(mem);
 }
 
 void* mmap(void* addr, size_t length, int prot, int flags, int fd, off_t offset)
