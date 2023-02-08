@@ -25,7 +25,7 @@
  */
 static bool sigchain_special_handler1(int signo, siginfo_t *siginfo, void *ucontext_raw)
 {
-    EXPECT_EQ("sigchain_add_special_handler_005", signo, SIGSEGV);
+    EXPECT_EQ("sigchain_add_special_handler_005", signo, SIGABRT);
     return false;
 }
 
@@ -34,7 +34,7 @@ static bool sigchain_special_handler1(int signo, siginfo_t *siginfo, void *ucont
  */
 static bool sigchain_special_handler2(int signo, siginfo_t *siginfo, void *ucontext_raw)
 {
-    EXPECT_EQ("sigchain_add_special_handler_005", signo, SIGSEGV);
+    EXPECT_EQ("sigchain_add_special_handler_005", signo, SIGABRT);
     return false;
 }
 
@@ -43,7 +43,7 @@ static bool sigchain_special_handler2(int signo, siginfo_t *siginfo, void *ucont
  */
 static bool sigchain_special_handler3(int signo, siginfo_t *siginfo, void *ucontext_raw)
 {
-    EXPECT_FALSE("sigchain_add_special_handler_005", false);
+    EXPECT_FALSE("sigchain_add_special_handler_005", true);
     return false;
 }
 
@@ -52,7 +52,7 @@ static bool sigchain_special_handler3(int signo, siginfo_t *siginfo, void *ucont
  */
 static void signal_handler(int signo)
 {
-    EXPECT_EQ("sigchain_add_special_handler_005", signo, SIGSEGV);
+    EXPECT_EQ("sigchain_add_special_handler_005", signo, SIGABRT);
 }
 
 /**
@@ -65,37 +65,30 @@ static void sigchain_add_special_handler_005()
 {
     signal(SIGSEGV, signal_handler);
 
-    struct signal_chain_action sigsegv = {
+    struct signal_chain_action sigabrt = {
         .sca_sigaction = sigchain_special_handler1,
         .sca_mask = {},
         .sca_flags = 0,
     };
-    add_special_signal_handler(SIGSEGV, &sigsegv);
+    add_special_signal_handler(SIGABRT, &sigabrt);
 
-    struct signal_chain_action sigsegv1 = {
+    struct signal_chain_action sigabrt1 = {
         .sca_sigaction = sigchain_special_handler2,
         .sca_mask = {},
         .sca_flags = 0,
     };
-    add_special_signal_handler(SIGSEGV, &sigsegv1);
+    add_special_signal_handler(SIGABRT, &sigabrt1);
 
-    struct signal_chain_action sigsegv2 = {
+    struct signal_chain_action sigabrt2 = {
         .sca_sigaction = sigchain_special_handler3,
         .sca_mask = {},
         .sca_flags = 0,
     };
-    add_special_signal_handler(SIGSEGV, &sigsegv2);
-
-    sigset_t set = {0};
-    int signo[SIGCHIAN_TEST_SIGNAL_NUM_1] = {SIGSEGV};
-    SIGCHAIN_TEST_SET_MASK(set, "sigchain_add_special_handler_005", signo, SIGCHIAN_TEST_SIGNAL_NUM_1);
+    add_special_signal_handler(SIGABRT, &sigabrt2);
 }
 
 int main(void)
 {
     sigchain_add_special_handler_005();
-    raise(SIGSEGV);
-    raise(SIGSEGV);
-    raise(SIGSEGV);
     return t_status;
 }

@@ -25,7 +25,7 @@
  */
 static void signal_handler1(int signo)
 {
-    EXPECT_FALSE("sigchain_intercept_sigprocmask_001", false);
+    EXPECT_FALSE("sigchain_intercept_sigprocmask_001", true);
 }
 
 /**
@@ -33,7 +33,7 @@ static void signal_handler1(int signo)
  */
 static void signal_handler2(int signo)
 {
-    EXPECT_FALSE("sigchain_intercept_sigprocmask_001", false);
+    EXPECT_FALSE("sigchain_intercept_sigprocmask_001", true);
 }
 
 /**

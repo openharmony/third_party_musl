@@ -19,6 +19,7 @@
 #include <errno.h>
 #include <threads.h>
 #include <hilog_adapter.h>
+#include <stdlib.h>
 
 extern int __libc_sigaction(int sig, const struct sigaction *restrict sa,
                             struct sigaction *restrict old);
@@ -36,11 +37,19 @@ extern int __libc_sigaction(int sig, const struct sigaction *restrict sa,
     SIGCHAIN_LOG_DOMAIN, SIGCHAIN_LOG_TAG, __VA_ARGS__))
 #define SIGCHAIN_PRINT_DEBUG(...) ((void)HiLogAdapterPrint(LOG_CORE, LOG_DEBUG, \
     SIGCHAIN_LOG_DOMAIN, SIGCHAIN_LOG_TAG, __VA_ARGS__))
+#define SIGCHAIN_LOG_FATAL(...) ((void)HiLogAdapterPrint(LOG_CORE, LOG_FATAL, \
+    SIGCHAIN_LOG_DOMAIN, SIGCHAIN_LOG_TAG, __VA_ARGS__))
 #else
 #define SIGCHAIN_PRINT_ERROR(...)
 #define SIGCHAIN_PRINT_INFO(...)
 #define SIGCHAIN_PRINT_DEBUG(...)
+#define SIGCHAIN_LOG_FATAL(...) 
 #endif
+
+#define SIGCHAIN_PRINT_FATAL(...)  do {                    \
+    SIGCHAIN_LOG_FATAL(__VA_ARGS__);                      \
+    abort();                                               \
+} while(0)
 
 struct sc_signal_chain {
     bool marked;
@@ -59,7 +68,7 @@ static once_flag g_flag = ONCE_FLAG_INIT;
   * @brief Create the thread key
   * @retval void
   */
-void create_pthread_key(void)
+static void create_pthread_key(void)
 {
     SIGCHAIN_PRINT_INFO("%{public}s create the thread key!", __func__);
     int rc = pthread_key_create(&g_sigchain_key, NULL);
@@ -87,11 +96,7 @@ static pthread_key_t get_handling_signal_key()
 static bool get_handling_signal()
 {
     void *result = pthread_getspecific(get_handling_signal_key());
-    if (result == NULL) {
-        return false;
-    } else {
-        return true;
-    }
+    return result == NULL ? false : true;
 }
 
 /**
@@ -188,7 +193,7 @@ static void signal_chain_handler(int signo, siginfo_t* siginfo, void* ucontext_r
   * @param[in] signo, the value of the signal.
   * @retval void
   */
-void sigchain_register(int signo)
+static void sigchain_register(int signo)
 {
     SIGCHAIN_PRINT_INFO("%{public}s signo: %{public}d", __func__, signo);
     struct sigaction signal_action = {};
@@ -204,7 +209,7 @@ void sigchain_register(int signo)
   * @param[in] signo, the value of the signal.
   * @retval void
   */
-void mark_signal_to_sigchain(int signo)
+static void mark_signal_to_sigchain(int signo)
 {
     SIGCHAIN_PRINT_INFO("%{public}s signo: %{public}d", __func__, signo);
     if (!sig_chains[signo - 1].marked) {
@@ -219,7 +224,7 @@ void mark_signal_to_sigchain(int signo)
   * @param[in] new_sa, the new action of the signal.
   * @retval void
   */
-void setaction(int signo, const struct sigaction *restrict new_sa)
+static void setaction(int signo, const struct sigaction *restrict new_sa)
 {
     SIGCHAIN_PRINT_DEBUG("%{public}s signo: %{public}d", __func__, signo);
     sig_chains[signo - 1].sig_action = *new_sa;
@@ -230,7 +235,7 @@ void setaction(int signo, const struct sigaction *restrict new_sa)
   * @param[in] signo, the value of the signal.
   * @retval The current action of the signal
   */
-struct sigaction getaction(int signo)
+static struct sigaction getaction(int signo)
 {
     SIGCHAIN_PRINT_DEBUG("%{public}s signo: %{public}d", __func__, signo);
     return sig_chains[signo - 1].sig_action;
@@ -252,6 +257,8 @@ void add_special_handler(int signo, struct signal_chain_action* sa)
             return;
         }
     }
+
+    SIGCHAIN_PRINT_FATAL("Add too many the special handlers!");
 }
 
 /**
@@ -275,7 +282,7 @@ void rm_special_handler(int signo, bool (*fn)(int, siginfo_t*, void*))
         }
     }
 
-    SIGCHAIN_PRINT_INFO("%{public}s failed to find special handler!. signo: %{public}d",
+    SIGCHAIN_PRINT_FATAL("%{public}s failed to remove the special handler!. signo: %{public}d",
             __func__, signo);
 }
 
@@ -290,7 +297,7 @@ void add_special_signal_handler(int signo, struct signal_chain_action* sa)
 {
     SIGCHAIN_PRINT_INFO("%{public}s signo: %{public}d", __func__, signo);
     if (signo <= 0 || signo >= _NSIG) {
-        SIGCHAIN_PRINT_ERROR("%{public}s Invalid signal %{public}d", __func__, signo);
+        SIGCHAIN_PRINT_FATAL("%{public}s Invalid signal %{public}d", __func__, signo);
         return;
     }
 
@@ -309,7 +316,7 @@ void remove_special_signal_handler(int signo, bool (*fn)(int, siginfo_t*, void*)
 {
     SIGCHAIN_PRINT_INFO("%{public}s signo: %{public}d", __func__, signo);
     if (signo <= 0 || signo >= _NSIG) {
-        SIGCHAIN_PRINT_ERROR("%{public}s Invalid signal %{public}d", __func__, signo);
+        SIGCHAIN_PRINT_FATAL("%{public}s Invalid signal %{public}d", __func__, signo);
         return;
     }
     // remove the special handler from the sigchain.

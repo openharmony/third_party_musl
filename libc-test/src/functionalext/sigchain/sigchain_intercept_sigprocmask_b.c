@@ -72,19 +72,19 @@ static void sigchain_intercept_sigprocmask_002()
     };
     sigaction(SIGSEGV, &siga2, NULL);
 
-    struct signal_chain_action sigsegv = {
+    struct signal_chain_action sighup = {
         .sca_sigaction = sigchain_special_handler,
         .sca_mask = {},
         .sca_flags = 0,
     };
-    add_special_signal_handler(SIGHUP, &sigsegv);
+    add_special_signal_handler(SIGHUP, &sighup);
 
-    struct signal_chain_action sigsegv1 = {
+    struct signal_chain_action sigsegv = {
         .sca_sigaction = sigchain_special_handler1,
         .sca_mask = {},
         .sca_flags = 0,
     };
-    add_special_signal_handler(SIGSEGV, &sigsegv1);
+    add_special_signal_handler(SIGSEGV, &sigsegv);
 
     sigset_t set = {0};
     int signo[SIGCHIAN_TEST_SIGNAL_NUM_2] = {SIGHUP, SIGSEGV};

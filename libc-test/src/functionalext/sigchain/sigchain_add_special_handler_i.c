@@ -58,10 +58,10 @@ static void signal_sigaction(int signo)
  */
 static void sigchain_add_special_handler_009()
 {
-    struct sigaction sigsegv1 = {
+    struct sigaction sigac = {
         .sa_handler = signal_sigaction,
     };
-    sigaction(SIGSEGV, &sigsegv1, NULL);
+    sigaction(SIGSEGV, &sigac, NULL);
 
     struct signal_chain_action sigsegv = {
         .sca_sigaction = sigchain_special_handler1,
@@ -70,12 +70,12 @@ static void sigchain_add_special_handler_009()
     };
     add_special_signal_handler(SIGSEGV, &sigsegv);
 
-    struct signal_chain_action sigsegv2 = {
+    struct signal_chain_action sighup = {
         .sca_sigaction = sigchain_special_handler2,
         .sca_mask = {},
         .sca_flags = 0,
     };
-    add_special_signal_handler(SIGHUP, &sigsegv2);
+    add_special_signal_handler(SIGHUP, &sighup);
 
     sigset_t set = {0};
     int signo[SIGCHIAN_TEST_SIGNAL_NUM_2] = {SIGSEGV, SIGHUP};

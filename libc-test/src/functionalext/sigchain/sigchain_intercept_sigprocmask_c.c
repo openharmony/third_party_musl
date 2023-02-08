@@ -25,7 +25,7 @@
  */
 static bool sigchain_special_handler(int signo, siginfo_t *siginfo, void *ucontext_raw)
 {
-    EXPECT_EQ("sigchain_intercept_sigprocmask_003", signo, SIGHUP);
+    EXPECT_FALSE("sigchain_intercept_sigprocmask_003", true);
     return false;
 }
 
@@ -34,7 +34,7 @@ static bool sigchain_special_handler(int signo, siginfo_t *siginfo, void *uconte
  */
 static bool sigchain_special_handler1(int signo, siginfo_t *siginfo, void *ucontext_raw)
 {
-    EXPECT_EQ("sigchain_intercept_sigprocmask_003", signo, SIGHUP);
+    EXPECT_FALSE("sigchain_intercept_sigprocmask_003", true);
     return false;
 }
 
@@ -72,19 +72,19 @@ static void sigchain_intercept_sigprocmask_003()
     };
     sigaction(SIGSEGV, &siga2, NULL);
 
-    struct signal_chain_action sigsegv = {
+    struct signal_chain_action sighup = {
         .sca_sigaction = sigchain_special_handler,
         .sca_mask = {},
         .sca_flags = 0,
     };
-    add_special_signal_handler(SIGHUP, &sigsegv);
+    add_special_signal_handler(SIGHUP, &sighup);
 
-    struct signal_chain_action sigsegv1 = {
+    struct signal_chain_action sigsegv = {
         .sca_sigaction = sigchain_special_handler1,
         .sca_mask = {},
         .sca_flags = 0,
     };
-    add_special_signal_handler(SIGSEGV, &sigsegv1);
+    add_special_signal_handler(SIGSEGV, &sigsegv);
 
     sigset_t set = {0};
     int signo[SIGCHIAN_TEST_SIGNAL_NUM_2] = {SIGHUP, SIGSEGV};

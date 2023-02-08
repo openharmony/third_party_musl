@@ -24,7 +24,7 @@
  */
 static bool sigchain_special_handler(int signo, siginfo_t *siginfo, void *ucontext_raw)
 {
-    EXPECT_FALSE("sigchain_rm_special_handler_001", false);
+    EXPECT_FALSE("sigchain_rm_special_handler_001", true);
     return false;
 }
 

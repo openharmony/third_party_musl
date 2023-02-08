@@ -25,7 +25,7 @@
  */
 static bool sigchain_special_handler(int signo, siginfo_t *siginfo, void *ucontext_raw)
 {
-    EXPECT_FALSE("sigchain_rm_special_handler_013", false);
+    EXPECT_FALSE("sigchain_rm_special_handler_013", true);
     return false;
 }
 
@@ -34,8 +34,17 @@ static bool sigchain_special_handler(int signo, siginfo_t *siginfo, void *uconte
  */
 static bool sigchain_special_handler1(int signo, siginfo_t *siginfo, void *ucontext_raw)
 {
-    EXPECT_FALSE("sigchain_rm_special_handler_013", false);
+    EXPECT_FALSE("sigchain_rm_special_handler_013", true);
     return false;
+}
+
+/**
+ * @brief the signal handler
+ */
+static void signal_handler(int signo)
+{
+    EXPECT_EQ("sigchain_rm_special_handler_013", signo, SIGABRT);
+    return;
 }
 
 /**
@@ -45,19 +54,7 @@ static bool sigchain_special_handler1(int signo, siginfo_t *siginfo, void *ucont
  */
 static void sigchain_rm_special_handler_013()
 {
-    struct signal_chain_action sigsegv = {
-        .sca_sigaction = sigchain_special_handler,
-        .sca_mask = {},
-        .sca_flags = 0,
-    };
-    add_special_signal_handler(0, &sigsegv);
-
-    struct signal_chain_action sigsegv1 = {
-        .sca_sigaction = sigchain_special_handler1,
-        .sca_mask = {},
-        .sca_flags = 0,
-    };
-    add_special_signal_handler(SIGCHAIN_SIGNAL_65, &sigsegv1);
+    signal(SIGABRT, signal_handler);
 
     remove_special_signal_handler(0, sigchain_special_handler);
     remove_special_signal_handler(SIGCHAIN_SIGNAL_65, sigchain_special_handler1);
