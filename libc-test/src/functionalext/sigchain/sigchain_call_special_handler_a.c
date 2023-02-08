@@ -20,12 +20,16 @@
 #include "functionalext.h"
 #include "sigchain_util.h"
 
+#define SIGCHAIN_CALL_SPECIAL_HANDLER_TAG 1
+static int g_count = 0;
+
 /**
  * @brief the special handler
  */
 static bool sigchain_special_handler(int signo, siginfo_t *siginfo, void *ucontext_raw)
 {
-    EXPECT_FALSE("sigchain_rm_special_handler_002", true);
+    EXPECT_EQ("sigchain_call_special_handler_001", signo, SIGSEGV);
+    g_count++;
     return false;
 }
 
@@ -34,16 +38,18 @@ static bool sigchain_special_handler(int signo, siginfo_t *siginfo, void *uconte
  */
 static void signal_handler(int signo)
 {
-    EXPECT_EQ("sigchain_rm_special_handler_002", signo, SIGSEGV);
+    EXPECT_EQ("sigchain_call_special_handler_001", signo, SIGSEGV);
+    EXPECT_EQ("sigchain_call_special_handler_001", g_count, SIGCHAIN_CALL_SPECIAL_HANDLER_TAG);
+    return;
 }
 
 /**
- * @tc.name      : sigchain_rm_special_handler_002
- * @tc.desc      : Remove a special handler for a signal that is registered with
+ * @tc.name      : sigchain_call_special_handler_001
+ * @tc.desc      : Add a special handler for a signal that is registered with
  *                 the kernel (Using signal interface) in sigchain.
  * @tc.level     : Level 0
  */
-static void sigchain_rm_special_handler_002()
+static void sigchain_call_special_handler_001()
 {
     signal(SIGSEGV, signal_handler);
 
@@ -56,14 +62,12 @@ static void sigchain_rm_special_handler_002()
 
     sigset_t set = {0};
     int signo[SIGCHIAN_TEST_SIGNAL_NUM_1] = {SIGSEGV};
-    SIGCHAIN_TEST_SET_MASK(set, "sigchain_add_special_handler_002", signo, SIGCHIAN_TEST_SIGNAL_NUM_1);
-
-    remove_special_signal_handler(SIGSEGV, sigchain_special_handler);
+    SIGCHAIN_TEST_SET_MASK(set, "sigchain_call_special_handler_001", signo, SIGCHIAN_TEST_SIGNAL_NUM_1);
 }
 
 int main(void)
 {
-    sigchain_rm_special_handler_002();
+    sigchain_call_special_handler_001();
     raise(SIGSEGV);
     return t_status;
 }

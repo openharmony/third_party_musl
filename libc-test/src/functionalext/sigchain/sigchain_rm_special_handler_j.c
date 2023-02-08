@@ -25,7 +25,7 @@
  */
 static bool sigchain_special_handler1(int signo, siginfo_t *siginfo, void *ucontext_raw)
 {
-    EXPECT_FALSE("sigchain_rm_special_handler_010", false);
+    EXPECT_FALSE("sigchain_rm_special_handler_010", true);
     return false;
 }
 
@@ -34,7 +34,7 @@ static bool sigchain_special_handler1(int signo, siginfo_t *siginfo, void *ucont
  */
 static bool sigchain_special_handler2(int signo, siginfo_t *siginfo, void *ucontext_raw)
 {
-    EXPECT_FALSE("sigchain_rm_special_handler_010", false);
+    EXPECT_FALSE("sigchain_rm_special_handler_010", true);
     return false;
 }
 
@@ -43,7 +43,7 @@ static bool sigchain_special_handler2(int signo, siginfo_t *siginfo, void *ucont
  */
 static bool sigchain_special_handler3(int signo, siginfo_t *siginfo, void *ucontext_raw)
 {
-    EXPECT_FALSE("sigchain_rm_special_handler_010", false);
+    EXPECT_FALSE("sigchain_rm_special_handler_010", true);
     return false;
 }
 
@@ -52,7 +52,7 @@ static bool sigchain_special_handler3(int signo, siginfo_t *siginfo, void *ucont
  */
 static bool sigchain_special_handler4(int signo, siginfo_t *siginfo, void *ucontext_raw)
 {
-    EXPECT_FALSE("sigchain_rm_special_handler_010", false);
+    EXPECT_FALSE("sigchain_rm_special_handler_010", true);
     return false;
 }
 
@@ -61,7 +61,7 @@ static bool sigchain_special_handler4(int signo, siginfo_t *siginfo, void *ucont
  */
 static bool sigchain_special_handler5(int signo, siginfo_t *siginfo, void *ucontext_raw)
 {
-    EXPECT_FALSE("sigchain_rm_special_handler_010", false);
+    EXPECT_FALSE("sigchain_rm_special_handler_010", true);
     return false;
 }
 
@@ -70,7 +70,7 @@ static bool sigchain_special_handler5(int signo, siginfo_t *siginfo, void *ucont
  */
 static bool sigchain_special_handler6(int signo, siginfo_t *siginfo, void *ucontext_raw)
 {
-    EXPECT_FALSE("sigchain_rm_special_handler_010", false);
+    EXPECT_FALSE("sigchain_rm_special_handler_010", true);
     return false;
 }
 
@@ -79,7 +79,7 @@ static bool sigchain_special_handler6(int signo, siginfo_t *siginfo, void *ucont
  */
 static bool sigchain_special_handler7(int signo, siginfo_t *siginfo, void *ucontext_raw)
 {
-    EXPECT_FALSE("sigchain_rm_special_handler_010", false);
+    EXPECT_FALSE("sigchain_rm_special_handler_010", true);
     return false;
 }
 
@@ -88,7 +88,7 @@ static bool sigchain_special_handler7(int signo, siginfo_t *siginfo, void *ucont
  */
 static bool sigchain_special_handler8(int signo, siginfo_t *siginfo, void *ucontext_raw)
 {
-    EXPECT_FALSE("sigchain_rm_special_handler_010", false);
+    EXPECT_FALSE("sigchain_rm_special_handler_010", true);
     return false;
 }
 
@@ -97,7 +97,7 @@ static bool sigchain_special_handler8(int signo, siginfo_t *siginfo, void *ucont
  */
 static bool sigchain_special_handler9(int signo, siginfo_t *siginfo, void *ucontext_raw)
 {
-    EXPECT_FALSE("sigchain_rm_special_handler_010", false);
+    EXPECT_FALSE("sigchain_rm_special_handler_010", true);
     return false;
 }
 
@@ -106,7 +106,7 @@ static bool sigchain_special_handler9(int signo, siginfo_t *siginfo, void *ucont
  */
 static bool sigchain_special_handler10(int signo, siginfo_t *siginfo, void *ucontext_raw)
 {
-    EXPECT_FALSE("sigchain_rm_special_handler_010", false);
+    EXPECT_FALSE("sigchain_rm_special_handler_010", true);
     return false;
 }
 
@@ -118,75 +118,75 @@ static bool sigchain_special_handler10(int signo, siginfo_t *siginfo, void *ucon
  */
 static void sigchain_rm_special_handler_010()
 {
-    struct signal_chain_action sigsegv = {
+    struct signal_chain_action sighup = {
         .sca_sigaction = sigchain_special_handler1,
         .sca_mask = {},
         .sca_flags = 0,
     };
-    add_special_signal_handler(SIGHUP, &sigsegv);
+    add_special_signal_handler(SIGHUP, &sighup);
 
-    struct signal_chain_action sigsegv1 = {
+    struct signal_chain_action sigabrt = {
         .sca_sigaction = sigchain_special_handler2,
         .sca_mask = {},
         .sca_flags = 0,
     };
-    add_special_signal_handler(SIGABRT, &sigsegv1);
+    add_special_signal_handler(SIGABRT, &sigabrt);
 
-    struct signal_chain_action sigsegv2 = {
+    struct signal_chain_action sigsegv = {
         .sca_sigaction = sigchain_special_handler3,
         .sca_mask = {},
         .sca_flags = 0,
     };
-    add_special_signal_handler(SIGSEGV, &sigsegv2);
+    add_special_signal_handler(SIGSEGV, &sigsegv);
 
-    struct signal_chain_action sigsegv3 = {
+    struct signal_chain_action sigurg = {
         .sca_sigaction = sigchain_special_handler4,
         .sca_mask = {},
         .sca_flags = 0,
     };
-    add_special_signal_handler(SIGURG, &sigsegv3);
+    add_special_signal_handler(SIGURG, &sigurg);
 
-    struct signal_chain_action sigsegv4 = {
+    struct signal_chain_action sigsys = {
         .sca_sigaction = sigchain_special_handler5,
         .sca_mask = {},
         .sca_flags = 0,
     };
-    add_special_signal_handler(SIGSYS, &sigsegv4);
+    add_special_signal_handler(SIGSYS, &sigsys);
 
-    struct signal_chain_action sigsegv5 = {
+    struct signal_chain_action sig37 = {
         .sca_sigaction = sigchain_special_handler6,
         .sca_mask = {},
         .sca_flags = 0,
     };
-    add_special_signal_handler(SIGCHAIN_SIGNAL_37, &sigsegv5);
+    add_special_signal_handler(SIGCHAIN_SIGNAL_37, &sig37);
 
-    struct signal_chain_action sigsegv6 = {
+    struct signal_chain_action sig43 = {
         .sca_sigaction = sigchain_special_handler7,
         .sca_mask = {},
         .sca_flags = 0,
     };
-    add_special_signal_handler(SIGCHAIN_SIGNAL_43, &sigsegv6);
+    add_special_signal_handler(SIGCHAIN_SIGNAL_43, &sig43);
 
-    struct signal_chain_action sigsegv7 = {
+    struct signal_chain_action sig50 = {
         .sca_sigaction = sigchain_special_handler8,
         .sca_mask = {},
         .sca_flags = 0,
     };
-    add_special_signal_handler(SIGCHAIN_SIGNAL_50, &sigsegv7);
+    add_special_signal_handler(SIGCHAIN_SIGNAL_50, &sig50);
 
-    struct signal_chain_action sigsegv8 = {
+    struct signal_chain_action sig56 = {
         .sca_sigaction = sigchain_special_handler9,
         .sca_mask = {},
         .sca_flags = 0,
     };
-    add_special_signal_handler(SIGCHAIN_SIGNAL_56, &sigsegv8);
+    add_special_signal_handler(SIGCHAIN_SIGNAL_56, &sig56);
 
-    struct signal_chain_action sigsegv9 = {
+    struct signal_chain_action sig64 = {
         .sca_sigaction = sigchain_special_handler10,
         .sca_mask = {},
         .sca_flags = 0,
     };
-    add_special_signal_handler(SIGCHAIN_SIGNAL_64, &sigsegv9);
+    add_special_signal_handler(SIGCHAIN_SIGNAL_64, &sig64);
 
     remove_special_signal_handler(SIGHUP, sigchain_special_handler1);
     remove_special_signal_handler(SIGABRT, sigchain_special_handler2);

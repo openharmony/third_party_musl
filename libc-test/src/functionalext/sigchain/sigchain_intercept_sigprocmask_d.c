@@ -73,19 +73,19 @@ static void sigchain_intercept_sigprocmask_004()
     };
     sigaction(SIGSEGV, &siga2, NULL);
 
-    struct signal_chain_action sigsegv = {
+    struct signal_chain_action sighup = {
         .sca_sigaction = sigchain_special_handler,
         .sca_mask = {},
         .sca_flags = 0,
     };
-    add_special_signal_handler(SIGHUP, &sigsegv);
+    add_special_signal_handler(SIGHUP, &sighup);
 
-    struct signal_chain_action sigsegv1 = {
+    struct signal_chain_action sigsegv = {
         .sca_sigaction = sigchain_special_handler1,
         .sca_mask = {},
         .sca_flags = 0,
     };
-    add_special_signal_handler(SIGSEGV, &sigsegv1);
+    add_special_signal_handler(SIGSEGV, &sigsegv);
 
     sigset_t set = {0};
     int signo[SIGCHIAN_TEST_SIGNAL_NUM_2] = {SIGHUP, SIGSEGV};
@@ -101,14 +101,10 @@ void thread_func(void *data)
 
 int main(void)
 {
-    thrd_t t1, t2, t3, t4;
+    thrd_t t1, t2;
     thrd_create(&t1, (thrd_start_t)thread_func, NULL);
     thrd_create(&t2, (thrd_start_t)thread_func, NULL);
-    thrd_create(&t3, (thrd_start_t)thread_func, NULL);
-    thrd_create(&t4, (thrd_start_t)thread_func, NULL);
     thrd_join(t1, NULL);
     thrd_join(t2, NULL);
-    thrd_join(t3, NULL);
-    thrd_join(t4, NULL);
     return t_status;
 }

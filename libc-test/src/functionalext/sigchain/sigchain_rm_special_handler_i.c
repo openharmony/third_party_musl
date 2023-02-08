@@ -25,7 +25,7 @@
  */
 static bool sigchain_special_handler1(int signo, siginfo_t *siginfo, void *ucontext_raw)
 {
-    EXPECT_FALSE("sigchain_rm_special_handler_009", false);
+    EXPECT_FALSE("sigchain_rm_special_handler_009", true);
     return false;
 }
 
@@ -34,7 +34,7 @@ static bool sigchain_special_handler1(int signo, siginfo_t *siginfo, void *ucont
  */
 static bool sigchain_special_handler2(int signo, siginfo_t *siginfo, void *ucontext_raw)
 {
-    EXPECT_FALSE("sigchain_rm_special_handler_009", false);
+    EXPECT_FALSE("sigchain_rm_special_handler_009", true);
     return false;
 }
 
@@ -58,15 +58,15 @@ static void signal_sigaction(int signo)
  */
 static void sigchain_rm_special_handler_009()
 {
-    struct sigaction sigsegv1 = {
+    struct sigaction sigac_segv = {
         .sa_handler = signal_sigaction,
     };
-    sigaction(SIGSEGV, &sigsegv1, NULL);
+    sigaction(SIGSEGV, &sigac_segv, NULL);
 
-    struct sigaction sigsegv2 = {
+    struct sigaction sigac_hup = {
         .sa_handler = signal_sigaction,
     };
-    sigaction(SIGHUP, &sigsegv2, NULL);
+    sigaction(SIGHUP, &sigac_hup, NULL);
 
     struct signal_chain_action sigsegv = {
         .sca_sigaction = sigchain_special_handler1,
