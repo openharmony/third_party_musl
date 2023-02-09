@@ -34,7 +34,7 @@
  * The valid shadow value records the distance from the end of a LIBRARY_ALIGNMENT memory range to the __cfi_check addr
  * of the dso (The unit is 4096, because the __cfi_check is aligned with 4096).
  * The valid shadow value is calculated as below:
- *      sv = (AlignUp(__cfi_check, LIBRARY_ALIGNMENT) - cfi_check_addr + N * LIBRARY_ALIGNMENT) / 4096 + 2;
+ *      sv = (AlignUp(__cfi_check, LIBRARY_ALIGNMENT) - __cfi_check + N * LIBRARY_ALIGNMENT) / 4096 + 2;
  *
  *      N   : starts at 0, is the index of LIBRARY_ALIGNMENT memory range that belongs to a dso.
  *      + 2 : to avoid conflict with invalid and uncheck shadow value.
