@@ -39,15 +39,6 @@ static bool sigchain_special_handler2(int signo, siginfo_t *siginfo, void *ucont
 }
 
 /**
- * @brief the special handler
- */
-static bool sigchain_special_handler3(int signo, siginfo_t *siginfo, void *ucontext_raw)
-{
-    EXPECT_FALSE("sigchain_add_special_handler_006", true);
-    return false;
-}
-
-/**
  * @brief the signal handler
  */
 static void signal_sigaction(int signo)
@@ -82,19 +73,15 @@ static void sigchain_add_special_handler_006()
     };
     add_special_signal_handler(SIGABRT, &sigabrt2);
 
-    struct signal_chain_action sigabrt3 = {
-        .sca_sigaction = sigchain_special_handler3,
-        .sca_mask = {},
-        .sca_flags = 0,
-    };
-    add_special_signal_handler(SIGABRT, &sigabrt3);
+    sigset_t set = {0};
+    int signo[SIGCHIAN_TEST_SIGNAL_NUM_1] = {SIGABRT};
+    SIGCHAIN_TEST_SET_MASK(set, "sigchain_add_special_handler_001", signo, SIGCHIAN_TEST_SIGNAL_NUM_1);
 }
 
 int main(void)
 {
     sigchain_add_special_handler_006();
-    raise(SIGSEGV);
-    raise(SIGSEGV);
-    raise(SIGSEGV);
+    raise(SIGABRT);
+    raise(SIGABRT);
     return t_status;
 }

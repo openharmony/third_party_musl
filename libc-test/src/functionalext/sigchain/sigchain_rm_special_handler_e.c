@@ -39,15 +39,6 @@ static bool sigchain_special_handler2(int signo, siginfo_t *siginfo, void *ucont
 }
 
 /**
- * @brief the special handler
- */
-static bool sigchain_special_handler3(int signo, siginfo_t *siginfo, void *ucontext_raw)
-{
-    EXPECT_FALSE("sigchain_rm_special_handler_005", true);
-    return false;
-}
-
-/**
  * @brief the signal handler
  */
 static void signal_handler(int signo)
@@ -85,11 +76,12 @@ static void sigchain_rm_special_handler_005()
     
     remove_special_signal_handler(SIGABRT, sigchain_special_handler2);
     remove_special_signal_handler(SIGABRT, sigchain_special_handler1);
-    remove_special_signal_handler(SIGABRT, sigchain_special_handler3);
 }
 
 int main(void)
 {
     sigchain_rm_special_handler_005();
+    raise(SIGABRT);
+    raise(SIGABRT);
     return t_status;
 }
