@@ -8,8 +8,8 @@
 struct musl_libc_globals __musl_libc_globals;
 
 struct MallocDispatchType __libc_malloc_default_dispatch = {
-	.malloc = MuslMalloc(malloc),
-	.free = MuslMalloc(free),
+	.malloc = MuslFunc(malloc),
+	.free = MuslFunc(free),
 	.mmap = MuslMalloc(mmap),
 	.munmap = MuslMalloc(munmap),
 	.calloc = MuslMalloc(calloc),

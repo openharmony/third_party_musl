@@ -30,11 +30,6 @@ extern int je_mallopt(int param, int value);
 #define inline inline __attribute__((always_inline))
 #endif
 
-#ifdef HOOK_ENABLE
-void *__libc_malloc(size_t);
-void __libc_free(void *p);
-#endif
-
 static struct {
 	volatile uint64_t binmap;
 	struct bin bins[BINS_COUNT];
@@ -627,17 +622,15 @@ static void trim(struct chunk *self, size_t n)
 	__bin_chunk(split);
 }
 
-#ifdef HOOK_ENABLE
-void *__libc_malloc(size_t n)
-#else
+#ifndef HOOK_ENABLE
 void *malloc(size_t n)
-#endif
 {
 #ifdef USE_JEMALLOC
 	return je_malloc(n);
 #endif
 	return internal_malloc(n);
 }
+#endif
 
 void *internal_malloc(size_t n)
 {
@@ -1244,17 +1237,15 @@ static void quarantine_bin(struct chunk *self)
 }
 #endif
 
-#ifdef HOOK_ENABLE
-void __libc_free(void *p)
-#else
+#ifndef HOOK_ENABLE
 void free(void *p)
-#endif
 {
 #ifdef USE_JEMALLOC
 	return je_free(p);
 #endif
 	return internal_free(p);
 }
+#endif
 
 void internal_free(void *p)
 {
