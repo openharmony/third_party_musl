@@ -176,9 +176,9 @@ static uintptr_t get_cfi_check_addr(uint16_t value, void* func_ptr)
     LD_LOGD("[CFI] [%{public}s] __arm__ defined!\n", __FUNCTION__);
     cfi_check_func_addr++;
 #endif
-    LD_LOGI("[CFI] [%{public}s] cfi_check_func_addr[%{public}p]\n", __FUNCTION__, cfi_check_func_addr);
-    LD_LOGD("[CFI] [%{public}s] __cfi_check is in dso[%{public}s]\n", __FUNCTION__,
-            ((struct dso *)addr2dso((size_t)cfi_check_func_addr))->name);
+    LD_LOGD("[CFI] [%{public}s] cfi_check_func_addr[%{public}p] in dso[%{public}s]\n",
+            __FUNCTION__, cfi_check_func_addr, ((struct dso *)addr2dso((size_t)cfi_check_func_addr))->name);
+
     return cfi_check_func_addr;
 }
 
