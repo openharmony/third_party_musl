@@ -358,8 +358,8 @@ void cfi_unmap_dso_from_cfi_shadow_002(void)
 {
     printf("["__FILE__"][Line: %d][%s]: entry\n", __LINE__, __func__);
     struct dso test_dso = {};
-    int a = 9;
-    test_dso.map = (unsigned char *)a;
+    unsigned char a = 'S';
+    test_dso.map = &a;
     test_dso.map_len = 0;
     unmap_dso_from_cfi_shadow(&test_dso);
     printf("["__FILE__"][Line: %d][%s]: end\n", __LINE__, __func__);
