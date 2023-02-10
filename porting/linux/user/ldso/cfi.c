@@ -176,8 +176,9 @@ static uintptr_t get_cfi_check_addr(uint16_t value, void* func_ptr)
     LD_LOGD("[CFI] [%{public}s] __arm__ defined!\n", __FUNCTION__);
     cfi_check_func_addr++;
 #endif
-    LD_LOGI("[CFI] [%{public}s] the cfi_check_func_addr is %{public}p!\n", __FUNCTION__, cfi_check_func_addr);
-
+    LD_LOGI("[CFI] [%{public}s] cfi_check_func_addr[%{public}p]\n", __FUNCTION__, cfi_check_func_addr);
+    LD_LOGD("[CFI] [%{public}s] __cfi_check is in dso[%{public}s]\n", __FUNCTION__,
+            ((struct dso *)addr2dso((size_t)cfi_check_func_addr))->name);
     return cfi_check_func_addr;
 }
 
@@ -490,18 +491,24 @@ static int fill_shadow_value_to_shadow(uintptr_t begin, uintptr_t end, uintptr_t
 
 void __cfi_slowpath(uint64_t call_site_type_id, void *func_ptr)
 {
-    LD_LOGD("[CFI] [%{public}s] start!\n", __FUNCTION__);
+    LD_LOGD("[CFI] [%{public}s] called from dso[%{public}s] to dso[%{public}s] func_ptr[%{public}p]\n",
+            __FUNCTION__,
+            ((struct dso *)addr2dso((size_t)__builtin_return_address(0)))->name,
+            ((struct dso *)addr2dso((size_t)func_ptr))->name,
+            func_ptr);
 
     cfi_slowpath_common(call_site_type_id, func_ptr, NULL);
-
     return;
 }
 
 void __cfi_slowpath_diag(uint64_t call_site_type_id, void *func_ptr, void *diag_data)
 {
-    LD_LOGD("[CFI] [%{public}s] start!\n", __FUNCTION__);
+    LD_LOGD("[CFI] [%{public}s] called from dso[%{public}s] to dso[%{public}s] func_ptr[%{public}p]\n",
+            __FUNCTION__,
+            ((struct dso *)addr2dso((size_t)__builtin_return_address(0)))->name,
+            ((struct dso *)addr2dso((size_t)func_ptr))->name,
+            func_ptr);
 
     cfi_slowpath_common(call_site_type_id, func_ptr, diag_data);
-
     return;
 }
