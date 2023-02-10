@@ -1668,6 +1668,7 @@ musl_src_ldso = [
   "ldso/ns_config.c",
   "ldso/strops.c",
   "ldso/dynlink_rand.c",
+  "ldso/cfi.c",
   "ldso/ld_log.c",
 ]
 
@@ -2102,11 +2103,13 @@ musl_src_porting_file = [
   "crt/arm/crti.s",
   "crt/aarch64/crti.s",
   "crt/crtplus.c",
+  "ldso/cfi.h",
   "ldso/ld_log.h",
   "ldso/ld_log.c",
   "ldso/namespace.c",
   "ldso/ns_config.c",
   "ldso/strops.c",
+  "ldso/cfi.c",
   "ldso/dynlink_rand.c",
   "ldso/dynlink_rand.h",
   "src/thread/pthread_create.c",
