@@ -2143,8 +2143,6 @@ musl_src_porting_file = [
   "src/process/x86_64/__vfork.s",
   "src/linux/cache.c",
   "src/sched/sched_getcpu.c",
-  "src/conf/legacy.c",
-  "src/conf/sysconf.c",
 ]
 
 musl_inc_hook_files = [
