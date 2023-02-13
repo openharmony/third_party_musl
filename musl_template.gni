@@ -725,11 +725,26 @@ template("musl_libs") {
       deps += [ "//base/startup/init/services/param/base:parameterbase" ]
     }
 
+    if (use_jemalloc) {
+      defines += [ "USE_JEMALLOC" ]
+      if (use_jemalloc_dfx_intf) {
+        defines += [ "USE_JEMALLOC_DFX_INTF" ]
+      }
+      include_dirs = [ "//third_party/jemalloc/include/jemalloc" ]
+    }
+
     configs -= musl_inherited_configs
 
     configs += [
       "//build/config/compiler:compiler",
       ":soft_hook",
+    ]
+
+    cflags = [
+      "-mllvm",
+      "--instcombine-max-iterations=0",
+      "-ffp-contract=fast",
+      "-O3",
     ]
   }
 
