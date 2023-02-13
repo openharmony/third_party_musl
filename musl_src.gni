@@ -143,6 +143,7 @@ if (musl_arch == "arm") {
   ]
 } else if (musl_arch == "x86_64") {
   musl_src_arch_file = [
+    "arch/x86_64/bits/float.h",
     "src/fenv/x86_64/fenv.s",
     "src/ldso/x86_64/dlsym.s",
     "src/ldso/x86_64/tlsdesc.s",
