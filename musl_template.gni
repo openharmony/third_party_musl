@@ -239,6 +239,7 @@ template("musl_libs") {
       "-fvisibility=hidden",
       "-O3",
       "-funroll-loops",
+      "-funwind-tables",
 
       # The following flags are for avoiding errors when compiling.
       "-Wno-unused-parameter",
