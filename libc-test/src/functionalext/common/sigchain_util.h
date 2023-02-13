@@ -16,17 +16,17 @@
 #define SIGCHAIN_TEST_SET_MASK(set, fun, signo, num)  do{ \
     int result = sigemptyset(&set);                       \
     if (result != 0) {                                    \
-        EXPECT_FALSE(fun, (result == 0));                 \
+        EXPECT_FALSE(fun, true);                 \
     }                                                     \
     for (int i = 0; i < num; i++) {                       \
         result = sigaddset(&set, signo[i]);               \
         if (result != 0) {                                \
-            EXPECT_FALSE(fun, (result == 0));             \
+            EXPECT_FALSE(fun, true);             \
         }                                                 \
     }                                                     \
     result = sigprocmask(SIG_BLOCK, &set, NULL);          \
     if (result != 0) {                                    \
-        EXPECT_FALSE(fun, (result == 0));                 \
+        EXPECT_FALSE(fun, true);                 \
     }                                                     \
 } while (0)
 

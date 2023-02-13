@@ -32,6 +32,7 @@ static bool sigchain_special_handler(int signo, siginfo_t *siginfo, void *uconte
         sigset_t set = {0};
         int signal[SIGCHIAN_TEST_SIGNAL_NUM_2] = {SIGHUP, SIGSEGV};
         SIGCHAIN_TEST_SET_MASK(set, "sigchain_intercept_sigprocmask_001", signal, SIGCHIAN_TEST_SIGNAL_NUM_2);
+        raise(SIGSEGV);
         g_count++;
     }
     return false;
@@ -43,6 +44,7 @@ static bool sigchain_special_handler(int signo, siginfo_t *siginfo, void *uconte
 static bool sigchain_special_handler1(int signo, siginfo_t *siginfo, void *ucontext_raw)
 {
     EXPECT_EQ("sigchain_intercept_sigprocmask_005", signo, SIGSEGV);
+    EXPECT_EQ("sigchain_intercept_sigprocmask_005", g_count, 1);
     return false;
 }
 
@@ -59,7 +61,7 @@ static void signal_handler(int signo)
 /**
  * @tc.name      : sigchain_intercept_sigprocmask_005
  * @tc.desc      : Test the influence of sigchain on sigprocmask, the signals are registered with
- *                 the special handler
+ *                 the special handler, and mask and rasie the signal at the special handler
  * @tc.level     : Level 0
  */
 static void sigchain_intercept_sigprocmask_005()
@@ -96,8 +98,6 @@ static void sigchain_intercept_sigprocmask_005()
 int main(void)
 {
     sigchain_intercept_sigprocmask_005();
-    raise(SIGHUP);
-    raise(SIGSEGV);
     raise(SIGHUP);
     return t_status;
 }
