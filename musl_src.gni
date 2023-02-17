@@ -2150,8 +2150,7 @@ musl_src_porting_file = [
 musl_inc_hook_files = [
   "porting/linux/user/src/internal/hilog_adapter.h",
   "porting/linux/user/src/internal/musl_log.h",
-  "porting/linux/user/src/hook/common_def.h",
-  "porting/linux/user/src/hook/memory_tag.h",
+  "porting/linux/user/src/hook/memory_trace.h",
   "porting/linux/user/src/hook/musl_malloc_dispatch_table.h",
   "porting/linux/user/src/hook/musl_malloc_dispatch.h",
   "porting/linux/user/src/hook/musl_preinit_common.h",
