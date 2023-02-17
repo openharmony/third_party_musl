@@ -143,7 +143,6 @@ if (musl_arch == "arm") {
   ]
 } else if (musl_arch == "x86_64") {
   musl_src_arch_file = [
-    "arch/x86_64/bits/float.h",
     "src/fenv/x86_64/fenv.s",
     "src/ldso/x86_64/dlsym.s",
     "src/ldso/x86_64/tlsdesc.s",
@@ -1750,7 +1749,6 @@ if (musl_arch == "arm") {
   musl_inc_bits_files = [
     "arch/x86_64/bits/fcntl.h",
     "arch/x86_64/bits/fenv.h",
-    "arch/x86_64/bits/float.h",
     "arch/x86_64/bits/posix.h",
     "arch/x86_64/bits/reg.h",
     "arch/x86_64/bits/setjmp.h",
@@ -2015,6 +2013,7 @@ musl_src_porting_file = [
   "arch/arm/bits/fenv.h",
   "arch/generic/bits/shm.h",
   "arch/generic/crtbrand.s",
+  "arch/x86_64/bits/float.h",
   "include/ctype.h",
   "include/info/application_target_sdk_version.h",
   "include/info/device_api_version.h",
