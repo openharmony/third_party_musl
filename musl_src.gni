@@ -1749,6 +1749,7 @@ if (musl_arch == "arm") {
   musl_inc_bits_files = [
     "arch/x86_64/bits/fcntl.h",
     "arch/x86_64/bits/fenv.h",
+    "arch/x86_64/bits/float.h",
     "arch/x86_64/bits/posix.h",
     "arch/x86_64/bits/reg.h",
     "arch/x86_64/bits/setjmp.h",
