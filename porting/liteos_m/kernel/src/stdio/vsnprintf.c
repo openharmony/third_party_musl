@@ -37,6 +37,7 @@ int vsnprintf(char *restrict s, size_t n, const char *restrict fmt, va_list ap)
 {
 	unsigned char buf[1];
 	char dummy[1];
+	int ret;
 	struct cookie c = { .s = n ? s : dummy, .n = n ? n-1 : 0 };
 	pthread_mutex_t locallock = PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
 	FILE f = {
@@ -53,5 +54,7 @@ int vsnprintf(char *restrict s, size_t n, const char *restrict fmt, va_list ap)
 	}
 
 	*c.s = 0;
-	return vfprintf(&f, fmt, ap);
+	ret = vfprintf(&f, fmt, ap);
+	pthread_mutex_destroy(&locallock);
+	return ret;
 }
