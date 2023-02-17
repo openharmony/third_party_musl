@@ -701,7 +701,7 @@ template("musl_libs") {
   source_set("soft_musl_hook") {
     sources = [
       "./porting/linux/user/src/hook/malloc_common.c",
-      "./porting/linux/user/src/hook/memory_tag.c",
+      "./porting/linux/user/src/hook/memory_trace.c",
       "./porting/linux/user/src/hook/musl_preinit.c",
       "./porting/linux/user/src/hook/musl_preinit_common.c",
       "./porting/linux/user/src/hook/musl_socket_preinit.c",
