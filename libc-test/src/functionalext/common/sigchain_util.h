@@ -13,6 +13,10 @@
  * limitations under the License.
  */
 
+/* 
+ * SIG_BLOCK: Mask the signal according to the mask word provided by parameter set. 
+ * And save the original signal mask to oldset
+ */
 #define SIGCHAIN_TEST_SET_MASK(set, fun, signo, num)  do{ \
     int result = sigemptyset(&set);                       \
     if (result != 0) {                                    \
