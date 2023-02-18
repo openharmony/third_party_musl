@@ -43,8 +43,8 @@ static void signal_handler(int signo)
 
 /**
  * @tc.name      : sigchain_intercept_sigprocmask_004
- * @tc.desc      : Test the influence of sigchain on sigprocmask. the signals are registered with
- *                 the special handler, and the case is called by multiple threads
+ * @tc.desc      : The signals are registered with the special handler.Test the multiple threads call
+ *                 sigprocmask and add_special_signal_handler.
  * @tc.level     : Level 0
  */
 static void sigchain_intercept_sigprocmask_004(int signo)

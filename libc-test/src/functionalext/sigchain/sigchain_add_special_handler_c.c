@@ -42,8 +42,8 @@ static void signal_sigaction(int signo)
 
 /**
  * @tc.name      : sigchain_add_special_handler_003
- * @tc.desc      : Add a special handler for a signal that is registered with
- *                 the kernel (Using sigaction interface) in sigchain.
+ * @tc.desc      : Call add_special_signal_handler after the signal that is registered with
+ *                 the kernel (using sigaction)
  * @tc.level     : Level 0
  */
 static void sigchain_add_special_handler_003()

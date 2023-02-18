@@ -52,8 +52,8 @@ static void signal_sigaction(int signo)
 
 /**
  * @tc.name      : sigchain_rm_special_handler_006
- * @tc.desc      : Remove multiple special handlers for a signal that is registered with
- *                 the kernel (Using sigaction interface) in sigchain.
+ * @tc.desc      : The signal is registered with the kernel(using sigaction), and add two special handler.
+ *                 Call the remove_special_signal_handler to remove the two special handler.
  * @tc.level     : Level 0
  */
 static void sigchain_rm_special_handler_006()

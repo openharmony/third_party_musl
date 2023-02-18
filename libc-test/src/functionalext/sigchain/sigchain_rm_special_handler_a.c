@@ -32,8 +32,8 @@ static bool sigchain_special_handler(int signo, siginfo_t *siginfo, void *uconte
 
 /**
  * @tc.name      : sigchain_rm_special_handler_001
- * @tc.desc      : remove a special handler for a signal that is not registered with
- *                 the kernel in sigchain.
+ * @tc.desc      : The signal is not registered with the kernel, and add the special handler.
+ *                 Call the remove_special_signal_handler
  * @tc.level     : Level 0
  */
 static void sigchain_rm_special_handler_001()

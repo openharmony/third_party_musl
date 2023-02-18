@@ -123,8 +123,9 @@ static bool sigchain_special_handler10(int signo, siginfo_t *siginfo, void *ucon
 
 /**
  * @tc.name      : sigchain_rm_special_handler_010
- * @tc.desc      : Remove multiple special handlers for the different signals that are not registered with
- *                 the kernel.
+ * @tc.desc     : The multiple signals(Coverage signal range) are not registered with the kernel,
+ *                and add the special handler. Call the remove_special_signal_handler to remove
+ *                the signals's special handler.
  * @tc.level     : Level 0
  */
 static void sigchain_rm_special_handler_010()

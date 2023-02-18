@@ -61,8 +61,7 @@ static void signal_handler2(int signo)
 
 /**
  * @tc.name      : sigchain_intercept_signal_002
- * @tc.desc      : Test the influence of sigchain on signal. the signals are registered with
- *                 the special handler
+ * @tc.desc      : The signals are registered with the special handler, test the influence of sigchain on signal
  * @tc.level     : Level 0
  */
 static void sigchain_intercept_signal_002()

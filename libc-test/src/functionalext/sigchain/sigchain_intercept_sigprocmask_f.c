@@ -22,7 +22,7 @@
 
 /**
  * @tc.name      : sigchain_intercept_sigprocmask_006
- * @tc.desc      : Test the influence of sigchain on sigprocmask, the new set is null.
+ * @tc.desc      : The new set is null, call sigprocmask.
  * @tc.level     : Level 0
  */
 static void sigchain_intercept_sigprocmask_006()
