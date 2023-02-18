@@ -18,12 +18,15 @@
 #include <stdlib.h>
 #include "test.h"
 #include "functionalext.h"
+#include "sigchain_util.h"
 
+static int g_count = 0;
 /**
  * @brief the special handler
  */
 static void signal_handler1(int signo)
 {
+    g_count++;
     EXPECT_EQ("sigchain_intercept_sigaction_001", signo, SIGHUP);
 }
 
@@ -32,6 +35,7 @@ static void signal_handler1(int signo)
  */
 static void signal_handler2(int signo)
 {
+    g_count++;
     EXPECT_EQ("sigchain_intercept_sigaction_001", signo, SIGSEGV);
 }
 
@@ -59,5 +63,6 @@ int main(void)
     sigchain_intercept_sigaction_001();
     raise(SIGHUP);
     raise(SIGSEGV);
+    EXPECT_EQ("sigchain_intercept_sigaction_001", g_count, SIGCHIAN_TEST_SIGNAL_NUM_2);
     return t_status;
 }

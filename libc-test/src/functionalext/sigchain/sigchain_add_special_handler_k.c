@@ -20,11 +20,13 @@
 #include "functionalext.h"
 #include "sigchain_util.h"
 
+static int g_count = 0;
 /**
  * @brief the special handler
  */
 static bool sigchain_special_handler1(int signo, siginfo_t *siginfo, void *ucontext_raw)
 {
+    g_count++;
     EXPECT_EQ("sigchain_add_special_handler_011", signo, SIGHUP);
     return false;
 }
@@ -34,6 +36,7 @@ static bool sigchain_special_handler1(int signo, siginfo_t *siginfo, void *ucont
  */
 static bool sigchain_special_handler2(int signo, siginfo_t *siginfo, void *ucontext_raw)
 {
+    g_count++;
     EXPECT_EQ("sigchain_add_special_handler_011", signo, SIGABRT);
     return false;
 }
@@ -43,6 +46,7 @@ static bool sigchain_special_handler2(int signo, siginfo_t *siginfo, void *ucont
  */
 static bool sigchain_special_handler3(int signo, siginfo_t *siginfo, void *ucontext_raw)
 {
+    g_count++;
     EXPECT_EQ("sigchain_add_special_handler_011", signo, SIGSEGV);
     return false;
 }
@@ -52,6 +56,7 @@ static bool sigchain_special_handler3(int signo, siginfo_t *siginfo, void *ucont
  */
 static bool sigchain_special_handler4(int signo, siginfo_t *siginfo, void *ucontext_raw)
 {
+    g_count++;
     EXPECT_EQ("sigchain_add_special_handler_011", signo, SIGURG);
     return false;
 }
@@ -61,6 +66,7 @@ static bool sigchain_special_handler4(int signo, siginfo_t *siginfo, void *ucont
  */
 static bool sigchain_special_handler5(int signo, siginfo_t *siginfo, void *ucontext_raw)
 {
+    g_count++;
     EXPECT_EQ("sigchain_add_special_handler_011", signo, SIGSYS);
     return false;
 }
@@ -70,6 +76,7 @@ static bool sigchain_special_handler5(int signo, siginfo_t *siginfo, void *ucont
  */
 static bool sigchain_special_handler6(int signo, siginfo_t *siginfo, void *ucontext_raw)
 {
+    g_count++;
     EXPECT_EQ("sigchain_add_special_handler_011", signo, SIGCHAIN_SIGNAL_37);
     return false;
 }
@@ -79,6 +86,7 @@ static bool sigchain_special_handler6(int signo, siginfo_t *siginfo, void *ucont
  */
 static bool sigchain_special_handler7(int signo, siginfo_t *siginfo, void *ucontext_raw)
 {
+    g_count++;
     EXPECT_EQ("sigchain_add_special_handler_011", signo, SIGCHAIN_SIGNAL_43);
     return false;
 }
@@ -88,6 +96,7 @@ static bool sigchain_special_handler7(int signo, siginfo_t *siginfo, void *ucont
  */
 static bool sigchain_special_handler8(int signo, siginfo_t *siginfo, void *ucontext_raw)
 {
+    g_count++;
     EXPECT_EQ("sigchain_add_special_handler_011", signo, SIGCHAIN_SIGNAL_50);
     return false;
 }
@@ -97,6 +106,7 @@ static bool sigchain_special_handler8(int signo, siginfo_t *siginfo, void *ucont
  */
 static bool sigchain_special_handler9(int signo, siginfo_t *siginfo, void *ucontext_raw)
 {
+    g_count++;
     EXPECT_EQ("sigchain_add_special_handler_011", signo, SIGCHAIN_SIGNAL_56);
     return false;
 }
@@ -106,6 +116,7 @@ static bool sigchain_special_handler9(int signo, siginfo_t *siginfo, void *ucont
  */
 static bool sigchain_special_handler10(int signo, siginfo_t *siginfo, void *ucontext_raw)
 {
+    g_count++;
     EXPECT_EQ("sigchain_add_special_handler_011", signo, SIGCHAIN_SIGNAL_64);
     return false;
 }
@@ -227,15 +238,17 @@ static void sigchain_add_special_handler_011()
     };
     add_special_signal_handler(SIGCHAIN_SIGNAL_64, &sig64);
 
-    sigset_t set = {0};
-    int signo[SIGCHIAN_TEST_SIGNAL_NUM_10] = {SIGHUP, SIGABRT, SIGSEGV,
-                                              SIGURG, SIGSYS,
-                                              SIGCHAIN_SIGNAL_37,
-                                              SIGCHAIN_SIGNAL_43,
-                                              SIGCHAIN_SIGNAL_50,
-                                              SIGCHAIN_SIGNAL_56,
-                                              SIGCHAIN_SIGNAL_64};
-    SIGCHAIN_TEST_SET_MASK(set, "sigchain_add_special_handler_011", signo, SIGCHIAN_TEST_SIGNAL_NUM_10);
+    if (get_sigchain_mask_enable()) {
+        sigset_t set = {0};
+        int signo[SIGCHIAN_TEST_SIGNAL_NUM_10] = {SIGHUP, SIGABRT, SIGSEGV,
+                                                SIGURG, SIGSYS,
+                                                SIGCHAIN_SIGNAL_37,
+                                                SIGCHAIN_SIGNAL_43,
+                                                SIGCHAIN_SIGNAL_50,
+                                                SIGCHAIN_SIGNAL_56,
+                                                SIGCHAIN_SIGNAL_64};
+        SIGCHAIN_TEST_SET_MASK(set, "sigchain_add_special_handler_011", signo, SIGCHIAN_TEST_SIGNAL_NUM_10);
+    }
 }
 
 int main(void)
@@ -251,5 +264,6 @@ int main(void)
     raise(SIGCHAIN_SIGNAL_50);
     raise(SIGCHAIN_SIGNAL_56);
     raise(SIGCHAIN_SIGNAL_64);
+    EXPECT_EQ("sigchain_add_special_handler_011", g_count, SIGCHIAN_TEST_SIGNAL_NUM_10);
     return t_status;
 }

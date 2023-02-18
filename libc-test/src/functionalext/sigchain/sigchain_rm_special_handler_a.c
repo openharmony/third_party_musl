@@ -19,11 +19,13 @@
 #include "test.h"
 #include "functionalext.h"
 
+static int g_count = 0;
 /**
  * @brief the special handler
  */
 static bool sigchain_special_handler(int signo, siginfo_t *siginfo, void *ucontext_raw)
 {
+    g_count++;
     EXPECT_FALSE("sigchain_rm_special_handler_001", true);
     return false;
 }
@@ -50,5 +52,6 @@ int main(void)
 {
     sigchain_rm_special_handler_001();
     raise(SIGHUP);
+    EXPECT_EQ("sigchain_rm_special_handler_001", g_count, 0);
     return t_status;
 }

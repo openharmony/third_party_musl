@@ -20,11 +20,13 @@
 #include "functionalext.h"
 #include "sigchain_util.h"
 
+static int g_count = 0;
 /**
  * @brief the signal handler
  */
 static void signal_handler1(int signo)
 {
+    g_count++;
     EXPECT_FALSE("sigchain_intercept_sigprocmask_001", true);
 }
 
@@ -33,6 +35,7 @@ static void signal_handler1(int signo)
  */
 static void signal_handler2(int signo)
 {
+    g_count++;
     EXPECT_FALSE("sigchain_intercept_sigprocmask_001", true);
 }
 
@@ -64,5 +67,6 @@ int main(void)
     sigchain_intercept_sigprocmask_001();
     raise(SIGHUP);
     raise(SIGSEGV);
+    EXPECT_EQ("sigchain_intercept_sigprocmask_001", g_count, 0);
     return t_status;
 }
