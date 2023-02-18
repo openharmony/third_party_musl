@@ -52,8 +52,8 @@ static void signal_handler(int signo)
 
 /**
  * @tc.name      : sigchain_rm_special_handler_005
- * @tc.desc      : Remove multiple special handlers for a signal that is registered with
- *                 the kernel (Using signal interface) in sigchain.
+ * @tc.desc      : The signal is registered with the kernel(using signal), and add two special handler.
+ *                 Call the remove_special_signal_handler to remove the two special handler.
  * @tc.level     : Level 0
  */
 static void sigchain_rm_special_handler_005()

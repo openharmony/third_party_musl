@@ -45,8 +45,8 @@ static void signal_handler2(int signo)
 
 /**
  * @tc.name      : sigchain_intercept_sigaction_004
- * @tc.desc      : Test the influence of sigchain on sigaction, the signals are not registered with
- *                 the special handler, and mask and rasie the signal at the special handler
+ * @tc.desc      : The signals are not registered with the special handler, and mask and rasie the signal
+ *                 at the special handler. Test the influence of sigchain on sigaction.
  * @tc.level     : Level 0
  */
 static void sigchain_intercept_sigaction_004()

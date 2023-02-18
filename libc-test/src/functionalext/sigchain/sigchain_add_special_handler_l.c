@@ -152,8 +152,8 @@ static void signal_sigaction(int signo)
 
 /**
  * @tc.name      : sigchain_add_special_handler_012
- * @tc.desc      : Add multiple special handlers for the different signals that is registered with
- *                 the kernel (Using sigaction interface) in sigchain.
+ * @tc.desc      : Multiple different signals(Coverage signal range) are registered with the kernel(using signal),
+ *                 call add_special_signal_handler
  * @tc.level     : Level 0
  */
 static void sigchain_add_special_handler_012()

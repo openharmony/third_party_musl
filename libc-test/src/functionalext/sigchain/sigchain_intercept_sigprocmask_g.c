@@ -44,7 +44,7 @@ static void signal_handler(int signo)
 
 /**
  * @tc.name      : sigchain_intercept_sigprocmask_007
- * @tc.desc      : Test sigprocmask when the 'musl.sigchain.procmask' is false, 
+ * @tc.desc      : The 'musl.sigchain.procmask' is false, call the sigprocmask
  * @tc.level     : Level 0
  */
 static void sigchain_intercept_sigprocmask_007()

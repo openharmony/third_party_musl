@@ -33,8 +33,7 @@ static bool sigchain_special_handler(int signo, siginfo_t *siginfo, void *uconte
 
 /**
  * @tc.name      : sigchain_add_special_handler_001
- * @tc.desc      : Add a special handler for a signal that is not registered with
- *                 the kernel in sigchain.
+ * @tc.desc      : Call add_special_signal_handler when the signal that is not registered with the kernel
  * @tc.level     : Level 0
  */
 static void sigchain_add_special_handler_001()

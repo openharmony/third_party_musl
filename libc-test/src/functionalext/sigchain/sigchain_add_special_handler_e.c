@@ -52,8 +52,8 @@ static void signal_handler(int signo)
 
 /**
  * @tc.name      : sigchain_add_special_handler_005
- * @tc.desc      : Add multiple special handlers for a signal that is registered with
- *                 the kernel (Using signal interface) in sigchain.
+ * @tc.desc      : The signal are registered with the kernel(Using signal), call
+ *                 add_special_signal_handler to add two special handlers
  * @tc.level     : Level 0
  */
 static void sigchain_add_special_handler_005()
@@ -73,7 +73,7 @@ static void sigchain_add_special_handler_005()
         .sca_flags = 0,
     };
     add_special_signal_handler(SIGABRT, &sigabrt1);
-    
+
     if (get_sigchain_mask_enable()) {
         sigset_t set = {0};
         int signo[SIGCHIAN_TEST_SIGNAL_NUM_1] = {SIGABRT};

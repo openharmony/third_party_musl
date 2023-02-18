@@ -41,8 +41,8 @@ static void signal_handler2(int signo)
 
 /**
  * @tc.name      : sigchain_intercept_sigprocmask_001
- * @tc.desc      : Test the influence of sigchain on sigprocmask, the signals are not registered with
- *                 the special handler
+ * @tc.desc      : The signals are not registered with the special handler, test the influence of sigchain
+ *                 on sigprocmask.
  * @tc.level     : Level 0
  */
 static void sigchain_intercept_sigprocmask_001()
