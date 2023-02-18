@@ -4,13 +4,16 @@
 #include <stddef.h>
 #include <hilog_adapter.h>
 #include <string.h>
+#ifdef OHOS_ENABLE_PARAMETER
 #include "sys_param.h"
+#endif
 
 extern void intercept_sigprocmask(int how, sigset_t *restrict set);
 static const char *param_name = "musl.sigchain.procmask";
 
 bool get_sigchain_mask_enable()
 {
+#ifdef OHOS_ENABLE_PARAMETER
     static CachedHandle musl_log_Handle = NULL;
     if (musl_log_Handle == NULL) {
         musl_log_Handle = CachedParameterCreate(param_name, "false");
@@ -22,6 +25,7 @@ bool get_sigchain_mask_enable()
             return true;
         }
     }
+#endif
     return false;
 }
 
