@@ -20,11 +20,13 @@
 #include "functionalext.h"
 #include "sigchain_util.h"
 
+static int g_count = 0;
 /**
  * @brief the special handler
  */
 static bool sigchain_special_handler1(int signo, siginfo_t *siginfo, void *ucontext_raw)
 {
+    g_count++;
     EXPECT_EQ("sigchain_add_special_handler_005", signo, SIGABRT);
     return false;
 }
@@ -34,6 +36,7 @@ static bool sigchain_special_handler1(int signo, siginfo_t *siginfo, void *ucont
  */
 static bool sigchain_special_handler2(int signo, siginfo_t *siginfo, void *ucontext_raw)
 {
+    g_count++;
     EXPECT_EQ("sigchain_add_special_handler_005", signo, SIGABRT);
     return false;
 }
@@ -43,6 +46,7 @@ static bool sigchain_special_handler2(int signo, siginfo_t *siginfo, void *ucont
  */
 static void signal_handler(int signo)
 {
+    g_count++;
     EXPECT_EQ("sigchain_add_special_handler_005", signo, SIGABRT);
 }
 
@@ -54,7 +58,7 @@ static void signal_handler(int signo)
  */
 static void sigchain_add_special_handler_005()
 {
-    signal(SIGSEGV, signal_handler);
+    signal(SIGABRT, signal_handler);
 
     struct signal_chain_action sigabrt = {
         .sca_sigaction = sigchain_special_handler1,
@@ -69,16 +73,18 @@ static void sigchain_add_special_handler_005()
         .sca_flags = 0,
     };
     add_special_signal_handler(SIGABRT, &sigabrt1);
-
-    sigset_t set = {0};
-    int signo[SIGCHIAN_TEST_SIGNAL_NUM_1] = {SIGABRT};
-    SIGCHAIN_TEST_SET_MASK(set, "sigchain_add_special_handler_001", signo, SIGCHIAN_TEST_SIGNAL_NUM_1);
+    
+    if (get_sigchain_mask_enable()) {
+        sigset_t set = {0};
+        int signo[SIGCHIAN_TEST_SIGNAL_NUM_1] = {SIGABRT};
+        SIGCHAIN_TEST_SET_MASK(set, "sigchain_add_special_handler_005", signo, SIGCHIAN_TEST_SIGNAL_NUM_1);
+    }
 }
 
 int main(void)
 {
     sigchain_add_special_handler_005();
     raise(SIGABRT);
-    raise(SIGABRT);
+    EXPECT_EQ("sigchain_add_special_handler_005", g_count, SIGCHIAN_TEST_SIGNAL_NUM_3);
     return t_status;
 }

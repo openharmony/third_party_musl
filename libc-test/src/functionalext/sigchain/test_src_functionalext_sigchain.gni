@@ -48,5 +48,6 @@ functionalext_sigchain_list = [
   "sigchain_intercept_sigprocmask_d",
   "sigchain_intercept_sigprocmask_e",
   "sigchain_intercept_sigprocmask_f",
+  "sigchain_intercept_sigprocmask_g",
   "sigchain_call_special_handler_a",
 ]

@@ -21,39 +21,25 @@
 #include "functionalext.h"
 #include "sigchain_util.h"
 
+static int g_count = 0;
 /**
  * @brief the special handler
  */
 static bool sigchain_special_handler(int signo, siginfo_t *siginfo, void *ucontext_raw)
 {
-    EXPECT_EQ("sigchain_intercept_sigprocmask_004", signo, SIGHUP);
+    g_count++;
     return false;
 }
 
-/**
- * @brief the special handler
- */
-static bool sigchain_special_handler1(int signo, siginfo_t *siginfo, void *ucontext_raw)
-{
-    EXPECT_EQ("sigchain_intercept_sigprocmask_004", signo, SIGHUP);
-    return false;
-}
 
 /**
  * @brief the signal handler
  */
-static void signal_handler1(int signo)
+static void signal_handler(int signo)
 {
-    EXPECT_EQ("sigchain_intercept_sigprocmask_004", signo, SIGHUP);
+    g_count++;
 }
 
-/**
- * @brief the signal handler
- */
-static void signal_handler2(int signo)
-{
-    EXPECT_EQ("sigchain_intercept_sigprocmask_004", signo, SIGSEGV);
-}
 
 /**
  * @tc.name      : sigchain_intercept_sigprocmask_004
@@ -61,50 +47,46 @@ static void signal_handler2(int signo)
  *                 the special handler, and the case is called by multiple threads
  * @tc.level     : Level 0
  */
-static void sigchain_intercept_sigprocmask_004()
+static void sigchain_intercept_sigprocmask_004(int signo)
 {
-    struct sigaction siga1 = {
-        .sa_handler = signal_handler1,
+    struct sigaction siga = {
+        .sa_handler = signal_handler,
     };
-    sigaction(SIGHUP, &siga1, NULL);
+    sigaction(signo, &siga, NULL);
 
-    struct sigaction siga2 = {
-        .sa_handler = signal_handler2,
-    };
-    sigaction(SIGSEGV, &siga2, NULL);
-
-    struct signal_chain_action sighup = {
+    struct signal_chain_action sig_ca = {
         .sca_sigaction = sigchain_special_handler,
         .sca_mask = {},
         .sca_flags = 0,
     };
-    add_special_signal_handler(SIGHUP, &sighup);
+    add_special_signal_handler(signo, &sig_ca);
 
-    struct signal_chain_action sigsegv = {
-        .sca_sigaction = sigchain_special_handler1,
-        .sca_mask = {},
-        .sca_flags = 0,
-    };
-    add_special_signal_handler(SIGSEGV, &sigsegv);
-
-    sigset_t set = {0};
-    int signo[SIGCHIAN_TEST_SIGNAL_NUM_2] = {SIGHUP, SIGSEGV};
-    SIGCHAIN_TEST_SET_MASK(set, "sigchain_intercept_sigprocmask_004", signo, SIGCHIAN_TEST_SIGNAL_NUM_2);
+    if (get_sigchain_mask_enable()) {
+        sigset_t set = {0};
+        int signal[SIGCHIAN_TEST_SIGNAL_NUM_1] = {signo};
+        SIGCHAIN_TEST_SET_MASK(set, "sigchain_intercept_sigprocmask_004", signal, SIGCHIAN_TEST_SIGNAL_NUM_1);
+    }
 }
 
-void thread_func(void *data)
+void thread_func1(void *data)
 {
-    sigchain_intercept_sigprocmask_004();
-    raise(SIGHUP);
-    raise(SIGSEGV);
+    sigchain_intercept_sigprocmask_004(SIGHUP);
+}
+
+void thread_func2(void *data)
+{
+    sigchain_intercept_sigprocmask_004(SIGSEGV);
 }
 
 int main(void)
 {
     thrd_t t1, t2;
-    thrd_create(&t1, (thrd_start_t)thread_func, NULL);
-    thrd_create(&t2, (thrd_start_t)thread_func, NULL);
+    thrd_create(&t1, (thrd_start_t)thread_func1, NULL);
+    thrd_create(&t2, (thrd_start_t)thread_func2, NULL);
     thrd_join(t1, NULL);
     thrd_join(t2, NULL);
+    raise(SIGHUP);
+    raise(SIGSEGV);
+    EXPECT_EQ("sigchain_intercept_sigprocmask_004", g_count, SIGCHIAN_TEST_SIGNAL_NUM_4);
     return t_status;
 }

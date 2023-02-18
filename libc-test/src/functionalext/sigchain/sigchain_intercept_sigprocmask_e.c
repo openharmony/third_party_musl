@@ -35,7 +35,7 @@ static bool sigchain_special_handler(int signo, siginfo_t *siginfo, void *uconte
         raise(SIGSEGV);
         g_count++;
     }
-    return false;
+    return true;
 }
 
 /**
@@ -44,7 +44,7 @@ static bool sigchain_special_handler(int signo, siginfo_t *siginfo, void *uconte
 static bool sigchain_special_handler1(int signo, siginfo_t *siginfo, void *ucontext_raw)
 {
     EXPECT_EQ("sigchain_intercept_sigprocmask_005", signo, SIGSEGV);
-    EXPECT_EQ("sigchain_intercept_sigprocmask_005", g_count, 1);
+    EXPECT_EQ("sigchain_intercept_sigprocmask_005", g_count, SIGCHIAN_TEST_SIGNAL_NUM_1);
     return false;
 }
 
@@ -54,6 +54,7 @@ static bool sigchain_special_handler1(int signo, siginfo_t *siginfo, void *ucont
  */
 static void signal_handler(int signo)
 {
+    g_count++;
     EXPECT_TRUE("sigchain_intercept_sigprocmask_005", true);
 }
 
@@ -92,12 +93,17 @@ static void sigchain_intercept_sigprocmask_005()
 
     sigset_t set = {0};
     int signo[SIGCHIAN_TEST_SIGNAL_NUM_2] = {SIGHUP, SIGSEGV};
-    SIGCHAIN_TEST_SET_MASK(set, "sigchain_intercept_sigprocmask_001", signo, SIGCHIAN_TEST_SIGNAL_NUM_2);
+    SIGCHAIN_TEST_SET_MASK(set, "sigchain_intercept_sigprocmask_005", signo, SIGCHIAN_TEST_SIGNAL_NUM_2);
 }
 
 int main(void)
 {
     sigchain_intercept_sigprocmask_005();
     raise(SIGHUP);
+    if (get_sigchain_mask_enable()) {
+        EXPECT_EQ("sigchain_intercept_sigprocmask_005", g_count, SIGCHIAN_TEST_SIGNAL_NUM_2);
+    } else {
+        EXPECT_EQ("sigchain_intercept_sigprocmask_005", g_count, 0);
+    }
     return t_status;
 }

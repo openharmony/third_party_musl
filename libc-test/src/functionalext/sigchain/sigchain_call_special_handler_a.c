@@ -40,6 +40,7 @@ static void signal_handler(int signo)
 {
     EXPECT_EQ("sigchain_call_special_handler_001", signo, SIGSEGV);
     EXPECT_EQ("sigchain_call_special_handler_001", g_count, SIGCHAIN_CALL_SPECIAL_HANDLER_TAG);
+    g_count++;
     return;
 }
 
@@ -60,14 +61,17 @@ static void sigchain_call_special_handler_001()
     };
     add_special_signal_handler(SIGSEGV, &sigsegv);
 
-    sigset_t set = {0};
-    int signo[SIGCHIAN_TEST_SIGNAL_NUM_1] = {SIGSEGV};
-    SIGCHAIN_TEST_SET_MASK(set, "sigchain_call_special_handler_001", signo, SIGCHIAN_TEST_SIGNAL_NUM_1);
+    if (get_sigchain_mask_enable()) {
+        sigset_t set = {0};
+        int signo[SIGCHIAN_TEST_SIGNAL_NUM_1] = {SIGSEGV};
+        SIGCHAIN_TEST_SET_MASK(set, "sigchain_call_special_handler_001", signo, SIGCHIAN_TEST_SIGNAL_NUM_1);
+    }
 }
 
 int main(void)
 {
     sigchain_call_special_handler_001();
     raise(SIGSEGV);
+    EXPECT_EQ("sigchain_call_special_handler_001", g_count, SIGCHIAN_TEST_SIGNAL_NUM_2);
     return t_status;
 }

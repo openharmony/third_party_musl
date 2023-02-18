@@ -20,11 +20,13 @@
 #include "functionalext.h"
 #include "sigchain_util.h"
 
+static int g_count = 0;
 /**
  * @brief the special handler
  */
 static bool sigchain_special_handler(int signo, siginfo_t *siginfo, void *ucontext_raw)
 {
+    g_count++;
     EXPECT_EQ("sigchain_intercept_signal_002", signo, SIGHUP);
     return false;
 }
@@ -34,6 +36,7 @@ static bool sigchain_special_handler(int signo, siginfo_t *siginfo, void *uconte
  */
 static bool sigchain_special_handler1(int signo, siginfo_t *siginfo, void *ucontext_raw)
 {
+    g_count++;
     EXPECT_EQ("sigchain_intercept_signal_002", signo, SIGSEGV);
     return false;
 }
@@ -43,6 +46,7 @@ static bool sigchain_special_handler1(int signo, siginfo_t *siginfo, void *ucont
  */
 static void signal_handler1(int signo)
 {
+    g_count++;
     EXPECT_EQ("sigchain_intercept_signal_002", signo, SIGHUP);
 }
 
@@ -51,6 +55,7 @@ static void signal_handler1(int signo)
  */
 static void signal_handler2(int signo)
 {
+    g_count++;
     EXPECT_EQ("sigchain_intercept_signal_002", signo, SIGSEGV);
 }
 
@@ -79,9 +84,11 @@ static void sigchain_intercept_signal_002()
     signal(SIGHUP, signal_handler1);
     signal(SIGSEGV, signal_handler2);
 
-    sigset_t set = {0};
-    int signo[SIGCHIAN_TEST_SIGNAL_NUM_2] = {SIGSEGV, SIGHUP};
-    SIGCHAIN_TEST_SET_MASK(set, "sigchain_intercept_signal_002", signo, SIGCHIAN_TEST_SIGNAL_NUM_2);
+    if (get_sigchain_mask_enable()) {
+        sigset_t set = {0};
+        int signo[SIGCHIAN_TEST_SIGNAL_NUM_2] = {SIGSEGV, SIGHUP};
+        SIGCHAIN_TEST_SET_MASK(set, "sigchain_intercept_signal_002", signo, SIGCHIAN_TEST_SIGNAL_NUM_2);
+    }
 }
 
 int main(void)
@@ -89,5 +96,6 @@ int main(void)
     sigchain_intercept_signal_002();
     raise(SIGHUP);
     raise(SIGSEGV);
+    EXPECT_EQ("sigchain_intercept_signal_002", g_count, SIGCHIAN_TEST_SIGNAL_NUM_4);
     return t_status;
 }

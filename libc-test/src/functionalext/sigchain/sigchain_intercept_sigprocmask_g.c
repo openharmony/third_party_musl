@@ -27,31 +27,29 @@ static int g_count = 0;
 static bool sigchain_special_handler(int signo, siginfo_t *siginfo, void *ucontext_raw)
 {
     g_count++;
-    EXPECT_EQ("sigchain_add_special_handler_003", signo, SIGSEGV);
+    EXPECT_EQ("sigchain_intercept_sigprocmask_007", signo, SIGSEGV);
     return false;
 }
 
 /**
  * @brief the signal handler
  */
-static void signal_sigaction(int signo)
+static void signal_handler(int signo)
 {
+    EXPECT_EQ("sigchain_intercept_sigprocmask_007", g_count, SIGCHIAN_TEST_SIGNAL_NUM_1);
     g_count++;
-    EXPECT_EQ("sigchain_add_special_handler_003", signo, SIGSEGV);
+    EXPECT_EQ("sigchain_intercept_sigprocmask_007", signo, SIGSEGV);
+    return;
 }
 
 /**
- * @tc.name      : sigchain_add_special_handler_003
- * @tc.desc      : Add a special handler for a signal that is registered with
- *                 the kernel (Using sigaction interface) in sigchain.
+ * @tc.name      : sigchain_intercept_sigprocmask_007
+ * @tc.desc      : Test sigprocmask when the 'musl.sigchain.procmask' is false, 
  * @tc.level     : Level 0
  */
-static void sigchain_add_special_handler_003()
+static void sigchain_intercept_sigprocmask_007()
 {
-    struct sigaction sigsegv1 = {
-        .sa_handler = signal_sigaction,
-    };
-    sigaction(SIGSEGV, &sigsegv1, NULL);
+    signal(SIGSEGV, signal_handler);
 
     struct signal_chain_action sigsegv = {
         .sca_sigaction = sigchain_special_handler,
@@ -60,17 +58,19 @@ static void sigchain_add_special_handler_003()
     };
     add_special_signal_handler(SIGSEGV, &sigsegv);
 
-    if (get_sigchain_mask_enable()) {
-        sigset_t set = {0};
-        int signo[SIGCHIAN_TEST_SIGNAL_NUM_1] = {SIGSEGV};
-        SIGCHAIN_TEST_SET_MASK(set, "sigchain_add_special_handler_003", signo, SIGCHIAN_TEST_SIGNAL_NUM_1);
-    }
+    sigset_t set = {0};
+    int signo[SIGCHIAN_TEST_SIGNAL_NUM_1] = {SIGSEGV};
+    SIGCHAIN_TEST_SET_MASK(set, "sigchain_intercept_sigprocmask_007", signo, SIGCHIAN_TEST_SIGNAL_NUM_1);
 }
 
 int main(void)
 {
-    sigchain_add_special_handler_003();
+    sigchain_intercept_sigprocmask_007();
     raise(SIGSEGV);
-    EXPECT_EQ("sigchain_add_special_handler_003", g_count, SIGCHIAN_TEST_SIGNAL_NUM_2);
+    if (get_sigchain_mask_enable()) {
+        EXPECT_EQ("sigchain_intercept_sigprocmask_007", g_count, SIGCHIAN_TEST_SIGNAL_NUM_2);
+    } else {
+        EXPECT_EQ("sigchain_intercept_sigprocmask_007", g_count, 0);
+    }
     return t_status;
 }

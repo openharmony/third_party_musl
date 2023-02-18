@@ -20,11 +20,13 @@
 #include "functionalext.h"
 #include "sigchain_util.h"
 
+static int g_count = 0;
 /**
  * @brief the special handler
  */
 static bool sigchain_special_handler1(int signo, siginfo_t *siginfo, void *ucontext_raw)
 {
+    g_count++;
     EXPECT_FALSE("sigchain_rm_special_handler_010", true);
     return false;
 }
@@ -34,6 +36,7 @@ static bool sigchain_special_handler1(int signo, siginfo_t *siginfo, void *ucont
  */
 static bool sigchain_special_handler2(int signo, siginfo_t *siginfo, void *ucontext_raw)
 {
+    g_count++;
     EXPECT_FALSE("sigchain_rm_special_handler_010", true);
     return false;
 }
@@ -43,6 +46,7 @@ static bool sigchain_special_handler2(int signo, siginfo_t *siginfo, void *ucont
  */
 static bool sigchain_special_handler3(int signo, siginfo_t *siginfo, void *ucontext_raw)
 {
+    g_count++;
     EXPECT_FALSE("sigchain_rm_special_handler_010", true);
     return false;
 }
@@ -52,6 +56,7 @@ static bool sigchain_special_handler3(int signo, siginfo_t *siginfo, void *ucont
  */
 static bool sigchain_special_handler4(int signo, siginfo_t *siginfo, void *ucontext_raw)
 {
+    g_count++;
     EXPECT_FALSE("sigchain_rm_special_handler_010", true);
     return false;
 }
@@ -61,6 +66,7 @@ static bool sigchain_special_handler4(int signo, siginfo_t *siginfo, void *ucont
  */
 static bool sigchain_special_handler5(int signo, siginfo_t *siginfo, void *ucontext_raw)
 {
+    g_count++;
     EXPECT_FALSE("sigchain_rm_special_handler_010", true);
     return false;
 }
@@ -70,6 +76,7 @@ static bool sigchain_special_handler5(int signo, siginfo_t *siginfo, void *ucont
  */
 static bool sigchain_special_handler6(int signo, siginfo_t *siginfo, void *ucontext_raw)
 {
+    g_count++;
     EXPECT_FALSE("sigchain_rm_special_handler_010", true);
     return false;
 }
@@ -79,6 +86,7 @@ static bool sigchain_special_handler6(int signo, siginfo_t *siginfo, void *ucont
  */
 static bool sigchain_special_handler7(int signo, siginfo_t *siginfo, void *ucontext_raw)
 {
+    g_count++;
     EXPECT_FALSE("sigchain_rm_special_handler_010", true);
     return false;
 }
@@ -88,6 +96,7 @@ static bool sigchain_special_handler7(int signo, siginfo_t *siginfo, void *ucont
  */
 static bool sigchain_special_handler8(int signo, siginfo_t *siginfo, void *ucontext_raw)
 {
+    g_count++;
     EXPECT_FALSE("sigchain_rm_special_handler_010", true);
     return false;
 }
@@ -97,6 +106,7 @@ static bool sigchain_special_handler8(int signo, siginfo_t *siginfo, void *ucont
  */
 static bool sigchain_special_handler9(int signo, siginfo_t *siginfo, void *ucontext_raw)
 {
+    g_count++;
     EXPECT_FALSE("sigchain_rm_special_handler_010", true);
     return false;
 }
@@ -106,6 +116,7 @@ static bool sigchain_special_handler9(int signo, siginfo_t *siginfo, void *ucont
  */
 static bool sigchain_special_handler10(int signo, siginfo_t *siginfo, void *ucontext_raw)
 {
+    g_count++;
     EXPECT_FALSE("sigchain_rm_special_handler_010", true);
     return false;
 }
@@ -113,7 +124,7 @@ static bool sigchain_special_handler10(int signo, siginfo_t *siginfo, void *ucon
 /**
  * @tc.name      : sigchain_rm_special_handler_010
  * @tc.desc      : Remove multiple special handlers for the different signals that are not registered with
- *                 the kernel in sigchain.
+ *                 the kernel.
  * @tc.level     : Level 0
  */
 static void sigchain_rm_special_handler_010()
@@ -199,8 +210,6 @@ static void sigchain_rm_special_handler_010()
     remove_special_signal_handler(SIGCHAIN_SIGNAL_56, sigchain_special_handler9);
     remove_special_signal_handler(SIGCHAIN_SIGNAL_64, sigchain_special_handler10);
 
-    raise(SIGHUP);
-    raise(SIGURG);
     raise(SIGCHAIN_SIGNAL_37);
     raise(SIGCHAIN_SIGNAL_43);
     raise(SIGCHAIN_SIGNAL_50);
@@ -211,5 +220,6 @@ static void sigchain_rm_special_handler_010()
 int main(void)
 {
     sigchain_rm_special_handler_010();
+    EXPECT_EQ("sigchain_rm_special_handler_010", g_count, 0);
     return t_status;
 }
