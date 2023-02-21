@@ -53,7 +53,6 @@ static bool sigchain_special_handler1(int signo, siginfo_t *siginfo, void *ucont
 static void signal_handler(int signo)
 {
     g_count++;
-    EXPECT_TRUE("sigchain_handler_call_order_001", true);
 }
 
 /**
