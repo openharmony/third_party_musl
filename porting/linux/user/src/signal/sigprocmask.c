@@ -14,12 +14,11 @@ static const char *param_name = "musl.sigchain.procmask";
 bool get_sigchain_mask_enable()
 {
 #ifdef OHOS_ENABLE_PARAMETER
-    static CachedHandle musl_log_Handle = NULL;
-    if (musl_log_Handle == NULL) {
-        musl_log_Handle = CachedParameterCreate(param_name, "false");
+    static CachedHandle sigchain_procmask_handle = NULL;
+    if (sigchain_procmask_handle == NULL) {
+        sigchain_procmask_handle = CachedParameterCreate(param_name, "false");
     }
-    char *param_value = CachedParameterGet(musl_log_Handle);
-
+    char *param_value = CachedParameterGet(sigchain_procmask_handle);
     if (param_value != NULL) {
         if (strcmp(param_value, "true") == 0) {
             return true;
