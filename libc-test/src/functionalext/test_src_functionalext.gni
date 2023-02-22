@@ -29,4 +29,5 @@ functionalext_list = [
   "sched:functionalext_sched_test",
   "unittest:functionalext_unittest_test",
   "legacy:functionalext_legacy_test",
+  "sigchain:functionalext_sigchain_test",
 ]
