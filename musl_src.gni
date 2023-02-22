@@ -1040,6 +1040,7 @@ musl_src_file = [
   "src/signal/sigtimedwait.c",
   "src/signal/sigwait.c",
   "src/signal/sigwaitinfo.c",
+  "src/sigchain/sigchain.c",
   "src/stat/__xstat.c",
   "src/stat/chmod.c",
   "src/stat/fchmod.c",
@@ -1974,6 +1975,7 @@ musl_inc_root_files = [
   "include/setjmp.h",
   "include/shadow.h",
   "include/signal.h",
+  "include/sigchain.h",
   "include/spawn.h",
   "include/stdalign.h",
   "include/stdarg.h",
@@ -2043,6 +2045,7 @@ musl_src_porting_file = [
   "include/sys/socket.h",
   "include/sys/sysinfo.h",
   "include/signal.h",
+  "include/sigchain.h",
   "include/sched.h",
   "src/internal/dynlink.h",
   "include/sys/tgkill.h",
@@ -2116,6 +2119,8 @@ musl_src_porting_file = [
   "src/thread/pthread_create.c",
   "src/sched/sched_cpualloc.c",
   "src/signal/signal.c",
+  "src/signal/sigaction.c",
+  "src/signal/sigprocmask.c",
   "include/langinfo.h",
   "include/locale.h",
   "src/hilog/hilog_adapter.c",
@@ -2147,6 +2152,7 @@ musl_src_porting_file = [
   "src/process/x86_64/__vfork.s",
   "src/linux/cache.c",
   "src/sched/sched_getcpu.c",
+  "src/sigchain/sigchain.c",
 ]
 
 musl_inc_hook_files = [
