@@ -35,9 +35,9 @@ void getspnam_r_0100(void)
     const char *spwd_name = "root";
 
     int result = getspnam_r(spwd_name, &spwd_storage, buf, sizeof(buf), &spwd);
-    EXPECT_EQ(getspnam_r_0100, result, 0);
-    EXPECT_PTRNE(getspnam_r_0100, spwd, NULL);
-    EXPECT_EQ(getspnam_r_0100, strcmp(spwd_name, spwd->sp_namp), 0);
+    EXPECT_EQ("getspnam_r_0100", result, 0);
+    EXPECT_PTRNE("getspnam_r_0100", spwd, NULL);
+    EXPECT_EQ("getspnam_r_0100", strcmp(spwd_name, spwd->sp_namp), 0);
 }
 
 int main(int argc, char *argv[])
