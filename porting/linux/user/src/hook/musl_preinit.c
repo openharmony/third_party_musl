@@ -209,11 +209,11 @@ static bool init_munmap_function(void* malloc_shared_library_handler, MallocMunm
 	return true;
 }
 
-static bool init_memtrace_function(void* malloc_shared_library_handler, Memtrace* func, const char* prefix)
+static bool init_memtrace_function(void* malloc_shared_library_handler, MemTrace* func, const char* prefix)
 {
 	char symbol[MAX_SYM_NAME_SIZE];
 	snprintf(symbol, sizeof(symbol), "%s_%s", prefix, "memtrace");
-	*func = (Memtrace)(dlsym(malloc_shared_library_handler, symbol));
+	*func = (MemTrace)(dlsym(malloc_shared_library_handler, symbol));
 	if (*func == NULL) {
 		return false;
 	}
