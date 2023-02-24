@@ -216,7 +216,7 @@ static void do_tzset()
 		             || !strcmp(dummy_name, "UTC")
 		             || !strcmp(dummy_name, "GMT")))
 			posix_form = 1;
-	}	
+	}
     /* Non-suid can use an absolute tzfile pathname or a relative
      * pathame beginning with "."; in secure mode, only the
      * standard path will be searched. */
