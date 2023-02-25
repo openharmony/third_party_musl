@@ -13,24 +13,24 @@
  * limitations under the License.
  */
 
-#include "malloc_impl.h"
+#include <stddef.h>
 
 static char buf[80] = "abcde"; 
 
-void *internal_malloc(size_t n)
+void *__libc_malloc(size_t n)
 {
     return (void*)buf;
 }
 
-void internal_free(void *p)
+void __libc_free(void *p)
 {}
 
-void *internal_calloc(size_t m, size_t n)
+void *__libc_calloc(size_t m, size_t n)
 {
     return (void*)buf;
 }
 
-void *internal_realloc(void* p, size_t n)
+void *__libc_realloc(void* p, size_t n)
 {
     buf[n+1] = '\0';
     return (void*)buf;

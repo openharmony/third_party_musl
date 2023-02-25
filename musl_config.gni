@@ -40,7 +40,13 @@ declare_args() {
   musl_inc_out_dir = "usr/include/${musl_target_triple}"
   uapi_dir = "//kernel/linux/patches/linux-5.10/prebuilts/usr/include"
   linux_kernel_dir = "//kernel/linux/linux-5.10"
-  musl_dir = "//third_party/musl"
+  if ((defined(target_os) && target_os == "ohos") ||
+      (defined(ohos_kernel_type) && ohos_kernel_type == "linux")) {
+    musl_dir = "//third_party/musl/musl_1.2.3"
+  } else {
+    musl_dir = "//third_party/musl"
+  }
+
   musl_porting_dir = "//third_party/musl/porting/linux/user"
 
   # if (is_asan) {

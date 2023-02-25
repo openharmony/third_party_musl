@@ -20,8 +20,6 @@
 #include <sys/random.h>
 #include <unistd.h>
 
-#include "malloc_impl.h"
-
 #define HANDLE_INCREASE 2
 #define TASK_BASE_CAPACITY 8
 
@@ -39,7 +37,7 @@ static uintptr_t saved_handle = 0;
 
 void *add_handle_node(void *handle, struct dso *dso)
 {
-    struct handle_node *node = internal_malloc(sizeof(*node));
+    struct handle_node *node = __libc_malloc(sizeof(*node));
     if (!node) {
         return NULL;
     }
@@ -85,7 +83,7 @@ void remove_handle_node(void *handle)
             } else {
                 handle_map_list = node->next;
             }
-            internal_free(node);
+            __libc_free(node);
             return;
         } else {
             pre_node = node;
@@ -120,7 +118,7 @@ void *assign_valid_handle(struct dso *p)
 
 struct loadtasks *create_loadtasks(void)
 {
-    struct loadtasks *tasks = internal_malloc(sizeof(struct loadtasks));
+    struct loadtasks *tasks = __libc_malloc(sizeof(struct loadtasks));
     if (tasks) {
         tasks->array = NULL;
         tasks->capacity = 0;
@@ -137,9 +135,9 @@ bool append_loadtasks(struct loadtasks *tasks, struct loadtask *item)
         new_cap = tasks->capacity + TASK_BASE_CAPACITY;
         void *realloced = NULL;
         if (tasks->array) {
-            realloced = internal_realloc(tasks->array, new_cap * sizeof(struct loadtask *));
+            realloced = __libc_realloc(tasks->array, new_cap * sizeof(struct loadtask *));
         } else {
-            realloced = internal_malloc(TASK_BASE_CAPACITY * sizeof(struct loadtask *));
+            realloced = __libc_malloc(TASK_BASE_CAPACITY * sizeof(struct loadtask *));
         }
         if (realloced) {
             tasks->array = realloced;
@@ -159,11 +157,11 @@ void free_task(struct loadtask *task)
         return;
     }
     if (task->name) {
-        internal_free(task->name);
+        __libc_free(task->name);
         task->name = NULL;
     }
     if (task->allocated_buf) {
-        internal_free(task->allocated_buf);
+        __libc_free(task->allocated_buf);
         task->allocated_buf = NULL;
     }
     if (task->dyn_map_len) {
@@ -180,7 +178,7 @@ void free_task(struct loadtask *task)
         close(task->fd);
         task->fd = -1;
     }
-    internal_free(task);
+    __libc_free(task);
 }
 
 struct loadtask *get_loadtask(struct loadtasks *tasks, size_t index)
@@ -202,11 +200,11 @@ void free_loadtasks(struct loadtasks *tasks)
             tasks->length = 0;
         }
         if (tasks->array) {
-            internal_free(tasks->array);
+            __libc_free(tasks->array);
             tasks->array = NULL;
         }
         tasks->capacity = 0;
-        internal_free(tasks);
+        __libc_free(tasks);
     }
 }
 
@@ -229,11 +227,11 @@ void shuffle_loadtasks(struct loadtasks *tasks)
 struct loadtask *create_loadtask(const char *name, struct dso *needed_by, ns_t *ns, bool check_inherited)
 {
     size_t name_len = strlen(name);
-    char *name_buf = (char *)internal_malloc(name_len + 1);
+    char *name_buf = (char *)__libc_malloc(name_len + 1);
     if (!name_buf) {
         return NULL;
     }
-    struct loadtask *task = internal_calloc(1, sizeof(struct loadtask));
+    struct loadtask *task = __libc_calloc(1, sizeof(struct loadtask));
     if (!task) {
         return NULL;
     }
