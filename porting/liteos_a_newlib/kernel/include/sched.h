@@ -40,8 +40,8 @@ extern "C" {
 #define __CPU_BITTYPE  unsigned long int  /* mandated by the kernel  */
 #include_next <sched.h>
 
-int sched_getaffinity (pid_t, size_t, cpu_set_t *);
-int sched_setaffinity (pid_t, size_t, const cpu_set_t *);
+int sched_getaffinity(pid_t, size_t, cpu_set_t *);
+int sched_setaffinity(pid_t, size_t, const cpu_set_t *);
 
 #ifdef __cplusplus
 }
