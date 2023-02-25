@@ -75,7 +75,7 @@ void* calloc(size_t m, size_t n)
 	if (__predict_false(dispatch_table != NULL)) {
 		return dispatch_table->calloc(m, n);
 	} else {
-		return MuslMalloc(calloc)(m, n);
+		return MuslFunc(calloc)(m, n);
 	}
 }
 
@@ -85,7 +85,7 @@ void* realloc(void *p, size_t n)
 	if (__predict_false(dispatch_table != NULL)) {
 		return dispatch_table->realloc(p, n);
 	} else {
-		return MuslMalloc(realloc)(p, n);
+		return MuslFunc(realloc)(p, n);
 	}
 }
 
