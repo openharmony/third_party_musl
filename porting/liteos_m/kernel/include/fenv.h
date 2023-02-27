@@ -24,6 +24,5 @@ int feupdateenv(const fenv_t *);
 #ifdef __cplusplus
 }
 #endif
-
 #endif
 

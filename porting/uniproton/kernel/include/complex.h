@@ -130,5 +130,4 @@ long double creall(long double complex);
 #ifdef __cplusplus
 }
 #endif
-
 #endif
