@@ -54,7 +54,7 @@ static const struct time_test_double_struct test_difftime_data[] = {
     {"Pacific/Efate", 10.000000},
     {"Pacific/Midway", 10.000000},
     {"Pacific/Niue", 10.000000},
-    {"Pacific/Enderbury", 10.000000},
+    {"Pacific/Kanton", 10.000000},
     {"Pacific/Funafuti", 10.000000},
     {"Pacific/Gambier", 10.000000},
     {"EET", 10.000000},

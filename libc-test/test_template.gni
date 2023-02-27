@@ -158,9 +158,9 @@ template("test_unittest") {
     }
 
     if (target_dir == "functionalext/symver") {
+      ldflags += [ "-Wl,-rpath=./" ]
       if (target_name == "dlsym" || target_name == "dlvsym" ||
           target_name == "dynlink" || target_name == "dynlink_default") {
-        ldflags += [ "-Wl,-rpath=src/functional" ]
         libs += [
           "//${root_out_dir}/${test_lib_dir}/libdso_easy_symver.so",
           "//${root_out_dir}/${test_lib_dir}/libdso_hard_symver.so",

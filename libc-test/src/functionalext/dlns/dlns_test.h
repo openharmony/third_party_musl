@@ -16,19 +16,19 @@
 #ifndef LIBC_TEST_SRC_FUNCTIONALEXT_DLNS_DLNS_TEST_H
 #define LIBC_TEST_SRC_FUNCTIONALEXT_DLNS_DLNS_TEST_H
 
-static const char* path = "/data/tests/libc-test/src/functionalext/dlns";
+static const char* path = "/data/tests/libc-test/src";
 static const char* dllName = "libdlopen_ns_dso.so";
-static const char* dllNamePath = "/data/tests/libc-test/src/functionalext/dlns/libdlopen_ns_dso.so";
+static const char* dllNamePath = "/data/tests/libc-test/src/libdlopen_ns_dso.so";
 static const char* errdllNamePath = "/etc/test/libdlopen_ns_dso.so";
 static const char* dllName2 = "libdlopen_dso.so";
-static const char* dllNamePath2 = "/data/tests/libc-test/src/functionalext/dlns/libdlopen_dso.so";
+static const char* dllNamePath2 = "/data/tests/libc-test/src/libdlopen_dso.so";
 static const char* errPath_ns = "src/test";
 
 static const char* sharedLib = "sharedlibtest.so";
-static const char* pathA = "/data/tests/libc-test/src/functionalext/dlns/A";
-static const char* pathB = "/data/tests/libc-test/src/functionalext/dlns/B";
-static const char* pathC = "/data/tests/libc-test/src/functionalext/dlns/C";
-static const char* pathD = "/data/tests/libc-test/src/functionalext/dlns/D";
+static const char* pathA = "/data/tests/libc-test/src/A";
+static const char* pathB = "/data/tests/libc-test/src/B";
+static const char* pathC = "/data/tests/libc-test/src/C";
+static const char* pathD = "/data/tests/libc-test/src/D";
 
 static const char* libB = "libB.so";
 static const char* libC = "libC.so";
