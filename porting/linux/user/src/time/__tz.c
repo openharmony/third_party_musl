@@ -18,14 +18,20 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/mman.h>
+#include <ctype.h>
 #include "libc.h"
 #include "lock.h"
+#include "fork_impl.h"
 #include "time_impl.h"
 #ifdef OHOS_ENABLE_PARAMETER
 #include "sys_param.h"
 #define SYSPARAM_LENGTH 40
 #endif
 
+#define malloc __libc_malloc
+#define calloc undef
+#define realloc undef
+#define free undef
 #define __TZ_VERSION__ '2'
 
 long  __timezone = 0;
@@ -52,6 +58,7 @@ static char *old_tz = old_tz_buf;
 static size_t old_tz_size = sizeof old_tz_buf;
 
 static volatile int lock[1];
+volatile int *const __timezone_lockptr = lock;
 
 static int getint(const char **p)
 {
@@ -113,18 +120,18 @@ static void getrule(const char **p, int rule[5])
 
 static void getname(char *d, const char **p)
 {
-    int i;
-    if (**p == '<') {
-        ++*p;
-        for (i=0; (*p)[i]!='>' && i<TZNAME_MAX; i++)
-            d[i] = (*p)[i];
-        ++*p;
-    } else {
-        for (i=0; ((*p)[i]|32)-'a'<26U && i<TZNAME_MAX; i++)
-            d[i] = (*p)[i];
-    }
-    *p += i;
-    d[i] = 0;
+	int i;
+	if (**p == '<') {
+		++*p;
+		for (i=0; (*p)[i] && (*p)[i]!='>'; i++)
+			if (i<TZNAME_MAX) d[i] = (*p)[i];
+		if ((*p)[i]) ++*p;
+	} else {
+		for (i=0; ((*p)[i]|32)-'a'<26U; i++)
+			if (i<TZNAME_MAX) d[i] = (*p)[i];
+	}
+	*p += i;
+	d[i<TZNAME_MAX?i:TZNAME_MAX] = 0;
 }
 
 #define VEC(...) ((const unsigned char[]) {__VA_ARGS__})
@@ -200,11 +207,21 @@ static void do_tzset()
     }
     if (old_tz) memcpy(old_tz, s, i+1);
 
+	int posix_form = 0;
+	if (*s != ':') {
+		p = s;
+		char dummy_name[TZNAME_MAX+1];
+		getname(dummy_name, &p);
+		if (p!=s && (*p == '+' || *p == '-' || isdigit(*p)
+		             || !strcmp(dummy_name, "UTC")
+		             || !strcmp(dummy_name, "GMT")))
+			posix_form = 1;
+	}
     /* Non-suid can use an absolute tzfile pathname or a relative
      * pathame beginning with "."; in secure mode, only the
      * standard path will be searched. */
     int flag = 1;
-    if (*s == ':' || ((p=strchr(s, '/')) && !memchr(s, ',', p-s))) {
+    if (!posix_form) {
         if (*s == ':') s++;
         if (*s == '/' || *s == '.') {
             /* The path is invalid, use the default value. */
@@ -265,7 +282,7 @@ static void do_tzset()
          * Second, its DST start time may be January 1 at 00:00 and its stop
          * time December 31 at 24:00 plus the difference between DST and
          * standard time, indicating DST all year. */
-        if (sizeof(time_t) > 4 && map[4] >= __TZ_VERSION__) {
+        if (map[4]!='1') {
             size_t skip = zi_dotprod(zi+20, VEC(1, 1, 8, 5, 6, 1), 6);
             trans = zi+skip+44+44;
             scale++;
@@ -356,29 +373,27 @@ static size_t scan_trans(long long t, int local, size_t *alt)
         }
     }
 
-    /* First and last entry are special. First means to use lowest-index
-     * non-DST type. Last means to apply POSIX-style rule if available. */
-    n = (index-trans)>>scale;
-    if (a == n-1) return -1;
-    if (a == 0) {
-        x = zi_read32(trans + (a<<scale));
-        if (scale == 3) x = (x<<32) | zi_read32(trans + (a<<scale) + 4);
-        else x = (int32_t)x;
-        if (local) off = (int32_t)zi_read32(types + 6 * index[a-1]);
-        if (t - off < (int64_t)x) {
-            for (a=0; a<(abbrevs-types)/6; a++) {
-                if (types[6*a+4] != types[4]) break;
-            }
-            if (a == (abbrevs-types)/6) a = 0;
-            if (types[6*a+4]) {
-                *alt = a;
-                return 0;
-            } else {
-                *alt = 0;
-                return a;
-            }
-        }
-    }
+	/* First and last entry are special. First means to use lowest-index
+	 * non-DST type. Last means to apply POSIX-style rule if available. */
+	n = (index-trans)>>scale;
+	if (a == n-1) return -1;
+	if (a == 0) {
+		x = zi_read32(trans);
+		if (scale == 3) x = (x<<32) | zi_read32(trans + 4);
+		else x = (int32_t)x;
+		/* Find the lowest non-DST type, or 0 if none. */
+		size_t j = 0;
+		for (size_t i=abbrevs-types; i; i-=6) {
+			if (!types[i-6+4]) j = i-6;
+		}
+		if (local) off = (int32_t)zi_read32(types + j);
+		/* If t is before first transition, use the above-found type
+		 * and the index-zero (after transition) type as the alt. */
+		if (t - off < (int64_t)x) {
+			if (alt) *alt = index[0];
+			return j/6;
+		}
+	}
 
     /* Try to find a neighboring opposite-DST-status rule. */
     if (alt) {

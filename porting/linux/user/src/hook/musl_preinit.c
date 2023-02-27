@@ -40,11 +40,11 @@ void default_memtrace(void* addr, size_t size, const char* tag, bool is_using) {
 
 static struct MallocDispatchType __ohos_malloc_hook_init_dispatch = {
 	.malloc = ohos_malloc_hook_init_function,
-	.free = MuslMalloc(free),
+	.free = MuslFunc(free),
 	.mmap = MuslMalloc(mmap),
 	.munmap = MuslMalloc(munmap),
-	.calloc = MuslMalloc(calloc),
-	.realloc = MuslMalloc(realloc),
+	.calloc = MuslFunc(calloc),
+	.realloc = MuslFunc(realloc),
 	.memtrace = default_memtrace,
 };
 #define MAX_SYM_NAME_SIZE 1000
@@ -459,7 +459,7 @@ void* ohos_malloc_hook_init_function(size_t bytes)
 			// __musl_log(__MUSL_LOG_ERROR, "%s: ohos_malloc_hook: failed to pthread_detach\n", getprogname());
 		}
 	}
-	void*ptr = MuslMalloc(malloc)(bytes);
+	void*ptr = MuslFunc(malloc)(bytes);
 	return ptr;
 
 }

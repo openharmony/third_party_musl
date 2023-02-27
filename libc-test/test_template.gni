@@ -233,6 +233,10 @@ template("test_unittest") {
         }
       }
     }
+
+    if (target_dir == "functionalext/sigchain") {
+      include_dirs += [ "//${musl_base_dir}/include" ]
+    }
   }
 }
 
