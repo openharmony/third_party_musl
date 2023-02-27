@@ -15,7 +15,6 @@
 
 #include <netdb.h>
 #include <stdio.h>
-#include "functionalext.h"
 #include "test.h"
 
 /**
@@ -35,7 +34,13 @@ void freeaddrinfo_0100(void)
     if (!ai->ai_flags) {
 
         freeaddrinfo(ai);
-        EXPECT_TRUE(__FUNCTION__, true);
+
+        while (ai->ai_next) {
+            if (!ai->ai_flags) {
+                t_error("%s freeaddrinfo failed\n", __func__);
+            }
+            ai = ai->ai_next;
+        }
     } else {
         t_error("%s hint is NULL, so ai->ai_flags should be 0, but now is %d\n", __func__, ai->ai_flags);
     }

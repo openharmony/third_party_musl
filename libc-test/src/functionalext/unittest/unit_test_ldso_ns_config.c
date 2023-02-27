@@ -54,6 +54,21 @@ static void ns_config_test_0020(void)
 }
 
 /**
+ * @tc.name      : ns_config_0030
+ * @tc.desc      : Test parse with invalid input
+ * @tc.level     : Level 2
+ */
+static void ns_config_test_0030(void)
+{
+    ns_configor* configor = NULL;
+    configor = configor_init();
+    configor->set_error_callback(NULL);
+    int ret = configor->parse("ttttttttt.txt", "ttttttttt");
+    configor_free();
+    EXPECT_EQ(ns_config_test_0030, ret, -2);
+}
+
+/**
  * @tc.name      : ns_config_0040
  * @tc.desc      : Test get_namespaces with invalid input
  * @tc.level     : Level 2
@@ -86,6 +101,27 @@ static void ns_config_test_0050(void)
     strlist *ret = configor->get_namespaces();
     configor_free();
     EXPECT_EQ(ns_config_test_0050, ret, NULL);
+}
+
+/**
+ * @tc.name      : ns_config_0060
+ * @tc.desc      : Test get_namespaces with invalid input
+ * @tc.level     : Level 2
+ */
+static void ns_config_test_0060(void)
+{
+    ns_configor* configor = NULL;
+    configor = configor_init();
+    kvlist kv;
+    kv.num = 1;
+    char *key = "added.nslist";
+    char *val = "b";
+    kv.key = &key;
+    kv.val = &val;
+    configor->kvs = &kv;
+    strlist *ret = configor->get_namespaces();
+    configor_free();
+    EXPECT_EQ(ns_config_test_0060, ret, NULL);
 }
 
 /**
@@ -147,8 +183,10 @@ static void ns_config_test_0100(void)
 TEST_FUN G_Fun_Array[] = {
     ns_config_test_0010,
     ns_config_test_0020,
+    ns_config_test_0030,
     ns_config_test_0040,
     ns_config_test_0050,
+    ns_config_test_0060,
     ns_config_test_0070,
     ns_config_test_0080,
     ns_config_test_0090,

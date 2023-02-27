@@ -19,6 +19,7 @@
 #include <string.h>
 #include <stdio.h>
 
+#include "malloc_impl.h"
 /* Do not malloc in vsnprintf, thus the log api can be called inside signal handler*/
 #define HILOG_PROHIBIT_ALLOCATION
 
@@ -130,11 +131,11 @@ typedef enum {
 
 #ifndef HILOG_PROHIBIT_ALLOCATION
 #ifndef SECUREC_MALLOC
-#define SECUREC_MALLOC(x) __libc_malloc((size_t)(x))
+#define SECUREC_MALLOC(x) internal_malloc((size_t)(x))
 #endif
 
 #ifndef SECUREC_FREE
-#define SECUREC_FREE(x)   __libc_free((void *)(x))
+#define SECUREC_FREE(x)   internal_free((void *)(x))
 #endif
 
 #else

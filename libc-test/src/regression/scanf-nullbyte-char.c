@@ -6,7 +6,7 @@
 int main(void)
 {
 	char dst[] = { 'a', 'a' }; 
-	char src[] = { 'b', 'b', 0 };
+	char src[] = { 'b', 'b' };
 
 	if (sscanf(src, "%c", dst) != 1)
 		t_error("sscanf %%c failed\n");

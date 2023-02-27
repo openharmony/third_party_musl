@@ -1,4 +1,0 @@
-_fini
-_init
-__bss_start
-_end

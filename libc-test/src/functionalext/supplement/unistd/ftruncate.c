@@ -89,7 +89,7 @@ void ftruncate_0300(void)
 
 /**
  * @tc.name      : ftruncate_0400
- * @tc.desc      : The fd parameter is NULL,the file content cannot be cleared.
+ * @tc.desc      : The fd parameter is invalid,the file content cannot be cleared.
  * @tc.level     : Level 2
  */
 void ftruncate_0400(void)
@@ -97,8 +97,26 @@ void ftruncate_0400(void)
     const char *ptr = "test.txt";
     FILE *fptr = fopen(ptr, "w");
     fprintf(fptr, "%s", "this is a sample!");
-    int freturn = ftruncate(0, 10);
+    fclose(fptr);
+    int freturn = ftruncate(fileno(fptr), 10);
     EXPECT_EQ("ftruncate_0400", freturn, FAILED);
+    remove(ptr);
+    fptr = NULL;
+    ptr = NULL;
+}
+
+/**
+ * @tc.name      : ftruncate_0500
+ * @tc.desc      : The fd parameter is NULL,the file content cannot be cleared.
+ * @tc.level     : Level 2
+ */
+void ftruncate_0500(void)
+{
+    const char *ptr = "test.txt";
+    FILE *fptr = fopen(ptr, "w");
+    fprintf(fptr, "%s", "this is a sample!");
+    int freturn = ftruncate(0, 10);
+    EXPECT_EQ("ftruncate_0500", freturn, FAILED);
     fclose(fptr);
     remove(ptr);
     fptr = NULL;
@@ -111,6 +129,7 @@ int main(int argc, char *argv[])
     ftruncate_0200();
     ftruncate_0300();
     ftruncate_0400();
+    ftruncate_0500();
 
     return t_status;
 }

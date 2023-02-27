@@ -12,8 +12,8 @@ struct MallocDispatchType __libc_malloc_default_dispatch = {
 	.free = MuslFunc(free),
 	.mmap = MuslMalloc(mmap),
 	.munmap = MuslMalloc(munmap),
-	.calloc = MuslFunc(calloc),
-	.realloc = MuslFunc(realloc),
+	.calloc = MuslMalloc(calloc),
+	.realloc = MuslMalloc(realloc),
 	.malloc_usable_size = MuslMalloc(malloc_usable_size),
 };
 

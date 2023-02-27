@@ -17,7 +17,8 @@
 #include "functionalext.h"
 
 #define TEST_MALLOC_SIZE 256
-
+#define TEST_MALLOC_PLACEHOLDER_SIZE 8
+#define TEST_MALLOC_PLACEHOLDER64_SIZE 16
 /**
  * @tc.name      : malloc_usable_size_0100
  * @tc.desc      : Obtain size of block of memory allocated from heap
@@ -31,7 +32,11 @@ void malloc_usable_size_0100(void)
         return;
     }
     size_t ret = malloc_usable_size(p);
-    EXPECT_GTE("malloc_usable_size_0100", ret, TEST_MALLOC_SIZE);
+#ifdef _ARM64_
+    EXPECT_GTE("malloc_usable_size_0100", ret, TEST_MALLOC_SIZE + TEST_MALLOC_PLACEHOLDER64_SIZE);
+#else
+    EXPECT_GTE("malloc_usable_size_0100", ret, TEST_MALLOC_SIZE + TEST_MALLOC_PLACEHOLDER_SIZE);
+#endif
     free(p);
 }
 

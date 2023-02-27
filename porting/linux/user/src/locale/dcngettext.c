@@ -25,12 +25,6 @@
 #include "atomic.h"
 #include "pleval.h"
 #include "lock.h"
-#include "fork_impl.h"
-
-#define malloc __libc_malloc
-#define calloc __libc_calloc
-#define realloc undef
-#define free undef
 
 #define __DIGIT_SEVEN__ 7
 #define __DIGIT_NINE__ 9
@@ -60,11 +54,9 @@ static char *gettextdir(const char *domainname, size_t *dirlen)
     return 0;
 }
 
-static volatile int lock[1];
-volatile int *const __gettext_lockptr = lock;
-
 char *bindtextdomain(const char *domainname, const char *dirname)
 {
+    static volatile int lock[1];
     struct binding *p, *q;
 
     if (!domainname) {
@@ -163,15 +155,10 @@ char *dcngettext(const char *domainname, const char *msgid1, const char *msgid2,
     struct binding *q;
     int old_errno = errno;
 
-	/* match gnu gettext behaviour */
-    if (!msgid1) {
+    if ((unsigned)category >= LC_ALL) {
         goto notrans;
     }
 
-	if ((unsigned)category >= LC_ALL) { 
-		goto notrans;
-	}
-	
     if (!domainname) {
         domainname = __gettextdomain();
     }
