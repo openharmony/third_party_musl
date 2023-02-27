@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef    _LOCALE_H
-#define    _LOCALE_H
+#ifndef	_LOCALE_H
+#define	_LOCALE_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -22,7 +22,9 @@ extern "C" {
 
 #include <features.h>
 
-#ifdef __cplusplus
+#if __cplusplus >= 201103L
+#define NULL nullptr
+#elif defined(__cplusplus)
 #define NULL 0L
 #else
 #define NULL ((void*)0)

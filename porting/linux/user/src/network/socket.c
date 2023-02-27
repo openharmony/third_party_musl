@@ -49,14 +49,14 @@ int socket(int domain, int type, int protocol)
 		return -1;
 	}
 #endif
-	int s = socketcall(socket, domain, type, protocol, 0, 0, 0);
-	if (s < 0 && (errno == EINVAL || errno == EPROTONOSUPPORT)
+	int s = __socketcall(socket, domain, type, protocol, 0, 0, 0);
+	if ((s==-EINVAL || s==-EPROTONOSUPPORT)
 		&& (type & (SOCK_CLOEXEC | SOCK_NONBLOCK))) {
-		s = socketcall(socket, domain,
+		s = __socketcall(socket, domain,
 			type & ~(SOCK_CLOEXEC | SOCK_NONBLOCK),
 			protocol, 0, 0, 0);
 		if (s < 0) {
-			return s;
+			return __syscall_ret(s);
 		}
 		if (type & SOCK_CLOEXEC) {
 			__syscall(SYS_fcntl, s, F_SETFD, FD_CLOEXEC);
@@ -65,5 +65,5 @@ int socket(int domain, int type, int protocol)
 			__syscall(SYS_fcntl, s, F_SETFL, O_NONBLOCK);
 		}
 	}
-	return s;
+	return __syscall_ret(s);
 }

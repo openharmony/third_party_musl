@@ -4,7 +4,6 @@
 #include "dynlink.h"
 
 #include <stdbool.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
 #include <stddef.h>
@@ -26,15 +25,17 @@
 #include <sys/membarrier.h>
 #include <sys/time.h>
 #include <time.h>
+#include <sys/prctl.h>
 
+#include "cfi.h"
 #include "dlfcn_ext.h"
 #include "dynlink_rand.h"
 #include "ld_log.h"
 #include "libc.h"
-#include "malloc_impl.h"
 #include "namespace.h"
 #include "ns_config.h"
 #include "pthread_impl.h"
+#include "fork_impl.h"
 #include "strops.h"
 #ifdef OHOS_ENABLE_PARAMETER
 #include "sys_param.h"
@@ -42,6 +43,11 @@
 #ifdef LOAD_ORDER_RANDOMIZATION
 #include "zip_archive.h"
 #endif
+
+#define malloc __libc_malloc
+#define calloc __libc_calloc
+#define realloc __libc_realloc
+#define free __libc_free
 
 static void error(const char *, ...);
 
@@ -88,105 +94,6 @@ struct reserved_address_params {
 #ifdef LOAD_ORDER_RANDOMIZATION
 	struct dso *target;
 #endif
-};
-
-struct td_index {
-	size_t args[2];
-	struct td_index *next;
-};
-
-struct verinfo {
-	const char *s;
-	const char *v;
-	bool use_vna_hash;
-	uint32_t vna_hash;
-};
-
-struct sym_info_pair {
-	uint_fast32_t sym_h;
-	uint32_t sym_l;
-};
-
-struct dso {
-#if DL_FDPIC
-	struct fdpic_loadmap *loadmap;
-#else
-	unsigned char *base;
-#endif
-	char *name;
-	size_t *dynv;
-	struct dso *next, *prev;
-	/* add namespace */
-	ns_t *namespace;
-	/* mark the dso status */
-	unsigned int flags;
-
-	int cache_sym_index;
-	struct dso *cache_dso;
-	Sym *cache_sym;
-
-	Phdr *phdr;
-	int phnum;
-	size_t phentsize;
-	Sym *syms;
-	Elf_Symndx *hashtab;
-	uint32_t *ghashtab;
-	int16_t *versym;
-	Verdef *verdef;
-	Verneed *verneed;
-	char *strings;
-	struct dso *syms_next, *lazy_next;
-	size_t *lazy, lazy_cnt;
-	unsigned char *map;
-	size_t map_len;
-	dev_t dev;
-	ino_t ino;
-	uint64_t file_offset;
-	char relocated;
-	char constructed;
-	char kernel_mapped;
-	char mark;
-	char bfs_built;
-	char runtime_loaded;
-	char by_dlopen;
-	struct dso **deps, *needed_by;
-	size_t ndeps_direct;
-	size_t next_dep;
-	int ctor_visitor;
-	int nr_dlopen;
-	char *rpath_orig, *rpath;
-	struct tls_module tls;
-	size_t tls_id;
-	size_t relro_start, relro_end;
-	uintptr_t *new_dtv;
-	unsigned char *new_tls;
-	struct td_index *td_index;
-	struct dso *fini_next;
-	char *shortname;
-#if DL_FDPIC
-	unsigned char *base;
-#else
-	struct fdpic_loadmap *loadmap;
-#endif
-	struct funcdesc {
-		void *addr;
-		size_t *got;
-	} *funcdescs;
-	size_t *got;
-	struct dso **parents;
-	size_t parents_count;
-	size_t parents_capacity;
-	bool is_global;
-	bool is_reloc_head_so_dep;
-	struct dso **reloc_can_search_dso_list;
-	size_t reloc_can_search_dso_count;
-	size_t reloc_can_search_dso_capacity;
-	char buf[];
-};
-
-struct symdef {
-	Sym *sym;
-	struct dso *dso;
 };
 
 typedef void (*stage3_func)(size_t *, size_t *);
@@ -268,7 +175,6 @@ static void handle_relro_sharing(struct dso *p, const dl_extinfo *extinfo, ssize
 int handle_asan_path_open(int fd, const char *name, ns_t *namespace, char *buf, size_t buf_size);
 
 /* add namespace function */
-static void *addr2dso(size_t a);
 static void get_sys_path(ns_configor *conf);
 static void dlclose_ns(struct dso *p);
 static bool get_app_path(char *path, size_t size)
@@ -433,7 +339,7 @@ static void init_namespace(struct dso *app)
 
 /* Compute load address for a virtual address in a given dso. */
 #if DL_FDPIC
-static void *laddr(const struct dso *p, size_t v)
+void *laddr(const struct dso *p, size_t v)
 {
 	size_t j=0;
 	if (!p->loadmap) return p->base + v;
@@ -588,7 +494,7 @@ static struct sym_info_pair sysv_hash(const char *s0)
 	return s_info_p;
 }
 
-static struct sym_info_pair gnu_hash(const char *s0)
+struct sym_info_pair gnu_hash(const char *s0)
 {
 	struct sym_info_pair s_info_p;
 	const unsigned char *s = (void *)s0;
@@ -697,13 +603,13 @@ static void add_dso_parent(struct dso *p, struct dso *parent)
 	}
 	if (p->parents_count + 1 > p->parents_capacity) {
 		if (p->parents_capacity == 0) {
-			p->parents = (struct dso **)internal_malloc(sizeof(struct dso *) * PARENTS_BASE_CAPACITY);
+			p->parents = (struct dso **)malloc(sizeof(struct dso *) * PARENTS_BASE_CAPACITY);
 			if (!p->parents) {
 				return;
 			}
 			p->parents_capacity = PARENTS_BASE_CAPACITY;
 		} else {
-			struct dso ** realloced = (struct dso **)internal_realloc(
+			struct dso ** realloced = (struct dso **)realloc(
 				p->parents, sizeof(struct dso *) * (p->parents_capacity + PARENTS_BASE_CAPACITY));
 			if (!realloced) {
 				return;
@@ -737,13 +643,13 @@ static void add_reloc_can_search_dso(struct dso *p, struct dso *can_search_so)
 	if (p->reloc_can_search_dso_count + 1 > p->reloc_can_search_dso_capacity) {
 		if (p->reloc_can_search_dso_capacity == 0) {
 			p->reloc_can_search_dso_list =
-				(struct dso **)internal_malloc(sizeof(struct dso *) * RELOC_CAN_SEARCH_DSO_BASE_CAPACITY);
+				(struct dso **)malloc(sizeof(struct dso *) * RELOC_CAN_SEARCH_DSO_BASE_CAPACITY);
 			if (!p->reloc_can_search_dso_list) {
 				return;
 			}
 			p->reloc_can_search_dso_capacity = RELOC_CAN_SEARCH_DSO_BASE_CAPACITY;
 		} else {
-			struct dso ** realloced = (struct dso **)internal_realloc(
+			struct dso ** realloced = (struct dso **)realloc(
 				p->reloc_can_search_dso_list,
 				sizeof(struct dso *) * (p->reloc_can_search_dso_capacity + RELOC_CAN_SEARCH_DSO_BASE_CAPACITY));
 			if (!realloced) {
@@ -760,7 +666,7 @@ static void add_reloc_can_search_dso(struct dso *p, struct dso *can_search_so)
 static void free_reloc_can_search_dso(struct dso *p)
 {
 	if (p->reloc_can_search_dso_list) {
-		internal_free(p->reloc_can_search_dso_list);
+		free(p->reloc_can_search_dso_list);
 		p->reloc_can_search_dso_list = NULL;
 		p->reloc_can_search_dso_count = 0;
 		p->reloc_can_search_dso_capacity = 0;
@@ -803,6 +709,60 @@ static void add_can_search_so_list_in_dso(struct dso *dso_relocating, struct dso
 #if defined(__GNUC__)
 __attribute__((always_inline))
 #endif
+
+struct symdef find_sym_impl(
+	struct dso *dso, struct verinfo *verinfo, struct sym_info_pair s_info_p, int need_def, ns_t *ns)
+{
+	Sym *sym;
+	uint32_t *ght;
+	uint32_t h = 0;
+	uint32_t gh = s_info_p.sym_h;
+	uint32_t gho = gh / (8 * sizeof(size_t));
+	size_t ghm = 1ul << gh % (8 * sizeof(size_t));
+	struct symdef def = {0};
+	if (ns && !check_sym_accessible(dso, ns))
+		return def;
+
+	if ((ght = dso->ghashtab)) {
+		const size_t *bloomwords = (const void *)(ght + 4);
+		size_t f = bloomwords[gho & (ght[2] - 1)];
+		if (!(f & ghm))
+			return def;
+
+		f >>= (gh >> ght[3]) % (8 * sizeof f);
+		if (!(f & 1))
+			return def;
+
+		sym = gnu_lookup(s_info_p, ght, dso, verinfo);
+	} else {
+		if (!h)
+			s_info_p = sysv_hash(verinfo->s);
+
+		sym = sysv_lookup(verinfo, s_info_p, dso);
+	}
+
+	if (!sym)
+		return def;
+
+	if (!sym->st_shndx)
+		if (need_def || (sym->st_info & 0xf) == STT_TLS || ARCH_SYM_REJECT_UND(sym))
+			return def;
+
+	if (!sym->st_value)
+		if ((sym->st_info & 0xf) != STT_TLS)
+			return def;
+
+	if (!(1 << (sym->st_info & 0xf) & OK_TYPES))
+		return def;
+
+	if (!(1 << (sym->st_info >> 4) & OK_BINDS))
+		return def;
+
+	def.sym = sym;
+	def.dso = dso;
+	return def;
+}
+
 static inline struct symdef find_sym2(struct dso *dso, struct verinfo *verinfo, int need_def, int use_deps, ns_t *ns)
 {
 	struct sym_info_pair s_info_p = gnu_hash(verinfo->s);
@@ -1024,8 +984,6 @@ static void do_relocs(struct dso *dso, size_t *rel, size_t rel_size, size_t stri
 		}
 
 		switch(type) {
-		case REL_NONE:
-			break;
 		case REL_OFFSET:
 			addend -= (size_t)reloc_addr;
 		case REL_SYMBOLIC:
@@ -1080,7 +1038,7 @@ static void do_relocs(struct dso *dso, size_t *rel, size_t rel_size, size_t stri
 		case REL_TLSDESC:
 			if (stride<3) addend = reloc_addr[1];
 			if (def.dso->tls_id > static_tls_cnt) {
-				struct td_index *new = internal_malloc(sizeof *new);
+				struct td_index *new = malloc(sizeof *new);
 				if (!new) {
 					error(
 					"Error relocating %s: cannot allocate TLSDESC for %s",
@@ -1133,7 +1091,7 @@ static void redo_lazy_relocs()
 			p->lazy_next = lazy_head;
 			lazy_head = p;
 		} else {
-			internal_free(p->lazy);
+			free(p->lazy);
 			p->lazy = 0;
 			p->lazy_next = 0;
 		}
@@ -1168,10 +1126,25 @@ static void reclaim_gaps(struct dso *dso)
 	}
 }
 
+static ssize_t read_loop(int fd, void *p, size_t n)
+{
+	for (size_t i=0; i<n; ) {
+		ssize_t l = read(fd, (char *)p+i, n-i);
+		if (l<0) {
+			if (errno==EINTR) continue;
+			else return -1;
+		}
+		if (l==0) return i;
+		i += l;
+	}
+	return n;
+}
+
 static void *mmap_fixed(void *p, size_t n, int prot, int flags, int fd, off_t off)
 {
 	static int no_map_fixed;
 	char *q;
+	if (!n) return p;
 	if (!no_map_fixed) {
 		q = mmap(p, n, prot, flags|MAP_FIXED, fd, off);
 		if (!DL_NOMMU_SUPPORT || q != MAP_FAILED || errno != EINVAL)
@@ -1211,7 +1184,7 @@ static void unmap_library(struct dso *dso)
 					dso->loadmap->segs[i].p_memsz, PROT_NONE);
 			}
 		}
-		internal_free(dso->loadmap);
+		free(dso->loadmap);
 	} else if (dso->map && dso->map_len) {
 		if (!is_dlclose_debug_enable()) {
 			munmap(dso->map, dso->map_len);
@@ -1284,7 +1257,7 @@ static void *map_library(int fd, struct dso *dso, struct reserved_address_params
 		goto noexec;
 	phsize = eh->e_phentsize * eh->e_phnum;
 	if (phsize > sizeof buf - sizeof *eh) {
-		allocated_buf = internal_malloc(phsize);
+		allocated_buf = malloc(phsize);
 		if (!allocated_buf) return 0;
 		l = pread(fd, allocated_buf, phsize, eh->e_phoff);
 		if (l < 0) goto error;
@@ -1331,7 +1304,7 @@ static void *map_library(int fd, struct dso *dso, struct reserved_address_params
 	}
 	if (!dyn) goto noexec;
 	if (DL_FDPIC && !(eh->e_flags & FDPIC_CONSTDISP_FLAG)) {
-		dso->loadmap = internal_calloc(1, sizeof *dso->loadmap
+		dso->loadmap = calloc(1, sizeof *dso->loadmap
 			+ nsegs * sizeof *dso->loadmap->segs);
 		if (!dso->loadmap) goto error;
 		dso->loadmap->nsegs = nsegs;
@@ -1386,19 +1359,45 @@ static void *map_library(int fd, struct dso *dso, struct reserved_address_params
 			map_flags |= MAP_FIXED;
 		}
 	}
-	/* The first time, we map too much, possibly even more than
-	 * the length of the file. This is okay because we will not
-	 * use the invalid part; we just need to reserve the right
-	 * amount of virtual address space to map over later. */
-	map = DL_NOMMU_SUPPORT
-		? mmap((void *)start_addr, map_len, PROT_READ|PROT_WRITE|PROT_EXEC,
-			MAP_PRIVATE|MAP_ANONYMOUS, -1, 0)
-		: mmap((void *)start_addr, map_len, prot,
-			map_flags, fd, off_start);
-	if (map==MAP_FAILED) goto error;
-	if (reserved_params && map_len < reserved_params->reserved_size) {
-		reserved_params->reserved_size -= (map_len + (start_addr - (size_t)reserved_params->start_addr));
-		reserved_params->start_addr = (void *)((uint8_t *)map + map_len);
+
+	/* we will find a LIBRARY_ALIGNMENT aligned address as the start of dso
+	 * so we need a tmp_map_len as map_len + LIBRARY_ALIGNMENT to make sure
+	 * we have enough space to shift the dso to the correct location. */
+	size_t tmp_map_len = ALIGN(map_len, LIBRARY_ALIGNMENT) + LIBRARY_ALIGNMENT - PAGE_SIZE;
+
+	/* if reserved_params exists, we should use start_addr as prefered result to do the mmap operation */
+	if (reserved_params) {
+		map = DL_NOMMU_SUPPORT
+			? mmap((void *)start_addr, map_len, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0)
+			: mmap((void *)start_addr, map_len, prot, map_flags, fd, off_start);
+		if (map == MAP_FAILED) {
+			goto error;
+		}
+		if (reserved_params && map_len < reserved_params->reserved_size) {
+			reserved_params->reserved_size -= (map_len + (start_addr - (size_t)reserved_params->start_addr));
+			reserved_params->start_addr = (void *)((uint8_t *)map + map_len);
+		}
+	/* if reserved_params does not exist, we should use real_map as prefered result to do the mmap operation */
+	} else {
+		/* use tmp_map_len to mmap enough space for the dso with anonymous mapping */
+		unsigned char *temp_map = mmap((void *)NULL, tmp_map_len, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+		if (temp_map == MAP_FAILED) {
+			goto error;
+		}
+
+		/* find the LIBRARY_ALIGNMENT aligned address */
+		unsigned char *real_map = (unsigned char*)ALIGN((uintptr_t)temp_map, LIBRARY_ALIGNMENT);
+
+		/* mummap the space we mmap before so that we can mmap correct space again */
+		munmap(temp_map, tmp_map_len);
+
+		map = DL_NOMMU_SUPPORT
+			? mmap(real_map, map_len, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0)
+			/* use map_len to mmap correct space for the dso with file mapping */
+			: mmap(real_map, map_len, prot, map_flags, fd, off_start);
+		if (map == MAP_FAILED) {
+			goto error;
+		}
 	}
 	dso->map = map;
 	dso->map_len = map_len;
@@ -1455,13 +1454,13 @@ done_mapping:
 	dso->base = base;
 	dso->dynv = laddr(dso, dyn);
 	if (dso->tls.size) dso->tls.image = laddr(dso, tls_image);
-	internal_free(allocated_buf);
+	free(allocated_buf);
 	return map;
 noexec:
 	errno = ENOEXEC;
 error:
 	if (map!=MAP_FAILED) unmap_library(dso);
-	internal_free(allocated_buf);
+	free(allocated_buf);
 	return 0;
 }
 
@@ -1550,7 +1549,7 @@ static int fixup_rpath(struct dso *p, char *buf, size_t buf_size)
 	/* Disallow non-absolute origins for suid/sgid/AT_SECURE. */
 	if (libc.secure && *origin != '/')
 		return 0;
-	p->rpath = internal_malloc(strlen(p->rpath_orig) + n*l + 1);
+	p->rpath = malloc(strlen(p->rpath_orig) + n*l + 1);
 	if (!p->rpath) return -1;
 
 	d = p->rpath;
@@ -1592,7 +1591,7 @@ static void decode_dyn(struct dso *p)
 		p->verneed = laddr(p, *dyn);
 }
 
-static size_t count_syms(struct dso *p)
+size_t count_syms(struct dso *p)
 {
 	if (p->hashtab) return p->hashtab[1];
 
@@ -1633,7 +1632,7 @@ static void makefuncdescs(struct dso *p)
 		p->funcdescs = dl_mmap(size);
 		self_done = 1;
 	} else {
-		p->funcdescs = internal_malloc(size);
+		p->funcdescs = malloc(size);
 	}
 	if (!p->funcdescs) {
 		if (!runtime) a_crash();
@@ -1666,7 +1665,7 @@ static void get_sys_path(ns_configor *conf)
 			sys_path = sys_path_default;
 		} else if (sys_path_default) {
 			size_t newlen = strlen(sys_path) + strlen(sys_path_default) + 2;
-			char *new_syspath = internal_malloc(newlen);
+			char *new_syspath = malloc(newlen);
 			memset(new_syspath, 0, newlen);
 			strcpy(new_syspath, sys_path);
 			strcat(new_syspath, ":");
@@ -1905,7 +1904,7 @@ struct dso *load_library(
 		if (n_th > SSIZE_MAX / per_th) alloc_size = SIZE_MAX;
 		else alloc_size += n_th * per_th;
 	}
-	p = internal_calloc(1, alloc_size);
+	p = calloc(1, alloc_size);
 	if (!p) {
 		unmap_library(&temp_dso);
 		return 0;
@@ -1971,7 +1970,7 @@ static void load_direct_deps(struct dso *p, ns_t *namespace, struct reserved_add
 	/* Use builtin buffer for apps with no external deps, to
 	 * preserve property of no runtime failure paths. */
 	p->deps = (p==head && cnt<2) ? builtin_deps :
-		internal_calloc(cnt+1, sizeof *p->deps);
+		calloc(cnt+1, sizeof *p->deps);
 	if (!p->deps) {
 		error("Error loading dependencies for %s", p->name);
 		if (runtime) longjmp(*rtld_fail, 1);
@@ -2033,8 +2032,8 @@ static void extend_bfs_deps(struct dso *p)
 		for (j=cnt=0; j<dep->ndeps_direct; j++)
 			if (!dep->deps[j]->mark) cnt++;
 		tmp = no_realloc ? 
-			internal_malloc(sizeof(*tmp) * (ndeps_all+cnt+1)) :
-			internal_realloc(p->deps, sizeof(*tmp) * (ndeps_all+cnt+1));
+			malloc(sizeof(*tmp) * (ndeps_all+cnt+1)) :
+			realloc(p->deps, sizeof(*tmp) * (ndeps_all+cnt+1));
 		if (!tmp) {
 			error("Error recording dependencies for %s", p->name);
 			if (runtime) longjmp(*rtld_fail, 1);
@@ -2317,7 +2316,7 @@ void __libc_exit_fini()
 {
 	struct dso *p;
 	size_t dyn[DYN_CNT];
-	int self = __pthread_self()->tid;
+	pthread_t self = __pthread_self();
 
 	/* Take both locks before setting shutting_down, so that
 	 * either lock is sufficient to read its value. The lock
@@ -2340,6 +2339,17 @@ void __libc_exit_fini()
 		if ((dyn[0] & (1<<DT_FINI)) && dyn[DT_FINI])
 			fpaddr(p, dyn[DT_FINI])();
 #endif
+	}
+}
+
+void __ldso_atfork(int who)
+{
+	if (who<0) {
+		pthread_rwlock_wrlock(&lock);
+		pthread_mutex_lock(&init_fini_lock);
+	} else {
+		pthread_mutex_unlock(&init_fini_lock);
+		pthread_rwlock_unlock(&lock);
 	}
 }
 
@@ -2366,7 +2376,7 @@ static struct dso **queue_ctors(struct dso *dso)
 	if (dso==head && cnt <= countof(builtin_ctor_queue))
 		queue = builtin_ctor_queue;
 	else
-		queue = internal_calloc(cnt, sizeof *queue);
+		queue = calloc(cnt, sizeof *queue);
 
 	if (!queue) {
 		error("Error allocating constructor queue: %m\n");
@@ -2449,7 +2459,7 @@ void __libc_start_init(void)
 {
 	do_init_fini(main_ctor_queue);
 	if (!__malloc_replaced && main_ctor_queue != builtin_ctor_queue)
-		internal_free(main_ctor_queue);
+		free(main_ctor_queue);
 	main_ctor_queue = 0;
 }
 
@@ -2518,7 +2528,7 @@ static void install_new_tls(void)
 
 	/* Install new dtv for each thread. */
 	for (j=0, td=self; !j || td!=self; j++, td=td->next) {
-		td->dtv = td->dtv_copy = newdtv[j];
+		td->dtv = newdtv[j];
 	}
 
 	__tl_unlock();
@@ -2731,7 +2741,7 @@ void __dls3(size_t *sp, size_t *auxv)
 			dprintf(2, "%s: cannot load %s: %s\n", ldname, argv[0], strerror(errno));
 			_exit(1);
 		}
-		Ehdr *ehdr = (void *)map_library(fd, &app, NULL);
+		Ehdr *ehdr = map_library(fd, &app, NULL);
 		if (!ehdr) {
 			dprintf(2, "%s: %s: Not a valid dynamic program\n", ldname, argv[0]);
 			_exit(1);
@@ -2878,7 +2888,7 @@ void __dls3(size_t *sp, size_t *auxv)
 	update_tls_size();
 	void *initial_tls = builtin_tls;
 	if (libc.tls_size > sizeof builtin_tls || tls_align > MIN_TLS_ALIGN) {
-		initial_tls = internal_calloc(libc.tls_size, 1);
+		initial_tls = calloc(libc.tls_size, 1);
 		if (!initial_tls) {
 			dprintf(2, "%s: Error getting %zu bytes thread-local storage: %m\n",
 				argv[0], libc.tls_size);
@@ -2915,6 +2925,10 @@ void __dls3(size_t *sp, size_t *auxv)
 		libc.tls_size = tmp_tls_size;
 	}
 
+	if (init_cfi_shadow(head, &ldso) == CFI_FAILED) {
+		error("[%s] init_cfi_shadow failed: %m", __FUNCTION__);
+	}
+
 	if (ldso_fail) _exit(127);
 	if (ldd_mode) _exit(0);
 
@@ -2923,6 +2937,8 @@ void __dls3(size_t *sp, size_t *auxv)
 	 * possibility of incomplete replacement. */
 	if (find_sym(head, "malloc", 1).dso != &ldso)
 		__malloc_replaced = 1;
+	if (find_sym(head, "aligned_alloc", 1).dso != &ldso)
+		__aligned_alloc_replaced = 1;
 
 	/* Switch to runtime mode: any further failures in the dynamic
 	 * linker are a reportable failure rather than a fatal startup
@@ -2960,7 +2976,7 @@ static void prepare_lazy(struct dso *p)
 		size_t i=0; search_vec(p->dynv, &i, DT_MIPS_SYMTABNO);
 		n += i-j;
 	}
-	p->lazy = internal_calloc(n, 3*sizeof(size_t));
+	p->lazy = calloc(n, 3*sizeof(size_t));
 	if (!p->lazy) {
 		error("Error preparing lazy relocation for %s: %m", p->name);
 		longjmp(*rtld_fail, 1);
@@ -3076,27 +3092,27 @@ static void *dlopen_impl(
 			next = p->next;
 			while (p->td_index) {
 				void *tmp = p->td_index->next;
-				internal_free(p->td_index);
+				free(p->td_index);
 				p->td_index = tmp;
 			}
-			internal_free(p->funcdescs);
+			free(p->funcdescs);
 			if (p->rpath != p->rpath_orig)
-				internal_free(p->rpath);
+				free(p->rpath);
 			if (p->deps) {
 				for (int i = 0; i < p->ndeps_direct; i++) {
 					remove_dso_parent(p->deps[i], p);
 				}
 			}
-			internal_free(p->deps);
+			free(p->deps);
 			dlclose_ns(p);
 			unmap_library(p);
 			if (p->parents) {
-				internal_free(p->parents);
+				free(p->parents);
 			}
 			free_reloc_can_search_dso(p);
-			internal_free(p);
+			free(p);
 		}
-		internal_free(ctor_queue);
+		free(ctor_queue);
 		ctor_queue = 0;
 		if (!orig_tls_tail) libc.tls_head = 0;
 		tls_tail = orig_tls_tail;
@@ -3176,8 +3192,9 @@ static void *dlopen_impl(
 #endif
 	extend_bfs_deps(p);
 	pthread_mutex_lock(&init_fini_lock);
-	if (!p->constructed) ctor_queue = queue_ctors(p);
+	int constructed = p->constructed;
 	pthread_mutex_unlock(&init_fini_lock);
+	if (!constructed) ctor_queue = queue_ctors(p);
 	if (!p->relocated && (mode & RTLD_LAZY)) {
 		prepare_lazy(p);
 		for (i=0; p->deps[i]; i++)
@@ -3215,6 +3232,11 @@ static void *dlopen_impl(
 	 * relocations resolved to symbol definitions that get removed. */
 	redo_lazy_relocs();
 
+	if (map_dso_to_cfi_shadow(p) == CFI_FAILED) {
+		error("[%s] map_dso_to_cfi_shadow failed: %m", __FUNCTION__);
+		longjmp(*rtld_fail, 1);
+	}
+
 	if (mode & RTLD_NODELETE) {
 		p->flags |= DSO_FLAGS_NODELETE;
 	}
@@ -3239,7 +3261,7 @@ end:
 	pthread_rwlock_unlock(&lock);
 	if (ctor_queue) {
 		do_init_fini(ctor_queue);
-		internal_free(ctor_queue);
+		free(ctor_queue);
 	}
 	pthread_setcancelstate(cs, 0);
 	return p;
@@ -3427,7 +3449,7 @@ hidden int __dl_invalid_handle(void *h)
 	return 1;
 }
 
-static void *addr2dso(size_t a)
+void *addr2dso(size_t a)
 {
 	struct dso *p;
 	size_t i;
@@ -3582,25 +3604,27 @@ static int dlclose_impl(struct dso *p)
 
 	/* remove dso from namespace */
 	dlclose_ns(p);
+
+	unmap_dso_from_cfi_shadow(p);
 	
 	if (p->lazy != NULL)
-		internal_free(p->lazy);
+		free(p->lazy);
 	if (p->deps) {
 		for (int i = 0; i < p->ndeps_direct; i++) {
 			remove_dso_parent(p->deps[i], p);
 		}
 	}
 	if (p->deps != no_deps)
-		internal_free(p->deps);
+		free(p->deps);
 	unmap_library(p);
 
 	if (p->parents) {
-		internal_free(p->parents);
+		free(p->parents);
 	}
 
 	free_reloc_can_search_dso(p);
 	if (p->tls.size == 0) {
-		internal_free(p);
+		free(p);
 	}
 
 	return 0;
@@ -3629,7 +3653,7 @@ static int do_dlclose(struct dso *p)
 
 	for (deps_num = 0; p->deps[deps_num]; deps_num++);
 
-	struct dso **deps_bak = internal_malloc(deps_num*sizeof(struct dso*));
+	struct dso **deps_bak = malloc(deps_num*sizeof(struct dso*));
 	if (deps_bak != NULL) {
 		memcpy(deps_bak, p->deps, deps_num*sizeof(struct dso*));
 	}
@@ -3644,7 +3668,7 @@ static int do_dlclose(struct dso *p)
 		}
 	}
 
-	internal_free(deps_bak);
+	free(deps_bak);
 
 	return 0;
 }
@@ -3833,7 +3857,8 @@ int dl_iterate_phdr(int(*callback)(struct dl_phdr_info *info, size_t size, void 
 		info.dlpi_adds      = gencnt;
 		info.dlpi_subs      = 0;
 		info.dlpi_tls_modid = current->tls_id;
-		info.dlpi_tls_data  = current->tls.image;
+		info.dlpi_tls_data = !current->tls_id ? 0 :
+			__tls_get_addr((tls_mod_off_t[]){current->tls_id,0});
 
 		ret = (callback)(&info, sizeof (info), data);
 
@@ -3951,14 +3976,14 @@ int handle_asan_path_open(int fd, const char *name, ns_t *namespace, char *buf, 
 	if (fd == -1 && (namespace->asan_lib_paths || namespace->lib_paths)) {
 		if (namespace->lib_paths && namespace->asan_lib_paths) {
 			size_t newlen = strlen(namespace->asan_lib_paths) + strlen(namespace->lib_paths) + 2;
-			char *new_lib_paths = internal_malloc(newlen);
+			char *new_lib_paths = malloc(newlen);
 			memset(new_lib_paths, 0, newlen);
 			strcpy(new_lib_paths, namespace->asan_lib_paths);
 			strcat(new_lib_paths, ":");
 			strcat(new_lib_paths, namespace->lib_paths);
 			fd_tmp = path_open(name, new_lib_paths, buf, buf_size);
 			LD_LOGD("handle_asan_path_open path_open new_lib_paths:%{public}s ,fd: %{public}d.", new_lib_paths, fd_tmp);
-			internal_free(new_lib_paths);
+			free(new_lib_paths);
 		} else if (namespace->asan_lib_paths) {
 			fd_tmp = path_open(name, namespace->asan_lib_paths, buf, buf_size);
 			LD_LOGD("handle_asan_path_open path_open asan_lib_paths:%{public}s ,fd: %{public}d.",
@@ -4032,7 +4057,7 @@ static void handle_asan_path_open_by_task(int fd, const char *name, ns_t *namesp
 	if (fd == -1 && (namespace->asan_lib_paths || namespace->lib_paths)) {
 		if (namespace->lib_paths && namespace->asan_lib_paths) {
 			size_t newlen = strlen(namespace->asan_lib_paths) + strlen(namespace->lib_paths) + 2;
-			char *new_lib_paths = internal_malloc(newlen);
+			char *new_lib_paths = malloc(newlen);
 			memset(new_lib_paths, 0, newlen);
 			strcpy(new_lib_paths, namespace->asan_lib_paths);
 			strcat(new_lib_paths, ":");
@@ -4041,7 +4066,7 @@ static void handle_asan_path_open_by_task(int fd, const char *name, ns_t *namesp
 			LD_LOGD("handle_asan_path_open_by_task open_library_by_path new_lib_paths:%{public}s ,fd: %{public}d.",
 					new_lib_paths,
 					task->fd);
-			internal_free(new_lib_paths);
+			free(new_lib_paths);
 		} else if (namespace->asan_lib_paths) {
 			open_library_by_path(name, namespace->asan_lib_paths, task, z_info);
 			LD_LOGD("handle_asan_path_open_by_task open_library_by_path asan_lib_paths:%{public}s ,fd: %{public}d.",
@@ -4199,7 +4224,7 @@ static bool map_library_header(struct loadtask *task)
 	}
 	task->phsize = task->eh->e_phentsize * task->eh->e_phnum;
 	if (task->phsize > sizeof task->ehdr_buf - sizeof(Ehdr)) {
-		task->allocated_buf = internal_malloc(task->phsize);
+		task->allocated_buf = malloc(task->phsize);
 		if (!task->allocated_buf) {
 			LD_LOGE("Error mapping header %{public}s: failed to alloc memory", task->name);
 			return false;
@@ -4287,7 +4312,7 @@ static bool map_library_header(struct loadtask *task)
 noexec:
 	errno = ENOEXEC;
 error:
-	internal_free(task->allocated_buf);
+	free(task->allocated_buf);
 	task->allocated_buf = NULL;
 	return false;
 }
@@ -4336,7 +4361,7 @@ static bool task_map_library(struct loadtask *task, struct reserved_address_para
 		goto noexec;
 	}
 	if (DL_FDPIC && !(task->eh->e_flags & FDPIC_CONSTDISP_FLAG)) {
-		task->p->loadmap = internal_calloc(1, sizeof(struct fdpic_loadmap) + nsegs * sizeof(struct fdpic_loadseg));
+		task->p->loadmap = calloc(1, sizeof(struct fdpic_loadmap) + nsegs * sizeof(struct fdpic_loadseg));
 		if (!task->p->loadmap) {
 			goto error;
 		}
@@ -4393,20 +4418,45 @@ static bool task_map_library(struct loadtask *task, struct reserved_address_para
 			map_flags |= MAP_FIXED;
 		}
 	}
-	/* The first time, we map too much, possibly even more than
-	 * the length of the file. This is okay because we will not
-	 * use the invalid part; we just need to reserve the right
-	 * amount of virtual address space to map over later. */
-	map = DL_NOMMU_SUPPORT
+
+	/* we will find a LIBRARY_ALIGNMENT aligned address as the start of dso
+	 * so we need a tmp_map_len as map_len + LIBRARY_ALIGNMENT to make sure
+	 * we have enough space to shift the dso to the correct location. */
+	size_t tmp_map_len = ALIGN(map_len, LIBRARY_ALIGNMENT) + LIBRARY_ALIGNMENT - PAGE_SIZE;
+
+	/* if reserved_params exists, we should use start_addr as prefered result to do the mmap operation */
+	if (reserved_params) {
+		map = DL_NOMMU_SUPPORT
 			? mmap((void *)start_addr, map_len, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0)
 			: mmap((void *)start_addr, map_len, prot, map_flags, task->fd, off_start + task->file_offset);
-	if (map == MAP_FAILED) {
-		LD_LOGE("Error mapping library %{public}s: failed to map fd", task->name);
-		goto error;
-	}
-	if (reserved_params && map_len < reserved_params->reserved_size) {
-		reserved_params->reserved_size -= (map_len + (start_addr - (size_t)reserved_params->start_addr));
-		reserved_params->start_addr = (void *)((uint8_t *)map + map_len);
+		if (map == MAP_FAILED) {
+			goto error;
+		}
+		if (reserved_params && map_len < reserved_params->reserved_size) {
+			reserved_params->reserved_size -= (map_len + (start_addr - (size_t)reserved_params->start_addr));
+			reserved_params->start_addr = (void *)((uint8_t *)map + map_len);
+		}
+	/* if reserved_params does not exist, we should use real_map as prefered result to do the mmap operation */
+	} else {
+		/* use tmp_map_len to mmap enough space for the dso with anonymous mapping */
+		unsigned char *temp_map = mmap((void *)NULL, tmp_map_len, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+		if (temp_map == MAP_FAILED) {
+			goto error;
+		}
+
+		/* find the LIBRARY_ALIGNMENT aligned address */
+		unsigned char *real_map = (unsigned char*)ALIGN((uintptr_t)temp_map, LIBRARY_ALIGNMENT);
+
+		/* mummap the space we mmap before so that we can mmap correct space again */
+		munmap(temp_map, tmp_map_len);
+
+		map = DL_NOMMU_SUPPORT
+			? mmap(real_map, map_len, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0)
+			/* use map_len to mmap correct space for the dso with file mapping */
+			: mmap(real_map, map_len, prot, map_flags, task->fd, off_start + task->file_offset);
+		if (map == MAP_FAILED) {
+			goto error;
+		}
 	}
 	task->p->map = map;
 	task->p->map_len = map_len;
@@ -4485,7 +4535,7 @@ done_mapping:
 	if (task->p->tls.size) {
 		task->p->tls.image = laddr(task->p, task->tls_image);
 	}
-	internal_free(task->allocated_buf);
+	free(task->allocated_buf);
 	task->allocated_buf = NULL;
 	return true;
 noexec:
@@ -4494,7 +4544,7 @@ error:
 	if (map != MAP_FAILED) {
 		unmap_library(task->p);
 	}
-	internal_free(task->allocated_buf);
+	free(task->allocated_buf);
 	task->allocated_buf = NULL;
 	return false;
 }
@@ -4684,7 +4734,7 @@ static bool load_library_header(struct loadtask *task)
 			alloc_size += n_th * per_th;
 		}
 	}
-	task->p = internal_calloc(1, alloc_size);
+	task->p = calloc(1, alloc_size);
 	if (!task->p) {
 		LD_LOGE("Error loading header %{public}s: failed to allocate dso", task->name);
 		close(task->fd);
@@ -4746,7 +4796,7 @@ static void task_load_library(struct loadtask *task, struct reserved_address_par
 		find_sym(task->p, "stdin", 1).sym) {
 		do_dlclose(task->p);
 		task->p = NULL;
-		internal_free((void*)task->name);
+		free((void*)task->name);
 		task->name = ld_strdup("libc.so");
 		task->check_inherited = true;
 		if (!load_library_header(task)) {
@@ -4798,7 +4848,7 @@ static void preload_direct_deps(struct dso *p, ns_t *namespace, struct loadtasks
 	/* Use builtin buffer for apps with no external deps, to
 	 * preserve property of no runtime failure paths. */
 	p->deps = (p == head && cnt < MIN_DEPS_COUNT) ? builtin_deps :
-		internal_calloc(cnt + 1, sizeof *p->deps);
+		calloc(cnt + 1, sizeof *p->deps);
 	if (!p->deps) {
 		LD_LOGE("Error loading dependencies for %{public}s", p->name);
 		error("Error loading dependencies for %s", p->name);
