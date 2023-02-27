@@ -231,13 +231,13 @@ void separated_1200(void)
     Dl_namespace dlns;
     dlns_init(&dlns, "ns_asan_permit_path");
 
-    char *libcc = "/data/tests/libc-test/src/functionalext/dlns/C/libC.so";
+    char *libcc = "/data/tests/libc-test/src/C/libC.so";
 
     void* handle = dlopen_ns(&dlns, libcc, RTLD_LAZY);
     EXPECT_TRUE("separated_1200", handle);
     dlclose(handle);
 
-    char *libbb = "/data/tests/libc-test/src/functionalext/dlns/B/libB.so";
+    char *libbb = "/data/tests/libc-test/src/B/libB.so";
 
     void* handle1 = dlopen_ns(&dlns, libbb, RTLD_LAZY);
     EXPECT_FALSE("separated_1200", handle1);

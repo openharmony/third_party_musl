@@ -54,7 +54,7 @@ static const struct time_test_time_struct test_mktime_data[] = {
     {"Pacific/Efate", 1659177614},
     {"Pacific/Midway", 1659177614},
     {"Pacific/Niue", 1659177614},
-    {"Pacific/Enderbury", 1659177614},
+    {"Pacific/Kanton", 1659177614},
     {"Pacific/Funafuti", 1659177614},
     {"Pacific/Gambier", 1659177614},
     {"EET", 1659177614},

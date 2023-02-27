@@ -439,7 +439,7 @@ static const struct time_test_string_struct test_strptime_data[] = {
     {"Pacific/Saipan", "2022-6-30 20:40:14 wday=6,yday=0,isdst=0,gmtoff=36000,zone=ChST"},
     {"Pacific/Guadalcanal", "2022-6-30 21:40:14 wday=6,yday=0,isdst=0,gmtoff=39600,zone=+11"},
     {"Pacific/Nauru", "2022-6-30 22:40:14 wday=6,yday=0,isdst=0,gmtoff=43200,zone=+12"},
-    {"Pacific/Enderbury", "2022-6-30 23:40:14 wday=6,yday=0,isdst=0,gmtoff=46800,zone=+13"},
+    {"Pacific/Kanton", "2022-6-30 23:40:14 wday=6,yday=0,isdst=0,gmtoff=46800,zone=+13"},
     {"Pacific/Bougainville", "2022-6-30 21:40:14 wday=6,yday=0,isdst=0,gmtoff=39600,zone=+11"},
     {"Pacific/Tarawa", "2022-6-30 22:40:14 wday=6,yday=0,isdst=0,gmtoff=43200,zone=+12"},
     {"Pacific/Kiritimati", "2022-6-31 0:40:14 wday=0,yday=0,isdst=0,gmtoff=50400,zone=+14"},

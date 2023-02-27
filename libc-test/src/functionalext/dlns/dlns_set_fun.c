@@ -93,7 +93,7 @@ void dlns_set_namespace_lib_path_0500(void)
 
     EXPECT_EQ("dlns_set_namespace_lib_path_0500", dlns_create(&dlns, NULL), EOK);
 
-    char* newlibpath = "/data/tests/libc-test/src/functionalext/dlns:/data/tests/libc-test/src/functionalext/dlns/B";
+    char* newlibpath = "/data/tests/libc-test/src:/data/tests/libc-test/src/B";
 
     EXPECT_EQ("dlns_set_namespace_lib_path_0500",
         dlns_set_namespace_lib_path("dlns_set_namespace_lib_path_0500", newlibpath), EOK);
@@ -198,7 +198,7 @@ void dlns_set_namespace_permitted_paths_0300(void)
     Dl_namespace dlns;
     dlns_init(&dlns, "dlns_set_namespace_permitted_paths_0300");
 
-    char *newLibPath = "/data/tests/libc-test/src/functionalext/dlns/B/libB.so";
+    char *newLibPath = "/data/tests/libc-test/src/B/libB.so";
 
     EXPECT_EQ("dlns_set_namespace_permitted_paths_0300", dlns_create(&dlns, NULL), EOK);
 
@@ -237,8 +237,8 @@ void dlns_set_namespace_permitted_paths_0500(void)
     Dl_namespace dlns;
     dlns_init(&dlns, "dlns_set_namespace_permitted_paths_0500");
 
-    char* newPermittPath = "/data/tests/libc-test/src/functionalext";
-    char* libBpath = "/data/tests/libc-test/src/functionalext/dlns/B/libB.so";
+    char* newPermittPath = "/data/tests/libc-test/src";
+    char* libBpath = "/data/tests/libc-test/src/B/libB.so";
 
     EXPECT_EQ("dlns_set_namespace_permitted_paths_0500", dlns_create(&dlns, NULL), EOK);
 
