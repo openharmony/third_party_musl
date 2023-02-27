@@ -12,7 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+#include <stdio.h>
 #include <sys/sysinfo.h>
 #include "test.h"
 
@@ -24,7 +24,6 @@
 void get_nprocs_conf_0100(void)
 {
     int nprocs = get_nprocs();
-
     int nprocs_conf = get_nprocs_conf();
     if (nprocs_conf < nprocs) {
         t_error("%s nprocs_conf should be greater than nprocs", __func__);
@@ -34,8 +33,31 @@ void get_nprocs_conf_0100(void)
     }
 }
 
+/**
+ * @tc.name      : get_nprocs_conf_0200
+ * @tc.desc      : Verify the number of CPUs is different, when cpu0 is offline.
+ * @tc.level     : Level 0
+ */
+void get_nprocs_conf_0200(void)
+{
+    char buf[8];
+    FILE *s = fopen("/sys/devices/system/cpu/cpu0/online", "w+");
+    fputs("0", s);
+    fclose(s);
+
+    int nprocs = get_nprocs();
+    int nprocs_conf = get_nprocs_conf();
+    if (nprocs_conf < nprocs) {
+        t_error("%s nprocs_conf should be greater than nprocs", __func__);
+    }
+    s = fopen("/sys/devices/system/cpu/cpu0/online","w+");
+    fputs("1", s);
+    fclose(s);
+}
+
 int main(int argc, char *argv[])
 {
     get_nprocs_conf_0100();
+    get_nprocs_conf_0200();
     return t_status;
 }
