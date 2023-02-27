@@ -15,14 +15,12 @@ extern "C" {
 
 #ifdef USE_JEMALLOC
 extern void* je_malloc(size_t size);
-extern void* je_calloc(size_t count, size_t size);
-extern void* je_realloc(void* p, size_t newsize);
 extern void je_free(void* p);
 #define MuslFunc(func) je_ ## func
 #else
-extern void* __libc_malloc(size_t size);
-extern void __libc_free(void* p);
-#define MuslFunc(func) __libc_ ## func
+extern void* internal_malloc(size_t size);
+extern void internal_free(void* p);
+#define MuslFunc(func) internal_ ## func
 #endif
 
 void *__libc_mmap(void*, size_t, int, int, int, off_t);

@@ -163,7 +163,7 @@ void faccessat_0800(void)
 
 /**
  * @tc.name      : faccessat_0900
- * @tc.desc      : The test file has read permissions whith invalid flag parameter (0), and amode is R_OK.
+ * @tc.desc      : Invalid flag parameter (AT_SYMLINK_NOFOLLOW), unable to test file permissions.
  * @tc.level     : Level 2
  */
 void faccessat_0900(void)
@@ -172,9 +172,9 @@ void faccessat_0900(void)
     FILE_ABSOLUTE_PATH(STR_FACCESSAT_TEST_TXT, ptr);
     int fd = open(ptr, O_RDWR | O_CREAT, 00070);
     EXPECT_TRUE("faccessat_0900", fd >= 0);
-    int ret = faccessat(fd, ptr, R_OK, 0);
-    EXPECT_EQ("faccessat_0900", ret, 0);
-    EXPECT_EQ("faccessat_0900", errno, 13);
+    int ret = faccessat(fd, ptr, R_OK, AT_SYMLINK_NOFOLLOW);
+    EXPECT_EQ("faccessat_0900", ret, -1);
+    EXPECT_EQ("faccessat_0900", errno, 22);
     close(fd);
     remove(ptr);
 }

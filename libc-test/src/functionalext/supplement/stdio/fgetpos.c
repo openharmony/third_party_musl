@@ -68,9 +68,27 @@ void fgetpos_0200()
     remove(path);
 }
 
+/**
+ * @tc.name      : fgetpos_0300
+ * @tc.desc      : Invalid argument. Cannot get the location of the current file pointer
+ * @tc.level     : Level 2
+ */
+void fgetpos_0300()
+{
+    fpos_t pos;
+    const char *path = "/data/test.txt";
+    FILE *fptr = fopen(path, "w+");
+    fclose(fptr);
+
+    int result = fgetpos(fptr, &pos);
+    EXPECT_EQ("fgetpos_0300", result, -1);
+    remove(path);
+}
+
 TEST_FUN G_Fun_Array[] = {
     fgetpos_0100,
     fgetpos_0200,
+    fgetpos_0300,
 };
 
 int main(int argc, char *argv[])

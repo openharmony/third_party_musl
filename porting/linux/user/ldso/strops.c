@@ -15,6 +15,7 @@
 
 #include <ctype.h>
 #include "strops.h"
+#include "malloc_impl.h"
 
 /* string to lower */
 void strlwc(char *str)
@@ -55,7 +56,7 @@ strlist *strsplit(const char *str, const char *split_s)
     char *ss = ld_strdup(str);
     if (!sl || !ss) {
         strlist_free(sl);
-        __libc_free(ss);
+        internal_free(ss);
         return NULL;
     }
 
@@ -68,7 +69,7 @@ strlist *strsplit(const char *str, const char *split_s)
     }
     strtrim(cur);
     strlist_set(sl, cur);
-    __libc_free(ss);
+    internal_free(ss);
     return sl;
 }
 
@@ -79,14 +80,14 @@ strlist *strlist_alloc(size_t size)
     strlist *strs;
     if (size < STR_DEFAULT_SIZE) size = STR_DEFAULT_SIZE ;
 
-    strs = (strlist *)__libc_calloc(1, sizeof *strs) ;
+    strs = (strlist *)internal_calloc(1, sizeof *strs) ;
 
     if (strs) {
-        strs->strs  = (char **)__libc_calloc(size, sizeof *strs->strs);
+        strs->strs  = (char **)internal_calloc(size, sizeof *strs->strs);
         if (strs->strs) {
             strs->size = size;
         } else {
-            __libc_free(strs);
+            internal_free(strs);
             strs = NULL;
         }
     }
@@ -98,7 +99,7 @@ static void strlist_realloc(strlist *strs)
     if(!strs) return;
     size_t size = 2*strs->size;
     if (size) {
-        char **ss = (char **)__libc_realloc(strs->strs, size * (sizeof *strs->strs));
+        char **ss = (char **)internal_realloc(strs->strs, size * (sizeof *strs->strs));
         if (ss) {
             strs->size = size;
             strs->strs = ss;
@@ -111,10 +112,10 @@ void strlist_free(strlist *strs)
 {
     if (!strs) return;
     for (size_t i=0; i < strs->num; i++) {
-        __libc_free(strs->strs[i]);
+        internal_free(strs->strs[i]);
     }
-    __libc_free(strs->strs);
-    __libc_free(strs);
+    internal_free(strs->strs);
+    internal_free(strs);
 }
 
 void strlist_set(strlist *strs,const char *str)
@@ -132,7 +133,7 @@ void strlist_set(strlist *strs,const char *str)
 char *ld_strdup(const char *s)
 {
     size_t l = strlen(s);
-    char *d = __libc_malloc(l+1);
+    char *d = internal_malloc(l+1);
     if (!d) return NULL;
     return memcpy(d, s, l+1);
 }

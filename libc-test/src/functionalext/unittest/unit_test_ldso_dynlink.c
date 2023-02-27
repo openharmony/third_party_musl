@@ -43,6 +43,17 @@ static void dynlink_test_0020(void)
 }
 
 /**
+ * @tc.name      : dynlink_test_0030
+ * @tc.desc      : Set path for default lib use dlns_set_namespace_lib_path 
+ * @tc.level     : Level 1
+ */
+static void dynlink_test_0030(void)
+{
+    int ret = dlns_set_namespace_lib_path("default", "/data");
+    EXPECT_EQ(dynlink_test_0030, ret, 0);
+}
+
+/**
  * @tc.name      : dynlink_test_0040
  * @tc.desc      : Test dlns_set_namespace_separated with invalid input
  * @tc.level     : Level 2
@@ -98,6 +109,17 @@ static void dynlink_test_0080(void)
 }
 
 /**
+ * @tc.name      : dynlink_test_0090
+ * @tc.desc      : Set path for default lib use dlns_set_namespace_permitted_paths
+ * @tc.level     : Level 0
+ */
+static void dynlink_test_0090(void)
+{
+    int ret = dlns_set_namespace_permitted_paths("default", "/data");
+    EXPECT_EQ(dynlink_test_0090, ret, 0);
+}
+
+/**
  * @tc.name      : dynlink_test_0100
  * @tc.desc      : Test dlns_set_namespace_allowed_libs with invalid input
  * @tc.level     : Level 2
@@ -119,16 +141,30 @@ static void dynlink_test_0110(void)
     EXPECT_EQ(dynlink_test_0110, ret, ENOKEY);
 }
 
+/**
+ * @tc.name      : dynlink_test_0120
+ * @tc.desc      : Set allowed libs for default lib use dlns_set_namespace_allowed_libs
+ * @tc.level     : Level 0
+ */
+static void dynlink_test_0120(void)
+{
+    int ret = dlns_set_namespace_allowed_libs("default", "/data");
+    EXPECT_EQ(dynlink_test_0120, ret, 0);
+}
+
 TEST_FUN G_Fun_Array[] = {
     dynlink_test_0010,
     dynlink_test_0020,
+    dynlink_test_0030,
     dynlink_test_0040,
     dynlink_test_0050,
     dynlink_test_0060,
     dynlink_test_0070,
     dynlink_test_0080,
+    dynlink_test_0090,
     dynlink_test_0100,
     dynlink_test_0110,
+    dynlink_test_0120,
 };
 
 int main(void)

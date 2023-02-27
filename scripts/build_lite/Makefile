@@ -75,12 +75,6 @@ $(warning *** warning: ARCH $(ARCH) has not been tested yet, use with cautions!)
 ARCH_CFLAGS =
 endif
 
-ifeq ($(TARGET), $(ARCH)-liteos-ohos)
-MUS_SRC_DIR = $(MUSLDIR)
-else
-MUS_SRC_DIR = $(MUSLDIR)/musl_1.2.3
-endif
-
 CFLAGS = -fstack-protector-strong -D_FORTIFY_SOURCE=2 -Wl,-z,relro,-z,now,-z,noexecstack -Wl,--build-id=sha1
 
 .PHONY: $(TARGETS:%=musl_copy_for_%)
@@ -95,7 +89,7 @@ all: $(TARGETS:%=musl_install_for_%)
 
 $(TARGETS:%=musl_copy_for_%):
 	$(HIDE) mkdir -p $@
-	$(HIDE) cp -rfu $(MUS_SRC_DIR)/[^p]* $@
+	$(HIDE) cp -rfu $(MUSLDIR)/[^p]* $@
 
 optimized_routines_install_for_liteos_a_user: musl_copy_for_liteos_a_user
 ifneq ($(ARCH),)

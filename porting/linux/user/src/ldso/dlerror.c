@@ -4,12 +4,7 @@
 #include "pthread_impl.h"
 #include "dynlink.h"
 #include "lock.h"
-#include "fork_impl.h"
-
-#define malloc __libc_malloc
-#define calloc __libc_calloc
-#define realloc __libc_realloc
-#define free __libc_free
+#include "malloc_impl.h"
 
 char *dlerror()
 {
@@ -25,7 +20,6 @@ char *dlerror()
 
 static volatile int freebuf_queue_lock[1];
 static void **freebuf_queue;
-volatile int *const __dlerror_lockptr = freebuf_queue_lock;
 
 void __dl_thread_cleanup(void)
 {
@@ -42,25 +36,22 @@ void __dl_thread_cleanup(void)
 hidden void __dl_vseterr(const char *fmt, va_list ap)
 {
 	LOCK(freebuf_queue_lock);
-	void **q = freebuf_queue;
-	freebuf_queue = 0;
-	UNLOCK(freebuf_queue_lock);
-
-	while (q) {
-		void **p = *q;
-		__libc_free(q);
-		q = p;
+	while (freebuf_queue) {
+		void **p = freebuf_queue;
+		freebuf_queue = *p;
+		internal_free(p);
 	}
+	UNLOCK(freebuf_queue_lock);
 
 	va_list ap2;
 	va_copy(ap2, ap);
 	pthread_t self = __pthread_self();
 	if (self->dlerror_buf != (void *)-1)
-		__libc_free(self->dlerror_buf);
+		internal_free(self->dlerror_buf);
 	size_t len = vsnprintf(0, 0, fmt, ap2);
 	if (len < sizeof(void *)) len = sizeof(void *);
 	va_end(ap2);
-	char *buf = __libc_malloc(len+1);
+	char *buf = internal_malloc(len+1);
 	if (buf) {
 		vsnprintf(buf, len+1, fmt, ap);
 	} else {

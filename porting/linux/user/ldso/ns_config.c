@@ -19,6 +19,7 @@
 #include <stdarg.h>
 
 #include "ld_log.h"
+#include "malloc_impl.h"
 /*---------------------------- Defines -------------------------------------*/
 #define MAX_LINE_SIZE         (1024)
 #define INI_INVALID_KEY     ((char*)-1)
@@ -111,16 +112,16 @@ static kvlist * kvlist_alloc(size_t size)
 
     if (size < KV_DEFAULT_SIZE) size = KV_DEFAULT_SIZE;
 
-    kvs = (kvlist *)__libc_calloc(1, sizeof *kvs);
+    kvs = (kvlist *)internal_calloc(1, sizeof *kvs);
     if (kvs) {
-        kvs->key = (char **)__libc_calloc(size, sizeof *kvs->key);
-        kvs->val = (char **)__libc_calloc(size, sizeof *kvs->val);
+        kvs->key = (char **)internal_calloc(size, sizeof *kvs->key);
+        kvs->val = (char **)internal_calloc(size, sizeof *kvs->val);
         if (kvs->key && kvs->val) {
             kvs->size = size;
         } else {
-            __libc_free(kvs->key);
-            __libc_free(kvs->val);
-            __libc_free(kvs);
+            internal_free(kvs->key);
+            internal_free(kvs->val);
+            internal_free(kvs);
             kvs = NULL;
         }
     }
@@ -133,10 +134,10 @@ static void kvlist_realloc(kvlist *kvs)
     size_t size = 2*kvs->size;
     if (size) {
         char **keys, **vals;
-        keys = (char **)__libc_realloc(kvs->key, size * (sizeof *kvs->key));
+        keys = (char **)internal_realloc(kvs->key, size * (sizeof *kvs->key));
         if (!keys) return;
         kvs->key = keys;
-        vals = (char **)__libc_realloc(kvs->val, size * (sizeof *kvs->val));
+        vals = (char **)internal_realloc(kvs->val, size * (sizeof *kvs->val));
         if (!vals) return;
         kvs->val = vals;
         kvs->size = size;
@@ -150,12 +151,12 @@ static void kvlist_free(kvlist *kvs)
     size_t i;
     if (!kvs) return;
     for (i=0; i<kvs->num; i++) {
-        __libc_free(kvs->key[i]);
-        __libc_free(kvs->val[i]);
+        internal_free(kvs->key[i]);
+        internal_free(kvs->val[i]);
     }
-    __libc_free(kvs->key);
-    __libc_free(kvs->val);
-    __libc_free(kvs);
+    internal_free(kvs->key);
+    internal_free(kvs->val);
+    internal_free(kvs);
 }
 
 static section_list *sections_alloc(size_t size)
@@ -163,17 +164,17 @@ static section_list *sections_alloc(size_t size)
     section_list *sections;
     if (size < SECTION_DEFAULT_SIZE) size = SECTION_DEFAULT_SIZE;
 
-    sections = (section_list *)__libc_calloc(1, sizeof *sections);
+    sections = (section_list *)internal_calloc(1, sizeof *sections);
 
     if (sections) {
-        sections->names = (char**)__libc_calloc(size, sizeof *sections->names);
-        sections->kvs = (kvlist**)__libc_calloc(size, sizeof *sections->kvs);
+        sections->names = (char**)internal_calloc(size, sizeof *sections->names);
+        sections->kvs = (kvlist**)internal_calloc(size, sizeof *sections->kvs);
         if (sections->names && sections->kvs) {
             sections->size = size;
         } else {
-            __libc_free(sections->names);
-            __libc_free(sections->kvs);
-            __libc_free(sections);
+            internal_free(sections->names);
+            internal_free(sections->kvs);
+            internal_free(sections);
             sections = NULL;
         }
     }
@@ -187,10 +188,10 @@ static void sections_realloc(section_list *sections)
     if (size) {
         char **names;
         kvlist **kvs;
-        names = (char **)__libc_realloc(sections->names, size * (sizeof *sections->names));
+        names = (char **)internal_realloc(sections->names, size * (sizeof *sections->names));
         if (!names) return;
         sections->names = names;
-        kvs = (kvlist **)__libc_realloc(sections->kvs, size * (sizeof *sections->kvs));
+        kvs = (kvlist **)internal_realloc(sections->kvs, size * (sizeof *sections->kvs));
         if (!kvs) return;
         sections->kvs = kvs;
         sections->size = size;
@@ -202,12 +203,12 @@ static void sections_free(section_list *sections)
 {
     if (!sections) return;
     for (size_t i=0; i < sections->num; i++) {
-        __libc_free(sections->names[i]);
+        internal_free(sections->names[i]);
         kvlist_free(sections->kvs[i]);
     }
-    __libc_free(sections->names);
-    __libc_free(sections->kvs);
-    __libc_free(sections);
+    internal_free(sections->names);
+    internal_free(sections->kvs);
+    internal_free(sections);
 }
 
 static void kvlist_set(kvlist *kvs, const char *key, const char *val)
@@ -224,7 +225,7 @@ static void kvlist_set(kvlist *kvs, const char *key, const char *val)
     if (i < kvs->num) {
         char * v = ld_strdup(val);
         if (v) {
-            __libc_free(kvs->val[i]);
+            internal_free(kvs->val[i]);
             kvs->val[i] = v;
         }
         return;
@@ -238,8 +239,8 @@ static void kvlist_set(kvlist *kvs, const char *key, const char *val)
         if (kvs->key[kvs->num] && kvs->val[kvs->num]) {
             kvs->num++;
         } else {
-            __libc_free(kvs->key[kvs->num]);
-            __libc_free(kvs->val[kvs->num]);
+            internal_free(kvs->key[kvs->num]);
+            internal_free(kvs->val[kvs->num]);
         }
     }
     return;
@@ -273,7 +274,7 @@ static void sections_set(section_list *sections, const char *name, const char *k
             sections->num++;
             kvlist_set(kvs,key,val);
         } else {
-            __libc_free(sections->names[sections->num]);
+            internal_free(sections->names[sections->num]);
             kvlist_free(kvs);
         }
     }
@@ -664,11 +665,11 @@ void configor_free()
         g_configor.sections = NULL;
     }
     if (g_configor.file_path) {
-        __libc_free(g_configor.file_path);
+        internal_free(g_configor.file_path);
         g_configor.file_path = NULL;
     }
     if (g_configor.exe_path) {
-        __libc_free(g_configor.exe_path);
+        internal_free(g_configor.exe_path);
         g_configor.exe_path = NULL;
     }
 }
