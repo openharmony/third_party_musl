@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-2022 Huawei Device Co., Ltd. All rights reserved.
+ * Copyright (c) 2023-2023 Huawei Device Co., Ltd. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
@@ -28,22 +28,14 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "los_config.h"
-#include "los_process_pri.h"
+#ifndef _ADAPT_SYSLIMITS_H
+#define _ADAPT_SYSLIMITS_H
 
-int _isatty(int file)
-{
-    return file <= 2;
-}
+#include_next <sys/syslimits.h>
 
-int _kill(int i, int j)
-{
-    return 0;
-}
+#undef PATH_MAX
+#undef NAME_MAX
+#define PATH_MAX 256
+#define NAME_MAX 256
 
-int _getpid(void)
-{
-    int pid = (int)OsGetKernelInitProcess()->processID;
-    return pid;
-}
-
+#endif /* !_ADAPT_SYSLIMITS_H */
