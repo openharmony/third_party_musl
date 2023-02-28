@@ -20,9 +20,13 @@ extern void* je_realloc(void* p, size_t newsize);
 extern void je_free(void* p);
 #define MuslFunc(func) je_ ## func
 #else
-extern void* __libc_malloc(size_t size);
+extern void *__libc_malloc(size_t size);
 extern void __libc_free(void* p);
-#define MuslFunc(func) __libc_ ## func
+extern void *hook_calloc(size_t, size_t);
+#define hook_malloc __libc_malloc 
+#define hook_free __libc_free 
+#define hook_realloc __libc_realloc 
+#define MuslFunc(func) hook_ ## func
 #endif
 
 void *__libc_mmap(void*, size_t, int, int, int, off_t);
