@@ -19,31 +19,27 @@ extern int je_mallopt(int param, int value);
 
 #ifdef MALLOC_SECURE_ALL
 #include <fcntl.h>
-#define RANDOM_BUFFER_LEN 64
+#define RANDOM_BUFFER_LEN 512
 static uint8_t buffer[RANDOM_BUFFER_LEN] = { 0 };
 static size_t ri = RANDOM_BUFFER_LEN;
 
-static void* get_ri(size_t width)
+static uint8_t get_random8()
 {
-	if ((ri + width > RANDOM_BUFFER_LEN) || (buffer[0] == 0)) {
+	uint8_t num;
+	if ((ri >= RANDOM_BUFFER_LEN) || (buffer[0] == 0)) {
 		int fd = open("/dev/urandom", O_RDONLY);
 		if (fd < 0) {
-			return (void *)buffer;
+			num = (uint8_t)get_random_secret();
+			return num;
 		}
 
 		read(fd, buffer, RANDOM_BUFFER_LEN);
 		close(fd);
 		ri = 0;
 	}
-	ri += width;
-
-	return (void *)(buffer + ri - width);
-}
-
-static uint8_t get_random8()
-{
-	uint8_t *pr = (uint8_t *)get_ri(sizeof(uint8_t));
-	return *pr;
+	num = buffer[ri];
+	ri++;
+	return num;
 }
 
 static int get_randomIdx(int avail_mask, int last_idx)

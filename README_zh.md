@@ -28,6 +28,7 @@ musl编译框架时编译，使用BUILD.gn进行配置编译。
 -  提供加载器namespace机制 
 -  OHOS容器中能够运行依赖bionic的库 
 -  musl全球化接口适配locale数据能力 
+-  mallocng堆内存分配器安全增强，默认开启meta指针混淆。地址随机化通过MALLOC_SECURE_ALL宏开关。可在编译命令中增加--gn-args="musl_secure_level=3"开启
 
 等。在新增特性基础上，也进行了对于musl接口功能的完善与错误的修复。
 
