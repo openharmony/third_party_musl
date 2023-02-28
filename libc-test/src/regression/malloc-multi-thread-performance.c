@@ -8,16 +8,27 @@
 
 #define THREAD_MAX_N 8
 #define SIZE_ALIGN (4 * sizeof(size_t))
-#define THRESHOLD (0x1c00 * SIZE_ALIGN)
-#define ITER_TIME 20
+#define MMAP_THRESHOLD 131052
+#define FREE_CYCLE 16
+#define THRESHOLD (MMAP_THRESHOLD / 16)
+#define ITER_TIME 80
 #define NANOSEC_PER_SEC 1e9
 #define MALLOC_TIME (ITER_TIME * (THRESHOLD / (SIZE_ALIGN + 1)))
+
+void free_all(void **ptr)
+{
+	for (int j = 0; j < FREE_CYCLE; j++) {
+		free(ptr[j]);
+	}
+}
 
 void *func(void *arg)
 {
 	int *val = (int *)arg;
 	cpu_set_t mask;
 	struct timespec ts[2];
+	int num = 0;
+	void *ptr[FREE_CYCLE];
 
 	CPU_ZERO(&mask);
 	CPU_SET(0, &mask);
@@ -28,13 +39,17 @@ void *func(void *arg)
 
 	for (int i = 0; i < ITER_TIME; ++i) {
 		for (size_t size = 0; size < THRESHOLD; size += SIZE_ALIGN + 1) {
-			void *ptr = malloc(size);
-			if (!ptr) {
+			if (num == FREE_CYCLE) {
+				free_all(ptr);
+				num = 0;
+			}
+			ptr[num] = malloc(size);
+			if (!ptr[num]) {
 				t_error("Thread %d malloc failed for size %u\n", *val, size);
 				*val = errno;
 				return NULL;
 			}
-			free(ptr);
+			num++;
 		}
 	}
 
