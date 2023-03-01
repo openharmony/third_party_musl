@@ -144,6 +144,57 @@ void nl_langinfo_0600()
     EXPECT_STREQ("nl_langinfo_0600", ptr, "C.UTF-8");
 }
 
+/**
+ * @tc.name      : nl_langinfo_0700
+ * @tc.desc      : Assert whether the return value result is not ""
+ * when the function nl_langinfo passes in the THOUSEP parameter
+ * @tc.level     : Level 2
+ */
+void nl_langinfo_0700()
+{
+    char *lo = setlocale(LC_ALL, "");
+    if (!lo) {
+        EXPECT_PTRNE("nl_langinfo_0700", lo, NULL);
+        return;
+    }
+    char *ptr = nl_langinfo(THOUSEP);
+    EXPECT_STREQ("nl_langinfo_0700", ptr, "");
+}
+
+/**
+ * @tc.name      : nl_langinfo_0800
+ * @tc.desc      : Assert whether the return value result is not ""
+ * when the function nl_langinfo passes in the THOUSEP * LC_MONETARY parameter
+ * @tc.level     : Level 2
+ */
+void nl_langinfo_0800()
+{
+    char *lo = setlocale(LC_ALL, "");
+    if (!lo) {
+        EXPECT_PTRNE("nl_langinfo_0800", lo, NULL);
+        return;
+    }
+    char *ptr = nl_langinfo(THOUSEP * LC_MONETARY);
+    EXPECT_STREQ("nl_langinfo_0800", ptr, "");
+}
+
+/**
+ * @tc.name      : nl_langinfo_0900
+ * @tc.desc      : Assert whether the return value result is not ""
+ * when the function nl_langinfo passes in the RADIXCHAR * LC_MONETARY parameter
+ * @tc.level     : Level 2
+ */
+void nl_langinfo_0900()
+{
+    char *lo = setlocale(LC_ALL, "");
+    if (!lo) {
+        EXPECT_PTRNE("nl_langinfo_0900", lo, NULL);
+        return;
+    }
+    char *ptr = nl_langinfo(RADIXCHAR * LC_MONETARY);
+    EXPECT_STREQ("nl_langinfo_0900", ptr, "");
+}
+
 int main(void)
 {
     langinfo_0100();
@@ -152,5 +203,8 @@ int main(void)
     nl_langinfo_0400();
     nl_langinfo_0500();
     nl_langinfo_0600();
+    nl_langinfo_0700();
+    nl_langinfo_0800();
+    nl_langinfo_0900();
     return t_status;
 }

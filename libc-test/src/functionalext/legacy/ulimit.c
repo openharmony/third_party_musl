@@ -53,9 +53,27 @@ static void ulimit_0200(void)
     EXPECT_LONGEQ("ulimit_0200", MAX_FILE_SIZE, result);
 }
 
+/**
+ * @tc.name      : ulimit_0300
+ * @tc.desc      : Test ulimit() with UL_SETFSIZE and invalid args
+ * @tc.level     : Level 2
+ */
+static void ulimit_0300(void)
+{
+    int cmd = UL_SETFSIZE;
+    long result = ulimit(cmd, -1);
+    if (result >= 0) {
+        EXPECT_PTRNE("ulimit_0300", result, 0);
+        return;
+    }
+
+    EXPECT_LONGEQ("ulimit_0300", -1, result);
+}
+
 int main(void)
 {
     ulimit_0100();
     ulimit_0200();
+    ulimit_0300();
     return t_status;
 }

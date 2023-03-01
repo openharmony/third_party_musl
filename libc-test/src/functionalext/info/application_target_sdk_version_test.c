@@ -50,9 +50,22 @@ static void get_application_target_sdk_version_0010(void)
     EXPECT_EQ(target, SDK_VERSION_8);
 }
 
+/**
+ * @tc.name      : set_application_target_sdk_version
+ * @tc.desc      : Test the function of set_application_target_sdk_version.
+ * @tc.level     : Level 0
+ */
+static void set_application_target_sdk_version_0020(void)
+{
+    set_application_target_sdk_version(0);
+    int target = get_application_target_sdk_version();
+    EXPECT_EQ(target, SDK_VERSION_FUTURE);
+}
+
 TEST_FUN G_Fun_Array[] = {
     set_application_target_sdk_version_0010,
     get_application_target_sdk_version_0010,
+    set_application_target_sdk_version_0020
 };
 
 int main(void)

@@ -41,6 +41,12 @@ static const char* dllName_inh_007 = "inherit_0700.so";
 static const char* dllName_inh_008 = "inherit_0800.so";
 static const char* dllName_inh_011 = "inherit_1100.so";
 
+static const char* dllAcePath = "/system/lib/libace.z.so";
+static const char* dllDylibPath = "/system/lib/libstd.dylib.so";
+static const char* dllHashsysvPath = "/data/tests/libc-test/src/libdlopen_hash_sysv.so";
+static const char* dllHashsysv = "libdlopen_hash_sysv.so";
+static const char* dllFillRandom = "/data/tests/libc-test/src/libdlopen_fill_random.so";
+
 typedef void(*TEST_FUN)(void);
 
 static const int EOK = 0;

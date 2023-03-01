@@ -726,6 +726,13 @@ template("musl_libs") {
       defines += [ "OHOS_ENABLE_PARAMETER" ]
       deps += [ "//base/startup/init/services/param/base:parameterbase" ]
     }
+
+    if (musl_unit_test_flag) {
+      defines += [
+        "UNIT_TEST_STATIC",
+        "DL_NOMMU_SUPPORT=1",
+      ]
+    }
   }
 
   source_set("soft_musl_hook") {
@@ -754,6 +761,9 @@ template("musl_libs") {
       deps += [ "//base/startup/init/services/param/base:parameterbase" ]
     }
 
+    if (musl_unit_test_flag) {
+      defines += [ "UNIT_TEST_STATIC" ]
+    }
     if (use_jemalloc) {
       defines += [ "USE_JEMALLOC" ]
       if (use_jemalloc_dfx_intf) {
@@ -881,10 +891,14 @@ template("musl_libs") {
 
     musl_lib_path = rebase_path("${target_out_dir}/${_libs_out_dir}")
 
-    libc_map_path =
-        rebase_path("${target_out_dir}/${musl_ported_dir}/libc.map.txt")
+    ldflags = []
+    if (!musl_unit_test_flag) {
+      libc_map_path =
+          rebase_path("${target_out_dir}/${musl_ported_dir}/libc.map.txt")
+      ldflags += [ "-Wl,--version-script=${libc_map_path}" ]
+    }
 
-    ldflags = [
+    ldflags += [
       "-nostdlib",
       "-Wl,-e,_dlstart",
       "-L${libclang_rt_path}",
@@ -893,7 +907,6 @@ template("musl_libs") {
       "-L${musl_lib_path}",
       "-ldl",
       "-lpthread",
-      "-Wl,--version-script=${libc_map_path}",
     ]
 
     configs -= musl_inherited_configs
