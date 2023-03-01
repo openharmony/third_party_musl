@@ -263,6 +263,465 @@ void strptime_1100(void)
     EXPECT_STREQ("strptime_1100", "22", buffResult);
 }
 
+/**
+ * @tc.name      : strptime_1200
+ * @tc.desc      : according to different time zones, convert a string to a time
+ * type according to a specific time format
+ * @tc.level     : Level 0
+ */
+void strptime_1200(void)
+{
+    const char *buffer = "am";
+    const char *handlerChar = test_handle_path("Asia/Shanghai");
+    if (!handlerChar) {
+        t_error("strptime_1200 failed: handlerChar is NULL\n");
+        return;
+    }
+
+    setenv("TZ", handlerChar, 1);
+    tzset();
+    struct tm *timeptr = localtime(&gTime);
+    if (!timeptr) {
+        EXPECT_PTRNE("strptime_1200", timeptr, NULL);
+        return;
+    }
+    strptime(buffer, "%P", timeptr);
+    char buffResult[gBufferSize];
+    int cnt = sprintf(buffResult, "%d", timeptr->tm_hour);
+    EXPECT_TRUE("strptime_1200", cnt > 0);
+    EXPECT_STREQ("strptime_1200", "6", buffResult);
+}
+
+/**
+ * @tc.name      : strptime_1300
+ * @tc.desc      : according to different time zones, convert a string to a time
+ * type according to a specific time format
+ * @tc.level     : Level 0
+ */
+void strptime_1300(void)
+{
+    const char *buffer = "pm";
+    const char *handlerChar = test_handle_path("Asia/Shanghai");
+    if (!handlerChar) {
+        t_error("strptime_1300 failed: handlerChar is NULL\n");
+        return;
+    }
+
+    setenv("TZ", handlerChar, 1);
+    tzset();
+    struct tm *timeptr = localtime(&gTime);
+    if (!timeptr) {
+        EXPECT_PTRNE("strptime_1300", timeptr, NULL);
+        return;
+    }
+    strptime(buffer, "%P", timeptr);
+    char buffResult[gBufferSize];
+    int cnt = sprintf(buffResult, "%d", timeptr->tm_hour);
+    EXPECT_TRUE("strptime_1300", cnt > 0);
+    EXPECT_STREQ("strptime_1300", "18", buffResult);
+}
+
+/**
+ * @tc.name      : strptime_1400
+ * @tc.desc      : according to different time zones, convert a string to a time
+ * type according to a specific time format
+ * @tc.level     : Level 0
+ */
+void strptime_1400(void)
+{
+    const char *buffer = "30-Oct-2021";
+    struct tm tmTime = {0};
+    char *result = strptime(buffer, "%U", &tmTime);
+    char buffResult[gBufferSize];
+    int cnt = sprintf(buffResult, "%s", result);
+    EXPECT_TRUE("strptime_1400", cnt > 0);
+    EXPECT_STREQ("strptime_1400", "-Oct-2021", buffResult);
+}
+
+/**
+ * @tc.name      : strptime_1500
+ * @tc.desc      : according to different time zones, convert a string to a time
+ * type according to a specific time format
+ * @tc.level     : Level 0
+ */
+void strptime_1500(void)
+{
+    const char *buffer = "1";
+    struct tm tmTime = {0};
+    char *result = strptime(buffer, "%w", &tmTime);
+    char buffResult[gBufferSize];
+    int cnt = sprintf(buffResult, "%d", tmTime.tm_wday);
+    EXPECT_TRUE("strptime_1500", cnt > 0);
+    EXPECT_STREQ("strptime_1500", "1", buffResult);
+}
+
+/**
+ * @tc.name      : strptime_1600
+ * @tc.desc      : according to different time zones, convert a string to a time
+ * type according to a specific time format
+ * @tc.level     : Level 0
+ */
+void strptime_1600(void)
+{
+    const char *buffer = "Oct-30-2021";
+    struct tm tmTime = {0};
+    strptime(buffer, "%v", &tmTime);
+    char buffResult[gBufferSize];
+    int cnt = sprintf(buffResult, "%d-%d-%d",
+        (tmTime.tm_year+gYearBase), tmTime.tm_mon, tmTime.tm_mday);
+    EXPECT_TRUE("strptime_1600", cnt > 0);
+    EXPECT_STREQ("strptime_1600", "1900-0-0", buffResult);
+}
+
+/**
+ * @tc.name      : strptime_1700
+ * @tc.desc      : according to different time zones, convert a string to a time
+ * type according to a specific time format
+ * @tc.level     : Level 0
+ */
+void strptime_1700(void)
+{
+    const char *buffer = "16-Spring";
+    struct tm tmTime = {0};
+    char *result = strptime(buffer, "%V", &tmTime);
+    char buffResult[gBufferSize];
+    int cnt = sprintf(buffResult, "%s", result);
+    EXPECT_TRUE("strptime_1700", cnt > 0);
+    EXPECT_STREQ("strptime_1700", "-Spring", buffResult);
+}
+
+/**
+ * @tc.name      : strptime_1800
+ * @tc.desc      : according to different time zones, convert a string to a time
+ * type according to a specific time format
+ * @tc.level     : Level 1
+ */
+void strptime_1800(void)
+{
+    const char *buffer = "+03";
+    struct tm tmTime = {0};
+    char *result = strptime(buffer, "%Z", &tmTime);
+    char buffResult[gBufferSize];
+    int cnt = sprintf(buffResult, "%s", tmTime.__tm_zone);
+    EXPECT_TRUE("strptime_1800", cnt > 0);
+    EXPECT_STREQ("strptime_1800", "+03", buffResult);
+}
+
+/**
+ * @tc.name      : strptime_1900
+ * @tc.desc      : according to different time zones, convert a string to a time
+ * type according to a specific time format
+ * @tc.level     : Level 1
+ */
+void strptime_1900(void)
+{
+    const char *buffer = "-03";
+    struct tm tmTime = {0};
+    char *result = strptime(buffer, "%Z", &tmTime);
+    char buffResult[gBufferSize];
+    int cnt = sprintf(buffResult, "%s", tmTime.__tm_zone);
+    EXPECT_TRUE("strptime_1900", cnt > 0);
+    EXPECT_STREQ("strptime_1900", "-03", buffResult);
+}
+
+/**
+ * @tc.name      : strptime_2000
+ * @tc.desc      : according to different time zones, convert a string to a time
+ * type according to a specific time format
+ * @tc.level     : Level 2
+ */
+void strptime_2000(void)
+{
+    const char *buffer = "Oct-30-2021";
+    struct tm tmTime = {0};
+    char *result = strptime(buffer, "test", &tmTime);
+    EXPECT_FALSE("strptime_2000", result);
+}
+
+/**
+ * @tc.name      : strptime_2100
+ * @tc.desc      : according to different time zones, convert a string to a time
+ * type according to a specific time format
+ * @tc.level     : Level 1
+ */
+void strptime_2100(void)
+{
+    const char *buffer = "2022-4-10";
+    struct tm tmTime = {0};
+    char *result = strptime(buffer, "%+2F", &tmTime);
+    char buffResult[gBufferSize];
+    int cnt = sprintf(buffResult, "%d", tmTime.tm_mday);
+    EXPECT_TRUE("strptime_2100", cnt > 0);
+    EXPECT_STREQ("strptime_2100", "10", buffResult);
+}
+
+/**
+ * @tc.name      : strptime_2200
+ * @tc.desc      : according to different time zones, convert a string to a time
+ * type according to a specific time format
+ * @tc.level     : Level 2
+ */
+void strptime_2200(void)
+{
+    const char *buffer = "";
+    struct tm tmTime = {0};
+    char *result = strptime(buffer, "%c", &tmTime);
+    EXPECT_FALSE("strptime_2200", result);
+}
+
+/**
+ * @tc.name      : strptime_2300
+ * @tc.desc      : according to different time zones, convert a string to a time
+ * type according to a specific time format
+ * @tc.level     : Level 1
+ */
+void strptime_2300(void)
+{
+    const char *buffer = "2022";
+    struct tm tmTime = {0};
+    char *result = strptime(buffer, "%C", &tmTime);
+    char buffResult[gBufferSize];
+    int cnt = sprintf(buffResult, "%s", result);
+    EXPECT_TRUE("strptime_2300", cnt > 0);
+    EXPECT_STREQ("strptime_2300", "22", buffResult);
+}
+
+/**
+ * @tc.name      : strptime_2400
+ * @tc.desc      : according to different time zones, convert a string to a time
+ * type according to a specific time format
+ * @tc.level     : Level 2
+ */
+void strptime_2400(void)
+{
+    const char *buffer = "";
+    struct tm tmTime = {0};
+    char *result = strptime(buffer, "%D", &tmTime);
+    EXPECT_FALSE("strptime_2400", result);
+}
+
+/**
+ * @tc.name      : strptime_2500
+ * @tc.desc      : according to different time zones, convert a string to a time
+ * type according to a specific time format
+ * @tc.level     : Level 2
+ */
+void strptime_2500(void)
+{
+    const char *buffer = "";
+    struct tm tmTime = {0};
+    char *result = strptime(buffer, "%F", &tmTime);
+    EXPECT_FALSE("strptime_2500", result);
+}
+
+/**
+ * @tc.name      : strptime_2600
+ * @tc.desc      : according to different time zones, convert a string to a time
+ * type according to a specific time format
+ * @tc.level     : Level 1
+ */
+void strptime_2600(void)
+{
+    const char *buffer = " 1";
+    struct tm tmTime = {0};
+    char *result = strptime(buffer, "%n%t", &tmTime);
+    char buffResult[gBufferSize];
+    int cnt = sprintf(buffResult, "%s", result);
+    EXPECT_TRUE("strptime_2600", cnt > 0);
+    EXPECT_STREQ("strptime_2600", "1", buffResult);
+}
+
+/**
+ * @tc.name      : strptime_2700
+ * @tc.desc      : according to different time zones, convert a string to a time
+ * type according to a specific time format
+ * @tc.level     : Level 1
+ */
+void strptime_2700(void)
+{
+    const char *buffer = "08:38:20";
+    struct tm tmTime = {0};
+    char *result = strptime(buffer, "%r", &tmTime);
+    char buffResult[gBufferSize];
+    int cnt = sprintf(buffResult, "%d:%d:%d", tmTime.tm_hour, tmTime.tm_min, tmTime.tm_sec);
+    EXPECT_TRUE("strptime_2700", cnt > 0);
+    EXPECT_STREQ("strptime_2700", "8:38:20", buffResult);
+}
+
+/**
+ * @tc.name      : strptime_2800
+ * @tc.desc      : according to different time zones, convert a string to a time
+ * type according to a specific time format
+ * @tc.level     : Level 2
+ */
+void strptime_2800(void)
+{
+    const char *buffer = "";
+    struct tm tmTime = {0};
+    char *result = strptime(buffer, "%r", &tmTime);
+    EXPECT_FALSE("strptime_2800", result);
+}
+
+/**
+ * @tc.name      : strptime_2900
+ * @tc.desc      : according to different time zones, convert a string to a time
+ * type according to a specific time format
+ * @tc.level     : Level 2
+ */
+void strptime_2900(void)
+{
+    const char *buffer = "";
+    struct tm tmTime = {0};
+    char *result = strptime(buffer, "%R", &tmTime);
+    EXPECT_FALSE("strptime_2900", result);
+}
+
+/**
+ * @tc.name      : strptime_3000
+ * @tc.desc      : according to different time zones, convert a string to a time
+ * type according to a specific time format
+ * @tc.level     : Level 2
+ */
+void strptime_3000(void)
+{
+    const char *buffer = "+1";
+    struct tm tmTime = {0};
+    char *result = strptime(buffer, "%s", &tmTime);
+    EXPECT_FALSE("strptime_3000", result);
+}
+
+/**
+ * @tc.name      : strptime_3100
+ * @tc.desc      : according to different time zones, convert a string to a time
+ * type according to a specific time format
+ * @tc.level     : Level 2
+ */
+void strptime_3100(void)
+{
+    const char *buffer = "";
+    struct tm tmTime = {0};
+    char *result = strptime(buffer, "%T", &tmTime);
+    EXPECT_FALSE("strptime_3100", result);
+}
+
+/**
+ * @tc.name      : strptime_3200
+ * @tc.desc      : according to different time zones, convert a string to a time
+ * type according to a specific time format
+ * @tc.level     : Level 2
+ */
+void strptime_3200(void)
+{
+    const char *buffer = "";
+    struct tm tmTime = {0};
+    char *result = strptime(buffer, "%u", &tmTime);
+    EXPECT_FALSE("strptime_3200", result);
+}
+
+/**
+ * @tc.name      : strptime_3300
+ * @tc.desc      : according to different time zones, convert a string to a time
+ * type according to a specific time format
+ * @tc.level     : Level 2
+ */
+void strptime_3300(void)
+{
+    const char *buffer = "";
+    struct tm tmTime = {0};
+    char *result = strptime(buffer, "%V", &tmTime);
+    EXPECT_FALSE("strptime_3300", result);
+}
+
+/**
+ * @tc.name      : strptime_3400
+ * @tc.desc      : according to different time zones, convert a string to a time
+ * type according to a specific time format
+ * @tc.level     : Level 1
+ */
+void strptime_3400(void)
+{
+    const char *buffer = "04/10/22";
+    struct tm tmTime = {0};
+    char *result = strptime(buffer, "%x", &tmTime);
+    char buffResult[gBufferSize];
+    int cnt = sprintf(buffResult, "%d/%d/%d", (tmTime.tm_mon + 1), tmTime.tm_mday, (tmTime.tm_year + gYearBase));
+    EXPECT_TRUE("strptime_3400", cnt > 0);
+    EXPECT_STREQ("strptime_3400", "4/10/2022", buffResult);
+}
+
+/**
+ * @tc.name      : strptime_3500
+ * @tc.desc      : according to different time zones, convert a string to a time
+ * type according to a specific time format
+ * @tc.level     : Level 2
+ */
+void strptime_3500(void)
+{
+    const char *buffer = "";
+    struct tm tmTime = {0};
+    char *result = strptime(buffer, "%x", &tmTime);
+    EXPECT_FALSE("strptime_3500", result);
+}
+
+/**
+ * @tc.name      : strptime_3600
+ * @tc.desc      : according to different time zones, convert a string to a time
+ * type according to a specific time format
+ * @tc.level     : Level 1
+ */
+void strptime_3600(void)
+{
+    const char *buffer = "08:10:20";
+    struct tm tmTime = {0};
+    char *result = strptime(buffer, "%X", &tmTime);
+    char buffResult[gBufferSize];
+    int cnt = sprintf(buffResult, "%d:%d:%d", tmTime.tm_hour, tmTime.tm_min, tmTime.tm_sec);
+    EXPECT_TRUE("strptime_3600", cnt > 0);
+    EXPECT_STREQ("strptime_3600", "8:10:20", buffResult);
+}
+
+/**
+ * @tc.name      : strptime_3700
+ * @tc.desc      : according to different time zones, convert a string to a time
+ * type according to a specific time format
+ * @tc.level     : Level 2
+ */
+void strptime_3700(void)
+{
+    const char *buffer = "";
+    struct tm tmTime = {0};
+    char *result = strptime(buffer, "%X", &tmTime);
+    EXPECT_FALSE("strptime_3700", result);
+}
+
+/**
+ * @tc.name      : strptime_3800
+ * @tc.desc      : according to different time zones, convert a string to a time
+ * type according to a specific time format
+ * @tc.level     : Level 2
+ */
+void strptime_3800(void)
+{
+    const char *buffer = "";
+    struct tm tmTime = {0};
+    char *result = strptime(buffer, "%%", &tmTime);
+    EXPECT_FALSE("strptime_3800", result);
+}
+
+/**
+ * @tc.name      : strptime_3900
+ * @tc.desc      : according to different time zones, convert a string to a time
+ * type according to a specific time format
+ * @tc.level     : Level 2
+ */
+void strptime_3900(void)
+{
+    const char *buffer = "";
+    struct tm tmTime = {0};
+    char *result = strptime(buffer, "%&", &tmTime);
+    EXPECT_FALSE("strptime_3900", result);
+}
+
 int main(void)
 {
     strptime_0100();
@@ -276,5 +735,33 @@ int main(void)
     strptime_0900();
     strptime_1000();
     strptime_1100();
+    strptime_1200();
+    strptime_1300();
+    strptime_1400();
+    strptime_1500();
+    strptime_1600();
+    strptime_1700();
+    strptime_1800();
+    strptime_1900();
+    strptime_2000();
+    strptime_2100();
+    strptime_2200();
+    strptime_2300();
+    strptime_2400();
+    strptime_2500();
+    strptime_2600();
+    strptime_2700();
+    strptime_2800();
+    strptime_2900();
+    strptime_3000();
+    strptime_3100();
+    strptime_3200();
+    strptime_3300();
+    strptime_3400();
+    strptime_3500();
+    strptime_3600();
+    strptime_3700();
+    strptime_3800();
+    strptime_3900();
     return t_status;
 }

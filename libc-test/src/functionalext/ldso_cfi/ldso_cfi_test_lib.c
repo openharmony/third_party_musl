@@ -29,7 +29,6 @@ char buf[1024 * 1024];
 // Mock a CFI-enabled library without relying on the compiler.
 __attribute__((aligned(4096))) void __cfi_check(uint64_t call_site_type_id,
                                                 void *target_addr, void *diag) {
-    printf("["__FILE__"][Line: %d][%s]: entry\n", __LINE__, __func__);
     ++g_count;
     g_type_id = call_site_type_id;
     g_address = target_addr;

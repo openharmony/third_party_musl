@@ -31,8 +31,21 @@ void inet_netof_0100(void)
     EXPECT_EQ("inet_netof_0100", inet_netof(a), NET);
 }
 
+/**
+ * @tc.name      : inet_netof_0100
+ * @tc.desc      : Test the function of inet_netof, n is 131072.(n > 65536)
+ * @tc.level     : Level 0
+ */
+void inet_netof_0200(void)
+{
+    const uint32_t net =0x00008000;
+    struct in_addr a = {htonl(0x80000001)};
+    EXPECT_EQ("inet_netof_0100", inet_netof(a), net);
+}
+
 int main(void)
 {
     inet_netof_0100();
+    inet_netof_0200();
     return t_status;
 }
