@@ -98,14 +98,4 @@ size_t malloc_usable_size(void* addr)
 		return MuslMalloc(malloc_usable_size)(addr);
 	}
 }
-
-int mallopt(int param, int value)
-{
-	volatile const struct MallocDispatchType* dispatch_table = get_current_dispatch_table();
-	if (__predict_false(dispatch_table != NULL)) {
-		return dispatch_table->mallopt(param, value);
-	} else {
-		return MuslMalloc(mallopt)(param, value);
-	}
-}
 #endif
