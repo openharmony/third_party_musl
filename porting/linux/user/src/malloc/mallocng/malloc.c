@@ -463,11 +463,7 @@ int is_allzero(void *p)
 		get_stride(g) < UNIT*size_classes[g->sizeclass];
 }
 
-#ifdef HOOK_ENABLE
-int __libc_mallopt(int param, int value)
-#else
 int mallopt(int param, int value)
-#endif
 {
 #ifdef USE_JEMALLOC_DFX_INTF
 	return je_mallopt(param, value);
