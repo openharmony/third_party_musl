@@ -75,7 +75,7 @@ int is_allzero(void *);
 static inline void *encode_ptr(void *ptr, uint64_t key)
 {
 #ifdef MALLOC_FREELIST_HARDENED
-	return (void *)((uintptr_t)ptr ^ (key | 1));
+	return (void *)((uintptr_t)ptr ^ key);
 #else
 	(void)key;
 	return ptr;

@@ -25,49 +25,61 @@ static void handler(int s)
 {
 }
 
-volatile uintptr_t *p0;
-volatile uintptr_t *p1;
-volatile void *tmp[512];
+uint8_t *p0;
+uint8_t *p1;
+
+#define UNIT                16
+#define OFF_OFFSET          2
+#define FIRST_OFFSET        (-4)
+#define FIRST_OFF_OFFSET    8
+#define MALLOC_SIZE_S       (10 * sizeof(uintptr_t))
+#define TEST_NUM            512
+
+volatile void *tmp[TEST_NUM];
+
+struct meta_in {
+	struct meta_in *prev, *next;
+	uintptr_t *mem;
+};
+
+struct group_in {
+	struct meta_in *meta;
+};
+
+static struct group_in *get_group(uint8_t *p)
+{
+	int offset = *(uint16_t *)(p - OFF_OFFSET);
+
+	if (p[FIRST_OFFSET]) {
+		offset = *(uint32_t *)(p - FIRST_OFF_OFFSET);
+	}
+
+	struct group_in *base = (void *)(p - UNIT*offset - UNIT);
+	return base;
+}
+
 
 static int child(void)
 {
-	p0 = (uintptr_t *)malloc(10 * sizeof(uintptr_t));
+	struct group_in *g = NULL;
+
+	p0 = (uint8_t *)malloc(MALLOC_SIZE_S);
 	if (!p0) {
 		t_error("Malloc failed:%s\n", strerror(errno));
 		return -1;
 	}
 	/* Malloc a dividing chunk to avoid combination of neighbouring freed chunk */
-	tmp[0] = malloc(10 * sizeof(uintptr_t));
-	/* Malloc another chunk to get a key */
-	p1 = (uintptr_t *)malloc(10 * sizeof(uintptr_t));
-	if (!p1) {
-		t_error("Malloc failed:%s\n", strerror(errno));
-		return -1;
-	}
-	/* Malloc a dividing chunk to avoid combination of neighbouring freed chunk */
-	tmp[0] = malloc(10 * sizeof(uintptr_t));
+	tmp[0] = malloc(MALLOC_SIZE_S);
 
-	free((void *)p0);
-	free((void *)p1);
+	g = get_group(p0);
+	free((void *)tmp[0]);
+	g->meta += 1;
 
-	uintptr_t *fake_ptr = (uintptr_t *)((uintptr_t)((char *)p1 - sizeof(size_t) * 2) ^ (uintptr_t)p0[0]);
-	p0[0] = (uintptr_t)fake_ptr;
-	p1[0] = (uintptr_t)fake_ptr;
-
-	/*
-	 * The init procedure makes the freelist unpredictable. To make sure to trigger the ivalid ptr
-	 * acess, here we create as many chunks as possible to make sure there are enough chunks in
-	 * bin[j] of size "10 * sizeof(uintptr_t)". Basically this is heap spray.
-	 */
-	for (int i = 0; i < 512; ++i) {
-		tmp[i] = malloc(10 *sizeof(uintptr_t));
+	for (int i = 0; i < TEST_NUM; ++i) {
+		tmp[i] = malloc(MALLOC_SIZE_S);
 	}
 
-	/*
-	 * When freelist quarantine is on, the modifiy-pointer chunk maybe in quarantine. So here we 
-	 * need free the pointer.
-	 */
-	for (int i = 0; i < 512; ++i) {
+	for (int i = 0; i < TEST_NUM; ++i) {
 		free((void *)tmp[i]);
 	}
 	return 0;

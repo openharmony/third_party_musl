@@ -81,6 +81,7 @@ regression_list = [
 
 if (musl_secure_level >= 3) {
   regression_list += [
+    "malloc-random",
     "malloc-overflow-check",
     "malloc-uaf-check",
   ]
