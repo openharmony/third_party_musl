@@ -16,7 +16,6 @@
 #define CHECK_BIT(bitmap, pos)  ((bitmap & (1u << pos)) ? 1 : 0)
 #define SIG_FLAG_NOIGNORE 1
 
-
 struct sigactq {
 	struct sigaction act;
 	bool	ign_flag;
@@ -25,9 +24,6 @@ struct sigactq {
 	unsigned char   reserve[2];
 };
 typedef struct sigactq sigactq_t;
-
-
-
 
 typedef void (*sa_sighandler_t)(int);
 typedef struct sigaction sigaction_t;
@@ -40,7 +36,6 @@ struct sig_default_act {
 	unsigned char flag;
 	sa_sighandler_t action;
 };
-
 
 static void __sig_core(int signo);
 static void __sig_kill(int signo);
@@ -276,12 +271,6 @@ void __sig_init(void)
 	__sig_add_def_action();
 }
 
-static volatile int dummy_lock[1] = { 0 };
-
-extern hidden volatile int __abort_lock[1];
-
-weak_alias(dummy_lock, __abort_lock);
-
 static int unmask_done;
 static unsigned long handler_set[_NSIG/(8*sizeof(long))];
 
@@ -295,7 +284,6 @@ volatile int __eintr_valid_flag;
 int __libc_sigaction(int sig, const struct sigaction *restrict sa, struct sigaction *restrict old)
 {
 	sigaction_t ksa, ksa_old;
-	unsigned long set[_NSIG/(8*sizeof(long))];
 	int r = 0;
 
 	if (sa) {
@@ -321,14 +309,6 @@ int __libc_sigaction(int sig, const struct sigaction *restrict sa, struct sigact
 				a_store(&__eintr_valid_flag, 1);
 			}
 		}
-		/* Changing the disposition of SIGABRT to anything but
-		 * SIG_DFL requires a lock, so that it cannot be changed
-		 * while abort is terminating the process after simply
-		 * calling raise(SIGABRT) failed to do so. */
-		if (sa->sa_handler != SIG_DFL && sig == SIGABRT) {
-			__block_all_sigs(&set);
-			LOCK(__abort_lock);
-		}
 		ksa.sa_handler = sa->sa_handler;
 		ksa.sa_flags = sa->sa_flags | SA_RESTORER;
 		ksa.sa_restorer = (sa->sa_flags & SA_SIGINFO) ? __restore_rt : __restore;
@@ -340,10 +320,6 @@ int __libc_sigaction(int sig, const struct sigaction *restrict sa, struct sigact
 	} else {
 		r = __sig_action_opr(sig, (const sigaction_t*)sa?&ksa:0, (sigaction_t*)old?&ksa_old:0);
 	}
-	if (sig == SIGABRT && sa && sa->sa_handler != SIG_DFL) {
-		UNLOCK(__abort_lock);
-		__restore_sigs(&set);
-	}
 	if (old && !r) {
 		old->sa_handler = ksa_old.sa_handler;
 		old->sa_flags = ksa_old.sa_flags;
@@ -354,11 +330,26 @@ int __libc_sigaction(int sig, const struct sigaction *restrict sa, struct sigact
 
 int __sigaction(int sig, const struct sigaction *restrict sa, struct sigaction *restrict old)
 {
+	unsigned long set[_NSIG/(8*sizeof(long))];
+
 	if (sig-32U < 3 || sig-1U >= _NSIG-1) {
 		errno = EINVAL;
 		return -1;
 	}
-	return __libc_sigaction(sig, sa, old);
+
+	/* Doing anything with the disposition of SIGABRT requires a lock,
+	 * so that it cannot be changed while abort is terminating the
+	 * process and so any change made by abort can't be observed. */
+	if (sig == SIGABRT) {
+		__block_all_sigs(&set);
+		LOCK(__abort_lock);
+	}
+	int r = __libc_sigaction(sig, sa, old);
+	if (sig == SIGABRT) {
+		UNLOCK(__abort_lock);
+		__restore_sigs(&set);
+	}
+	return r;
 }
 
 weak_alias(__sigaction, sigaction);

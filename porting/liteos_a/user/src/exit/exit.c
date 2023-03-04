@@ -7,7 +7,7 @@
 #include "libc.h"
 #include <bits/errno.h>
 
-pthread_mutex_t __exit_mutex = PTHREAD_MUTEX_INITIALIZER; 
+pthread_mutex_t __exit_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 static void dummy()
 {

@@ -1,25 +1,30 @@
 #include <errno.h>
+#include <stddef.h>
 #include <string.h>
 #include "locale_impl.h"
 
-#define E(a,b) ((unsigned char)a),
-static const unsigned char errid[] = {
+static const struct errmsgstr_t {
+#define E(n, s) char str##n[sizeof(s)];
 #include "__strerror.h"
+#undef E
+} errmsgstr = {
+#define E(n, s) s,
+#include "__strerror.h"
+#undef E
 };
 
-#undef E
-#define E(a,b) b "\0"
-static const char errmsg[] =
+static const unsigned short errmsgidx[] = {
+#define E(n, s) [n] = offsetof(struct errmsgstr_t, str##n),
 #include "__strerror.h"
-;
+#undef E
+};
 
 char *__strerror_l(int e, locale_t loc)
 {
 	const char *s;
-	int i;
 
-	for (i=0; errid[i] && errid[i] != e; i++);
-	for (s=errmsg; i; s++, i--) for (; *s; s++);
+	if (e >= sizeof errmsgidx / sizeof *errmsgidx) e = 0;
+	s = (char *)&errmsgstr + errmsgidx[e];
 	return (char *)s;
 }
 

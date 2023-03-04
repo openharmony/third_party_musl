@@ -1,22 +1,21 @@
 #include <unistd.h>
-#include <string.h>
 #include <signal.h>
 #include "syscall.h"
 #include "libc.h"
+#include "lock.h"
 #include "pthread_impl.h"
+#include "aio_impl.h"
 
-static void dummy(int x)
-{
-}
+static void dummy(int x) { }
+weak_alias(dummy, __aio_atfork);
 
-weak_alias(dummy, __fork_handler);
-
-pid_t fork(void)
+pid_t _Fork(void)
 {
 	pid_t ret;
 	sigset_t set;
-	__fork_handler(-1);
 	__block_all_sigs(&set);
+	__aio_atfork(-1);
+	LOCK(__abort_lock);
 #ifdef SYS_fork
 	ret = __syscall(SYS_fork);
 #else
@@ -30,10 +29,12 @@ pid_t fork(void)
 		self->next = self->prev = self;
 		__thread_list_lock = 0;
 		libc.threads_minus_1 = 0;
+		if (libc.need_locks) libc.need_locks = -1;
 		libc.exit = 0;
 		signal(SIGSYS, arm_do_signal);
 	}
+	UNLOCK(__abort_lock);
+	__aio_atfork(!ret);
 	__restore_sigs(&set);
-	__fork_handler(!ret);
 	return __syscall_ret(ret);
 }

@@ -6,6 +6,7 @@
 
 int posix_spawn_file_actions_addclose(posix_spawn_file_actions_t *fa, int fd)
 {
+	if (fd < 0) return EBADF;
 	unsupported_api(__FUNCTION__);
 	struct fdop *op = malloc(sizeof *op);
 	if (!op) return ENOMEM;

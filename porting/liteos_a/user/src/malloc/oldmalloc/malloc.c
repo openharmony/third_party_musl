@@ -9,6 +9,11 @@
 #include "atomic.h"
 #include "pthread_impl.h"
 #include "malloc_impl.h"
+#include "fork_impl.h"
+
+#define malloc __libc_malloc_impl
+#define realloc __libc_realloc
+#define free __libc_free
 
 #if defined(__GNUC__) && defined(__PIC__)
 #define inline inline __attribute__((always_inline))
@@ -17,17 +22,18 @@
 static struct {
 	volatile uint64_t binmap;
 	struct bin bins[64];
-	volatile int free_lock[2];
+	volatile int split_merge_lock[2];
 } mal;
-
-int __malloc_replaced;
 
 /* Synchronization tools */
 
 static inline void lock(volatile int *lk)
 {
-	if (libc.threads_minus_1)
+	int need_locks = libc.need_locks;
+	if (need_locks) {
 		while(a_swap(lk, 1)) __wait(lk, lk+1, 1, 1);
+		if (need_locks < 0) libc.need_locks = 0;
+	}
 }
 
 static inline void unlock(volatile int *lk)
@@ -123,9 +129,72 @@ void __dump_heap(int x)
 }
 #endif
 
+/* This function returns true if the interval [old,new]
+ * intersects the 'len'-sized interval below &libc.auxv
+ * (interpreted as the main-thread stack) or below &b
+ * (the current stack). It is used to defend against
+ * buggy brk implementations that can cross the stack. */
+
+static int traverses_stack_p(uintptr_t old, uintptr_t new)
+{
+	const uintptr_t len = 8<<20;
+	uintptr_t a, b;
+
+	b = (uintptr_t)libc.auxv;
+	a = b > len ? b-len : 0;
+	if (new>a && old<b) return 1;
+
+	b = (uintptr_t)&b;
+	a = b > len ? b-len : 0;
+	if (new>a && old<b) return 1;
+
+	return 0;
+}
+
+/* Expand the heap in-place if brk can be used, or otherwise via mmap,
+ * using an exponential lower bound on growth by mmap to make
+ * fragmentation asymptotically irrelevant. The size argument is both
+ * an input and an output, since the caller needs to know the size
+ * allocated, which will be larger than requested due to page alignment
+ * and mmap minimum size rules. The caller is responsible for locking
+ * to prevent concurrent calls. */
+
+static void *__expand_heap(size_t *pn)
+{
+	static uintptr_t brk;
+	static unsigned mmap_step;
+	size_t n = *pn;
+
+	if (n > SIZE_MAX/2 - PAGE_SIZE) {
+		errno = ENOMEM;
+		return 0;
+	}
+	n += -n & PAGE_SIZE-1;
+
+	if (!brk) {
+		brk = __syscall(SYS_brk, 0);
+		brk += -brk & PAGE_SIZE-1;
+	}
+
+	if (n < SIZE_MAX-brk && !traverses_stack_p(brk, brk+n)
+	    && __syscall(SYS_brk, brk+n)==brk+n) {
+		*pn = n;
+		brk += n;
+		return (void *)(brk-n);
+	}
+
+	size_t min = (size_t)PAGE_SIZE << mmap_step/2;
+	if (n < min) n = min;
+	void *area = __mmap(0, n, PROT_READ|PROT_WRITE,
+		MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
+	if (area == MAP_FAILED) return 0;
+	*pn = n;
+	mmap_step++;
+	return area;
+}
+
 static struct chunk *expand_heap(size_t n)
 {
-	static int heap_lock[2];
 	static void *end;
 	void *p;
 	struct chunk *w;
@@ -135,13 +204,8 @@ static struct chunk *expand_heap(size_t n)
 	 * we need room for an extra zero-sized sentinel chunk. */
 	n += SIZE_ALIGN;
 
-	lock(heap_lock);
-
 	p = __expand_heap(&n);
-	if (!p) {
-		unlock(heap_lock);
-		return 0;
-	}
+	if (!p) return 0;
 
 	/* If not just expanding existing space, we need to make a
 	 * new sentinel chunk below the allocated space. */
@@ -163,8 +227,6 @@ static struct chunk *expand_heap(size_t n)
 	 * zero-size sentinel header at the old end-of-heap. */
 	w = MEM_TO_CHUNK(p);
 	w->csize = n | C_INUSE;
-
-	unlock(heap_lock);
 
 	return w;
 }
@@ -195,72 +257,14 @@ static void unbin(struct chunk *c, int i)
 	NEXT_CHUNK(c)->psize |= C_INUSE;
 }
 
-static int alloc_fwd(struct chunk *c)
+static void bin_chunk(struct chunk *self, int i)
 {
-	int i;
-	size_t k;
-	while (!((k=c->csize) & C_INUSE)) {
-		i = bin_index(k);
-		lock_bin(i);
-		if (c->csize == k) {
-			unbin(c, i);
-			unlock_bin(i);
-			return 1;
-		}
-		unlock_bin(i);
-	}
-	return 0;
-}
-
-static int alloc_rev(struct chunk *c)
-{
-	int i;
-	size_t k;
-	while (!((k=c->psize) & C_INUSE)) {
-		i = bin_index(k);
-		lock_bin(i);
-		if (c->psize == k) {
-			unbin(PREV_CHUNK(c), i);
-			unlock_bin(i);
-			return 1;
-		}
-		unlock_bin(i);
-	}
-	return 0;
-}
-
-
-/* pretrim - trims a chunk _prior_ to removing it from its bin.
- * Must be called with i as the ideal bin for size n, j the bin
- * for the _free_ chunk self, and bin j locked. */
-static int pretrim(struct chunk *self, size_t n, int i, int j)
-{
-	size_t n1;
-	struct chunk *next, *split;
-
-	/* We cannot pretrim if it would require re-binning. */
-	if (j < 40) return 0;
-	if (j < i+3) {
-		if (j != 63) return 0;
-		n1 = CHUNK_SIZE(self);
-		if (n1-n <= MMAP_THRESHOLD) return 0;
-	} else {
-		n1 = CHUNK_SIZE(self);
-	}
-	if (bin_index(n1-n) != j) return 0;
-
-	next = NEXT_CHUNK(self);
-	split = (void *)((char *)self + n);
-
-	split->prev = self->prev;
-	split->next = self->next;
-	split->prev->next = split;
-	split->next->prev = split;
-	split->psize = n | C_INUSE;
-	split->csize = n1-n;
-	next->psize = n1-n;
-	self->csize = n | C_INUSE;
-	return 1;
+	self->next = BIN_TO_CHUNK(i);
+	self->prev = mal.bins[i].tail;
+	self->next->prev = self;
+	self->prev->next = self;
+	if (self->prev == BIN_TO_CHUNK(i))
+		a_or_64(&mal.binmap, 1ULL<<i);
 }
 
 static void trim(struct chunk *self, size_t n)
@@ -274,17 +278,23 @@ static void trim(struct chunk *self, size_t n)
 	split = (void *)((char *)self + n);
 
 	split->psize = n | C_INUSE;
-	split->csize = n1-n | C_INUSE;
-	next->psize = n1-n | C_INUSE;
+	split->csize = n1-n;
+	next->psize = n1-n;
 	self->csize = n | C_INUSE;
 
-	__bin_chunk(split);
+	int i = bin_index(n1-n);
+	lock_bin(i);
+
+	bin_chunk(split, i);
+
+	unlock_bin(i);
 }
 
 void *malloc(size_t n)
 {
 	struct chunk *c;
 	int i, j;
+	uint64_t mask;
 
 	if (adjust_size(&n) < 0) return 0;
 
@@ -300,70 +310,43 @@ void *malloc(size_t n)
 	}
 
 	i = bin_index_up(n);
-	for (;;) {
-		uint64_t mask = mal.binmap & -(1ULL<<i);
-		if (!mask) {
-			c = expand_heap(n);
-			if (!c) return 0;
-			if (alloc_rev(c)) {
-				struct chunk *x = c;
-				c = PREV_CHUNK(c);
-				NEXT_CHUNK(x)->psize = c->csize =
-					x->csize + CHUNK_SIZE(c);
-			}
-			break;
+	if (i<63 && (mal.binmap & (1ULL<<i))) {
+		lock_bin(i);
+		c = mal.bins[i].head;
+		if (c != BIN_TO_CHUNK(i) && CHUNK_SIZE(c)-n <= DONTCARE) {
+			unbin(c, i);
+			unlock_bin(i);
+			return CHUNK_TO_MEM(c);
 		}
+		unlock_bin(i);
+	}
+	lock(mal.split_merge_lock);
+	for (mask = mal.binmap & -(1ULL<<i); mask; mask -= (mask&-mask)) {
 		j = first_set(mask);
 		lock_bin(j);
 		c = mal.bins[j].head;
 		if (c != BIN_TO_CHUNK(j)) {
-			if (!pretrim(c, n, i, j)) unbin(c, j);
+			unbin(c, j);
 			unlock_bin(j);
 			break;
 		}
 		unlock_bin(j);
 	}
-
-	/* Now patch up in case we over-allocated */
+	if (!mask) {
+		c = expand_heap(n);
+		if (!c) {
+			unlock(mal.split_merge_lock);
+			return 0;
+		}
+	}
 	trim(c, n);
-
+	unlock(mal.split_merge_lock);
 	return CHUNK_TO_MEM(c);
 }
 
-static size_t mal0_clear(char *p, size_t pagesz, size_t n)
+int __malloc_allzerop(void *p)
 {
-#ifdef __GNUC__
-	typedef uint64_t __attribute__((__may_alias__)) T;
-#else
-	typedef unsigned char T;
-#endif
-	char *pp = p + n;
-	size_t i = (uintptr_t)pp & (pagesz - 1);
-	for (;;) {
-		pp = memset(pp - i, 0, i);
-		if (pp - p < pagesz) return pp - p;
-		for (i = pagesz; i; i -= 2*sizeof(T), pp -= 2*sizeof(T))
-		        if (((T *)pp)[-1] | ((T *)pp)[-2])
-				break;
-	}
-}
-
-void *calloc(size_t m, size_t n)
-{
-	if (n && m > (size_t)-1/n) {
-		errno = ENOMEM;
-		return 0;
-	}
-	n *= m;
-	void *p = malloc(n);
-	if (!p) return p;
-	if (!__malloc_replaced) {
-		if (IS_MMAPPED(MEM_TO_CHUNK(p)))
-			return p;
-		if (n >= PAGE_SIZE)
-			n = mal0_clear(p, PAGE_SIZE, n);
-	}
-	return memset(p, 0, n);
+	return IS_MMAPPED(MEM_TO_CHUNK(p));
 }
 
 void *realloc(void *p, size_t n)
@@ -378,6 +361,8 @@ void *realloc(void *p, size_t n)
 
 	self = MEM_TO_CHUNK(p);
 	n1 = n0 = CHUNK_SIZE(self);
+
+	if (n<=n0 && n0-n<=DONTCARE) return p;
 
 	if (IS_MMAPPED(self)) {
 		size_t extra = self->psize;
@@ -405,34 +390,43 @@ void *realloc(void *p, size_t n)
 	/* Crash on corrupted footer (likely from buffer overflow) */
 	if (next->psize != self->csize) a_crash();
 
-	/* Merge adjacent chunks if we need more space. This is not
-	 * a waste of time even if we fail to get enough space, because our
-	 * subsequent call to free would otherwise have to do the merge. */
-	if (n > n1 && alloc_fwd(next)) {
-		n1 += CHUNK_SIZE(next);
-		next = NEXT_CHUNK(next);
-	}
-	/* FIXME: find what's wrong here and reenable it..? */
-	if (0 && n > n1 && alloc_rev(self)) {
-		self = PREV_CHUNK(self);
-		n1 += CHUNK_SIZE(self);
-	}
-	self->csize = n1 | C_INUSE;
-	next->psize = n1 | C_INUSE;
-
-	/* If we got enough space, split off the excess and return */
-	if (n <= n1) {
-		//memmove(CHUNK_TO_MEM(self), p, n0-OVERHEAD);
-		trim(self, n);
+	if (n < n0) {
+		int i = bin_index_up(n);
+		int j = bin_index(n0);
+		if (i<j && (mal.binmap & (1ULL << i)))
+			goto copy_realloc;
+		struct chunk *split = (void *)((char *)self + n);
+		self->csize = split->psize = n | C_INUSE;
+		split->csize = next->psize = n0-n | C_INUSE;
+		__bin_chunk(split);
 		return CHUNK_TO_MEM(self);
 	}
+
+	lock(mal.split_merge_lock);
+
+	size_t nsize = next->csize & C_INUSE ? 0 : CHUNK_SIZE(next);
+	if (n0+nsize >= n) {
+		int i = bin_index(nsize);
+		lock_bin(i);
+		if (!(next->csize & C_INUSE)) {
+			unbin(next, i);
+			unlock_bin(i);
+			next = NEXT_CHUNK(next);
+			self->csize = next->psize = n0+nsize | C_INUSE;
+			trim(self, n);
+			unlock(mal.split_merge_lock);
+			return CHUNK_TO_MEM(self);
+		}
+		unlock_bin(i);
+	}
+	unlock(mal.split_merge_lock);
 
 copy_realloc:
 	/* As a last resort, allocate a new chunk and copy to it. */
 	new = malloc(n-OVERHEAD);
 	if (!new) return 0;
 copy_free_ret:
-	memcpy(new, p, n0-OVERHEAD);
+	memcpy(new, p, (n<n0 ? n : n0) - OVERHEAD);
 	free(CHUNK_TO_MEM(self));
 	return new;
 }
@@ -440,67 +434,61 @@ copy_free_ret:
 void __bin_chunk(struct chunk *self)
 {
 	struct chunk *next = NEXT_CHUNK(self);
-	size_t final_size, new_size, size;
-	int reclaim=0;
-	int i;
-
-	final_size = new_size = CHUNK_SIZE(self);
 
 	/* Crash on corrupted footer (likely from buffer overflow) */
 	if (next->psize != self->csize) a_crash();
 
-	for (;;) {
-		if (self->psize & next->csize & C_INUSE) {
-			self->csize = final_size | C_INUSE;
-			next->psize = final_size | C_INUSE;
-			i = bin_index(final_size);
-			lock_bin(i);
-			lock(mal.free_lock);
-			if (self->psize & next->csize & C_INUSE)
-				break;
-			unlock(mal.free_lock);
-			unlock_bin(i);
-		}
+	lock(mal.split_merge_lock);
 
-		if (alloc_rev(self)) {
-			self = PREV_CHUNK(self);
-			size = CHUNK_SIZE(self);
-			final_size += size;
-			if (new_size+size > RECLAIM && (new_size+size^size) > size)
-				reclaim = 1;
-		}
+	size_t osize = CHUNK_SIZE(self), size = osize;
 
-		if (alloc_fwd(next)) {
-			size = CHUNK_SIZE(next);
-			final_size += size;
-			if (new_size+size > RECLAIM && (new_size+size^size) > size)
-				reclaim = 1;
+	/* Since we hold split_merge_lock, only transition from free to
+	 * in-use can race; in-use to free is impossible */
+	size_t psize = self->psize & C_INUSE ? 0 : CHUNK_PSIZE(self);
+	size_t nsize = next->csize & C_INUSE ? 0 : CHUNK_SIZE(next);
+
+	if (psize) {
+		int i = bin_index(psize);
+		lock_bin(i);
+		if (!(self->psize & C_INUSE)) {
+			struct chunk *prev = PREV_CHUNK(self);
+			unbin(prev, i);
+			self = prev;
+			size += psize;
+		}
+		unlock_bin(i);
+	}
+	if (nsize) {
+		int i = bin_index(nsize);
+		lock_bin(i);
+		if (!(next->csize & C_INUSE)) {
+			unbin(next, i);
 			next = NEXT_CHUNK(next);
+			size += nsize;
 		}
+		unlock_bin(i);
 	}
 
-	if (!(mal.binmap & 1ULL<<i))
-		a_or_64(&mal.binmap, 1ULL<<i);
+	int i = bin_index(size);
+	lock_bin(i);
 
-	self->csize = final_size;
-	next->psize = final_size;
-	unlock(mal.free_lock);
-
-	self->next = BIN_TO_CHUNK(i);
-	self->prev = mal.bins[i].tail;
-	self->next->prev = self;
-	self->prev->next = self;
+	self->csize = size;
+	next->psize = size;
+	bin_chunk(self, i);
+	unlock(mal.split_merge_lock);
 
 	/* Replace middle of large chunks with fresh zero pages */
-	if (reclaim) {
+	if (size > RECLAIM && (size^(size-osize)) > size-osize) {
 		uintptr_t a = (uintptr_t)self + SIZE_ALIGN+PAGE_SIZE-1 & -PAGE_SIZE;
 		uintptr_t b = (uintptr_t)next - SIZE_ALIGN & -PAGE_SIZE;
+		int e = errno;
 #if 0
 		__madvise((void *)a, b-a, MADV_DONTNEED);
 #else
 		__mmap((void *)a, b-a, PROT_READ|PROT_WRITE,
 			MAP_PRIVATE|MAP_ANONYMOUS|MAP_FIXED, -1, 0);
 #endif
+		errno = e;
 	}
 
 	unlock_bin(i);
@@ -513,7 +501,9 @@ static void unmap_chunk(struct chunk *self)
 	size_t len = CHUNK_SIZE(self) + extra;
 	/* Crash on double free */
 	if (extra & 1) a_crash();
+	int e = errno;
 	__munmap(base, len);
+	errno = e;
 }
 
 void free(void *p)
@@ -545,4 +535,22 @@ void __malloc_donate(char *start, char *end)
 	c->psize = n->csize = C_INUSE;
 	c->csize = n->psize = C_INUSE | (end-start);
 	__bin_chunk(c);
+}
+
+void __malloc_atfork(int who)
+{
+	if (who<0) {
+		lock(mal.split_merge_lock);
+		for (int i=0; i<64; i++)
+			lock(mal.bins[i].lock);
+	} else if (!who) {
+		for (int i=0; i<64; i++)
+			unlock(mal.bins[i].lock);
+		unlock(mal.split_merge_lock);
+	} else {
+		for (int i=0; i<64; i++)
+			mal.bins[i].lock[0] = mal.bins[i].lock[1] = 0;
+		mal.split_merge_lock[1] = 0;
+		mal.split_merge_lock[0] = 0;
+	}
 }

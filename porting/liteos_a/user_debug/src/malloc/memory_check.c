@@ -9,7 +9,7 @@
 #include "libc.h"
 #include "atomic.h"
 #include "pthread_impl.h"
-#include "malloc_impl.h"
+#include "oldmalloc/malloc_impl.h"
 
 #if defined(__GNUC__) && defined(__PIC__)
 #define inline inline __attribute__((always_inline))

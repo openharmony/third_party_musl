@@ -75,7 +75,11 @@ $(warning *** warning: ARCH $(ARCH) has not been tested yet, use with cautions!)
 ARCH_CFLAGS =
 endif
 
+ifeq ($(TARGET), $(ARCH)-liteos-ohos)
+MUS_SRC_DIR = $(MUSLDIR)/musl_1.2.3
+else
 MUS_SRC_DIR = $(MUSLDIR)
+endif
 
 CFLAGS = -fstack-protector-strong -D_FORTIFY_SOURCE=2 -Wl,-z,relro,-z,now,-z,noexecstack -Wl,--build-id=sha1
 
@@ -147,6 +151,7 @@ musl_install_for_liteos_a_user: musl_patch_for_liteos_a_user
 	../configure --prefix=$(SYSROOTDIR)/usr --target=$(TARGET) \
 		--includedir=$(SYSROOTDIR)/usr/include/$(TARGET) \
 		--libdir=$(SYSROOTDIR)/usr/lib/$(TARGET)/$(MULTILIB) \
+		--with-malloc=oldmalloc	\
 		$(if $(LDFLAGS),LDFLAGS="$(LDFLAGS)",) \
 		CC="$(CC)" CROSS_COMPILE="$(CROSS_COMPILE)" CFLAGS="$(CFLAGS)" >/dev/null && \
 	sed $(SED_ARGS) Makefile | make -f- -sj install
