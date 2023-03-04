@@ -36,7 +36,6 @@ int __init_tp(void *p)
 	int r = __set_thread_area(TP_ADJ(p));
 	if (r < 0) return -1;
 	if (!r) libc.can_do_threads = 1;
-	libc.threads_minus_1 = 1;
 	libc.threaded = 0;
 	td->self = td;
 	td->detach_state = DT_JOINABLE;
@@ -100,7 +99,7 @@ void *__copy_tls(unsigned char *mem)
 	}
 #endif
 	dtv[0] = libc.tls_cnt;
-	td->dtv = td->dtv_copy = dtv;
+	td->dtv = dtv;
 	return td;
 }
 

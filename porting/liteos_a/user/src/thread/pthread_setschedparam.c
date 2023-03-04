@@ -13,8 +13,11 @@ int pthread_setschedparam(pthread_t t, int policy, const struct sched_param *par
 		return EINVAL;
 	}
 
+	sigset_t set;
+	__block_app_sigs(&set);
 	LOCK(t->killlock);
 	r = !t->tid ? ESRCH : -__syscall(SYS_sched_setscheduler, t->tid, policy, param->sched_priority, MUSL_TYPE_THREAD);
 	UNLOCK(t->killlock);
+	__restore_sigs(&set);
 	return r;
 }

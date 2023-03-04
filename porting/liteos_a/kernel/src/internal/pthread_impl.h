@@ -9,14 +9,10 @@
 #include "atomic.h"
 
 enum {
-	DT_EXITING = 0,
+	DT_EXITED = 0,
+	DT_EXITING,
 	DT_JOINABLE,
 	DT_DETACHED,
-};
-
-struct __timer {
-	int timerid;
-	pthread_t thread;
 };
 
 #define __SU (sizeof(size_t)/sizeof(int))
@@ -51,12 +47,20 @@ struct __timer {
 #define _b_waiters2 __u.__vi[4]
 #define _b_inst __u.__p[3]
 
-#ifndef CANARY
-#define CANARY canary
+#ifndef TP_OFFSET
+#define TP_OFFSET 0
 #endif
 
 #ifndef DTP_OFFSET
 #define DTP_OFFSET 0
+#endif
+
+#ifdef TLS_ABOVE_TP
+#define TP_ADJ(p) ((char *)(p) + sizeof(struct pthread) + TP_OFFSET)
+#define __pthread_self() ((pthread_t)(__get_tp() - sizeof(struct __pthread) - TP_OFFSET))
+#else
+#define TP_ADJ(p) (p)
+#define __pthread_self() ((pthread_t)__get_tp())
 #endif
 
 #ifndef tls_mod_off_t
@@ -92,7 +96,6 @@ hidden int __pthread_key_delete_impl(pthread_key_t);
 
 extern hidden volatile size_t __pthread_tsd_size;
 extern hidden void *__pthread_tsd_main[];
-extern hidden volatile int __aio_fut;
 extern hidden volatile int __eintr_valid_flag;
 
 hidden int __clone(int (*)(void *), void *, int, void *, ...);
@@ -114,6 +117,8 @@ hidden void __tl_unlock(void);
 hidden void __tl_sync(pthread_t);
 
 extern hidden volatile int __thread_list_lock;
+
+extern hidden volatile int __abort_lock[1];
 
 extern hidden unsigned __default_stacksize;
 extern hidden unsigned __default_guardsize;

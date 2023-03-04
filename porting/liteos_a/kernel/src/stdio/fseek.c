@@ -1,7 +1,14 @@
 #include "stdio_impl.h"
+#include <errno.h>
 
 int __fseeko_unlocked(FILE *f, off_t off, int whence)
 {
+	/* Fail immediately for invalid whence argument. */
+	if (whence != SEEK_CUR && whence != SEEK_SET && whence != SEEK_END) {
+		errno = EINVAL;
+		return -1;
+	}
+
 	/* Adjust relative offset for unread data in buffer, if any. */
 	if (whence == SEEK_CUR && f->rend) off -= f->rend - f->rpos;
 
@@ -20,7 +27,7 @@ int __fseeko_unlocked(FILE *f, off_t off, int whence)
 	/* If seek succeeded, file is seekable and we discard read buffer. */
 	f->rpos = f->rend = 0;
 	f->flags &= ~F_EOF;
-	
+
 	return 0;
 }
 
