@@ -21,6 +21,34 @@
 #include <string.h>
 #include "test.h"
 
+#define UNIT            16
+#define OFF_OFFSET      2
+#define FIRST_OFFSET    (-4)
+#define FIRST_OFF_OFFSET 8
+#define MALLOC_SIZE_S   50
+#define MALLOC_SIZE_L   100
+#define TEST_NUM        512
+
+struct meta_in {
+	struct meta_in *prev, *next;
+	uintptr_t *mem;
+};
+
+struct group_in {
+	struct meta_in *meta;
+};
+
+static struct group_in *get_group(const uint8_t *p)
+{
+	int offset = *(const uint16_t *)(p - OFF_OFFSET);
+
+	if (p[FIRST_OFFSET]) {
+		offset = *(uint32_t *)(p - FIRST_OFF_OFFSET);
+	}
+	struct group_in *base = (void *)(p - UNIT*offset - UNIT);
+	return base;
+}
+
 static void handler(int s)
 {
 }
@@ -38,31 +66,29 @@ int set_devide_chunk(size_t size)
 
 static int child(void)
 {
-	uintptr_t *c;
-	uintptr_t *temp;
+	uint8_t *c1;
+	uint8_t *c2;
 
-	/* Set first dividing chunk */
-	if (set_devide_chunk(sizeof(size_t)))
-		return -1;
+	uint8_t *temp;
+	struct group_in *g1 = NULL;
+	struct group_in *g2 = NULL;
 
-	/*
-	 * The init procedure makes the freelist unpredictable. To make sure trigger the safe-unlink
-	 * check, Here we create as many chunks as possible to make sure there are enough chunks in
-	 * bin[0] and malloc again. Basically this is heap spray.
-	 */
-	for (int i = 0; i < 512; ++i) {
-		if (set_devide_chunk(sizeof(size_t)))
-			return -1;
-		c = (uintptr_t *)malloc(sizeof(uintptr_t));
-		if (!c) {
+	for (int i = 0; i < TEST_NUM; ++i) {
+		c1 = (uint8_t *)malloc(MALLOC_SIZE_S);
+		if (!c1) {
 			t_error("Malloc failed: %s\n", strerror(errno));
 			return -1;
 		}
-		free(c);
-		/* exchange the prev and next pointer */
-		uintptr_t temp = c[0];
-		c[0] = c[1];
-		c[1] = temp;
+		g1 = get_group(c1);
+		c2 = (uint8_t *)malloc(MALLOC_SIZE_L);
+		if (!c2) {
+			t_error("Malloc failed: %s\n", strerror(errno));
+			return -1;
+		}
+		g2 = get_group(c2);
+		g2->meta = g1->meta;
+		free(c2);
+		free(c1);
 	}
 
 	return 0;
