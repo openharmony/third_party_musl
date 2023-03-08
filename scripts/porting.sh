@@ -27,10 +27,5 @@ done
 if [ ! -d ${DST_DIR} ]; then
     mkdir -p ${DST_DIR}
 fi
-
-if [ ${PORTING} = "linux" ]; then
-	cp -rfp ${SRC_DIR}/musl_1.2.3/* ${DST_DIR}
-else
-	cp -rfp ${SRC_DIR}/* ${DST_DIR}
-fi
+cp -rfp ${SRC_DIR}/* ${DST_DIR}
 cp -rfp ${SRC_DIR}/porting/${PORTING}/user/* ${DST_DIR}
