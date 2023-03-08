@@ -37,17 +37,25 @@ void *__libc_calloc(size_t m, size_t n)
 		return 0;
 	}
 	n *= m;
-#ifdef HOOK_ENABLE
-#ifdef USE_JEMALLOC
 	void *p = __libc_malloc(n);
-#else
-	void *p = malloc(n);
-#endif
-#else
-	void *p = __libc_malloc(n);
-#endif
 	if (!p || (!__malloc_replaced && __malloc_allzerop(p)))
 		return p;
 	n = mal0_clear(p, n);
 	return memset(p, 0, n);
 }
+
+#ifdef HOOK_ENABLE
+void *hook_calloc(size_t m, size_t n)
+{
+	if (n && m > (size_t)-1/n) {
+		errno = ENOMEM;
+		return 0;
+	}
+	n *= m;
+	void *p = malloc(n);
+	if (!p || (!__malloc_replaced && __malloc_allzerop(p)))
+		return p;
+	n = mal0_clear(p, n);
+	return memset(p, 0, n);
+}
+#endif
