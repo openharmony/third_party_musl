@@ -4,7 +4,9 @@
 #include <time.h>
 #include <sys/time.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <string.h>
+#include <endian.h>
 #include "syscall.h"
 
 #define alignof(t) offsetof(struct { char c; t x; }, x)
@@ -28,6 +30,12 @@ struct ioctl_compat_map {
  * number producing macros; only size of result is meaningful. */
 #define new_misaligned(n) struct { int i; time_t t; char c[(n)-4]; }
 
+struct v4l2_event {
+	uint32_t a;
+	uint64_t b[8];
+	uint32_t c[2], ts[2], d[9];
+};
+
 static const struct ioctl_compat_map compat_map[] = {
 	{ SIOCGSTAMP, SIOCGSTAMP_OLD, 8, R, 0, OFFS(0, 4) },
 	{ SIOCGSTAMPNS, SIOCGSTAMPNS_OLD, 8, R, 0, OFFS(0, 4) },
@@ -46,16 +54,17 @@ static const struct ioctl_compat_map compat_map[] = {
 	{ _IOWR('A', 0x23, char[136]), _IOWR('A', 0x23, char[132]), 0, WR, 1, 0 },
 	{ 0, 0, 4, WR, 1, 0 }, /* snd_pcm_sync_ptr (flags only) */
 	{ 0, 0, 32, WR, 1, OFFS(8,12,16,24,28) }, /* snd_pcm_mmap_status */
-	{ 0, 0, 8, WR, 1, OFFS(0,4) }, /* snd_pcm_mmap_control */
+	{ 0, 0, 4, WR, 1, 0 }, /* snd_pcm_mmap_control (each member) */
 
 	/* VIDIOC_QUERYBUF, VIDIOC_QBUF, VIDIOC_DQBUF, VIDIOC_PREPARE_BUF */
-	{ _IOWR('V',  9, new_misaligned(72)), _IOWR('V',  9, char[72]), 72, WR, 0, OFFS(20) },
-	{ _IOWR('V', 15, new_misaligned(72)), _IOWR('V', 15, char[72]), 72, WR, 0, OFFS(20) },
-	{ _IOWR('V', 17, new_misaligned(72)), _IOWR('V', 17, char[72]), 72, WR, 0, OFFS(20) },
-	{ _IOWR('V', 93, new_misaligned(72)), _IOWR('V', 93, char[72]), 72, WR, 0, OFFS(20) },
+	{ _IOWR('V',  9, new_misaligned(68)), _IOWR('V',  9, char[68]), 68, WR, 1, OFFS(20, 24) },
+	{ _IOWR('V', 15, new_misaligned(68)), _IOWR('V', 15, char[68]), 68, WR, 1, OFFS(20, 24) },
+	{ _IOWR('V', 17, new_misaligned(68)), _IOWR('V', 17, char[68]), 68, WR, 1, OFFS(20, 24) },
+	{ _IOWR('V', 93, new_misaligned(68)), _IOWR('V', 93, char[68]), 68, WR, 1, OFFS(20, 24) },
 
 	/* VIDIOC_DQEVENT */
-	{ _IOR('V', 89, new_misaligned(96)), _IOR('V', 89, char[96]), 96, R, 0, OFFS(76,80) },
+	{ _IOR('V', 89, new_misaligned(120)), _IOR('V', 89, struct v4l2_event), sizeof(struct v4l2_event),
+	  R, 0, OFFS(offsetof(struct v4l2_event, ts[0]), offsetof(struct v4l2_event, ts[1])) },
 
 	/* VIDIOC_OMAP3ISP_STAT_REQ */
 	{ _IOWR('V', 192+6, char[32]), _IOWR('V', 192+6, char[24]), 22, WR, 0, OFFS(0,4) },
@@ -82,7 +91,11 @@ static void convert_ioctl_struct(const struct ioctl_compat_map *map, char *old, 
 		 * if another exception appears this needs changing. */
 		convert_ioctl_struct(map+1, old, new, dir);
 		convert_ioctl_struct(map+2, old+4, new+8, dir);
-		convert_ioctl_struct(map+3, old+68, new+72, dir);
+		/* snd_pcm_mmap_control, special-cased due to kernel
+		 * type definition having been botched. */
+		int adj = BYTE_ORDER==BIG_ENDIAN ? 4 : 0;
+		convert_ioctl_struct(map+3, old+68, new+72+adj, dir);
+		convert_ioctl_struct(map+3, old+72, new+76+3*adj, dir);
 		return;
 	}
 	for (int i=0; i < map->noffs; i++) {

@@ -319,39 +319,10 @@ template("musl_libs") {
       "src/env/__stack_chk_fail.c",
     ]
 
-    if (musl_arch == "arm" && musl_target_os == "linux") {
+    if (musl_arch == "arm") {
       sources_orig -= [
         "src/thread/${musl_arch}/__set_thread_area.c",
         "src/string/arm/memcpy.S",
-        "src/string/memchr.c",
-        "src/string/strcmp.c",
-        "src/string/strlen.c",
-        "src/math/sincosf.c",
-        "src/math/expf.c",
-        "src/math/exp2f.c",
-        "src/math/exp2l.c",
-        "src/math/exp2.c",
-        "src/math/log.c",
-        "src/math/logl.c",
-        "src/math/log2.c",
-        "src/math/log2f.c",
-        "src/math/log2l.c",
-        "src/math/logf.c",
-        "src/math/log_data.c",
-        "src/math/logf_data.c",
-        "src/math/log2_data.c",
-        "src/math/log2f_data.c",
-        "src/math/exp2f_data.c",
-        "src/math/pow.c",
-        "src/math/powf.c",
-        "src/math/powl.c",
-        "src/math/sinf.c",
-        "src/math/cosf.c",
-      ]
-    } else if (musl_arch == "arm" && musl_target_os != "linux") {
-      sources_orig -= [
-        "src/thread/${musl_arch}/__set_thread_area.c",
-        "src/string/arm/memcpy_le.S",
         "src/string/memchr.c",
         "src/string/strcmp.c",
         "src/string/strlen.c",
