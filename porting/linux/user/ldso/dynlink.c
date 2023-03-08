@@ -3634,7 +3634,6 @@ static char* dlclose_deps_black_list[] =
 {
 	"/system/lib/libhidebug.so",
 	"/system/lib64/libhidebug.so", 
-	"/system/lib64/libmsdp_neardetect_algorithm.z.so", 
 	"/vendor/lib64/libhril_hdf.z.so"
 };
 
