@@ -140,7 +140,6 @@
     __lutimes_time64;
     __lxstat;
     __lxstat64;
-    __mem_typeset;
     __memchr_diagnose;
     __memcpy_chk;
     __memmove_aarch64;
@@ -1114,6 +1113,7 @@
     mempcpy;
     memrchr;
     memset;
+    memtrace;
     mincore;
     mkdir;
     mkdirat;

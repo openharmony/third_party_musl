@@ -28,6 +28,7 @@ typedef int (*MallocInfoType)(int, FILE*);
 typedef void (*MallocStatsPrintType)(void (*) (void *, const char *), void *, const char *);
 typedef int (*MalloptType)(int, int);
 typedef ssize_t (*MallocBacktraceType)(void*, uintptr_t*, size_t);
+typedef void (*MemTrace)(void*, size_t, const char*, bool);
 
 typedef bool (*GetHookFlagType)();
 typedef bool (*SetHookFlagType)(bool);
@@ -53,6 +54,7 @@ struct MallocDispatchType {
 	MallocBacktraceType malloc_backtrace;
 	GetHookFlagType get_hook_flag;
 	SetHookFlagType set_hook_flag;
+	MemTrace memtrace;
 };
 #ifdef __cplusplus
 }
