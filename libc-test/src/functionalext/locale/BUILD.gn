@@ -15,6 +15,16 @@ import("//build/test.gni")
 import("../../../test_template.gni")
 import("test_src_functionalext_locale.gni")
 
+test_out_dir = "${root_out_dir}/musl"
+
+action("copy_mo_file") {
+  outputs = [ "${test_out_dir}/libc-test" ]
+  script =
+      "//third_party/musl/libc-test/src/functionalext/locale/copy_mo_file.sh"
+  args = [ "-i" ] + [ rebase_path("//third_party/musl/libc-test") ]
+  args += [ "-o" ] + [ rebase_path("${test_out_dir}/libc-test") ]
+}
+
 foreach(s, functionalext_locale_test) {
   test_unittest(s) {
     target_dir = "functionalext/locale"
@@ -27,4 +37,6 @@ group("functionalext_locale_test") {
   foreach(s, functionalext_locale_test) {
     deps += [ ":${s}" ]
   }
+
+  deps += [ ":copy_mo_file" ]
 }

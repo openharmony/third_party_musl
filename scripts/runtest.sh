@@ -6,6 +6,7 @@ rm /data/tests/libc-test/SkipList.txt
 touch /data/tests/libc-test/REPORT
 touch /data/tests/libc-test/FileList.txt
 touch /data/tests/libc-test/SkipList.txt
+echo 'root:This.is.a.test:18997:0:99999:7:::'>/etc/shadow
 
 function FileSuffix() {
     local filename="$1"
@@ -17,12 +18,14 @@ function FileSuffix() {
 #Test cases that need to be shielded
 ShieldedList=("trace_stresstest" "syslog" "vsyslog" "runtest"
 #Failed when running by shell, need to be run manually
-"fatal_message" "tgkill_ext" "exittest01" "exittest02" "stat" "isatty"
-"ldso_randomization_manual" "ldso_randomization_test" "dlopen_ext_relro_test"
+"tgkill_ext" "exittest02" "stat" "isatty" "ttyname" "a_stack_chk_fail"
+"ldso_randomization_manual" "ldso_randomization_test"
 "tcgetattr" "tcgetpgrp" "tcgetsid" "tcsendbreak" "tcsetattr" "tcsetpgrp"
 #These need run with special condiction
-"ipc_msg" "ipc_sem" "ipc_shm" "sem_close-unmap" "sem_open" "pthread_atfork-errno-clobber"
-"flockfile-list" "dlns_set_fun_test" "dlns_inherit_test" "dlns_separated_test"
+"pthread_atfork-errno-clobber" "flockfile-list" 
+#Symbol hidden
+"dlns_set_fun_test" "dlns_inherit_test" "dlns_separated_test"
+"unittest_ldso_ns_config" "unittest_ldso_dynlink"
 #Some math test cases need to skip.
 "acoshl" "asinhl" "erfcl" "fenv" "fma" "fmaf" "fmal" "lgammal" "nearbyint" "nearbyintf"
 "nearbyintl" "rint" "rintf" "rintl" "sqrt" "sqrtf" "sqrtl" "tgammal"
