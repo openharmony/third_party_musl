@@ -19,7 +19,6 @@ which need be escaped.
 #include <signal.h>
 #include "musl_malloc_dispatch_table.h"
 #include "musl_malloc.h"
-#include "memory_tag.h"
 #include "musl_preinit_common.h"
 #ifdef OHOS_ENABLE_PARAMETER
 #include "sys_param.h"
@@ -37,6 +36,7 @@ which need be escaped.
 #include "musl_log.h"
 
 void* ohos_malloc_hook_init_function(size_t bytes);
+void default_memtrace(void* addr, size_t size, const char* tag, bool is_using) {}
 
 static struct MallocDispatchType __ohos_malloc_hook_init_dispatch = {
 	.malloc = ohos_malloc_hook_init_function,
@@ -45,6 +45,7 @@ static struct MallocDispatchType __ohos_malloc_hook_init_dispatch = {
 	.munmap = MuslMalloc(munmap),
 	.calloc = MuslFunc(calloc),
 	.realloc = MuslFunc(realloc),
+	.memtrace = default_memtrace,
 };
 #define MAX_SYM_NAME_SIZE 1000
 #define MAX_PROC_NAME_SIZE 256
@@ -208,13 +209,12 @@ static bool init_munmap_function(void* malloc_shared_library_handler, MallocMunm
 	return true;
 }
 
-static bool init_memorytag_function(void* malloc_shared_library_handler, const char* prefix)
+static bool init_memtrace_function(void* malloc_shared_library_handler, MemTrace* func, const char* prefix)
 {
 	char symbol[MAX_SYM_NAME_SIZE];
-	snprintf(symbol, sizeof(symbol), "%s_%s", prefix, "memtag");
-	__mem_typeset = (mtypeset)(dlsym(malloc_shared_library_handler, symbol));
-
-	if (__mem_typeset == NULL) {
+	snprintf(symbol, sizeof(symbol), "%s_%s", prefix, "memtrace");
+	*func = (MemTrace)(dlsym(malloc_shared_library_handler, symbol));
+	if (*func == NULL) {
 		return false;
 	}
 	return true;
@@ -273,7 +273,7 @@ static bool init_hook_functions(void* shared_library_handler, struct MallocDispa
 	if (!init_realloc_function(shared_library_handler, &table->realloc, prefix)) {
 		return false;
 	}
-	if (!init_memorytag_function(shared_library_handler, prefix)) {
+	if (!init_memtrace_function(shared_library_handler, &table->memtrace, prefix)) {
 		return false;
 	}
 	if (!init_malloc_usable_size_function(shared_library_handler, &table->malloc_usable_size, prefix)) {
