@@ -31,7 +31,7 @@ static void dcngettext_0100(void)
 {
     char *msgid = "hello";
     setlocale(LC_ALL, "zh_CN");
-    bindtextdomain(PACKAGE, ".");
+    bindtextdomain(PACKAGE, "/tmp");
     textdomain(PACKAGE);
     char *result = dcngettext(PACKAGE, msgid, 0, 1, LC_MESSAGES);
     if (!result) {
