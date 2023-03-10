@@ -362,4 +362,14 @@
 #define __NR_fspick		6433
 #define __NR_pidfd_open		6434
 #define __NR_clone3		6435
+#define __NR_close_range	6436
+#define __NR_openat2		6437
+#define __NR_pidfd_getfd	6438
+#define __NR_faccessat2		6439
+#define __NR_process_madvise	6440
+#define __NR_epoll_pwait2	6441
+#define __NR_mount_setattr	6442
+#define __NR_landlock_create_ruleset	6444
+#define __NR_landlock_add_rule	6445
+#define __NR_landlock_restrict_self	6446
 
