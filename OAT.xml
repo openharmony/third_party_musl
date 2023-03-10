@@ -70,11 +70,8 @@
                 <filteritem type="filepath" name="porting/liteos_a/kernel/src/math/.*" desc="No License specified while permission to use, copy, modify, and distribute are granted"/>
                 <filteritem type="filepath" name="porting/liteos_m/kernel/src/math/.*" desc="No License specified while permission to use, copy, modify, and distribute are granted"/>
                 <filteritem type="filepath" name="src/complex/.*" desc="No License specified while permission to use, copy, modify, and distribute are granted"/>
-                <filteritem type="filepath" name="musl_1.2.3/src/complex/.*" desc="No License specified while permission to use, copy, modify, and distribute are granted"/>
 		<filteritem type="filepath" name="src/crypt/crypt_blowfish.c" desc="No License specified while permission to use, copy, modify, and distribute are granted"/>
-        <filteritem type="filepath" name="musl_1.2.3/src/crypt/crypt_blowfish.c" desc="No License specified while permission to use, copy, modify, and distribute are granted"/>
                 <filteritem type="filepath" name="src/math/.*" desc="No License specified while permission to use, copy, modify, and distribute are granted"/>
-                <filteritem type="filepath" name="musl_1.2.3/src/math/.*" desc="No License specified while permission to use, copy, modify, and distribute are granted"/>
 		<filteritem type="filepath" name="src/string/arm/memcpy_le.S" desc="No License specified while requirements for receving permission to use, copy, modify, and distribute are satisfied"/>
                 <filteritem type="filepath" name="libc-test/src/math/crlibm/.*" desc="GPLV2协议，测试代码，进程独立，不会造成GPL协议污染"/>
 		<filteritem type="filepath" name="libc-test/src/math/ucb/.*" desc="GPLV2协议，测试代码，进程独立，不会造成GPL协议污染"/>
