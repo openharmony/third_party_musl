@@ -39,7 +39,7 @@ static void clear_socket_function()
 static void socket_finalize()
 {
 	((finalize_func_type)shared_lib_func[FINALIZE_FUNC])();
-	__current_dispatch = NULL;
+	__current_dispatch = 0;
 	__socket_hook_begin_flag = false;
 	// Don't dlclose because hidumper crash
 }
@@ -114,7 +114,7 @@ static void install_ohos_socket_hook()
 		return;
 	}
 
-	__current_dispatch = NULL;
+	__current_dispatch = 0;
 	shared_library_handle = load_socket_hook_shared_library();
 	if (shared_library_handle == NULL) {
 		MUSL_LOGI("Netsys, load_socket_hook_shared_library failed.");
@@ -128,7 +128,7 @@ static void install_ohos_socket_hook()
 		__current_dispatch = (long long)(&__musl_libc_socket_dispatch);
 	} else {
 		MUSL_LOGI("Netsys, finish_install_ohos_socket_hooks failed.");
-		__ohos_socket_hook_shared_library = NULL;
+		__ohos_socket_hook_shared_library = 0;
 		dlclose((void *)shared_library_handle);
 	}
 }
