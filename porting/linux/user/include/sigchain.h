@@ -38,8 +38,12 @@ struct signal_chain_action {
 
 /* Mark the signal to the sigchain, add the special handler to the sigchain. */
 void add_special_signal_handler(int signo, struct signal_chain_action* sa);
-/* Remove the special the handler form the sigchain. */
+/* Add the special handler at the last of sigchain chains */
+void add_special_handler_at_last(int signo, struct signal_chain_action* sa);
+/* Remove the special the handler from the sigchain. */
 void remove_special_signal_handler(int signo, bool (*fn)(int, siginfo_t*, void*));
+/* Remove all special the handler from the sigchain */
+void remove_all_special_handler(int signo);
 
 #ifdef __cplusplus
 }
