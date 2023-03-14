@@ -3657,7 +3657,7 @@ static int do_dlclose(struct dso *p)
 		memcpy(deps_bak, p->deps, deps_num*sizeof(struct dso*));
 	}
 
-	LD_LOGI("do_dlclose name=%{public}s count=%{public}d by_dlopen=%{public}d", p->name, p->nr_dlopen, p->by_dlopen);	
+	LD_LOGI("do_dlclose name=%{public}s count=%{public}d by_dlopen=%{public}d", p->name, p->nr_dlopen, p->by_dlopen);
 	dlclose_impl(p);
 
 	if (ldclose_deps) {
