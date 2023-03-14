@@ -15,6 +15,6 @@ functionalext_sigchain_list = [
   "sigchain_rm_special_handler",
   "sigchain_intercept_sigaction",
   "sigchain_intercept_signal",
-  "sigchain_intercept_sigprocmask",
+  "sigchain_intercept_pthread_sigmask",
   "sigchain_handler_call_order",
 ]

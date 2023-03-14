@@ -24,52 +24,52 @@ static int g_count = 0;
 /**
  * @brief the special handler
  */
-static bool sigchain_special_sigabrt_handler1(int signo, siginfo_t *siginfo, void *ucontext_raw)
+static bool sigchain_special_sigint_handler1(int signo, siginfo_t *siginfo, void *ucontext_raw)
 {
     g_count++;
-    EXPECT_EQ("sigchain_add_special_handler_001", signo, SIGABRT);
+    EXPECT_EQ("sigchain_add_special_handler_001", signo, SIGINT);
     return false;
 }
 
 /**
  * @brief the special handler
  */
-static bool sigchain_special_sigabrt_handler2(int signo, siginfo_t *siginfo, void *ucontext_raw)
+static bool sigchain_special_sigint_handler2(int signo, siginfo_t *siginfo, void *ucontext_raw)
 {
     g_count++;
-    EXPECT_EQ("sigchain_add_special_handler_001", signo, SIGABRT);
+    EXPECT_EQ("sigchain_add_special_handler_001", signo, SIGINT);
     return true;
 }
 
 /**
  * @tc.name      : sigchain_add_special_handler_001
- * @tc.desc      : The signal are not registered with the kernel, call add_special_signal_handler to  add
+ * @tc.desc      : The signal is not registered with the kernel, call add_special_signal_handler to  add
  *                 two special handlers
  * @tc.level     : Level 0
  */
 static void sigchain_add_special_handler_001()
 {
-    struct signal_chain_action sigabrt = {
-        .sca_sigaction = sigchain_special_sigabrt_handler1,
+    struct signal_chain_action sigint = {
+        .sca_sigaction = sigchain_special_sigint_handler1,
         .sca_mask = {},
         .sca_flags = 0,
     };
-    add_special_signal_handler(SIGABRT, &sigabrt);
+    add_special_signal_handler(SIGINT, &sigint);
 
-    struct signal_chain_action sigabrt1 = {
-        .sca_sigaction = sigchain_special_sigabrt_handler2,
+    struct signal_chain_action sigint1 = {
+        .sca_sigaction = sigchain_special_sigint_handler2,
         .sca_mask = {},
         .sca_flags = SIGCHAIN_ALLOW_NORETURN,
     };
-    add_special_signal_handler(SIGABRT, &sigabrt1);
+    add_special_signal_handler(SIGINT, &sigint1);
 
     if (get_sigchain_mask_enable()) {
         sigset_t set = {0};
-        int signo[SIGCHIAN_TEST_SIGNAL_NUM_1] = {SIGABRT};
+        int signo[SIGCHIAN_TEST_SIGNAL_NUM_1] = {SIGINT};
         SIGCHAIN_TEST_SET_MASK(set, "sigchain_add_special_handler_001", signo, SIGCHIAN_TEST_SIGNAL_NUM_1);
     }
 
-    raise(SIGABRT);
+    raise(SIGINT);
     EXPECT_EQ("sigchain_add_special_handler_001", g_count, SIGCHIAN_TEST_SIGNAL_NUM_2);
 }
 
@@ -104,12 +104,13 @@ static void signal_sighup_handler(int signo)
 
 /**
  * @tc.name      : sigchain_add_special_handler_002
- * @tc.desc      : The signal are registered with the kernel(Using signal), call
+ * @tc.desc      : The signal is registered with the kernel(Using signal), call
  *                 add_special_signal_handler to add two special handlers
  * @tc.level     : Level 0
  */
 static void sigchain_add_special_handler_002()
 {
+    g_count = 0;
     signal(SIGHUP, signal_sighup_handler);
 
     struct signal_chain_action sighup = {
@@ -132,72 +133,73 @@ static void sigchain_add_special_handler_002()
         SIGCHAIN_TEST_SET_MASK(set, "sigchain_add_special_handler_002", signo, SIGCHIAN_TEST_SIGNAL_NUM_1);
     }
     raise(SIGHUP);
-    EXPECT_EQ("sigchain_add_special_handler_002", g_count, SIGCHIAN_TEST_SIGNAL_NUM_5);
+    EXPECT_EQ("sigchain_add_special_handler_002", g_count, SIGCHIAN_TEST_SIGNAL_NUM_3);
 }
 
 /**
  * @brief the special handler
  */
-static bool sigchain_special_sigsegv_handler1(int signo, siginfo_t *siginfo, void *ucontext_raw)
+static bool sigchain_special_sigusr2_handler1(int signo, siginfo_t *siginfo, void *ucontext_raw)
 {
     g_count++;
-    EXPECT_EQ("sigchain_add_special_handler_003", signo, SIGSEGV);
+    EXPECT_EQ("sigchain_add_special_handler_003", signo, SIGUSR2);
     return false;
 }
 
 /**
  * @brief the special handler
  */
-static bool sigchain_special_sigsegv_handler2(int signo, siginfo_t *siginfo, void *ucontext_raw)
+static bool sigchain_special_sigusr2_handler2(int signo, siginfo_t *siginfo, void *ucontext_raw)
 {
     g_count++;
-    EXPECT_EQ("sigchain_add_special_handler_003", signo, SIGSEGV);
+    EXPECT_EQ("sigchain_add_special_handler_003", signo, SIGUSR2);
     return false;
 }
 
 /**
  * @brief the signal handler
  */
-static void signal_sigsegv_sigaction(int signo)
+static void signal_sigusr2_sigaction(int signo)
 {
     g_count++;
-    EXPECT_EQ("sigchain_add_special_handler_003", signo, SIGSEGV);
+    EXPECT_EQ("sigchain_add_special_handler_003", signo, SIGUSR2);
 }
 
 /**
  * @tc.name      : sigchain_add_special_handler_003
- * @tc.desc      : the signal that are registered with the kernel(Using sigaction), call
+ * @tc.desc      : The signal is registered with the kernel(Using sigaction), call
  *                 add_special_signal_handler to add two special handlers
  * @tc.level     : Level 0
  */
 static void sigchain_add_special_handler_003()
 {
+    g_count = 0;
     struct sigaction sigac = {
-        .sa_handler = signal_sigsegv_sigaction,
+        .sa_handler = signal_sigusr2_sigaction,
     };
-    sigaction(SIGSEGV, &sigac, NULL);
+    sigaction(SIGUSR2, &sigac, NULL);
 
-    struct signal_chain_action sigsegv = {
-        .sca_sigaction = sigchain_special_sigsegv_handler1,
+    struct signal_chain_action sigusr2 = {
+        .sca_sigaction = sigchain_special_sigusr2_handler1,
         .sca_mask = {},
         .sca_flags = 0,
     };
-    add_special_signal_handler(SIGSEGV, &sigsegv);
+    add_special_signal_handler(SIGUSR2, &sigusr2);
 
-    struct signal_chain_action sigsegv2 = {
-        .sca_sigaction = sigchain_special_sigsegv_handler2,
+    struct signal_chain_action sigusr21 = {
+        .sca_sigaction = sigchain_special_sigusr2_handler2,
         .sca_mask = {},
         .sca_flags = 0,
     };
-    add_special_signal_handler(SIGSEGV, &sigsegv2);
+    add_special_signal_handler(SIGUSR2, &sigusr21);
 
     if (get_sigchain_mask_enable()) {
         sigset_t set = {0};
-        int signo[SIGCHIAN_TEST_SIGNAL_NUM_1] = {SIGSEGV};
+        int signo[SIGCHIAN_TEST_SIGNAL_NUM_1] = {SIGUSR2};
         SIGCHAIN_TEST_SET_MASK(set, "sigchain_add_special_handler_003", signo, SIGCHIAN_TEST_SIGNAL_NUM_1);
     }
-    raise(SIGSEGV);
-    EXPECT_EQ("sigchain_add_special_handler_003", g_count, SIGCHIAN_TEST_SIGNAL_NUM_8);
+    raise(SIGUSR2);
+    EXPECT_EQ("sigchain_add_special_handler_003", g_count, SIGCHIAN_TEST_SIGNAL_NUM_3);
 }
 
 /**
@@ -218,6 +220,7 @@ static bool sigchain_special_sigterm_handler(int signo, siginfo_t *siginfo, void
  */
 static void sigchain_add_special_handler_004()
 {
+    g_count = 0;
     struct signal_chain_action sigterm = {
         .sca_sigaction = sigchain_special_sigterm_handler,
         .sca_mask = {},
@@ -232,7 +235,7 @@ static void sigchain_add_special_handler_004()
     }
 
     raise(SIGTERM);
-    EXPECT_EQ("sigchain_add_special_handler_004", g_count, SIGCHIAN_TEST_SIGNAL_NUM_9);
+    EXPECT_EQ("sigchain_add_special_handler_004", g_count, SIGCHIAN_TEST_SIGNAL_NUM_1);
 }
 
 /**
@@ -262,6 +265,7 @@ static void signal_64_handler(int signo)
  */
 static void sigchain_add_special_handler_005()
 {
+    g_count = 0;
     signal(SIGCHAIN_SIGNAL_64, signal_64_handler);
 
     struct signal_chain_action sighup = {
@@ -277,7 +281,7 @@ static void sigchain_add_special_handler_005()
         SIGCHAIN_TEST_SET_MASK(set, "sigchain_add_special_handler_005", signo, SIGCHIAN_TEST_SIGNAL_NUM_1);
     }
     raise(SIGCHAIN_SIGNAL_64);
-    EXPECT_EQ("sigchain_add_special_handler_005", g_count, SIGCHIAN_TEST_SIGNAL_NUM_11);
+    EXPECT_EQ("sigchain_add_special_handler_005", g_count, SIGCHIAN_TEST_SIGNAL_NUM_2);
 }
 
 /**
@@ -307,6 +311,7 @@ static void signal_37_sigaction(int signo)
  */
 static void sigchain_add_special_handler_006()
 {
+    g_count = 0;
     struct sigaction sigac = {
         .sa_handler = signal_37_sigaction,
     };
@@ -326,7 +331,7 @@ static void sigchain_add_special_handler_006()
     }
 
     raise(SIGCHAIN_SIGNAL_37);
-    EXPECT_EQ("sigchain_add_special_handler_006", g_count, SIGCHIAN_TEST_SIGNAL_NUM_13);
+    EXPECT_EQ("sigchain_add_special_handler_006", g_count, SIGCHIAN_TEST_SIGNAL_NUM_2);
 }
 
 /**
@@ -345,7 +350,7 @@ static bool sigchain_special_43_handler(int signo, siginfo_t *siginfo, void *uco
 static void signal_43_sigaction(int signo)
 {
     g_count++;
-    EXPECT_FALSE("sigchain_intercept_sigprocmask_003", true);
+    EXPECT_FALSE("sigchain_add_special_handler_007", true);
 }
 
 /**
@@ -356,6 +361,7 @@ static void signal_43_sigaction(int signo)
  */
 static void sigchain_add_special_handler_007()
 {
+    g_count = 0;
     struct sigaction sigac = {
         .sa_handler = signal_43_sigaction,
     };
@@ -375,7 +381,126 @@ static void sigchain_add_special_handler_007()
     }
 
     raise(SIGCHAIN_SIGNAL_43);
-    EXPECT_EQ("sigchain_add_special_handler_007", g_count, SIGCHIAN_TEST_SIGNAL_NUM_14);
+    EXPECT_EQ("sigchain_add_special_handler_007", g_count, SIGCHIAN_TEST_SIGNAL_NUM_1);
+}
+
+
+/**
+ * @brief the special handler
+ */
+static bool sigchain_special_45_handler(int signo, siginfo_t *siginfo, void *ucontext_raw)
+{
+    g_count++;
+    EXPECT_EQ("sigchain_add_special_handler_008", signo, SIGCHAIN_SIGNAL_45);
+    return false;
+}
+
+/**
+ * @brief the signal handler
+ */
+static void signal_45_sigaction(int signo)
+{
+    g_count++;
+    EXPECT_EQ("sigchain_add_special_handler_008", signo, SIGCHAIN_SIGNAL_45);
+}
+
+/**
+ * @tc.name      : sigchain_add_special_handler_008
+ * @tc.desc      : There is no special handler, add the special at the last of the chains
+ * @tc.level     : Level 0
+ */
+static void sigchain_add_special_handler_008()
+{
+    g_count = 0;
+    struct sigaction sigac = {
+        .sa_handler = signal_45_sigaction,
+    };
+    sigaction(SIGCHAIN_SIGNAL_45, &sigac, NULL);
+
+    struct signal_chain_action sig45 = {
+        .sca_sigaction = sigchain_special_45_handler,
+        .sca_mask = {},
+        .sca_flags = 0,
+    };
+    add_special_handler_at_last(SIGCHAIN_SIGNAL_45, &sig45);
+
+    if (get_sigchain_mask_enable()) {
+        sigset_t set = {0};
+        int signo[SIGCHIAN_TEST_SIGNAL_NUM_1] = {SIGCHAIN_SIGNAL_45};
+        SIGCHAIN_TEST_SET_MASK(set, "sigchain_add_special_handler_008", signo, SIGCHIAN_TEST_SIGNAL_NUM_1);
+    }
+
+    raise(SIGCHAIN_SIGNAL_45);
+    EXPECT_EQ("sigchain_add_special_handler_008", g_count, SIGCHIAN_TEST_SIGNAL_NUM_2);
+}
+
+
+/**
+ * @brief the special handler
+ */
+static bool sigchain_special_56_handler1(int signo, siginfo_t *siginfo, void *ucontext_raw)
+{
+    g_count++;
+    EXPECT_EQ("sigchain_add_special_handler_009", signo, SIGCHAIN_SIGNAL_56);
+    EXPECT_EQ("sigchain_add_special_handler_009", g_count, SIGCHIAN_TEST_SIGNAL_NUM_2);
+    return false;
+}
+
+/**
+ * @brief the special handler
+ */
+static bool sigchain_special_56_handler2(int signo, siginfo_t *siginfo, void *ucontext_raw)
+{
+    g_count++;
+    EXPECT_EQ("sigchain_add_special_handler_009", signo, SIGCHAIN_SIGNAL_56);
+    EXPECT_EQ("sigchain_add_special_handler_009", g_count, SIGCHIAN_TEST_SIGNAL_NUM_1);
+    return false;
+}
+
+/**
+ * @brief the signal handler
+ */
+static void signal_56_sigaction(int signo)
+{
+    g_count++;
+    EXPECT_EQ("sigchain_add_special_handler_009", signo, SIGCHAIN_SIGNAL_56);
+}
+
+/**
+ * @tc.name      : sigchain_add_special_handler_009
+ * @tc.desc      : There are one special handler, add the special at the last of the chains
+ * @tc.level     : Level 0
+ */
+static void sigchain_add_special_handler_009()
+{
+    g_count = 0;
+    struct sigaction sigac = {
+        .sa_handler = signal_56_sigaction,
+    };
+    sigaction(SIGCHAIN_SIGNAL_56, &sigac, NULL);
+
+    struct signal_chain_action sig56 = {
+        .sca_sigaction = sigchain_special_56_handler2,
+        .sca_mask = {},
+        .sca_flags = 0,
+    };
+    add_special_signal_handler(SIGCHAIN_SIGNAL_56, &sig56);
+
+    struct signal_chain_action sig561 = {
+        .sca_sigaction = sigchain_special_56_handler1,
+        .sca_mask = {},
+        .sca_flags = 0,
+    };
+    add_special_handler_at_last(SIGCHAIN_SIGNAL_56, &sig561);
+
+    if (get_sigchain_mask_enable()) {
+        sigset_t set = {0};
+        int signo[SIGCHIAN_TEST_SIGNAL_NUM_1] = {SIGCHAIN_SIGNAL_56};
+        SIGCHAIN_TEST_SET_MASK(set, "sigchain_add_special_handler_009", signo, SIGCHIAN_TEST_SIGNAL_NUM_1);
+    }
+
+    raise(SIGCHAIN_SIGNAL_56);
+    EXPECT_EQ("sigchain_add_special_handler_009", g_count, SIGCHIAN_TEST_SIGNAL_NUM_3);
 }
 
 int main(void)
@@ -387,5 +512,7 @@ int main(void)
     sigchain_add_special_handler_005();
     sigchain_add_special_handler_006();
     sigchain_add_special_handler_007();
+    sigchain_add_special_handler_008();
+    sigchain_add_special_handler_009();
     return t_status;
 }
