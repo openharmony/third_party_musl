@@ -3633,7 +3633,7 @@ static int dlclose_impl(struct dso *p)
 static char* dlclose_deps_black_list[] =
 {
 	"/system/lib/libhidebug.so",
-	"/system/lib64/libhidebug.so", 
+	"/system/lib64/libhidebug.so",
 	"/vendor/lib64/libhril_hdf.z.so"
 };
 
