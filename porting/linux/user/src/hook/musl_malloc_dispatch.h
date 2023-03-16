@@ -18,6 +18,7 @@ typedef void* (*MallocVallocType)(size_t);
 typedef void (*MallocFreeType)(void*);
 typedef void* (*MallocMemalignType)(size_t, size_t);
 typedef size_t (*MallocMallocUsableSizeType)(void*);
+typedef int (*MallocPrctlType)(int, ...);
 
 typedef struct mallinfo (*MallinfoType)(void);
 typedef struct mallinfo2 (*Mallinfo2Type)(void);
@@ -55,6 +56,7 @@ struct MallocDispatchType {
 	GetHookFlagType get_hook_flag;
 	SetHookFlagType set_hook_flag;
 	MemTrace memtrace;
+	MallocPrctlType prctl;
 };
 #ifdef __cplusplus
 }
