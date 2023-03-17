@@ -122,6 +122,7 @@ template("musl_libs") {
       "-Werror=pointer-sign",
       "-Werror=pointer-arith",
       "-Qunused-arguments",
+      "-Wno-int-conversion",
     ]
 
     if (!is_asan) {
@@ -745,6 +746,7 @@ template("musl_libs") {
       "--instcombine-max-iterations=0",
       "-ffp-contract=fast",
       "-O3",
+      "-Wno-int-conversion",
     ]
   }
 
