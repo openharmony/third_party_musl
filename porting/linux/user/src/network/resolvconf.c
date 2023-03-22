@@ -68,6 +68,10 @@ netsys_conf:
 		}
 	}
 
+        if (nns != 0) {
+            goto get_conf_ok;
+        }
+
 etc_resolv_conf:
 #endif
 	f = __fopen_rb_ca("/etc/resolv.conf", &_f, _buf, sizeof _buf);
@@ -140,6 +144,7 @@ no_resolv_conf:
 		nns = 1;
 	}
 
+get_conf_ok:
 	conf->nns = nns;
 
 	return 0;
