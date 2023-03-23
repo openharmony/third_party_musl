@@ -76,6 +76,7 @@ ARCH_CFLAGS =
 endif
 
 CFLAGS = -fstack-protector-strong -D_FORTIFY_SOURCE=2 -Wl,-z,relro,-z,now,-z,noexecstack -Wl,--build-id=sha1
+CFLAGS += -Wno-int-conversion
 
 .PHONY: $(TARGETS:%=musl_copy_for_%)
 .PHONY: $(TARGETS:%=musl_patch_for_%)
