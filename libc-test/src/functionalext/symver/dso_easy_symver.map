@@ -12,16 +12,16 @@
 # limitations under the License.
 
 OLD {
-	global: dso_easy_symver_old;
+	global: dso_easy_symver;
 	local: *;
 };
 
 STABLE {
-	global: dso_easy_symver_stable;
+	global: dso_easy_symver;
 	local: *;
 };
 
 DEV {
-	global: dso_easy_symver_dev;
+	global: dso_easy_symver;
 	local: *;
 };
