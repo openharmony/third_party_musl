@@ -45,6 +45,7 @@ static struct MallocDispatchType __ohos_malloc_hook_init_dispatch = {
 	.munmap = MuslMalloc(munmap),
 	.calloc = MuslFunc(calloc),
 	.realloc = MuslFunc(realloc),
+	.prctl = MuslMalloc(prctl),
 	.memtrace = default_memtrace,
 };
 #define MAX_SYM_NAME_SIZE 1000
@@ -253,6 +254,18 @@ static bool init_malloc_usable_size_function(void* malloc_shared_library_handler
 	return true;
 }
 
+static bool init_prctl_function(void* malloc_shared_library_handler, MallocPrctlType* func, const char* prefix)
+{
+	char symbol[MAX_SYM_NAME_SIZE];
+	snprintf(symbol, sizeof(symbol), "%s_%s", prefix, "prctl");
+	*func = (MallocPrctlType)(dlsym(malloc_shared_library_handler, symbol));
+	if (*func == NULL) {
+		return false;
+	}
+	return true;
+}
+
+
 static bool init_hook_functions(void* shared_library_handler, struct MallocDispatchType* table, const char* prefix)
 {
 	if (!init_malloc_function(shared_library_handler, &table->malloc, prefix)) {
@@ -277,6 +290,9 @@ static bool init_hook_functions(void* shared_library_handler, struct MallocDispa
 		return false;
 	}
 	if (!init_malloc_usable_size_function(shared_library_handler, &table->malloc_usable_size, prefix)) {
+		return false;
+	}
+	if (!init_prctl_function(shared_library_handler, &table->prctl, prefix)) {
 		return false;
 	}
 	return true;
