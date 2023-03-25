@@ -98,4 +98,21 @@ size_t malloc_usable_size(void* addr)
 		return MuslMalloc(malloc_usable_size)(addr);
 	}
 }
+
+int prctl(int option, ...)
+{
+	unsigned long x[4];
+	int i;
+	va_list ap;
+	va_start(ap, option);
+	for (i=0; i<4; i++) x[i] = va_arg(ap, unsigned long);
+	va_end(ap);
+	volatile const struct MallocDispatchType* dispatch_table = get_current_dispatch_table();
+	if (__predict_false(dispatch_table != NULL)) {
+		return dispatch_table->prctl(option, x[0], x[1], x[2], x[3]);
+	} else {
+		return MuslMalloc(prctl)(option, x[0], x[1], x[2], x[3]);
+	}
+}
+
 #endif
