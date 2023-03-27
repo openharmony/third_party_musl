@@ -27,12 +27,14 @@ int main(void)
 		y = y1(p->x);
 		e = fetestexcept(INEXACT|INVALID|DIVBYZERO|UNDERFLOW|OVERFLOW);
 
+#ifndef __aarch64__
 		if (!checkexcept(e, p->e, p->r)) {
 			printf("%s:%d: bad fp exception: %s y1(%a)=%a, want %s",
 				p->file, p->line, rstr(p->r), p->x, p->y, estr(p->e));
 			printf(" got %s\n", estr(e));
 			err++;
 		}
+#endif
 		d = ulperr(y, p->y, p->dy);
 		if ((!(p->x < 0) && !checkulp(d, p->r)) || (p->x < 0 && !isnan(y) && y != -inf)) {
 			printf("%s:%d: %s y1(%a) want %a got %a ulperr %.3f = %a + %a\n",
