@@ -3,6 +3,7 @@
 #include <limits.h>
 #include <string.h>
 #include <sys/mman.h>
+#include <sys/prctl.h>
 #include <errno.h>
 
 #include "meta.h"
@@ -125,6 +126,7 @@ struct meta *alloc_meta(void)
 			if (brk(new) != new) {
 				ctx.brk = -1;
 			} else {
+				prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, ctx.brk, new - ctx.brk, "heap:meta");
 				if (need_guard) mmap((void *)ctx.brk, pagesize,
 					PROT_NONE, MAP_ANON|MAP_PRIVATE|MAP_FIXED, -1, 0);
 				ctx.brk = new;
@@ -313,6 +315,7 @@ static struct meta *alloc_group(int sc, size_t req)
 			free_meta(m);
 			return 0;
 		}
+		prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, p, needed, "heap:brk");
 		m->maplen = needed>>12;
 		ctx.mmap_counter++;
 		active_idx = (4096-UNIT)/size-1;
@@ -373,6 +376,7 @@ void *malloc(size_t n)
 			MAP_PRIVATE|MAP_ANON, -1, 0);
 		if (p==MAP_FAILED) return 0;
 		wrlock();
+		prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, p, needed, "heap:mmap");
 		step_seq();
 		g = alloc_meta();
 		if (!g) {
