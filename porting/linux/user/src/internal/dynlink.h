@@ -86,13 +86,9 @@ struct dso {
 	struct dso *next, *prev;
 	/* add namespace */
 	ns_t *namespace;
-	/* mark the dso status */
-	unsigned int flags;
-
 	int cache_sym_index;
 	struct dso *cache_dso;
 	Sym *cache_sym;
-
 	Phdr *phdr;
 	int phnum;
 	size_t phentsize;
@@ -110,18 +106,7 @@ struct dso {
 	dev_t dev;
 	ino_t ino;
 	uint64_t file_offset;
-	char relocated;
-	char constructed;
-	char kernel_mapped;
-	char mark;
-	char bfs_built;
-	char runtime_loaded;
-	char by_dlopen;
-	struct dso **deps, *needed_by;
-	size_t ndeps_direct;
-	size_t next_dep;
 	int ctor_visitor;
-	int nr_dlopen;
 	char *rpath_orig, *rpath;
 	struct tls_module tls;
 	size_t tls_id;
@@ -141,14 +126,27 @@ struct dso {
 		size_t *got;
 	} *funcdescs;
 	size_t *got;
+	struct dso **deps, *needed_by;
+	uint16_t ndeps_direct;
+	uint16_t next_dep;
+	uint16_t parents_count;
+	uint16_t parents_capacity;
 	struct dso **parents;
-	size_t parents_count;
-	size_t parents_capacity;
+	struct dso **reloc_can_search_dso_list;
+	uint16_t reloc_can_search_dso_count;
+	uint16_t reloc_can_search_dso_capacity;
+	/* mark the dso status */
+	uint32_t flags;
+	uint8_t nr_dlopen;
 	bool is_global;
 	bool is_reloc_head_so_dep;
-	struct dso **reloc_can_search_dso_list;
-	size_t reloc_can_search_dso_count;
-	size_t reloc_can_search_dso_capacity;
+	char relocated;
+	char constructed;
+	char kernel_mapped;
+	char mark;
+	char bfs_built;
+	char runtime_loaded;
+	char by_dlopen;
 	bool is_mapped_to_shadow;
 	char buf[];
 };
