@@ -27,6 +27,8 @@ static void handler(int s)
 
 volatile void *tmp;
 
+#define MALLOC_SIZE 40
+
 int set_devide_chunk(size_t size)
 {
 	if (!(tmp = malloc(size))) {
@@ -39,10 +41,11 @@ int set_devide_chunk(size_t size)
 static int child(void)
 {
 	uintptr_t *c;
+	uintptr_t *d;
 	uintptr_t *temp;
 
 	/* Set first dividing chunk */
-	if (set_devide_chunk(sizeof(size_t)))
+	if (set_devide_chunk(MALLOC_SIZE))
 		return -1;
 
 	/*
@@ -51,14 +54,33 @@ static int child(void)
 	 * bin[0] and malloc again. Basically this is heap spray.
 	 */
 	for (int i = 0; i < 512; ++i) {
-		if (set_devide_chunk(sizeof(size_t)))
-			return -1;
-		c = (uintptr_t *)malloc(sizeof(uintptr_t));
+		c = (uintptr_t *)malloc(MALLOC_SIZE);
 		if (!c) {
 			t_error("Malloc failed: %s\n", strerror(errno));
 			return -1;
 		}
-		free(c);
+
+		if (set_devide_chunk(MALLOC_SIZE)) {
+			free((void *)c);
+			return -1;
+		}
+
+		d = (uintptr_t *)malloc(MALLOC_SIZE);
+		if (!d) {
+			t_error("Malloc failed: %s\n", strerror(errno));
+			free((void *)c);
+			return -1;
+		}
+
+		if (set_devide_chunk(MALLOC_SIZE)) {
+			free((void *)d);
+			free((void *)c);
+			return -1;
+		}
+
+		free((void *)d);
+		free((void *)c);
+
 		/* exchange the prev and next pointer */
 		uintptr_t temp = c[0];
 		c[0] = c[1];
