@@ -75,7 +75,9 @@ template("test_unittest") {
     ldflags = [ "-nostdlib" ]
 
     libs = [ "//${out_test_dir}/src/common/libtest.a" ]
-    libs += [ "${musl_lib_dir}/libc.a" ]
+    if (!musl_unit_test_flag) {
+      libs += [ "${musl_lib_dir}/libc.a" ]
+    }
 
     if (target_dir == "math") {
       include_dirs += [

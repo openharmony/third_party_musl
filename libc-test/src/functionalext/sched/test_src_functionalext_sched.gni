@@ -13,4 +13,8 @@
 # limitations under the License.
 #
 
-functionalext_sched_list = [ "sched_setparam" ]
+functionalext_sched_list = [
+  "sched_setparam",
+  "sched_getparam",
+  "sched_scheduler",
+]

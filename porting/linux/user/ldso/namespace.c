@@ -31,6 +31,12 @@ static nslist g_ns_list;
 #define INHERIT_DEFAULT_SIZE 16
 #endif
 
+#ifdef UNIT_TEST_STATIC
+    #define UT_STATIC
+#else
+    #define UT_STATIC static
+#endif
+
 static ns_inherit_list *nsinherits_alloc()
 {
     ns_inherit_list *nsinl;
@@ -61,7 +67,7 @@ static void nsinherits_free(ns_inherit_list *nsinl)
     __libc_free(nsinl);
 }
 
-static void nsinherits_realloc(ns_inherit_list *nsinl)
+UT_STATIC void nsinherits_realloc(ns_inherit_list *nsinl)
 {
     if (!nsinl) {
         return;

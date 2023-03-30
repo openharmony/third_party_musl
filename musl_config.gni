@@ -69,3 +69,8 @@ declare_args() {
     product_path = ""
   }
 }
+
+declare_args() {
+  # for unit test
+  musl_unit_test_flag = false
+}

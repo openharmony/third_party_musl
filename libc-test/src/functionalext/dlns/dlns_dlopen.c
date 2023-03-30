@@ -269,6 +269,74 @@ void dlns_get_0400(void)
     EXPECT_EQ("dlns_get_0400", dlns_get("dlns_get_0400", &dlns), ENOKEY);
 }
 
+/**
+ * @tc.name      : dlopen_add_reloc
+ * @tc.desc      : Test add_reloc_can_search_dso: not enough memory. 
+ *                 Dlopen lib whth more than 32 dependent libs.(libace.z.so)
+ * @tc.level     : Level 1
+ */
+void dlopen_add_reloc(void)
+{
+    void* handle = dlopen(dllAcePath, RTLD_LAZY);
+    EXPECT_TRUE("dlopen_add_reloc", handle);
+}
+
+/**
+ * @tc.name      : dlopen_relocation
+ * @tc.desc      : Test dlopen lib relocation type is REL_DTPMOD/REL_DTPOFF.(libstd.dylib.so)
+ * @tc.level     : Level 1
+ */
+void dlopen_relocation(void)
+{
+    void* handle = dlopen(dllDylibPath, RTLD_LAZY);
+    EXPECT_TRUE("dlopen_relocation", handle);
+    if(handle){
+        dlclose(handle);
+    }
+}
+
+/**
+ * @tc.name      : dlopen_hash_type
+ * @tc.desc      : Test dlopen lib hash type is sysv.(libdlopen_hash_sysv.so)
+ * @tc.level     : Level 1
+ */
+void dlopen_hash_type(void)
+{
+    void* handle = dlopen(dllHashsysvPath, RTLD_LAZY);
+    EXPECT_TRUE("dlopen_hash_type", handle);
+    if(handle){
+        dlclose(handle);
+    }
+}
+
+/**
+ * @tc.name      : dlopen_set_rpath
+ * @tc.desc      : Test dlopen lib by set rpath.(libdlopen_hash_sysv.so)
+ * @tc.level     : Level 1
+ */
+void dlopen_set_rpath(void)
+{
+    void* handle = dlopen(dllHashsysv, RTLD_LAZY);
+    EXPECT_TRUE("dlopen_set_rpath", handle);
+    if(handle){
+        dlclose(handle);
+    }
+}
+
+/**
+ * @tc.name      : dlopen_fill_random
+ * @tc.desc      : Test dlopen lib libdlopen_fill_random.so to coverage fill_random_data.
+ * @tc.level     : Level 1
+ */
+void dlopen_fill_random(void)
+{
+    void* handle = dlopen(dllFillRandom, RTLD_LAZY);
+    EXPECT_TRUE("dlopen_fill_random", handle);
+    if(handle){
+        dlclose(handle);
+    }
+}
+
 TEST_FUN G_Fun_Array[] = {
     dlopen_0100,
     dlopen_0200,
@@ -288,6 +356,11 @@ TEST_FUN G_Fun_Array[] = {
     dlns_get_0200,
     dlns_get_0300,
     dlns_get_0400,
+    dlopen_relocation,
+    dlopen_hash_type,
+    dlopen_set_rpath,
+    dlopen_fill_random,
+    dlopen_add_reloc,
 };
 
 int main(void)

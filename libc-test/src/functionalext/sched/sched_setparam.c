@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -24,18 +24,44 @@ typedef void (*TEST_FUN)(void);
 
 /**
  * @tc.name      : sched_setparam
+ * @tc.desc      : Test the function of sched_setparam with normal input.
+ * @tc.level     : Level 1
+ */
+
+static void sched_setparam_0010(void)
+{
+    struct sched_param param;
+    int maxpri,minpri;
+    pid_t pid;
+    int sched;
+    
+    pid = getpid();
+    sched = SCHED_OTHER;
+    maxpri = sched_get_priority_max(sched);
+    minpri = sched_get_priority_min(sched);
+    if(maxpri == -1 || minpri == -1) 
+    {
+        t_error("get maxpriority or minpriority failed");
+    }
+    param.sched_priority = 0;//取值范围:minpri~maxpri
+    EXPECT_EQ("sched_setparam_0010", sched_setparam(pid, &param), 0);
+}
+
+/**
+ * @tc.name      : sched_setparam
  * @tc.desc      : When param is NULL, call sched_setparam.
  * @tc.level     : Level 2
  */
-static void sched_setparam_0010(void)
+static void sched_setparam_0020(void)
 {
     pid_t pid;
     pid = getpid();
-    EXPECT_EQ("sched_setparam_0010", sched_setparam(pid, NULL), -1);
+    EXPECT_EQ("sched_setparam_0020", sched_setparam(pid, NULL), -1);
 }
 
 TEST_FUN G_Fun_Array[] = {
     sched_setparam_0010,
+    sched_setparam_0020,
 };
 
 int main(void)

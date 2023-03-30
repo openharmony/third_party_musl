@@ -32,8 +32,36 @@ void inet_makeaddr_0100(void)
     EXPECT_EQ("inet_makeaddr_0100", htonl(IP), a.s_addr);
 }
 
+/**
+ * @tc.name      : inet_makeaddr_0200
+ * @tc.desc      : Test the function of inet_makeaddr, n is 512.(n < 65536)
+ * @tc.level     : Level 0
+ */
+void inet_makeaddr_0200(void)
+{
+    const uint32_t net = 0x00000200;
+    const uint32_t ip = 0x02000001;
+    struct in_addr a = inet_makeaddr(net, HOST);
+    EXPECT_EQ("inet_makeaddr_0200", htonl(ip), a.s_addr);
+}
+
+/**
+ * @tc.name      : inet_makeaddr_0300
+ * @tc.desc      : Test the function of inet_makeaddr, n is 131072.(n > 65536)
+ * @tc.level     : Level 0
+ */
+void inet_makeaddr_0300(void)
+{
+    const uint32_t net = 0x00020000;
+    const uint32_t ip = 0x02000001;
+    struct in_addr a = inet_makeaddr(net, HOST);
+    EXPECT_EQ("inet_makeaddr_0200", htonl(ip), a.s_addr);
+}
+
 int main(void)
 {
     inet_makeaddr_0100();
+    inet_makeaddr_0200();
+    inet_makeaddr_0300();
     return t_status;
 }

@@ -800,6 +800,405 @@ static void trace_marker_0090(void)
     pthread_join(fatalMessageThread2, NULL);
 }
 
+/**
+ * @tc.name      : trace_marker
+ * @tc.desc      : Test trace_marker_begin and trace_marker_end, value is null.
+ * @tc.level     : Level 2
+ */
+static void trace_marker_0100(void)
+{
+    system("cd /sys/kernel/debug/tracing;echo 1 > tracing_on");
+    trace_marker_begin("Musl_Trace_Marker_0100", NULL);
+    trace_marker_end();
+    system("cd /sys/kernel/debug/tracing;echo 0 > tracing_on");
+
+    int trace_fd = open("/sys/kernel/tracing/trace", O_CLOEXEC | O_RDONLY);
+    if (trace_fd == -1) {
+        trace_fd = open("/sys/kernel/debug/tracing/trace", O_CLOEXEC | O_RDONLY);
+        if (trace_fd == -1) {
+            return;
+        }
+    }
+    bool trace_sucess = false;
+    char buffer[BUFFER_LEN] = {0};
+    char buf_begin[BUFFER_LEN] = {0};
+    char buf_end[BUFFER_LEN] = {0};
+
+    int buf_begin_fd = snprintf(buf_begin, BUFFER_LEN, "B|%d|%s", getpid(), "Musl_Trace_Marker_0100");
+    if (buf_begin_fd < 0) {
+        close(trace_fd);
+        return;
+    }
+
+     int buf_end_fd = snprintf(buf_end, BUFFER_LEN, "E|%d", getpid());
+    if (buf_end_fd < 0) {
+        close(trace_fd);
+        return;
+    }
+    for (int i = 0; i < count; i++) {
+        int read_fd = read(trace_fd, buffer, BUFFER_LEN * i);
+        if (read_fd == -1) {
+            close(trace_fd);
+            return;
+        }
+        if (strstr(buffer, buf_begin) != NULL && strstr(buffer, buf_end) != NULL) {
+            trace_sucess = true;
+            break;
+        }
+       
+    }
+    EXPECT_TRUE(trace_sucess);
+    close(trace_fd);
+}
+
+/**
+ * @tc.name      : trace_marker
+ * @tc.desc      : Test trace_marker_begin and trace_marker_end, the size of message is 1026.
+ * @tc.level     : Level 2
+ */
+static void trace_marker_0110(void)
+{
+    char message[1026]= {0};
+    memset(message, 1, 1025);
+    message[1025] = '\0';
+
+    system("cd /sys/kernel/debug/tracing;echo 1 > tracing_on");
+    trace_marker_begin(message, "");
+    trace_marker_end();
+    system("cd /sys/kernel/debug/tracing;echo 0 > tracing_on");
+
+    int trace_fd = open("/sys/kernel/tracing/trace", O_CLOEXEC | O_RDONLY);
+    if (trace_fd == -1) {
+        trace_fd = open("/sys/kernel/debug/tracing/trace", O_CLOEXEC | O_RDONLY);
+        if (trace_fd == -1) {
+            return;
+        }
+    }
+    bool trace_sucess = true;
+    char buffer[BUFFER_LEN] = {0};
+    char buf_begin[BUFFER_LEN] = {0};
+    char buf_end[BUFFER_LEN] = {0};
+
+    int buf_begin_fd = snprintf(buf_begin, BUFFER_LEN, "B|%d|%s", getpid(), message);
+    if (buf_begin_fd < 0) {
+        close(trace_fd);
+        return;
+    }
+
+     int buf_end_fd = snprintf(buf_end, BUFFER_LEN, "E|%d", getpid());
+    if (buf_end_fd < 0) {
+        close(trace_fd);
+        return;
+    }
+    for (int i = 0; i < count; i++) {
+        int read_fd = read(trace_fd, buffer, BUFFER_LEN * i);
+        if (read_fd == -1) {
+            close(trace_fd);
+            return;
+        }
+        if (strstr(buffer, buf_begin) != NULL && strstr(buffer, buf_end) != NULL) {
+            trace_sucess = false;
+            break;
+        }
+       
+    }
+
+    EXPECT_TRUE(trace_sucess);
+    close(trace_fd);
+}
+
+/**
+ * @tc.name      : trace_marker
+ * @tc.desc      : Test trace_marker_begin and trace_marker_end, message is null.
+ * @tc.level     : Level 2
+ */
+static void trace_marker_0120(void)
+{
+    system("cd /sys/kernel/debug/tracing;echo 1 > tracing_on");
+    trace_marker_begin(NULL, "");
+    trace_marker_end();
+    system("cd /sys/kernel/debug/tracing;echo 0 > tracing_on");
+
+    int trace_fd = open("/sys/kernel/tracing/trace", O_CLOEXEC | O_RDONLY);
+    if (trace_fd == -1) {
+        trace_fd = open("/sys/kernel/debug/tracing/trace", O_CLOEXEC | O_RDONLY);
+        if (trace_fd == -1) {
+            return;
+        }
+    }
+    bool trace_sucess = false;
+    char buffer[BUFFER_LEN] = {0};
+    char buf_end[BUFFER_LEN] = {0};
+
+    int buf_end_fd = snprintf(buf_end, BUFFER_LEN, "E|%d", getpid());
+    if (buf_end_fd < 0) {
+        close(trace_fd);
+        return;
+    }
+    for (int i = 0; i < count; i++) {
+        int read_fd = read(trace_fd, buffer, BUFFER_LEN * i);
+        if (read_fd == -1) {
+            close(trace_fd);
+            return;
+        }
+        if (strstr(buffer, buf_end) != NULL) {
+            trace_sucess = true;
+            break;
+        }
+    }
+    EXPECT_TRUE(trace_sucess);
+    close(trace_fd); 
+}
+
+/**
+ * @tc.name      : trace_marker
+ * @tc.desc      : Test trace_marker_async_begin and trace_marker_async_end, the value is null. 
+ * @tc.level     : Level 2
+ */
+static void trace_marker_0140(void)
+{
+    system("cd /sys/kernel/debug/tracing;echo 1 > tracing_on");
+    trace_marker_async_begin("async_begin_0200", NULL,1);
+    trace_marker_async_end("async_end_0200", NULL,1);
+    system("cd /sys/kernel/debug/tracing;echo 0 > tracing_on");
+
+    int trace_fd = open("/sys/kernel/tracing/trace", O_CLOEXEC | O_RDONLY);
+    if (trace_fd == -1) {
+        trace_fd = open("/sys/kernel/debug/tracing/trace", O_CLOEXEC | O_RDONLY);
+        if (trace_fd == -1) {
+            return;
+        }
+    }
+
+    bool trace_async_sucess = false;
+    char buffer[BUFFER_LEN] = {0};
+    char buf_async_begin[BUFFER_LEN] = {0};
+    char buf_async_end[BUFFER_LEN] = {0};
+
+    int buf_async_begin_fd = snprintf(buf_async_begin, BUFFER_LEN, "S|%d|%s %d", getpid(), "async_begin_0200",1);
+    if (buf_async_begin_fd < 0) {
+        close(trace_fd);
+        return;
+    }
+
+    int buf_async_end_fd = snprintf(buf_async_end, BUFFER_LEN, "F|%d|%s %d", getpid(), "async_end_0200" ,1);
+    if (buf_async_end_fd < 0) {
+        close(trace_fd);
+        return;
+    }
+    for (int i = 0; i < count; i++) {
+        int read_fd = read(trace_fd, buffer, BUFFER_LEN * i);
+        if (read_fd == -1) {
+            close(trace_fd);
+            return;
+        }
+        if (strstr(buffer, buf_async_begin) != NULL && strstr(buffer, buf_async_end) != NULL) {
+            trace_async_sucess = true;
+            break;
+        }
+    }
+    EXPECT_TRUE(trace_async_sucess);
+    close(trace_fd);
+}
+
+/**
+ * @tc.name      : trace_marker
+ * @tc.desc      : Test trace_marker_async_begin and trace_marker_async_end, the size of message 
+ *                 is 1026.
+ * @tc.level     : Level 2
+ */
+static void trace_marker_0150(void)
+{
+    char message[1026]= {0};
+    memset(message, 1, 1025);
+    message[1025] = '\0';
+
+    system("cd /sys/kernel/debug/tracing;echo 1 > tracing_on");
+    trace_marker_async_begin(message, "trace_async",1);
+    trace_marker_async_end(message, "trace_async",1);
+    system("cd /sys/kernel/debug/tracing;echo 0 > tracing_on");
+
+    int trace_fd = open("/sys/kernel/tracing/trace", O_CLOEXEC | O_RDONLY);
+    if (trace_fd == -1) {
+        trace_fd = open("/sys/kernel/debug/tracing/trace", O_CLOEXEC | O_RDONLY);
+        if (trace_fd == -1) {
+            return;
+        }
+    }
+
+    bool trace_async_sucess = true;
+    char buffer[BUFFER_LEN] = {0};
+    char buf_async_begin[BUFFER_LEN] = {0};
+    char buf_async_end[BUFFER_LEN] = {0};
+    int buf_async_begin_fd = snprintf(buf_async_begin, BUFFER_LEN, "S|%d|%s|%s %d", getpid(), message, "trace_async" , 1);
+    if (buf_async_begin_fd < 0) {
+        close(trace_fd);
+        return;
+    }
+
+    int buf_async_end_fd = snprintf(buf_async_end, BUFFER_LEN, "F|%d|%s|%s %d", getpid(), message, "trace_async" , 1);
+    if (buf_async_end_fd < 0) {
+        close(trace_fd);
+        return;
+    }
+    for (int i = 0; i < count; i++) {
+        int read_fd = read(trace_fd, buffer, BUFFER_LEN * i);
+        if (read_fd == -1) {
+            close(trace_fd);
+            return;
+        }
+        if (strstr(buffer, buf_async_begin) != NULL && strstr(buffer, buf_async_end) != NULL) {
+            trace_async_sucess = false;
+            break;
+        }
+    }
+    EXPECT_TRUE(trace_async_sucess);
+    close(trace_fd);
+}
+
+/**
+ * @tc.name      : trace_marker
+ * @tc.desc      : Test trace_marker_async_begin and trace_marker_async_end, message is null.
+ * @tc.level     : Level 2
+ */
+static void trace_marker_0160(void)
+{
+    system("cd /sys/kernel/debug/tracing;echo 1 > tracing_on");
+    trace_marker_async_begin(NULL, "trace_async",1);
+    trace_marker_async_end(NULL, "trace_async",1);
+    system("cd /sys/kernel/debug/tracing;echo 0 > tracing_on");
+
+    int trace_fd = open("/sys/kernel/tracing/trace", O_CLOEXEC | O_RDONLY);
+    if (trace_fd == -1) {
+        trace_fd = open("/sys/kernel/debug/tracing/trace", O_CLOEXEC | O_RDONLY);
+        if (trace_fd == -1) {
+            return;
+        }
+    }
+
+    bool trace_async_sucess = true;
+    char buffer[BUFFER_LEN] = {0};
+    char buf_async_begin[BUFFER_LEN] = {0};
+    char buf_async_end[BUFFER_LEN] = {0};
+    int buf_async_begin_fd = snprintf(buf_async_begin, BUFFER_LEN, "S|%d|%s %d", getpid(), "trace_async" , 1);
+    if (buf_async_begin_fd < 0) {
+        close(trace_fd);
+        return;
+    }
+
+    int buf_async_end_fd = snprintf(buf_async_end, BUFFER_LEN, "F|%d|%s %d", getpid(), "trace_async" , 1);
+    if (buf_async_end_fd < 0) {
+        close(trace_fd);
+        return;
+    }
+    for (int i = 0; i < count; i++) {
+        int read_fd = read(trace_fd, buffer, BUFFER_LEN * i);
+        if (read_fd == -1) {
+            close(trace_fd);
+            return;
+        }
+        if (strstr(buffer, buf_async_begin) != NULL && strstr(buffer, buf_async_end) != NULL) {
+            trace_async_sucess = false;
+            break;
+        }
+    }
+    EXPECT_TRUE(trace_async_sucess);
+    close(trace_fd);
+}
+
+/**
+ * @tc.name      : trace_marker
+ * @tc.desc      : Test trace_marker_count, the size of messge is 1026.
+ * @tc.level     : Level 2
+ */
+static void trace_marker_0180(void)
+{
+    system("cd /sys/kernel/debug/tracing;echo 1 > tracing_on");
+    int traceCount = 5;
+    char message[1026]= {0};
+    memset(message, 1, 1025);
+    message[1025] = '\0';
+
+    trace_marker_count(message, traceCount);
+    system("cd /sys/kernel/debug/tracing;echo 0 > tracing_on");
+
+    int trace_fd = open("/sys/kernel/tracing/trace", O_CLOEXEC | O_RDONLY);
+    if (trace_fd == -1) {
+        trace_fd = open("/sys/kernel/debug/tracing/trace", O_CLOEXEC | O_RDONLY);
+        if (trace_fd == -1) {
+            return;
+        }
+    }
+
+    bool trace_count_sucess = true;
+    char buffer[BUFFER_LEN] = {0};
+    char buf_count[BUFFER_LEN] = {0};
+
+    int buf_begin_fd = snprintf(buf_count, BUFFER_LEN, "C|%d|%s %d", getpid(), message, traceCount);
+    if (buf_begin_fd < 0) {
+        close(trace_fd);
+        return;
+    }
+
+    for (int i = 0; i < count; i++) {
+        int read_fd = read(trace_fd, buffer, BUFFER_LEN * i);
+        if (read_fd == -1) {
+            close(trace_fd);
+            return;
+        }
+        if (strstr(buffer, buf_count) != NULL) {
+            trace_count_sucess = false;
+            break;
+        }
+    }
+    EXPECT_TRUE(trace_count_sucess);
+    close(trace_fd);
+}
+
+/**
+ * @tc.name      : trace_marker
+ * @tc.desc      : Test trace_marker_count, message is null.
+ * @tc.level     : Level 2
+ */
+static void trace_marker_0190(void)
+{
+    system("cd /sys/kernel/debug/tracing;echo 1 > tracing_on");
+    int traceCount = 5;
+    trace_marker_count(NULL, traceCount);
+    system("cd /sys/kernel/debug/tracing;echo 0 > tracing_on");
+
+    int trace_fd = open("/sys/kernel/tracing/trace", O_CLOEXEC | O_RDONLY);
+    if (trace_fd == -1) {
+        trace_fd = open("/sys/kernel/debug/tracing/trace", O_CLOEXEC | O_RDONLY);
+        if (trace_fd == -1) {
+            return;
+        }
+    }
+
+    bool trace_count_sucess = true;
+    char buffer[BUFFER_LEN] = {0};
+    char buf_count[BUFFER_LEN] = {0};
+    int buf_begin_fd = snprintf(buf_count, BUFFER_LEN, "C|%d %d", getpid(), traceCount);
+    if (buf_begin_fd < 0) {
+        close(trace_fd);
+        return;
+    }
+
+    for (int i = 0; i < count; i++) {
+        int read_fd = read(trace_fd, buffer, BUFFER_LEN * i);
+        if (read_fd == -1) {
+            close(trace_fd);
+            return;
+        }
+        if (strstr(buffer, buf_count) != NULL) {
+            trace_count_sucess = false;
+            break;
+        }
+    }
+    EXPECT_TRUE(trace_count_sucess);
+    close(trace_fd);
+}
+
 TEST_FUN G_Fun_Array[] = {
     trace_marker_0010,
     trace_marker_0020,
@@ -810,6 +1209,14 @@ TEST_FUN G_Fun_Array[] = {
     trace_marker_0070,
     trace_marker_0080,
     trace_marker_0090,
+    trace_marker_0100,
+    trace_marker_0110,
+    trace_marker_0120,
+    trace_marker_0140,
+    trace_marker_0150,
+    trace_marker_0160,
+    trace_marker_0180,
+    trace_marker_0190,
     };
 
 int main(void)

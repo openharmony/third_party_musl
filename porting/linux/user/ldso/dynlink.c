@@ -78,6 +78,12 @@ static void error(const char *, ...);
 #define PARENTS_BASE_CAPACITY 8
 #define RELOC_CAN_SEARCH_DSO_BASE_CAPACITY 32
 
+#ifdef UNIT_TEST_STATIC
+    #define UT_STATIC
+#else
+    #define UT_STATIC static
+#endif
+
 struct debug {
 	int ver;
 	void *head;
@@ -143,7 +149,7 @@ extern hidden void (*const __init_array_end)(void), (*const __fini_array_end)(vo
 weak_alias(__init_array_start, __init_array_end);
 weak_alias(__fini_array_start, __fini_array_end);
 #ifdef DFX_SIGNAL_LIBC
-static void __InstallSignalHandler()
+UT_STATIC void __InstallSignalHandler()
 {
 }
 weak_alias(__InstallSignalHandler, DFX_InstallSignalHandler);
@@ -162,8 +168,8 @@ static void preload_direct_deps(struct dso *p, ns_t *namespace, struct loadtasks
 static void unmap_preloaded_sections(struct loadtasks *tasks);
 static void preload_deps(struct dso *p, struct loadtasks *tasks);
 static void run_loadtasks(struct loadtasks *tasks, struct reserved_address_params *reserved_params);
-static void assign_tls(struct dso *p);
-static void load_preload(char *s, ns_t *ns, struct loadtasks *tasks);
+UT_STATIC void assign_tls(struct dso *p);
+UT_STATIC void load_preload(char *s, ns_t *ns, struct loadtasks *tasks);
 static void open_library_by_path(const char *name, const char *s, struct loadtask *task, struct zip_info *z_info);
 static void handle_asan_path_open_by_task(int fd, const char *name, ns_t *namespace, struct loadtask *task, struct zip_info *z_info);
 #endif
@@ -209,7 +215,7 @@ static void init_default_namespace(struct dso *app)
 	return;
 }
 
-static void set_ns_attrs(ns_t *ns, ns_configor *conf)
+UT_STATIC void set_ns_attrs(ns_t *ns, ns_configor *conf)
 {
 	if(!ns || !conf) {
 		return;
@@ -246,7 +252,7 @@ static void set_ns_attrs(ns_t *ns, ns_configor *conf)
 			asan_permitted_paths, allowed_libs);
 }
 
-static void set_ns_inherits(ns_t *ns, ns_configor *conf)
+UT_STATIC void set_ns_inherits(ns_t *ns, ns_configor *conf)
 {
 	if(!ns || !conf) {
 		return;
@@ -395,7 +401,7 @@ static int search_vec(size_t *v, size_t *r, size_t key)
 	return 1;
 }
 
-static int check_vna_hash(Verdef *def, int16_t vsym, uint32_t vna_hash)
+UT_STATIC int check_vna_hash(Verdef *def, int16_t vsym, uint32_t vna_hash)
 {
 	int matched = 0;
 
@@ -424,7 +430,7 @@ static int check_vna_hash(Verdef *def, int16_t vsym, uint32_t vna_hash)
 	return matched;
 }
 
-static int check_verinfo(Verdef *def, int16_t *versym, uint32_t index, struct verinfo *verinfo, char *strings)
+UT_STATIC int check_verinfo(Verdef *def, int16_t *versym, uint32_t index, struct verinfo *verinfo, char *strings)
 {
 	/* if the versym and verinfo is null , then not need version. */
 	if (!versym || !def) {
@@ -1140,7 +1146,7 @@ static ssize_t read_loop(int fd, void *p, size_t n)
 	return n;
 }
 
-static void *mmap_fixed(void *p, size_t n, int prot, int flags, int fd, off_t off)
+UT_STATIC void *mmap_fixed(void *p, size_t n, int prot, int flags, int fd, off_t off)
 {
 	static int no_map_fixed;
 	char *q;
@@ -1169,7 +1175,7 @@ static void *mmap_fixed(void *p, size_t n, int prot, int flags, int fd, off_t of
 	return p;
 }
 
-static void unmap_library(struct dso *dso)
+UT_STATIC void unmap_library(struct dso *dso)
 {
 	if (dso->loadmap) {
 		size_t i;
@@ -1194,7 +1200,7 @@ static void unmap_library(struct dso *dso)
 	}
 }
 
-static bool get_random(void *buf, size_t buflen)
+UT_STATIC bool get_random(void *buf, size_t buflen)
 {
 	int ret;
 	int fd = open("/dev/urandom", O_RDONLY);
@@ -1212,7 +1218,7 @@ static bool get_random(void *buf, size_t buflen)
 	return true;
 }
 
-static void fill_random_data(void *buf, size_t buflen)
+UT_STATIC void fill_random_data(void *buf, size_t buflen)
 {
 	uint64_t x;
 	int i;
@@ -1231,7 +1237,7 @@ static void fill_random_data(void *buf, size_t buflen)
 	return;
 }
 
-static void *map_library(int fd, struct dso *dso, struct reserved_address_params *reserved_params)
+UT_STATIC void *map_library(int fd, struct dso *dso, struct reserved_address_params *reserved_params)
 {
 	Ehdr buf[(896+sizeof(Ehdr))/sizeof(Ehdr)];
 	void *allocated_buf=0;
@@ -1490,7 +1496,7 @@ static int path_open(const char *name, const char *s, char *buf, size_t buf_size
 	}
 }
 
-static int fixup_rpath(struct dso *p, char *buf, size_t buf_size)
+UT_STATIC int fixup_rpath(struct dso *p, char *buf, size_t buf_size)
 {
 	size_t n, l;
 	const char *s, *t, *origin;
@@ -1591,7 +1597,7 @@ static void decode_dyn(struct dso *p)
 		p->verneed = laddr(p, *dyn);
 }
 
-size_t count_syms(struct dso *p)
+UT_STATIC size_t count_syms(struct dso *p)
 {
 	if (p->hashtab) return p->hashtab[1];
 
@@ -1720,7 +1726,7 @@ static struct dso *find_library_by_name(const char *name, const ns_t *ns, bool c
 	return NULL;
 }
 /* Find loaded so by file stat */
-static struct dso *find_library_by_fstat(const struct stat *st, const ns_t *ns, bool check_inherited, uint64_t file_offset) {
+UT_STATIC struct dso *find_library_by_fstat(const struct stat *st, const ns_t *ns, bool check_inherited, uint64_t file_offset) {
 	LD_LOGD("find_library_by_fstat ns_name:%{public}s, check_inherited :%{public}d",
 		ns ? ns->ns_name : "NULL",
 		!!check_inherited);
@@ -4955,7 +4961,7 @@ static void run_loadtasks(struct loadtasks *tasks, struct reserved_address_param
 	}
 }
 
-static void assign_tls(struct dso *p)
+UT_STATIC void assign_tls(struct dso *p)
 {
 	while (p) {
 		if (p->tls.image) {
@@ -4982,7 +4988,7 @@ static void assign_tls(struct dso *p)
 	}
 }
 
-static void load_preload(char *s, ns_t *ns, struct loadtasks *tasks)
+UT_STATIC void load_preload(char *s, ns_t *ns, struct loadtasks *tasks)
 {
 	int tmp;
 	char *z;

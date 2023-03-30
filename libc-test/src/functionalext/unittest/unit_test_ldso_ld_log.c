@@ -26,7 +26,7 @@ typedef void (*TEST_FUN)(void);
 static void ld_log_test_0010(void)
 {
     ld_log_reset();
-    EXPECT_TRUE(ld_log_test_0010, true);
+    EXPECT_TRUE(__FUNCTION__, true);
 }
 
 TEST_FUN G_Fun_Array[] = {

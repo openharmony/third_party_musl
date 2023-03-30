@@ -516,14 +516,306 @@ static void vsnprintfp_s_0350(void)
     EXPECT_TRUE("vsnprintfp_s_0350", ret < 0);
 }
 
+/**
+ * @tc.name     : vsnprintfp_s_0360
+ * @tc.desc     : test vsnprintf param fmt is "%ld"
+ * @tc.level    : Level 0
+ */
+static void vsnprintfp_s_0360(void)
+{
+    char buf[MAX_LOG_LEN] = {0};
+    char *fmt = "%ld";
+    int ret = vsprintf_test(buf, MAX_LOG_LEN, MAX_LOG_LEN - 1, false, fmt, 333);
+    EXPECT_TRUE("vsnprintfp_s_0360", ret > 0);
+    EXPECT_STREQ("vsnprintfp_s_0360", buf, "333");
+}
+
+/**
+ * @tc.name     : vsnprintfp_s_0370
+ * @tc.desc     : test vsnprintf param fmt is "%V" 
+ * @tc.level    : Level 2
+ */
+static void vsnprintfp_s_0370(void)
+{
+    char buf[MAX_LOG_LEN] = {0};
+    char *fmt = "%V";
+    int ret = vsprintf_test(buf, MAX_LOG_LEN, MAX_LOG_LEN - 1, false, fmt, 9);
+    EXPECT_TRUE("vsnprintfp_s_0370", ret < 0);
+}
+
+/**
+ * @tc.name     : vsnprintfp_s_0380
+ * @tc.desc     : test vsnprintf param fmt is "%{public}wc" 
+ * @tc.level    : Level 0
+ */
+static void vsnprintfp_s_0380(void)
+{
+    char buf[MAX_LOG_LEN] = {0};
+    char *fmt = "%{public}wc";
+    int ret = vsprintf_test(buf, MAX_LOG_LEN, MAX_LOG_LEN - 1, false, fmt, 'a');
+    EXPECT_TRUE("vsnprintfp_s_0380", ret > 0);
+    EXPECT_STREQ("vsnprintfp_s_0380", buf, "a");
+}
+
+/**
+ * @tc.name     : vsnprintfp_s_0390
+ * @tc.desc     : test vsnprintf param fmt is "%I" 
+ * @tc.level    : Level 0
+ */
+static void vsnprintfp_s_0390(void)
+{
+    char buf[MAX_LOG_LEN] = {0};
+    char *fmt = "%I";
+    int ret = vsprintf_test(buf, MAX_LOG_LEN, MAX_LOG_LEN - 1, false, fmt, 22);
+    EXPECT_TRUE("vsnprintfp_s_0390", ret > 0);
+    EXPECT_STREQ("vsnprintfp_s_0390", buf, "I");
+}
+
+/**
+ * @tc.name     : vsnprintfp_s_0400
+ * @tc.desc     : test vsnprintf param fmt is "%I64d %I32d" 
+ * @tc.level    : Level 0
+ */
+static void vsnprintfp_s_0400(void)
+{
+    char buf[MAX_LOG_LEN] = {0};
+    char *fmt = "%I64d %I32d";
+    int ret = vsprintf_test(buf, MAX_LOG_LEN, MAX_LOG_LEN - 1, false, fmt, 22, 33);
+    EXPECT_TRUE("vsnprintfp_s_0400", ret > 0);
+    EXPECT_STREQ("vsnprintfp_s_0400", buf, "94489280545 942945337");
+}
+
+/**
+ * @tc.name     : vsnprintfp_s_0410
+ * @tc.desc     : test vsnprintf param fmt is "%Id %Ii %Io %Iu %Ix %IX" 
+ * @tc.level    : Level 0
+ */
+static void vsnprintfp_s_0410(void)
+{
+    char buf[MAX_LOG_LEN] = {0};
+    char *fmt = "%Id %Ii %Io %Iu %Ix %IX";
+    int ret = vsprintf_test(buf, MAX_LOG_LEN, MAX_LOG_LEN - 1, false, fmt, 22, 33, 44, 55, 66, 77);
+    EXPECT_TRUE("vsnprintfp_s_0410", ret > 0);
+    EXPECT_STREQ("vsnprintfp_s_0410", buf, "22 33 54 55 42 4D");
+}
+
+/**
+ * @tc.name     : vsnprintfp_s_0420
+ * @tc.desc     : test vsnprintf param fmt is "%0c" 
+ * @tc.level    : Level 0
+ */
+static void vsnprintfp_s_0420(void)
+{
+    char buf[MAX_LOG_LEN] = {0};
+    char *fmt = "%0c";
+    int ret = vsprintf_test(buf, MAX_LOG_LEN, MAX_LOG_LEN - 1, false, fmt, 'c');
+    EXPECT_TRUE("vsnprintfp_s_0420", ret > 0);
+    EXPECT_STREQ("vsnprintfp_s_0420", buf, "c");
+}
+
+/**
+ * @tc.name     : vsnprintfp_s_0430
+ * @tc.desc     : test vsnprintf param fmt is "%hhd" 
+ * @tc.level    : Level 0
+ */
+static void vsnprintfp_s_0430(void)
+{
+    char buf[MAX_LOG_LEN] = {0};
+    char *fmt = "%hhd";
+    int ret = vsprintf_test(buf, MAX_LOG_LEN, MAX_LOG_LEN - 1, false, fmt, 1024);
+    EXPECT_TRUE("vsnprintfp_s_0430", ret > 0);
+    EXPECT_STREQ("vsnprintfp_s_0430", buf, "0");
+}
+
+/**
+ * @tc.name     : vsnprintfp_s_0440
+ * @tc.desc     : test vsnprintf param fmt is "%#o" 
+ * @tc.level    : Level 0
+ */
+static void vsnprintfp_s_0440(void)
+{
+    char buf[MAX_LOG_LEN] = {0};
+    char *fmt = "%#o";
+    int ret = vsprintf_test(buf, MAX_LOG_LEN, MAX_LOG_LEN - 1, false, fmt, 64);
+    EXPECT_TRUE("vsnprintfp_s_0440", ret > 0);
+    EXPECT_STREQ("vsnprintfp_s_0440", buf, "0100");
+}
+
+/**
+ * @tc.name     : vsnprintfp_s_0450
+ * @tc.desc     : test vsnprintf param fmt is "%#o"
+ * @tc.level    : Level 0
+ */
+static void vsnprintfp_s_0450(void)
+{
+    char buf[MAX_LOG_LEN] = {0};
+    char *fmt = "%{public}ws";
+    int ret = vsprintf_test(buf, MAX_LOG_LEN, MAX_LOG_LEN - 1, false, fmt, "test");
+    EXPECT_TRUE("vsnprintfp_s_0450", ret < 0);
+}
+
+/**
+ * @tc.name     : vsnprintfp_s_0460
+ * @tc.desc     : test vsnprintf param fmt is "%123123d"
+ * @tc.level    : Level 2
+ */
+static void vsnprintfp_s_0460(void)
+{
+    char buf[MAX_LOG_LEN] = {0};
+    char *fmt = "%123123d";
+    int ret = vsprintf_test(buf, MAX_LOG_LEN, MAX_LOG_LEN - 1, false, fmt, 1024);
+    EXPECT_TRUE("vsnprintfp_s_0460", ret < 0);
+}
+
+/**
+ * @tc.name     : vsnprintfp_s_0470
+ * @tc.desc     : test vsnprintf param fmt is "%+123123d"
+ * @tc.level    : Level 2
+ */
+static void vsnprintfp_s_0470(void)
+{
+    char buf[MAX_LOG_LEN] = {0};
+    char *fmt = "%+123123d";
+    int ret = vsprintf_test(buf, MAX_LOG_LEN, MAX_LOG_LEN - 1, false, fmt, 1024);
+    EXPECT_TRUE("vsnprintfp_s_0470", ret < 0);
+}
+
+/**
+ * @tc.name     : vsnprintfp_s_0480
+ * @tc.desc     : param count < PRIVATE_STR_LEN(9) and format is {private}
+ * @tc.level    : Level 2
+ */
+static void vsnprintfp_s_0480(void)
+{
+    char buf[MAX_LOG_LEN] = {0};
+    char *fmt = "%{private}d";
+    int ret = vsprintf_test(buf, 8, 7, true, fmt, 22);
+    EXPECT_TRUE("vsnprintfp_s_0480", ret < 0);
+}
+
+/**
+ * @tc.name     : vsnprintfp_s_0490
+ * @tc.desc     : test vsnprintf param fmt is "%d" and arg is (char)128
+ * @tc.level    : Level 1
+ */
+static void vsnprintfp_s_0490(void)
+{
+    char buf[MAX_LOG_LEN] = {0};
+    char *fmt = "%hhd";
+    char num = 128;
+    int ret = vsprintf_test(buf, MAX_LOG_LEN, MAX_LOG_LEN - 1, false, fmt, num);
+    EXPECT_TRUE("vsnprintfp_s_0490", ret > 0);
+    EXPECT_STREQ("vsnprintfp_s_0490", buf, "-128");
+}
+
+/**
+ * @tc.name     : vsnprintfp_s_0500
+ * @tc.desc     : test vsnprintf param fmt is "%d" and arg is (char)128
+ * @tc.level    : Level 1
+ */
+static void vsnprintfp_s_0500(void)
+{
+    char buf[MAX_LOG_LEN] = {0};
+    char *fmt = "%*d";
+    int ret = vsprintf_test(buf, MAX_LOG_LEN, MAX_LOG_LEN - 1, false, fmt, 1, 1024);
+    EXPECT_TRUE("vsnprintfp_s_0500", ret > 0);
+    EXPECT_STREQ("vsnprintfp_s_0500", buf, "1024");
+}
+
+/**
+ * @tc.name     : vsnprintfp_s_0510
+ * @tc.desc     : test vsnprintf param fmt is "%I63d"
+ * @tc.level    : Level 2
+ */
+static void vsnprintfp_s_0510(void)
+{
+    char buf[MAX_LOG_LEN] = {0};
+    char *fmt = "%I63d";
+    int ret = vsprintf_test(buf, MAX_LOG_LEN, MAX_LOG_LEN - 1, false, fmt, 22);
+    EXPECT_TRUE("vsnprintfp_s_0510", ret > 0);
+}
+
+/**
+ * @tc.name     : vsnprintfp_s_0520
+ * @tc.desc     : test vsnprintf param fmt is "%I31d"
+ * @tc.level    : Level 2
+ */
+static void vsnprintfp_s_0520(void)
+{
+    char buf[MAX_LOG_LEN] = {0};
+    char *fmt = "%I31d";
+    int ret = vsprintf_test(buf, MAX_LOG_LEN, MAX_LOG_LEN - 1, false, fmt, 22);
+    EXPECT_TRUE("vsnprintfp_s_0520", ret > 0);
+}
+
+/**
+ * @tc.name     : vsnprintfp_s_0530
+ * @tc.desc     : test vsnprintf param fmt is "%.g"
+ * @tc.level    : Level 1
+ */
+static void vsnprintfp_s_0530(void)
+{
+    char buf[MAX_LOG_LEN] = {0};
+    char *fmt = "%.g";
+    int ret = vsprintf_test(buf, MAX_LOG_LEN, MAX_LOG_LEN - 1, false, fmt, 0.12000);
+    EXPECT_TRUE("vsnprintfp_s_0530", ret > 0);
+    EXPECT_STREQ("vsnprintfp_s_0530", buf, "0.1");
+}
+
 TEST_FUN G_Fun_Array[] = {
-    vsnprintfp_s_0010, vsnprintfp_s_0020, vsnprintfp_s_0030, vsnprintfp_s_0040, vsnprintfp_s_0050,
-    vsnprintfp_s_0060, vsnprintfp_s_0070, vsnprintfp_s_0080, vsnprintfp_s_0090, vsnprintfp_s_0100,
-    vsnprintfp_s_0110, vsnprintfp_s_0120, vsnprintfp_s_0130, vsnprintfp_s_0140, vsnprintfp_s_0150,
-    vsnprintfp_s_0160, vsnprintfp_s_0170, vsnprintfp_s_0180, vsnprintfp_s_0190, vsnprintfp_s_0200,
-    vsnprintfp_s_0210, vsnprintfp_s_0220, vsnprintfp_s_0230, vsnprintfp_s_0240, vsnprintfp_s_0250,
-    vsnprintfp_s_0260, vsnprintfp_s_0270, vsnprintfp_s_0280, vsnprintfp_s_0290, vsnprintfp_s_0300,
-    vsnprintfp_s_0310, vsnprintfp_s_0320, vsnprintfp_s_0330, vsnprintfp_s_0340, vsnprintfp_s_0350,
+    vsnprintfp_s_0010, 
+    vsnprintfp_s_0020, 
+    vsnprintfp_s_0030, 
+    vsnprintfp_s_0040, 
+    vsnprintfp_s_0050,
+    vsnprintfp_s_0060, 
+    vsnprintfp_s_0070, 
+    vsnprintfp_s_0080, 
+    vsnprintfp_s_0090, 
+    vsnprintfp_s_0100,
+    vsnprintfp_s_0110, 
+    vsnprintfp_s_0120, 
+    vsnprintfp_s_0130, 
+    vsnprintfp_s_0140, 
+    vsnprintfp_s_0150,
+    vsnprintfp_s_0160, 
+    vsnprintfp_s_0170, 
+    vsnprintfp_s_0180, 
+    vsnprintfp_s_0190, 
+    vsnprintfp_s_0200,
+    vsnprintfp_s_0210, 
+    vsnprintfp_s_0220, 
+    vsnprintfp_s_0230, 
+    vsnprintfp_s_0240, 
+    vsnprintfp_s_0250,
+    vsnprintfp_s_0260, 
+    vsnprintfp_s_0270, 
+    vsnprintfp_s_0280, 
+    vsnprintfp_s_0290, 
+    vsnprintfp_s_0300,
+    vsnprintfp_s_0310, 
+    vsnprintfp_s_0320, 
+    vsnprintfp_s_0330, 
+    vsnprintfp_s_0340, 
+    vsnprintfp_s_0350,
+    vsnprintfp_s_0360, 
+    vsnprintfp_s_0370, 
+    vsnprintfp_s_0380, 
+    vsnprintfp_s_0390, 
+    vsnprintfp_s_0400,
+    vsnprintfp_s_0410, 
+    vsnprintfp_s_0420, 
+    vsnprintfp_s_0430, 
+    vsnprintfp_s_0440, 
+    vsnprintfp_s_0450,
+    vsnprintfp_s_0460, 
+    vsnprintfp_s_0470, 
+    vsnprintfp_s_0480, 
+    vsnprintfp_s_0490, 
+    vsnprintfp_s_0500,
+    vsnprintfp_s_0510, 
+    vsnprintfp_s_0520, 
+    vsnprintfp_s_0530,
 };
 
 int main(void)

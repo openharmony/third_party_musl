@@ -28,7 +28,6 @@ void getspnam_r_0100(void)
 {
     errno = 0;
     char buf[512];
-    gid_t gid = 0;
 
     struct spwd *spwd;
     struct spwd spwd_storage;
@@ -40,8 +39,63 @@ void getspnam_r_0100(void)
     EXPECT_EQ("getspnam_r_0100", strcmp(spwd_name, spwd->sp_namp), 0);
 }
 
+/**
+ * @tc.name      : getspnam_r_0200
+ * @tc.desc      : Buffer size not be able to hold name.(normal: buffer_size > strlen(name)+100)
+ * @tc.level     : Level 2
+ */
+void getspnam_r_0200(void)
+{
+    char buf[10];
+    struct spwd *spwd;
+    struct spwd spwd_storage;
+
+    int result = getspnam_r("bin", &spwd_storage, buf, sizeof(buf), &spwd);
+    EXPECT_NE("getspnam_r_0300", result, 0);
+    EXPECT_PTREQ("getspnam_r_0300", spwd, NULL);
+}
+
+/**
+ * @tc.name      : getspnam_r_0300
+ * @tc.desc      : Test the function of getspnam_r with invalid input(name).
+ * @tc.level     : Level 2
+ */
+void getspnam_r_0300(void)
+{
+    char buf[512];
+    struct spwd *spwd;
+    struct spwd spwd_storage;
+
+    int result = getspnam_r("bin/", &spwd_storage, buf, sizeof(buf), &spwd);
+    EXPECT_NE("getspnam_r_0400", result, 0);
+    EXPECT_PTREQ("getspnam_r_0400", spwd, NULL);
+}
+
+/**
+ * @tc.name      : getspnam_r_0400
+ * @tc.desc      : The length of name is greater than the NAME_MAX.
+ * @tc.level     : Level 2
+ */
+void getspnam_r_0400(void)
+{
+    char buf[512];
+    struct spwd *spwd;
+    struct spwd spwd_storage;
+
+    char name[300]= {0};
+    memset(name, 1, 299);
+    name[299] = '\0';
+
+    int result = getspnam_r(name, &spwd_storage, buf, sizeof(buf), &spwd);
+    EXPECT_NE("getspnam_r_0500", result, 0);
+    EXPECT_PTREQ("getspnam_r_0500", spwd, NULL);
+}
+
 int main(int argc, char *argv[])
 {
     getspnam_r_0100();
+    getspnam_r_0200();
+    getspnam_r_0300();
+    getspnam_r_0400();
     return t_status;
 }
