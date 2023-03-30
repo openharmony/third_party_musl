@@ -85,7 +85,10 @@ template("musl_libs") {
   ]
 
   config("soft_musl_config") {
-    configs = [ "//build/config/compiler:compiler_cpu_abi" ]
+    configs = [
+      "//build/config/compiler:compiler_cpu_abi",
+      "//build/config/coverage:default_coverage",
+    ]
 
     include_dirs = [
       "${target_out_dir}/${musl_ported_dir}/arch/${musl_arch}",
@@ -179,7 +182,7 @@ template("musl_libs") {
 
   config("soft_hook") {
     defines = []
-    configs = []
+    configs = [ "//build/config/coverage:default_coverage" ]
 
     if (is_posix) {
       configs += [ "//build/config/posix:runtime_library" ]
@@ -214,7 +217,7 @@ template("musl_libs") {
   }
 
   config("soft_jemalloc") {
-    configs = []
+    configs = [ "//build/config/coverage:default_coverage" ]
 
     include_dirs = [
       "${target_out_dir}/${musl_ported_dir}/arch/${musl_arch}",
@@ -785,6 +788,9 @@ template("musl_libs") {
     deps += dfx_deps
     if (!startup_init_with_param_base) {
       deps += [ "//base/startup/init/services/param/base:parameterbase" ]
+    }
+    if (use_jemalloc) {
+      deps += [ ":soft_musl_jemalloc" ]
     }
   }
 
