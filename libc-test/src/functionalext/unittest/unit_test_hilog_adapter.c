@@ -26,7 +26,7 @@
 
 /**
  * @tc.name     : reboot_0010
- * @tc.desc     : test HiLogAdapterPrint after musl_log_reset
+ * @tc.desc     : Test HiLogAdapterPrint after musl_log_reset
  * @tc.level    : Level 2
  */
 static void HiLogAdapterPrint_0010(void)

@@ -23,6 +23,11 @@
 #define MAX_LINE_SIZE         (1024)
 #define INI_INVALID_KEY     ((char*)-1)
 
+#ifdef UNIT_TEST_STATIC
+    #define UT_STATIC
+#else
+    #define UT_STATIC static
+#endif
 typedef enum _line_status_ {
     LINE_UNPROCESSED,
     LINE_ERROR,
@@ -127,7 +132,7 @@ static kvlist * kvlist_alloc(size_t size)
     return kvs;
 }
 
-static void kvlist_realloc(kvlist *kvs)
+UT_STATIC void kvlist_realloc(kvlist *kvs)
 {
     if (!kvs) return;
     size_t size = 2*kvs->size;
@@ -180,7 +185,7 @@ static section_list *sections_alloc(size_t size)
     return sections;
 }
 
-static void sections_realloc(section_list *sections)
+UT_STATIC void sections_realloc(section_list *sections)
 {
     if (!sections) return;
     size_t size = 2*sections->size;

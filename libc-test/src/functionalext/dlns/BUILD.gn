@@ -16,6 +16,7 @@ import("../../../test_template.gni")
 group("dlns_test") {
   testonly = true
   deps = [
+    ":dlns_dlopen_ext_test",
     ":dlns_dlopen_test",
     ":dlns_dlsym_dep_a",
     ":dlns_dlsym_test",
@@ -23,6 +24,8 @@ group("dlns_test") {
     ":dlns_separated_test",
     ":dlns_set_fun_test",
     ":dlns_special_scene_test",
+    ":dlopen_fill_random",
+    ":dlopen_hash_sysv",
   ]
 }
 
@@ -37,6 +40,8 @@ ohos_executable("dlns_dlopen_test") {
 
   sources = [ "dlns_dlopen.c" ]
   configs = [ "//third_party/musl/libc-test/src/common:config_runtest" ]
+
+  ldflags = [ "-Wl,-rpath=/data/tests/libc-test/src/" ]
 }
 
 ohos_executable("dlns_set_fun_test") {
@@ -50,7 +55,9 @@ ohos_executable("dlns_set_fun_test") {
 
   sources = [ "dlns_set_fun.c" ]
   configs = [ "//third_party/musl/libc-test/src/common:config_runtest" ]
-  libs = [ "${musl_lib_dir}/libc.a" ]
+  if (!musl_unit_test_flag) {
+    libs = [ "${musl_lib_dir}/libc.a" ]
+  }
 }
 
 ohos_executable("dlns_inherit_test") {
@@ -64,7 +71,9 @@ ohos_executable("dlns_inherit_test") {
 
   sources = [ "dlns_inherit.c" ]
   configs = [ "//third_party/musl/libc-test/src/common:config_runtest" ]
-  libs = [ "${musl_lib_dir}/libc.a" ]
+  if (!musl_unit_test_flag) {
+    libs = [ "${musl_lib_dir}/libc.a" ]
+  }
 }
 
 ohos_executable("dlns_separated_test") {
@@ -78,7 +87,9 @@ ohos_executable("dlns_separated_test") {
 
   sources = [ "dlns_separated.c" ]
   configs = [ "//third_party/musl/libc-test/src/common:config_runtest" ]
-  libs = [ "${musl_lib_dir}/libc.a" ]
+  if (!musl_unit_test_flag) {
+    libs = [ "${musl_lib_dir}/libc.a" ]
+  }
 }
 
 ohos_executable("dlns_special_scene_test") {
@@ -104,6 +115,15 @@ ohos_executable("dlns_dlsym_test") {
   ]
 
   sources = [ "dlns_dlsym.c" ]
+  configs = [ "//third_party/musl/libc-test/src/common:config_runtest" ]
+}
+
+ohos_executable("dlns_dlopen_ext_test") {
+  subsystem_name = "musl"
+  part_name = "libc-test"
+  include_dirs = [ "../common" ]
+
+  sources = [ "dlns_dlopen_ext.c" ]
   configs = [ "//third_party/musl/libc-test/src/common:config_runtest" ]
 }
 
@@ -145,6 +165,36 @@ ohos_shared_library("dlns_dlsym_dep_a") {
   output_extension = "so"
 
   deps = [ ":dlns_dlsym_dep_b" ]
+
+  subsystem_name = "musl"
+  part_name = "libc-test-lib"
+}
+
+ohos_shared_library("dlopen_hash_sysv") {
+  include_dirs = [ "." ]
+
+  sources = [ "dlns_dlsym_dep_c.c" ]
+
+  output_name = "dlopen_hash_sysv"
+
+  output_extension = "so"
+
+  subsystem_name = "musl"
+  part_name = "libc-test-lib"
+
+  ldflags = [ "-Wl,--hash-style=sysv" ]
+}
+
+ohos_shared_library("dlopen_fill_random") {
+  include_dirs = [ "." ]
+
+  sources = [ "dlns_dlsym_dep_c.c" ]
+
+  stack_protector_ret = true
+
+  output_name = "dlopen_fill_random"
+
+  output_extension = "so"
 
   subsystem_name = "musl"
   part_name = "libc-test-lib"

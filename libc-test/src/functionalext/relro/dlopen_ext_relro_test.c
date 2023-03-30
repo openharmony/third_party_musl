@@ -24,7 +24,7 @@
 #include "functionalext.h"
 #include "test.h"
 
-#define LIB_NAME "./libdlopen_ext_relro_dso.so"
+#define LIB_NAME "/data/tests/libc-test/src/libdlopen_ext_relro_dso.so"
 #define RELRO_FILE_PATH "./TemporaryFile-XXXXXX"
 #define RESERVED_ADDRESS_SIZE (64 * 1024 * 1024)
 #define MIN_RESERVED_ADDRESS_SIZE 4096

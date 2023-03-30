@@ -30,7 +30,7 @@ struct dso {
 static void namespace_test_0010(void)
 {
     ns_free(NULL);
-    EXPECT_TRUE(namespace_test_0010, true);
+    EXPECT_TRUE(__FUNCTION__, true);
 }
 
 /**
@@ -59,7 +59,7 @@ static void namespace_test_0020(void)
     ns.ns_inherits = &list;
 
     ns_free(&ns);
-    EXPECT_TRUE(namespace_test_0020, true);
+    EXPECT_TRUE(__FUNCTION__, true);
 }
 
 /**
@@ -81,7 +81,7 @@ static void namespace_test_0030(void)
     ns.ns_inherits = NULL;
 
     ns_free(&ns);
-    EXPECT_TRUE(namespace_test_0030, true);
+    EXPECT_TRUE(__FUNCTION__, true);
 }
 
 /**
@@ -92,7 +92,7 @@ static void namespace_test_0030(void)
 static void namespace_test_0040(void)
 {
     ns_add_dso(NULL, NULL);
-    EXPECT_TRUE(namespace_test_0040, true);
+    EXPECT_TRUE(__FUNCTION__, true);
 }
 
 /**
@@ -104,7 +104,7 @@ static void namespace_test_0050(void)
 {
     ns_t ns;
     ns_add_dso(&ns, NULL);
-    EXPECT_TRUE(namespace_test_0050, true);
+    EXPECT_TRUE(__FUNCTION__, true);
 }
 
 /**
@@ -116,7 +116,7 @@ static void namespace_test_0060(void)
 {
     struct dso d;
     ns_add_dso(NULL, &d);
-    EXPECT_TRUE(namespace_test_0060, true);
+    EXPECT_TRUE(__FUNCTION__, true);
 }
 
 /**
@@ -133,7 +133,7 @@ static void namespace_test_0070(void)
     list.size = 1;
     ns.ns_dsos = &list;
     ns_add_dso(&ns, &d);
-    EXPECT_EQ(namespace_test_0070, list.size, 2);
+    EXPECT_EQ(__FUNCTION__, list.size, 2);
 }
 
 /**
@@ -161,7 +161,7 @@ static void namespace_test_0080(void)
     nslist_add_ns(&ns);
     nslist_add_ns(&ns);
     nslist_add_ns(&ns);
-    EXPECT_TRUE(namespace_test_0080, true);
+    EXPECT_TRUE(__FUNCTION__, true);
 }
 
 /**
@@ -172,7 +172,7 @@ static void namespace_test_0080(void)
 static void namespace_test_0090(void)
 {
     nslist_add_ns(NULL);
-    EXPECT_TRUE(namespace_test_0090, true);
+    EXPECT_TRUE(__FUNCTION__, true);
 }
 
 /**
@@ -183,7 +183,7 @@ static void namespace_test_0090(void)
 static void namespace_test_0100(void)
 {
     ns_set_name(NULL, NULL);
-    EXPECT_TRUE(namespace_test_0100, true);
+    EXPECT_TRUE(__FUNCTION__, true);
 }
 
 /**
@@ -195,7 +195,7 @@ static void namespace_test_0110(void)
 {
     ns_t ns;
     ns_set_name(&ns, NULL);
-    EXPECT_TRUE(namespace_test_0110, true);
+    EXPECT_TRUE(__FUNCTION__, true);
 }
 
 /**
@@ -206,7 +206,7 @@ static void namespace_test_0110(void)
 static void namespace_test_0120(void)
 {
     ns_set_name(NULL, "abc");
-    EXPECT_TRUE(namespace_test_0120, true);
+    EXPECT_TRUE(__FUNCTION__, true);
 }
 
 /**
@@ -217,7 +217,7 @@ static void namespace_test_0120(void)
 static void namespace_test_0130(void)
 {
     ns_set_env_paths(NULL, "abc");
-    EXPECT_TRUE(namespace_test_0130, true);
+    EXPECT_TRUE(__FUNCTION__, true);
 }
 
 /**
@@ -230,7 +230,7 @@ static void namespace_test_0140(void)
     ns_t ns;
     ns.env_paths = NULL;
     ns_set_env_paths(&ns, "abc");
-    EXPECT_EQ(namespace_test_0140, strcmp(ns.env_paths, "abc"), 0);
+    EXPECT_EQ(__FUNCTION__, strcmp(ns.env_paths, "abc"), 0);
 }
 
 /**
@@ -243,7 +243,7 @@ static void namespace_test_0150(void)
     ns_t ns;
     ns.env_paths = "abc";
     ns_set_env_paths(&ns, "abc");
-    EXPECT_EQ(namespace_test_0150, strcmp(ns.env_paths, "abc"), 0);
+    EXPECT_EQ(__FUNCTION__, strcmp(ns.env_paths, "abc"), 0);
 }
 
 /**
@@ -256,7 +256,7 @@ static void namespace_test_0160(void)
     ns_t ns;
     ns.env_paths = NULL;
     ns_set_env_paths(&ns, NULL);
-    EXPECT_EQ(namespace_test_0160, ns.env_paths, NULL);
+    EXPECT_EQ(__FUNCTION__, ns.env_paths, NULL);
 }
 
 /**
@@ -269,7 +269,7 @@ static void namespace_test_0170(void)
     ns_t ns;
     ns.env_paths = "abc";
     ns_set_env_paths(&ns, NULL);
-    EXPECT_EQ(namespace_test_0170, ns.env_paths, NULL);
+    EXPECT_EQ(__FUNCTION__, ns.env_paths, NULL);
 }
 
 /**
@@ -280,7 +280,7 @@ static void namespace_test_0170(void)
 static void namespace_test_0180(void)
 {
     ns_set_asan_lib_paths(NULL, "abc");
-    EXPECT_TRUE(namespace_test_0180, true);
+    EXPECT_TRUE(__FUNCTION__, true);
 }
 
 /**
@@ -293,7 +293,7 @@ static void namespace_test_0190(void)
     ns_t ns;
     ns.asan_lib_paths = NULL;
     ns_set_asan_lib_paths(&ns, "abc");
-    EXPECT_EQ(namespace_test_0190, strcmp(ns.asan_lib_paths, "abc"), 0);
+    EXPECT_EQ(__FUNCTION__, strcmp(ns.asan_lib_paths, "abc"), 0);
 }
 
 /**
@@ -306,7 +306,7 @@ static void namespace_test_0200(void)
     ns_t ns;
     ns.asan_lib_paths = "abc";
     ns_set_asan_lib_paths(&ns, "abc");
-    EXPECT_EQ(namespace_test_0200, strcmp(ns.asan_lib_paths, "abc"), 0);
+    EXPECT_EQ(__FUNCTION__, strcmp(ns.asan_lib_paths, "abc"), 0);
 }
 
 /**
@@ -319,7 +319,7 @@ static void namespace_test_0210(void)
     ns_t ns;
     ns.asan_lib_paths = NULL;
     ns_set_asan_lib_paths(&ns, NULL);
-    EXPECT_EQ(namespace_test_0210, ns.asan_lib_paths, NULL);
+    EXPECT_EQ(__FUNCTION__, ns.asan_lib_paths, NULL);
 }
 
 /**
@@ -332,7 +332,7 @@ static void namespace_test_0220(void)
     ns_t ns;
     ns.asan_lib_paths = "abc";
     ns_set_asan_lib_paths(&ns, NULL);
-    EXPECT_EQ(namespace_test_0220, ns.asan_lib_paths, NULL);
+    EXPECT_EQ(__FUNCTION__, ns.asan_lib_paths, NULL);
 }
 
 /**
@@ -346,7 +346,7 @@ static void namespace_test_0230(void)
     strlist list;
     ns.permitted_paths = &list;
     ns_set_permitted_paths(&ns, NULL);
-    EXPECT_EQ(namespace_test_0230, ns.permitted_paths, NULL);
+    EXPECT_EQ(__FUNCTION__, ns.permitted_paths, NULL);
 }
 
 /**
@@ -357,7 +357,7 @@ static void namespace_test_0230(void)
 static void namespace_test_0240(void)
 {
     ns_set_permitted_paths(NULL, NULL);
-    EXPECT_TRUE(namespace_test_0240, true);
+    EXPECT_TRUE(__FUNCTION__, true);
 }
 
 /**
@@ -370,7 +370,7 @@ static void namespace_test_0250(void)
     ns_t ns;
     ns.permitted_paths = NULL;
     ns_set_permitted_paths(&ns, NULL);
-    EXPECT_EQ(namespace_test_0250, ns.permitted_paths, NULL);
+    EXPECT_EQ(__FUNCTION__, ns.permitted_paths, NULL);
 }
 
 /**
@@ -384,7 +384,7 @@ static void namespace_test_0260(void)
     strlist list;
     ns.asan_permitted_paths = &list;
     ns_set_asan_permitted_paths(&ns, NULL);
-    EXPECT_EQ(namespace_test_0260, ns.asan_permitted_paths, NULL);
+    EXPECT_EQ(__FUNCTION__, ns.asan_permitted_paths, NULL);
 }
 
 /**
@@ -395,7 +395,7 @@ static void namespace_test_0260(void)
 static void namespace_test_0270(void)
 {
     ns_set_asan_permitted_paths(NULL, NULL);
-    EXPECT_TRUE(namespace_test_0270, true);
+    EXPECT_TRUE(__FUNCTION__, true);
 }
 
 /**
@@ -408,7 +408,7 @@ static void namespace_test_0280(void)
     ns_t ns;
     ns.asan_permitted_paths = NULL;
     ns_set_asan_permitted_paths(&ns, NULL);
-    EXPECT_EQ(namespace_test_0280, ns.asan_permitted_paths, NULL);
+    EXPECT_EQ(__FUNCTION__, ns.asan_permitted_paths, NULL);
 }
 
 /**
@@ -419,7 +419,7 @@ static void namespace_test_0280(void)
 static void namespace_test_0290(void)
 {
     ns_set_separated(NULL, false);
-    EXPECT_TRUE(namespace_test_0290, true);
+    EXPECT_TRUE(__FUNCTION__, true);
 }
 
 /**
@@ -430,7 +430,7 @@ static void namespace_test_0290(void)
 static void namespace_test_0300(void)
 {
     ns_set_allowed_libs(NULL, "abc");
-    EXPECT_TRUE(namespace_test_0300, true);
+    EXPECT_TRUE(__FUNCTION__, true);
 }
 
 /**
@@ -443,7 +443,7 @@ static void namespace_test_0310(void)
     ns_t ns;
     ns.allowed_libs = NULL;
     ns_set_allowed_libs(&ns, "abc");
-    EXPECT_EQ(namespace_test_0310, (ns.allowed_libs != NULL), true);
+    EXPECT_EQ(__FUNCTION__, (ns.allowed_libs != NULL), true);
 }
 
 /**
@@ -457,7 +457,7 @@ static void namespace_test_0320(void)
     strlist list;
     ns.allowed_libs = &list;
     ns_set_allowed_libs(&ns, "abc");
-    EXPECT_EQ(namespace_test_0320, (ns.allowed_libs != NULL), true);
+    EXPECT_EQ(__FUNCTION__, (ns.allowed_libs != NULL), true);
 }
 
 /**
@@ -470,7 +470,7 @@ static void namespace_test_0330(void)
     ns_t ns;
     ns.allowed_libs = NULL;
     ns_set_allowed_libs(&ns, NULL);
-    EXPECT_EQ(namespace_test_0330, ns.allowed_libs, NULL);
+    EXPECT_EQ(__FUNCTION__, ns.allowed_libs, NULL);
 }
 
 /**
@@ -484,7 +484,7 @@ static void namespace_test_0400(void)
     strlist list;
     ns.allowed_libs = &list;
     ns_set_allowed_libs(&ns, NULL);
-    EXPECT_EQ(namespace_test_0400, ns.allowed_libs, NULL);
+    EXPECT_EQ(__FUNCTION__, ns.allowed_libs, NULL);
 }
 
 /**
@@ -496,7 +496,7 @@ static void namespace_test_0340(void)
 {
     ns_t ns;
     ns_add_inherit(&ns, NULL, NULL);
-    EXPECT_TRUE(namespace_test_0340, true);
+    EXPECT_TRUE(__FUNCTION__, true);
 }
 
 /**
@@ -508,7 +508,7 @@ static void namespace_test_0350(void)
 {
 
     ns_add_inherit(NULL, NULL, NULL);
-    EXPECT_TRUE(namespace_test_0350, true);
+    EXPECT_TRUE(__FUNCTION__, true);
 }
 
 /**
@@ -520,7 +520,7 @@ static void namespace_test_0360(void)
 {
     ns_t ns;
     ns_add_inherit(NULL, &ns, NULL);
-    EXPECT_TRUE(namespace_test_0360, true);
+    EXPECT_TRUE(__FUNCTION__, true);
 }
 
 /**
@@ -533,26 +533,26 @@ static void namespace_test_0370(void)
     ns_t ns;
     ns.separated = true;
     bool ret = is_accessible(&ns, NULL , true, true);
-    EXPECT_EQ(namespace_test_0370, ret, false);
+    EXPECT_EQ(__FUNCTION__, ret, false);
 }
 
 /**
  * @tc.name      : namespace_test_0380
  * @tc.desc      : is_accessible test args is (&ns, NULL, true, false) and ns.separated is false
- * @tc.level     : Level 1
+ * @tc.level     : Level 2
  */
 static void namespace_test_0380(void)
 {
     ns_t ns;
     ns.separated = false;
     bool ret = is_accessible(&ns, NULL, true, false);
-    EXPECT_EQ(namespace_test_0380, ret, false);
+    EXPECT_EQ(__FUNCTION__, ret, false);
 }
 
 /**
  * @tc.name      : namespace_test_0390
  * @tc.desc      : is_accessible test args is (&ns, "/data/test.so", true, false) and ns.separated is false
- * @tc.level     : Level 1
+ * @tc.level     : Level 2
  */
 static void namespace_test_0390(void)
 {
@@ -570,19 +570,622 @@ static void namespace_test_0390(void)
     ns.asan_permitted_paths = NULL;
     ns.permitted_paths = NULL;
     bool ret = is_accessible(&ns, "/data/test.so", true, false);
-    EXPECT_EQ(namespace_test_0390, ret, false);
+    EXPECT_EQ(__FUNCTION__, ret, false);
 }
 
 /**
  * @tc.name      : namespace_test_0410
  * @tc.desc      : is_sharable test args are NULL
- * @tc.level     : Level 0
+ * @tc.level     : Level 1
  */
 static void namespace_test_0410(void)
 {
     bool ret = is_sharable(NULL, NULL);
-    EXPECT_EQ(namespace_test_0410, ret, true);    
+    EXPECT_EQ(__FUNCTION__, ret, true);    
 }
+
+/**
+ * @tc.name      : namespace_test_0420
+ * @tc.desc      : is_sharable test args lib_name are NULL
+ * @tc.level     : Level 1
+ */
+void namespace_test_0420(void)
+{
+    ns_inherit ns;
+    bool ret = is_sharable(&ns, NULL);
+    EXPECT_EQ(__FUNCTION__, ret, true);
+}
+
+/**
+ * @tc.name      : namespace_test_0440
+ * @tc.desc      : is_sharable test args shared_libs are NULL
+ * @tc.level     : Level 1
+ */
+void namespace_test_0440(void)
+{
+    ns_inherit ns;
+    ns.shared_libs = NULL;
+    bool ret = is_sharable(&ns, "lib.so");
+    EXPECT_EQ(__FUNCTION__, ret, true);
+}
+
+/**
+ * @tc.name      : namespace_test_0450
+ * @tc.desc      : is_accessible test args allowed_libs are NULL
+ * @tc.level     : Level 2
+ */
+void namespace_test_0450(void)
+{
+    ns_t ns;
+    ns.separated = false;
+    ns.allowed_libs = NULL;
+    bool ret = is_accessible(&ns, "/data/test.so", true, false);
+    EXPECT_EQ(__FUNCTION__, ret, false);
+}
+
+/**
+ * @tc.name      : namespace_test_0460
+ * @tc.desc      : is_accessible test args allowed_libs are not NULL
+ * @tc.level     : Level 2
+ */
+void namespace_test_0460(void)
+{
+    ns_t ns;
+    ns.separated = false;
+    strlist list;
+    list.num = 0;
+    ns.allowed_libs = &list;
+    ns.env_paths = NULL;
+    ns.lib_paths = NULL;
+    ns.asan_lib_paths = NULL;
+    ns.asan_permitted_paths = NULL;
+    ns.permitted_paths = NULL;
+    bool ret = is_accessible(&ns, "test.so", true, false);
+    EXPECT_EQ(__FUNCTION__, ret, false);
+}
+
+/**
+ * @tc.name      : namespace_test_0470
+ * @tc.desc      : is_accessible test args env_paths are not NULL
+ * @tc.level     : Level 2
+ */
+void namespace_test_0470(void)
+{
+    ns_t ns;
+    ns.separated = false;
+    ns.allowed_libs = NULL;
+    ns.env_paths = "/data/tests:/etc";
+    ns.lib_paths = NULL;
+    ns.asan_lib_paths = NULL;
+    ns.asan_permitted_paths = NULL;
+    ns.permitted_paths = NULL;
+    bool ret = is_accessible(&ns, "/data/abc/", true, false);
+    EXPECT_EQ(__FUNCTION__, ret, false);
+}
+
+/**
+ * @tc.name      : namespace_test_0480
+ * @tc.desc      : is_accessible test param is NULL
+ * @tc.level     : Level 2
+ */
+void namespace_test_0480(void)
+{
+    ns_t ns;
+    ns.separated = false;
+    ns.allowed_libs = NULL;
+    ns.env_paths = NULL;
+    ns.lib_paths = NULL;
+    ns.asan_lib_paths = NULL;
+    ns.asan_permitted_paths = NULL;
+    ns.permitted_paths = NULL;
+    bool ret = is_accessible(&ns, "/data/test.so", true, false);
+
+    ns.env_paths = "";
+    EXPECT_EQ(__FUNCTION__, ret, false);
+}
+
+/**
+ * @tc.name      : namespace_test_0490
+ * @tc.desc      : is_accessible test env_paths is matching
+ * @tc.level     : Level 1
+ */
+void namespace_test_0490(void)
+{
+    ns_t ns;
+    ns.separated = false;
+    ns.allowed_libs = NULL;
+    ns.env_paths = "/data/test:/etc";
+    ns.lib_paths = NULL;
+    ns.asan_lib_paths = NULL;
+    ns.asan_permitted_paths = NULL;
+    ns.permitted_paths = NULL;
+    bool ret = is_accessible(&ns, "/data/test/", true, false);
+
+    EXPECT_EQ(__FUNCTION__, ret, true);
+}
+
+/**
+ * @tc.name      : namespace_test_0500
+ * @tc.desc      : is_accessible test env_paths is not matching
+ * @tc.level     : Level 2
+ */
+void namespace_test_0500(void)
+{
+    ns_t ns;
+    ns.separated = false;
+    ns.allowed_libs = NULL;
+    ns.env_paths = "/data/test:/etc";
+    ns.lib_paths = NULL;
+    ns.asan_lib_paths = NULL;
+    ns.asan_permitted_paths = NULL;
+    ns.permitted_paths = NULL;
+    bool ret = is_accessible(&ns, "/data/test", true, false);
+
+    EXPECT_EQ(__FUNCTION__, ret, false);
+}
+
+/**
+ * @tc.name      : namespace_test_0510
+ * @tc.desc      : is_accessible test env_paths is not matching
+ * @tc.level     : Level 2
+ */
+void namespace_test_0510(void)
+{
+    ns_t ns;
+    ns.separated = false;
+    ns.allowed_libs = NULL;
+    ns.env_paths = "/data/test:/etc";
+    ns.lib_paths = NULL;
+    ns.asan_lib_paths = NULL;
+    ns.asan_permitted_paths = NULL;
+    ns.permitted_paths = NULL;
+    bool ret = is_accessible(&ns, "/data/test//", true, false);
+
+    EXPECT_EQ(__FUNCTION__, ret, false);
+}
+
+/**
+ * @tc.name      : namespace_test_0520
+ * @tc.desc      : is_accessible test asan_lib_paths is matching
+ * @tc.level     : Level 2
+ */
+void namespace_test_0520(void)
+{
+    ns_t ns;
+    ns.separated = false;
+    ns.allowed_libs = NULL;
+    ns.env_paths = NULL;
+    ns.asan_lib_paths = "/data/test:/etc";
+    ns.lib_paths = NULL;
+    ns.asan_permitted_paths = NULL;
+    ns.permitted_paths = NULL;
+    bool ret = is_accessible(&ns, "/data/test/", true, false);
+
+    EXPECT_EQ(__FUNCTION__, ret, true);
+}
+
+/**
+ * @tc.name      : namespace_test_0530
+ * @tc.desc      : is_accessible test permitted_paths is matching
+ * @tc.level     : Level 1
+ */
+void namespace_test_0530(void)
+{
+    ns_t ns;
+    ns.separated = false;
+    ns.allowed_libs = NULL;
+    ns.env_paths = NULL;
+    ns.lib_paths = NULL;
+    ns.asan_lib_paths = NULL;
+    ns.asan_permitted_paths = NULL;
+
+    strlist list;
+    list.num = 1;
+    char *name = "/test";
+    list.strs = &name;
+
+    ns.permitted_paths = &list;
+
+    bool ret = is_accessible(&ns, "/test/", true, false);
+
+    EXPECT_EQ(__FUNCTION__, ret, true);
+}
+
+/**
+ * @tc.name      : namespace_test_0540
+ * @tc.desc      : is_accessible test permitted_paths is not matching
+ * @tc.level     : Level 2
+ */
+void namespace_test_0540(void)
+{
+    ns_t ns;
+    ns.separated = false;
+    ns.allowed_libs = NULL;
+    ns.env_paths = NULL;
+    ns.lib_paths = NULL;
+    ns.asan_lib_paths = NULL;
+    ns.asan_permitted_paths = NULL;
+
+    strlist list;
+    list.num = 1;
+    char *name = "/test";
+    list.strs = &name;
+
+    ns.permitted_paths = &list;
+
+    bool ret = is_accessible(&ns, "/test", true, false);
+    EXPECT_EQ(__FUNCTION__, ret, false);
+}
+
+/**
+ * @tc.name      : namespace_test_0550
+ * @tc.desc      : is_accessible test permitted_paths is not matching
+ * @tc.level     : Level 2
+ */
+void namespace_test_0550(void)
+{
+    ns_t ns;
+    ns.separated = false;
+    ns.allowed_libs = NULL;
+    ns.env_paths = NULL;
+    ns.asan_lib_paths = NULL;
+    ns.asan_permitted_paths = NULL;
+
+    strlist list;
+    list.num = 1;
+    char *name = "/abc";
+    list.strs = &name;
+
+    ns.permitted_paths = &list;
+
+    bool ret = is_accessible(&ns, "/test", true, false);
+
+    EXPECT_EQ(__FUNCTION__, ret, false);
+}
+
+/**
+ * @tc.name      : namespace_test_0560
+ * @tc.desc      : is_accessible test env_paths is not matching
+ * @tc.level     : Level 2
+ */
+void namespace_test_0560(void)
+{
+    ns_t ns;
+    ns.separated = false;
+    ns.allowed_libs = NULL;
+    ns.env_paths = "/data/test:/etc";
+    ns.lib_paths = NULL;
+    ns.asan_lib_paths = NULL;
+    ns.asan_permitted_paths = NULL;
+    ns.permitted_paths = NULL;
+    bool ret = is_accessible(&ns, "/data/abc/", true, false);
+    
+    EXPECT_EQ(__FUNCTION__, ret, false);
+}
+
+/**
+ * @tc.name      : namespace_test_0570
+ * @tc.desc      : check_asan_path test wiht invalid input
+ * @tc.level     : Level 2
+ */
+void namespace_test_0570(void)
+{
+    ns_t ns;
+    ns.separated = false;
+    ns.allowed_libs = NULL;
+    ns.env_paths = NULL;
+    ns.asan_lib_paths = NULL;
+    bool ret = check_asan_path(&ns, "/data/test/");
+
+    EXPECT_EQ(__FUNCTION__, ret, false);
+}
+
+/**
+ * @tc.name      : namespace_test_0580
+ * @tc.desc      : check_asan_path test asan_lib_paths is not matching
+ * @tc.level     : Level 2
+ */
+void namespace_test_0580(void)
+{
+    ns_t ns;
+    ns.asan_lib_paths = "";
+    ns.asan_permitted_paths = NULL;
+    bool ret = check_asan_path(&ns, "/abc/");
+
+    EXPECT_EQ(__FUNCTION__, ret, false);
+}
+
+/**
+ * @tc.name      : namespace_test_0590
+ * @tc.desc      : check_asan_path test asan_lib_paths is matching
+ * @tc.level     : Level 1
+ */
+void namespace_test_0590(void)
+{
+    ns_t ns;
+    ns.asan_lib_paths = "/data/test:/etc";
+    ns.asan_permitted_paths = NULL;
+    bool ret = check_asan_path(&ns, "/data/test/");
+    EXPECT_EQ(__FUNCTION__, ret, true);
+}
+
+/**
+ * @tc.name      : namespace_test_0600
+ * @tc.desc      : check_asan_path test asan_lib_paths is not matching
+ * @tc.level     : Level 2
+ */
+void namespace_test_0600(void)
+{
+    ns_t ns;
+    ns.asan_lib_paths = "/data/test:/etc";
+    ns.asan_permitted_paths = NULL;
+    bool ret = check_asan_path(&ns, "/data/test");
+    EXPECT_EQ(__FUNCTION__, ret, false);
+}
+
+/**
+ * @tc.name      : namespace_test_0610
+ * @tc.desc      : check_asan_path test asan_lib_paths is not matching
+ * @tc.level     : Level 2
+ */
+void namespace_test_0610(void)
+{
+    ns_t ns;
+    ns.asan_lib_paths = "/data/test:/etc";
+    ns.asan_permitted_paths = NULL;
+    bool ret = check_asan_path(&ns, "/data/test//");
+    EXPECT_EQ(__FUNCTION__, ret, false);
+}
+
+/**
+ * @tc.name      : namespace_test_0630
+ * @tc.desc      : is_accessible test lib_paths is not matching
+ * @tc.level     : Level 2
+ */
+void namespace_test_0630(void)
+{
+    ns_t ns;
+    ns.separated = false;
+    ns.allowed_libs = NULL;
+    ns.env_paths = NULL;
+    ns.asan_lib_paths = NULL;
+    ns.asan_permitted_paths = NULL;
+    ns.permitted_paths = NULL;
+
+    ns.lib_paths = "";
+
+    bool ret = is_accessible(&ns, "/test/", true, false);
+
+    EXPECT_EQ(__FUNCTION__, ret, false);
+}
+
+/**
+ * @tc.name      : namespace_test_0640
+ * @tc.desc      : is_accessible test lib_paths is not matching
+ * @tc.level     : Level 2
+ */
+void namespace_test_0640(void)
+{
+    ns_t ns;
+    ns.separated = false;
+    ns.allowed_libs = NULL;
+    ns.env_paths = NULL;
+    ns.asan_lib_paths = NULL;
+    ns.asan_permitted_paths = NULL;
+    ns.permitted_paths = NULL;
+
+    ns.lib_paths = "/data/test:/ext";
+
+    bool ret = is_accessible(&ns, "/bct/", true, false);
+
+    EXPECT_EQ(__FUNCTION__, ret, false);
+}
+
+/**
+ * @tc.name      : namespace_test_0650
+ * @tc.desc      : is_accessible test lib_paths is matching
+ * @tc.level     : Level 1
+ */
+void namespace_test_0650(void)
+{
+    ns_t ns;
+    ns.separated = false;
+    ns.allowed_libs = NULL;
+    ns.env_paths = NULL;
+    ns.asan_lib_paths = NULL;
+    ns.asan_permitted_paths = NULL;
+    ns.permitted_paths = NULL;
+
+    ns.lib_paths = "/data/test:/ext";
+
+    bool ret = is_accessible(&ns, "/data/test/", true, false);
+
+    EXPECT_EQ(__FUNCTION__, ret, true);
+}
+
+/**
+ * @tc.name      : namespace_test_0660
+ * @tc.desc      : is_accessible test lib_paths is not matching
+ * @tc.level     : Level 2
+ */
+void namespace_test_0660(void)
+{
+    ns_t ns;
+    ns.separated = false;
+    ns.allowed_libs = NULL;
+    ns.env_paths = NULL;
+    ns.asan_lib_paths = NULL;
+    ns.asan_permitted_paths = NULL;
+    ns.permitted_paths = NULL;
+
+    ns.lib_paths = "/data/test:/ext";
+
+    bool ret = is_accessible(&ns, "/data/test//", true, false);
+
+    EXPECT_EQ(__FUNCTION__, ret, false);
+}
+
+/**
+ * @tc.name      : namespace_test_0670
+ * @tc.desc      : check_asan_path test asan_permitted_paths is not matching
+ * @tc.level     : Level 2
+ */
+void namespace_test_0670(void)
+{
+    ns_t ns;
+    ns.asan_lib_paths = NULL;
+
+    strlist list;
+    list.num = 1;
+    char *name = "/abc";
+    list.strs = &name;
+
+    ns.asan_permitted_paths = &list;
+    bool ret = check_asan_path(&ns, "/test//");
+    EXPECT_EQ(__FUNCTION__, ret, false);
+}
+
+/**
+ * @tc.name      : namespace_test_0680
+ * @tc.desc      : check_asan_path test asan_permitted_paths is matching
+ * @tc.level     : Level 1
+ */
+void namespace_test_0680(void)
+{
+    ns_t ns;
+    ns.asan_lib_paths = NULL;
+
+    strlist list;
+    list.num = 1;
+    char *name = "/test";
+    list.strs = &name;
+
+    ns.asan_permitted_paths = &list;
+    bool ret = check_asan_path(&ns, "/test/");
+    EXPECT_EQ(__FUNCTION__, ret, true);
+}
+
+/**
+ * @tc.name      : namespace_test_0690
+ * @tc.desc      : check_asan_path test asan_permitted_paths is matching
+ * @tc.level     : Level 1
+ */
+void namespace_test_0690(void)
+{
+    ns_t ns;
+    ns.asan_lib_paths = NULL;
+
+    strlist list;
+    list.num = 1;
+    char *name = "/test";
+    list.strs = &name;
+
+    ns.asan_permitted_paths = &list;
+    bool ret = check_asan_path(&ns, "/test//");
+    EXPECT_EQ(__FUNCTION__, ret, true);
+}
+
+/**
+ * @tc.name      : namespace_test_0700
+ * @tc.desc      : check_asan_path test asan_permitted_paths is not matching
+ * @tc.level     : Level 2
+ */
+void namespace_test_0700(void)
+{
+    ns_t ns;
+    ns.asan_lib_paths = NULL;
+
+    strlist list;
+    list.num = 0;
+
+    ns.asan_permitted_paths = &list;
+    bool ret = check_asan_path(&ns, "/test//");
+    EXPECT_EQ(__FUNCTION__, ret, false);
+}
+
+/**
+ * @tc.name      : namespace_test_0710
+ * @tc.desc      : is_accessible test input param are null
+ * @tc.level     : Level 2
+ */
+void namespace_test_0710(void)
+{
+    ns_t ns;
+    ns.separated = false;
+    ns.allowed_libs = NULL;
+    ns.env_paths = NULL;
+    ns.asan_lib_paths = NULL;
+    ns.asan_permitted_paths = NULL;
+    ns.permitted_paths = NULL;
+    ns.lib_paths = NULL;
+    bool ret = is_accessible(&ns, NULL , false, false);
+    EXPECT_EQ(__FUNCTION__, ret, false);
+}
+
+/**
+ * @tc.name      : namespace_test_0720
+ * @tc.desc      : is_sharable test shared_libs is matching
+ * @tc.level     : Level 1
+ */
+void namespace_test_0720(void)
+{
+    ns_inherit ns;
+
+    strlist list;
+    list.num = 1;
+    char *name = "/test";
+    list.strs = &name;
+    ns.shared_libs = &list;
+
+    bool ret = is_sharable(&ns, "/test");
+    EXPECT_EQ(__FUNCTION__, ret, true);    
+}
+
+/**
+ * @tc.name      : namespace_test_0730
+ * @tc.desc      : is_sharable test shared_libs is not matching
+ * @tc.level     : Level 2
+ */
+void namespace_test_0730(void)
+{
+    ns_inherit ns;
+
+    strlist list;
+    list.num = 0;
+    ns.shared_libs = &list;
+
+    bool ret = is_sharable(&ns, "/test");
+    EXPECT_EQ(__FUNCTION__, ret, false);    
+}
+
+// Because below function are static in file and call it difficult through External API, below interfaces are covered by white-box unit testing.
+#ifdef UNIT_TEST_STATIC
+void nsinherits_realloc(ns_inherit_list *nsinl);
+
+/**
+ * @tc.name      : namespace_test_0740
+ * @tc.desc      : Test nsinherits_realloc with invalid input
+ * @tc.level     : Level 2
+ */
+void namespace_test_0740(void)
+{
+    nsinherits_realloc(NULL);
+    EXPECT_TRUE(__FUNCTION__, true);    
+}
+
+/**
+ * @tc.name      : namespace_test_0750
+ * @tc.desc      : Test nsinherits_realloc with normal input
+ * @tc.level     : Level 0
+ */
+void namespace_test_0750(void)
+{
+    ns_inherit_list nsinl;
+    nsinl.size = 1;
+    nsinherits_realloc(&nsinl);
+    EXPECT_EQ(__FUNCTION__, nsinl.size, 2);    
+}
+#endif
 
 TEST_FUN G_Fun_Array[] = {
     namespace_test_0010,
@@ -625,6 +1228,40 @@ TEST_FUN G_Fun_Array[] = {
     namespace_test_0390,
     namespace_test_0400,
     namespace_test_0410,
+    namespace_test_0420,
+    namespace_test_0440,
+    namespace_test_0450,
+    namespace_test_0460,
+    namespace_test_0470,
+    namespace_test_0480,
+    namespace_test_0490,
+    namespace_test_0500,
+    namespace_test_0510,
+    namespace_test_0520,
+    namespace_test_0530,
+    namespace_test_0540,
+    namespace_test_0550,
+    namespace_test_0560,
+    namespace_test_0570,
+    namespace_test_0580,
+    namespace_test_0590,
+    namespace_test_0600,
+    namespace_test_0610,
+    namespace_test_0630,
+    namespace_test_0640,
+    namespace_test_0650,
+    namespace_test_0660,
+    namespace_test_0670,
+    namespace_test_0680,
+    namespace_test_0690,
+    namespace_test_0700,
+    namespace_test_0710,
+    namespace_test_0720,
+    namespace_test_0730,
+#ifdef UNIT_TEST_STATIC
+    namespace_test_0740,
+    namespace_test_0750,
+#endif
 };
 
 int main(void)
