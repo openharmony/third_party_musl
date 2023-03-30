@@ -77,6 +77,8 @@ hdc shell cp %REMOTE%/src/libdlopen_dso.so %REMOTE%/src/inherit_0800.so
 hdc shell cp %REMOTE%/src/libdlopen_dso.so %REMOTE%/src/inherit_1100.so
 hdc shell cp %REMOTE%/src/libdlopen_ns_dso.so /system/lib
 
+hdc shell mv %REMOTE%/src/zh_CN /tmp/zh_CN
+
 hdc file send %SHDIR%\runtest.sh %REMOTE%/runtest.sh
 hdc shell chmod +x %REMOTE%/runtest.sh
 hdc shell %REMOTE%/runtest.sh
