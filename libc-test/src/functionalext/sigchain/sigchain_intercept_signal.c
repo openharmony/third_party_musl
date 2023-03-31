@@ -33,7 +33,7 @@ static void signal_handler1(int signo)
 
 /**
  * @tc.name      : sigchain_add_special_handler_025
- * @tc.desc      : The signals are not registered with the special handler, test the influence of sigchain on signal
+ * @tc.desc      : The signal is not registered with the special handler, test the influence of sigchain on signal
  * @tc.level     : Level 0
  */
 static void sigchain_intercept_signal_001()
@@ -49,7 +49,7 @@ static void sigchain_intercept_signal_001()
 static bool sigchain_special_handler1(int signo, siginfo_t *siginfo, void *ucontext_raw)
 {
     g_count++;
-    EXPECT_EQ("sigchain_intercept_signal_002", signo, SIGSEGV);
+    EXPECT_EQ("sigchain_intercept_signal_002", signo, SIGUSR2);
     return false;
 }
 
@@ -59,32 +59,33 @@ static bool sigchain_special_handler1(int signo, siginfo_t *siginfo, void *ucont
 static void signal_handler2(int signo)
 {
     g_count++;
-    EXPECT_EQ("sigchain_intercept_signal_002", signo, SIGSEGV);
+    EXPECT_EQ("sigchain_intercept_signal_002", signo, SIGUSR2);
 }
 
 /**
  * @tc.name      : sigchain_intercept_signal_002
- * @tc.desc      : The signals are registered with the special handler, test the influence of sigchain on signal
+ * @tc.desc      : The signal is registered with the special handler, test the influence of sigchain on signal
  * @tc.level     : Level 0
  */
 static void sigchain_intercept_signal_002()
 {
-    struct signal_chain_action sigsegv = {
+    g_count = 0;
+    struct signal_chain_action sigusr2 = {
         .sca_sigaction = sigchain_special_handler1,
         .sca_mask = {},
         .sca_flags = 0,
     };
-    add_special_signal_handler(SIGSEGV, &sigsegv);
+    add_special_signal_handler(SIGUSR2, &sigusr2);
 
-    signal(SIGSEGV, signal_handler2);
+    signal(SIGUSR2, signal_handler2);
 
     if (get_sigchain_mask_enable()) {
         sigset_t set = {0};
-        int signo[SIGCHIAN_TEST_SIGNAL_NUM_1] = {SIGSEGV};
+        int signo[SIGCHIAN_TEST_SIGNAL_NUM_1] = {SIGUSR2};
         SIGCHAIN_TEST_SET_MASK(set, "sigchain_intercept_signal_002", signo, SIGCHIAN_TEST_SIGNAL_NUM_1);
     }
-    raise(SIGSEGV);
-    EXPECT_EQ("sigchain_intercept_signal_002", g_count, SIGCHIAN_TEST_SIGNAL_NUM_3);
+    raise(SIGUSR2);
+    EXPECT_EQ("sigchain_intercept_signal_002", g_count, SIGCHIAN_TEST_SIGNAL_NUM_2);
 }
 
 /**
@@ -109,12 +110,13 @@ static void signal_handler3(int signo)
 
 /**
  * @tc.name      : sigchain_intercept_signal_003
- * @tc.desc      : The signals are registered with the special handler, and remove the special handler.
+ * @tc.desc      : The signal is registered with the special handler, and remove the special handler.
  *                 Test the influence of sigchain on signal
  * @tc.level     : Level 0
  */
 static void sigchain_intercept_signal_003()
 {
+    g_count = 0;
     struct signal_chain_action sigurg = {
         .sca_sigaction = sigchain_special_handler3,
         .sca_mask = {},
@@ -126,13 +128,8 @@ static void sigchain_intercept_signal_003()
 
     remove_special_signal_handler(SIGURG, sigchain_special_handler3);
 
-    if (get_sigchain_mask_enable()) {
-        sigset_t set = {0};
-        int signo[SIGCHIAN_TEST_SIGNAL_NUM_1] = {SIGURG};
-        SIGCHAIN_TEST_SET_MASK(set, "sigchain_intercept_sigaction_002", signo, SIGCHIAN_TEST_SIGNAL_NUM_1);
-    }
     raise(SIGURG);
-    EXPECT_EQ("sigchain_intercept_signal_003", g_count, SIGCHIAN_TEST_SIGNAL_NUM_4);
+    EXPECT_EQ("sigchain_intercept_signal_003", g_count, SIGCHIAN_TEST_SIGNAL_NUM_1);
 }
 int main(void)
 {
