@@ -309,6 +309,7 @@
     acoshl;
     acosl;
     addmntent;
+    add_special_handler_at_last;
     add_special_signal_handler;
     adjtime;
     adjtimex;
@@ -1487,6 +1488,7 @@
     remainderl;
     remap_file_pages;
     remove;
+    remove_all_special_handler;
     remove_special_signal_handler;
     removexattr;
     remque;

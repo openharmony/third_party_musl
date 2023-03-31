@@ -20,6 +20,8 @@
 #include <threads.h>
 #include <hilog_adapter.h>
 #include <stdlib.h>
+#include <errno.h>
+#include "syscall.h"
 
 extern int __libc_sigaction(int sig, const struct sigaction *restrict sa,
                             struct sigaction *restrict old);
@@ -73,11 +75,10 @@ static void create_pthread_key(void)
     SIGCHAIN_PRINT_INFO("%{public}s create the thread key!", __func__);
     int rc = pthread_key_create(&g_sigchain_key, NULL);
     if (rc != 0) {
-        SIGCHAIN_PRINT_ERROR("%{public}s failed to create sigchain pthread key, rc:%{public}d",
+        SIGCHAIN_PRINT_FATAL("%{public}s failed to create sigchain pthread key, rc:%{public}d",
                 __func__,  rc);
     }
 }
-
 
 /**
   * @brief Get the key of the signal thread.
@@ -111,11 +112,33 @@ static void set_handling_signal(bool value)
 }
 
 /**
+  * @brief Set the mask of the system. Its prototype comes from pthread_sigmask.
+  * @param[in] how, the value of the mask operation .
+  * @param[in] set, the new value of the sigset.
+  * @param[in] old, the old value of the sigset.
+  */
+static int sigchain_sigmask(int how, const sigset_t *restrict set, sigset_t *restrict old)
+{
+    int ret;
+    if (set && (unsigned)how - SIG_BLOCK > 2U) return EINVAL;
+    ret = -__syscall(SYS_rt_sigprocmask, how, set, old, _NSIG/8);
+    if (!ret && old) {
+        if (sizeof old->__bits[0] == 8) {
+            old->__bits[0] &= ~0x380000000ULL;
+        } else {
+            old->__bits[0] &= ~0x80000000UL;
+            old->__bits[1] &= ~0x3UL;
+        }
+    }
+    return ret;
+}
+
+/**
   * @brief Judge whether the signal is marked
   * @param[in] signo, the value of the signal.
   * @retval true if the signal is marked, or false.
   */
-bool ismarked(int signo)
+static bool ismarked(int signo)
 {
     return sig_chains[signo - 1].marked;
 }
@@ -135,13 +158,13 @@ static void signal_chain_handler(int signo, siginfo_t* siginfo, void* ucontext_r
     if (!get_handling_signal()) {
         for (int i = 0; i < SIGNAL_CHAIN_SPECIAL_ACTION_MAX; i++) {
             if (sig_chains[signo - 1].sca_special_actions[i].sca_sigaction == NULL) {
-                break;
+                continue;
             }
             /* The special handler might not return. */
             bool noreturn = (sig_chains[signo - 1].sca_special_actions[i].sca_flags &
                              SIGCHAIN_ALLOW_NORETURN);
             sigset_t previous_mask;
-            pthread_sigmask(SIG_SETMASK, &sig_chains[signo - 1].sca_special_actions[i].sca_mask,
+            sigchain_sigmask(SIG_SETMASK, &sig_chains[signo - 1].sca_special_actions[i].sca_mask,
                             &previous_mask);
 
             bool previous_value =  get_handling_signal();
@@ -155,7 +178,7 @@ static void signal_chain_handler(int signo, siginfo_t* siginfo, void* ucontext_r
                 return;
             }
 
-            pthread_sigmask(SIG_SETMASK, &previous_mask, NULL);
+            sigchain_sigmask(SIG_SETMASK, &previous_mask, NULL);
             set_handling_signal(previous_value);
         }
     }
@@ -170,7 +193,7 @@ static void signal_chain_handler(int signo, siginfo_t* siginfo, void* ucontext_r
         sigaddset(&mask, signo);
     }
 
-    pthread_sigmask(SIG_SETMASK, &mask, NULL);
+    sigchain_sigmask(SIG_SETMASK, &mask, NULL);
 
     if ((sa_flags & SA_SIGINFO)) {
         sig_chains[signo - 1].sig_action.sa_sigaction(signo, siginfo, ucontext_raw);
@@ -178,7 +201,7 @@ static void signal_chain_handler(int signo, siginfo_t* siginfo, void* ucontext_r
         if (sig_chains[signo - 1].sig_action.sa_handler == SIG_IGN) {
             return;
         } else if (sig_chains[signo - 1].sig_action.sa_handler == SIG_DFL) {
-            SIGCHAIN_PRINT_INFO("%{public}s exiting due to SIG_DFL handler for signal: %{public}d",
+            SIGCHAIN_PRINT_FATAL("%{public}s exiting due to SIG_DFL handler for signal: %{public}d",
                     __func__, signo);
         } else {
             sig_chains[signo - 1].sig_action.sa_handler(signo);
@@ -202,6 +225,18 @@ static void sigchain_register(int signo)
     signal_action.sa_sigaction = signal_chain_handler;
     signal_action.sa_flags = SA_RESTART | SA_SIGINFO | SA_ONSTACK;
     __libc_sigaction(signo, &signal_action, &sig_chains[signo - 1].sig_action);
+}
+
+/**
+  * @brief Unregister the signal from sigchain, register the signal's user handler with the kernel if needed
+  * @param[in] signo, the value of the signal.
+  * @retval void
+  */
+static void unregister_sigchain(int signo)
+{
+    SIGCHAIN_PRINT_INFO("%{public}s signo: %{public}d", __func__, signo);
+    __libc_sigaction(signo, &sig_chains[signo - 1].sig_action, NULL);
+    sig_chains[signo - 1].marked = false;
 }
 
 /**
@@ -247,7 +282,7 @@ static struct sigaction getaction(int signo)
   * @param[in] sa, the action with special handler.
   * @retval void
   */
-void add_special_handler(int signo, struct signal_chain_action* sa)
+static void add_special_handler(int signo, struct signal_chain_action* sa)
 {
     SIGCHAIN_PRINT_INFO("%{public}s signo: %{public}d", __func__, signo);
     for (int i = 0; i < SIGNAL_CHAIN_SPECIAL_ACTION_MAX; i++) {
@@ -267,17 +302,22 @@ void add_special_handler(int signo, struct signal_chain_action* sa)
   * @param[in] fn, the special handler of the signal.
   * @retval void
   */
-void rm_special_handler(int signo, bool (*fn)(int, siginfo_t*, void*))
+static void rm_special_handler(int signo, bool (*fn)(int, siginfo_t*, void*))
 {
     SIGCHAIN_PRINT_INFO("%{public}s signo: %{public}d", __func__, signo);
     int len = SIGNAL_CHAIN_SPECIAL_ACTION_MAX;
     for (int i = 0; i < len; i++) {
         if (sig_chains[signo - 1].sca_special_actions[i].sca_sigaction == fn) {
-            for (int j = i; j < len - 1; ++j) {
-                sig_chains[signo - 1].sca_special_actions[j] = 
-                        sig_chains[signo - 1].sca_special_actions[j + 1];
+            sig_chains[signo - 1].sca_special_actions[i].sca_sigaction = NULL;
+            int count = 0;
+            for (int k = 0; k < len; k++) {
+                if (sig_chains[signo - 1].sca_special_actions[k].sca_sigaction == NULL) {
+                    count++;
+                }
             }
-            sig_chains[signo - 1].sca_special_actions[len - 1].sca_sigaction = NULL;
+            if (count == len) {
+                unregister_sigchain(signo);
+            }
             return;
         }
     }
@@ -319,8 +359,56 @@ void remove_special_signal_handler(int signo, bool (*fn)(int, siginfo_t*, void*)
         SIGCHAIN_PRINT_FATAL("%{public}s Invalid signal %{public}d", __func__, signo);
         return;
     }
-    // remove the special handler from the sigchain.
-    rm_special_handler(signo, fn);
+
+    if (ismarked(signo)) {
+        // remove the special handler from the sigchain.
+        rm_special_handler(signo, fn);
+    }
+}
+
+/**
+  * @brief This is an external interface, remove all special handler from the sigchain.
+  * @param[in] signo, the value of the signal.
+  * @retval void
+  */
+void remove_all_special_handler(int signo)
+{
+    SIGCHAIN_PRINT_INFO("%{public}s signo: %{public}d", __func__, signo);
+    if (signo <= 0 || signo >= _NSIG) {
+        SIGCHAIN_PRINT_FATAL("%{public}s Invalid signal %{public}d", __func__, signo);
+        return;
+    }
+
+    if (ismarked(signo)) {
+        // remove all special handler from the sigchain.
+        for (int i = 0; i < SIGNAL_CHAIN_SPECIAL_ACTION_MAX; i++) {
+            sig_chains[signo - 1].sca_special_actions[i].sca_sigaction = NULL;
+        }
+        unregister_sigchain(signo);
+    }
+}
+
+/**
+  * @brief This is an external interface, add the special handler at the last of sigchain chains.
+  * @param[in] signo, the value of the signal.
+  * @param[in] sa, the action with special handler.
+  * @retval void
+  */
+void add_special_handler_at_last(int signo, struct signal_chain_action* sa)
+{
+    SIGCHAIN_PRINT_INFO("%{public}s signo: %{public}d", __func__, signo);
+    if (signo <= 0 || signo >= _NSIG) {
+        SIGCHAIN_PRINT_FATAL("%{public}s Invalid signal %{public}d", __func__, signo);
+        return;
+    }
+
+    if (sig_chains[signo - 1].sca_special_actions[SIGNAL_CHAIN_SPECIAL_ACTION_MAX - 1].sca_sigaction == NULL) {
+        sig_chains[signo - 1].sca_special_actions[SIGNAL_CHAIN_SPECIAL_ACTION_MAX - 1] = *sa;
+        mark_signal_to_sigchain(signo);
+        return;
+    }
+
+    SIGCHAIN_PRINT_FATAL("Add too many the special handlers at last!");
 }
 
 /**
@@ -355,15 +443,15 @@ bool intercept_sigaction(int signo, const struct sigaction *restrict sa,
 }
 
 /**
-  * @brief Intercept the sigprocmask.
+  * @brief Intercept the pthread_sigmask.
   * @param[in] how, the value of the mask operation .
   * @param[out] set, the value of the sigset.
   * @retval void.
   */
-void intercept_sigprocmask(int how, sigset_t *restrict set)
+void intercept_pthread_sigmask(int how, sigset_t *restrict set)
 {
     SIGCHAIN_PRINT_DEBUG("%{public}s how: %{public}d", __func__, how);
-    // Forward directly to the pthread_sigmask When this sigchain is handling a signal.
+    // Forward directly to the system mask When this sigchain is handling a signal.
     if (get_handling_signal()) {
         return;
     }

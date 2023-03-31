@@ -28,7 +28,7 @@
             EXPECT_FALSE(fun, true);             \
         }                                                 \
     }                                                     \
-    result = sigprocmask(SIG_BLOCK, &set, NULL);          \
+    result = pthread_sigmask(SIG_BLOCK, &set, NULL);          \
     if (result != 0) {                                    \
         EXPECT_FALSE(fun, true);                 \
     }                                                     \
@@ -38,16 +38,11 @@
 #define SIGCHIAN_TEST_SIGNAL_NUM_2 2
 #define SIGCHIAN_TEST_SIGNAL_NUM_3 3
 #define SIGCHIAN_TEST_SIGNAL_NUM_4 4
-#define SIGCHIAN_TEST_SIGNAL_NUM_5 5
-#define SIGCHIAN_TEST_SIGNAL_NUM_6 6
-#define SIGCHIAN_TEST_SIGNAL_NUM_8 8
-#define SIGCHIAN_TEST_SIGNAL_NUM_9 9
-#define SIGCHIAN_TEST_SIGNAL_NUM_11 11
-#define SIGCHIAN_TEST_SIGNAL_NUM_13 13
-#define SIGCHIAN_TEST_SIGNAL_NUM_14 14
 
 #define SIGCHAIN_SIGNAL_37 37
 #define SIGCHAIN_SIGNAL_43 43
+#define SIGCHAIN_SIGNAL_45 45
+#define SIGCHAIN_SIGNAL_56 56
 #define SIGCHAIN_SIGNAL_64 64
 
 extern bool get_sigchain_mask_enable();
