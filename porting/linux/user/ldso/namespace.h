@@ -21,14 +21,15 @@ extern "C" {
 #endif
 
 #include <stdbool.h>
+#include <stdint.h>
 #include "strops.h"
 
 #define NS_DEFAULT_NAME "default"
 struct dso;
 /* define dso list */
 typedef struct _dso_list_ {
-    size_t num;
-    size_t size;
+    uint16_t num;
+    uint16_t size;
     struct dso **dsos;    
 } dsolist;
 /* define namespace struct */
@@ -49,8 +50,8 @@ typedef struct _namespace_t_ {
 } ns_t;
 /* define namespace list */
 typedef struct _namespaces_list_ {
-    size_t num;
-    size_t size;
+    uint16_t num;
+    uint16_t size;
     ns_t **nss;
 } nslist;
 /* define namespace inherit */
@@ -60,8 +61,8 @@ typedef struct _namespace_inherit_ {
 } ns_inherit;
 /* define namespace inherit list */
 typedef struct _ns_inherit_list_ {
-    size_t num;
-    size_t size;
+    uint16_t num;
+    uint16_t size;
     ns_inherit **inherits;
 } ns_inherit_list;
 

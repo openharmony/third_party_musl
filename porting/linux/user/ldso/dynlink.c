@@ -77,6 +77,7 @@ static void error(const char *, ...);
 
 #define PARENTS_BASE_CAPACITY 8
 #define RELOC_CAN_SEARCH_DSO_BASE_CAPACITY 32
+#define ANON_NAME_MAX_LEN 70
 
 #ifdef UNIT_TEST_STATIC
     #define UT_STATIC
@@ -179,6 +180,10 @@ static void handle_relro_sharing(struct dso *p, const dl_extinfo *extinfo, ssize
 
 /* asan path open */
 int handle_asan_path_open(int fd, const char *name, ns_t *namespace, char *buf, size_t buf_size);
+
+static void set_bss_vma_name(char *path_name, void *addr, size_t zeromap_size);
+
+static void find_and_set_bss_name(struct dso *p);
 
 /* add namespace function */
 static void get_sys_path(ns_configor *conf);
@@ -1444,9 +1449,11 @@ UT_STATIC void *map_library(int fd, struct dso *dso, struct reserved_address_par
 		if (ph->p_memsz > ph->p_filesz && (ph->p_flags&PF_W)) {
 			size_t brk = (size_t)base+ph->p_vaddr+ph->p_filesz;
 			size_t pgbrk = brk+PAGE_SIZE-1 & -PAGE_SIZE;
+			size_t zeromap_size = (size_t)base+this_max-pgbrk;
 			memset((void *)brk, 0, pgbrk-brk & PAGE_SIZE-1);
-			if (pgbrk-(size_t)base < this_max && mmap_fixed((void *)pgbrk, (size_t)base+this_max-pgbrk, prot, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) == MAP_FAILED)
+			if (pgbrk-(size_t)base < this_max && mmap_fixed((void *)pgbrk, zeromap_size, prot, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) == MAP_FAILED)
 				goto error;
+			set_bss_vma_name(dso->name, (void *)pgbrk, zeromap_size);
 		}
 	}
 	for (i=0; ((size_t *)(base+dyn))[i]; i+=2)
@@ -2802,6 +2809,9 @@ void __dls3(size_t *sp, size_t *auxv)
 	/* Donate unused parts of app and library mapping to malloc */
 	reclaim_gaps(&app);
 	reclaim_gaps(&ldso);
+
+	find_and_set_bss_name(&app);
+	find_and_set_bss_name(&ldso);
 
 	/* Load preload/needed libraries, add symbols to global namespace. */
 	ldso.deps = (struct dso **)no_deps;
@@ -4512,10 +4522,11 @@ static bool task_map_library(struct loadtask *task, struct reserved_address_para
 		if (ph->p_memsz > ph->p_filesz && (ph->p_flags & PF_W)) {
 			size_t brk = (size_t)base + ph->p_vaddr + ph->p_filesz;
 			size_t pgbrk = brk + PAGE_SIZE - 1 & -PAGE_SIZE;
+			size_t zeromap_size = (size_t)base + this_max - pgbrk;
 			memset((void *)brk, 0, pgbrk - brk & PAGE_SIZE - 1);
 			if (pgbrk - (size_t)base < this_max && mmap_fixed(
 				(void *)pgbrk,
-				(size_t)base + this_max - pgbrk,
+				zeromap_size,
 				prot,
 				MAP_PRIVATE | MAP_FIXED | MAP_ANONYMOUS,
 				-1,
@@ -4523,6 +4534,7 @@ static bool task_map_library(struct loadtask *task, struct reserved_address_para
 				LD_LOGE("Error mapping library: mmap fix failed");
 				goto error;
 			}
+			set_bss_vma_name(task->p->name, (void *)pgbrk, zeromap_size);
 		}
 	}
 	for (i = 0; ((size_t *)(base + task->dyn))[i]; i += NEXT_DYNAMIC_INDEX) {
@@ -5133,6 +5145,39 @@ static void handle_relro_sharing(struct dso *p, const dl_extinfo *extinfo, ssize
 			LD_LOGE("Error mapping GNU_RELRO %{public}s", p->name);
 			error("Error mapping GNU_RELRO");
 			if (runtime) longjmp(*rtld_fail, 1);
+		}
+	}
+}
+
+static void set_bss_vma_name(char *path_name, void *addr, size_t zeromap_size)
+{
+	char so_bss_name[ANON_NAME_MAX_LEN];
+	if (path_name == NULL) {
+		snprintf(so_bss_name, ANON_NAME_MAX_LEN, ".bss");
+	} else {
+		char *t = strrchr(path_name, '/');
+		if (t) {
+			snprintf(so_bss_name, ANON_NAME_MAX_LEN, "%s.bss", ++t);
+		} else {
+			snprintf(so_bss_name, ANON_NAME_MAX_LEN, "%s.bss", path_name);
+		}
+	}
+
+	prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, addr, zeromap_size, so_bss_name);
+}
+
+static void find_and_set_bss_name(struct dso *p)
+{
+	size_t  cnt;
+	Phdr *ph = p->phdr;
+	for (cnt = p->phnum; cnt--; ph = (void *)((char *)ph + p->phentsize)) {
+		if (ph->p_type != PT_LOAD) continue;
+		size_t seg_start = p->base + ph->p_vaddr;
+		size_t seg_file_end = seg_start + ph->p_filesz + PAGE_SIZE - 1 & -PAGE_SIZE;
+		size_t seg_max_addr = seg_start + ph->p_memsz + PAGE_SIZE - 1 & -PAGE_SIZE;
+		size_t zeromap_size = seg_max_addr - seg_file_end;
+		if (zeromap_size > 0 && (ph->p_flags & PF_W)) {
+			set_bss_vma_name(p->name, (void *)seg_file_end, zeromap_size);
 		}
 	}
 }
