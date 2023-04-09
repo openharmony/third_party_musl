@@ -13,12 +13,7 @@ int sched_getparam(pid_t pid, struct sched_param *param)
 	}
 
 	memset(param, 0, sizeof(struct sched_param));
-	r = __syscall(SYS_sched_getparam, pid, MUSL_TYPE_PROCESS);
-	if (r >= 0) {
-		param->sched_priority = r;
-		r = 0;
-	}
-
+	r = __syscall(SYS_sched_getparam, pid, param, MUSL_TYPE_PROCESS);
 exit:
 	return __syscall_ret(r);
 }

@@ -11,8 +11,7 @@ int sched_setparam(pid_t pid, const struct sched_param *param)
 		goto exit;
 	}
 
-	r = __syscall(SYS_sched_setparam, pid, param->sched_priority, MUSL_TYPE_PROCESS);
-
+	r = __syscall(SYS_sched_setparam, pid, param, MUSL_TYPE_PROCESS);
 exit:
 	return __syscall_ret(r);
 }

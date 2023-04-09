@@ -10,9 +10,8 @@ int pthread_getschedparam(pthread_t t, int *restrict policy, struct sched_param 
 	if (!t->tid) {
 		r = ESRCH;
 	} else {
-		r = __syscall(SYS_sched_getparam, t->tid, MUSL_TYPE_THREAD);
+		r = __syscall(SYS_sched_getparam, t->tid, param, MUSL_TYPE_THREAD);
 		if (r >= 0) {
-			param->sched_priority = r;
 			r = __syscall(SYS_sched_getscheduler, t->tid, MUSL_TYPE_THREAD);
 			if (r >= 0) {
 				*policy = r;
