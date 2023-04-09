@@ -217,8 +217,8 @@ weak_alias(dummy_tsd, __pthread_tsd_main);
 
 int __pthread_init_and_check_attr(const pthread_attr_t *restrict attrp, pthread_attr_t *attr)
 {
-	int policy = 0;
-	struct sched_param param = { 0 };
+ 	int policy = 0;
+	struct sched_param param = {0};
 	int c11 = (attrp == __ATTRP_C11_THREAD);
 	int ret;
 
@@ -233,14 +233,8 @@ int __pthread_init_and_check_attr(const pthread_attr_t *restrict attrp, pthread_
 		if (ret) return ret;
 		attr->_a_policy = policy;
 		attr->_a_prio = param.sched_priority;
-	}
-
-	if (attr->_a_policy != SCHED_RR && attr->_a_policy != SCHED_FIFO) {
-		return EINVAL;
-	}
-
-	if (attr->_a_prio < 0 || attr->_a_prio > PTHREAD_PRIORITY_LOWEST) {
-		return EINVAL;
+		attr->_a_deadline = param.sched_deadline;
+		attr->_a_period = param.sched_period;
 	}
 
 	return 0;
@@ -372,7 +366,7 @@ int __pthread_create(pthread_t *restrict res, const pthread_attr_t *restrict att
 		__restore_sigs(&set);
 		__release_ptc();
 		ret = __syscall(SYS_sched_setscheduler,
-			new->tid, attr._a_policy, attr._a_prio, MUSL_TYPE_THREAD);
+			new->tid, attr._a_policy, &attr._a_prio, MUSL_TYPE_THREAD);
 	}
 
 	if (ret < 0) {
