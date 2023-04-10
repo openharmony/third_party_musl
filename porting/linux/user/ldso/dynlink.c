@@ -3540,6 +3540,8 @@ static void *do_dlsym(struct dso *p, const char *s, const char *v, void *ra)
 	return laddr(def.dso, def.sym->st_value);
 }
 
+extern int invalidate_exit_funcs(struct dso *p);
+
 static int dlclose_impl(struct dso *p)
 {
 	size_t n;
@@ -3573,6 +3575,9 @@ static int dlclose_impl(struct dso *p)
 		}
 		p->constructed = 0;
 	}
+
+	/* after destruct, invalidate atexit funcs which belong to this dso */
+	invalidate_exit_funcs(p);
 
 	/* remove dso symbols from global list */
 	if (p->syms_next) {
