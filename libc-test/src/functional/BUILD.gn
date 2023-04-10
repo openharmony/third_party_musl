@@ -30,11 +30,14 @@ test_sharedlib("tls_init_dso") {
 }
 test_sharedlib("tls_align_dso") {
 }
+test_sharedlib("atexit_dlclose_dso") {
+}
 
 group("dso_shared") {
   testonly = true
 
   deps = [
+    ":atexit_dlclose_dso",
     ":dlclose_reset_dso",
     ":dlopen_dso",
     ":dlopen_ns_dso",

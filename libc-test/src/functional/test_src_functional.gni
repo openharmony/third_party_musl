@@ -79,6 +79,7 @@ functional_list = [
   "wcsstr",
   "wcstol",
   "dlclose_reset",
+  "atexit_dlclose",
 ]
 
 malloc_stats_list = [
