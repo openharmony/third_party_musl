@@ -37,6 +37,8 @@ static nslist g_ns_list;
     #define UT_STATIC static
 #endif
 
+#define ALLOW_ALL_SHARED_LIBS "allow_all_shared_libs"
+
 static ns_inherit_list *nsinherits_alloc()
 {
     ns_inherit_list *nsinl;
@@ -584,7 +586,8 @@ bool is_sharable(ns_inherit *inherit, const char *lib_name)
 {
     if (inherit && lib_name && inherit->shared_libs) {
         for (size_t i = 0; i < inherit->shared_libs->num; i++) {
-            if (strcmp(inherit->shared_libs->strs[i], lib_name) == 0) {
+            if (strcmp(inherit->shared_libs->strs[i], lib_name) == 0 ||
+                strcmp(inherit->shared_libs->strs[i], ALLOW_ALL_SHARED_LIBS) == 0) {
                 LD_LOGD("is_sharable inherit [%{public}s] lib_name [%{public}s] found, return true.",
                     inherit->inherited_ns->ns_name,
                     lib_name);
