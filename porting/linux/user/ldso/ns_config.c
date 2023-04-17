@@ -512,9 +512,8 @@ static int config_parse(const char *file_path, const char *exe_path)
         if (sname) break;
     }
     if (!sname) {
-        /* No matched section found, use the default section. */
-        sname = ATTR_NS_ACQUIESCENCE;
         LD_LOGD("config_parse no section found!");
+        return -4;/* no section found */
     }
     if (!(g_configor.kvs = config_get_kvs(sname))) {
         LD_LOGD("config_parse no section key-value list found!");
