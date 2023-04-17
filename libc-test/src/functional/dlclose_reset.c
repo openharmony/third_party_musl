@@ -3,10 +3,10 @@
 #include "test.h"
 
 
-typedef int (* TEST_S_VAR)();  
+typedef int (* TEST_S_VAR)();
 typedef int (* TEST_G_VAR)();
-typedef int (* INSP_S_VAR)();  
-typedef int (* INSP_G_VAR)();  
+typedef int (* INSP_S_VAR)();
+typedef int (* INSP_G_VAR)();
 
 
 int main(int argc, char *argv[])
@@ -16,9 +16,9 @@ int main(int argc, char *argv[])
 	void *g = NULL;
 	TEST_S_VAR test_s_var = NULL;
 	TEST_G_VAR test_g_var = NULL;
-	INSP_S_VAR insp_s_var = NULL;  
-	INSP_G_VAR insp_g_var = NULL;  
-	
+	INSP_S_VAR insp_s_var = NULL;
+	INSP_G_VAR insp_g_var = NULL;
+
 	int s_var = 0;
 	int g_var = 0;
 
@@ -48,7 +48,7 @@ int main(int argc, char *argv[])
 	g = dlopen(buf, RTLD_LAZY|RTLD_LOCAL);
 	if(!g)
         t_error("dlopen %s failed: %s\n", buf, dlerror());
-	
+
 	insp_s_var = (INSP_S_VAR)dlsym( g, "ret_static");
 	if (!insp_s_var)
 		t_error("dlsym ret_static failed: %s\n", dlerror());
@@ -56,7 +56,7 @@ int main(int argc, char *argv[])
 	insp_g_var = (INSP_G_VAR)dlsym( g, "ret_global");
 	if (!insp_g_var)
 		t_error("dlsyn global_var failed: %s\n", dlerror());
-	
+
 	s_var = insp_s_var();
 	g_var = insp_g_var();
 
