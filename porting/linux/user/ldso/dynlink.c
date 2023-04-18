@@ -1714,6 +1714,18 @@ static struct dso *search_dso_by_fstat(const struct stat *st, const ns_t *ns, ui
 	}
 	return NULL;
 }
+
+static inline int app_has_same_name_so(const char *so_name, const ns_t *ns)
+{
+   int fd = -1;
+   /* Only check system app. */
+   if (((ns->flag & LOCAL_NS_PREFERED) != 0) && ns->lib_paths) {
+       char tmp_buf[PATH_MAX+1];
+       fd = path_open(so_name, ns->lib_paths, tmp_buf, sizeof tmp_buf);
+   }
+   return fd;
+}
+
 /* Find loaded so by name */
 static struct dso *find_library_by_name(const char *name, const ns_t *ns, bool check_inherited)
 {
@@ -1727,7 +1739,12 @@ static struct dso *find_library_by_name(const char *name, const ns_t *ns, bool c
 		for (size_t i = 0; i < ns->ns_inherits->num; i++){
 			ns_inherit * inherit = ns->ns_inherits->inherits[i];
 			p = search_dso_by_name(name, inherit->inherited_ns);
-			if (p && is_sharable(inherit, name)) return p;
+			if (p && is_sharable(inherit, name)) {
+			    if (app_has_same_name_so(name, ns) != -1) {
+			        return NULL;
+			    }
+			    return p;
+			}
 		}
 	}
 	return NULL;
@@ -3387,6 +3404,7 @@ int dlns_create2(Dl_namespace *dlns, const char *lib_path, int flags)
 		return ENOMEM;
 	}
 	ns_set_name(ns, dlns->name);
+	ns_set_flag(ns, flags);
 	ns_add_dso(ns, get_default_ns()->ns_dsos->dsos[0]); /* add main app to this namespace*/
 	nslist_add_ns(ns); /* add ns to list*/
 	ns_set_lib_paths(ns, lib_path);

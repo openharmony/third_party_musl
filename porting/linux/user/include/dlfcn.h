@@ -24,6 +24,7 @@ extern "C" {
 /* create flags for dlns_create */
 #define CREATE_INHERIT_DEFAULT 0x1
 #define CREATE_INHERIT_CURRENT 0x2
+#define LOCAL_NS_PREFERED 0x4 /* Use app's library when app's library has same name as system library. */
 
 int    dlclose(void *);
 char  *dlerror(void);
