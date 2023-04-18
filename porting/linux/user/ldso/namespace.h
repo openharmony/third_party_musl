@@ -47,6 +47,7 @@ typedef struct _namespace_t_ {
     strlist *allowed_libs;       /* when separated, allowed library names splited by ':'. */
     dsolist *ns_dsos;         /* dso list in this namespace */
     struct _ns_inherit_list_ *ns_inherits;   /* inherit list in this namespace */
+    int flag;
 } ns_t;
 /* define namespace list */
 typedef struct _namespaces_list_ {
@@ -83,6 +84,7 @@ void ns_set_allowed_libs(ns_t *ns, const char *allowed_libs);
 void ns_add_dso(ns_t *ns, struct dso *dso);
 void nslist_add_ns(ns_t *ns);
 void ns_add_inherit(ns_t *ns,ns_t *inherited, const char *shared_libs);
+void ns_set_flag(ns_t *ns, int flag);
 
 /* get default namespace */
 ns_t *get_default_ns();
