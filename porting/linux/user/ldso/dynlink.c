@@ -3577,7 +3577,9 @@ static int dlclose_impl(struct dso *p)
 	}
 
 	/* after destruct, invalidate atexit funcs which belong to this dso */
+#if (defined(FEATURE_ATEXIT_CB_PROTECT))
 	invalidate_exit_funcs(p);
+#endif
 
 	/* remove dso symbols from global list */
 	if (p->syms_next) {
