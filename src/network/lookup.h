@@ -113,6 +113,10 @@ typedef int32_t (*GetCache)(uint16_t netId, struct param_wrapper param,
 
 typedef int32_t (*SetCache)(uint16_t netId, struct param_wrapper param, struct addrinfo *res);
 
+/* If the memory holder points to stores NULL value, try to load symbol from the
+ * dns lib into holder; otherwise, it does nothing. */
+hidden void resolve_dns_sym(void **holder, const char *symbol);
+
 void
 dns_set_addr_info_to_netsys_cache(const char *__restrict host, const char *__restrict serv,
 								  const struct addrinfo *__restrict
