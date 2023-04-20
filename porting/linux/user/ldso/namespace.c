@@ -602,3 +602,12 @@ bool is_sharable(ns_inherit *inherit, const char *lib_name)
     LD_LOGD("is_sharable shared_libs not config, return true.");
     return true;
 }
+
+void ns_set_flag(ns_t *ns, int flag)
+{
+    if (!ns) {
+        return;
+    }
+    ns->flag = flag;
+    LD_LOGD("ns_set_flag ns[%{public}s] flag:%{public}d.", ns->ns_name, ns->flag);
+}
