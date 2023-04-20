@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -23,25 +23,33 @@
 
 #if OHOS_DNS_PROXY_BY_NETSYS
 
+#include "atomic.h"
+
+static GetCache load_cache_getter(void)
+{
+	static GetCache cache_getter = NULL;
+	resolve_dns_sym((void **) &cache_getter, OHOS_GET_CACHE_FUNC_NAME);
+	return cache_getter;
+}
+
+static SetCache load_cache_setter(void)
+{
+	static SetCache cache_setter = NULL;
+	resolve_dns_sym((void **) &cache_setter, OHOS_SET_CACHE_FUNC_NAME);
+	return cache_setter;
+}
+
 void
 dns_set_addr_info_to_netsys_cache(const char *restrict host, const char *restrict serv, const struct addrinfo *restrict
 hint, struct addrinfo *res) {
-	void *handle = dlopen(DNS_SO_PATH, RTLD_LAZY);
-	if (handle == NULL) {
-		DNS_CONFIG_PRINT("dns_set_addr_info_to_netsys_cache dlopen err %s\n", dlerror());
-		return;
-	}
-
-	SetCache func = dlsym(handle, OHOS_SET_CACHE_FUNC_NAME);
-	if (func == NULL) {
-		DNS_CONFIG_PRINT("dns_set_addr_info_to_netsys_cache dlsym err %s\n", dlerror());
-		dlclose(handle);
+	SetCache func = load_cache_setter();
+	if (!func) {
+		DNS_CONFIG_PRINT("%s: loading %s failed", __func__, OHOS_SET_CACHE_FUNC_NAME);
 		return;
 	}
 
 	struct param_wrapper param = {(char *) host, (char *) serv, (struct addrinfo *) hint};
 	int ret = func(0, param, res);
-	dlclose(handle);
 	if (ret < 0) {
 		DNS_CONFIG_PRINT("dns_set_addr_info_to_netsys_cache OHOS_SET_CACHE_FUNC_NAME err %d\n", ret);
 		return;
@@ -52,16 +60,9 @@ hint, struct addrinfo *res) {
 
 int dns_get_addr_info_from_netsys_cache(const char *restrict host, const char *restrict serv,
 										const struct addrinfo *restrict hint, struct addrinfo **restrict res) {
-	void *handle = dlopen(DNS_SO_PATH, RTLD_LAZY);
-	if (handle == NULL) {
-		DNS_CONFIG_PRINT("dns_get_addr_info_from_netsys_cache dlopen err %s\n", dlerror());
-		return -1;
-	}
-
-	GetCache func = dlsym(handle, OHOS_GET_CACHE_FUNC_NAME);
-	if (func == NULL) {
-		DNS_CONFIG_PRINT("dns_get_addr_info_from_netsys_cache dlsym err %s\n", dlerror());
-		dlclose(handle);
+	GetCache func = load_cache_getter();
+	if (!func) {
+		DNS_CONFIG_PRINT("%s: loading %s failed", __func__, OHOS_GET_CACHE_FUNC_NAME);
 		return -1;
 	}
 
@@ -69,7 +70,6 @@ int dns_get_addr_info_from_netsys_cache(const char *restrict host, const char *r
 	uint32_t num = 0;
 	struct param_wrapper param = {(char *) host, (char *) serv, (struct addrinfo *) hint};
 	int ret = func(0, param, addr_info, &num);
-	dlclose(handle);
 	if (ret < 0) {
 		DNS_CONFIG_PRINT("dns_get_addr_info_from_netsys_cache OHOS_GET_CACHE_FUNC_NAME err %d\n", ret);
 		return -1;

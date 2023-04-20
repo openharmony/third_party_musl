@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -16,6 +16,9 @@
 #include <netdb.h>
 #include <stdlib.h>
 #include <sys/socket.h>
+#include <pthread.h>
+#include <string.h>
+#include <errno.h>
 
 #include "functionalext.h"
 
@@ -276,7 +279,7 @@ void getaddrinfo_1500(void)
     EXPECT_EQ("getaddrinfo_1500", ret, SOCKTYPE_NOTSUPPORTED);
 }
 
-int main(int argc, char *argv[])
+static void *test_all_cases(void *arg)
 {
     getaddrinfo_0100();
     getaddrinfo_0200();
@@ -293,6 +296,40 @@ int main(int argc, char *argv[])
     getaddrinfo_1300();
     getaddrinfo_1400();
     getaddrinfo_1500();
+    return arg;
+}
+
+static void do_test_concurrently(void *(*test) (void *arg), size_t num_threads)
+{
+    pthread_t *threads = (pthread_t *) malloc(sizeof(pthread_t) * num_threads);
+    if (threads == NULL) {
+        t_error("Failed to allocate memory: %s\n", strerror(errno));
+        return;
+    }
+
+    size_t last = 0;
+    while (last < num_threads) {
+        if (pthread_create(&(threads[last]), NULL, test, NULL)) {
+            t_error("Failed to create thread: %s\n", strerror(errno));
+            break;
+        }
+        last++;
+    }
+
+    for (size_t i = 0; i < last; i++) {
+        if (pthread_join(threads[i], NULL)) {
+            t_error("Failed to join thread: %s\n", strerror(errno));
+        }
+    }
+
+    free(threads);
+    return;
+}
+
+int main(int argc, char *argv[])
+{
+    size_t num_threads = 16;
+    do_test_concurrently(test_all_cases, num_threads);
 
     return t_status;
 }
