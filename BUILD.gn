@@ -55,12 +55,18 @@ if (is_lite_system && current_os == "ohos") {
     deps = [
       ":musl_headers",
       ":musl_sysparam",
+      ":musl_sysparam_dac",
       ":soft_libs",
     ]
   }
 
   ohos_prebuilt_etc("musl_sysparam") {
     source = "${musl_porting_dir}/etc/musl.para"
+    relative_install_dir = "param"
+  }
+
+  ohos_prebuilt_etc("musl_sysparam_dac") {
+    source = "${musl_porting_dir}/etc/musl.para.dac"
     relative_install_dir = "param"
   }
 
