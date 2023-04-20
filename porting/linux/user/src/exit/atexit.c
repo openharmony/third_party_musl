@@ -76,6 +76,7 @@ int __cxa_atexit(void (*func)(void *), void *arg, void *dso)
 	if (!head) head = &builtin;
 
 	// if called from atexit, check callback ptr mem range.
+#if (defined(FEATURE_ATEXIT_CB_PROTECT))
 	if ((func == (void *)call) && (dso == NULL)) {
 		p = addr2dso((size_t)arg);
 		if (p == NULL) {
@@ -84,6 +85,7 @@ int __cxa_atexit(void (*func)(void *), void *arg, void *dso)
 			return -1;
 		}
 	}
+#endif
 
 	/* If the current function list is full, add a new one */
 	if (slot==COUNT) {
