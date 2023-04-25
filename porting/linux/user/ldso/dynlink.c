@@ -37,6 +37,8 @@
 #include "pthread_impl.h"
 #include "fork_impl.h"
 #include "strops.h"
+#include "trace/trace_marker.h"
+
 #ifdef OHOS_ENABLE_PARAMETER
 #include "sys_param.h"
 #endif
@@ -304,6 +306,8 @@ static void init_namespace(struct dso *app)
 	char file_path[sizeof "/etc/ld-musl-namespace-" + sizeof (LDSO_ARCH) + sizeof ".ini" + 1] = {0};
 	(void)snprintf(file_path, sizeof file_path, "/etc/ld-musl-namespace-%s.ini", LDSO_ARCH);
 	LD_LOGI("init_namespace file_path:%{public}s", file_path);
+	trace_marker_reset();
+	trace_marker_begin(HITRACE_TAG_MUSL, "parse linker config", file_path);
 	int ret = conf->parse(file_path, app_path);
 	if (ret < 0) {
 		LD_LOGE("init_namespace ini file parse failed!");
@@ -311,6 +315,7 @@ static void init_namespace(struct dso *app)
 		if (!sys_path) get_sys_path(conf);
 		init_default_namespace(app);
 		configor_free();
+		trace_marker_end(HITRACE_TAG_MUSL);
 		return;
 	}
 
@@ -326,6 +331,7 @@ static void init_namespace(struct dso *app)
 	if (!nsl) {
 		LD_LOGE("init nslist fail!");
 		configor_free();
+		trace_marker_end(HITRACE_TAG_MUSL);
 		return;
 	}
 	strlist *s_ns = conf->get_namespaces();
@@ -345,6 +351,7 @@ static void init_namespace(struct dso *app)
 		set_ns_inherits(nsl->nss[i], conf);
 	}
 	configor_free();
+	trace_marker_end(HITRACE_TAG_MUSL);
 	return;
 }
 
@@ -2457,7 +2464,13 @@ static void do_init_fini(struct dso **queue)
 		if (dyn[0] & (1<<DT_INIT_ARRAY)) {
 			size_t n = dyn[DT_INIT_ARRAYSZ]/sizeof(size_t);
 			size_t *fn = laddr(p, dyn[DT_INIT_ARRAY]);
+			if (p != &ldso) {
+				trace_marker_begin(HITRACE_TAG_MUSL, "calling constructors: ", p->name);
+			}
 			while (n--) ((void (*)(void))*fn++)();
+			if (p != &ldso) {
+				trace_marker_end(HITRACE_TAG_MUSL);
+			}
 		}
 
 		pthread_mutex_lock(&init_fini_lock);
@@ -3077,6 +3090,8 @@ static void *dlopen_impl(
 	pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &cs);
 	pthread_rwlock_wrlock(&lock);
 	__inhibit_ptc();
+	trace_marker_reset();
+	trace_marker_begin(HITRACE_TAG_MUSL, "dlopen: ", file);
 
 	debug.state = RT_ADD;
 	_dl_debug_state();
@@ -3153,12 +3168,14 @@ static void *dlopen_impl(
 			LD_LOGE("dlopen_impl create loadtask failed");
 			goto end;
 		}
+		trace_marker_begin(HITRACE_TAG_MUSL, "loading: entry so", file);
 		if (!load_library_header(task)) {
 			error(noload ?
 				"Library %s is not already loaded" :
 				"Error loading shared library %s: %m",
 				file);
 			LD_LOGE("dlopen_impl load library header failed for %{public}s", task->name);
+			trace_marker_end(HITRACE_TAG_MUSL); // "loading: entry so" trace end.
 			goto end;
 		}
 		if (reserved_address) {
@@ -3171,6 +3188,7 @@ static void *dlopen_impl(
 			"Library %s is not already loaded" :
 			"Error loading shared library %s: %m",
 			file);
+		trace_marker_end(HITRACE_TAG_MUSL); // "loading: entry so" trace end.
 		goto end;
 	}
 	if (!task->isloaded) {
@@ -3193,6 +3211,7 @@ static void *dlopen_impl(
 	free_loadtasks(tasks);
 	tasks = NULL;
 #else
+		trace_marker_begin(HITRACE_TAG_MUSL, "loading: entry so", file);
 		p = load_library(file, head, ns, true, reserved_address ? &reserved_params : NULL);
 	}
 
@@ -3201,11 +3220,13 @@ static void *dlopen_impl(
 			"Library %s is not already loaded" :
 			"Error loading shared library %s: %m",
 			file);
+		trace_marker_end(HITRACE_TAG_MUSL); // "loading: entry so" trace end.
 		goto end;
 	}
 	/* First load handling */
 	load_deps(p, reserved_address && reserved_address_recursive ? &reserved_params : NULL);
 #endif
+	trace_marker_end(HITRACE_TAG_MUSL); // "loading: entry so" trace end.
 	extend_bfs_deps(p);
 	pthread_mutex_lock(&init_fini_lock);
 	int constructed = p->constructed;
@@ -3229,9 +3250,11 @@ static void *dlopen_impl(
 		}
 	}
 	struct dso *reloc_head_so = p;
+	trace_marker_begin(HITRACE_TAG_MUSL, "linking: entry so", p->name);
 	if (!p->relocated) {
 		reloc_all(p, extinfo);
 	}
+	trace_marker_end(HITRACE_TAG_MUSL);
 	reloc_head_so->is_reloc_head_so_dep = false;
 	for (size_t i=0; reloc_head_so->deps[i]; i++) {
 		reloc_head_so->deps[i]->is_reloc_head_so_dep = false;
@@ -3280,6 +3303,7 @@ end:
 		free(ctor_queue);
 	}
 	pthread_setcancelstate(cs, 0);
+	trace_marker_end(HITRACE_TAG_MUSL); // "dlopen: " trace end.
 	return p;
 }
 
@@ -3526,8 +3550,11 @@ static void *do_dlsym(struct dso *p, const char *s, const char *v, void *ra)
 			ns = caller->namespace;
 		}
 	}
+	trace_marker_reset();
+	trace_marker_begin(HITRACE_TAG_MUSL, "dlsym: ", (s == NULL ? "(NULL)" : s));
 	struct verinfo verinfo = { .s = s, .v = v, .use_vna_hash = false };
 	struct symdef def = find_sym2(p, &verinfo, 0, use_deps, ns);
+	trace_marker_end(HITRACE_TAG_MUSL);
 	if (!def.sym) {
 		LD_LOGE("do_dlsym failed: symbol not found. so=%{public}s s=%{public}s v=%{public}s", p->name, s, v);
 		error("Symbol not found: %s, version: %s", s, strlen(v) > 0 ? v : "null");
@@ -3560,7 +3587,8 @@ static int dlclose_impl(struct dso *p)
 
 	if (--(p->nr_dlopen) > 0)
 		return 0;
-
+	trace_marker_reset();
+	trace_marker_begin(HITRACE_TAG_MUSL, "dlclose", p->name);
 	/* call destructors if needed */
 	if (p->constructed) {
 		size_t dyn[DYN_CNT];
@@ -3568,8 +3596,10 @@ static int dlclose_impl(struct dso *p)
 		if (dyn[0] & (1<<DT_FINI_ARRAY)) {
 			n = dyn[DT_FINI_ARRAYSZ] / sizeof(size_t);
 			size_t *fn = (size_t *)laddr(p, dyn[DT_FINI_ARRAY]) + n;
+			trace_marker_begin(HITRACE_TAG_MUSL, "calling destructors:", p->name);
 			while (n--)
 				((void (*)(void))*--fn)();
+			trace_marker_end(HITRACE_TAG_MUSL);
 		}
 		p->constructed = 0;
 	}
@@ -3642,6 +3672,7 @@ static int dlclose_impl(struct dso *p)
 	if (p->tls.size == 0) {
 		free(p);
 	}
+	trace_marker_end(HITRACE_TAG_MUSL);
 
 	return 0;
 }
@@ -4029,7 +4060,7 @@ void* dlopen_ext(const char *file, int mode, const dl_extinfo *extinfo)
 		mode,
 		caller_addr,
 		extinfo ? extinfo->flag : 0);
-  	return dlopen_impl(file, mode, NULL, caller_addr, extinfo);
+	return dlopen_impl(file, mode, NULL, caller_addr, extinfo);
 }
 
 #ifdef LOAD_ORDER_RANDOMIZATION
