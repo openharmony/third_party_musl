@@ -24,22 +24,58 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include "musl_log.h"
+#ifdef OHOS_ENABLE_PARAMETER
+#include "sys_param.h"
+#endif
 
 #ifndef MUSL_TEMP_FAILURE_RETRY
-#define MUSL_TEMP_FAILURE_RETRY(exp)            \
-    ({                                     \
-    long int _rc;                          \
-    do {                                   \
-        _rc = (long int)(exp);             \
+#define MUSL_TEMP_FAILURE_RETRY(exp)           \
+    ({                                         \
+    long int _rc;                              \
+    do {                                       \
+        _rc = (long int)(exp);                 \
     } while ((_rc == -1) && (errno == EINTR)); \
-    _rc;                                   \
+    _rc;                                       \
     })
 #endif
 
-// Check whether the user space trace function is enabled
-static inline bool is_enable_trace(void)
+#define LIKELY(exp) (__builtin_expect(!!(exp), 1))
+
+#ifdef OHOS_ENABLE_PARAMETER
+#define TRACE_PROPERTY_FLAG "debug.hitrace.tags.enableflags"
+static uint64_t g_trace_switch_status = 0;
+
+uint64_t get_uint64_sysparam(CachedHandle cachedhandle)
 {
-    return true;
+    char *param_value = CachedParameterGet(cachedhandle);
+    if (param_value != NULL) {
+        return strtoull(param_value, NULL, 0);
+    }
+    return 0;
+}
+#endif
+
+void trace_marker_reset(void)
+{
+#ifdef OHOS_ENABLE_PARAMETER
+    static CachedHandle trace_switch_handle = NULL;
+    if (trace_switch_handle == NULL) {
+        trace_switch_handle = CachedParameterCreate(TRACE_PROPERTY_FLAG, "0");
+    }
+    g_trace_switch_status = get_uint64_sysparam(trace_switch_handle);
+#else
+    return;
+#endif
+}
+
+// Check whether the user space trace function is enabled
+static inline bool is_enable_trace(uint64_t label)
+{
+#ifdef OHOS_ENABLE_PARAMETER
+    return (((g_trace_switch_status & label) != 0) || ((g_trace_switch_status & HITRACE_TAG_ALWAYS) != 0));
+#else
+    return false;
+#endif
 }
 
 // Get the fd of trace_marker
@@ -54,9 +90,9 @@ static inline int get_trace_marker_fd(void)
 
 /* Write the function call information to the trace_marker node in kernel space,
 used on the same thread as trace_marker_end(),with the symbol "B". */
-void trace_marker_begin(const char *message, const char *value)
+void trace_marker_begin(uint64_t label, const char *message, const char *value)
 {
-    if (!is_enable_trace() || message == NULL) {
+    if (LIKELY((!is_enable_trace(label) || message == NULL))) {
         return;
     }
 
@@ -68,7 +104,7 @@ void trace_marker_begin(const char *message, const char *value)
     char buf[TRACE_MARKER_MESSAGE_LEN] = {0};
     int len = 0;
     if (value == NULL) {
-        len = snprintf(buf, TRACE_MARKER_MESSAGE_LEN, "B|%d %s", getpid(), message);
+        len = snprintf(buf, TRACE_MARKER_MESSAGE_LEN, "B|%d|%s", getpid(), message);
     } else {
         len = snprintf(buf, TRACE_MARKER_MESSAGE_LEN, "B|%d|%s %s", getpid(), message, value);
     }
@@ -87,9 +123,9 @@ void trace_marker_begin(const char *message, const char *value)
 
 /* Write the terminator to the trace_marker node of the kernel space,
 used on the same thread as trace_marker_begin(),with the symbol "E". */
-void trace_marker_end(void)
+void trace_marker_end(uint64_t label)
 {
-    if (!is_enable_trace()) {
+    if (LIKELY(!is_enable_trace(label))) {
         return;
     }
 
@@ -115,9 +151,9 @@ void trace_marker_end(void)
 
 /* Write the function call information to the trace_marker node in kernel space,
 used in a different thread than trace_marker_async_end(),with the symbol "S". */
-void trace_marker_async_begin(const char *message, const char *value, int taskId)
+void trace_marker_async_begin(uint64_t label, const char *message, const char *value, int taskId)
 {
-    if (!is_enable_trace() || message == NULL) {
+    if (LIKELY((!is_enable_trace(label) || message == NULL))) {
         return;
     }
 
@@ -148,9 +184,9 @@ void trace_marker_async_begin(const char *message, const char *value, int taskId
 
 /* Write the terminator to the trace_marker node in kernel space,
 used in a different thread than trace_marker_async_begin(),with the symbol "F". */
-void trace_marker_async_end(const char *message, const char *value, int taskId)
+void trace_marker_async_end(uint64_t label, const char *message, const char *value, int taskId)
 {
-    if (!is_enable_trace() || message == NULL) {
+    if (LIKELY((!is_enable_trace(label) || message == NULL))) {
         return;
     }
 
@@ -180,9 +216,9 @@ void trace_marker_async_end(const char *message, const char *value, int taskId)
 }
 
 // A numeric variable used to mark a pre trace, with the symbol "C".
-void trace_marker_count(const char *message, int value)
+void trace_marker_count(uint64_t label, const char *message, int value)
 {
-    if (!is_enable_trace() || message == NULL) {
+    if (LIKELY((!is_enable_trace(label) || message == NULL))) {
         return;
     }
 

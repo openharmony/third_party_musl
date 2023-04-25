@@ -49,8 +49,8 @@ static void trace_marker_stresstest_0010(void)
         while (traceCount <= 5000) {
             snprintf(buf, BUFFER_LEN, "%d", traceCount);
             system("cd /sys/kernel/debug/tracing;echo 1 > tracing_on");
-            trace_marker_async_begin("Trace_Marker_Async_Begin", buf, 1);
-            trace_marker_async_end("Trace_Marker_Async_End", buf, 1);
+            trace_marker_async_begin(HITRACE_TAG_MUSL, "Trace_Marker_Async_Begin", buf, 1);
+            trace_marker_async_end(HITRACE_TAG_MUSL, "Trace_Marker_Async_End", buf, 1);
             system("cd /sys/kernel/debug/tracing;echo 0 > tracing_on");
             printf("trace_marker_async_begin has been running times is:%d\n", traceCount);
             traceCount++;
@@ -69,8 +69,8 @@ static void trace_marker_stresstest_0010(void)
             while (traceCount <= 5000) {
                 snprintf(buf, BUFFER_LEN, "%d", traceCount);
                 system("cd /sys/kernel/debug/tracing;echo 1 > tracing_on");
-                trace_marker_begin("Trace_Marker", buf);
-                trace_marker_end();
+                trace_marker_begin(HITRACE_TAG_MUSL, "Trace_Marker", buf);
+                trace_marker_end(HITRACE_TAG_MUSL);
                 system("cd /sys/kernel/debug/tracing;echo 0 > tracing_on");
                 printf("trace_marker_begin has been running times is:%d\n", traceCount);  
                 traceCount++;
@@ -82,7 +82,7 @@ static void trace_marker_stresstest_0010(void)
 
             while (traceCount <= 5000) {
                 system("cd /sys/kernel/debug/tracing;echo 1 > tracing_on");
-                trace_marker_count("traceCount", traceCount);
+                trace_marker_count(HITRACE_TAG_MUSL, "traceCount", traceCount);
                 system("cd /sys/kernel/debug/tracing;echo 0 > tracing_on");
                 printf("trace_marker_count has been running times is:%d\n", traceCount);
                 traceCount++;
