@@ -43,7 +43,7 @@ void readdir_0200(void)
     DIR *dir = (DIR *)"";
     struct dirent *ret;
     ret = readdir(dir);
-    EXPECT_TRUE("readdir_0200", NULL == ret);
+    EXPECT_TRUE(" readdir_0200", NULL == ret);
 }
 
 int main(int argc, char *argv[])

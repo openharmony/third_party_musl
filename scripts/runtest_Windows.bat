@@ -14,6 +14,7 @@ set REMOTE=/data/tests/libc-test
 set REMOTESYSTEM=/system/lib
 @REM runtest脚本所在目录
 set SHDIR=%LOCAL%\third_party\musl\scripts
+set ARCH=arm
 
 @REM 检查设备是否连接
 echo checking HDC device 
@@ -33,6 +34,11 @@ if exist %TESTDIR% (
 
 @REM 在单板创建目录, 需要预先创建好才能传输到相应位置。
 :hdcStart
+for /F "usebackq delims==" %%r in (`hdc shell param get const.product.cpu.abilist`) DO (
+    echo %%r | findstr "arm64-v8a" && set ARCH=aarch64 
+)
+echo detect arch = %ARCH%
+
 echo.
 echo now mkdir...
 hdc shell rm -rf /data/tests/libc-test
@@ -56,9 +62,9 @@ hdc shell chmod +x %REMOTE%/src/*
 
 hdc shell mount -o rw,remount /
 hdc shell chmod 777 /etc
-hdc shell cp /etc/ld-musl-namespace-arm.ini /etc/ld-musl-namespace-arm.ini.bak
-hdc file send %LOCAL%\third_party\musl\porting\linux\user\config\ld-musl-namespace-arm-test.ini ^
-                /etc/ld-musl-namespace-arm.ini
+hdc shell cp /etc/ld-musl-namespace-%ARCH%.ini /etc/ld-musl-namespace-%ARCH%.ini.bak
+hdc file send %LOCAL%\third_party\musl\porting\linux\user\config\ld-musl-namespace-%ARCH%-test.ini ^
+                /etc/ld-musl-namespace-%ARCH%.ini
 hdc shell mkdir %REMOTE%/src/A
 hdc shell mkdir %REMOTE%/src/B
 hdc shell mkdir %REMOTE%/src/C
@@ -97,7 +103,7 @@ if exist Summary.txt (
 hdc file recv %REMOTE%/FileList.txt %~dp0FileList.txt
 hdc file recv %REMOTE%/SkipList.txt %~dp0SkipList.txt
 
-for /f "delims=:" %%a in ('dir /b "%TESTDIR%" ^| findstr /n .*') do set all=%%a
+for /f "delims=:" %%a in ('dir /b /a:-d "%TESTDIR%" ^| findstr /n .*') do set all=%%a
 for /f %%b in (' find /c /v "" ^<"FileList.txt" ') do set /a run=%%b
 for /f %%c in (' find /c "FAIL" ^<"REPORT" ') do set fail=%%c
 
@@ -106,13 +112,13 @@ echo ===================================
 set /a pass=%run%-%fail%
 set /a skip=%all%-%run%
 
-echo SUMMARY
+echo SUMMARY-%ARCH%
 echo All: %all% ^| Run: %run% ^| Skip: %skip%
 echo Pass: [%pass%/%run%]
 echo Fail: [%fail%/%run%]
 
 (
-echo SUMMARY
+echo SUMMARY-%ARCH%
 echo All: %all% ^| Run: %run% ^| Skip: %skip%
 echo Pass: [%pass%/%run%]
 echo Fail: [%fail%/%run%]
