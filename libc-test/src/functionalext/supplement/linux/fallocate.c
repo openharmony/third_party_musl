@@ -29,7 +29,7 @@ void fallocate_0100()
 {
     char str[] = "this is a fatest\n";
     char buffer[1024] = {0};
-    int fd = open("fatest.txt", O_RDWR | O_CREAT);
+    int fd = open("fatest.txt", O_RDWR | O_CREAT, TEST_MODE);
     EXPECT_TRUE("fallocate_0100", fd >= 0);
     int retwrite = write(fd, str, sizeof(str));
     EXPECT_EQ("fallocate_0100", retwrite, SIZE);
@@ -48,7 +48,7 @@ void fallocate_0200(void)
 {
     char str[] = "this is a fatest\n";
     char buffer[1024] = {0};
-    int fd = open("fatest.txt", O_RDWR | O_CREAT);
+    int fd = open("fatest.txt", O_RDWR | O_CREAT, TEST_MODE);
     EXPECT_TRUE("fallocate_0200", fd >= 0);
     int retwrite = write(fd, str, sizeof(str));
     EXPECT_EQ("fallocate_0200", retwrite, SIZE);
@@ -67,7 +67,7 @@ void fallocate_0300(void)
 {
     char str[] = "this is a fatest\n";
     char buffer[1024] = {0};
-    int fd = open("fatest.txt", O_RDWR | O_CREAT);
+    int fd = open("fatest.txt", O_RDWR | O_CREAT, TEST_MODE);
     EXPECT_TRUE("fallocate_0300", fd >= 0);
     int retwrite = write(fd, str, sizeof(str));
     EXPECT_EQ("fallocate_0300", retwrite, SIZE);

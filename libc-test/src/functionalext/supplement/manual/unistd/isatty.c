@@ -37,7 +37,7 @@ void isatty_0100()
  */
 void isatty_0200()
 {
-    int fd = open("/data/readtest.txt", O_RDWR | O_CREAT);
+    int fd = open("/data/readtest.txt", O_RDWR | O_CREAT, TEST_MODE);
     int result = isatty(fd);
     EXPECT_EQ("isatty_0200", result, 0);
     close(fd);

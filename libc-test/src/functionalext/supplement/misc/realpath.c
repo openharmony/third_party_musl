@@ -37,9 +37,7 @@ void realpath_0100(void)
 void realpath_0200(void)
 {
     char actualPath[4096] = {0};
-    char *ret = realpath(NULL, actualPath);
-    EXPECT_PTREQ("realpath_0200", ret, NULL);
-    ret = realpath("/system/bin/../mypth", actualPath);
+    char *ret = realpath("/system/bin/../mypth", actualPath);
     EXPECT_PTREQ("realpath_0200", ret, NULL);
     ret = realpath("/system/bin/../etc", NULL);
     EXPECT_STREQ("realpath_0200", ret, "/system/etc");

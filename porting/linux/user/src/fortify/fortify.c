@@ -57,7 +57,7 @@ static inline bool __needs_mode(int flags)
     return ((flags & O_CREAT) == O_CREAT) || ((flags & O_TMPFILE) == O_TMPFILE);
 }
 
-int __open_diagnose(const char* pathname, int flags)
+int __open_chk(const char* pathname, int flags)
 {
     if (__needs_mode(flags)) {
         __fortify_error("open: " OPEN_TOO_FEW_ARGS_ERROR);
@@ -65,7 +65,7 @@ int __open_diagnose(const char* pathname, int flags)
     return __DIAGNOSE_CALL_BYPASSING_FORTIFY(open)(pathname, __force_O_LARGEFILE(flags), 0);
 }
 
-int __openat_diagnose(int fd, const char* pathname, int flags)
+int __openat_chk(int fd, const char* pathname, int flags)
 {
     if (__needs_mode(flags)) {
         __fortify_error("openat: " OPEN_TOO_FEW_ARGS_ERROR);
@@ -74,7 +74,7 @@ int __openat_diagnose(int fd, const char* pathname, int flags)
 }
 
 #if defined(_LARGEFILE64_SOURCE) || defined(_GNU_SOURCE)
-int __open64_diagnose(const char* pathname, int flags)
+int __open64_chk(const char* pathname, int flags)
 {
     if (__needs_mode(flags)) {
         __fortify_error("open64: " OPEN_TOO_FEW_ARGS_ERROR);
@@ -82,7 +82,7 @@ int __open64_diagnose(const char* pathname, int flags)
     return __DIAGNOSE_CALL_BYPASSING_FORTIFY(open64)(pathname, __force_O_LARGEFILE(flags), 0);
 }
 
-int __openat64_diagnose(int fd, const char* pathname, int flags)
+int __openat64_chk(int fd, const char* pathname, int flags)
 {
     if (__needs_mode(flags)) {
         __fortify_error("openat64: " OPEN_TOO_FEW_ARGS_ERROR);
@@ -100,7 +100,7 @@ static inline void __diagnose_pollfd_array(const char* fn, size_t fds_size, nfds
     }
 }
 
-int __poll_diagnose(struct pollfd* fds, nfds_t fd_count, int timeout, size_t fds_size)
+int __poll_chk(struct pollfd* fds, nfds_t fd_count, int timeout, size_t fds_size)
 {
     __diagnose_pollfd_array("poll", fds_size, fd_count);
     return __DIAGNOSE_CALL_BYPASSING_FORTIFY(poll)(fds, fd_count, timeout);
@@ -123,33 +123,33 @@ static inline void __diagnose_buffer_access(const char* fn, const char* action,
     }
 }
 
-ssize_t __recvfrom_diagnose(int socket, void* buf, size_t len, size_t buf_size,
+ssize_t __recvfrom_chk(int socket, void* buf, size_t len, size_t buf_size,
     int flags, struct sockaddr* src_addr, socklen_t* addrlen)
 {
     __diagnose_buffer_access("recvfrom", "write into", len, buf_size);
     return __DIAGNOSE_CALL_BYPASSING_FORTIFY(recvfrom)(socket, buf, len, flags, src_addr, addrlen);
 }
 
-ssize_t __sendto_diagnose(int socket, const void* buf, size_t len, size_t buflen,
+ssize_t __sendto_chk(int socket, const void* buf, size_t len, size_t buflen,
     int flags, const struct sockaddr* dest_addr, socklen_t addrlen)
 {
     __diagnose_buffer_access("sendto", "read from", len, buflen);
     return __DIAGNOSE_CALL_BYPASSING_FORTIFY(sendto)(socket, buf, len, flags, dest_addr, addrlen);
 }
 
-ssize_t __recv_diagnose(int socket, void* buf, size_t len, size_t buf_size, int flags)
+ssize_t __recv_chk(int socket, void* buf, size_t len, size_t buf_size, int flags)
 {
     __diagnose_buffer_access("recv", "write into", len, buf_size);
     return __DIAGNOSE_CALL_BYPASSING_FORTIFY(recv)(socket, buf, len, flags);
 }
 
-ssize_t __send_diagnose(int socket, const void* buf, size_t len, size_t buflen, int flags)
+ssize_t __send_chk(int socket, const void* buf, size_t len, size_t buflen, int flags)
 {
     __diagnose_buffer_access("send", "read from", len, buflen);
     return __DIAGNOSE_CALL_BYPASSING_FORTIFY(send)(socket, buf, len, flags);
 }
 
-mode_t __umask_diagnose(mode_t mode)
+mode_t __umask_chk(mode_t mode)
 {
     if (__DIAGNOSE_PREDICT_FALSE((mode & FILE_MODE_ALL) != mode)) {
         __fortify_error("umask: called with invalid mask %o\n", mode);
@@ -225,7 +225,7 @@ char* __stpcpy_chk(char* dest, const char* src, size_t dst_len)
     return __DIAGNOSE_CALL_BYPASSING_FORTIFY(stpcpy)(dest, src);
 }
 
-void* __memchr_diagnose(const void* s, int c, size_t n, size_t actual_size)
+void* __memchr_chk(const void* s, int c, size_t n, size_t actual_size)
 {
     __diagnose_buffer_access("memchr", "read from", n, actual_size);
     void* const_cast_s = s;
@@ -241,17 +241,6 @@ char* __stpncpy_chk(char* dest, const char* src, size_t len, size_t dst_len)
 char *__strncpy_chk(char *dest, const char *src, size_t len, size_t dst_len)
 {
     __diagnose_buffer_access("strncpy", "write into", len, dst_len);
-    if (len != 0) {
-        char *d = dest;
-        const char *s = src;
-        size_t src_len = strlen(src);
-        do {
-            size_t s_copy_len = (size_t)(s - src);
-            if (__DIAGNOSE_PREDICT_FALSE(s_copy_len >= src_len)) {
-                __fortify_error("strncpy: diagnose read exceed end of %zu-byte buffer\n", src_len);
-            }
-        } while (--len != 0);
-    }
     return __DIAGNOSE_CALL_BYPASSING_FORTIFY(strncpy)(dest, src, len);
 }
 
@@ -263,14 +252,14 @@ void *__memset_chk(void *dest, int byte, size_t count, size_t dst_len)
 }
 
 #if defined(_GNU_SOURCE) || defined(_BSD_SOURCE)
-size_t __strlcpy_diagnose(char *dest, const char *src,
+size_t __strlcpy_chk(char *dest, const char *src,
     size_t supplied_size, size_t dst_len_from_compiler)
 {
     __diagnose_buffer_access("strlcpy", "write into", supplied_size, dst_len_from_compiler);
     return __DIAGNOSE_CALL_BYPASSING_FORTIFY(strlcpy)(dest, src, supplied_size);
 }
 
-size_t __strlcat_diagnose(char *dest, const char *src,
+size_t __strlcat_chk(char *dest, const char *src,
     size_t supplied_size, size_t dst_len_from_compiler)
 {
     __diagnose_buffer_access("strlcat", "write into", supplied_size, dst_len_from_compiler);
@@ -278,7 +267,7 @@ size_t __strlcat_diagnose(char *dest, const char *src,
 }
 #endif
 
-char* __strchr_diagnose(const char *s, int c, size_t s_len)
+char* __strchr_chk(const char *s, int c, size_t s_len)
 {
     if (s_len == 0) {
         __fortify_error("strchr: avoid read exceed end of buffer\n");
@@ -286,7 +275,7 @@ char* __strchr_diagnose(const char *s, int c, size_t s_len)
     return __DIAGNOSE_CALL_BYPASSING_FORTIFY(strchr)(s, c);
 }
 
-char *__strrchr_diagnose(const char *s, int c, size_t s_len)
+char *__strrchr_chk(const char *s, int c, size_t s_len)
 {
     if (s_len == 0) {
         __fortify_error("strrchr: avoid read exceed end of buffer\n");

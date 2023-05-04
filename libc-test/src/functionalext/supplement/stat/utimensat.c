@@ -32,7 +32,7 @@ void utimensat_0100(void)
 {
     char path[PATH_MAX] = {0};
     FILE_ABSOLUTE_PATH(STR_FILE_TXT, path);
-    int fd = open(path, O_RDWR | O_CREAT);
+    int fd = open(path, O_RDWR | O_CREAT, TEST_MODE);
     struct timespec times[] = {{.tv_sec = 0}, {.tv_sec = sec}};
 
     int result = utimensat(fd, path, times, 0);
@@ -82,7 +82,7 @@ void utimensat_time64_0100(void)
 {
     char path[PATH_MAX] = {0};
     FILE_ABSOLUTE_PATH(STR_FILE_TXT, path);
-    int fd = open(path, O_RDWR | O_CREAT);
+    int fd = open(path, O_RDWR | O_CREAT, TEST_MODE);
     struct timespec times[] = {{.tv_sec = 0}, {.tv_sec = sec}};
 
     int result = __utimensat_time64(fd, path, times, 0);

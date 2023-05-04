@@ -96,6 +96,8 @@ char *basename();
 #endif
 #endif
 
+#include <fortify/string.h>
+
 #ifdef __cplusplus
 }
 #endif

@@ -35,14 +35,14 @@ void poll_0100(void)
     struct pollfd fds[2];
     int time_delay = 2000;
 
-    int fd1 = open(path1, O_WRONLY | O_CREAT);
+    int fd1 = open(path1, O_WRONLY | O_CREAT, TEST_MODE);
     if (fd1 < 0) {
         t_error("%s open path1 failed\n", __func__);
     }
     write(fd1, str1, strlen(str1) + 1);
     close(fd1);
 
-    int fd2 = open(path2, O_WRONLY | O_CREAT);
+    int fd2 = open(path2, O_WRONLY | O_CREAT, TEST_MODE);
     if (fd2 < 0) {
         t_error("%s open path2 failed\n", __func__);
     }
@@ -108,29 +108,9 @@ void poll_0200(void)
     }
 }
 
-/*
- * @tc.name      : poll_0300
- * @tc.desc      : When the parameter nfds is invalid, test the return value of the function
- * @tc.level     : Level 2
- */
-void poll_0300(void)
-{
-    struct pollfd fds[2];
-    fds[0].fd = 1;
-    fds[0].events = POLLIN;
-    fds[1].fd = 1;
-    fds[1].events = POLLIN;
-
-    int result = poll(fds, -1, 1);
-    if (result != -1) {
-        t_error("%s poll should be failed\n", __func__);
-    }
-}
-
 int main(int argc, char *argv[])
 {
     poll_0100();
     poll_0200();
-    poll_0300();
     return t_status;
 }

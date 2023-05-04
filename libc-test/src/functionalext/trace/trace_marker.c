@@ -74,7 +74,7 @@ static void dump_trace(int trace_fd)
     char buffer[READ_BUFFER_SIZE];
     int nwrite;
     int nread;
-    int out_fd = open(OUTFILE, O_WRONLY | O_CREAT);
+    int out_fd = open(OUTFILE, O_WRONLY | O_CREAT, TEST_MODE);
     if (out_fd == -1) {
         return;
     }

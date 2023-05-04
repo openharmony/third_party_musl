@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef _SYS_STAT_H
-#error "Never include this file directly; instead, include <sys/stat.h>"
+#ifndef _STDLIB_H
+#error "Never include this file directly; instead, include <stdlib.h>"
 #endif
 
 #include "fortify.h"
@@ -23,25 +23,12 @@
 extern "C" {
 #endif
 
-mode_t __umask_chk(mode_t);
-mode_t __umask_real(mode_t mode) __DIAGNOSE_RENAME(umask);
-
-#ifdef __FORTIFY_COMPILATION
-/* Overload of umask. */
-__DIAGNOSE_FORTIFY_INLINE
-mode_t umask(mode_t mode)
-__DIAGNOSE_OVERLOAD
-__DIAGNOSE_ENABLE_IF(1, "")
-__DIAGNOSE_ERROR_IF(mode & ~0777, "'umask' was called in invalid mode")
-{
-#ifdef __FORTIFY_RUNTIME
-    return __umask_chk(mode);
-#else
-    return __umask_real(mode);
+#if defined(_GNU_SOURCE) && defined(__FORTIFY_COMPILATION)
+char* realpath(const char* path, char* resolved)
+__DIAGNOSE_ERROR_IF(!path, "'realpath': NULL path is never correct; flipped arguments?")
+__DIAGNOSE_ERROR_IF(__DIAGNOSE_UNEVALUATED_LT(__DIAGNOSE_BOS(resolved), FORTIFY_PATH_MAX),
+    "'realpath' " OUTPUT_PARAMETER_BYTES);
 #endif
-}
-#endif
-
 #ifdef __cplusplus
 }
 #endif
