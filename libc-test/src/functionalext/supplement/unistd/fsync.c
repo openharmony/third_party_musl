@@ -26,7 +26,7 @@ const char *path = "/data/test.txt";
  */
 void fsync_0100(void)
 {
-    int fd = open(path, O_RDWR | O_CREAT);
+    int fd = open(path, O_RDWR | O_CREAT, TEST_MODE);
     EXPECT_TRUE("fsync_0100", fd >= 0);
 
     int result = fsync(fd);

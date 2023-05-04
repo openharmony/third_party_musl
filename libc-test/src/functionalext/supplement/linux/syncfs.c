@@ -30,7 +30,7 @@ void syncfs_0100(void)
     errno = 0;
     char path[PATH_MAX] = {0};
     FILE_ABSOLUTE_PATH("syncfs.txt", path);
-    int fd = open(path, O_RDWR | O_CREAT);
+    int fd = open(path, O_RDWR | O_CREAT, TEST_MODE);
     if (fd == -1) {
         t_error("%s open failed\n", __func__);
         return;

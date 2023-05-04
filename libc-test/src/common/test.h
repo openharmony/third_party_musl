@@ -85,3 +85,5 @@ int t_setutf8(void);
 #define __utimes_time64 utimes
 #define __wait4_time64 wait4
 #endif
+
+#define TEST_MODE 0666

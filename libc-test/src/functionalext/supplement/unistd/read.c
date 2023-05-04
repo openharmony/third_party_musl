@@ -27,7 +27,7 @@ void read_0100(void)
 {
     char str[] = "this is a readtest\n";
     char buffer[1024] = {0};
-    int fd = open("/data/readtest.txt", O_RDWR | O_CREAT);
+    int fd = open("/data/readtest.txt", O_RDWR | O_CREAT, TEST_MODE);
     EXPECT_TRUE("read_0100", fd >= 0);
     int retwrite = write(fd, str, sizeof(str));
     EXPECT_EQ("read_0100", retwrite, SIZE);

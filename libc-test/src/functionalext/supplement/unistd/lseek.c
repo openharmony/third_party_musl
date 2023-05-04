@@ -36,7 +36,7 @@ void lseek64_0100(void)
 {
     off64_t DataArry[TEST_BUFFER_SIZE] = {1, 2, 4, 8};
     off64_t offset = 0;
-    int fd = open("lseek64_function_test.c", O_RDWR | O_CREAT);
+    int fd = open("lseek64_function_test.c", O_RDWR | O_CREAT, TEST_MODE);
     if (fd < 0) {
         t_error("open file failed\n");
         return;
@@ -63,7 +63,7 @@ void lseek64_0100(void)
 void lseek_0100(void)
 {
     char *wrstring = "This is a test sample!";
-    int fd = open("/data/readtest.txt", O_RDWR | O_CREAT);
+    int fd = open("/data/readtest.txt", O_RDWR | O_CREAT, TEST_MODE);
     EXPECT_STRLT("lseek_0100", 0, fd);
     int retwrite = write(fd, wrstring, sizeof(wrstring));
     off_t data = lseek(fd, 0L, SEEK_SET);
@@ -80,7 +80,7 @@ void lseek_0100(void)
 void lseek_0200(void)
 {
     char *wrstring = "This is a test sample!";
-    int fd = open("/data/readtest.txt", O_RDWR | O_CREAT);
+    int fd = open("/data/readtest.txt", O_RDWR | O_CREAT, TEST_MODE);
     EXPECT_STRLT("lseek_0200", 0, fd);
     int retwrite = write(fd, wrstring, sizeof(wrstring));
     off_t data = lseek(fd, 8L, SEEK_SET);
@@ -97,7 +97,7 @@ void lseek_0200(void)
 void lseek_0300(void)
 {
     char *wrstring = "This is a test sample!";
-    int fd = open("/data/readtest.txt", O_RDWR | O_CREAT);
+    int fd = open("/data/readtest.txt", O_RDWR | O_CREAT, TEST_MODE);
     EXPECT_STRLT("lseek_0300", 0, fd);
     int retwrite = write(fd, wrstring, sizeof(wrstring));
     off_t data = lseek(fd, 10L, SEEK_SET);
@@ -115,7 +115,7 @@ void lseek_0300(void)
 void lseek_0400(void)
 {
     char str[] = "This is a test sample!";
-    int fd = open("/data/readtest.txt", O_RDWR | O_CREAT);
+    int fd = open("/data/readtest.txt", O_RDWR | O_CREAT, TEST_MODE);
     EXPECT_STRLT("lseek_0400", 0, fd);
     int retwrite = write(fd, str, sizeof(str));
     off_t data = lseek(fd, -1L, SEEK_END);
@@ -132,7 +132,7 @@ void lseek_0400(void)
 void lseek_0500(void)
 {
     char str[] = "This is a test sample!";
-    int fd = open("/data/readtest.txt", O_RDWR | O_CREAT);
+    int fd = open("/data/readtest.txt", O_RDWR | O_CREAT, TEST_MODE);
     EXPECT_STRLT("lseek_0500", 0, fd);
     int retwrite = write(fd, str, sizeof(str));
     off_t data = lseek(fd, -10L, SEEK_SET);
@@ -149,7 +149,7 @@ void lseek_0500(void)
 void lseek_0600(void)
 {
     char str[] = "This is a test sample!";
-    int fd = open("/data/readtest.txt", O_RDWR | O_CREAT);
+    int fd = open("/data/readtest.txt", O_RDWR | O_CREAT, TEST_MODE);
     EXPECT_STRLT("lseek_0600", 0, fd);
     int retwrite = write(fd, str, sizeof(str));
     off_t data = lseek(fd, 10L, SEEK_END);

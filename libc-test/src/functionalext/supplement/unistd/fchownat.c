@@ -28,7 +28,7 @@ void fchownat_0100(void)
 {
     char ptr[PATH_MAX] = {0};
     FILE_ABSOLUTE_PATH(STR_FCHOWNAT_TEST_TXT, ptr);
-    int fd = open(ptr, O_RDWR | O_CREAT);
+    int fd = open(ptr, O_RDWR | O_CREAT, TEST_MODE);
     EXPECT_TRUE("fchownat_0100", fd >= 0);
     int ret = fchownat(fd, ptr, 0, 0, AT_SYMLINK_NOFOLLOW);
     EXPECT_EQ("fchownat_0100", ret, 0);
@@ -50,7 +50,7 @@ void fchownat_0200(void)
 {
     char ptr[PATH_MAX] = {0};
     FILE_ABSOLUTE_PATH(STR_FCHOWNAT_TEST_TXT, ptr);
-    int fd = open(ptr, O_RDWR | O_CREAT);
+    int fd = open(ptr, O_RDWR | O_CREAT, TEST_MODE);
     EXPECT_TRUE("fchownat_0200", fd >= 0);
     int ret = fchownat(AT_FDCWD, ptr, 0, 0, AT_SYMLINK_NOFOLLOW);
     EXPECT_EQ("fchownat_0200", ret, 0);

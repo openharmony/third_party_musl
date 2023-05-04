@@ -35,12 +35,12 @@ void splice_0100(void)
     FILE_ABSOLUTE_PATH(STR_FILE_FROM_TXT, fromfile);
     FILE_ABSOLUTE_PATH(STR_FILE_TO_TXT, tofile);
 
-    int fromfd = open(fromfile, O_RDWR | O_CREAT);
+    int fromfd = open(fromfile, O_RDWR | O_CREAT, TEST_MODE);
     if (fromfd < 0) {
         t_error("%s failed: fromfd = %d\n", __func__, fromfd);
     }
 
-    int tofd = open(tofile, O_RDWR | O_CREAT);
+    int tofd = open(tofile, O_RDWR | O_CREAT, TEST_MODE);
     if (tofd < 0) {
         t_error("%s failed: tofd = %d\n", __func__, tofd);
     }

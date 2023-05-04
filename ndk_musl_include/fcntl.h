@@ -20,6 +20,7 @@ extern "C" {
 #include <bits/alltypes.h>
 
 #include <bits/fcntl.h>
+#include <fortify/fcntl.h>
 
 struct flock {
 	short l_type;

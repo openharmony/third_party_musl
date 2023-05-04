@@ -25,7 +25,7 @@
 void chmod_0100(void)
 {
     struct stat buf;
-    open("test.txt", O_RDWR | O_CREAT);
+    open("test.txt", O_RDWR | O_CREAT, TEST_MODE);
     int result = chmod("test.txt",
         S_IRUSR | S_ISGID | S_ISVTX | S_IWUSR | S_IROTH | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IXGRP | S_IROTH |
             S_IWOTH | S_IXOTH);
@@ -44,7 +44,7 @@ void chmod_0200(void)
 {
 
     struct stat buf;
-    open("test.txt", O_RDWR | O_CREAT);
+    open("test.txt", O_RDWR | O_CREAT, TEST_MODE);
     int result = chmod("test.txt", S_IRWXU | S_IRWXG | S_IRWXO);
     stat("test.txt", &buf);
     EXPECT_EQ("chmod_0200", result, 0);

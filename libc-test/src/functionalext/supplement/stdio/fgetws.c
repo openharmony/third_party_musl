@@ -57,7 +57,7 @@ void fgetws_0200()
     FILE *fptr = fopen(ptr, "w+");
     EXPECT_PTRNE("fgetws_0100", fptr, NULL);
 
-    fwrite(line, sizeof(char), 100, fptr);
+    fwrite(line, sizeof(line) / sizeof(wchar_t), sizeof(*line), fptr);
     fflush(fptr);
 
     wchar_t *ch = fgetws(wrstring, EINVAL, fptr);

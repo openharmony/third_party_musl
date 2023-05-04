@@ -27,7 +27,7 @@ const char *linkfilename = "./linkfile.txt";
 
 int create_file(char *path)
 {
-    int fd = open(path, O_RDWR | O_CREAT);
+    int fd = open(path, O_RDWR | O_CREAT, TEST_MODE);
     if (fd < 0) {
         return -1;
     }

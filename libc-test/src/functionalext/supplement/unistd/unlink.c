@@ -28,7 +28,7 @@ void unlink_0100(void)
 {
     char path[PATH_MAX] = {0};
     FILE_ABSOLUTE_PATH("test_unlink.txt", path);
-    int fd = open(path, O_CREAT);
+    int fd = open(path, O_CREAT, TEST_MODE);
     int error_code = -1;
     if (fd == error_code) {
         t_error("%s unlink create file error", __func__);

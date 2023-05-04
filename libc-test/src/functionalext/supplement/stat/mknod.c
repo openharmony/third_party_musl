@@ -18,8 +18,6 @@
 #include "functionalext.h"
 #include "filepath_util.h"
 
-#define TEST_MODE 0666
-
 /**
  * @tc.name      : mknod_0100
  * @tc.desc      : Create file node

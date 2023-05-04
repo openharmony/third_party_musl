@@ -32,7 +32,7 @@ void faccessat_0100(void)
 {
     char ptr[PATH_MAX] = {0};
     FILE_ABSOLUTE_PATH(STR_FACCESSAT_TEST_TXT, ptr);
-    int fd = open(ptr, O_RDWR | O_CREAT);
+    int fd = open(ptr, O_RDWR | O_CREAT, TEST_MODE);
     EXPECT_TRUE("faccessat_0100", fd >= 0);
     int isExist = faccessat(fd, ptr, F_OK, 0);
     EXPECT_EQ("faccessat_0100", isExist, SUCCESS);
@@ -119,7 +119,7 @@ void faccessat_0600(void)
 {
     char ptr[PATH_MAX] = {0};
     FILE_ABSOLUTE_PATH(STR_FACCESSAT_TEST_TXT, ptr);
-    int fd = open(ptr, O_RDWR | O_CREAT);
+    int fd = open(ptr, O_RDWR | O_CREAT, TEST_MODE);
     EXPECT_TRUE("faccessat_0600", fd >= 0);
     int isExecute = faccessat(fd, ptr, X_OK, 0);
     EXPECT_EQ("faccessat_0600", isExecute, FAILED);
@@ -153,7 +153,7 @@ void faccessat_0800(void)
 {
     char ptr[PATH_MAX] = {0};
     FILE_ABSOLUTE_PATH(STR_FACCESSAT_TEST_TXT, ptr);
-    int fd = open(ptr, O_RDWR | O_CREAT);
+    int fd = open(ptr, O_RDWR | O_CREAT, TEST_MODE);
     EXPECT_TRUE("faccessat_0800", fd >= 0);
     int isExecute = faccessat(fd, ptr, R_OK | W_OK | X_OK, 0);
     EXPECT_EQ("faccessat_0800", isExecute, FAILED);
@@ -207,7 +207,7 @@ void faccessat_1100(void)
 {
     char ptr[PATH_MAX] = {0};
     FILE_ABSOLUTE_PATH(STR_FACCESSAT_TEST_TXT, ptr);
-    int fd = open(ptr, O_RDWR | O_CREAT);
+    int fd = open(ptr, O_RDWR | O_CREAT, TEST_MODE);
     EXPECT_TRUE("faccessat_1100", fd >= 0);
     int isExecute = faccessat(AT_FDCWD, ptr, R_OK | W_OK | X_OK, AT_EACCESS);
     EXPECT_EQ("faccessat_1100", isExecute, FAILED);

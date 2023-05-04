@@ -28,7 +28,7 @@ void fchmod_0100()
 {
     struct stat buf;
     const char *path = "/data/test.txt";
-    int fd = open(path, O_RDWR | O_CREAT);
+    int fd = open(path, O_RDWR | O_CREAT, TEST_MODE);
     EXPECT_NE("fchmod_0100", fd, -1);
 
     int result = fchmod(fd,
@@ -50,7 +50,7 @@ void fchmod_0200()
 {
     struct stat buf;
     const char *path = "/data/test.txt";
-    int fd = open(path, O_RDWR | O_CREAT);
+    int fd = open(path, O_RDWR | O_CREAT, TEST_MODE);
     int result = fchmod(fd, S_IRWXU | S_IRWXG | S_IRWXO);
     stat(path, &buf);
     EXPECT_EQ("fchmod_0200", result, 0);

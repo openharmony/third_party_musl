@@ -189,7 +189,7 @@ void strptime_0700(void)
     strptime(buffer, "%s", &tmTime);
     second = mktime(&tmTime);
     char buffResult[gBufferSize];
-    int cnt = sprintf(buffResult, "%ld", second);
+    int cnt = sprintf(buffResult, "%lld", second);
     EXPECT_TRUE("strptime_0700", cnt > 0);
     EXPECT_STREQ("strptime_0700", buffer, buffResult);
 }

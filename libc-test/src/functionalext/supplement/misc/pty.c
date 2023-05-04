@@ -102,27 +102,28 @@ void ptsname_r_0400(void)
 
 /**
  * @tc.name      : posix_openpt_0100
- * @tc.desc      : Open the ptmx file in the dev directory (success)
+ * @tc.desc      : Open the ptmx file using flag O_RDWR (success)
  * @tc.level     : Level 0
  */
 void posix_openpt_0100(void)
 {
     int amaster, aslave;
-    int ret = posix_openpt(O_RDWR | O_CREAT);
+    int ret = posix_openpt(O_RDWR);
     EXPECT_NE("posix_openpt_0100", ret, ERREXPECT);
-    ret = close(ret);
+    close(ret);
 }
 
 /**
  * @tc.name      : posix_openpt_0200
- * @tc.desc      : Open the ptmx file in the dev directory (failed)
+ * @tc.desc      : Open the ptmx file using flag O_RDWR | O_NOCTTY (success)
  * @tc.level     : Level 2
  */
 void posix_openpt_0200(void)
 {
     errno = ENOSPC;
-    int ret = posix_openpt(O_EXCL | O_CREAT);
-    EXPECT_EQ("posix_openpt_0200", ret, ERREXPECT);
+    int ret = posix_openpt(O_RDWR | O_NOCTTY);
+    EXPECT_NE("posix_openpt_0200", ret, ERREXPECT);
+    close(ret);
 }
 
 int main(void)

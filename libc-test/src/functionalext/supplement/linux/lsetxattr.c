@@ -29,7 +29,7 @@ const int size = 3;
  */
 void lsetxattr_0100(void)
 {
-    int fd = open(path, O_RDWR | O_CREAT);
+    int fd = open(path, O_RDWR | O_CREAT, TEST_MODE);
     if (fd < 0) {
         t_error("%s failed: fd = %d\n", __func__, fd);
         return;

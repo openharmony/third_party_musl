@@ -19,7 +19,6 @@
 #include "functionalext.h"
 
 #define TEST_BUFFER_SIZE 64
-#define TEST_MODE 0777
 
 void rm_file(const char *name)
 {
