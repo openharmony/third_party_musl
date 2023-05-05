@@ -7,6 +7,7 @@ touch /data/tests/libc-test/REPORT
 touch /data/tests/libc-test/FileList.txt
 touch /data/tests/libc-test/SkipList.txt
 echo 'root:This.is.a.test:18997:0:99999:7:::'>/etc/shadow
+param set debug.hitrace.tags.enableflags 1
 
 ARCH=arm
 ABILIST=$(param get const.product.cpu.abilist)
