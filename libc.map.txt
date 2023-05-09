@@ -1978,6 +1978,7 @@
     CachedParameterDestroy;
     CachedParameterGetChanged;
     malloc_stats_print;
+    GetParamLabelIndex;
   local:
     *;
 };
