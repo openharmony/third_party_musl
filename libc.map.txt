@@ -1972,6 +1972,7 @@
     GetSystemCommitId;
     mallopt;
     TestParameterReaderPerformance;
+    reallocarray;
   local:
     *;
 };
