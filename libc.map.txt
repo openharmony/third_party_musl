@@ -1973,6 +1973,11 @@
     mallopt;
     TestParameterReaderPerformance;
     reallocarray;
+    CachedParameterCreate;
+    CachedParameterGet;
+    CachedParameterDestroy;
+    CachedParameterGetChanged;
+    malloc_stats_print;
   local:
     *;
 };
