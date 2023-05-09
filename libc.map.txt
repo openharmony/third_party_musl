@@ -1966,6 +1966,10 @@
     __cfi_slowpath;
     __cfi_slowpath_diag;
     __memleak_hook_flag;
+    SystemFindParameter;
+    SystemGetParameterCommitId;
+    SystemGetParameterValue;
+    GetSystemCommitId;
   local:
     *;
 };
