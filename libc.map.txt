@@ -1979,7 +1979,11 @@
     CachedParameterGetChanged;
     malloc_stats_print;
     GetParamLabelIndex;
-    # temp_just_for_access_control
+    # temp_just_for_access_control;
+    malloc_disable;
+    malloc_enable;
+    malloc_info;
+    malloc_iterate;
   local:
     *;
 };
