@@ -1961,7 +1961,7 @@
     ynf;
     dlopen_ns_ext;
     init_cfi_shadow;
-    # map_dso_to_cfi_shadow;
+    map_dso_to_cfi_shadow;
     unmap_dso_from_cfi_shadow;
     __cfi_slowpath;
     __cfi_slowpath_diag;
