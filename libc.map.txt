@@ -1983,6 +1983,12 @@
     malloc_enable;
     malloc_info;
     malloc_iterate;
+    GetLabelIndex;
+    tcgetwinsize;
+    _Fork;
+    malloc_backtrace;
+    tcsetwinsize;
+    qsort_r;
   local:
     *;
 };
