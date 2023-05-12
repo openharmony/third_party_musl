@@ -45,7 +45,7 @@ extern int __libc_sigaction(int sig, const struct sigaction *restrict sa,
 #define SIGCHAIN_PRINT_ERROR(...)
 #define SIGCHAIN_PRINT_INFO(...)
 #define SIGCHAIN_PRINT_DEBUG(...)
-#define SIGCHAIN_LOG_FATAL(...) 
+#define SIGCHAIN_LOG_FATAL(...)
 #endif
 
 #define SIGCHAIN_PRINT_FATAL(...)  do {                    \
@@ -167,7 +167,7 @@ static void signal_chain_handler(int signo, siginfo_t* siginfo, void* ucontext_r
             sigchain_sigmask(SIG_SETMASK, &sig_chains[signo - 1].sca_special_actions[i].sca_mask,
                             &previous_mask);
 
-            bool previous_value =  get_handling_signal();
+            bool previous_value = get_handling_signal();
             if (!noreturn) {
                 set_handling_signal(true);
             }
@@ -201,8 +201,13 @@ static void signal_chain_handler(int signo, siginfo_t* siginfo, void* ucontext_r
         if (sig_chains[signo - 1].sig_action.sa_handler == SIG_IGN) {
             return;
         } else if (sig_chains[signo - 1].sig_action.sa_handler == SIG_DFL) {
-            SIGCHAIN_PRINT_FATAL("%{public}s exiting due to SIG_DFL handler for signal: %{public}d",
-                    __func__, signo);
+            SIGCHAIN_PRINT_DEBUG("%{public}s SIG_DFL handler for signal: %{public}d", __func__, signo);
+            remove_all_special_handler(signo);
+            if (__syscall(SYS_rt_tgsigqueueinfo, __syscall(SYS_getpid), __syscall(SYS_gettid), signo, siginfo) != 0) {
+                SIGCHAIN_PRINT_ERROR("Failed to rethrow sig(%{public}d), errno(%{public}d).", signo, errno);
+            } else {
+                SIGCHAIN_PRINT_INFO("pid(%{public}d) rethrow sig(%{public}d).", __syscall(SYS_getpid), signo);
+            }
         } else {
             sig_chains[signo - 1].sig_action.sa_handler(signo);
         }
