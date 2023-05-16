@@ -61,6 +61,7 @@ void __pthread_reserve_signal_stack()
 	sigaltstack(&signal_stack, NULL);
 
 	pthread_t self = __pthread_self();
+	self->signal_stack = stack;
 	char name[ANON_STACK_NAME_SIZE];
 	snprintf(name, ANON_STACK_NAME_SIZE, "signal_stack:%d", __pthread_self()->tid);
 	prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, signal_stack.ss_sp, signal_stack.ss_size, name);
@@ -69,13 +70,20 @@ void __pthread_reserve_signal_stack()
 
 void __pthread_release_signal_stack()
 {
+	pthread_t self = __pthread_self();
+	if (self->signal_stack == NULL) {
+		return;
+	}
+
 	stack_t signal_stack, old_stack;
 	memset(&signal_stack, 0, sizeof(signal_stack));
 	signal_stack.ss_flags = SS_DISABLE;
 	sigaltstack(&signal_stack, &old_stack);
+	munmap(self->signal_stack, __default_guardsize);
 	if (old_stack.ss_flags != SS_DISABLE) {
 		munmap(old_stack.ss_sp, old_stack.ss_size);
 	}
+	self->signal_stack = NULL;
 }
 
 weak_alias(__pthread_reserve_signal_stack, pthread_reserve_signal_stack);
