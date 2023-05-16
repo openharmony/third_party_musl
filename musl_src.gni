@@ -2180,6 +2180,7 @@ musl_src_porting_file = [
   "src/sigchain/sigchain.c",
   "src/conf/legacy.c",
   "src/conf/sysconf.c",
+  "src/env/getenv.c",
 ]
 
 musl_inc_hook_files = [
