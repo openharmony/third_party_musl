@@ -36,6 +36,7 @@ declare_args() {
   user_custom_libc = true
   use_jemalloc = false
   use_jemalloc_dfx_intf = false
+  use_pthread_cancel = false
   musl_ported_dir = "intermidiates/${musl_target_os}/musl_src_ported"
   musl_inc_out_dir = "usr/include/${musl_target_triple}"
   uapi_dir = "//kernel/linux/patches/linux-5.10/prebuilts/usr/include"

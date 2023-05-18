@@ -56,6 +56,7 @@ static void child(void)
 
 static void *thread_fun(void *arg)
 {
+#ifdef FEATURE_PTHREAD_CANCEL
     while (1) {
         pthread_testcancel();
         pthread_mutex_lock(&glock);
@@ -63,6 +64,12 @@ static void *thread_fun(void *arg)
         pthread_mutex_unlock(&glock);
         sleep(1);
     }
+#else
+    pthread_mutex_lock(&glock);
+    sleep(TEST_THREAD_SLEEP);
+    pthread_mutex_unlock(&glock);
+    sleep(1);
+#endif
     return NULL;
 }
 
@@ -74,9 +81,10 @@ static void *thread_fun(void *arg)
 void pthread_atfork_0100(void)
 {
     reset_data();
+#ifdef FEATURE_PTHREAD_CANCEL
     pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
     pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
-
+#endif
     pthread_t tid;
     int ret = pthread_create(&tid, NULL, thread_fun, NULL);
     EXPECT_EQ("pthread_atfork_0100", ret, CMPFLAG);
@@ -99,8 +107,10 @@ void pthread_atfork_0100(void)
         EXPECT_EQ("pthread_atfork_0100", gchild_flag, 1);
         _exit(0);
     } else if (pid > 0) {
+#ifdef FEATURE_PTHREAD_CANCEL
         wait(NULL);
         pthread_cancel(tid);
+#endif
         pthread_join(tid, NULL);
 
         EXPECT_EQ("pthread_atfork_0100", gprepare_flag, 1);
