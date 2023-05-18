@@ -1,3 +1,5 @@
+import("../../../musl_config.gni")
+
 functional_list = [
   "argv",
   "basename",
@@ -21,8 +23,6 @@ functional_list = [
   "mbc",
   "memstream",
   "popen",
-  "pthread_cancel-points",
-  "pthread_cancel",
   "pthread_cond",
   "pthread_gettid_np",
   "pthread_mutex",
@@ -81,6 +81,13 @@ functional_list = [
   "dlclose_reset",
   "atexit_dlclose",
 ]
+
+if (use_pthread_cancel) {
+  functional_list += [
+    "pthread_cancel-points",
+    "pthread_cancel",
+  ]
+}
 
 malloc_stats_list = [
   "test-malloc-stats-print",

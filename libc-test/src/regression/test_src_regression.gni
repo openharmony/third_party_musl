@@ -40,7 +40,6 @@ regression_list = [
   "printf-fmt-n",
   "pthread-robust-detach",
   "pthread_atfork-errno-clobber",
-  "pthread_cancel-sem_wait",
   "pthread_cond-smasher",
   "pthread_condattr_setclock",
   "pthread_create-oom",
@@ -78,6 +77,10 @@ regression_list = [
   "wcsncpy-read-overflow",
   "wcsstr-false-negative",
 ]
+
+if (use_pthread_cancel) {
+  regression_list += [ "pthread_cancel-sem_wait" ]
+}
 
 if (musl_secure_level >= 3) {
   regression_list += [
