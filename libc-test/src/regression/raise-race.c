@@ -8,7 +8,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 #include "test.h"
-
+#define SIGNUM 40
 static volatile int c0;
 static volatile int c1;
 static volatile int child;
@@ -32,7 +32,7 @@ static void *start(void *arg)
 	int i,r,s;
 
 	for (i = 0; i < 1000; i++) {
-		r = raise(SIGRTMIN);
+		r = raise(SIGNUM);
 		if (r)
 			t_error("raise failed: %s\n", strerror(errno));
 	}
@@ -59,16 +59,16 @@ int main(void)
 	void *p;
 	int r, i, s;
 
-	if (signal(SIGRTMIN, handler0) == SIG_ERR)
+	if (signal(SIGNUM, handler0) == SIG_ERR)
 		t_error("registering signal handler failed: %s\n", strerror(errno));
-	if (signal(SIGRTMIN+1, handler1) == SIG_ERR)
+	if (signal(SIGNUM+1, handler1) == SIG_ERR)
 		t_error("registering signal handler failed: %s\n", strerror(errno));
 
 	r = pthread_create(&t, 0, start, 0);
 	if (r)
 		t_error("pthread_create failed: %s\n", strerror(r));
 	for (i = 0; i < 100; i++) {
-		r = pthread_kill(t, SIGRTMIN+1);
+		r = pthread_kill(t, SIGNUM+1);
 		if (r)
 			t_error("phread_kill failed: %s\n", strerror(r));
 	}
