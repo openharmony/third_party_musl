@@ -16,6 +16,7 @@ import("test_src_functionalext_sigchain.gni")
 foreach(s, functionalext_sigchain_list) {
   test_unittest(s) {
     target_dir = "functionalext/sigchain"
+    musl_unit_test_flag = true
   }
 }
 

@@ -1283,6 +1283,7 @@ TEST_FUN G_Fun_Array[] = {
 
 int main(void)
 {
+    trace_marker_reset();
     int num = sizeof(G_Fun_Array) / sizeof(TEST_FUN);
     for (int pos = 0; pos < num; ++pos) {
         G_Fun_Array[pos]();

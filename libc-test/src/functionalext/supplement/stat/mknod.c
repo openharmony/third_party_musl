@@ -13,6 +13,7 @@
  * limitations under the License.
  */
 
+#include <errno.h>
 #include <sys/stat.h>
 #include "functionalext.h"
 #include "filepath_util.h"
@@ -26,8 +27,8 @@
  */
 void mknod_0100(void)
 {
-    char pathname[PATH_MAX] = {0};
-    FILE_ABSOLUTE_PATH("mknod", pathname);
+    char pathname[PATH_MAX] = "/dev/zero";
+    // FILE_ABSOLUTE_PATH("mknod", pathname);
     int ret = mknod(pathname, TEST_MODE, 0);
     EXPECT_EQ("mknod_0100", ret, ERREXPECT);
 }
