@@ -93,6 +93,7 @@ FILE *__fdopen(int fd, const char *mode)
 	f->write = __stdio_write;
 	f->seek = __stdio_seek;
 	f->close = __stdio_close;
+	f->readx = __stdio_readx;
 
 	if (!libc.threaded) {
 		f->lock = -1;

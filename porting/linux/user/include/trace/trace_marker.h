@@ -16,6 +16,8 @@
 #ifndef _TRACE_TRACE_MARKER_H
 #define _TRACE_TRACE_MARKER_H
 
+#include <stdint.h>
+
 #define TRACE_MARKER_MESSAGE_LEN 1024
 
 #ifdef __cplusplus
@@ -23,42 +25,55 @@ extern "C"
 {
 #endif
 
+static const uint64_t HITRACE_TAG_ALWAYS = (1ULL << 0); // This tag is always enabled.
+static const uint64_t HITRACE_TAG_MUSL = (1ULL << 12); // musl tag.
+
+/**
+  * @brief Reset trace_marker trace switch status
+  */
+void trace_marker_reset(void);
+
 /**
   * @brief Write the function call information to the trace_marker node in kernel space,
   *        used on the same thread as trace_marker_end(),with the symbol "B".
+  * @param label The tagLabel of current sub-system.
   * @param message The function of information.
   * @param value The value which want to trace.
   */
-void trace_marker_begin(const char *message, const char *value);
+void trace_marker_begin(uint64_t label, const char *message, const char *value);
 
 /**
   * @brief Write the terminator to the trace_marker node of the kernel space,
   *        used on the same thread as trace_marker_begin(),with the symbol "E".
+  * @param label The tagLabel of current sub-system.
   */
-void trace_marker_end(void);
+void trace_marker_end(uint64_t label);
 
 /**
   * @brief Write the function call information to the trace_marker node in kernel space,
   *        used in a different thread than trace_marker_async_end(),with the symbol "S".
+  * @param label The tagLabel of current sub-system.
   * @param message The function of information.
   * @param value The value which want to trace.
   */
-void trace_marker_async_begin(const char *message, const char *value, int taskId);
+void trace_marker_async_begin(uint64_t label, const char *message, const char *value, int taskId);
 
 /**
   * @brief Write the terminator to the trace_marker node in kernel space,
   *        used in a different thread than trace_marker_async_begin(),with the symbol "F".
+  * @param label The tagLabel of current sub-system.
   * @param message The function of information.
   * @param value The value which want to trace.
   */
-void trace_marker_async_end(const char *message, const char *value, int taskId);
+void trace_marker_async_end(uint64_t label, const char *message, const char *value, int taskId);
 
 /**
   * @brief Marks a pre-traced numeric variable,with the symbol "C".
+  * @param label The tagLabel of current sub-system.
   * @param message The function of information.
   * @param value The value which want to trace.
   */
-void trace_marker_count(const char *message, int value);
+void trace_marker_count(uint64_t label, const char *message, int value);
 
 #ifdef __cplusplus
 }

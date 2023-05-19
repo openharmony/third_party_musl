@@ -44,4 +44,7 @@ __progname;
 __progname_full;
 
 __stack_chk_guard;
+
+exit;
+_Exit;
 };
