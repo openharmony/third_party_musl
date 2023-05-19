@@ -28,7 +28,6 @@
 void mknod_0100(void)
 {
     char pathname[PATH_MAX] = "/dev/zero";
-    // FILE_ABSOLUTE_PATH("mknod", pathname);
     int ret = mknod(pathname, TEST_MODE, 0);
     EXPECT_EQ("mknod_0100", ret, ERREXPECT);
 }
