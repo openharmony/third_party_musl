@@ -37,6 +37,8 @@
 #include "pthread_impl.h"
 #include "fork_impl.h"
 #include "strops.h"
+#include "trace/trace_marker.h"
+
 #ifdef OHOS_ENABLE_PARAMETER
 #include "sys_param.h"
 #endif
@@ -103,7 +105,7 @@ struct reserved_address_params {
 #endif
 };
 
-typedef void (*stage3_func)(size_t *, size_t *);
+typedef void (*stage3_func)(size_t *, size_t *, size_t *);
 
 static struct builtin_tls {
 	char c[8];
@@ -304,6 +306,8 @@ static void init_namespace(struct dso *app)
 	char file_path[sizeof "/etc/ld-musl-namespace-" + sizeof (LDSO_ARCH) + sizeof ".ini" + 1] = {0};
 	(void)snprintf(file_path, sizeof file_path, "/etc/ld-musl-namespace-%s.ini", LDSO_ARCH);
 	LD_LOGI("init_namespace file_path:%{public}s", file_path);
+	trace_marker_reset();
+	trace_marker_begin(HITRACE_TAG_MUSL, "parse linker config", file_path);
 	int ret = conf->parse(file_path, app_path);
 	if (ret < 0) {
 		LD_LOGE("init_namespace ini file parse failed!");
@@ -311,6 +315,7 @@ static void init_namespace(struct dso *app)
 		if (!sys_path) get_sys_path(conf);
 		init_default_namespace(app);
 		configor_free();
+		trace_marker_end(HITRACE_TAG_MUSL);
 		return;
 	}
 
@@ -326,6 +331,7 @@ static void init_namespace(struct dso *app)
 	if (!nsl) {
 		LD_LOGE("init nslist fail!");
 		configor_free();
+		trace_marker_end(HITRACE_TAG_MUSL);
 		return;
 	}
 	strlist *s_ns = conf->get_namespaces();
@@ -345,6 +351,7 @@ static void init_namespace(struct dso *app)
 		set_ns_inherits(nsl->nss[i], conf);
 	}
 	configor_free();
+	trace_marker_end(HITRACE_TAG_MUSL);
 	return;
 }
 
@@ -2474,7 +2481,13 @@ static void do_init_fini(struct dso **queue)
 		if (dyn[0] & (1<<DT_INIT_ARRAY)) {
 			size_t n = dyn[DT_INIT_ARRAYSZ]/sizeof(size_t);
 			size_t *fn = laddr(p, dyn[DT_INIT_ARRAY]);
+			if (p != &ldso) {
+				trace_marker_begin(HITRACE_TAG_MUSL, "calling constructors: ", p->name);
+			}
 			while (n--) ((void (*)(void))*fn++)();
+			if (p != &ldso) {
+				trace_marker_end(HITRACE_TAG_MUSL);
+			}
 		}
 
 		pthread_mutex_lock(&init_fini_lock);
@@ -2596,6 +2609,9 @@ hidden void __dls2(unsigned char *base, size_t *sp)
 	} else {
 		ldso.base = base;
 	}
+	size_t aux[AUX_CNT];
+	decode_vec(auxv, aux, AUX_CNT);
+	libc.page_size = aux[AT_PAGESZ];
 	Ehdr *ehdr = (void *)ldso.base;
 	ldso.name = ldso.shortname = "libc.so";
 	ldso.phnum = ehdr->e_phnum;
@@ -2632,8 +2648,8 @@ hidden void __dls2(unsigned char *base, size_t *sp)
 	 * symbolically as a barrier against moving the address
 	 * load across the above relocation processing. */
 	struct symdef dls2b_def = find_sym(&ldso, "__dls2b", 0);
-	if (DL_FDPIC) ((stage3_func)&ldso.funcdescs[dls2b_def.sym-ldso.syms])(sp, auxv);
-	else ((stage3_func)laddr(&ldso, dls2b_def.sym->st_value))(sp, auxv);
+	if (DL_FDPIC) ((stage3_func)&ldso.funcdescs[dls2b_def.sym-ldso.syms])(sp, auxv, aux);
+	else ((stage3_func)laddr(&ldso, dls2b_def.sym->st_value))(sp, auxv, aux);
 }
 
 /* Stage 2b sets up a valid thread pointer, which requires relocations
@@ -2642,7 +2658,7 @@ hidden void __dls2(unsigned char *base, size_t *sp)
  * so that loads of the thread pointer and &errno can be pure/const and
  * thereby hoistable. */
 
-void __dls2b(size_t *sp, size_t *auxv)
+void __dls2b(size_t *sp, size_t *auxv, size_t *aux)
 {
 	/* Setup early thread pointer in builtin_tls for ldso/libc itself to
 	 * use during dynamic linking. If possible it will also serve as the
@@ -2656,8 +2672,8 @@ void __dls2b(size_t *sp, size_t *auxv)
 	}
 
 	struct symdef dls3_def = find_sym(&ldso, "__dls3", 0);
-	if (DL_FDPIC) ((stage3_func)&ldso.funcdescs[dls3_def.sym-ldso.syms])(sp, auxv);
-	else ((stage3_func)laddr(&ldso, dls3_def.sym->st_value))(sp, auxv);
+	if (DL_FDPIC) ((stage3_func)&ldso.funcdescs[dls3_def.sym-ldso.syms])(sp, auxv, aux);
+	else ((stage3_func)laddr(&ldso, dls3_def.sym->st_value))(sp, auxv, aux);
 }
 
 /* Stage 3 of the dynamic linker is called with the dynamic linker/libc
@@ -2665,10 +2681,9 @@ void __dls2b(size_t *sp, size_t *auxv)
  * process dependencies and relocations for the main application and
  * transfer control to its entry point. */
 
-void __dls3(size_t *sp, size_t *auxv)
+void __dls3(size_t *sp, size_t *auxv, size_t *aux)
 {
 	static struct dso app, vdso;
-	size_t aux[AUX_CNT];
 	size_t i;
 	char *env_preload=0;
 	char *replace_argv0=0;
@@ -2681,10 +2696,8 @@ void __dls3(size_t *sp, size_t *auxv)
 	/* Find aux vector just past environ[] and use it to initialize
 	 * global data that may be needed before we can make syscalls. */
 	__environ = envp;
-	decode_vec(auxv, aux, AUX_CNT);
 	search_vec(auxv, &__sysinfo, AT_SYSINFO);
 	__pthread_self()->sysinfo = __sysinfo;
-	libc.page_size = aux[AT_PAGESZ];
 	libc.secure = ((aux[0]&0x7800)!=0x7800 || aux[AT_UID]!=aux[AT_EUID]
 		|| aux[AT_GID]!=aux[AT_EGID] || aux[AT_SECURE]);
 
@@ -3094,6 +3107,8 @@ static void *dlopen_impl(
 	pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &cs);
 	pthread_rwlock_wrlock(&lock);
 	__inhibit_ptc();
+	trace_marker_reset();
+	trace_marker_begin(HITRACE_TAG_MUSL, "dlopen: ", file);
 
 	debug.state = RT_ADD;
 	_dl_debug_state();
@@ -3170,12 +3185,14 @@ static void *dlopen_impl(
 			LD_LOGE("dlopen_impl create loadtask failed");
 			goto end;
 		}
+		trace_marker_begin(HITRACE_TAG_MUSL, "loading: entry so", file);
 		if (!load_library_header(task)) {
 			error(noload ?
 				"Library %s is not already loaded" :
 				"Error loading shared library %s: %m",
 				file);
 			LD_LOGE("dlopen_impl load library header failed for %{public}s", task->name);
+			trace_marker_end(HITRACE_TAG_MUSL); // "loading: entry so" trace end.
 			goto end;
 		}
 		if (reserved_address) {
@@ -3188,6 +3205,7 @@ static void *dlopen_impl(
 			"Library %s is not already loaded" :
 			"Error loading shared library %s: %m",
 			file);
+		trace_marker_end(HITRACE_TAG_MUSL); // "loading: entry so" trace end.
 		goto end;
 	}
 	if (!task->isloaded) {
@@ -3210,6 +3228,7 @@ static void *dlopen_impl(
 	free_loadtasks(tasks);
 	tasks = NULL;
 #else
+		trace_marker_begin(HITRACE_TAG_MUSL, "loading: entry so", file);
 		p = load_library(file, head, ns, true, reserved_address ? &reserved_params : NULL);
 	}
 
@@ -3218,11 +3237,13 @@ static void *dlopen_impl(
 			"Library %s is not already loaded" :
 			"Error loading shared library %s: %m",
 			file);
+		trace_marker_end(HITRACE_TAG_MUSL); // "loading: entry so" trace end.
 		goto end;
 	}
 	/* First load handling */
 	load_deps(p, reserved_address && reserved_address_recursive ? &reserved_params : NULL);
 #endif
+	trace_marker_end(HITRACE_TAG_MUSL); // "loading: entry so" trace end.
 	extend_bfs_deps(p);
 	pthread_mutex_lock(&init_fini_lock);
 	int constructed = p->constructed;
@@ -3246,9 +3267,11 @@ static void *dlopen_impl(
 		}
 	}
 	struct dso *reloc_head_so = p;
+	trace_marker_begin(HITRACE_TAG_MUSL, "linking: entry so", p->name);
 	if (!p->relocated) {
 		reloc_all(p, extinfo);
 	}
+	trace_marker_end(HITRACE_TAG_MUSL);
 	reloc_head_so->is_reloc_head_so_dep = false;
 	for (size_t i=0; reloc_head_so->deps[i]; i++) {
 		reloc_head_so->deps[i]->is_reloc_head_so_dep = false;
@@ -3297,6 +3320,7 @@ end:
 		free(ctor_queue);
 	}
 	pthread_setcancelstate(cs, 0);
+	trace_marker_end(HITRACE_TAG_MUSL); // "dlopen: " trace end.
 	return p;
 }
 
@@ -3487,31 +3511,19 @@ void *addr2dso(size_t a)
 {
 	struct dso *p;
 	size_t i;
-	if (DL_FDPIC) for (p=head; p; p=p->next) {
-		i = count_syms(p);
-		if (a-(size_t)p->funcdescs < i*sizeof(*p->funcdescs))
-			return p;
-	}
 	for (p=head; p; p=p->next) {
-		if (DL_FDPIC && p->loadmap) {
-			for (i=0; i<p->loadmap->nsegs; i++) {
-				if (a-p->loadmap->segs[i].p_vaddr
-					< p->loadmap->segs[i].p_memsz)
-					return p;
-			}
-		} else {
-			Phdr *ph = p->phdr;
-			size_t phcnt = p->phnum;
-			size_t entsz = p->phentsize;
-			size_t base = (size_t)p->base;
-			for (; phcnt--; ph=(void *)((char *)ph+entsz)) {
-				if (ph->p_type != PT_LOAD) continue;
-				if (a-base-ph->p_vaddr < ph->p_memsz)
-					return p;
-			}
-			if (a-(size_t)p->map < p->map_len)
-				return 0;
+		if (a < p->map || a - (size_t)p->map >= p->map_len) continue;
+		Phdr *ph = p->phdr;
+		size_t phcnt = p->phnum;
+		size_t entsz = p->phentsize;
+		size_t base = (size_t)p->base;
+		for (; phcnt--; ph=(void *)((char *)ph+entsz)) {
+			if (ph->p_type != PT_LOAD) continue;
+			if (a-base-ph->p_vaddr < ph->p_memsz)
+				return p;
 		}
+		if (a-(size_t)p->map < p->map_len)
+			return 0;
 	}
 	return 0;
 }
@@ -3544,8 +3556,11 @@ static void *do_dlsym(struct dso *p, const char *s, const char *v, void *ra)
 			ns = caller->namespace;
 		}
 	}
+	trace_marker_reset();
+	trace_marker_begin(HITRACE_TAG_MUSL, "dlsym: ", (s == NULL ? "(NULL)" : s));
 	struct verinfo verinfo = { .s = s, .v = v, .use_vna_hash = false };
 	struct symdef def = find_sym2(p, &verinfo, 0, use_deps, ns);
+	trace_marker_end(HITRACE_TAG_MUSL);
 	if (!def.sym) {
 		LD_LOGE("do_dlsym failed: symbol not found. so=%{public}s s=%{public}s v=%{public}s", p->name, s, v);
 		error("Symbol not found: %s, version: %s", s, strlen(v) > 0 ? v : "null");
@@ -3580,7 +3595,8 @@ static int dlclose_impl(struct dso *p)
 
 	if (--(p->nr_dlopen) > 0)
 		return 0;
-
+	trace_marker_reset();
+	trace_marker_begin(HITRACE_TAG_MUSL, "dlclose", p->name);
 	/* call destructors if needed */
 	if (p->constructed) {
 		size_t dyn[DYN_CNT];
@@ -3588,8 +3604,10 @@ static int dlclose_impl(struct dso *p)
 		if (dyn[0] & (1<<DT_FINI_ARRAY)) {
 			n = dyn[DT_FINI_ARRAYSZ] / sizeof(size_t);
 			size_t *fn = (size_t *)laddr(p, dyn[DT_FINI_ARRAY]) + n;
+			trace_marker_begin(HITRACE_TAG_MUSL, "calling destructors:", p->name);
 			while (n--)
 				((void (*)(void))*--fn)();
+			trace_marker_end(HITRACE_TAG_MUSL);
 		}
 		p->constructed = 0;
 	}
@@ -3667,6 +3685,7 @@ static int dlclose_impl(struct dso *p)
 	if (p->tls.size == 0) {
 		free(p);
 	}
+	trace_marker_end(HITRACE_TAG_MUSL);
 
 	return 0;
 }
@@ -3746,15 +3765,71 @@ hidden int __dlclose(void *p)
 	return rc;
 }
 
+static inline int sym_is_matched(const Sym* sym, size_t addr_offset_so) {
+	return sym->st_value &&
+		(1<<(sym->st_info&0xf) != STT_TLS) &&
+		(addr_offset_so >= sym->st_value) &&
+		(addr_offset_so < sym->st_value + sym->st_size);
+}
+
+static inline Sym* find_addr_by_elf(size_t addr_offset_so, struct dso *p) {
+	uint32_t nsym = p->hashtab[1];
+	Sym *sym = p->syms;
+	for (; nsym; nsym--, sym++) {
+		if (sym_is_matched(sym, addr_offset_so)) {
+			return sym;
+		}
+	}
+
+	return NULL;
+}
+
+static inline Sym* find_addr_by_gnu(size_t addr_offset_so, struct dso *p) {
+
+	size_t i, nsym, first_hash_sym_index;
+	uint32_t *hashval;
+	Sym *sym_tab = p->syms;
+	uint32_t *buckets= p->ghashtab + 4 + (p->ghashtab[2]*sizeof(size_t)/4);
+	// Points to the first defined symbol, all symbols before it are undefined.
+	first_hash_sym_index = buckets[0];
+	Sym *sym = &sym_tab[first_hash_sym_index];
+
+	// Get the location pointed by the last bucket.
+	for (i = nsym = 0; i < p->ghashtab[0]; i++) {
+		if (buckets[i] > nsym)
+			nsym = buckets[i];
+	}
+
+	for (i = first_hash_sym_index; i < nsym; i++) {
+		if (sym_is_matched(sym, addr_offset_so)) {
+			return sym;
+		}
+		sym++;
+	}
+
+	// Start traversing the hash list from the position pointed to by the last bucket.
+	if (nsym) {
+		hashval = buckets + p->ghashtab[0] + (nsym - p->ghashtab[1]);
+		do {
+			nsym++;
+			if (sym_is_matched(sym, addr_offset_so)) {
+				return sym;
+			}
+			sym++;
+		}
+		while (!(*hashval++ & 1));
+	}
+
+	return NULL;
+}
+
+
 int dladdr(const void *addr_arg, Dl_info *info)
 {
 	size_t addr = (size_t)addr_arg;
 	struct dso *p;
-	Sym *sym, *bestsym;
-	uint32_t nsym;
+	Sym *match_sym = NULL;
 	char *strings;
-	size_t best = 0;
-	size_t besterr = -1;
 
 	pthread_rwlock_rdlock(&lock);
 	p = addr2dso(addr);
@@ -3762,54 +3837,26 @@ int dladdr(const void *addr_arg, Dl_info *info)
 
 	if (!p) return 0;
 
-	sym = p->syms;
 	strings = p->strings;
-	nsym = count_syms(p);
-
-	if (DL_FDPIC) {
-		size_t idx = (addr-(size_t)p->funcdescs)
-			/ sizeof(*p->funcdescs);
-		if (idx < nsym && (sym[idx].st_info&0xf) == STT_FUNC) {
-			best = (size_t)(p->funcdescs + idx);
-			bestsym = sym + idx;
-			besterr = 0;
-		}
-	}
-
-	if (!best) for (; nsym; nsym--, sym++) {
-		if (sym->st_value
-		 && (1<<(sym->st_info&0xf) & OK_TYPES)
-		 && (1<<(sym->st_info>>4) & OK_BINDS)) {
-			size_t symaddr = (size_t)laddr(p, sym->st_value);
-			if (symaddr > addr || symaddr <= best)
-				continue;
-			best = symaddr;
-			bestsym = sym;
-			besterr = addr - symaddr;
-			if (addr == symaddr)
-				break;
-		}
-	}
-
-	if (best && besterr > bestsym->st_size-1) {
-		best = 0;
-		bestsym = 0;
-	}
+	size_t addr_offset_so = addr - (size_t)p->base;
 
 	info->dli_fname = p->name;
 	info->dli_fbase = p->map;
 
-	if (!best) {
+	if (p->ghashtab) {
+		match_sym = find_addr_by_gnu(addr_offset_so, p);
+
+	} else {
+		match_sym = find_addr_by_elf(addr_offset_so, p);
+	}
+
+	if (!match_sym) {
 		info->dli_sname = 0;
 		info->dli_saddr = 0;
 		return 1;
 	}
-
-	if (DL_FDPIC && (bestsym->st_info&0xf) == STT_FUNC)
-		best = (size_t)(p->funcdescs + (bestsym - p->syms));
-	info->dli_sname = strings + bestsym->st_name;
-	info->dli_saddr = (void *)best;
-
+	info->dli_sname = strings + match_sym->st_name;
+	info->dli_saddr = (void *)laddr(p, match_sym->st_value);
 	return 1;
 }
 
@@ -4054,7 +4101,7 @@ void* dlopen_ext(const char *file, int mode, const dl_extinfo *extinfo)
 		mode,
 		caller_addr,
 		extinfo ? extinfo->flag : 0);
-  	return dlopen_impl(file, mode, NULL, caller_addr, extinfo);
+	return dlopen_impl(file, mode, NULL, caller_addr, extinfo);
 }
 
 #ifdef LOAD_ORDER_RANDOMIZATION

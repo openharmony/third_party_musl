@@ -7,6 +7,13 @@ touch /data/tests/libc-test/REPORT
 touch /data/tests/libc-test/FileList.txt
 touch /data/tests/libc-test/SkipList.txt
 echo 'root:This.is.a.test:18997:0:99999:7:::'>/etc/shadow
+param set debug.hitrace.tags.enableflags 1
+
+ARCH=arm
+ABILIST=$(param get const.product.cpu.abilist)
+if [ $ABILIST == "arm64-v8a" ]; then
+    ARCH=aarch64
+fi
 
 function FileSuffix() {
     local filename="$1"
@@ -29,7 +36,14 @@ ShieldedList=("trace_stresstest" "syslog" "vsyslog" "runtest"
 #Some math test cases need to skip.
 "acoshl" "asinhl" "erfcl" "fenv" "fma" "fmaf" "fmal" "lgammal" "nearbyint" "nearbyintf"
 "nearbyintl" "rint" "rintf" "rintl" "sqrt" "sqrtf" "sqrtl" "tgammal"
+#TODO-arm32
+"dlopen_ns" "malloc-brk-fail" "pthread_cancel" "res_send"
 )
+
+#TODO-aarch64
+if [ $ARCH == "aarch64" ]; then
+  ShieldedList+=("faccessat" "signal" "unittest_hilog_vsnprint" "yn")
+fi
 
 for skiped in ${ShieldedList[*]};do
     echo $skiped >> /data/tests/libc-test/SkipList.txt

@@ -70,18 +70,6 @@ _Noreturn void __pthread_exit(void *result)
 
 	__block_app_sigs(&set);
 
-	/* This atomic potentially competes with a concurrent pthread_detach
-	 * call; the loser is responsible for freeing thread resources. */
-	int state = a_cas(&self->detach_state, DT_JOINABLE, DT_EXITING);
-
-	if (state==DT_DETACHED && self->map_base) {
-		/* Since __unmapself bypasses the normal munmap code path,
-		 * explicitly wait for vmlock holders first. This must be
-		 * done before any locks are taken, to avoid lock ordering
-		 * issues that could lead to deadlock. */
-		__vm_wait();
-	}
-
 	/* Access to target the exiting thread with syscalls that use
 	 * its kernel tid is controlled by killlock. For detached threads,
 	 * any use past this point would have undefined behavior, but for
@@ -99,7 +87,6 @@ _Noreturn void __pthread_exit(void *result)
 	if (self->next == self) {
 		__tl_unlock();
 		UNLOCK(self->killlock);
-		self->detach_state = state;
 		__restore_sigs(&set);
 		exit(0);
 	}
@@ -137,6 +124,10 @@ _Noreturn void __pthread_exit(void *result)
 	self->next->prev = self->prev;
 	self->prev->next = self->next;
 	self->prev = self->next = self;
+
+	/* This atomic potentially competes with a concurrent pthread_detach
+	 * call; the loser is responsible for freeing thread resources. */
+	int state = a_cas(&self->detach_state, DT_JOINABLE, DT_EXITING);
 
 #if 0
 	if (state==DT_DETACHED && self->map_base) {

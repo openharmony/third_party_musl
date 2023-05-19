@@ -152,7 +152,11 @@ static int name_from_dns(struct address buf[static MAXADDRS], char canon[static 
 		{ .af = AF_INET, .rr = RR_AAAA },
 	};
 
+#ifdef STANDARD_SYSTEM
+	for (i=0; i<1; i++) {
+#else
 	for (i=0; i<2; i++) {
+#endif
 		if (family != afrr[i].af) {
 			qlens[nq] = __res_mkquery(0, name, 1, afrr[i].rr,
 				0, 0, 0, qbuf[nq], sizeof *qbuf);

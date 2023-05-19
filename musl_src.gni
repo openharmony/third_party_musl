@@ -144,6 +144,7 @@ if (musl_arch == "arm") {
   musl_src_arch_file = [
     "src/fenv/x86_64/fenv.s",
     "src/ldso/x86_64/dlsym.s",
+    "src/ldso/x86_64/dlvsym.s",
     "src/ldso/x86_64/tlsdesc.s",
     "src/math/x86_64/__invtrigl.s",
     "src/math/x86_64/acosl.s",
@@ -2165,6 +2166,9 @@ musl_src_porting_file = [
   "src/ldso/x86_64/dlvsym.s",
   "src/stdio/__fdopen.c",
   "src/stdio/vfprintf.c",
+  "src/stdio/__stdio_read.c",
+  "src/stdio/fread.c",
+  "src/internal/stdio_impl.h",
   "src/internal/vdso.c",
   "src/time/clock_gettime.c",
   "src/time/clock_getres.c",
@@ -2180,6 +2184,7 @@ musl_src_porting_file = [
   "src/sigchain/sigchain.c",
   "src/conf/legacy.c",
   "src/conf/sysconf.c",
+  "src/env/getenv.c",
 ]
 
 musl_inc_hook_files = [

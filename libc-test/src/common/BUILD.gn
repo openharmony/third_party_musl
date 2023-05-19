@@ -105,6 +105,7 @@ config("config_unittest") {
     "-Wno-error=unused-function",
     "-g",
     "-D_FILE_OFFSET_BITS=64",
+    "-Wno-constant-conversion",
   ]
 
   ldflags = [ "-nostdlib" ]
