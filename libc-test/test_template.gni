@@ -28,7 +28,9 @@ template("test_unittest") {
 
   target_name = invoker.target_name
   target_dir = invoker.target_dir
-
+  if (defined(invoker.musl_unit_test_flag)) {
+    musl_unit_test_flag = invoker.musl_unit_test_flag
+  }
   target("ohos_executable", "${target_name}") {
     subsystem_name = "musl"
     part_name = "libc-test"
