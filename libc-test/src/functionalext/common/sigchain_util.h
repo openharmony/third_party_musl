@@ -45,4 +45,19 @@
 #define SIGCHAIN_SIGNAL_56 56
 #define SIGCHAIN_SIGNAL_64 64
 
-extern bool get_sigchain_mask_enable();
+bool get_sigchain_mask_enable()
+{
+#ifdef OHOS_ENABLE_PARAMETER
+    static CachedHandle sigchain_procmask_handle = NULL;
+    if (sigchain_procmask_handle == NULL) {
+        sigchain_procmask_handle = CachedParameterCreate(param_name, "false");
+    }
+    char *param_value = CachedParameterGet(sigchain_procmask_handle);
+    if (param_value != NULL) {
+        if (strcmp(param_value, "true") == 0) {
+            return true;
+        }
+    }
+#endif
+    return false;
+}

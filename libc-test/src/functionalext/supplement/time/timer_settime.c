@@ -20,7 +20,7 @@
 #include <unistd.h>
 
 #include "test.h"
-
+#define SIGNUM 40
 static int count = 0;
 
 extern int __timer_settime64(timer_t, int, const struct itimerspec *__restrict, struct itimerspec *__restrict);
@@ -48,10 +48,10 @@ void timer_settime_0100(void)
     timer_t timerid;
 
     sev.sigev_notify = SIGEV_SIGNAL;
-    sev.sigev_signo = SIGRTMIN;
+    sev.sigev_signo = SIGNUM;
     sev.sigev_value.sival_ptr = &timerid;
 
-    signal(SIGRTMIN, handler);
+    signal(SIGNUM, handler);
 
     int result = timer_create(CLOCK_REALTIME, &sev, &timerid);
     if (result != 0) {
@@ -102,10 +102,10 @@ void timer_settime64_0100(void)
     timer_t timerid;
 
     sev.sigev_notify = SIGEV_SIGNAL;
-    sev.sigev_signo = SIGRTMIN;
+    sev.sigev_signo = SIGNUM;
     sev.sigev_value.sival_ptr = &timerid;
 
-    signal(SIGRTMIN, handler);
+    signal(SIGNUM, handler);
 
     int result = timer_create(CLOCK_REALTIME, &sev, &timerid);
     if (result != 0) {
