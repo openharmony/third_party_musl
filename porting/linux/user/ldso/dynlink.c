@@ -601,6 +601,21 @@ static bool check_sym_accessible(struct dso *dso, ns_t *ns)
 	return false;
 }
 
+static inline bool is_dso_accessible(struct dso *dso, ns_t *ns)
+{
+	if (dso->namespace == ns) {
+		return true;
+	}
+	for (int i = 0; i < dso->parents_count; i++) {
+		if (dso->parents[i]->namespace == ns) {
+			return true;
+		}
+	}
+	LD_LOGD(
+		"check_sym_accessible dso name [%{public}s] ns_name [%{public}s] not accessible!", dso->name, ns->ns_name);
+	return false;
+}
+
 static int find_dso_parent(struct dso *p, struct dso *target)
 {
 	int index = -1;
@@ -791,6 +806,43 @@ static inline struct symdef find_sym2(struct dso *dso, struct verinfo *verinfo, 
 	for (; dso; dso=use_deps ? *deps++ : dso->syms_next) {
 		Sym *sym;
 		if (ns && !check_sym_accessible(dso, ns)) {
+			continue;
+		}
+		if ((ght = dso->ghashtab)) {
+			GNU_HASH_FILTER(ght, ghm, gho)
+			sym = gnu_lookup(s_info_p, ght, dso, verinfo);
+		} else {
+			if (!h) s_info_p = sysv_hash(verinfo->s);
+			sym = sysv_lookup(verinfo, s_info_p, dso);
+		}
+
+		if (!sym) continue;
+		if (!sym->st_shndx)
+			if (need_def || (sym->st_info&0xf) == STT_TLS
+				|| ARCH_SYM_REJECT_UND(sym))
+				continue;
+		if (!sym->st_value)
+			if ((sym->st_info&0xf) != STT_TLS)
+				continue;
+		if (!(1<<(sym->st_info&0xf) & OK_TYPES)) continue;
+		if (!(1<<(sym->st_info>>4) & OK_BINDS)) continue;
+		def.sym = sym;
+		def.dso = dso;
+		break;
+	}
+	return def;
+}
+
+static inline struct symdef find_sym_by_deps(struct dso *dso, struct verinfo *verinfo, int need_def, ns_t *ns)
+{
+	struct sym_info_pair s_info_p = gnu_hash(verinfo->s);
+	uint32_t h = 0, gh = s_info_p.sym_h, gho = gh / (8*sizeof(size_t)), *ght;
+	size_t ghm = 1ul << gh % (8*sizeof(size_t));
+	struct symdef def = {0};
+	struct dso **deps = dso->deps;
+	for (; dso; dso=*deps++) {
+		Sym *sym;
+		if (!is_dso_accessible(dso, ns)) {
 			continue;
 		}
 		if ((ght = dso->ghashtab)) {
@@ -3556,10 +3608,10 @@ static void *do_dlsym(struct dso *p, const char *s, const char *v, void *ra)
 			ns = caller->namespace;
 		}
 	}
-	trace_marker_reset();
 	trace_marker_begin(HITRACE_TAG_MUSL, "dlsym: ", (s == NULL ? "(NULL)" : s));
 	struct verinfo verinfo = { .s = s, .v = v, .use_vna_hash = false };
-	struct symdef def = find_sym2(p, &verinfo, 0, use_deps, ns);
+	struct symdef def = use_deps ? find_sym_by_deps(p, &verinfo, 0, ns) :
+		find_sym2(p, &verinfo, 0, use_deps, ns);
 	trace_marker_end(HITRACE_TAG_MUSL);
 	if (!def.sym) {
 		LD_LOGE("do_dlsym failed: symbol not found. so=%{public}s s=%{public}s v=%{public}s", p->name, s, v);
