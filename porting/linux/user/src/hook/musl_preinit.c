@@ -46,6 +46,7 @@ static struct MallocDispatchType __ohos_malloc_hook_init_dispatch = {
 	.calloc = MuslFunc(calloc),
 	.realloc = MuslFunc(realloc),
 	.prctl = MuslMalloc(prctl),
+	.malloc_usable_size = MuslMalloc(malloc_usable_size),
 	.memtrace = default_memtrace,
 };
 #define MAX_SYM_NAME_SIZE 1000
