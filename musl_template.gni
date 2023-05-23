@@ -455,6 +455,7 @@ template("musl_libs") {
           "$OPTRTDIR/string/aarch64/memset.S",
           "$OPTRTDIR/string/aarch64/stpcpy-sve.S",
           "$OPTRTDIR/string/aarch64/strchr-sve.S",
+          "$OPTRTDIR/string/aarch64/strchrnul-sve.S",
           "$OPTRTDIR/string/aarch64/strcmp-sve.S",
           "$OPTRTDIR/string/aarch64/strcpy-sve.S",
           "$OPTRTDIR/string/aarch64/strlen-sve.S",
@@ -473,6 +474,7 @@ template("musl_libs") {
           "-D__stpcpy_aarch64_sve = stpcpy",
           "-D__strchr_aarch64_sve = strchr",
           "-D__strrchr_aarch64_sve = strrchr",
+          "-D__strchrnul_aarch64_sve = strchrnul",
           "-D__strnlen_aarch64_sve = strnlen",
           "-D__strncmp_aarch64_sve = strncmp",
         ]
@@ -484,6 +486,7 @@ template("musl_libs") {
           "$OPTRTDIR/string/aarch64/memset.S",
           "$OPTRTDIR/string/aarch64/stpcpy-mte.S",
           "$OPTRTDIR/string/aarch64/strchr-mte.S",
+          "$OPTRTDIR/string/aarch64/strchrnul-mte.S",
           "$OPTRTDIR/string/aarch64/strcmp-mte.S",
           "$OPTRTDIR/string/aarch64/strcpy-mte.S",
           "$OPTRTDIR/string/aarch64/strlen-mte.S",
@@ -502,6 +505,7 @@ template("musl_libs") {
           "-D__stpcpy_aarch64_mte = stpcpy",
           "-D__strchr_aarch64_mte = strchr",
           "-D__strrchr_aarch64_mte = strrchr",
+          "-D__strchrnul_aarch64_mte = strchrnul",
           "-D__strnlen_aarch64 = strnlen",
           "-D__strncmp_aarch64_mte = strncmp",
         ]
@@ -513,6 +517,7 @@ template("musl_libs") {
           "$OPTRTDIR/string/aarch64/memset.S",
           "$OPTRTDIR/string/aarch64/stpcpy.S",
           "$OPTRTDIR/string/aarch64/strchr.S",
+          "$OPTRTDIR/string/aarch64/strchrnul.S",
           "$OPTRTDIR/string/aarch64/strcmp.S",
           "$OPTRTDIR/string/aarch64/strcpy.S",
           "$OPTRTDIR/string/aarch64/strlen.S",
@@ -532,6 +537,7 @@ template("musl_libs") {
           "-D__stpcpy_aarch64 = stpcpy",
           "-D__strchr_aarch64 = strchr",
           "-D__strrchr_aarch64 = strrchr",
+          "-D__strchrnul_aarch64 = strchrnul",
           "-D__strnlen_aarch64 = strnlen",
           "-D__strncmp_aarch64 = strncmp",
         ]
