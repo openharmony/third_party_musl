@@ -2185,6 +2185,7 @@ musl_src_porting_file = [
   "src/conf/legacy.c",
   "src/conf/sysconf.c",
   "src/env/getenv.c",
+  "src/thread/pthread_once.c",
 ]
 
 musl_inc_hook_files = [
