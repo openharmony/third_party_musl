@@ -24,9 +24,10 @@
 
 typedef void (* ATEXIT_CB)();
 
-#define TEST_DSO "libatexit_dlclose_dso.so"
+#define TEST_DSO "/data/tests/libc-test/src/libatexit_dlclose_dso.so"
 #define ATEXIT_CB_NAME "atexit_cb"
 #define ATEXIT_WATCHPOINT_NAME "g_watchpoint"
+#define LIBATEXIT_DLCLOSE_DSO_ABSOLUTE_PATH "/data/tests/libc-test/src/libatexit_dlclose_dso.so"
 
 int fork_main(char *exe)
 {
@@ -43,7 +44,7 @@ int fork_main(char *exe)
 		return 1;
 	}
 
-	handler = dlopen(buf, RTLD_LAZY|RTLD_LOCAL);
+	handler = dlopen(LIBATEXIT_DLCLOSE_DSO_ABSOLUTE_PATH, RTLD_LAZY|RTLD_LOCAL);
 	if(!handler) {
 		t_error("dlopen %s failed: %s\n", buf, dlerror());
 		return 2;

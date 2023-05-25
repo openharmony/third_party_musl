@@ -19,7 +19,7 @@
 #include <unistd.h>
 
 #include "test.h"
-
+#define SIGNUM 40
 static int count = 0;
 
 void handler(int sig)
@@ -40,10 +40,10 @@ void timer_create_0100(void)
     timer_t timerid;
 
     sev.sigev_notify = SIGEV_SIGNAL;
-    sev.sigev_signo = SIGRTMIN;
+    sev.sigev_signo = SIGNUM;
     sev.sigev_value.sival_ptr = &timerid;
 
-    signal(SIGRTMIN, handler);
+    signal(SIGNUM, handler);
 
     int result = timer_create(CLOCK_REALTIME, &sev, &timerid);
     if (result != 0) {
