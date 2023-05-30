@@ -736,6 +736,7 @@
     { "name": "lutimes" },
     { "name": "madvise" },
     { "name": "malloc" },
+    { "name": "mallopt" },
     { "name": "malloc_usable_size" },
     { "name": "mblen" },
     { "name": "mbrlen" },
