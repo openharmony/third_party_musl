@@ -2167,6 +2167,8 @@ musl_src_porting_file = [
   "src/stdio/__fdopen.c",
   "src/stdio/vfprintf.c",
   "src/stdio/__stdio_read.c",
+  "src/stdio/__stdio_write.c",
+  "src/stdio/__stdout_write.c",
   "src/stdio/fread.c",
   "src/stdio/fmemopen.c",
   "src/stdio/freopen.c",
