@@ -380,7 +380,7 @@ static void malloc_finalize()
 	fclose(stderr);
 }
 
-bool finish_install_ohos_malloc_hooks(struct musl_libc_globals* globals, const char* options, const char* prefix)
+bool finish_install_ohos_malloc_hooks(struct musl_libc_globals* globals, const char* options, const char* prefix, void* shared_library_handle)
 {
 	init_func_t init_func = (init_func_t)(function_of_shared_lib[INITIALIZE_FUNCTION]);
 	if (!init_func(&__libc_malloc_default_dispatch, NULL, options)) {
@@ -395,6 +395,7 @@ bool finish_install_ohos_malloc_hooks(struct musl_libc_globals* globals, const c
 			clear_function_table();
 			return false;
 		}
+		atomic_store_explicit(&ohos_malloc_hook_shared_library, (volatile long long)shared_library_handle, memory_order_seq_cst);
 		atomic_store_explicit(&__musl_libc_globals.so_dispatch_table, (volatile long long)&globals->malloc_dispatch_table, memory_order_seq_cst);
 		atomic_store_explicit(&__musl_libc_globals.current_dispatch_table, (volatile long long)&globals->malloc_dispatch_table, memory_order_seq_cst);
 	}
@@ -437,8 +438,7 @@ static void install_ohos_malloc_hook(struct musl_libc_globals* globals, const ch
 		return;
 	}
 
-	if (finish_install_ohos_malloc_hooks(globals, NULL, prefix)) {
-		atomic_store_explicit(&ohos_malloc_hook_shared_library, (volatile long long)shared_library_handle, memory_order_seq_cst);
+	if (finish_install_ohos_malloc_hooks(globals, NULL, prefix, shared_library_handle)) {
 		if (strncmp(__malloc_hook_function_prefix, prefix, strlen(prefix)) == 0) {
 			atomic_store_explicit(&ohos_malloc_ever_shared_library_handle, (volatile long long)shared_library_handle, memory_order_seq_cst);
 		} else {
