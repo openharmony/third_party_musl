@@ -9,6 +9,16 @@ extern "C" {
 
 #include <bits/alltypes.h>
 
+#define M_SET_THREAD_CACHE -1001
+#define M_THREAD_CACHE_ENABLE 1
+#define M_THREAD_CACHE_DISABLE 0
+
+#define M_FLUSH_THREAD_CACHE -1002
+
+#define M_DELAYED_FREE -1003
+#define M_DELAYED_FREE_ENABLE 1
+#define M_DELAYED_FREE_DISABLE 0
+
 void *malloc (size_t);
 void *calloc (size_t, size_t);
 void *realloc (void *, size_t);
@@ -17,6 +27,7 @@ void *valloc (size_t);
 void *memalign(size_t, size_t);
 
 size_t malloc_usable_size(void *);
+int mallopt(int param, int value);
 
 struct mallinfo {
   int arena;
