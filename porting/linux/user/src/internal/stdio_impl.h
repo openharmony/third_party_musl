@@ -63,6 +63,7 @@ hidden off_t __stdio_seek(FILE *, off_t, int);
 hidden int __stdio_close(FILE *);
 
 hidden int __fill_buffer(FILE *f);
+
 hidden int __toread(FILE *);
 hidden int __towrite(FILE *);
 
