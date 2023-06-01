@@ -18,7 +18,7 @@
 
 static int test_mallopt()
 {
-	return mallopt(0, 0) != 0;
+	return mallopt(0, 0) == 0;
 }
 
 int main()

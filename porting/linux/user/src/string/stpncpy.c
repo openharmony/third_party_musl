@@ -3,17 +3,18 @@
 char *__stpncpy(char *dst, const char *src, size_t n)
 {
 	char *d = dst, *s = src;
-	char *flag = dst;
+	dst = &dst[n];
 	while (n > 0){
-		*d = *src;
-		if(*s != 0){
-			s++;
-			flag++;
+		if((*d++ = *src++) == 0){
+			dst = d - 1;
+			while(--n > 0){
+				*d++ = 0;
+			}
+			break;
 		}
-		d++;
 		n--;
 	}
-	return (++flag);
+	return (dst);
 }
 
 weak_alias(__stpncpy, stpncpy);

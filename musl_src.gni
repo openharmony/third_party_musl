@@ -2168,6 +2168,9 @@ musl_src_porting_file = [
   "src/stdio/vfprintf.c",
   "src/stdio/__stdio_read.c",
   "src/stdio/fread.c",
+  "src/stdio/fmemopen.c",
+  "src/stdio/freopen.c",
+  "src/stdio/stdin.c",
   "src/internal/stdio_impl.h",
   "src/internal/vdso.c",
   "src/time/clock_gettime.c",
@@ -2187,6 +2190,7 @@ musl_src_porting_file = [
   "src/env/getenv.c",
   "src/string/stpncpy.c",
   "src/string/strncpy.c",
+  "src/thread/pthread_once.c",
 ]
 
 musl_inc_hook_files = [

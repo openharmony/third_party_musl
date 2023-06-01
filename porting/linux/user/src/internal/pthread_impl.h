@@ -74,6 +74,9 @@ struct pthread {
     volatile int killlock[1];
     char *dlerror_buf;
     void *stdio_locks;
+#ifdef RESERVE_SIGNAL_STACK
+    void *signal_stack;
+#endif
 
 	/* Part 3 -- the positions of these fields relative to
 	 * the end of the structure is external and internal ABI. */

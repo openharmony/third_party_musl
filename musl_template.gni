@@ -393,6 +393,15 @@ template("musl_libs") {
     }
 
     defines = []
+    if (musl_arch == "arm") {
+      defines += [ "MUSL_ARM_ARCH" ]
+    }
+    if (musl_arch == "aarch64") {
+      defines += [ "MUSL_AARCH64_ARCH" ]
+    }
+    if (musl_arch == "x86_64") {
+      defines += [ "MUSL_X86_64_ARCH" ]
+    }
     if (musl_secure_level > 0) {
       defines += [ "MALLOC_FREELIST_HARDENED" ]
     }
