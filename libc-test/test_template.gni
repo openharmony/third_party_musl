@@ -74,6 +74,10 @@ template("test_unittest") {
       "-o",
     ]
 
+    if (use_pthread_cancel) {
+      cflags += [ "-DFEATURE_PTHREAD_CANCEL" ]
+    }
+
     ldflags = [ "-nostdlib" ]
 
     libs = [ "//${out_test_dir}/src/common/libtest.a" ]

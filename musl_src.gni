@@ -2189,6 +2189,9 @@ musl_src_porting_file = [
   "src/conf/sysconf.c",
   "src/env/getenv.c",
   "src/thread/pthread_once.c",
+  "src/thread/pthread_cancel.c",
+  "src/mq/mq_notify.c",
+  "src/aio/aio.c",
 ]
 
 musl_inc_hook_files = [

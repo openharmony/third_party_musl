@@ -51,8 +51,10 @@ struct pthread {
     int pid;
     int errno_val;
     volatile int detach_state;
+#ifdef FEATURE_PTHREAD_CANCEL
     volatile int cancel;
     volatile unsigned char canceldisable, cancelasync;
+#endif
     unsigned char tsd_used:1;
     unsigned char dlerror_flag:1;
     unsigned char *map_base;
