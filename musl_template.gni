@@ -135,6 +135,10 @@ template("musl_libs") {
       ]
     }
 
+    if (use_pthread_cancel) {
+      cflags_auto += [ "-DFEATURE_PTHREAD_CANCEL" ]
+    }
+
     cflags_auto += [ "-DRESERVE_SIGNAL_STACK" ]
     cflags_auto += [ "-DDFX_SIGNAL_LIBC" ]
 

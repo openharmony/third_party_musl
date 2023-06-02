@@ -139,8 +139,10 @@ _Noreturn void __pthread_exit(void *result)
 	pthread_t self = __pthread_self();
 	sigset_t set;
 
+#ifdef FEATURE_PTHREAD_CANCEL
 	self->canceldisable = 1;
 	self->cancelasync = 0;
+#endif
 	self->result = result;
 
 	while (self->cancelbuf) {
