@@ -267,6 +267,10 @@ template("musl_libs") {
       "-DOHOS_TCACHE_NSLOTS_LARGE=16",
     ]
 
+    if (is_debug || musl_secure_level > 1) {
+      cflags += [ "-DOHOS_TCACHE_NSLOTS_RANDOM" ]
+    }
+
     if (musl_arch == "arm") {
       cflags += [
         "-march=armv7-a",
