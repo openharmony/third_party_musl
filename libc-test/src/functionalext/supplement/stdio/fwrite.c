@@ -14,6 +14,9 @@
  */
 
 #include "functionalext.h"
+#include <unistd.h>
+#include <fcntl.h>
+#include <stdlib.h>
 
 const char *path = "/data/test.txt";
 
@@ -69,6 +72,38 @@ void fwrite_0300(void)
 
     fclose(fptr);
     remove(path);
+}
+
+void fwrite_0400(void)
+{
+    pid_t childPid = 0;
+    int fds[2] = {0};
+    pipe(fds);
+    int pipeRead = 0;
+    int pipeWrite = 1;
+
+    char buf[1024] = {0};
+
+    childPid = fork();
+    EXPECT_NE("fwrite_0400", childPid, -1);
+    if (childPid == 0) {
+        // childr
+        dup2(fds[pipeWrite], STDOUT_FILENO);
+        dup2(fds[pipeRead], STDIN_FILENO);
+
+        close(fds[pipeWrite]);
+        close(fds[pipeRead]);
+
+        // exec
+        execl("/bin/sh", "/bin/sh", "-c", "/system/bin/bm get -u", NULL);
+        exit(0);
+    } else {
+        // parent
+        close(fds[pipeWrite]);
+        fcntl(fds[pipeRead], F_SETFD, F_DUPFD_CLOEXEC);
+        int cn = read(fds[pipeRead], buf, sizeof(buf));
+        EXPECT_MT("fwrite_0400", cn, 0);
+    }
 }
 
 int main(int argc, char *argv[])
