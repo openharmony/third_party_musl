@@ -1,0 +1,63 @@
+/*
+ * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#ifdef ONO_CURRENT_INTERFACE
+#include <benchmark/benchmark.h>
+#include "time.h"
+#include "util.h"
+
+using namespace std;
+
+// Used to put the current thread to sleep for the specified time
+static void Bm_function_Nanosleep_0ns(benchmark::State &state)
+{
+    struct timespec req, rem;
+    req.tv_nsec = 0;
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(nanosleep(&req, &rem));
+    }
+}
+
+static void Bm_function_Nanosleep_10ns(benchmark::State &state)
+{
+    struct timespec req, rem;
+    req.tv_nsec = 10;
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(nanosleep(&req, &rem));
+    }
+}
+
+static void Bm_function_Nanosleep_100ns(benchmark::State &state)
+{
+    struct timespec req, rem;
+    req.tv_nsec = 100;
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(nanosleep(&req, &rem));
+    }
+}
+
+// Used to set information about the time zone
+static void Bm_function_Tzset(benchmark::State &state)
+{
+    while (state.KeepRunning()) {
+        tzset();
+    }
+}
+
+MUSL_BENCHMARK(Bm_function_Nanosleep_0ns);
+MUSL_BENCHMARK(Bm_function_Nanosleep_10ns);
+MUSL_BENCHMARK(Bm_function_Nanosleep_100ns);
+MUSL_BENCHMARK(Bm_function_Tzset);
+#endif
