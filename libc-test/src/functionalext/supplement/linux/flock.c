@@ -25,7 +25,7 @@
 void flock_0100(void)
 {
     int result = -1;
-    int fd = open("/data/test.txt", O_RDWR | O_CREAT, 0666);
+    int fd = open("/data/test.txt", O_RDWR | O_CREAT, TEST_MODE);
     EXPECT_NE("flock_0100", fd, -1);
     lseek(fd, 2, SEEK_SET);
 
@@ -43,7 +43,7 @@ void flock_0100(void)
 void flock_0200(void)
 {
     int result = -1;
-    int fd = open("/data/test.txt", O_RDWR | O_CREAT, 0666);
+    int fd = open("/data/test.txt", O_RDWR | O_CREAT, TEST_MODE);
     EXPECT_NE("flock_0200", fd, -1);
     lseek(fd, 2, SEEK_SET);
 
@@ -61,7 +61,7 @@ void flock_0200(void)
 void flock_0300(void)
 {
     int result = -1;
-    int fd = open("/data/test.txt", O_RDWR | O_CREAT, 0666);
+    int fd = open("/data/test.txt", O_RDWR | O_CREAT, TEST_MODE);
     EXPECT_NE("flock_0300", fd, -1);
     lseek(fd, 2, SEEK_SET);
 
@@ -79,7 +79,7 @@ void flock_0300(void)
 void flock_0400(void)
 {
     int result = -1;
-    int fd = open("/data/test.txt", O_RDWR | O_CREAT, 0666);
+    int fd = open("/data/test.txt", O_RDWR | O_CREAT, TEST_MODE);
     EXPECT_NE("flock_0400", fd, -1);
     lseek(fd, 2, SEEK_SET);
 
@@ -97,7 +97,7 @@ void flock_0400(void)
 void flock_0500(void)
 {
     int result = -1;
-    int fd = open("/data/test.txt", O_RDWR | O_CREAT, 0666);
+    int fd = open("/data/test.txt", O_RDWR | O_CREAT, TEST_MODE);
     EXPECT_NE("flock_0500", fd, -1);
     lseek(fd, 2, SEEK_SET);
 
@@ -126,7 +126,7 @@ void flock_0600(void)
 void flock_0700()
 {
     int result = 0;
-    int fd = open("/data/test.txt", O_RDWR | O_CREAT, 0666);
+    int fd = open("/data/test.txt", O_RDWR | O_CREAT, TEST_MODE);
     EXPECT_NE("flock_0700", fd, -1);
     lseek(fd, 2, SEEK_SET);
 

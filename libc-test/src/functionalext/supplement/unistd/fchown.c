@@ -33,7 +33,7 @@ const int COUNT_NEFATIVE = -1;
  */
 void fchown_0100()
 {
-    int fd = open("test.txt", O_RDONLY | O_CREAT);
+    int fd = open("test.txt", O_RDONLY | O_CREAT, TEST_MODE);
     int result = fchown(fd, 0, 0);
     struct stat buff;
     EXPECT_EQ("fchown_0100", result, COUNT_ZERO);
@@ -50,7 +50,7 @@ void fchown_0100()
  */
 void fchown_0200()
 {
-    int fd = open("test.txt", O_RDONLY | O_CREAT);
+    int fd = open("test.txt", O_RDONLY | O_CREAT, TEST_MODE);
     int result = fchown(fd, 0, -1);
     struct stat buff;
     EXPECT_EQ("fchown_0200", result, COUNT_ZERO);
@@ -67,7 +67,7 @@ void fchown_0200()
  */
 void fchown_0300()
 {
-    int fd = open("test.txt", O_RDONLY | O_CREAT);
+    int fd = open("test.txt", O_RDONLY | O_CREAT, TEST_MODE);
     int result = fchown(fd, -1, 0);
     struct stat buff;
     EXPECT_EQ("fchown_0300", result, COUNT_ZERO);
@@ -84,7 +84,7 @@ void fchown_0300()
  */
 void fchown_0400()
 {
-    int fd = open("test.txt", O_RDONLY | O_CREAT);
+    int fd = open("test.txt", O_RDONLY | O_CREAT, TEST_MODE);
     close(fd);
     int result = fchown(fd, 0, 0);
     EXPECT_EQ("fchown_0400", result, COUNT_NEFATIVE);
@@ -98,7 +98,7 @@ void fchown_0400()
  */
 void fchown_0500()
 {
-    int fd = open("test.txt", O_RDONLY | O_CREAT);
+    int fd = open("test.txt", O_RDONLY | O_CREAT, TEST_MODE);
     int result = fchown(-1, 0, 0);
     EXPECT_EQ("fchown_0500", result, COUNT_NEFATIVE);
     close(fd);

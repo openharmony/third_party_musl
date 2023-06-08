@@ -29,7 +29,7 @@ void fexecve_0100(void)
     if (fpid == 0) {
         char *argv[] = {"./fexecverely", NULL};
         char *environ[] = {0, NULL};
-        int fd = open("fexecverely", O_RDONLY, 0777);
+        int fd = open("fexecverely", O_RDONLY);
         int ret = fexecve(fd, argv, environ);
         EXPECT_NE("fexecve_0100", ret, -1);
     }

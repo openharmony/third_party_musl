@@ -34,7 +34,7 @@ void pwritev_0100(void)
     iov[1].iov_base = buf2;
     iov[1].iov_len = sizeof(buf2) / sizeof(char);
 
-    int fd = open("pwritev_function_value.c", O_RDWR | O_CREAT);
+    int fd = open("pwritev_function_value.c", O_RDWR | O_CREAT, TEST_MODE);
     int count = sizeof(iov) / sizeof(struct iovec);
     int ret = pwritev(fd, iov, count, 0);
     EXPECT_NE("pwritev_0100", ret, EOF);
@@ -63,7 +63,7 @@ void pwritev_0200(void)
     iov[1].iov_base = buf2;
     iov[1].iov_len = sizeof(buf2) / sizeof(char);
 
-    int fd = open("pwritev_function_value.c", O_RDWR | O_CREAT);
+    int fd = open("pwritev_function_value.c", O_RDWR | O_CREAT, TEST_MODE);
     if (fd == -1) {
         EXPECT_NE("pwritev_0200", fd, ERREXPECT);
         return;

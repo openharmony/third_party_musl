@@ -33,7 +33,7 @@ void fstatat_0100(void)
 {
     const char *ptr = "fstatattest.txt";
     struct stat st;
-    int fd = open(ptr, O_RDWR | O_CREAT);
+    int fd = open(ptr, O_RDWR | O_CREAT, TEST_MODE);
     EXPECT_TRUE("fstatat_0100", fd >= 0);
     lseek(fd, 0, SEEK_SET);
     int ret = fstatat(AT_FDCWD, ptr, &st, 0);
@@ -57,7 +57,7 @@ void fstatat_0200(void)
 {
     const char *ptr = "fstatattest.txt";
     struct stat st;
-    int fd = open(ptr, O_RDWR | O_CREAT);
+    int fd = open(ptr, O_RDWR | O_CREAT, TEST_MODE);
     EXPECT_TRUE("fstatat_0200", fd >= 0);
     lseek(fd, 0, SEEK_SET);
     const char *softptr = "./fstatattest.txt.soft";
@@ -89,7 +89,7 @@ void fstatat_0300(void)
     FILE_ABSOLUTE_PATH("fstatattest.txt", ptr);
 
     struct stat st;
-    int fd = open(ptr, O_RDWR | O_CREAT);
+    int fd = open(ptr, O_RDWR | O_CREAT, TEST_MODE);
     EXPECT_TRUE("fstatat_0300", fd >= 0);
     lseek(fd, 0, SEEK_SET);
     int ret = fstatat(0, ptr, &st, 0);
@@ -112,7 +112,7 @@ void fstatat_time64_0100(void)
 {
     const char *ptr = "fstatat_time64_test.txt";
     struct stat st;
-    int fd = open(ptr, O_RDWR | O_CREAT);
+    int fd = open(ptr, O_RDWR | O_CREAT, TEST_MODE);
     EXPECT_TRUE("fstatat_0100", fd >= 0);
     lseek(fd, 0, SEEK_SET);
     int ret = __fstatat_time64(AT_FDCWD, ptr, &st, 0);

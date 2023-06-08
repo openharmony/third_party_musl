@@ -30,7 +30,7 @@ void fgetxattr_0100(void)
     char name[] = "user.x";
     char value[] = "the past is not dead.";
 
-    int fd = open(path, O_RDWR | O_CREAT);
+    int fd = open(path, O_RDWR | O_CREAT, TEST_MODE);
     if (fd < 0) {
         t_error("%s open failed\n", __func__);
     }

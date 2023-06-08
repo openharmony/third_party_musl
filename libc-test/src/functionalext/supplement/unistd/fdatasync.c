@@ -30,7 +30,7 @@ void fdatasync_0100()
 {
     char str[] = "hello";
     char buffer[1024] = {"\0"};
-    int fd = open(path, O_RDWR | O_CREAT);
+    int fd = open(path, O_RDWR | O_CREAT, TEST_MODE);
     EXPECT_NE("fdatasync_0100", fd, -1);
 
     write(fd, str, sizeof(str));
@@ -54,7 +54,7 @@ void fdatasync_0200()
 {
     char str[] = "hello\n";
     char buffer[1024] = {"\0"};
-    int fd = open(path, O_RDWR | O_CREAT);
+    int fd = open(path, O_RDWR | O_CREAT, TEST_MODE);
     EXPECT_NE("fdatasync_0100", fd, -1);
     close(fd);
 

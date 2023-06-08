@@ -33,7 +33,7 @@ void fchmodat_0100(void)
     struct stat buf;
     char path[PATH_MAX] = {0};
     FILE_ABSOLUTE_PATH(STR_TEST_TXT, path);
-    fd = open(path, O_RDWR | O_CREAT);
+    fd = open(path, O_RDWR | O_CREAT, TEST_MODE);
     int result = fchmodat(fd,
         path,
         S_ISUID | S_ISGID | S_ISVTX | S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IXGRP | S_IROTH | S_IWOTH |
@@ -57,7 +57,7 @@ void fchmodat_0200(void)
     struct stat buf;
     char path[PATH_MAX] = {0};
     FILE_ABSOLUTE_PATH(STR_TEST_TXT, path);
-    fd = open(path, O_RDWR | O_CREAT);
+    fd = open(path, O_RDWR | O_CREAT, TEST_MODE);
     int result = fchmodat(fd,
         path,
         S_IRWXU | S_IRWXG | S_IRWXO,

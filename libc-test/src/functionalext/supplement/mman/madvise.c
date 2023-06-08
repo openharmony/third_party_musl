@@ -23,7 +23,7 @@ const char *path = "madvise_function_test.c";
 
 static int openfile(void)
 {
-    int fd = open(path, O_RDWR | O_CREAT);
+    int fd = open(path, O_RDWR | O_CREAT, TEST_MODE);
     if (fd < 0) {
         t_error("open file failed\n");
         return -1;

@@ -212,6 +212,8 @@ typedef struct _IO_cookie_io_functions_t {
 #define off64_t off_t
 #endif
 
+#include <fortify/stdio.h>
+
 #ifdef __cplusplus
 }
 #endif

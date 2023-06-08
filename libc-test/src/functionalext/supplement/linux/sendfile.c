@@ -46,7 +46,7 @@ void sendfile_0100(void)
         t_error("%s failed: open. fromfd = %d\n", __func__, fromfd);
     }
 
-    int tofd = open(tofile, O_WRONLY | O_CREAT);
+    int tofd = open(tofile, O_WRONLY | O_CREAT, TEST_MODE);
     if (tofd < 0) {
         t_error("%s failed: open. tofd = %d\n", __func__, tofd);
     }

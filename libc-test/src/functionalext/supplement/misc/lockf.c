@@ -27,7 +27,7 @@ const int SIZE = 3;
  */
 void lockf_0100(void)
 {
-    int fd = open(path, O_RDWR | O_CREAT);
+    int fd = open(path, O_RDWR | O_CREAT, TEST_MODE);
     if (fd < 0) {
         t_error("%s failed: fd = %d\n", __func__, fd);
         return;
@@ -50,7 +50,7 @@ void lockf_0100(void)
  */
 void lockf_0200(void)
 {
-    int fd = open(path, O_RDWR | O_CREAT);
+    int fd = open(path, O_RDWR | O_CREAT, TEST_MODE);
     if (fd < 0) {
         t_error("%s failed: fd = %d\n", __func__, fd);
         return;
@@ -73,7 +73,7 @@ void lockf_0200(void)
  */
 void lockf_0300(void)
 {
-    int fd = open(path, O_RDWR | O_CREAT);
+    int fd = open(path, O_RDWR | O_CREAT, TEST_MODE);
     if (fd < 0) {
         t_error("%s failed: fd = %d\n", __func__, fd);
     }
@@ -98,7 +98,7 @@ void lockf_0300(void)
  */
 void lockf_0400(void)
 {
-    int fd = open(path, O_RDWR | O_CREAT);
+    int fd = open(path, O_RDWR | O_CREAT, TEST_MODE);
     if (fd < 0) {
         t_error("%s failed: fd = %d\n", __func__, fd);
     }

@@ -32,7 +32,7 @@ void sync_file_range_0100(void)
     char path[PATH_MAX] = {0};
     FILE_ABSOLUTE_PATH(STR_FILE_SYNC_TXT, path);
 
-    fd = open(path, O_RDWR | O_CREAT);
+    fd = open(path, O_RDWR | O_CREAT, TEST_MODE);
     if (fd == -1) {
         t_error("%s open failed\n", __func__);
         return;
@@ -77,7 +77,7 @@ void sync_file_range_0300(void)
 
     char path[PATH_MAX] = {0};
     FILE_ABSOLUTE_PATH(STR_FILE_SYNC_TXT, path);
-    fd = open(path, O_RDWR | O_CREAT);
+    fd = open(path, O_RDWR | O_CREAT, TEST_MODE);
     if (fd == -1) {
         t_error("%s open failed\n", __func__);
         return;
@@ -106,7 +106,7 @@ void sync_file_range_0400(void)
 
     char path[PATH_MAX] = {0};
     FILE_ABSOLUTE_PATH(STR_FILE_SYNC_TXT, path);
-    fd = open(path, O_RDWR | O_CREAT);
+    fd = open(path, O_RDWR | O_CREAT, TEST_MODE);
     if (fd == -1) {
         t_error("%s open failed\n", __func__);
         return;

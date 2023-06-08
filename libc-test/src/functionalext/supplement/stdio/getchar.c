@@ -27,7 +27,7 @@ const char *path = "/data/readtest.txt";
 void getchar_0100(void)
 {
     char str[] = "t";
-    int fd = open(path, O_RDWR | O_CREAT);
+    int fd = open(path, O_RDWR | O_CREAT, TEST_MODE);
     if (fd < 0) {
         t_error("%s open failed\n", __func__);
     }

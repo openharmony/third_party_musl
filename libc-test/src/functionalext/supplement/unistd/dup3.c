@@ -25,7 +25,7 @@ const int FAILED = -1;
  */
 void dup3_0100(void)
 {
-    int fd = open("/data/dup3test.txt", O_RDWR | O_CREAT);
+    int fd = open("/data/dup3test.txt", O_RDWR | O_CREAT, TEST_MODE);
     EXPECT_TRUE("dup3_0100", fd >= 0);
     int ret = dup3(fd, fileno(stderr), O_CLOEXEC);
     EXPECT_EQ("dup3_0100", ret, fileno(stderr));
@@ -53,7 +53,7 @@ void dup3_0200(void)
 void dup3_0300(void)
 {
     int newfd = -1;
-    int fd = open("/data/readtest.txt", O_RDWR | O_CREAT);
+    int fd = open("/data/readtest.txt", O_RDWR | O_CREAT, TEST_MODE);
     EXPECT_TRUE("dup3_0300", fd >= 0);
     int ret = dup3(fd, newfd, O_CLOEXEC);
     EXPECT_EQ("dup3_0300", ret, FAILED);

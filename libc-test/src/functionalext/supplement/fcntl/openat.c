@@ -17,7 +17,6 @@
 #include <sys/stat.h>
 #include "functionalext.h"
 
-#define TEST_MODE 0666
 /**
  * @tc.name      : openat_0100
  * @tc.desc      : Open /dev/null
@@ -25,13 +24,13 @@
  */
 void openat_0100(void)
 {
-    int ret = openat(0, "/dev/null", O_CREAT);
+    int ret = openat(0, "/dev/null", O_CREAT, TEST_MODE);
     EXPECT_NE("openat_0100", ret, ERREXPECT);
 
-    ret = openat(0, "/dev/null", O_TMPFILE);
+    ret = openat(0, "/dev/null", O_TMPFILE, TEST_MODE);
     EXPECT_EQ("openat_0100", ret, ERREXPECT);
 
-    ret = openat(0, "/dev/null", O_RDONLY, TEST_MODE);
+    ret = openat(0, "/dev/null", O_RDONLY);
     EXPECT_NE("openat_0100", ret, ERREXPECT);
 }
 
@@ -42,13 +41,13 @@ void openat_0100(void)
  */
 void openat_0200(void)
 {
-    int ret = openat(0, "openat_test", O_CREAT);
+    int ret = openat(0, "openat_test", O_CREAT, TEST_MODE);
     EXPECT_EQ("openat_0200", ret, ERREXPECT);
 
-    ret = openat(0, "openat_test", O_TMPFILE);
+    ret = openat(0, "openat_test", O_TMPFILE, TEST_MODE);
     EXPECT_EQ("openat_0200", ret, ERREXPECT);
 
-    ret = openat(0, "openat_test", O_RDONLY, TEST_MODE);
+    ret = openat(0, "openat_test", O_RDONLY);
     EXPECT_EQ("openat_0200", ret, ERREXPECT);
 }
 

@@ -29,7 +29,7 @@ void open_0100(void)
 {
     char s[] = "test";
     char buffer[80] = {0};
-    int fd = open(path, O_RDONLY + O_CREAT);
+    int fd = open(path, O_RDONLY + O_CREAT, TEST_MODE);
     int len = write(fd, s, sizeof(s));
     ssize_t size = read(fd, buffer, sizeof(buffer));
     EXPECT_EQ("open_0100", fd, 4);
@@ -60,7 +60,7 @@ void open_0300(void)
 {
     char s[] = "test";
     char buffer[80] = {0};
-    int fd = open(path, O_WRONLY + O_CREAT);
+    int fd = open(path, O_WRONLY + O_CREAT, TEST_MODE);
     ssize_t size = read(fd, buffer, sizeof(buffer));
     EXPECT_EQ("open_0300", fd, 4);
     EXPECT_STREQ("open_0300", buffer, "");
@@ -90,7 +90,7 @@ void open_0500(void)
 {
     char s[] = "test";
     char buffer[80] = {0};
-    int fd = open(path, O_RDWR | O_APPEND + O_CREAT);
+    int fd = open(path, O_RDWR | O_APPEND + O_CREAT, TEST_MODE);
     ssize_t size = read(fd, buffer, sizeof(buffer));
     EXPECT_EQ("open_0500", fd, 4);
     EXPECT_STREQ("open_0500", buffer, "");
@@ -138,7 +138,7 @@ void open_0800(void)
 {
     char s[] = "test";
     char buffer[80] = {0};
-    int fd = open(path, O_RDWR | O_CREAT);
+    int fd = open(path, O_RDWR | O_CREAT, TEST_MODE);
     ssize_t size = read(fd, buffer, sizeof(buffer));
     EXPECT_EQ("open_0800", fd, 4);
     EXPECT_STREQ("open_0800", buffer, "");
@@ -157,7 +157,7 @@ void open_0900(void)
 {
     char s[] = "test";
     char buffer[80] = {0};
-    int fd = open(path, O_RDWR | O_CLOEXEC + O_CREAT);
+    int fd = open(path, O_RDWR | O_CLOEXEC + O_CREAT, TEST_MODE);
     ssize_t size = read(fd, buffer, sizeof(buffer));
     EXPECT_EQ("open_0900", fd, 4);
     EXPECT_STREQ("open_0900", buffer, "");

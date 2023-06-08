@@ -51,7 +51,7 @@ void dprintf_0200(void)
 void dprintf_0300(void)
 {
     const char *path = "/data/test.txt";
-    int fd = open(path, O_CREAT | O_WRONLY);
+    int fd = open(path, O_CREAT | O_WRONLY, TEST_MODE);
     EXPECT_NE("dprintf_0300", fd, -1);
 
     int result = dprintf(fd, "This is a test!");
@@ -72,7 +72,7 @@ void dprintf_0300(void)
 void dprintf_0400(void)
 {
     const char *path = "/data/test.txt";
-    int fd = open(path, O_CREAT | O_RDONLY);
+    int fd = open(path, O_CREAT | O_RDONLY, TEST_MODE);
     EXPECT_NE("dprintf_0400", fd, -1);
 
     int result = dprintf(fd, "This is a test!");
