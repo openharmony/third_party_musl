@@ -40,7 +40,7 @@ void preadv_0100(void)
     iov[1].iov_base = buf2;
     iov[1].iov_len = sizeof(buf2) / sizeof(char);
 
-    int fd = open("./preadv_function_value.c", O_RDWR | O_CREAT);
+    int fd = open("./preadv_function_value.c", O_RDWR | O_CREAT, TEST_MODE);
     if (fd == -1) {
         EXPECT_NE("preadv_0100", fd, ERREXPECT);
         return;

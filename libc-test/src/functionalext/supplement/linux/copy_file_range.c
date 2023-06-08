@@ -20,7 +20,6 @@
 #include "filepath_util.h"
 
 const char *str = "Hello";
-
 /**
  * @tc.name      : copy_file_range_0100
  * @tc.desc      : Copy a range of data from one file to another
@@ -36,7 +35,7 @@ void copy_file_range_0100(void)
     FILE_ABSOLUTE_PATH(STR_FILE_IN_TXT, path_in);
     FILE_ABSOLUTE_PATH(STR_FILE_OUT_TXT, path_out);
 
-    fd_in = open(path_in, O_RDWR | O_CREAT);
+    fd_in = open(path_in, O_RDWR | O_CREAT, TEST_MODE);
     if (fd_in == -1) {
         t_error("%s open path_in failed\n", __func__);
         return;
@@ -51,7 +50,7 @@ void copy_file_range_0100(void)
     close(fd_in);
     fd_in = open(path_in, O_RDONLY);
 
-    fd_out = open(path_out, O_RDWR | O_CREAT);
+    fd_out = open(path_out, O_RDWR | O_CREAT, TEST_MODE);
     if (fd_out == -1) {
         t_error("%s open path_out failed\n", __func__);
         return;
@@ -115,7 +114,7 @@ void copy_file_range_0300(void)
     FILE_ABSOLUTE_PATH(STR_FILE_IN_TXT, path_in);
     FILE_ABSOLUTE_PATH(STR_FILE_OUT_TXT, path_out);
 
-    fd_in = open(path_in, O_WRONLY | O_CREAT);
+    fd_in = open(path_in, O_WRONLY | O_CREAT, TEST_MODE);
     if (fd_in == -1) {
         t_error("%s open path_in failed\n", __func__);
         return;
@@ -130,7 +129,7 @@ void copy_file_range_0300(void)
     close(fd_in);
     fd_in = open(path_in, O_WRONLY);
 
-    fd_out = open(path_out, O_RDONLY | O_CREAT);
+    fd_out = open(path_out, O_RDONLY | O_CREAT, TEST_MODE);
     if (fd_out == -1) {
         t_error("%s open path_out failed\n", __func__);
         return;

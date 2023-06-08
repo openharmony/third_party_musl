@@ -29,7 +29,7 @@ void getpagesize_0100()
     system("getconf PAGE_SIZE > /data/1.txt");
     FILE *fd;
     fd = fopen("/data/1.txt", "r");
-    fread(list, sizeof(list), 10, fd);
+    fread(list, sizeof(list) / sizeof(list[0]), sizeof(*list), fd);
     EXPECT_EQ("getpagesize_0100", page, atoi(list));
     remove("/data/1.txt");
 }

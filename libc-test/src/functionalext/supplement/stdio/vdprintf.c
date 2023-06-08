@@ -37,7 +37,7 @@ void vdprintf_0100(void)
 {
     char *value = "asdf";
     char buffer[100] = {0};
-    int fp = open("/data/temp_vdprintf.txt", O_RDWR | O_CREAT);
+    int fp = open("/data/temp_vdprintf.txt", O_RDWR | O_CREAT, TEST_MODE);
     if (fp < 0) {
         t_error("%s open failed", __func__);
         return;

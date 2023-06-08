@@ -28,7 +28,7 @@
  */
 void ttyname_r_0100(void)
 {
-    int fd = open("/data/tempfile_forttyname.txt", O_CREAT);
+    int fd = open("/data/tempfile_forttyname.txt", O_CREAT, TEST_MODE);
     char buf[128];
     int want = 25;
     int result = ttyname_r(fd, buf, sizeof(buf));

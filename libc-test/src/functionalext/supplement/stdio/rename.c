@@ -25,7 +25,7 @@ void rename_0100(void)
 {
     const char *oldname = "oldfile.txt";
     const char *newname = "newfile.txt";
-    int fd = open(oldname, O_RDONLY | O_CREAT);
+    int fd = open(oldname, O_RDONLY | O_CREAT, TEST_MODE);
     EXPECT_TRUE("rename_0100", fd != -1);
     close(fd);
 
@@ -61,7 +61,7 @@ void rename_0300(void)
 {
     const char *oldname = "oldfile.txt";
     const char *newname = "newfile.txt";
-    int fd_old = open(oldname, O_RDWR | O_CREAT);
+    int fd_old = open(oldname, O_RDWR | O_CREAT, TEST_MODE);
     EXPECT_TRUE("rename_0300", fd_old != -1);
 
     char str_old[] = "old";
@@ -69,7 +69,7 @@ void rename_0300(void)
     EXPECT_TRUE("rename_0300", ret_old > 0);
     close(fd_old);
 
-    int fd_new = open(newname, O_RDWR | O_CREAT);
+    int fd_new = open(newname, O_RDWR | O_CREAT, TEST_MODE);
     EXPECT_TRUE("rename_0100", fd_new != -1);
 
     char str_new[] = "new";
