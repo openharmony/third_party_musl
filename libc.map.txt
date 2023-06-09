@@ -518,6 +518,7 @@
     dlclose;
     dlerror;
     dlinfo;
+    dlns_disable;
     dlns_create;
     dlns_create2;
     dlns_get;

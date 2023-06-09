@@ -3385,7 +3385,7 @@ void *dlopen(const char *file, int mode)
 	return dlopen_impl(file, mode, NULL, caller_addr, NULL);
 }
 
-void dlns_init(Dl_namespace *dlns, const char *name)
+hidden void in_dlns_init(Dl_namespace *dlns, const char *name)
 {
 	if (!dlns) {
 		LD_LOGE("dlns_init dlns is null.");
@@ -3400,7 +3400,7 @@ void dlns_init(Dl_namespace *dlns, const char *name)
 	LD_LOGI("dlns_init dlns->name:%{public}s .", dlns->name);
 }
 
-int dlns_get(const char *name, Dl_namespace *dlns)
+hidden int in_dlns_get(const char *name, Dl_namespace *dlns)
 {
 	if (!dlns) {
 		LD_LOGE("dlns_get dlns is null.");
@@ -3458,7 +3458,7 @@ void *dlopen_ns_ext(Dl_namespace *dlns, const char *file, int mode, const dl_ext
 	return dlopen_impl(file, mode, dlns->name, caller_addr, extinfo);
 }
 
-int dlns_create2(Dl_namespace *dlns, const char *lib_path, int flags)
+hidden int in_dlns_create2(Dl_namespace *dlns, const char *lib_path, int flags)
 {
 	if (!dlns) {
 		LD_LOGE("dlns_create2 dlns is null.");
@@ -3508,13 +3508,13 @@ int dlns_create2(Dl_namespace *dlns, const char *lib_path, int flags)
 	return 0;
 }
 
-int dlns_create(Dl_namespace *dlns, const char *lib_path)
+hidden int in_dlns_create(Dl_namespace *dlns, const char *lib_path)
 {
 	LD_LOGI("dlns_create lib_paths:%{public}s", lib_path);
 	return dlns_create2(dlns, lib_path, CREATE_INHERIT_DEFAULT);
 }
 
-int dlns_inherit(Dl_namespace *dlns, Dl_namespace *inherited, const char *shared_libs)
+hidden int in_dlns_inherit(Dl_namespace *dlns, Dl_namespace *inherited, const char *shared_libs)
 {
 	if (!dlns || !inherited) {
 		LD_LOGE("dlns_inherit dlns or inherited is null.");
@@ -4085,7 +4085,7 @@ int dlns_set_namespace_permitted_paths(const char * name, const char * permitted
 	return 0;
 }
 
-int dlns_set_namespace_allowed_libs(const char * name, const char * allowed_libs)
+hidden int in_dlns_set_namespace_allowed_libs(const char * name, const char * allowed_libs)
 {
 	if (!name || !allowed_libs) {
 		LD_LOGE("dlns_set_namespace_allowed_libs name or allowed_libs is null.");
@@ -5304,4 +5304,89 @@ static void find_and_set_bss_name(struct dso *p)
 			set_bss_vma_name(p->name, (void *)seg_file_end, zeromap_size);
 		}
 	}
+}
+
+struct dlns_hook {
+	void (*dlns_init_hook)(Dl_namespace *, const char *);
+	int (*dlns_get_hook)(const char *, Dl_namespace *);
+	int (*dlns_create_hook)(Dl_namespace *, const char *);
+	int (*dlns_create2_hook)(Dl_namespace *, const char *, int);
+	int (*dlns_inherit_hook)(Dl_namespace *, Dl_namespace *, const char *);
+	int (*dlns_set_namespace_allowed_libs_hook)(const char *name, const char *allowed_libs);
+};
+
+static struct dlns_hook hook = {
+	.dlns_init_hook = in_dlns_init,
+	.dlns_get_hook = in_dlns_get,
+	.dlns_create_hook = in_dlns_create,
+	.dlns_create2_hook = in_dlns_create2,
+	.dlns_inherit_hook = in_dlns_inherit,
+	.dlns_set_namespace_allowed_libs_hook = in_dlns_set_namespace_allowed_libs,
+};
+
+void dlns_init(Dl_namespace *dlns, const char *name)
+{
+	if (hook.dlns_init_hook == NULL) {
+		return ;
+	}
+
+	hook.dlns_init_hook(dlns, name);
+	return ;
+}
+
+int dlns_get(const char *name, Dl_namespace *dlns)
+{
+	if (hook.dlns_get_hook == NULL) {
+		return EINVAL;
+	}
+
+	return hook.dlns_get_hook(name, dlns);
+}
+
+int dlns_create(Dl_namespace *dlns, const char *lib_path)
+{
+	if (hook.dlns_create_hook == NULL) {
+		return EINVAL;
+	}
+
+	return hook.dlns_create_hook(dlns, lib_path);
+}
+
+int dlns_create2(Dl_namespace *dlns, const char *lib_path, int flags)
+{
+	if (hook.dlns_create2_hook == NULL) {
+		return EINVAL;
+	}
+
+	return hook.dlns_create2_hook(dlns, lib_path, flags);
+}
+
+int dlns_inherit(Dl_namespace *dlns, Dl_namespace *inherited, const char *shared_libs)
+{
+	if (hook.dlns_inherit_hook == NULL) {
+		return EINVAL;
+	}
+
+	return hook.dlns_inherit_hook(dlns, inherited, shared_libs);
+}
+
+int dlns_set_namespace_allowed_libs(const char *name, const char *allowed_libs)
+{
+	if (hook.dlns_set_namespace_allowed_libs_hook == NULL) {
+		return EINVAL;
+	}
+
+	return hook.dlns_set_namespace_allowed_libs_hook(name, allowed_libs);
+}
+
+void dlns_disable()
+{
+	hook.dlns_init_hook = NULL;
+	hook.dlns_get_hook = NULL;
+	hook.dlns_create_hook = NULL;
+	hook.dlns_create2_hook = NULL;
+	hook.dlns_inherit_hook = NULL;
+	hook.dlns_set_namespace_allowed_libs_hook = NULL;
+
+	return;
 }
