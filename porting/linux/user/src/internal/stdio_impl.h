@@ -17,6 +17,7 @@
 #define F_ERR 32
 #define F_SVB 64
 #define F_APP 128
+#define F_NOBUF 256
 
 struct _IO_FILE {
 	unsigned flags;
@@ -31,6 +32,14 @@ struct _IO_FILE {
 	off_t (*seek)(FILE *, off_t, int);
 	unsigned char *buf;
 	size_t buf_size;
+	/* when allocating buffer dynamically, base == buf - UNGET,
+	 * free base when calling fclose.
+	 * otherwise, base == NULL, cases:
+	 * 1. in stdout, stdin, stdout, base is static array.
+	 * 2. call setvbuf to set buffer or non-buffer.
+	 * 3. call fmemopen, base == NULL && buf_size != 0.
+	 */
+	unsigned char *base;
 	FILE *prev, *next;
 	int fd;
 	int pipe_pid;
@@ -67,6 +76,7 @@ hidden ssize_t __flush_buffer(FILE *f);
 
 hidden int __toread(FILE *);
 hidden int __towrite(FILE *);
+hidden int __falloc_buf(FILE *);
 
 hidden void __stdio_exit(void);
 hidden void __stdio_exit_needed(void);
@@ -84,11 +94,14 @@ hidden size_t __fwritex(const unsigned char *, size_t, FILE *);
 hidden int __putc_unlocked(int, FILE *);
 
 hidden FILE *__fdopen(int, const char *);
-hidden int __fmodeflags(const char *);
+hidden FILE *__fdopenx(int, int);
+hidden int __fmodeflags(const char *, int *);
 
 hidden FILE *__ofl_add(FILE *f);
 hidden FILE **__ofl_lock(void);
 hidden void __ofl_unlock(void);
+hidden void __ofl_free(FILE *f);
+hidden FILE *__ofl_alloc();
 
 struct __pthread;
 hidden void __register_locked_file(FILE *, struct __pthread *);

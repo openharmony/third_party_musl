@@ -21,7 +21,7 @@
 #include <string.h>
 #include "libc.h"
 
-static size_t get_bufsize(int fd)
+static size_t __get_bufsize(int fd)
 {
 	struct stat st;
 	size_t buf_size = 0;
@@ -37,50 +37,79 @@ static size_t get_bufsize(int fd)
 	return buf_size;
 }
 
-FILE *__fdopen(int fd, const char *mode)
+int __falloc_buf(FILE *f)
 {
-	FILE *f;
-	struct winsize wsz;
-	size_t buf_size = 0;
-
-	/* Check for valid initial mode character */
-	if (!strchr("rwa", *mode)) {
-		errno = EINVAL;
+	/* return if already allocated, or F_NOBUF set */
+	if (f->buf != NULL || f->buf_size != 0 || f->flags & F_NOBUF) {
 		return 0;
 	}
 
-	/* get buffer size via file stat */
-	buf_size = get_bufsize(fd);
+	/* Default,  base and buf are NULL,and buf_size = 0 */
+	size_t buf_size = 0;
 
-	/* Allocate FILE+buffer or fail */
-	if (!(f = malloc(sizeof *f + UNGET + buf_size))) {
-		return 0;
+	/* get buffer size via file stat */
+	buf_size = __get_bufsize(f->fd);
+
+	/* alloc R/W buffer */
+	f->base = (unsigned char *)malloc(UNGET + buf_size * sizeof(unsigned char));
+	if (!f->base) {
+		errno = -ENOMEM;
+		return errno;
+	}
+
+	/* reserve UNGET buffer */
+	f->buf = f->base + UNGET;
+	f->buf_size = buf_size;
+
+	return 0;
+}
+
+FILE *__fdopen(int fd, const char *mode)
+{
+	FILE *f = NULL;
+	int file_flags = 0;
+	int mode_flags = 0;
+
+	/* Compute the flags to pass to open() */
+	mode_flags = __fmodeflags(mode, &file_flags);
+	if (mode_flags < 0) {
+		return NULL;
+	}
+
+	if (mode_flags & O_CLOEXEC) {
+		__syscall(SYS_fcntl, fd, F_SETFD, FD_CLOEXEC);
+	}
+
+	if (mode_flags & O_APPEND) {
+		int flags = __syscall(SYS_fcntl, fd, F_GETFL);
+		if (!(flags & O_APPEND))
+			__syscall(SYS_fcntl, fd, F_SETFL, flags | O_APPEND);
+	}
+
+	f = __fdopenx(fd, file_flags);
+	if (f) {
+		return f;
+	}
+
+	return NULL;
+}
+weak_alias(__fdopen, fdopen);
+
+FILE *__fdopenx(int fd, int flags)
+{
+	FILE *f = 0;
+	struct winsize wsz;
+
+	/* Allocate FILE or fail */
+	if (!(f = __ofl_alloc())) {
+		return NULL;
 	}
 
 	/* Zero-fill only the struct, not the buffer */
 	memset(f, 0, sizeof *f);
 
-	/* Impose mode restrictions */
-	if (!strchr(mode, '+')) {
-		f->flags = (*mode == 'r') ? F_NOWR : F_NORD;
-	}
-
-	/* Apply close-on-exec flag */
-	if (strchr(mode, 'e')) {
-		__syscall(SYS_fcntl, fd, F_SETFD, FD_CLOEXEC);
-	}
-
-	/* Set append mode on fd if opened for append */
-	if (*mode == 'a') {
-		int flags = __syscall(SYS_fcntl, fd, F_GETFL);
-		if (!(flags & O_APPEND))
-			__syscall(SYS_fcntl, fd, F_SETFL, flags | O_APPEND);
-		f->flags |= F_APP;
-	}
-
+	f->flags = flags;
 	f->fd = fd;
-	f->buf = (unsigned char *)f + sizeof *f + UNGET;
-	f->buf_size = buf_size;
 
 	/* Activate line buffered mode for terminals */
 	f->lbf = EOF;
@@ -103,4 +132,3 @@ FILE *__fdopen(int fd, const char *mode)
 	return __ofl_add(f);
 }
 
-weak_alias(__fdopen, fdopen);

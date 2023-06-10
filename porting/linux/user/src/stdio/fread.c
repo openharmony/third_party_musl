@@ -9,6 +9,7 @@ int __fill_buffer(FILE *f)
 	if (r != 0) {
 		return r;
 	}
+
 	int k = f->readx(f, f->buf, f->buf_size);
 	if (k <= 0) {
 		f->flags |= (k == 0) ? F_EOF : F_ERR;
@@ -32,6 +33,12 @@ size_t fread(void *restrict destv, size_t size, size_t nmemb, FILE *restrict f)
 
 	FLOCK(f);
 
+	/* allocate file buffer if needed */
+	if (__falloc_buf(f) < 0) {
+		f->flags |= F_ERR;
+		goto exit;
+	}
+
 	f->mode |= f->mode-1;
 
 	while (l > 0) {
@@ -47,7 +54,9 @@ size_t fread(void *restrict destv, size_t size, size_t nmemb, FILE *restrict f)
 		if (l == 0) {
 			goto exit;
 		}
-		/* if user buffer is longer than file buffer, read directly */
+		/* if user buffer is longer than file buffer,
+		 * maybe buffer size is 0, non-buffer mode,
+		 * read directly */
 		if (l > f->buf_size) {
 			break;
 		}
