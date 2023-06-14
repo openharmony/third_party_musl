@@ -163,8 +163,6 @@ int dlns_set_namespace_permitted_paths(const char *name, const char *permitted_p
   */
 int dlns_set_namespace_allowed_libs(const char *name, const char *allowed_libs);
 
-void dlns_disable(void);
-
 #if defined(_GNU_SOURCE) || defined(_BSD_SOURCE)
 typedef struct {
 	const char *dli_fname;
