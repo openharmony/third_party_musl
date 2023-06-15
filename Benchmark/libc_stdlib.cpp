@@ -48,6 +48,29 @@ static void Bm_function_Strtod(benchmark::State &state)
     }
 }
 
+static void Bm_function_Strtof(benchmark::State &state)
+{
+     const char *var[] = {"+2.86500000e+01", "3.1415", "29",
+                         "-123.456", "1.23e5", "0x1.2p3",
+                         "-inf", "123foo"};
+    const char *str = var[state.range(0)];
+    char *ptr;
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(strtof(str, &ptr));
+    }
+}
+
+static void Bm_function_Strtold(benchmark::State &state)
+{
+     const char *var[] = {"+2.86500000e+01", "3.1415", "29",
+                         "-123.456", "1.23e5", "0x1.2p3",
+                         "-inf", "123foo"};
+    const char *str = var[state.range(0)];
+    char *ptr;
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(strtold(str, &ptr));
+    }
+}
 // Used to sort elements in an array
 static void Bm_function_Qsort(benchmark::State &state)
 {
@@ -107,6 +130,8 @@ static void Bm_function_Realpath(benchmark::State &state)
 }
 
 MUSL_BENCHMARK_WITH_ARG(Bm_function_Strtod, "BENCHMARK_VARIABLE");
+MUSL_BENCHMARK_WITH_ARG(Bm_function_Strtof, "BENCHMARK_VARIABLE");
+MUSL_BENCHMARK_WITH_ARG(Bm_function_Strtold, "BENCHMARK_VARIABLE");
 MUSL_BENCHMARK(Bm_function_Qsort);
 MUSL_BENCHMARK_WITH_ARG(Bm_function_Realpath, "REALPATH_VARIABLE");
 #endif
