@@ -134,9 +134,28 @@ static void Bm_function_Mmap_anonymous(benchmark::State &state)
     state.SetItemsProcessed(state.iterations());
 }
 
+static void Bm_function_Madvise(benchmark::State &state)
+{
+    int fd = open("/data/data/my_mmap_anonymous.txt", O_RDWR | O_CREAT);
+    if (fd == -1) {
+        perror("open anonymous mmap");
+        exit(EXIT_FAILURE);
+    }
+    size_t length = state.range(0);
+    int *addr = (int*)mmap(NULL, length, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(madvise(addr, length, 0));
+    }
+    munmap(addr, length);
+    close(fd);
+    remove("/data/data/my_mmap_anonymous.txt");
+    state.SetItemsProcessed(state.iterations());
+}
+
 MUSL_BENCHMARK_WITH_ARG(Bm_function_Mmap_1, "MMAP_SIZE");
 MUSL_BENCHMARK_WITH_ARG(Bm_function_Mmap_2, "MMAP_SIZE");
 MUSL_BENCHMARK_WITH_ARG(Bm_function_Mmap_3, "MMAP_SIZE");
 MUSL_BENCHMARK_WITH_ARG(Bm_function_Munmap, "MMAP_SIZE");
 MUSL_BENCHMARK_WITH_ARG(Bm_function_Mmap_anonymous, "MMAP_SIZE");
+MUSL_BENCHMARK_WITH_ARG(Bm_function_Madvise, "MMAP_SIZE");
 #endif

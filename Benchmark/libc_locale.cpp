@@ -16,6 +16,7 @@
 #ifdef ONO_CURRENT_INTERFACE
 #include <benchmark/benchmark.h>
 #include <locale.h>
+#include <langinfo.h>
 #include "sys/types.h"
 #include "sys/epoll.h"
 #include "sys/stat.h"
@@ -82,10 +83,25 @@ static void Bm_function_Setlocale_Time(benchmark::State &state)
     state.SetBytesProcessed(state.iterations());
 }
 
+static void Bm_function_Locale_nl_langinfo(benchmark::State &state)
+{
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(nl_langinfo(CODESET));
+    }
+}
+static void Bm_function_Locale_localeconv(benchmark::State &state)
+{
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(localeconv());
+    }
+}
+
 MUSL_BENCHMARK(Bm_function_Setlocale_All);
 MUSL_BENCHMARK(Bm_function_Setlocale_All1);
 MUSL_BENCHMARK(Bm_function_Setlocale_All2);
 MUSL_BENCHMARK(Bm_function_Setlocale_Collate);
 MUSL_BENCHMARK(Bm_function_Setlocale_Ctype);
 MUSL_BENCHMARK(Bm_function_Setlocale_Time);
+MUSL_BENCHMARK(Bm_function_Locale_nl_langinfo);
+MUSL_BENCHMARK(Bm_function_Locale_localeconv);
 #endif

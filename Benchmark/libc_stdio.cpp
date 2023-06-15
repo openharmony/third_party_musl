@@ -1175,6 +1175,46 @@ static void Bm_function_Vfscanf_lluformat(benchmark::State &state)
     state.SetBytesProcessed(state.iterations());
 }
 
+static void Bm_function_Fileno_unlocked(benchmark::State &state)
+{
+    FILE *stream = fopen("/data/data/vfscanf_lluformat.txt", "w+");
+    if (stream == nullptr) {
+        perror("fopen vfscanf lluformat");
+        exit(EXIT_FAILURE);
+    }
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(fileno_unlocked(stream));
+    }
+    fclose(stream);
+    remove("/data/data/vfscanf_lluformat.txt");
+    state.SetBytesProcessed(state.iterations());
+}
+
+static void Bm_function_Fseek_fflush(benchmark::State &state)
+{
+    FILE *f = fopen("/dev/zero", "r");
+    if (f == nullptr) {
+        perror("fopen fseek set");
+        exit(EXIT_FAILURE);
+    }
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(fflush(f));
+    }
+    fclose(f);
+    state.SetItemsProcessed(state.iterations());
+}
+
+
+static void Bm_function_Sscanf_vsscanf_int(benchmark::State &state)
+{
+    for (auto _ : state) {
+        va_list ap;
+        benchmark::DoNotOptimize(vsscanf("20230515", "%04d%02d%02d", ap));
+    }
+    state.SetBytesProcessed(state.iterations());
+}
+
+
 MUSL_BENCHMARK(Bm_function_Fopen_read);
 MUSL_BENCHMARK(Bm_function_Fopen_write);
 MUSL_BENCHMARK(Bm_function_Fopen_append);
@@ -1247,4 +1287,7 @@ MUSL_BENCHMARK(Bm_function_Vfscanf_hhxformat);
 MUSL_BENCHMARK(Bm_function_Vfscanf_llxformat);
 MUSL_BENCHMARK(Bm_function_Vfscanf_lldformat);
 MUSL_BENCHMARK(Bm_function_Vfscanf_lluformat);
+MUSL_BENCHMARK(Bm_function_Fileno_unlocked);
+MUSL_BENCHMARK(Bm_function_Fseek_fflush);
+MUSL_BENCHMARK(Bm_function_Sscanf_vsscanf_int);
 #endif

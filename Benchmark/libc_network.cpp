@@ -54,6 +54,14 @@ static void Bm_function_Getaddrinfo_intranet1(benchmark::State &state)
     state.SetBytesProcessed(state.iterations());
 }
 
+static void Bm_function_Network_ntohs(benchmark::State &state)
+{
+    uint16_t srcPort = 5060;
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(ntohs(srcPort));
+    }
+}
 MUSL_BENCHMARK(Bm_function_Getaddrinfo_external_network);
 MUSL_BENCHMARK(Bm_function_Getaddrinfo_intranet1);
+MUSL_BENCHMARK(Bm_function_Network_ntohs);
 #endif
