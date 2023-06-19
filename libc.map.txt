@@ -935,10 +935,8 @@
     init_malloc_hook_shared_library;
     init_module;
     initgroups;
-    InitParameterClient;
     InitParamSelinux;
     InitParamWorkSpace;
-    InitSharedMem;
     initstate;
     inotify_add_watch;
     inotify_init;
@@ -1752,7 +1750,6 @@
     sysinfo;
     syslog;
     system;
-    SystemReadParam;
     tan;
     tanf;
     tanh;
@@ -1966,12 +1963,7 @@
     __cfi_slowpath;
     __cfi_slowpath_diag;
     __memleak_hook_flag;
-    SystemFindParameter;
-    SystemGetParameterCommitId;
-    SystemGetParameterValue;
-    GetSystemCommitId;
     mallopt;
-    TestParameterReaderPerformance;
     reallocarray;
     CachedParameterCreate;
     CachedParameterGet;

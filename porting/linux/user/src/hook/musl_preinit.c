@@ -71,27 +71,32 @@ void* function_of_ohos_malloc_shared_lib[LAST_FUNCTION];
 void* function_of_memleak_shared_lib[LAST_FUNCTION];
 static enum EnumHookMode __hook_mode = STEP_HOOK_MODE;
 
-static void  get_native_hook_param(char *buf, unsigned int buf_len)
+static void get_native_hook_param(char *buf, unsigned int buf_len)
 {
 #ifdef OHOS_ENABLE_PARAMETER
-	const char *key =  MUSL_HOOK_PARAM_NAME;
-	unsigned int len = buf_len;
-	(void)SystemReadParam(key, buf, &len);
+	CachedHandle handle = CachedParameterCreate(MUSL_HOOK_PARAM_NAME,  "");
+	const char *value = CachedParameterGet(handle);
+	if (value != NULL) {
+		size_t size = strlen(value);
+		if (size > 0 && size < buf_len) {
+			strcpy(buf, value);
+		}
+	}
+	CachedParameterDestroy(handle);
 #else
 	return;
 #endif
 }
 
-static void  get_memleak_hook_param()
+static void get_memleak_hook_param()
 {
 #ifdef OHOS_ENABLE_PARAMETER
-	const char *key =  kMemTrackPropertyEnable;
-	unsigned int len = OHOS_PARAM_MAX_SIZE;
-	char memleak_param_value[OHOS_PARAM_MAX_SIZE + 1] = {0};
-	(void)SystemReadParam(key, memleak_param_value, &len);
-	if (strncmp(memleak_param_value, kMemTrackSign, strlen(kMemTrackSign)) == 0) {
+	CachedHandle handle = CachedParameterCreate(kMemTrackPropertyEnable,  "false");
+	const char *value = CachedParameterGet(handle);
+	if (value != NULL && strncmp(value, kMemTrackSign, strlen(kMemTrackSign)) == 0) {
 		checkLoadMallocMemTrack = true;
 	}
+	CachedParameterDestroy(handle);
 #else
 	return;
 #endif
