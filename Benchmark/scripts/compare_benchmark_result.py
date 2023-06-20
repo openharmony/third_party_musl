@@ -17,73 +17,76 @@
 import argparse
 import re
 
-g_before_data = {}
-g_after_data = {}
-g_all_cases = []
 
+class BenchmarkDataParser:
+    def __init__(self):
+        self.benchmark_data_before = {}
+        self.benchmark_data_after = {}
+        self.all_cases = []
 
-def get_format(before_data, after_data, pct, fluctuation_range):
-    deg_format = "\033[1;31m|{:60}|{:20}|{:20}|{:20}\033[0m|"
-    opt_format = "\033[1;32m|{:60}|{:20}|{:20}|{:20}\033[0m|"
-    equal_format = "\033[1;37m|{:60}|{:20}|{:20}|{:20}\033[0m|"
-    if pct <= fluctuation_range:
-        return equal_format
-    if before_data > after_data:
-        return opt_format
-    else:
-        return deg_format
+    @staticmethod
+    def get_format(before_data, after_data, pct, fluctuation_range):
+        deg_format = "\033[1;31m|{:60}|{:20}|{:20}|{:20}\033[0m|"
+        opt_format = "\033[1;32m|{:60}|{:20}|{:20}|{:20}\033[0m|"
+        equal_format = "\033[1;37m|{:60}|{:20}|{:20}|{:20}\033[0m|"
+        if pct <= fluctuation_range:
+            return equal_format
+        if before_data > after_data:
+            return opt_format
+        else:
+            return deg_format
 
+    @staticmethod
+    def print_header(args):
+        header_format = "\033[1;37m|{:60}|{:20}|{:20}|{:20}|\033[0m"
+        print("\033[1;34m[Notice]:\033[0m")
+        print("file before optimization: " + args.before)
+        print("file after optimization: " + args.after)
+        print("allowed fluctuation range: " + args.range + "%")
+        print("\033[1;32mgreen is better, \033[0m" +
+              "\033[1;31mred is worse, \033[0m" +
+              "\033[1;37mwhite is equal.\033[0m")
+        print("\033[1;34m[Compare Result]:\033[0m")
+        print(header_format.format("case", "before(ns)", "after(ns)", "(before - after / before)"))
+        print(header_format.format("----", "----", "----", "----"))
 
-def read_file(file_path, is_before):
-    bench_pattern = re.compile(r'''
-        ^([\S]+)   # case name
-        [^0-9]+
-        ([0-9,.]+) # time
-        [^0-9]+
-        ([0-9|.]+) # cpu
-        [^0-9]+
-        ([0-9|.]+) # iters
-        .*''', re.VERBOSE)
+    def read_file(self, file_path, is_before):
+        bench_pattern = re.compile(r'''
+            ^([\S]+)   # case name
+            [^0-9]+
+            ([0-9,.]+) # time
+            [^0-9]+
+            ([0-9|.]+) # cpu
+            [^0-9]+
+            ([0-9|.]+) # iters
+            .*''', re.VERBOSE)
 
-    with open(file_path, 'r') as f:
-        for line in f.readlines():
-            if line.startswith("BM_"):
+        if is_before:
+            current_data = self.benchmark_data_before
+        else:
+            current_data = self.benchmark_data_after
+
+        lines = open(file_path, 'r').readlines()
+        for line in lines:
+            if line.lower().startswith("bm_"):
                 m = bench_pattern.match(line)
                 if m:
                     case, time, cpu, iters = m.groups()
-                    if g_all_cases.count(case) == 0:
-                        g_all_cases.append(case)
-                    result = [float(time), float(cpu), float(iters)]
-                    if is_before:
-                        g_before_data[case] = result
-                    else:
-                        g_after_data[case] = result
+                    self.all_cases.append(case) if self.all_cases.count(case) == 0 else self.all_cases
+                    current_data[case] = [float(time), float(cpu), float(iters)]
                 else:
-                    print("match error")
+                    print("match error: {}".format(line))
 
-
-def print_header(args):
-    header_format = "\033[1;37m|{:60}|{:20}|{:20}|{:20}|\033[0m"
-    print("\033[1;34m[Notice]:\033[0m")
-    print("file before optimization: " + args.before)
-    print("file after optimization: " + args.after)
-    print("allowed fluctuation range: " + args.range + "%")
-    print("\033[1;32mgreen is better, \033[0m" + "\033[1;31mred is worse, \033[0m" + "\033[1;37mwhite is equal.\033[0m")
-    print("\033[1;34m[Compare Result]:\033[0m")
-    print(header_format.format("case", "before(ns)", "after(ns)", "(before - after / before)"))
-    print(header_format.format("----", "----", "----", "----"))
-
-
-def out_results(args):
-    print_header(args)
-    for case in g_all_cases:
-        before_data = g_before_data[case][0] if case in g_before_data.keys() else 0
-        after_data = g_after_data[case][0] if case in g_after_data.keys() else 0
-        pct = 0 if before_data == 0 else round((abs(before_data - after_data) / before_data) * 100, 2)
-        sign = "+" if (before_data - after_data) > 0  else "-"
-        output_format = get_format(before_data, after_data, pct, float(args.range))
-        signed_pct = "{}{}{}".format(sign, str(pct), "%")
-        print(output_format.format(str(case), str(before_data), str(after_data), signed_pct))
+    def out_results(self, args):
+        self.print_header(args)
+        for case in self.all_cases:
+            before_data = self.benchmark_data_before[case][0] if case in self.benchmark_data_before.keys() else 0
+            after_data = self.benchmark_data_after[case][0] if case in self.benchmark_data_after.keys() else 0
+            pct = 0 if before_data == 0 else round((abs(before_data - after_data) / before_data) * 100, 2)
+            sign = "+" if (before_data - after_data) > 0  else "-"
+            output_format = self.get_format(before_data, after_data, pct, float(args.range))
+            signed_pct = "{}{}{}".format(sign, str(pct), "%")
+            print(output_format.format(str(case), str(before_data), str(after_data), signed_pct))
 
 
 def main():
@@ -93,9 +96,11 @@ def main():
     parser.add_argument('-r', '--range', type=str, help='allowed fluctuation range')
 
     args = parser.parse_args()
-    read_file(args.before,  1)
-    read_file(args.after, 0)
-    out_results(args)
+
+    benchmark_data_parser = BenchmarkDataParser()
+    benchmark_data_parser.read_file(args.before,  1)
+    benchmark_data_parser.read_file(args.after, 0)
+    benchmark_data_parser.out_results(args)
 
 
 if __name__ == '__main__':
