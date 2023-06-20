@@ -139,6 +139,7 @@ if (musl_arch == "arm") {
     "src/thread/aarch64/__unmapself.s",
     "src/thread/aarch64/clone.s",
     "src/thread/aarch64/syscall_cp.s",
+    "src/misc/aarch64/syscall.s",
   ]
 } else if (musl_arch == "x86_64") {
   musl_src_arch_file = [
@@ -1626,6 +1627,7 @@ if (musl_arch == "arm") {
     "src/thread/__unmapself.c",
     "src/thread/clone.c",
     "src/thread/syscall_cp.c",
+    "src/misc/syscall.c",
   ]
 } else if (musl_arch == "x86_64") {
   musl_src_filterout = [
@@ -2196,6 +2198,7 @@ musl_src_porting_file = [
   "src/thread/pthread_cancel.c",
   "src/mq/mq_notify.c",
   "src/aio/aio.c",
+  "src/misc/aarch64/syscall.s",
 ]
 
 musl_inc_hook_files = [
