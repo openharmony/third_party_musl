@@ -258,6 +258,52 @@ static void Bm_function_Strcasecmp(benchmark::State &state)
     state.SetBytesProcessed(uint64_t(state.iterations()) * uint64_t(nbytes));
 }
 
+static void Bm_function_Strncasecmp(benchmark::State &state)
+{
+    const size_t nbytes = state.range(0);
+    const size_t haystackAlignment = state.range(1);
+    const size_t needleAlignment = state.range(2);
+
+    std::vector<char> haystack;
+    std::vector<char> needle;
+    char *haystackAligned = GetAlignedPtrFilled(&haystack, haystackAlignment, nbytes, 'x');
+    char *needleAligned = GetAlignedPtrFilled(&needle, needleAlignment, nbytes, 'x');
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(strncasecmp(haystackAligned, needleAligned, nbytes));
+    }
+    state.SetBytesProcessed(uint64_t(state.iterations()) * uint64_t(nbytes));
+}
+
+static void Bm_function_Strdup(benchmark::State &state)
+{
+    const size_t nbytes = state.range(0);
+    const size_t haystackAlignment = state.range(1);
+    std::vector<char> haystack;
+    char *haystackAligned = GetAlignedPtrFilled(&haystack, haystackAlignment, nbytes, 'x');
+    haystackAligned[nbytes - 1] = '\0';
+    char* ptr = 0;
+    while (state.KeepRunning()) {
+        benchmark::DoNotOptimize(ptr = strdup(haystackAligned));
+        free(ptr);
+    }
+    state.SetBytesProcessed(uint64_t(state.iterations()) * uint64_t(nbytes));
+}
+
+static void Bm_function_Strncat(benchmark::State &state)
+{
+    const size_t nbytes = state.range(0);
+    const size_t haystackAlignment = state.range(1);
+    std::vector<char> haystack;
+    char *haystackAligned = GetAlignedPtrFilled(&haystack, haystackAlignment, nbytes, 'x');
+    haystackAligned[nbytes - 1] = '\0';
+    std::vector<char> dstStack;
+    char *dst = GetAlignedPtrFilled(&dstStack, haystackAlignment, nbytes, '0');
+    while (state.KeepRunning()) {
+        dst[0] = 0;
+        benchmark::DoNotOptimize(strncat(dst, haystackAligned, nbytes));
+    }
+    state.SetBytesProcessed(uint64_t(state.iterations()) * uint64_t(nbytes));
+}
 MUSL_BENCHMARK_WITH_ARG(Bm_function_Memchr, "STRING_LIMIT");
 MUSL_BENCHMARK_WITH_ARG(Bm_function_Strnlen, "STRING_LIMIT");
 MUSL_BENCHMARK_WITH_ARG(Bm_function_Stpncpy, "STRING_LIMIT");
@@ -270,6 +316,9 @@ MUSL_BENCHMARK(Bm_function_Strcasecmp_small_equal);
 MUSL_BENCHMARK(Bm_function_Strcasecmp_equal);
 MUSL_BENCHMARK(Bm_function_Strcasecmp_not_equal);
 MUSL_BENCHMARK_WITH_ARG(Bm_function_Strcasecmp, "ALIGNED_TWOBUF");
+MUSL_BENCHMARK_WITH_ARG(Bm_function_Strncasecmp, "ALIGNED_TWOBUF");
+MUSL_BENCHMARK_WITH_ARG(Bm_function_Strdup, "ALIGNED_ONEBUF");
+MUSL_BENCHMARK_WITH_ARG(Bm_function_Strncat, "ALIGNED_ONEBUF");
 
 #ifdef ONO_CURRENT_INTERFACE
 MUSL_BENCHMARK(Bm_function_Strrchr);
