@@ -55,9 +55,75 @@ static void Bm_function_Tzset(benchmark::State &state)
         tzset();
     }
 }
+static void Bm_function_Clock_nanosleep_realtime(benchmark::State &state)
+{
+    struct timespec req, rem;
+    req.tv_nsec = 10;
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(clock_nanosleep(CLOCK_REALTIME, 0, &req, &rem));
+    }
+}
+
+static void Bm_function_Clock_nanosleep_realtime_raw(benchmark::State &state)
+{
+    struct timespec req, rem;
+    req.tv_nsec = 10;
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(clock_nanosleep(CLOCK_REALTIME_COARSE, 0, &req, &rem));
+    }
+}
+
+static void Bm_function_Clock_nanosleep_realtime_coarse(benchmark::State &state)
+{
+    struct timespec req, rem;
+    req.tv_nsec = 10;
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(clock_nanosleep(CLOCK_REALTIME_COARSE, 0, &req, &rem));
+    }
+}
+
+static void Bm_function_Clock_nanosleep_monotonic(benchmark::State &state)
+{
+    struct timespec req, rem;
+    req.tv_nsec = 10;
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(clock_nanosleep(CLOCK_MONOTONIC, 0, &req, &rem));
+    }
+}
+static void Bm_function_Clock_nanosleep_monotonic_coarse(benchmark::State &state)
+{
+    struct timespec req, rem;
+    req.tv_nsec = 10;
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(clock_nanosleep(CLOCK_MONOTONIC_COARSE, 0, &req, &rem));
+    }
+}
+static void Bm_function_Clock_nanosleep_monotonic_raw(benchmark::State &state)
+{
+    struct timespec req, rem;
+    req.tv_nsec = 10;
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(clock_nanosleep(CLOCK_MONOTONIC_RAW, 0, &req, &rem));
+    }
+}
+static void Bm_function_Clock_nanosleep_boottime(benchmark::State &state)
+{
+    struct timespec req, rem;
+    req.tv_nsec = 10;
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(clock_nanosleep(CLOCK_BOOTTIME, 0, &req, &rem));
+    }
+}
 
 MUSL_BENCHMARK(Bm_function_Nanosleep_0ns);
 MUSL_BENCHMARK(Bm_function_Nanosleep_10ns);
 MUSL_BENCHMARK(Bm_function_Nanosleep_100ns);
 MUSL_BENCHMARK(Bm_function_Tzset);
+MUSL_BENCHMARK(Bm_function_Clock_nanosleep_realtime);
+MUSL_BENCHMARK(Bm_function_Clock_nanosleep_realtime_raw);
+MUSL_BENCHMARK(Bm_function_Clock_nanosleep_realtime_coarse);
+MUSL_BENCHMARK(Bm_function_Clock_nanosleep_monotonic);
+MUSL_BENCHMARK(Bm_function_Clock_nanosleep_monotonic_raw);
+MUSL_BENCHMARK(Bm_function_Clock_nanosleep_monotonic_coarse);
+MUSL_BENCHMARK(Bm_function_Clock_nanosleep_boottime);
 #endif

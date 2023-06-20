@@ -15,11 +15,22 @@
 
 #ifdef ONO_CURRENT_INTERFACE
 #include <benchmark/benchmark.h>
-
 #include "pthread.h"
+#include "semaphore.h"
+#include "signal.h"
 #include "threads.h"
 #include "unistd.h"
 #include "util.h"
+
+static void Bm_function_pthread_mutexattr_settype(benchmark::State &state)
+{
+    pthread_mutexattr_t mutex_attr;
+    pthread_mutexattr_init(&mutex_attr);
+    while (state.KeepRunning()) {
+        benchmark::DoNotOptimize(pthread_mutexattr_settype(&mutex_attr, PTHREAD_MUTEX_NORMAL));
+    }
+    pthread_mutexattr_destroy(&mutex_attr);
+}
 
 static void Bm_function_pthread_mutex_trylock_fast(benchmark::State &state)
 {
@@ -375,6 +386,58 @@ static void Bm_function_pthread_cond_broadcast(benchmark::State &state)
     state.SetBytesProcessed(state.iterations());
 }
 
+static void Bm_function_Sem_timewait(benchmark::State &state)
+{
+    sem_t semp;
+    sem_init(&semp, 0, 1);
+    struct timespec spec;
+    spec.tv_sec = 0;
+    spec.tv_nsec = 5;
+    while (state.KeepRunning()) {
+        sem_timedwait(&semp, &spec);
+    }
+    sem_destroy(&semp);
+}
+
+static void Bm_function_Sem_post_wait(benchmark::State &state)
+{
+    sem_t semp;
+    sem_init(&semp, 0, 0);
+    struct timespec spec;
+    spec.tv_sec = 0;
+    spec.tv_nsec = 5;
+    while (state.KeepRunning()) {
+        sem_post(&semp);
+        sem_wait(&semp);
+    }
+    sem_destroy(&semp);
+}
+
+static void Bm_function_pthread_cond_signal(benchmark::State &state)
+{
+    pthread_cond_t cond;
+    pthread_cond_init(&cond, NULL);
+    while (state.KeepRunning())
+    {
+        pthread_cond_signal(&cond);
+    }
+    pthread_cond_destroy(&cond);
+    state.SetBytesProcessed(state.iterations());
+}
+
+static void Bm_function_Sigaddset(benchmark::State &state)
+{
+    sigset_t set;
+    sigemptyset(&set);
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(sigaddset(&set, SIGUSR1));
+    }
+    state.SetBytesProcessed(state.iterations());
+}
+
+MUSL_BENCHMARK(Bm_function_Sigaddset);
+MUSL_BENCHMARK(Bm_function_pthread_cond_signal);
+MUSL_BENCHMARK(Bm_function_pthread_mutexattr_settype);
 MUSL_BENCHMARK(Bm_function_pthread_mutex_trylock_fast);
 MUSL_BENCHMARK(Bm_function_pthread_mutex_trylock_errchk);
 MUSL_BENCHMARK(Bm_function_pthread_mutex_trylock_rec);
@@ -396,4 +459,6 @@ MUSL_BENCHMARK(Bm_function_pthread_rwlock_timedrdlock);
 MUSL_BENCHMARK(Bm_function_pthread_rwlock_timedwrlock);
 MUSL_BENCHMARK(Bm_function_pthread_cond_timedwait);
 MUSL_BENCHMARK(Bm_function_pthread_cond_broadcast);
+MUSL_BENCHMARK(Bm_function_Sem_timewait);
+MUSL_BENCHMARK(Bm_function_Sem_post_wait);
 #endif
