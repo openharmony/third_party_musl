@@ -18,6 +18,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/wait.h>
+#include <unistd.h>
 #include "fortify_test.h"
 #include "functionalext.h"
 #include "test.h"
@@ -81,9 +82,31 @@ static void poll_0020(void)
  */
 static void poll_0030(void)
 {
-    nfds_t fd_count = atoi("1");
-    struct pollfd buf[2] = {{0, POLLIN, 0}, {1, POLLIN, 0}};
-    EXPECT_EQ(poll_0030, poll(buf, fd_count, 1), 1);
+    int fd[2];
+    int res = pipe(fd);
+    if (res != 0) {
+        EXPECT_TRUE("poll_0030 pipe", 0);
+    }
+    int pid = fork();
+    if (pid == -1) {
+        EXPECT_TRUE("poll_0030 fork", 0);
+    } else if (pid == 0) {
+        // child process: send msg to master process
+        close(fd[0]);
+        const char* message = "";
+        write(fd[1], message, strlen(message) + 1);
+        close(fd[1]);
+        exit(0);
+    } else {
+        // master process: wait events from child process
+        close(fd[1]);
+        struct pollfd buf[2] = {{fd[0], POLLIN, 0}, {fd[0], POLLIN, 0}};
+        int result = poll(buf, 1, 100);
+        char buff;
+        while (read(fd[0], &buff, 1) > 0);
+        close(fd[0]);
+        EXPECT_EQ("poll_0030", result, 1);
+    }
     return;
 }
 
@@ -149,10 +172,33 @@ static void ppoll_0020(void)
  */
 static void ppoll_0030(void)
 {
-    nfds_t fd_count = atoi("1");
-    struct pollfd buf[2] = {{0, POLLIN, 0}, {1, POLLIN, 0}};
-    struct timespec ts = { .tv_nsec = PPOLL_TIMESPEC_NSEC };
-    EXPECT_EQ(ppoll_0030, ppoll(buf, fd_count, &ts, NULL), 1);
+
+    int fd[2];
+    int res = pipe(fd);
+    if (res != 0) {
+        EXPECT_TRUE("poll_0030 pipe", 0);
+    }
+    int pid = fork();
+    if (pid == -1) {
+        EXPECT_TRUE("poll_0030 fork", 0);
+    } else if (pid == 0) {
+        // child process: send msg to master process
+        close(fd[0]);
+        const char* message = "";
+        write(fd[1], message, strlen(message) + 1);
+        close(fd[1]);
+        exit(0);
+    } else {
+        // master process: wait events from child process
+        close(fd[1]);
+        struct pollfd buf[2] = {{fd[0], POLLIN, 0}, {fd[0], POLLIN, 0}};
+        struct timespec ts = { .tv_nsec = 100000000 };
+        int result = ppoll(buf, 1, &ts, NULL);
+        char buff;
+        while (read(fd[0], &buff, 1) > 0);
+        close(fd[0]);
+        EXPECT_EQ("ppoll_0030", result, 1);
+    }
     return;
 }
 
