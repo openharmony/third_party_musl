@@ -94,6 +94,14 @@ template("test_unittest") {
         "//${test_dir}/src/math/ucb",
       ]
 
+      if (musl_ld128_flag) {
+        include_dirs += [ "//${test_dir}/src/math/ld128" ]
+        if (!defined(defines)) {
+          defines = []
+        }
+        defines += [ "LD128_ENABLE" ]
+      }
+
       cflags += [
         # math/dremf.c:1:9: error: '_GNU_SOURCE' macro redefined [-Werror,-Wmacro-redefined]
         # cflags_c无法生效此命令

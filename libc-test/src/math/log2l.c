@@ -12,6 +12,11 @@ static struct l_l t[] = {
 #include "sanity/log2l.h"
 #include "special/log2l.h"
 
+#elif LDBL_MANT_DIG == 113
+#ifdef LD128_ENABLE
+#include "ld128/log2l.h"
+#endif
+
 #endif
 };
 

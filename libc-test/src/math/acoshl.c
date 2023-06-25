@@ -11,6 +11,11 @@ static struct l_l t[] = {
 #include "sanity/acoshl.h"
 #include "special/acoshl.h"
 
+#elif LDBL_MANT_DIG == 113
+#ifdef LD128_ENABLE
+#include "ld128/acoshl.h"
+#endif
+
 #endif
 };
 

@@ -1,6 +1,7 @@
 import("//base/startup/init/begetd.gni")
 import("//build/config/clang/clang.gni")
 import("//build/ohos.gni")
+import("//third_party/FreeBSD/FreeBSD.gni")
 import("//third_party/optimized-routines/optimized-routines.gni")
 import("musl_src.gni")
 template("musl_libs") {
@@ -398,6 +399,47 @@ template("musl_libs") {
       ]
     } else if (musl_arch == "x86_64") {
       sources_orig -= [ "src/thread/${musl_arch}/__set_thread_area.s" ]
+    }
+    if (musl_ld128_flag) {
+      if (musl_arch == "x86_64") {
+        sources_orig -= [
+          "src/math/x86_64/exp2l.s",
+          "src/math/x86_64/expl.s",
+          "src/math/x86_64/expm1l.s",
+          "src/math/x86_64/fabsl.s",
+          "src/math/x86_64/floorl.s",
+          "src/math/x86_64/log1pl.s",
+          "src/math/x86_64/log2l.s",
+          "src/math/x86_64/log10l.s",
+          "src/math/x86_64/logl.s",
+          "src/math/x86_64/sqrtl.s",
+          "src/math/acoshl.c",
+          "src/math/asinhl.c",
+          "src/math/coshl.c",
+          "src/math/sinhl.c",
+          "src/math/erfl.c",
+          "src/math/powl.c",
+          "src/math/lgammal.c",
+          "src/math/tanhl.c",
+        ]
+      } else if (musl_arch == "aarch64") {
+        sources_orig -= [
+          "src/math/acoshl.c",
+          "src/math/asinhl.c",
+          "src/math/coshl.c",
+          "src/math/sinhl.c",
+          "src/math/expl.c",
+          "src/math/expm1l.c",
+          "src/math/erfl.c",
+          "src/math/logl.c",
+          "src/math/log1pl.c",
+          "src/math/log2l.c",
+          "src/math/log10l.c",
+          "src/math/powl.c",
+          "src/math/lgammal.c",
+          "src/math/tanhl.c",
+        ]
+      }
     }
 
     defines = []
@@ -807,6 +849,54 @@ template("musl_libs") {
     configs += [ ":soft_jemalloc" ]
   }
 
+  source_set("soft_musl_src_ld128") {
+    sources = []
+    if (musl_arch == "x86_64") {
+      sources += [
+        "src/math/exp2l.c",
+        "src/math/fabsl.c",
+        "src/math/floorl.c",
+        "src/math/sqrtl.c",
+      ]
+    }
+    sources += [
+      "$FREEBSD_DIR/lib/msun/ld128/e_lgammal_r.c",
+      "$FREEBSD_DIR/lib/msun/ld128/e_powl.c",
+      "$FREEBSD_DIR/lib/msun/ld128/k_cosl.c",
+      "$FREEBSD_DIR/lib/msun/ld128/k_sinl.c",
+      "$FREEBSD_DIR/lib/msun/ld128/s_erfl.c",
+      "$FREEBSD_DIR/lib/msun/ld128/s_expl.c",
+      "$FREEBSD_DIR/lib/msun/ld128/s_logl.c",
+      "$FREEBSD_DIR/lib/msun/src/e_acoshl.c",
+      "$FREEBSD_DIR/lib/msun/src/e_coshl.c",
+      "$FREEBSD_DIR/lib/msun/src/e_lgammal.c",
+      "$FREEBSD_DIR/lib/msun/src/e_sinhl.c",
+      "$FREEBSD_DIR/lib/msun/src/s_asinhl.c",
+      "$FREEBSD_DIR/lib/msun/src/s_tanhl.c",
+    ]
+
+    defines = [ "LD128_ENABLE" ]
+    include_dirs = [
+      "//third_party/FreeBSD/lib/msun/ld128",
+      "//third_party/FreeBSD/lib/msun/src",
+      "//third_party/FreeBSD/lib/libc/include",
+      "//third_party/FreeBSD/sys",
+    ]
+
+    configs -= musl_inherited_configs
+    configs += [ ":soft_musl_config" ]
+    cflags = [
+      "-mllvm",
+      "-instcombine-max-iterations=0",
+      "-ffp-contract=fast",
+      "-O3",
+      "-fPIC",
+      "-fstack-protector-strong",
+    ]
+
+    deps = porting_deps
+  }
+
   static_library("soft_libc_musl_static") {
     output_name = "libc"
     complete_static_lib = true
@@ -827,6 +917,10 @@ template("musl_libs") {
     }
     if (use_jemalloc) {
       deps += [ ":soft_musl_jemalloc" ]
+    }
+
+    if (musl_ld128_flag) {
+      deps += [ ":soft_musl_src_ld128" ]
     }
   }
 
@@ -935,6 +1029,10 @@ template("musl_libs") {
 
     if (use_jemalloc) {
       deps += [ ":soft_musl_jemalloc" ]
+    }
+
+    if (musl_ld128_flag) {
+      deps += [ ":soft_musl_src_ld128" ]
     }
   }
 

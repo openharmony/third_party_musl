@@ -13,6 +13,11 @@ static struct ll_l t[] = {
 #include "sanity/powl.h"
 #include "special/powl.h"
 
+#elif LDBL_MANT_DIG == 113
+#ifdef LD128_ENABLE
+#include "ld128/powl.h"
+#endif
+
 #endif
 };
 
