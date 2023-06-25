@@ -3647,6 +3647,10 @@ static int dlclose_impl(struct dso *p)
 
 	if (--(p->nr_dlopen) > 0)
 		return 0;
+
+	if (p->parents_count > 0)
+		return 0;
+
 	trace_marker_reset();
 	trace_marker_begin(HITRACE_TAG_MUSL, "dlclose", p->name);
 	/* call destructors if needed */
