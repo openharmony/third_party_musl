@@ -33,6 +33,14 @@ int eulpl(long double x)
 	if (!e)
 		e++;
 	return e - 0x3fff - 63;
+#elif LDBL_MANT_DIG == 113
+	union { long double f; struct {uint64_t lo; uint32_t mid; uint16_t top; uint16_t se;} i; } u = { x };
+	int e = u.i.se & 0x7fff;
+
+	if (!e)
+		e++;
+	return e - 0x3fff - 112;
+
 #else
 	// TODO
 	return 0;
@@ -75,7 +83,7 @@ float ulperrl(long double got, long double want, float dwant)
 {
 #if LDBL_MANT_DIG == 53
 	return ulperr(got, want, dwant);
-#elif LDBL_MANT_DIG == 64
+#elif LDBL_MANT_DIG == 64 || LDBL_MANT_DIG == 113
 	if (isnan(got) && isnan(want))
 		return 0;
 	if (got == want) {

@@ -12,6 +12,11 @@ static struct l_l t[] = {
 #include "sanity/expm1l.h"
 #include "special/expm1l.h"
 
+#elif LDBL_MANT_DIG == 113
+#ifdef LD128_ENABLE
+#include "ld128/expm1l.h"
+#endif
+
 #endif
 };
 
