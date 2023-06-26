@@ -2183,6 +2183,7 @@ musl_src_porting_file = [
   "src/stdio/__toread.c",
   "src/stdio/__towrite.c",
   "src/stdio/stderr.c",
+  "src/stdio/fgets.c",
   "src/internal/stdio_impl.h",
   "src/internal/vdso.c",
   "src/time/clock_gettime.c",
