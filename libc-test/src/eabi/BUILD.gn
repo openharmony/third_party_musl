@@ -5,6 +5,7 @@ eabi_list = [
   "__aeabi_memmove",
   "__aeabi_memset",
   "__aeabi_memclr",
+  "__gmtime64",
   "__aeabi_read_tp",
   "__sigtimedwait_time64",
 ]
