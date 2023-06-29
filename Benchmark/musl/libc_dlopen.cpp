@@ -13,16 +13,15 @@
  * limitations under the License.
  */
 
+#include "util.h"
 #include <dlfcn.h>
 #include <sys/time.h>
 #include <stdio.h>
 #include <iostream>
 
-#define LIBACE_PATH "system/lib64/libace.z.so"
-
 class ScopeTime {
 public:
-    explicit ScopeTime() : cost(0)
+    explicit ScopeTime(const char *name) : cost(0), soName(name)
     {
         gettimeofday(&timeStart, nullptr);
     }
@@ -33,23 +32,24 @@ public:
         gettimeofday(&timeCurrent, nullptr);
         cost = (timeCurrent.tv_sec - timeStart.tv_sec) * 1000.0 +
             (double)(timeCurrent.tv_usec - timeStart.tv_usec) / 1000.0;
-        printf("current cost %f ms.\n", cost);
+        printf("%s current cost %f ms.\n", soName, cost);
     }
 
     ~ScopeTime()
     {
         gettimeofday(&timeEnd, nullptr);
         cost = (timeEnd.tv_sec - timeStart.tv_sec) * 1000.0 + (double)(timeEnd.tv_usec - timeStart.tv_usec) / 1000.0;
-        printf("dlopen cost %f ms.\n", cost);
+        printf("dlopen %s cost %f ms.\n", soName, cost);
     }
 private:
     struct timeval timeStart, timeEnd;
     double cost;
+    const char *soName;
 };
 
 static void DoDlopen(const char *fileName, int flags)
 {
-    ScopeTime st;
+    ScopeTime st = ScopeTime(fileName);
     void *handle = dlopen(fileName, flags);
     if (handle == nullptr) {
         printf("dlopen error: %s", dlerror());

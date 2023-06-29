@@ -13,7 +13,6 @@
  * limitations under the License.
  */
 
-#ifdef ONO_CURRENT_INTERFACE
 #include <benchmark/benchmark.h>
 #include "sys/select.h"
 #include "sys/time.h"
@@ -39,4 +38,3 @@ static void Bm_function_Select(benchmark::State &state)
 }
 
 MUSL_BENCHMARK(Bm_function_Select);
-#endif
