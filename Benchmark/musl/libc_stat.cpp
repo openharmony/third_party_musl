@@ -13,7 +13,6 @@
  * limitations under the License.
  */
 
-#ifdef ONO_CURRENT_INTERFACE
 #include <benchmark/benchmark.h>
 #include "sys/stat.h"
 #include "sys/types.h"
@@ -75,7 +74,7 @@ static void Bm_function_Fstatat_absolutepath(benchmark::State &state)
 static void Bm_function_Fstat64(benchmark::State &state)
 {
     struct stat buf;
-    int fd = open("/etc/passwd", O_RDONLY);
+    int fd = open("/etc/passwd", O_RDONLY, OPEN_MODE);
     if (fd == -1) {
         perror("open fstat64");
         exit(EXIT_FAILURE);
@@ -104,4 +103,3 @@ MUSL_BENCHMARK(Bm_function_Fstatat_symbollink);
 MUSL_BENCHMARK(Bm_function_Fstatat_absolutepath);
 MUSL_BENCHMARK(Bm_function_Fstat64);
 MUSL_BENCHMARK(Bm_function_Mkdir);
-#endif

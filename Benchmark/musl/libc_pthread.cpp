@@ -13,7 +13,6 @@
  * limitations under the License.
  */
 
-#ifdef ONO_CURRENT_INTERFACE
 #include <benchmark/benchmark.h>
 #include "pthread.h"
 #include "semaphore.h"
@@ -24,23 +23,23 @@
 
 static void Bm_function_pthread_mutexattr_settype(benchmark::State &state)
 {
-    pthread_mutexattr_t mutex_attr;
-    pthread_mutexattr_init(&mutex_attr);
+    pthread_mutexattr_t mutexAttr;
+    pthread_mutexattr_init(&mutexAttr);
     while (state.KeepRunning()) {
-        benchmark::DoNotOptimize(pthread_mutexattr_settype(&mutex_attr, PTHREAD_MUTEX_NORMAL));
+        benchmark::DoNotOptimize(pthread_mutexattr_settype(&mutexAttr, PTHREAD_MUTEX_NORMAL));
     }
-    pthread_mutexattr_destroy(&mutex_attr);
+    pthread_mutexattr_destroy(&mutexAttr);
 }
 
 static void Bm_function_pthread_mutex_trylock_fast(benchmark::State &state)
 {
-    pthread_mutexattr_t mutex_attr;
-    pthread_mutexattr_init(&mutex_attr);
-    pthread_mutexattr_settype(&mutex_attr, PTHREAD_MUTEX_NORMAL);
+    pthread_mutexattr_t mutexAttr;
+    pthread_mutexattr_init(&mutexAttr);
+    pthread_mutexattr_settype(&mutexAttr, PTHREAD_MUTEX_NORMAL);
 
     pthread_mutex_t mutex;
-    pthread_mutex_init(&mutex, &mutex_attr);
-    pthread_mutexattr_destroy(&mutex_attr);
+    pthread_mutex_init(&mutex, &mutexAttr);
+    pthread_mutexattr_destroy(&mutexAttr);
     while (state.KeepRunning()) {
         pthread_mutex_trylock(&mutex);
         pthread_mutex_unlock(&mutex);
@@ -49,13 +48,13 @@ static void Bm_function_pthread_mutex_trylock_fast(benchmark::State &state)
 
 static void Bm_function_pthread_mutex_trylock_errchk(benchmark::State &state)
 {
-    pthread_mutexattr_t mutex_attr;
-    pthread_mutexattr_init(&mutex_attr);
-    pthread_mutexattr_settype(&mutex_attr, PTHREAD_MUTEX_ERRORCHECK);
+    pthread_mutexattr_t mutexAttr;
+    pthread_mutexattr_init(&mutexAttr);
+    pthread_mutexattr_settype(&mutexAttr, PTHREAD_MUTEX_ERRORCHECK);
 
     pthread_mutex_t mutex;
-    pthread_mutex_init(&mutex, &mutex_attr);
-    pthread_mutexattr_destroy(&mutex_attr);
+    pthread_mutex_init(&mutex, &mutexAttr);
+    pthread_mutexattr_destroy(&mutexAttr);
     while (state.KeepRunning()) {
         pthread_mutex_trylock(&mutex);
         pthread_mutex_unlock(&mutex);
@@ -64,13 +63,13 @@ static void Bm_function_pthread_mutex_trylock_errchk(benchmark::State &state)
 
 static void Bm_function_pthread_mutex_trylock_rec(benchmark::State &state)
 {
-    pthread_mutexattr_t mutex_attr;
-    pthread_mutexattr_init(&mutex_attr);
-    pthread_mutexattr_settype(&mutex_attr, PTHREAD_MUTEX_RECURSIVE);
+    pthread_mutexattr_t mutexAttr;
+    pthread_mutexattr_init(&mutexAttr);
+    pthread_mutexattr_settype(&mutexAttr, PTHREAD_MUTEX_RECURSIVE);
 
     pthread_mutex_t mutex;
-    pthread_mutex_init(&mutex, &mutex_attr);
-    pthread_mutexattr_destroy(&mutex_attr);
+    pthread_mutex_init(&mutex, &mutexAttr);
+    pthread_mutexattr_destroy(&mutexAttr);
     while (state.KeepRunning()) {
         pthread_mutex_trylock(&mutex);
         pthread_mutex_unlock(&mutex);
@@ -79,13 +78,13 @@ static void Bm_function_pthread_mutex_trylock_rec(benchmark::State &state)
 
 static void Bm_function_pthread_mutex_trylock_pi_fast(benchmark::State &state)
 {
-    pthread_mutexattr_t mutex_attr;
-    pthread_mutexattr_init(&mutex_attr);
-    pthread_mutexattr_settype(&mutex_attr, PTHREAD_MUTEX_NORMAL);
-    pthread_mutexattr_setprotocol(&mutex_attr, PTHREAD_PRIO_INHERIT);
+    pthread_mutexattr_t mutexAttr;
+    pthread_mutexattr_init(&mutexAttr);
+    pthread_mutexattr_settype(&mutexAttr, PTHREAD_MUTEX_NORMAL);
+    pthread_mutexattr_setprotocol(&mutexAttr, PTHREAD_PRIO_INHERIT);
     pthread_mutex_t mutex;
-    pthread_mutex_init(&mutex, &mutex_attr);
-    pthread_mutexattr_destroy(&mutex_attr);
+    pthread_mutex_init(&mutex, &mutexAttr);
+    pthread_mutexattr_destroy(&mutexAttr);
     while (state.KeepRunning()) {
         pthread_mutex_trylock(&mutex);
         pthread_mutex_unlock(&mutex);
@@ -94,13 +93,13 @@ static void Bm_function_pthread_mutex_trylock_pi_fast(benchmark::State &state)
 
 static void Bm_function_pthread_mutex_trylock_pi_errorcheck(benchmark::State &state)
 {
-    pthread_mutexattr_t mutex_attr;
-    pthread_mutexattr_init(&mutex_attr);
-    pthread_mutexattr_settype(&mutex_attr, PTHREAD_MUTEX_ERRORCHECK);
-    pthread_mutexattr_setprotocol(&mutex_attr, PTHREAD_PRIO_INHERIT);
+    pthread_mutexattr_t mutexAttr;
+    pthread_mutexattr_init(&mutexAttr);
+    pthread_mutexattr_settype(&mutexAttr, PTHREAD_MUTEX_ERRORCHECK);
+    pthread_mutexattr_setprotocol(&mutexAttr, PTHREAD_PRIO_INHERIT);
     pthread_mutex_t mutex;
-    pthread_mutex_init(&mutex, &mutex_attr);
-    pthread_mutexattr_destroy(&mutex_attr);
+    pthread_mutex_init(&mutex, &mutexAttr);
+    pthread_mutexattr_destroy(&mutexAttr);
     while (state.KeepRunning()) {
         pthread_mutex_trylock(&mutex);
         pthread_mutex_unlock(&mutex);
@@ -109,13 +108,13 @@ static void Bm_function_pthread_mutex_trylock_pi_errorcheck(benchmark::State &st
 
 static void Bm_function_pthread_mutex_trylock_pi_rec(benchmark::State &state)
 {
-    pthread_mutexattr_t mutex_attr;
-    pthread_mutexattr_init(&mutex_attr);
-    pthread_mutexattr_settype(&mutex_attr, PTHREAD_MUTEX_RECURSIVE);
-    pthread_mutexattr_setprotocol(&mutex_attr, PTHREAD_PRIO_INHERIT);
+    pthread_mutexattr_t mutexAttr;
+    pthread_mutexattr_init(&mutexAttr);
+    pthread_mutexattr_settype(&mutexAttr, PTHREAD_MUTEX_RECURSIVE);
+    pthread_mutexattr_setprotocol(&mutexAttr, PTHREAD_PRIO_INHERIT);
     pthread_mutex_t mutex;
-    pthread_mutex_init(&mutex, &mutex_attr);
-    pthread_mutexattr_destroy(&mutex_attr);
+    pthread_mutex_init(&mutex, &mutexAttr);
+    pthread_mutexattr_destroy(&mutexAttr);
     while (state.KeepRunning()) {
         pthread_mutex_trylock(&mutex);
         pthread_mutex_unlock(&mutex);
@@ -126,12 +125,12 @@ static void Bm_function_pthread_mutex_timedlock_fast(benchmark::State &state)
 {
     struct timespec ts = {.tv_sec = 1, .tv_nsec = 0};
 
-    pthread_mutexattr_t mutex_attr;
-    pthread_mutexattr_init(&mutex_attr);
-    pthread_mutexattr_settype(&mutex_attr, PTHREAD_MUTEX_NORMAL);
+    pthread_mutexattr_t mutexAttr;
+    pthread_mutexattr_init(&mutexAttr);
+    pthread_mutexattr_settype(&mutexAttr, PTHREAD_MUTEX_NORMAL);
     pthread_mutex_t mutex;
-    pthread_mutex_init(&mutex, &mutex_attr);
-    pthread_mutexattr_destroy(&mutex_attr);
+    pthread_mutex_init(&mutex, &mutexAttr);
+    pthread_mutexattr_destroy(&mutexAttr);
     while (state.KeepRunning()) {
         pthread_mutex_timedlock(&mutex, &ts);
         pthread_mutex_unlock(&mutex);
@@ -142,13 +141,13 @@ static void Bm_function_pthread_mutex_timedlock_errchk(benchmark::State &state)
 {
     struct timespec ts = {.tv_sec = 1, .tv_nsec = 0};
 
-    pthread_mutexattr_t mutex_attr;
-    pthread_mutexattr_init(&mutex_attr);
-    pthread_mutexattr_settype(&mutex_attr, PTHREAD_MUTEX_ERRORCHECK);
+    pthread_mutexattr_t mutexAttr;
+    pthread_mutexattr_init(&mutexAttr);
+    pthread_mutexattr_settype(&mutexAttr, PTHREAD_MUTEX_ERRORCHECK);
 
     pthread_mutex_t mutex;
-    pthread_mutex_init(&mutex, &mutex_attr);
-    pthread_mutexattr_destroy(&mutex_attr);
+    pthread_mutex_init(&mutex, &mutexAttr);
+    pthread_mutexattr_destroy(&mutexAttr);
     while (state.KeepRunning()) {
         pthread_mutex_timedlock(&mutex, &ts);
         pthread_mutex_unlock(&mutex);
@@ -159,13 +158,13 @@ static void Bm_function_pthread_mutex_timedlock_rec(benchmark::State &state)
 {
     struct timespec ts = {.tv_sec = 1, .tv_nsec = 0};
 
-    pthread_mutexattr_t mutex_attr;
-    pthread_mutexattr_init(&mutex_attr);
-    pthread_mutexattr_settype(&mutex_attr, PTHREAD_MUTEX_RECURSIVE);
+    pthread_mutexattr_t mutexAttr;
+    pthread_mutexattr_init(&mutexAttr);
+    pthread_mutexattr_settype(&mutexAttr, PTHREAD_MUTEX_RECURSIVE);
 
     pthread_mutex_t mutex;
-    pthread_mutex_init(&mutex, &mutex_attr);
-    pthread_mutexattr_destroy(&mutex_attr);
+    pthread_mutex_init(&mutex, &mutexAttr);
+    pthread_mutexattr_destroy(&mutexAttr);
     while (state.KeepRunning()) {
         pthread_mutex_timedlock(&mutex, &ts);
         pthread_mutex_unlock(&mutex);
@@ -176,13 +175,13 @@ static void Bm_function_pthread_mutex_timedlock_pi_fast(benchmark::State &state)
 {
     struct timespec ts = {.tv_sec = 1, .tv_nsec = 0};
 
-    pthread_mutexattr_t mutex_attr;
-    pthread_mutexattr_init(&mutex_attr);
-    pthread_mutexattr_settype(&mutex_attr, PTHREAD_MUTEX_NORMAL);
-    pthread_mutexattr_setprotocol(&mutex_attr, PTHREAD_PRIO_INHERIT);
+    pthread_mutexattr_t mutexAttr;
+    pthread_mutexattr_init(&mutexAttr);
+    pthread_mutexattr_settype(&mutexAttr, PTHREAD_MUTEX_NORMAL);
+    pthread_mutexattr_setprotocol(&mutexAttr, PTHREAD_PRIO_INHERIT);
     pthread_mutex_t mutex;
-    pthread_mutex_init(&mutex, &mutex_attr);
-    pthread_mutexattr_destroy(&mutex_attr);
+    pthread_mutex_init(&mutex, &mutexAttr);
+    pthread_mutexattr_destroy(&mutexAttr);
     while (state.KeepRunning()) {
         pthread_mutex_timedlock(&mutex, &ts);
         pthread_mutex_unlock(&mutex);
@@ -193,13 +192,13 @@ static void Bm_function_pthread_mutex_timedlock_pi_errchk(benchmark::State &stat
 {
     struct timespec ts = {.tv_sec = 1, .tv_nsec = 0};
 
-    pthread_mutexattr_t mutex_attr;
-    pthread_mutexattr_init(&mutex_attr);
-    pthread_mutexattr_settype(&mutex_attr, PTHREAD_MUTEX_ERRORCHECK);
-    pthread_mutexattr_setprotocol(&mutex_attr, PTHREAD_PRIO_INHERIT);
+    pthread_mutexattr_t mutexAttr;
+    pthread_mutexattr_init(&mutexAttr);
+    pthread_mutexattr_settype(&mutexAttr, PTHREAD_MUTEX_ERRORCHECK);
+    pthread_mutexattr_setprotocol(&mutexAttr, PTHREAD_PRIO_INHERIT);
     pthread_mutex_t mutex;
-    pthread_mutex_init(&mutex, &mutex_attr);
-    pthread_mutexattr_destroy(&mutex_attr);
+    pthread_mutex_init(&mutex, &mutexAttr);
+    pthread_mutexattr_destroy(&mutexAttr);
     while (state.KeepRunning()) {
         pthread_mutex_timedlock(&mutex, &ts);
         pthread_mutex_unlock(&mutex);
@@ -210,13 +209,13 @@ static void Bm_function_pthread_mutex_timedlock_pi_rec(benchmark::State &state)
 {
     struct timespec ts = {.tv_sec = 1, .tv_nsec = 0};
 
-    pthread_mutexattr_t mutex_attr;
-    pthread_mutexattr_init(&mutex_attr);
-    pthread_mutexattr_settype(&mutex_attr, PTHREAD_MUTEX_RECURSIVE);
-    pthread_mutexattr_setprotocol(&mutex_attr, PTHREAD_PRIO_INHERIT);
+    pthread_mutexattr_t mutexAttr;
+    pthread_mutexattr_init(&mutexAttr);
+    pthread_mutexattr_settype(&mutexAttr, PTHREAD_MUTEX_RECURSIVE);
+    pthread_mutexattr_setprotocol(&mutexAttr, PTHREAD_PRIO_INHERIT);
     pthread_mutex_t mutex;
-    pthread_mutex_init(&mutex, &mutex_attr);
-    pthread_mutexattr_destroy(&mutex_attr);
+    pthread_mutex_init(&mutex, &mutexAttr);
+    pthread_mutexattr_destroy(&mutexAttr);
     while (state.KeepRunning()) {
         pthread_mutex_timedlock(&mutex, &ts);
         pthread_mutex_unlock(&mutex);
@@ -240,6 +239,37 @@ static void Bm_function_pthread_mutex_init(benchmark::State &state)
 
     for (auto _ : state) {
         pthread_mutex_init(&mutex, nullptr);
+    }
+    state.SetBytesProcessed(state.iterations());
+}
+
+static void Bm_function_pthread_mutex_init_destroy(benchmark::State &state)
+{
+    pthread_mutex_t mutex;
+
+    for (auto _ : state) {
+        pthread_mutex_init(&mutex, nullptr);
+        pthread_mutex_destroy(&mutex);
+    }
+}
+
+static void Bm_function_pthread_cond_init(benchmark::State &state)
+{
+    pthread_cond_t cond;
+
+    for (auto _ : state) {
+        pthread_cond_init(&cond, nullptr);
+    }
+    state.SetBytesProcessed(state.iterations());
+}
+
+static void Bm_function_pthread_cond_init_destroy(benchmark::State &state)
+{
+    pthread_cond_t cond;
+
+    for (auto _ : state) {
+        pthread_cond_init(&cond, nullptr);
+        pthread_cond_destroy(&cond);
     }
     state.SetBytesProcessed(state.iterations());
 }
@@ -325,8 +355,8 @@ static void Bm_function_pthread_cond_timedwait(benchmark::State &state)
 {
     pthread_mutex_t mutex;
     pthread_cond_t cond;
-    pthread_mutex_init(&mutex, NULL);
-    pthread_cond_init(&cond, NULL);
+    pthread_mutex_init(&mutex, nullptr);
+    pthread_cond_init(&cond, nullptr);
     struct timespec ts;
     clock_gettime(CLOCK_REALTIME, &ts);
     ts.tv_sec += 1;
@@ -340,32 +370,32 @@ static void Bm_function_pthread_cond_timedwait(benchmark::State &state)
     state.SetBytesProcessed(state.iterations());
 }
 
-pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
-pthread_mutex_t mutex1 = PTHREAD_MUTEX_INITIALIZER;
-pthread_mutex_t mutex2 = PTHREAD_MUTEX_INITIALIZER;
-void* thread_task1(void* arg)
+pthread_cond_t g_cond = PTHREAD_COND_INITIALIZER;
+pthread_mutex_t g_mutex1 = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t g_mutex2 = PTHREAD_MUTEX_INITIALIZER;
+void* ThreadTaskOne(void* arg)
 {
-    pthread_mutex_lock(&mutex1);
-    pthread_cond_wait(&cond, &mutex1);
+    pthread_mutex_lock(&g_mutex1);
+    pthread_cond_wait(&g_cond, &g_mutex1);
     sleep(1);
-    pthread_mutex_unlock(&mutex1);
+    pthread_mutex_unlock(&g_mutex1);
     return nullptr;
 }
 
-void* thread_task2(void* arg)
+void* ThreadTaskTwo(void* arg)
 {
-    pthread_mutex_lock(&mutex2);
-    pthread_cond_wait(&cond, &mutex2);
+    pthread_mutex_lock(&g_mutex2);
+    pthread_cond_wait(&g_cond, &g_mutex2);
     sleep(1);
-    pthread_mutex_unlock(&mutex2);
+    pthread_mutex_unlock(&g_mutex2);
     return nullptr;
 }
 
-void* broadcastNotifyMutex(void* arg)
+void* BroadcastNotifyMutex(void* arg)
 {
     benchmark::State *statePtr = (benchmark::State *)arg;
     statePtr->ResumeTiming();
-    benchmark::DoNotOptimize(pthread_cond_broadcast(&cond));
+    benchmark::DoNotOptimize(pthread_cond_broadcast(&g_cond));
     statePtr->PauseTiming();
     return nullptr;
 }
@@ -374,14 +404,14 @@ static void Bm_function_pthread_cond_broadcast(benchmark::State &state)
 {
     while (state.KeepRunning()) {
         state.PauseTiming();
-        pthread_t thread_1, thread_2, thread_3;
-        pthread_create(&thread_1, nullptr, thread_task1, nullptr);
-        pthread_create(&thread_2, nullptr, thread_task2, nullptr);
+        pthread_t threadOne, threadTwo, threadThree;
+        pthread_create(&threadOne, nullptr, ThreadTaskOne, nullptr);
+        pthread_create(&threadTwo, nullptr, ThreadTaskTwo, nullptr);
         sleep(3);
-        pthread_create(&thread_3, nullptr, broadcastNotifyMutex, &state);
-        pthread_join(thread_1, nullptr);
-        pthread_join(thread_2, nullptr);
-        pthread_join(thread_3, nullptr);
+        pthread_create(&threadThree, nullptr, BroadcastNotifyMutex, &state);
+        pthread_join(threadOne, nullptr);
+        pthread_join(threadTwo, nullptr);
+        pthread_join(threadThree, nullptr);
     }
     state.SetBytesProcessed(state.iterations());
 }
@@ -416,7 +446,7 @@ static void Bm_function_Sem_post_wait(benchmark::State &state)
 static void Bm_function_pthread_cond_signal(benchmark::State &state)
 {
     pthread_cond_t cond;
-    pthread_cond_init(&cond, NULL);
+    pthread_cond_init(&cond, nullptr);
     while (state.KeepRunning())
     {
         pthread_cond_signal(&cond);
@@ -431,6 +461,14 @@ static void Bm_function_Sigaddset(benchmark::State &state)
     sigemptyset(&set);
     for (auto _ : state) {
         benchmark::DoNotOptimize(sigaddset(&set, SIGUSR1));
+    }
+}
+
+static void Bm_function_pthread_setcancelstate(benchmark::State &state)
+{
+    while (state.KeepRunning()) {
+        pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, nullptr);
+        pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, nullptr);
     }
     state.SetBytesProcessed(state.iterations());
 }
@@ -452,6 +490,9 @@ MUSL_BENCHMARK(Bm_function_pthread_mutex_timedlock_pi_errchk);
 MUSL_BENCHMARK(Bm_function_pthread_mutex_timedlock_pi_rec);
 MUSL_BENCHMARK(Bm_function_pthread_rwlock_tryrdlock);
 MUSL_BENCHMARK(Bm_function_pthread_mutex_init);
+MUSL_BENCHMARK(Bm_function_pthread_mutex_init_destroy);
+MUSL_BENCHMARK(Bm_function_pthread_cond_init);
+MUSL_BENCHMARK(Bm_function_pthread_cond_init_destroy);
 MUSL_BENCHMARK(BM_pthread_rwlock_tryread);
 MUSL_BENCHMARK(BM_pthread_rwlock_trywrite);
 MUSL_BENCHMARK(Bm_function_tss_get);
@@ -461,4 +502,4 @@ MUSL_BENCHMARK(Bm_function_pthread_cond_timedwait);
 MUSL_BENCHMARK(Bm_function_pthread_cond_broadcast);
 MUSL_BENCHMARK(Bm_function_Sem_timewait);
 MUSL_BENCHMARK(Bm_function_Sem_post_wait);
-#endif
+MUSL_BENCHMARK(Bm_function_pthread_setcancelstate);

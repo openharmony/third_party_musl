@@ -13,7 +13,6 @@
  * limitations under the License.
  */
 
-#ifdef ONO_CURRENT_INTERFACE
 #include <benchmark/benchmark.h>
 #include <sys/syscall.h>
 #include <string.h>
@@ -32,6 +31,7 @@
 #include "util.h"
 
 using namespace std;
+
 #define BYTES_WRITTEN 8
 #define BUFSIZE 10
 
@@ -58,18 +58,18 @@ static void Bm_function_Syscall_gettid(benchmark::State &state)
 // Used to read the kernel time
 static void Bm_function_Syscall_adjtimex(benchmark::State &state)
 {
-    struct timex time_info;
+    struct timex timeInfo;
     for (auto _ : state) {
-        benchmark::DoNotOptimize(syscall(SYS_adjtimex, &time_info));
+        benchmark::DoNotOptimize(syscall(SYS_adjtimex, &timeInfo));
     }
 }
 
 // Writes the contents of the file of the user buffer to the corresponding location of the file on disk
 static void Bm_function_Syscall_write(benchmark::State &state)
 {
-    int fp = open("/dev/zero", O_RDWR);
+    int fp = open("/dev/zero", O_RDWR, OPEN_MODE);
     if (fp == -1) {
-        perror("open sys_write");
+        perror("open SYS_write");
         exit(EXIT_FAILURE);
     }
     for (auto _ : state) {
@@ -82,15 +82,15 @@ static void Bm_function_Syscall_write(benchmark::State &state)
 static void Bm_function_Syscall_read(benchmark::State &state)
 {
     char buf[BUFSIZE];
-    int fd = open("/dev/zero", O_RDONLY);
+    int fd = open("/dev/zero", O_RDONLY, OPEN_MODE);
     if (fd == -1) {
-        perror("syscall read");
+        perror("open SYS_read");
         exit(EXIT_FAILURE);
     }
     for (auto _ : state) {
         ssize_t ret = syscall(SYS_read, fd, buf, BUFSIZE);
         if (ret < 0) {
-            perror("syscall read");
+            perror("STS_read");
             exit(EXIT_FAILURE);
         }
         benchmark::DoNotOptimize(ret);
@@ -102,15 +102,15 @@ static void Bm_function_Syscall_read(benchmark::State &state)
 static void Bm_function_Syscall_fcntl(benchmark::State &state)
 {
     long int ret;
-    int fd = open("/dev/zero", O_RDONLY);
+    int fd = open("/dev/zero", O_RDONLY, OPEN_MODE);
     if (fd == -1) {
-        perror("syscall_fcntl open");
+        perror("open SYS_fcntl");
         exit(EXIT_FAILURE);
     }
     for (auto _ : state) {
         ret = syscall(SYS_fcntl, fd, F_GETFL);
         if (ret == -1) {
-            perror("syscall_fcntl fail");
+            perror("SYS_fcntl");
             exit(EXIT_FAILURE);
         }
         benchmark::DoNotOptimize(ret);
@@ -154,4 +154,3 @@ MUSL_BENCHMARK(Bm_function_Syscall_read);
 MUSL_BENCHMARK(Bm_function_Syscall_fcntl);
 MUSL_BENCHMARK(Bm_function_Syscall_getrusage);
 MUSL_BENCHMARK(Bm_function_Syscall_uname);
-#endif
