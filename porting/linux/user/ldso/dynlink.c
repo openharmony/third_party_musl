@@ -3112,6 +3112,47 @@ static void *dlopen_post(struct dso* p, int mode) {
 	return p;
 }
 
+static char *dlopen_permitted_list[] =
+{
+	"default",
+	"ndk",
+};
+
+#define PERMITIED_TARGET  "nweb_ns"
+static bool in_permitted_list(char *caller, char *target)
+{
+	for (int i = 0; i < sizeof(dlopen_permitted_list)/sizeof(char*); i++) {
+		if (strcmp(dlopen_permitted_list[i], caller) == 0) {
+			return true;
+		}
+	}
+
+	if (strcmp(PERMITIED_TARGET, target) == 0) {
+		return true;
+	}
+
+	return false;
+}
+
+static bool is_permitted(const void *caller_addr, char *target)
+{
+	struct dso *caller;
+	ns_t *ns;
+	caller = (struct dso *)addr2dso((size_t)caller_addr);
+	if ((caller == NULL) || (caller->namespace == NULL)) {
+		LD_LOGE("caller ns get error");
+		return false;
+	}
+
+	ns = caller->namespace;
+	if (in_permitted_list(ns->ns_name, target) == false) {
+		LD_LOGE("caller ns: %{public}s have no permission, target is %{public}s", ns->ns_name, target);
+		return false;
+	}
+
+	return true;
+}
+
 /* add namespace function */
 static void *dlopen_impl(
 	const char *file, int mode, const char *namespace, const void *caller_addr, const dl_extinfo *extinfo)
@@ -3396,6 +3437,12 @@ void dlns_init(Dl_namespace *dlns, const char *name)
 		dlns->name[0] = 0;
 		return;
 	}
+
+	const void *caller_addr = __builtin_return_address(0);
+	if (is_permitted(caller_addr, name) == false) {
+		return;
+	}
+
 	snprintf(dlns->name, sizeof dlns->name, name);
 	LD_LOGI("dlns_init dlns->name:%{public}s .", dlns->name);
 }
@@ -3467,6 +3514,12 @@ int dlns_create2(Dl_namespace *dlns, const char *lib_path, int flags)
 	ns_t *ns;
 
 	pthread_rwlock_wrlock(&lock);
+	const void *caller_addr = __builtin_return_address(0);
+	if (is_permitted(caller_addr, dlns->name) == false) {
+		pthread_rwlock_unlock(&lock);
+		return EINVAL;
+	}
+
 	ns = find_ns_by_name(dlns->name);
 	if (ns) {
 		LD_LOGE("dlns_create2 ns is exist.");
@@ -3522,6 +3575,12 @@ int dlns_inherit(Dl_namespace *dlns, Dl_namespace *inherited, const char *shared
 	}
 
 	pthread_rwlock_wrlock(&lock);
+	const void *caller_addr = __builtin_return_address(0);
+	if (is_permitted(caller_addr, dlns->name) == false) {
+		pthread_rwlock_unlock(&lock);
+		return EINVAL;
+	}
+
 	ns_t* ns = find_ns_by_name(dlns->name);
 	ns_t* ns_inherited = find_ns_by_name(inherited->name);
 	if (!ns || !ns_inherited) {
