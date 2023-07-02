@@ -1,6 +1,7 @@
 import("//base/startup/init/begetd.gni")
 import("//build/config/clang/clang.gni")
 import("//build/ohos.gni")
+import("//third_party/FreeBSD/FreeBSD.gni")
 import("//third_party/optimized-routines/optimized-routines.gni")
 import("musl_src.gni")
 template("musl_libs") {
@@ -331,6 +332,13 @@ template("musl_libs") {
       "src/env/__init_tls.c",
       "src/env/__libc_start_main.c",
       "src/env/__stack_chk_fail.c",
+      "src/stdlib/qsort.c",
+      "src/stdlib/qsort_nr.c",
+    ]
+
+    sources += [
+      "$FREEBSD_DIR/contrib/tcp_wrappers/strcasecmp.c",
+      "$FREEBSD_DIR/lib/libc/stdlib/qsort.c",
     ]
 
     if (musl_arch == "arm") {
@@ -456,6 +464,8 @@ template("musl_libs") {
         "$OPTRTDIR/string/arm/strcmp.S",
         "$OPTRTDIR/string/arm/strlen-armv6t2.S",
       ]
+
+      sources += added_freebsd_files
       asmflags = [
         "-D__memcpy_arm = memcpy",
         "-D__memchr_arm = memchr",
@@ -542,6 +552,7 @@ template("musl_libs") {
           "$OPTRTDIR/string/aarch64/strnlen.S",
           "$OPTRTDIR/string/aarch64/strrchr.S",
         ]
+        sources += added_freebsd_files
         asmflags = [
           "-D__memmove_aarch64 = memmove",
           "-D__memcpy_aarch64 = memcpy",
@@ -574,6 +585,22 @@ template("musl_libs") {
         defines += [ "USE_JEMALLOC_DFX_INTF" ]
       }
       include_dirs = [ "//third_party/jemalloc/include/jemalloc" ]
+    }
+
+    if (!defined(include_dirs)) {
+      if (musl_arch == "aarch64") {
+        include_dirs = [ "//third_party/FreeBSD/lib/libc/aarch64" ]
+      }
+      if (musl_arch == "arm") {
+        include_dirs = [ "//third_party/FreeBSD/lib/libc/arm" ]
+      }
+    } else {
+      if (musl_arch == "aarch64") {
+        include_dirs += [ "//third_party/FreeBSD/lib/libc/aarch64" ]
+      }
+      if (musl_arch == "arm") {
+        include_dirs += [ "//third_party/FreeBSD/lib/libc/arm" ]
+      }
     }
 
     configs -= musl_inherited_configs

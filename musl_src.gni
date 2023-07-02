@@ -1,3 +1,4 @@
+import("//third_party/FreeBSD/FreeBSD.gni")
 import("musl_config.gni")
 
 if (musl_arch == "arm") {
@@ -2201,6 +2202,8 @@ musl_src_porting_file = [
   "src/conf/legacy.c",
   "src/conf/sysconf.c",
   "src/env/getenv.c",
+  "src/string/strcasecmp.c",
+  "src/string/strncasecmp.c",
   "src/string/stpncpy.c",
   "src/string/strncpy.c",
   "src/string/strcspn.c",
@@ -2209,6 +2212,8 @@ musl_src_porting_file = [
   "src/mq/mq_notify.c",
   "src/aio/aio.c",
   "src/misc/aarch64/syscall.s",
+  "src/stdlib/strtod.c",
+  "src/stdio/vfscanf.c",
 ]
 
 musl_inc_hook_files = [
@@ -2218,4 +2223,21 @@ musl_inc_hook_files = [
   "porting/linux/user/src/hook/musl_malloc_dispatch_table.h",
   "porting/linux/user/src/hook/musl_malloc_dispatch.h",
   "porting/linux/user/src/hook/musl_preinit_common.h",
+]
+
+added_freebsd_files = [
+  "$FREEBSD_DIR/contrib/gdtoa/strtod.c",
+  "$FREEBSD_DIR/contrib/gdtoa/gethex.c",
+  "$FREEBSD_DIR/contrib/gdtoa/smisc.c",
+  "$FREEBSD_DIR/contrib/gdtoa/misc.c",
+  "$FREEBSD_DIR/contrib/gdtoa/strtord.c",
+  "$FREEBSD_DIR/contrib/gdtoa/hexnan.c",
+  "$FREEBSD_DIR/contrib/gdtoa/gmisc.c",
+  "$FREEBSD_DIR/contrib/gdtoa/hd_init.c",
+  "$FREEBSD_DIR/contrib/gdtoa/strtodg.c",
+  "$FREEBSD_DIR/contrib/gdtoa/ulp.c",
+  "$FREEBSD_DIR/contrib/gdtoa/strtof.c",
+  "$FREEBSD_DIR/contrib/gdtoa/sum.c",
+  "$FREEBSD_DIR/lib/libc/gdtoa/glue.c",
+  "$FREEBSD_DIR/lib/libc/stdio/parsefloat.c",
 ]
