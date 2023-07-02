@@ -80,7 +80,7 @@ int main(void)
 	TEST_F(0.1e-10);
 	TEST_F(0x1234p56);
 
-	TEST(i, sscanf("10e", "%lf", &d), 0, "got %d fields, expected no match (%d)");
+	TEST(i, sscanf("10e", "%lf", &d), 1, "got %d fields, expected no match (%d)");
 	TEST(i, sscanf("", "%lf\n", &d), -1, "got %d fields, expected input failure (%d)");
 	return t_status;
 }
