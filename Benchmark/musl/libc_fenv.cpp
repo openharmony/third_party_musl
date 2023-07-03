@@ -13,17 +13,17 @@
  * limitations under the License.
  */
 
-#ifdef ONO_CURRENT_INTERFACE
 #include <benchmark/benchmark.h>
-#include "sched.h"
+#include "fenv.h"
 #include "util.h"
 
-static void Bm_function_sched_yield(benchmark::State &state)
+// Obtain rounding direction mode
+static void Bm_function_Fegetround(benchmark::State &state)
 {
     for (auto _ : state) {
-        benchmark::DoNotOptimize(sched_yield());
+        benchmark::DoNotOptimize(fegetround());
     }
+    state.SetBytesProcessed(state.iterations());
 }
 
-MUSL_BENCHMARK(Bm_function_sched_yield);
-#endif
+MUSL_BENCHMARK(Bm_function_Fegetround);

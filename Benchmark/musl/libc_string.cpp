@@ -21,6 +21,39 @@
 
 using namespace std;
 
+static const std::vector<int> bufferSizes {
+    8,
+    16,
+    32,
+    64,
+    512,
+    1 * K,
+    8 * K,
+    16 * K,
+    32 * K,
+    64 * K,
+    128 * K,
+};
+
+static const std::vector<int> limitSizes{
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+};
+
+static void StringtestArgs(benchmark::internal::Benchmark* b)
+{
+    for (auto l : bufferSizes) {
+        for (auto f : limitSizes) {
+            b->Args({l, f, 0});
+        }
+    }
+}
+
 // Searches for the first occurrence of the character x in the first n bytes of the selected string
 static void Bm_function_Memchr(benchmark::State &state)
 {
@@ -38,21 +71,25 @@ static void Bm_function_Memchr(benchmark::State &state)
     state.SetBytesProcessed(uint64_t(state.iterations()) * uint64_t(nbytes));
 }
 
-#ifdef ONO_CURRENT_INTERFACE
-// Search for the last occurrence of the character 'm' in the string pointed to by the parameter test
+// Finds the last occurrence of the specified character in a string and returns a pointer to that position
 static void Bm_function_Strrchr(benchmark::State &state)
 {
-    const char test[] = "com.ohos.mms";
-    const char ch = 'm';
-    const void *ret;
+    const char *strrchrtestsrc[] = { "com.ohos.launcher", "/system/lib/libfilemgmt_libhilog.z.so",
+                                     "/system/lib/libstatic_subscriber_extension.z.so",
+                                     "../../base/startup/init/services/param/base/param_base.c",
+                                     "/system/lib/libwallpapermanager.z.so",
+                                     "/system/lib/libwallpaperextension.z.so",
+                                     "/system/lib/module/libaccessibility.z.so",
+                                     "/../base/startup/init/services/param/base/param_trie.c" };
+    const char strrchrtesttag[] = { 'm', 'l', 's', 'o', 'z', 't', 'i', 'c', '\0' };
+    const char *test = strrchrtestsrc[state.range(0)];
+    const char ch = strrchrtesttag[state.range(0)];
     for (auto _ : state) {
-        ret = strrchr(test, ch);
-        benchmark::DoNotOptimize(ret);
+        benchmark::DoNotOptimize(strrchr(test, ch));
     }
 
     state.SetBytesProcessed(state.iterations());
 }
-#endif
 
 // The selected range calculates the length
 static void Bm_function_Strnlen(benchmark::State &state)
@@ -92,7 +129,25 @@ static void Bm_function_Stpncpy(benchmark::State &state)
     state.SetBytesProcessed(uint64_t(state.iterations()) * uint64_t(nbytes));
 }
 
-#ifdef ONO_CURRENT_INTERFACE
+static void Bm_function_Strncpy(benchmark::State &state)
+{
+    const size_t nbytes = state.range(0);
+    const size_t limitsize = state.range(1);
+    const size_t srcAlignment = state.range(2);
+    const size_t dstAlignment = state.range(2);
+
+    vector<char> src;
+    vector<char> dst;
+    char *srcAligned = GetAlignedPtrFilled(&src, srcAlignment, nbytes, 'z');
+    char *dstAligned = GetAlignedPtr(&dst, dstAlignment, nbytes);
+    srcAligned[nbytes - 1] = '\0';
+
+    while (state.KeepRunning()) {
+        stpncpy(dstAligned, srcAligned, limitsize);
+    }
+    state.SetBytesProcessed(uint64_t(state.iterations()) * uint64_t(nbytes));
+}
+
 // Comparing whether two binary blocks of data are equal is functionally similar to MEMCMP
 static void Bm_function_Bcmp(benchmark::State &state)
 {
@@ -116,10 +171,14 @@ static void Bm_function_Bcmp(benchmark::State &state)
 // Find the first character in a given string that matches any character in another specified string
 static void Bm_function_Strpbrk(benchmark::State &state)
 {
-    const char test1[] = "open.harmony";
-    const char test2[] = "enh";
+    const char *strpbrktestsrc[] = { "method", "setTimeout", "open.harmony",
+                                     "libfilemgmt_libhilog", "libwallpaperextension",
+                                     "startup", "libwallpapermanager", "param_trie" };
+    const char *strpbrktesttag[] = { "th", "me", "enh", "lo", "en", "tu", "ag", "pa" };
+    const char *src = strpbrktestsrc[state.range(0)];
+    const char *tag = strpbrktesttag[state.range(0)];
     for (auto _ : state) {
-        benchmark::DoNotOptimize(strpbrk(test1, test2));
+        benchmark::DoNotOptimize(strpbrk(src, tag));
     }
 }
 
@@ -155,21 +214,19 @@ static void Bm_function_Wmemcpy(benchmark::State &state)
     state.SetBytesProcessed(uint64_t(state.iterations()) * uint64_t(nbytes));
 }
 
-#endif
-
 // Returns the index value of the first successful match
 static void Bm_function_Strcspn(benchmark::State &state)
 {
-    const char *var1[] = {"system/lib64", "system/lib64/chipset-pub-sdk", "vendor/lib64/chipsetsdk",
-                          "system/lib64/ndk", "system/lib64/platformsdk", "system/lib64/priv-platformsdk",
-                          "system/lib64/module/data", "tem/lib64/module/security"};
-    const char *var2[] = {"vendor/lib64", "/system/lib64/chipset-sdk", "/system/lib64/ndk",
-                          "lib64/chipset-pub-sdk", "priv-platformsdk", "/system/lib64/priv-module",
-                          "/system/lib64/module/multimedia", "/system/lib"};
-    const char *test1 = var1[state.range(0)];
-    const char *test2 = var2[state.range(0)];
+    const char *strcspnsrc[] = { "system/lib64", "system/lib64/chipset-pub-sdk", "vendor/lib64/chipsetsdk",
+                                 "system/lib64/ndk", "system/lib64/platformsdk", "system/lib64/priv-platformsdk",
+                                 "system/lib64/module/data", "tem/lib64/module/security" };
+    const char *strcspntag[] = { "vendor/lib64", "/system/lib64/chipset-sdk", "/system/lib64/ndk",
+                                 "lib64/chipset-pub-sdk", "priv-platformsdk", "/system/lib64/priv-module",
+                                 "/system/lib64/module/multimedia", "/system/lib" };
+    const char *src = strcspnsrc[state.range(0)];
+    const char *tag = strcspntag[state.range(0)];
     for (auto _ : state) {
-        benchmark::DoNotOptimize(strcspn(test1, test2));
+        benchmark::DoNotOptimize(strcspn(src, tag));
     }
 }
 
@@ -304,10 +361,12 @@ static void Bm_function_Strncat(benchmark::State &state)
     }
     state.SetBytesProcessed(uint64_t(state.iterations()) * uint64_t(nbytes));
 }
-MUSL_BENCHMARK_WITH_ARG(Bm_function_Memchr, "STRING_LIMIT");
-MUSL_BENCHMARK_WITH_ARG(Bm_function_Strnlen, "STRING_LIMIT");
-MUSL_BENCHMARK_WITH_ARG(Bm_function_Stpncpy, "STRING_LIMIT");
-MUSL_BENCHMARK_WITH_ARG(Bm_function_Strcspn, "BENCHMARK_VARIABLE");
+
+BENCHMARK(Bm_function_Memchr)->Apply(StringtestArgs);
+BENCHMARK(Bm_function_Strnlen)->Apply(StringtestArgs);
+BENCHMARK(Bm_function_Stpncpy)->Apply(StringtestArgs);
+BENCHMARK(Bm_function_Strncpy)->Apply(StringtestArgs);
+MUSL_BENCHMARK_WITH_ARG(Bm_function_Strcspn, "BENCHMARK_8");
 MUSL_BENCHMARK(Bm_function_Strchrnul_exist);
 MUSL_BENCHMARK(Bm_function_Strchrnul_noexist);
 MUSL_BENCHMARK_WITH_ARG(Bm_function_Strchrnul, "ALIGNED_ONEBUF");
@@ -317,13 +376,10 @@ MUSL_BENCHMARK(Bm_function_Strcasecmp_equal);
 MUSL_BENCHMARK(Bm_function_Strcasecmp_not_equal);
 MUSL_BENCHMARK_WITH_ARG(Bm_function_Strcasecmp, "ALIGNED_TWOBUF");
 MUSL_BENCHMARK_WITH_ARG(Bm_function_Strncasecmp, "ALIGNED_TWOBUF");
-MUSL_BENCHMARK_WITH_ARG(Bm_function_Strdup, "ALIGNED_ONEBUF");
-MUSL_BENCHMARK_WITH_ARG(Bm_function_Strncat, "ALIGNED_ONEBUF");
-
-#ifdef ONO_CURRENT_INTERFACE
-MUSL_BENCHMARK(Bm_function_Strrchr);
+MUSL_BENCHMARK_WITH_ARG(Bm_function_Strrchr, "BENCHMARK_8");
 MUSL_BENCHMARK_WITH_ARG(Bm_function_Bcmp, "ALIGNED_TWOBUF");
-MUSL_BENCHMARK(Bm_function_Strpbrk);
+MUSL_BENCHMARK_WITH_ARG(Bm_function_Strpbrk, "BENCHMARK_8");
 MUSL_BENCHMARK_WITH_ARG(Bm_function_Wmemset, "ALIGNED_ONEBUF");
 MUSL_BENCHMARK_WITH_ARG(Bm_function_Wmemcpy, "ALIGNED_TWOBUF");
-#endif
+MUSL_BENCHMARK_WITH_ARG(Bm_function_Strdup, "ALIGNED_ONEBUF");
+MUSL_BENCHMARK_WITH_ARG(Bm_function_Strncat, "ALIGNED_ONEBUF");

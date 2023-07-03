@@ -432,7 +432,7 @@ if (is_lite_system && current_os == "ohos") {
     deps = [ "libc-test:musl_libc_test" ]
   }
 
-  group("benchmark_musl") {
-    deps = [ "Benchmark:benchmark_musl_group" ]
+  group("benchmark-musl") {
+    deps = [ "Benchmark/musl:benchmark_musl_group" ]
   }
 }

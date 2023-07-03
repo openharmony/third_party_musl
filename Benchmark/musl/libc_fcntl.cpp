@@ -23,10 +23,10 @@
 
 using namespace std;
 
-#ifdef ONO_CURRENT_INTERFACE
+#define LOCK_SIZE 10
 static void Bm_function_Fcntl_getfl(benchmark::State &state)
 {
-    int fd = open("/etc/passwd", O_RDONLY);
+    int fd = open("/etc/passwd", O_RDONLY, OPEN_MODE);
     if (fd == -1) {
         perror("open fcntl_getfl");
         exit(EXIT_FAILURE);
@@ -45,7 +45,7 @@ static void Bm_function_Fcntl_getfl(benchmark::State &state)
 
 static void Bm_function_Fcntl_setfl(benchmark::State &state)
 {
-    int flags = fcntl(STDIN_FILENO, F_GETFL);
+    int flags = fcntl(STDIN_FILENO, F_GETFL, 0);
     if (flags < 0) {
         perror("fcntl_setfl F_GETFL");
         exit(EXIT_FAILURE);
@@ -58,31 +58,39 @@ static void Bm_function_Fcntl_setfl(benchmark::State &state)
             exit(EXIT_FAILURE);
         }
         benchmark::DoNotOptimize(ret);
+
+        state.PauseTiming();
+        flags &= ~O_NONBLOCK;
+        if (fcntl(STDOUT_FILENO, F_SETFL, flags) < -1) {
+            perror("fcntl_setfl proc");
+            exit(EXIT_FAILURE);
+        }
+        state.ResumeTiming();
     }
     state.SetItemsProcessed(state.iterations());
 }
 
 static void Bm_function_Fcntl_setlkw(benchmark::State &state)
 {
-    int fd = open("/dev/zero", O_RDWR);
+    int fd = open("/dev/zero", O_RDWR, OPEN_MODE);
     if (fd == -1) {
         perror("open fcntl_setlkw");
         exit(EXIT_FAILURE);
     }
-    struct flock f_lock;
+    struct flock fdLock;
     for (auto _ : state) {
         state.PauseTiming();
-        f_lock.l_type = F_WRLCK;
-        f_lock.l_whence = SEEK_SET;
-        f_lock.l_start = 0;
-        f_lock.l_len = 0;
-        if (fcntl(fd, F_SETLKW, &f_lock) < 0) {
+        fdLock.l_type = F_WRLCK;
+        fdLock.l_whence = SEEK_SET;
+        fdLock.l_start = 0;
+        fdLock.l_len = LOCK_SIZE;
+        if (fcntl(fd, F_SETLKW, &fdLock) < 0) {
             perror("fcntl_setlkw F_WRLCK");
             exit(EXIT_FAILURE);
         }
-        f_lock.l_type = F_UNLCK;
+        fdLock.l_type = F_UNLCK;
         state.ResumeTiming();
-        int ret = fcntl(fd, F_SETLKW, &f_lock);
+        int ret = fcntl(fd, F_SETLKW, &fdLock);
         if (ret < 0) {
             perror("fcntl_setlkw proc");
             exit(EXIT_FAILURE);
@@ -95,7 +103,7 @@ static void Bm_function_Fcntl_setlkw(benchmark::State &state)
 
 static void Bm_function_Fcntl_dupfd(benchmark::State &state)
 {
-    int fd = open("/etc/passwd", O_RDONLY);
+    int fd = open("/etc/passwd", O_RDONLY, OPEN_MODE);
     if (fd == -1) {
         perror("open fcntl_dupfd");
         exit(EXIT_FAILURE);
@@ -117,25 +125,25 @@ static void Bm_function_Fcntl_dupfd(benchmark::State &state)
 
 static void Bm_function_Fcntl_setlk(benchmark::State &state)
 {
-    int fd = open("/dev/zero", O_RDWR);
+    int fd = open("/dev/zero", O_RDWR, OPEN_MODE);
     if (fd == -1) {
         perror("open fcntl_setlk");
         exit(EXIT_FAILURE);
     }
-    struct flock f_lock;
+    struct flock fdLock;
     for (auto _ : state) {
         state.PauseTiming();
-        f_lock.l_type = F_WRLCK;
-        f_lock.l_whence = SEEK_SET;
-        f_lock.l_start = 0;
-        f_lock.l_len = 0;
-        if (fcntl(fd, F_SETLK, &f_lock) < 0) {
+        fdLock.l_type = F_WRLCK;
+        fdLock.l_whence = SEEK_SET;
+        fdLock.l_start = 0;
+        fdLock.l_len = LOCK_SIZE;
+        if (fcntl(fd, F_SETLK, &fdLock) < 0) {
             perror("fcntl_setlk F_WRLCK");
             exit(EXIT_FAILURE);
         }
-        f_lock.l_type = F_UNLCK;
+        fdLock.l_type = F_UNLCK;
         state.ResumeTiming();
-        int ret = fcntl(fd, F_SETLK, &f_lock);
+        int ret = fcntl(fd, F_SETLK, &fdLock);
         if (ret < 0) {
             perror("fcntl_setlk proc");
             exit(EXIT_FAILURE);
@@ -148,20 +156,20 @@ static void Bm_function_Fcntl_setlk(benchmark::State &state)
 
 static void Bm_function_Fcntl_getlk(benchmark::State &state)
 {
-    int fd = open("/dev/zero", O_RDWR);
+    int fd = open("/dev/zero", O_RDWR, OPEN_MODE);
     if (fd == -1) {
         perror("open fcntl_getlk");
         exit(EXIT_FAILURE);
     }
-    struct flock f_lock;
+    struct flock fdLock;
     for (auto _ : state) {
         state.PauseTiming();
-        f_lock.l_type = F_RDLCK;
-        f_lock.l_whence = SEEK_SET;
-        f_lock.l_start = 0;
-        f_lock.l_len = 0;
+        fdLock.l_type = F_RDLCK;
+        fdLock.l_whence = SEEK_SET;
+        fdLock.l_start = 0;
+        fdLock.l_len = LOCK_SIZE;
         state.ResumeTiming();
-        int ret = fcntl(fd, F_GETLK, &f_lock);
+        int ret = fcntl(fd, F_GETLK, &fdLock);
         if (ret < 0) {
             perror("fcntl_getlk proc");
             exit(EXIT_FAILURE);
@@ -174,7 +182,7 @@ static void Bm_function_Fcntl_getlk(benchmark::State &state)
 
 static void Bm_function_Fcntl_getfd(benchmark::State &state)
 {
-    int fd = open("/dev/zero", O_RDWR);
+    int fd = open("/dev/zero", O_RDWR, OPEN_MODE);
     if (fd == -1) {
         perror("open fcntl_getfd");
         exit(EXIT_FAILURE);
@@ -193,7 +201,7 @@ static void Bm_function_Fcntl_getfd(benchmark::State &state)
 
 static void Bm_function_Fcntl_setfd(benchmark::State &state)
 {
-    int fd = open("/dev/zero", O_RDWR);
+    int fd = open("/dev/zero", O_RDWR, OPEN_MODE);
     if (fd == -1) {
         perror("open fcntl_setfd");
         exit(EXIT_FAILURE);
@@ -213,17 +221,24 @@ static void Bm_function_Fcntl_setfd(benchmark::State &state)
             exit(EXIT_FAILURE);
         }
         benchmark::DoNotOptimize(ret);
+
+        state.PauseTiming();
+        flags &= ~FD_CLOEXEC;
+        if (fcntl(fd, F_SETFD, flags) < -1) {
+            perror("fcntl_setfd F_SETFD");
+            exit(EXIT_FAILURE);
+        }
+        state.ResumeTiming();
     }
     close(fd);
     state.SetBytesProcessed(state.iterations());
 }
-#endif
 
 static void Bm_function_Open_rdonly(benchmark::State &state)
 {
     const char *filename = "/proc/self/cmdline";
     for (auto _ : state) {
-        int fd = open(filename, O_RDONLY);
+        int fd = open(filename, O_RDONLY, OPEN_MODE);
         if (fd == -1) {
             perror("open_rdonly proc");
             exit(EXIT_FAILURE);
@@ -240,7 +255,7 @@ static void Bm_function_Open_rdwr(benchmark::State &state)
 {
     const char *filename = "/dev/zero";
     for (auto _ : state) {
-        int fd = open(filename, O_RDWR);
+        int fd = open(filename, O_RDWR, OPEN_MODE);
         if (fd == -1) {
             perror("open_rdwr proc");
             exit(EXIT_FAILURE);
@@ -257,7 +272,7 @@ static void Bm_function_Open_creat_rdwr(benchmark::State &state)
 {
     const char *filename = "/data/log/hiview/sys_event_logger/event.db";
     for (auto _ : state) {
-        int fd = open(filename, O_RDWR | O_CREAT);
+        int fd = open(filename, O_RDWR | O_CREAT, OPEN_MODE);
         if (fd == -1) {
             perror("open_creat_rdwr proc");
             exit(EXIT_FAILURE);
@@ -270,7 +285,6 @@ static void Bm_function_Open_creat_rdwr(benchmark::State &state)
     state.SetItemsProcessed(state.iterations());
 }
 
-#ifdef ONO_CURRENT_INTERFACE
 MUSL_BENCHMARK(Bm_function_Fcntl_getfl);
 MUSL_BENCHMARK(Bm_function_Fcntl_setfl);
 MUSL_BENCHMARK(Bm_function_Fcntl_setlkw);
@@ -279,8 +293,6 @@ MUSL_BENCHMARK(Bm_function_Fcntl_setlk);
 MUSL_BENCHMARK(Bm_function_Fcntl_getlk);
 MUSL_BENCHMARK(Bm_function_Fcntl_getfd);
 MUSL_BENCHMARK(Bm_function_Fcntl_setfd);
-#endif
-
 MUSL_BENCHMARK(Bm_function_Open_rdonly);
 MUSL_BENCHMARK(Bm_function_Open_rdwr);
 MUSL_BENCHMARK(Bm_function_Open_creat_rdwr);

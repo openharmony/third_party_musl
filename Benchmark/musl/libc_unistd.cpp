@@ -29,12 +29,13 @@
 #include "util.h"
 
 using namespace std;
+
 #define BUFFER 1024
 
 void ReadWriteTest(benchmark::State& state, bool isRead)
 {
     size_t chunkSize = state.range(0);
-    int fd = open("/dev/zero", O_RDWR);
+    int fd = open("/dev/zero", O_RDWR, OPEN_MODE);
     if (fd == -1) {
         perror("open ReadWriteTest");
         exit(EXIT_FAILURE);
@@ -63,13 +64,11 @@ void ReadWriteTest(benchmark::State& state, bool isRead)
     close(fd);
 }
 
-#ifdef ONO_CURRENT_INTERFACE
-
 template <typename Fn>
 void PreadWriteTest(benchmark::State &state, Fn f, bool buffered)
 {
     size_t chunkSize = state.range(0);
-    int fp = open("/dev/zero", O_RDWR);
+    int fp = open("/dev/zero", O_RDWR, OPEN_MODE);
     char *buf = new char[chunkSize];
     off64_t offset = 0;
     while (state.KeepRunning()) {
@@ -108,7 +107,7 @@ static void Bm_function_Close(benchmark::State &state)
 {
     for (auto _ : state) {
         state.PauseTiming();
-        int fd = open("/dev/zero", O_RDONLY);
+        int fd = open("/dev/zero", O_RDONLY, OPEN_MODE);
         if (fd == -1) {
             perror("open Close");
             exit(EXIT_FAILURE);
@@ -180,14 +179,12 @@ static void Bm_function_Read(benchmark::State &state)
 {
     ReadWriteTest(state, true);
 }
-#endif
 
 static void Bm_function_Write(benchmark::State &state)
 {
     ReadWriteTest(state, false);
 }
 
-#ifdef ONO_CURRENT_INTERFACE
 static void Bm_function_Access_exist(benchmark::State &state)
 {
     const char *filename = "/data";
@@ -224,21 +221,21 @@ static void Bm_function_Access_execute(benchmark::State &state)
     state.SetBytesProcessed(state.iterations());
 }
 
-static const char *writevvariable1[] = {"Pretend inferiority and", "hello,",
-                                        "non sa module libtoken_sync_manager_service.z.so",
-                                        "The variable device_company was",
-                                        "but never appeared in a",
-                                        "The build continued as if",
-                                        "product_name=rk3568", "build/toolchain/ohos:"};
-static const char *writevvariable2[] = {"encourage others arrogance!", "world!", ":token_sync_manager_service",
-                                        "set as a build argument", "declare_args() block in any buildfile",
-                                        "that argument was unspecified", "ohos_build_type=", "ohos_clang_arm64"};
+static const char *g_writevvariable1[] = {"Pretend inferiority and", "hello,",
+                                          "non sa module libtoken_sync_manager_service.z.so",
+                                          "The variable device_company was",
+                                          "but never appeared in a",
+                                          "The build continued as if",
+                                          "product_name=rk3568", "build/toolchain/ohos:"};
+static const char *g_writevvariable2[] = {"encourage others arrogance!", "world!", ":token_sync_manager_service",
+                                          "set as a build argument", "declare_args() block in any buildfile",
+                                          "that argument was unspecified", "ohos_build_type=", "ohos_clang_arm64"};
 // Write the contents of multiple buffers to the file descriptor at once
 static void Bm_function_Writev(benchmark::State &state)
 {
-    int fd = open("/dev/zero", O_RDWR);
-    const char *str1 = writevvariable1[state.range(0)];
-    const char *str2 = writevvariable2[state.range(0)];
+    int fd = open("/dev/zero", O_RDWR, OPEN_MODE);
+    const char *str1 = g_writevvariable1[state.range(0)];
+    const char *str2 = g_writevvariable2[state.range(0)];
     struct iovec iov[2];
     ssize_t nwritten;
     iov[0].iov_base = (void *)str1;
@@ -262,6 +259,38 @@ static void Bm_function_Uname(benchmark::State &state)
     state.SetItemsProcessed(state.iterations());
 }
 
+static void Bm_function_Lseek(benchmark::State &state)
+{
+    int fd = open("/etc/passwd", O_RDONLY, OPEN_MODE);
+    if (fd == -1) {
+        perror("open lseek");
+        exit(EXIT_FAILURE);
+    }
+
+    for (auto _ : state) {
+        lseek(fd, 0, SEEK_END);
+        lseek(fd, 0, SEEK_SET);
+    }
+    close(fd);
+    state.SetItemsProcessed(state.iterations());
+}
+
+static void Bm_function_Dup(benchmark::State &state)
+{
+    int fd = -1;
+    for (auto _ : state) {
+        fd = dup(STDOUT_FILENO);
+        if (fd == -1) {
+            perror("dup");
+            exit(EXIT_FAILURE);
+        }
+
+        state.PauseTiming();
+        close(fd);
+        state.ResumeTiming();
+    }
+}
+
 MUSL_BENCHMARK(Bm_function_Getpid);
 MUSL_BENCHMARK(Bm_function_Geteuid);
 MUSL_BENCHMARK_WITH_ARG(Bm_function_Pwrite64, "COMMON_ARGS");
@@ -276,8 +305,8 @@ MUSL_BENCHMARK(Bm_function_Access_exist);
 MUSL_BENCHMARK(Bm_function_Access_read);
 MUSL_BENCHMARK(Bm_function_Access_write);
 MUSL_BENCHMARK(Bm_function_Access_execute);
-MUSL_BENCHMARK_WITH_ARG(Bm_function_Writev, "BENCHMARK_VARIABLE");
+MUSL_BENCHMARK_WITH_ARG(Bm_function_Writev, "BENCHMARK_8");
 MUSL_BENCHMARK(Bm_function_Uname);
-#endif
-
-MUSL_BENCHMARK_WITH_ARG(Bm_function_Write, "COMMON_ARGS");
+MUSL_BENCHMARK_WITH_ARG(Bm_function_Write, "BENCHMARK_8");
+MUSL_BENCHMARK(Bm_function_Lseek);
+MUSL_BENCHMARK(Bm_function_Dup);

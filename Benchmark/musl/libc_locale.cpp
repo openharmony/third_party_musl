@@ -13,7 +13,6 @@
  * limitations under the License.
  */
 
-#ifdef ONO_CURRENT_INTERFACE
 #include <benchmark/benchmark.h>
 #include <locale.h>
 #include <langinfo.h>
@@ -38,7 +37,7 @@ using namespace std;
 static void Bm_function_Setlocale_All(benchmark::State &state)
 {
     for (auto _ : state) {
-        benchmark::DoNotOptimize(setlocale(LC_ALL, NULL));
+        benchmark::DoNotOptimize(setlocale(LC_ALL, nullptr));
     }
     state.SetBytesProcessed(state.iterations());
 }
@@ -62,7 +61,7 @@ static void Bm_function_Setlocale_All2(benchmark::State &state)
 static void Bm_function_Setlocale_Collate(benchmark::State &state)
 {
     for (auto _ : state) {
-        benchmark::DoNotOptimize(setlocale(LC_COLLATE, NULL));
+        benchmark::DoNotOptimize(setlocale(LC_COLLATE, nullptr));
     }
     state.SetBytesProcessed(state.iterations());
 }
@@ -70,7 +69,7 @@ static void Bm_function_Setlocale_Collate(benchmark::State &state)
 static void Bm_function_Setlocale_Ctype(benchmark::State &state)
 {
     for (auto _ : state) {
-        benchmark::DoNotOptimize(setlocale(LC_CTYPE, NULL));
+        benchmark::DoNotOptimize(setlocale(LC_CTYPE, nullptr));
     }
     state.SetBytesProcessed(state.iterations());
 }
@@ -78,7 +77,7 @@ static void Bm_function_Setlocale_Ctype(benchmark::State &state)
 static void Bm_function_Setlocale_Time(benchmark::State &state)
 {
     for (auto _ : state) {
-        benchmark::DoNotOptimize(setlocale(LC_TIME, NULL));
+        benchmark::DoNotOptimize(setlocale(LC_TIME, nullptr));
     }
     state.SetBytesProcessed(state.iterations());
 }
@@ -89,11 +88,23 @@ static void Bm_function_Locale_nl_langinfo(benchmark::State &state)
         benchmark::DoNotOptimize(nl_langinfo(CODESET));
     }
 }
+
 static void Bm_function_Locale_localeconv(benchmark::State &state)
 {
     for (auto _ : state) {
         benchmark::DoNotOptimize(localeconv());
     }
+}
+
+static void Bm_function_Uselocale(benchmark::State &state)
+{
+    locale_t oldLocale;
+    locale_t newLocale = newlocale(LC_ALL_MASK, "zh_CN.UTF-8", nullptr);
+    for (auto _ : state) {
+        oldLocale = uselocale(newLocale);
+        newLocale = uselocale(oldLocale);
+    }
+    state.SetBytesProcessed(state.iterations());
 }
 
 MUSL_BENCHMARK(Bm_function_Setlocale_All);
@@ -104,4 +115,4 @@ MUSL_BENCHMARK(Bm_function_Setlocale_Ctype);
 MUSL_BENCHMARK(Bm_function_Setlocale_Time);
 MUSL_BENCHMARK(Bm_function_Locale_nl_langinfo);
 MUSL_BENCHMARK(Bm_function_Locale_localeconv);
-#endif
+MUSL_BENCHMARK(Bm_function_Uselocale);
