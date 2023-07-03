@@ -57,7 +57,53 @@ char* GetAlignedPtrFilled(std::vector<char>* buf, size_t alignment, size_t nbyte
 
 wchar_t* GetAlignedPtrFilled(std::vector<wchar_t>* buf, size_t alignment, size_t nbytes, wchar_t fillByte)
 {
-  wchar_t* bufAligned = GetAlignedPtr(buf, alignment, nbytes);
-  wmemset(bufAligned, fillByte, nbytes);
-  return bufAligned;
+    wchar_t* bufAligned = GetAlignedPtr(buf, alignment, nbytes);
+    wmemset(bufAligned, fillByte, nbytes);
+    return bufAligned;
+}
+
+char* ReadJsonFile(const char *fileName)
+{
+    FILE *jsonFile = nullptr;
+    char *contentBuffer = nullptr;
+    long jsonFileLength = 0;
+    size_t readFileContent = 0;
+
+    jsonFile = fopen(fileName, "rb");
+    if (jsonFile == nullptr) {
+        return nullptr;
+    }
+
+    /* get the length */
+    if (fseek(jsonFile, 0, SEEK_END) != 0) {
+        fclose(jsonFile);
+        return nullptr;
+    }
+    jsonFileLength = ftell(jsonFile);
+    if (jsonFileLength < 0) {
+        fclose(jsonFile);
+        return nullptr;
+    }
+    if (fseek(jsonFile, 0, SEEK_SET) != 0) {
+        fclose(jsonFile);
+        return nullptr;
+    }
+
+    contentBuffer = (char*)malloc((size_t)jsonFileLength + sizeof(""));
+    if (contentBuffer == nullptr) {
+        fclose(jsonFile);
+        return nullptr;
+    }
+
+    /* read the json file into memory */
+    readFileContent = fread(contentBuffer, sizeof(char), (size_t)jsonFileLength, jsonFile);
+    if ((long)readFileContent != jsonFileLength) {
+        free(contentBuffer);
+        contentBuffer = nullptr;
+        fclose(jsonFile);
+        return contentBuffer;
+    }
+    contentBuffer[readFileContent] = '\0';
+
+    return contentBuffer;
 }

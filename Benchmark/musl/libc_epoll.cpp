@@ -13,7 +13,6 @@
  * limitations under the License.
  */
 
-#ifdef ONO_CURRENT_INTERFACE
 #include <benchmark/benchmark.h>
 #include <sys/epoll.h>
 #include <errno.h>
@@ -28,19 +27,19 @@
 
 using namespace std;
 #define EVENTSIZE 10
-struct epoll_event events[EVENTSIZE], event;
+struct epoll_event g_events[EVENTSIZE], g_event;
 
 // Used to create an epoll object to record events for files to be listened to
 static void Bm_function_Epoll_createl(benchmark::State &state)
 {
     for (auto _ : state) {
-        int epoll_fd = epoll_create1(0);
-        if (epoll_fd == -1) {
+        int epollFd = epoll_create1(0);
+        if (epollFd == -1) {
             perror("epoll_createl");
             exit(EXIT_FAILURE);
         }
-        benchmark::DoNotOptimize(epoll_fd);
-        close(epoll_fd);
+        benchmark::DoNotOptimize(epollFd);
+        close(epollFd);
     }
 
     state.SetBytesProcessed(state.iterations());
@@ -49,22 +48,22 @@ static void Bm_function_Epoll_createl(benchmark::State &state)
 // Used to add, modify, or delete events to an epoll object
 static void Bm_function_Epoll_ctl(benchmark::State &state)
 {
-    int epoll_fd = epoll_create1(0);
-    if (epoll_fd == -1) {
+    int epollFd = epoll_create1(0);
+    if (epollFd == -1) {
         perror("epoll_createl");
         exit(EXIT_FAILURE);
     }
-    int fd = open("/dev/zero", O_RDONLY);
+    int fd = open("/dev/zero", O_RDONLY, OPEN_MODE);
     if (fd == -1) {
         perror("open epoll_ctl");
         exit(EXIT_FAILURE);
     }
-    event.events = EPOLLIN | EPOLLET;
-    event.data.fd = fd;
+    g_event.events = EPOLLIN | EPOLLET;
+    g_event.data.fd = fd;
     for (auto _ : state) {
-        benchmark::DoNotOptimize(epoll_ctl(epoll_fd, EPOLL_CTL_ADD, fd, &event));
+        benchmark::DoNotOptimize(epoll_ctl(epollFd, EPOLL_CTL_ADD, fd, &g_event));
     }
-    close(epoll_fd);
+    close(epollFd);
     close(fd);
     state.SetBytesProcessed(state.iterations());
 }
@@ -72,24 +71,24 @@ static void Bm_function_Epoll_ctl(benchmark::State &state)
 // Used to wait for the file descriptor in the epoll object to appear for the event
 static void Bm_function_Epoll_wait(benchmark::State &state)
 {
-    int epoll_fd = epoll_create1(0);
-    if (epoll_fd == -1) {
+    int epollFd = epoll_create1(0);
+    if (epollFd == -1) {
         perror("epoll_createl");
         exit(EXIT_FAILURE);
     }
 
-    int fd = open("/dev/zero", O_RDONLY);
+    int fd = open("/dev/zero", O_RDONLY, OPEN_MODE);
     if (fd == -1) {
         perror("open epoll_wait");
         exit(EXIT_FAILURE);
     }
 
-    event.events = EPOLLIN | EPOLLET;
-    event.data.fd = fd;
+    g_event.events = EPOLLIN | EPOLLET;
+    g_event.data.fd = fd;
     for (auto _ : state) {
-        epoll_wait(epoll_fd, events, EVENTSIZE, 0);
+        epoll_wait(epollFd, g_events, EVENTSIZE, 0);
     }
-    close(epoll_fd);
+    close(epollFd);
     close(fd);
     state.SetBytesProcessed(state.iterations());
 }
@@ -97,4 +96,3 @@ static void Bm_function_Epoll_wait(benchmark::State &state)
 MUSL_BENCHMARK(Bm_function_Epoll_createl);
 MUSL_BENCHMARK(Bm_function_Epoll_ctl);
 MUSL_BENCHMARK(Bm_function_Epoll_wait);
-#endif

@@ -13,19 +13,16 @@
  * limitations under the License.
  */
 
-#ifdef ONO_CURRENT_INTERFACE
 #include <benchmark/benchmark.h>
-#include "fenv.h"
+#include "sys/random.h"
 #include "util.h"
 
-// Obtain rounding direction mode
-static void Bm_function_Fegetround(benchmark::State &state)
+static void Bm_function_Getrandom(benchmark::State &state)
 {
-    for (auto _ : state) {
-        benchmark::DoNotOptimize(fegetround());
+    unsigned int i;
+    for (auto _state: state) {
+        benchmark::DoNotOptimize(getrandom(&i, sizeof(i), 0));
     }
-    state.SetBytesProcessed(state.iterations());
 }
 
-MUSL_BENCHMARK(Bm_function_Fegetround);
-#endif
+MUSL_BENCHMARK(Bm_function_Getrandom);

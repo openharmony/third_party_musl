@@ -13,7 +13,6 @@
  * limitations under the License.
  */
 
-#ifdef ONO_CURRENT_INTERFACE
 #include <benchmark/benchmark.h>
 #include "stdio.h"
 #include "stdlib.h"
@@ -28,9 +27,9 @@ using namespace std;
 
 #define SSCANF_SIZE 32
 #define BUFFERSIZE 100
-char buffer[BUFFERSIZE];
+char g_buffer[BUFFERSIZE];
 
-int MyPrintf1(FILE *stream, const char *format, ...)
+int MyPrintfVf(FILE *stream, const char *format, ...)
 {
     va_list args;
     int ret;
@@ -40,22 +39,22 @@ int MyPrintf1(FILE *stream, const char *format, ...)
     return (ret);
 }
 
-int MyPrintf2(const char *format, ...)
+int MyPrintfVs(const char *format, ...)
 {
     va_list args;
     int ret;
     va_start(args, format);
-    ret = vsprintf(buffer, format, args);
+    ret = vsprintf(g_buffer, format, args);
     va_end(args);
     return (ret);
 }
 
-int MyPrintf3(const char *format, ...)
+int MyPrintfVsn(const char *format, ...)
 {
     va_list args;
     int ret;
     va_start(args, format);
-    ret = vsnprintf(buffer, BUFFERSIZE, format, args);
+    ret = vsnprintf(g_buffer, BUFFERSIZE, format, args);
     va_end(args);
     return (ret);
 }
@@ -280,13 +279,14 @@ static void Bm_function_Fclose(benchmark::State &state)
     }
 }
 
+// Used to convert a file descriptor to a file pointer
 static void Bm_function_Fdopen(benchmark::State &state)
 {
     for (auto _ : state) {
-        int fp = open("/dev/zero", O_RDONLY);
+        int fp = open("/dev/zero", O_RDONLY, OPEN_MODE);
         FILE *fd = fdopen(fp, "r");
-        if (fd == NULL) {
-            perror("fdopen test");
+        if (fd == nullptr) {
+            perror("fdopen");
             exit(EXIT_FAILURE);
         }
         benchmark::DoNotOptimize(fd);
@@ -304,7 +304,7 @@ static void Bm_function_Vfprintf_str(benchmark::State &state)
     const char *arr1 = "hello";
     const char *arr2 = "world";
     for (auto _ : state) {
-        benchmark::DoNotOptimize(MyPrintf1(fp, "Set parameter %s %s success", arr1, arr2));
+        benchmark::DoNotOptimize(MyPrintfVf(fp, "Set parameter %s %s success", arr1, arr2));
     }
     fclose(fp);
     state.SetBytesProcessed(state.iterations());
@@ -317,7 +317,7 @@ static void Bm_function_Vfprintf_int(benchmark::State &state)
     int arr1 = 233;
     int arr2 = 322;
     for (auto _ : state) {
-        benchmark::DoNotOptimize(MyPrintf1(fp, "Set parameter %d %d success", arr1, arr2));
+        benchmark::DoNotOptimize(MyPrintfVf(fp, "Set parameter %d %d success", arr1, arr2));
     }
     fclose(fp);
     state.SetBytesProcessed(state.iterations());
@@ -330,7 +330,7 @@ static void Bm_function_Vfprintf_float(benchmark::State &state)
     float i = 22.33f;
     float j = 33.22f;
     for (auto _ : state) {
-        benchmark::DoNotOptimize(MyPrintf1(fp, "Set parameter %f %f success", i, j));
+        benchmark::DoNotOptimize(MyPrintfVf(fp, "Set parameter %f %f success", i, j));
     }
     fclose(fp);
     state.SetBytesProcessed(state.iterations());
@@ -343,7 +343,7 @@ static void Bm_function_Vfprintf_longdouble(benchmark::State &state)
     long double i = 2250996946.3365252546L;
     long double j = 9583454321234.226342465121L;
     for (auto _ : state) {
-        benchmark::DoNotOptimize(MyPrintf1(fp, "Set parameter %Lf %Lf success", i, j));
+        benchmark::DoNotOptimize(MyPrintfVf(fp, "Set parameter %Lf %Lf success", i, j));
     }
     fclose(fp);
     state.SetBytesProcessed(state.iterations());
@@ -356,7 +356,7 @@ static void Bm_function_Vfprintf_unsigned(benchmark::State &state)
     unsigned int i = 4294967295U;
     unsigned int j = 3456264567U;
     for (auto _ : state) {
-        benchmark::DoNotOptimize(MyPrintf1(fp, "Set parameter %u %u success", i, j));
+        benchmark::DoNotOptimize(MyPrintfVf(fp, "Set parameter %u %u success", i, j));
     }
     fclose(fp);
     state.SetBytesProcessed(state.iterations());
@@ -369,7 +369,7 @@ static void Bm_function_Vfprintf_long(benchmark::State &state)
     long i = 1234567890L;
     long j = 954611731L;
     for (auto _ : state) {
-        benchmark::DoNotOptimize(MyPrintf1(fp, "Set parameter %ld %ld success", i, j));
+        benchmark::DoNotOptimize(MyPrintfVf(fp, "Set parameter %ld %ld success", i, j));
     }
     fclose(fp);
     state.SetBytesProcessed(state.iterations());
@@ -382,7 +382,7 @@ static void Bm_function_Vfprintf_short(benchmark::State &state)
     short i = 32767;
     short j = -32768;
     for (auto _ : state) {
-        benchmark::DoNotOptimize(MyPrintf1(fp, "Set parameter %hd %hd success", i, j));
+        benchmark::DoNotOptimize(MyPrintfVf(fp, "Set parameter %hd %hd success", i, j));
     }
     fclose(fp);
     state.SetBytesProcessed(state.iterations());
@@ -395,7 +395,7 @@ static void Bm_function_Vfprintf_char(benchmark::State &state)
     char i = 'n';
     char j = 'Z';
     for (auto _ : state) {
-        benchmark::DoNotOptimize(MyPrintf1(fp, "Set parameter %c %c success", i, j));
+        benchmark::DoNotOptimize(MyPrintfVf(fp, "Set parameter %c %c success", i, j));
     }
     fclose(fp);
     state.SetBytesProcessed(state.iterations());
@@ -407,7 +407,7 @@ static void Bm_function_Vsprintf_str(benchmark::State &state)
 {
     const char *arr = "signal_stack";
     for (auto _ : state) {
-        benchmark::DoNotOptimize(MyPrintf2("%s", arr));
+        benchmark::DoNotOptimize(MyPrintfVs("%s", arr));
     }
 
     state.SetBytesProcessed(state.iterations());
@@ -418,7 +418,7 @@ static void Bm_function_Vsprintf_int(benchmark::State &state)
 {
     int i = 2233;
     for (auto _ : state) {
-        benchmark::DoNotOptimize(MyPrintf2("%d", i));
+        benchmark::DoNotOptimize(MyPrintfVs("%d", i));
     }
 
     state.SetBytesProcessed(state.iterations());
@@ -429,7 +429,7 @@ static void Bm_function_Vsprintf_float(benchmark::State &state)
 {
     float i = 22.33;
     for (auto _ : state) {
-        benchmark::DoNotOptimize(MyPrintf2("%f", i));
+        benchmark::DoNotOptimize(MyPrintfVs("%f", i));
     }
 
     state.SetBytesProcessed(state.iterations());
@@ -440,7 +440,7 @@ static void Bm_function_Vsprintf_longdouble(benchmark::State &state)
 {
     long double i = 9583454321234.226342465121L;
     for (auto _ : state) {
-        benchmark::DoNotOptimize(MyPrintf2("%Lf", i));
+        benchmark::DoNotOptimize(MyPrintfVs("%Lf", i));
     }
 
     state.SetBytesProcessed(state.iterations());
@@ -451,7 +451,7 @@ static void Bm_function_Vsprintf_unsigned(benchmark::State &state)
 {
     unsigned int u = 4294967295U;
     for (auto _ : state) {
-        benchmark::DoNotOptimize(MyPrintf2("%u", u));
+        benchmark::DoNotOptimize(MyPrintfVs("%u", u));
     }
 
     state.SetBytesProcessed(state.iterations());
@@ -462,7 +462,7 @@ static void Bm_function_Vsprintf_long(benchmark::State &state)
 {
     long l = 1234567890L;
     for (auto _ : state) {
-        benchmark::DoNotOptimize(MyPrintf2("%ld", l));
+        benchmark::DoNotOptimize(MyPrintfVs("%ld", l));
     }
 
     state.SetBytesProcessed(state.iterations());
@@ -473,7 +473,7 @@ static void Bm_function_Vsprintf_short(benchmark::State &state)
 {
     short s = 32767;
     for (auto _ : state) {
-        benchmark::DoNotOptimize(MyPrintf2("%hd", s));
+        benchmark::DoNotOptimize(MyPrintfVs("%hd", s));
     }
 
     state.SetBytesProcessed(state.iterations());
@@ -484,7 +484,7 @@ static void Bm_function_Vsprintf_char(benchmark::State &state)
 {
     char c = 'Z';
     for (auto _ : state) {
-        benchmark::DoNotOptimize(MyPrintf2("%c", c));
+        benchmark::DoNotOptimize(MyPrintfVs("%c", c));
     }
 
     state.SetBytesProcessed(state.iterations());
@@ -496,7 +496,7 @@ static void Bm_function_Vsnprintf_str(benchmark::State &state)
 {
     const char *i = "holy";
     for (auto _ : state) {
-        benchmark::DoNotOptimize(MyPrintf3("Error loading shared library %s", i));
+        benchmark::DoNotOptimize(MyPrintfVsn("Error loading shared library %s", i));
     }
 
     state.SetBytesProcessed(state.iterations());
@@ -507,7 +507,7 @@ static void Bm_function_Vsnprintf_int(benchmark::State &state)
 {
     int i = 2233;
     for (auto _ : state) {
-        benchmark::DoNotOptimize(MyPrintf3("Error loading shared library %d", i));
+        benchmark::DoNotOptimize(MyPrintfVsn("Error loading shared library %d", i));
     }
 
     state.SetBytesProcessed(state.iterations());
@@ -518,7 +518,7 @@ static void Bm_function_Vsnprintf_float(benchmark::State &state)
 {
     float i = 22.33;
     for (auto _ : state) {
-        benchmark::DoNotOptimize(MyPrintf3("Error loading shared library %f", i));
+        benchmark::DoNotOptimize(MyPrintfVsn("Error loading shared library %f", i));
     }
 
     state.SetBytesProcessed(state.iterations());
@@ -529,7 +529,7 @@ static void Bm_function_Vsnprintf_longdouble(benchmark::State &state)
 {
     long double i = 23423523.769563665L;
     for (auto _ : state) {
-        benchmark::DoNotOptimize(MyPrintf3("Error loading shared library %Lf", i));
+        benchmark::DoNotOptimize(MyPrintfVsn("Error loading shared library %Lf", i));
     }
 
     state.SetBytesProcessed(state.iterations());
@@ -540,7 +540,7 @@ static void Bm_function_Vsnprintf_unsigned(benchmark::State &state)
 {
     unsigned int u = 4294967295U;
     for (auto _ : state) {
-        benchmark::DoNotOptimize(MyPrintf3("Error loading shared library %u", u));
+        benchmark::DoNotOptimize(MyPrintfVsn("Error loading shared library %u", u));
     }
 
     state.SetBytesProcessed(state.iterations());
@@ -551,7 +551,7 @@ static void Bm_function_Vsnprintf_long(benchmark::State &state)
 {
     long l = 1234567890L;
     for (auto _ : state) {
-        benchmark::DoNotOptimize(MyPrintf3("Error loading shared library %ld", l));
+        benchmark::DoNotOptimize(MyPrintfVsn("Error loading shared library %ld", l));
     }
 
     state.SetBytesProcessed(state.iterations());
@@ -562,7 +562,7 @@ static void Bm_function_Vsnprintf_short(benchmark::State &state)
 {
     short s = 32767;
     for (auto _ : state) {
-        benchmark::DoNotOptimize(MyPrintf3("Error loading shared library %hd", s));
+        benchmark::DoNotOptimize(MyPrintfVsn("Error loading shared library %hd", s));
     }
 
     state.SetBytesProcessed(state.iterations());
@@ -573,7 +573,7 @@ static void Bm_function_Vsnprintf_char(benchmark::State &state)
 {
     char s = 'R';
     for (auto _ : state) {
-        benchmark::DoNotOptimize(MyPrintf3("Error loading shared library %c", s));
+        benchmark::DoNotOptimize(MyPrintfVsn("Error loading shared library %c", s));
     }
 
     state.SetBytesProcessed(state.iterations());
@@ -584,7 +584,7 @@ static void Bm_function_Vsnprintf_char(benchmark::State &state)
 static void Bm_function_Flock_Funlockfile(benchmark::State &state)
 {
     FILE *fp = fopen("/dev/zero", "r");
-    if (fp == NULL) {
+    if (fp == nullptr) {
         perror("fopen funlockfile");
         exit(EXIT_FAILURE);
     }
@@ -711,6 +711,16 @@ int MyScanf1(FILE *stream, const char *format, ...)
     int ret;
     va_start(args, format);
     ret = vfscanf(stream, format, args);
+    va_end(args);
+    return (ret);
+}
+
+int MyVfscanf(const char* str, const char *format, ...)
+{
+    va_list args;
+    int ret;
+    va_start(args, format);
+    ret = vsscanf(str, format, args);
     va_end(args);
     return (ret);
 }
@@ -1207,13 +1217,26 @@ static void Bm_function_Fseek_fflush(benchmark::State &state)
 
 static void Bm_function_Sscanf_vsscanf_int(benchmark::State &state)
 {
+    int year, month, day;
+    const char* src = "20230515";
     for (auto _ : state) {
-        va_list ap;
-        benchmark::DoNotOptimize(vsscanf("20230515", "%04d%02d%02d", ap));
+        benchmark::DoNotOptimize(MyVfscanf(src, "%04d%02d%02d", &year, &month, &day));
     }
-    state.SetBytesProcessed(state.iterations());
 }
 
+static void Bm_function_Feof(benchmark::State &state)
+{
+    FILE *fp = fopen("/dev/zero", "r");
+    if (fp == nullptr) {
+        perror("feof");
+        exit(EXIT_FAILURE);
+    }
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(feof(fp));
+    }
+    fclose(fp);
+    state.SetBytesProcessed(state.iterations());
+}
 
 MUSL_BENCHMARK(Bm_function_Fopen_read);
 MUSL_BENCHMARK(Bm_function_Fopen_write);
@@ -1290,4 +1313,4 @@ MUSL_BENCHMARK(Bm_function_Vfscanf_lluformat);
 MUSL_BENCHMARK(Bm_function_Fileno_unlocked);
 MUSL_BENCHMARK(Bm_function_Fseek_fflush);
 MUSL_BENCHMARK(Bm_function_Sscanf_vsscanf_int);
-#endif
+MUSL_BENCHMARK(Bm_function_Feof);

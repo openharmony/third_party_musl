@@ -13,7 +13,6 @@
  * limitations under the License.
  */
 
-#ifdef ONO_CURRENT_INTERFACE
 #include <benchmark/benchmark.h>
 #include "errno.h"
 #include "util.h"
@@ -102,4 +101,3 @@ MUSL_BENCHMARK(Bm_function_Strerror_eexist);
 MUSL_BENCHMARK(Bm_function_Strerror_einval);
 MUSL_BENCHMARK(Bm_function_Strerror_erofs);
 MUSL_BENCHMARK(Bm_function_Strerror_etimeout);
-#endif

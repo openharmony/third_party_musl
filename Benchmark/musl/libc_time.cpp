@@ -13,7 +13,6 @@
  * limitations under the License.
  */
 
-#ifdef ONO_CURRENT_INTERFACE
 #include <benchmark/benchmark.h>
 #include "time.h"
 #include "util.h"
@@ -115,6 +114,18 @@ static void Bm_function_Clock_nanosleep_boottime(benchmark::State &state)
     }
 }
 
+#define BUFFER_SIZE 32
+
+static void Bm_function_Strftime(benchmark::State &state)
+{
+    time_t rawTime = time(nullptr);
+    struct tm *localTime = localtime(&rawTime);
+    char buf[BUFFER_SIZE];
+    while (state.KeepRunning()) {
+        benchmark::DoNotOptimize(strftime(buf, BUFFER_SIZE, "%Y-%m-%d %H:%M:%S", localTime));
+    }
+}
+
 MUSL_BENCHMARK(Bm_function_Nanosleep_0ns);
 MUSL_BENCHMARK(Bm_function_Nanosleep_10ns);
 MUSL_BENCHMARK(Bm_function_Nanosleep_100ns);
@@ -126,4 +137,4 @@ MUSL_BENCHMARK(Bm_function_Clock_nanosleep_monotonic);
 MUSL_BENCHMARK(Bm_function_Clock_nanosleep_monotonic_raw);
 MUSL_BENCHMARK(Bm_function_Clock_nanosleep_monotonic_coarse);
 MUSL_BENCHMARK(Bm_function_Clock_nanosleep_boottime);
-#endif
+MUSL_BENCHMARK(Bm_function_Strftime);

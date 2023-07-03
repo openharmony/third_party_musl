@@ -12,7 +12,6 @@
 # limitations under the License.
 
 import("//build/ohos.gni")
-import("//third_party/musl/musl_config.gni")
 
 group("benchmark_musl_group") {
   deps = [
@@ -30,6 +29,7 @@ ohos_executable("musl_benchmark") {
     "libc_errno.cpp",
     "libc_fcntl.cpp",
     "libc_fenv.cpp",
+    "libc_ioctl.cpp",
     "libc_linker.cpp",
     "libc_locale.cpp",
     "libc_malloc.cpp",
@@ -37,8 +37,10 @@ ohos_executable("musl_benchmark") {
     "libc_mman.cpp",
     "libc_network.cpp",
     "libc_pthread.cpp",
+    "libc_random.cpp",
     "libc_sched.cpp",
     "libc_select.cpp",
+    "libc_signal.cpp",
     "libc_stat.cpp",
     "libc_stdio.cpp",
     "libc_stdlib.cpp",
@@ -46,14 +48,17 @@ ohos_executable("musl_benchmark") {
     "libc_syscall.cpp",
     "libc_time.cpp",
     "libc_unistd.cpp",
+    "socket_test.cpp",
     "util.cpp",
   ]
 
-  deps = [ "//third_party/benchmark:benchmark" ]
+  deps = [
+    "//third_party/benchmark:benchmark",
+    "//third_party/cJSON:cjson",
+  ]
 
-  defines = []
-  if (defined(non_current_interface) && non_current_interface) {
-    defines += [ "ONO_CURRENT_INTERFACE" ]
+  if (current_cpu == "arm") {
+    defines = ["SYSTEM_32_BIT"]
   }
 
   part_name = "musl"
@@ -62,6 +67,10 @@ ohos_executable("musl_benchmark") {
 
 ohos_executable("musl_dlopen") {
   sources = [ "libc_dlopen.cpp" ]
+
+  if (current_cpu == "arm") {
+    defines = ["SYSTEM_32_BIT"]
+  }
 
   part_name = "musl"
   subsystem_name = "thirdparty"

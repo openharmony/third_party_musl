@@ -20,8 +20,7 @@
 
 using namespace std;
 
-#define LIBGLES_MALI_PATH "/vendor/lib64/chipsetsdk/libGLES_mali.so"
-
+#if (!defined(SYSTEM_32_BIT))
 static vector<string> syms = {
     "eglGetProcAddress",
     "eglChooseConfig",
@@ -518,5 +517,5 @@ static void Bm_function_dlsym_libGLES_mali(benchmark::State &state)
         DoDlsym(handle);
     }
 }
-
 MUSL_BENCHMARK(Bm_function_dlsym_libGLES_mali);
+#endif
