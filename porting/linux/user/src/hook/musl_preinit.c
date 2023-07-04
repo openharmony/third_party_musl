@@ -271,6 +271,28 @@ static bool init_prctl_function(void* malloc_shared_library_handler, MallocPrctl
 	return true;
 }
 
+#ifdef USE_JEMALLOC_RECYCLE_FUNC
+extern int je_reclaim_cache();
+static void handle_recycle_cache()
+{
+	int ret;
+	ret = je_reclaim_cache();
+	MUSL_LOGD("je_reclaim_cache result=%{public}d", ret);
+}
+
+static void init_jemalloc_recycle_handler()
+{
+	struct sigaction action = {};
+	action.sa_handler = NULL;
+	action.sa_sigaction = handle_recycle_cache;
+	sigemptyset(&action.sa_mask);
+	sigaddset(&action.sa_mask, MUSL_SIGNAL_RECYCLE_JEMALLOC);
+	action.sa_flags = SA_SIGINFO | SA_RESTART;
+	action.sa_restorer = NULL;
+	sigaction(MUSL_SIGNAL_RECYCLE_JEMALLOC, &action, NULL);
+
+}
+#endif
 
 static bool init_hook_functions(void* shared_library_handler, struct MallocDispatchType* table, const char* prefix)
 {
@@ -626,6 +648,9 @@ static void __install_malloc_hook_signal_handler()
 static void __initialize_malloc()
 {
 	__install_malloc_hook_signal_handler();
+#ifdef USE_JEMALLOC_RECYCLE_FUNC
+	init_jemalloc_recycle_handler();
+#endif
 }
 
 __attribute__((constructor(1))) static void __musl_initialize()
