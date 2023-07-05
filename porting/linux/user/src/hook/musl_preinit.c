@@ -290,7 +290,6 @@ static void init_jemalloc_recycle_handler()
 	action.sa_flags = SA_SIGINFO | SA_RESTART;
 	action.sa_restorer = NULL;
 	sigaction(MUSL_SIGNAL_RECYCLE_JEMALLOC, &action, NULL);
-
 }
 #endif
 
