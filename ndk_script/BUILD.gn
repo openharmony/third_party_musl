@@ -39,8 +39,6 @@ if (host_os == "mac") {
       "${darwin_system_toolchains_dir}/llvm/include",
       "${darwin_system_toolchains_dir}/llvm/lib",
       "${darwin_system_toolchains_dir}/llvm/libexec",
-      "${darwin_system_toolchains_dir}/llvm/python3",
-      "${darwin_system_toolchains_dir}/llvm/script",
       "${darwin_system_toolchains_dir}/llvm/share",
     ]
     license_file = "${darwin_system_toolchains_dir}/llvm/NOTICE"
@@ -70,8 +68,6 @@ if (host_os == "mac") {
       "${linux_x86_64_toolchains_dir}/llvm/include",
       "${linux_x86_64_toolchains_dir}/llvm/lib",
       "${linux_x86_64_toolchains_dir}/llvm/libexec",
-      "${linux_x86_64_toolchains_dir}/llvm/python3",
-      "${linux_x86_64_toolchains_dir}/llvm/script",
       "${linux_x86_64_toolchains_dir}/llvm/share",
     ]
     license_file = "${linux_x86_64_toolchains_dir}/llvm/NOTICE"
@@ -85,7 +81,6 @@ if (host_os == "mac") {
       "${windows_x86_64_toolchain_dir}/llvm/include",
       "${windows_x86_64_toolchain_dir}/llvm/lib",
       "${windows_x86_64_toolchain_dir}/llvm/libexec",
-      "${windows_x86_64_toolchain_dir}/llvm/script",
       "${windows_x86_64_toolchain_dir}/llvm/share",
     ]
     args = [ "--follow-all-symlinks" ]
