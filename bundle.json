@@ -24,8 +24,8 @@
         "deps": {
             "components": [],
             "third_party": [
-                "thirdparty_benchmark",
-                "cjson"
+                "benchmark",
+                "cJSON"
             ]
         },
         "build": {
