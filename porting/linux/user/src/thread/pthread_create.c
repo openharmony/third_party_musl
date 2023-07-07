@@ -1,5 +1,6 @@
 #define _GNU_SOURCE
 #define ANON_STACK_NAME_SIZE 50
+#include "musl_log.h"
 #include "pthread_impl.h"
 #include "stdio_impl.h"
 #include "libc.h"
@@ -336,7 +337,10 @@ int __pthread_create(pthread_t *restrict res, const pthread_attr_t *restrict att
 	pthread_attr_t attr = { 0 };
 	sigset_t set;
 
-	if (!libc.can_do_threads) return ENOSYS;
+	if (!libc.can_do_threads) {
+		MUSL_LOGE("pthread_create: can't do threads, err: %{public}s", strerror(errno));
+		return ENOSYS;
+	}
 	self = __pthread_self();
 	if (!libc.threaded) {
 		for (FILE *f=*__ofl_lock(); f; f=f->next)
@@ -383,15 +387,22 @@ int __pthread_create(pthread_t *restrict res, const pthread_attr_t *restrict att
 	if (!tsd) {
 		if (guard) {
 			map = __mmap(0, size, PROT_NONE, MAP_PRIVATE|MAP_ANON, -1, 0);
-			if (map == MAP_FAILED) goto fail;
+			if (map == MAP_FAILED) {
+				MUSL_LOGE("pthread_create: mmap PROT_NONE failed, err:%{public}s", strerror(errno));
+				goto fail;
+			}
 			if (__mprotect(map+guard, size-guard, PROT_READ|PROT_WRITE)
 			    && errno != ENOSYS) {
+				MUSL_LOGE("pthread_create: mprotect failed, err:%{public}s", strerror(errno));
 				__munmap(map, size);
 				goto fail;
 			}
 		} else {
 			map = __mmap(0, size, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANON, -1, 0);
-			if (map == MAP_FAILED) goto fail;
+			if (map == MAP_FAILED) {
+				MUSL_LOGE("pthread_create: mmap PROT_READ|PROT_WRITE failed, err:%{public}s", strerror(errno));
+				goto fail;
+			}
 		}
 		tsd = map + size - __pthread_tsd_size;
 		if (!stack) {
@@ -476,6 +487,7 @@ int __pthread_create(pthread_t *restrict res, const pthread_attr_t *restrict att
 
 	if (ret < 0) {
 		if (map) __munmap(map, size);
+		MUSL_LOGE("pthread_create: ret:%{public}d, err:%{public}s", ret, strerror(errno));
 		return -ret;
 	}
 
