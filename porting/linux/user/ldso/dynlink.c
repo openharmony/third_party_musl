@@ -2305,10 +2305,8 @@ static void do_android_relocs(struct dso *p, size_t dt_name, size_t dt_size)
 			}
 
 			if (dt_name == DT_ANDROID_REL) {
-				LD_LOGI("do_android_relocs REL %{public}x %{public}x", rel[0], rel[1]);
 				do_relocs(p, rel, sizeof(size_t)*2, 2);
 			} else {
-				LD_LOGI("do_android_relocs RELA %{public}x %{public}x %{public}x", rel[0], rel[1], rel[2]);
 				do_relocs(p, rel, sizeof(size_t)*3, 3);
 			}
 		}
@@ -3388,11 +3386,9 @@ void *dlopen(const char *file, int mode)
 void dlns_init(Dl_namespace *dlns, const char *name)
 {
 	if (!dlns) {
-		LD_LOGE("dlns_init dlns is null.");
 		return;
 	}
 	if (!name) {
-		LD_LOGE("dlns_init name is null.");
 		dlns->name[0] = 0;
 		return;
 	}
@@ -3636,20 +3632,25 @@ static int dlclose_impl(struct dso *p)
 		return -1;
 
 	if (!p->by_dlopen) {
-		error("Library %s is not loaded by dlopen", p->name);
+		LD_LOGD("dlclose skip unload %{public}s because so isn't loaded by dlopen", p->name);
 		return -1;
 	}
 
 	/* dso is marked  as RTLD_NODELETE library, do nothing here. */
 	if ((p->flags & DSO_FLAGS_NODELETE) != 0) {
+		LD_LOGD("dlclose skip unload %{public}s because flags is RTLD_NODELETE", p->name);
 		return 0;
 	}
 
-	if (--(p->nr_dlopen) > 0)
+	if (--(p->nr_dlopen) > 0) {
+		LD_LOGD("dlclose skip unload %{public}s because nr_dlopen=%{public}d > 0", p->name, p->nr_dlopen);
 		return 0;
+	}
 
-	if (p->parents_count > 0)
+	if (p->parents_count > 0) {
+		LD_LOGD("dlclose skip unload %{public}s because parents_count=%{public}d > 0", p->name, p->parents_count);
 		return 0;
+	}
 
 	trace_marker_reset();
 	trace_marker_begin(HITRACE_TAG_MUSL, "dlclose", p->name);
@@ -3731,6 +3732,7 @@ static int dlclose_impl(struct dso *p)
 	}
 	if (p->deps != no_deps)
 		free(p->deps);
+	LD_LOGD("dlclose unloading %{public}s @%{public}p", p->name, p);
 	unmap_library(p);
 
 	if (p->parents) {
@@ -4787,6 +4789,8 @@ static bool load_library_header(struct loadtask *task)
 		task->p = find_library_by_name(name, namespace, check_inherited);
 		if (task->p) {
 			task->isloaded = true;
+			LD_LOGD("find_library_by_name(name=%{public}s ns=%{public}s) already loaded by %{public}s in %{public}s namespace  ",
+					name, namespace->ns_name, task->p->name, task->p->namespace->ns_name);
 			return true;
 		}
 		if (strlen(name) > NAME_MAX) {
@@ -4853,6 +4857,8 @@ static bool load_library_header(struct loadtask *task)
 		close(task->fd);
 		task->fd = -1;
 		task->isloaded = true;
+		LD_LOGD("find_library_by_fstat(name=%{public}s ns=%{public}s) already loaded by %{public}s in %{public}s namespace  ",
+				name, namespace->ns_name, task->p->name, task->p->namespace->ns_name);
 		return true;
 	}
 
@@ -4920,6 +4926,7 @@ static bool load_library_header(struct loadtask *task)
 
 static void task_load_library(struct loadtask *task, struct reserved_address_params *reserved_params)
 {
+	LD_LOGD("load_library loading ns=%{public}s name=%{public}s by_dlopen=%{public}d", task->namespace->ns_name, task->p->name, runtime);
 	bool map = noload ? 0 : task_map_library(task, reserved_params);
 	close(task->fd);
 	task->fd = -1;
@@ -5011,7 +5018,9 @@ static void preload_direct_deps(struct dso *p, ns_t *namespace, struct loadtasks
 		if (p->dynv[i] != DT_NEEDED) {
 			continue;
 		}
-		struct loadtask *task = create_loadtask(p->strings + p->dynv[i + 1], p, namespace, true);
+		const char* dtneed_name = p->strings + p->dynv[i + 1];
+		LD_LOGD("load_library %{public}s adding DT_NEEDED task %{public}s namespace(%{public}s)", p->name, dtneed_name, namespace->ns_name);
+		struct loadtask *task = create_loadtask(dtneed_name, p, namespace, true);
 		if (!task) {
 			LD_LOGE("Error loading dependencies %{public}s : create load task failed", p->name);
 			error("Error loading dependencies for %s : create load task failed", p->name);
