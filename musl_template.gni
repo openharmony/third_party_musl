@@ -103,7 +103,6 @@ template("musl_libs") {
     cflags_basic = [
       "--target=${musl_target_triple}",
       "-Wall",
-      "-D_FORTIFY_SOURCE=2",
       "-Wl,-z,relro,-z,now,-z,noexecstack",
     ]
 
