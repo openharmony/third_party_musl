@@ -339,6 +339,9 @@ template("musl_libs") {
     sources += [
       "$FREEBSD_DIR/contrib/tcp_wrappers/strcasecmp.c",
       "$FREEBSD_DIR/lib/libc/stdlib/qsort.c",
+      "$FREEBSD_DIR/lib/libc/stdlib/strtoimax.c",
+      "$FREEBSD_DIR/lib/libc/stdlib/strtoul.c",
+      "$FREEBSD_DIR/lib/libc/stdlib/strtoumax.c",
     ]
 
     if (musl_arch == "arm") {
