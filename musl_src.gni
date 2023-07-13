@@ -2214,6 +2214,7 @@ musl_src_porting_file = [
   "src/misc/aarch64/syscall.s",
   "src/stdlib/strtod.c",
   "src/stdio/vfscanf.c",
+  "src/stdio/fileno.c",
 ]
 
 musl_inc_hook_files = [
