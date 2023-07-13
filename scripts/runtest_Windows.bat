@@ -82,6 +82,12 @@ hdc shell cp %REMOTE%/src/libdlopen_dso.so %REMOTE%/src/inherit_0700.so
 hdc shell cp %REMOTE%/src/libdlopen_dso.so %REMOTE%/src/inherit_0800.so
 hdc shell cp %REMOTE%/src/libdlopen_dso.so %REMOTE%/src/inherit_1100.so
 hdc shell cp %REMOTE%/src/libdlopen_ns_dso.so /system/lib
+hdc shell cp %REMOTE%/src/libdlopen_dso.so %REMOTE%/src/lib_for_no_delete.so
+hdc shell cp %REMOTE%/src/libdlopen_dso.so %REMOTE%/src/lib_for_dlopen.so
+hdc shell cp %REMOTE%/src/libdlopen_ns_dso.so /system/lib64/libdlopen_ns_dso_sys.so
+hdc shell cp %REMOTE%/src/libdlopen_ns_dso.so /system/lib/libdlopen_ns_dso_sys.so
+hdc shell cp %REMOTE%/src/libdlopen_ns_dso.so /system/lib64/ndk/libdlopen_ns_dso_ndk.so
+hdc shell cp %REMOTE%/src/libdlopen_ns_dso.so /system/lib/ndk/libdlopen_ns_dso_ndk.so
 
 hdc shell mv %REMOTE%/src/zh_CN /tmp/zh_CN
 
