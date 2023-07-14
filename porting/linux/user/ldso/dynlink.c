@@ -2508,7 +2508,7 @@ static void do_init_fini(struct dso **queue)
 {
 	struct dso *p;
 	size_t dyn[DYN_CNT], i;
-	int self = __pthread_self()->tid;
+	pthread_t self = __pthread_self();
 
 	pthread_mutex_lock(&init_fini_lock);
 	for (i=0; (p=queue[i]); i++) {
