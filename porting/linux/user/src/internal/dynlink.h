@@ -106,7 +106,7 @@ struct dso {
 	dev_t dev;
 	ino_t ino;
 	uint64_t file_offset;
-	int ctor_visitor;
+	pthread_t ctor_visitor;
 	char *rpath_orig, *rpath;
 	struct tls_module tls;
 	size_t tls_id;

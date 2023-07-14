@@ -80,6 +80,7 @@ functional_list = [
   "wcstol",
   "dlclose_reset",
   "atexit_dlclose",
+  "exit_constructor",
 ]
 
 if (use_pthread_cancel) {
