@@ -2161,6 +2161,7 @@ musl_src_porting_file = [
   "src/locale/dcngettext.c",
   "src/locale/locale_map.c",
   "src/locale/langinfo.c",
+  "src/locale/newlocale.c",
   "src/time/__tz.c",
   "src/time/gmtime_r.c",
   "src/time/strftime.c",

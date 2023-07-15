@@ -104,12 +104,10 @@ void setlocale_0400(void)
     for (unsigned int i = 0; i < sizeof(envforlocale) / sizeof(envforlocale[0]); i++) {
         setenv(envforlocale[i], "da_DK", 1);
         const char *locale = setlocale(LcArry[i], "");
-        if (!locale) {
+        if (locale) {
             t_error("[%s] failed\n", "setlocale_0400");
             return;
         }
-        EXPECT_STRNE("SetlocaleTest_0400", locale, "da_DK");
-        EXPECT_STREQ("SetlocaleTest_0400", locale, "C");
     }
 }
 
@@ -150,19 +148,10 @@ void setlocale_0600(void)
 
         setenv(envforlocale[i], "ar_QA", 1);
         char *locale = setlocale(LC_ALL, "");
-        if (locale == NULL) {
+        if (locale) {
             t_error("[%s] failed\n", "setlocale_0600");
             return;
         }
-
-        char *token = strtok(locale, flag);
-        while (token != NULL && count < LC_ALL) {
-            vec[count] = token;
-            token = strtok(NULL, flag);
-            count++;
-        }
-
-        EXPECT_NE("setlocale_0600", count, 0);
     }
 }
 
