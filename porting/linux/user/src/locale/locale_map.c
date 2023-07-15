@@ -51,19 +51,25 @@ static const char envvars[][18] = {
 
 volatile int __locale_lock[1];
 volatile int *const __locale_lockptr = __locale_lock;
-static void *volatile loc_head;
 
-struct __locale_map *common_logic(int cat, const char *val, int *length)
+const struct __locale_map *__get_locale(int cat, const char *val)
 {
+	static void *volatile loc_head;
 	const struct __locale_map *p;
 	struct __locale_map *new = 0;
 	const char *path = 0, *z;
 	char buf[256];
 	size_t l, n;
 
+	if (!*val) {
+		(val = getenv("LC_ALL")) && *val ||
+		(val = getenv(envvars[cat])) && *val ||
+		(val = getenv("LANG")) && *val ||
+		(val = "C.UTF-8");
+	}
+
 	/* Limit name length and forbid leading dot or any slashes. */
 	for (n=0; n<LOCALE_NAME_MAX && val[n] && val[n]!='/'; n++);
-	*length = n;
 	if (val[0]=='.' || val[n]) {
 		val = "C.UTF-8";
 	}
@@ -74,7 +80,7 @@ struct __locale_map *common_logic(int cat, const char *val, int *length)
 	if (builtin) {
 		if (cat == LC_CTYPE && val[1] == '.')
 			return (void *)&__c_dot_utf8;
-		return LOC_MAP_BUILTIN;
+		return 0;
 	}
 
 	for (p=loc_head; p; p=p->next) {
@@ -87,81 +93,36 @@ struct __locale_map *common_logic(int cat, const char *val, int *length)
 		path = getenv("MUSL_LOCPATH");
 	}
 
-	if (path) {
-		for (; *path; path=z+!!*z) {
-			z = __strchrnul(path, ':');
-			l = z - path;
-			if (l >= sizeof buf - n - 2) {
-				continue;
-			}
-			memcpy(buf, path, l);
-			buf[l] = '/';
-			memcpy(buf+l+1, val, n);
-			buf[l+1+n] = 0;
-			size_t map_size;
-			const void *map = __map_file(buf, &map_size);
-			if (map) {
-				new = malloc(sizeof *new);
-				if (!new) {
-					__munmap((void *)map, map_size);
-					break;
-				}
-				new->map = map;
-				new->map_size = map_size;
-				memcpy(new->name, val, n);
-				new->name[n] = 0;
-				new->next = loc_head;
-				new->flag = VALID;
-				loc_head = new;
+	if (path) for (; *path; path=z+!!*z) {
+		z = __strchrnul(path, ':');
+		l = z - path;
+		if (l >= sizeof buf - n - 2) {
+			continue;
+		}
+		memcpy(buf, path, l);
+		buf[l] = '/';
+		memcpy(buf+l+1, val, n);
+		buf[l+1+n] = 0;
+		size_t map_size;
+		const void *map = __map_file(buf, &map_size);
+		if (map) {
+			new = malloc(sizeof *new);
+			if (!new) {
+				__munmap((void *)map, map_size);
 				break;
 			}
+			new->map = map;
+			new->map_size = map_size;
+			memcpy(new->name, val, n);
+			new->name[n] = 0;
+			new->next = loc_head;
+			new->flag = VALID;
+			loc_head = new;
+			break;
 		}
 	}
-	return new;
-}
+	
 
-char *get_next_val(int cat, int *idx)
-{
-	char *str = 0;
-	switch (*idx) {
-		case 0:
-			*idx = 1;
-			if (str = getenv("LC_ALL") && *str) {
-				break;
-			}
-		case 1:
-			*idx = 2;
-			if (str = getenv(envvars[cat]) && *str) {
-				break;
-			}
-		case 2:
-			*idx = 3;
-			if (str = getenv("LANG") && *str) {
-				break;
-			}
-		case 3:
-			str = "C.UTF-8";
-			*idx = 4;
-	}
-	return str;
-}
-
-const struct __locale_map *__get_locale(int cat, const char *val)
-{
-	int n = 0;
-	struct __locale_map *new = 0;
-	if (!*val) {
-		int idx = 0;
-		while (idx < 4 && !new) {
-			val = get_next_val(cat, &idx);
-			new = common_logic(cat, val, &n);
-		}
-	} else {
-		new = common_logic(cat, val, &n);
-	}
-	if (new == LOC_MAP_BUILTIN) {
-		return 0;
-	}
 	/* If no locale definition was found, make a locale map
 	 * object anyway to store the name, which is kept for the
 	 * sake of being able to do message translations at the

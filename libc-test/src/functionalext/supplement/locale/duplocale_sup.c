@@ -55,7 +55,7 @@ void duplocale_0200(void)
     locale_t global = duplocale(LC_GLOBAL_LOCALE);
     EXPECT_PTRNE("duplocale_0200", global, NULL);
 
-    locale_t newlocale_ = newlocale(LC_ALL_MASK, "en-US", NULL);
+    locale_t newlocale_ = newlocale(LC_ALL_MASK, "C.UTF-8", NULL);
     EXPECT_PTRNE("duplocale_0200", newlocale_, NULL);
 
     locale_t clonelocale = duplocale(newlocale_);
@@ -69,6 +69,10 @@ void duplocale_0200(void)
     if (newlocale_) {
         freelocale(newlocale_);
         newlocale_ = NULL;
+    }
+    if (global) {
+        freelocale(global);
+        global = NULL;
     }
 }
 
