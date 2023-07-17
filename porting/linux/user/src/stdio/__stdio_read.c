@@ -3,7 +3,12 @@
 
 size_t __stdio_readx(FILE *f, unsigned char *buf, size_t len)
 {
-	return syscall(SYS_read, f->fd, buf, len);
+	ssize_t cnt = syscall(SYS_read, f->fd, buf, len);
+	if (cnt <= 0) {
+		f->flags |= cnt ? F_ERR : F_EOF;
+		return 0;
+	}
+	return cnt;
 }
 
 size_t __stdio_read(FILE *f, unsigned char *buf, size_t len)
@@ -21,8 +26,8 @@ size_t __stdio_read(FILE *f, unsigned char *buf, size_t len)
 		return 0;
 	}
 	if (cnt <= iov_buf[0].iov_len) {
-        return cnt;
-    }
+		return cnt;
+	}
 	cnt -= iov_buf[0].iov_len;
 	f->rpos = f->buf;
 	f->rend = f->buf + cnt;

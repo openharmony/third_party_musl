@@ -69,8 +69,7 @@ size_t fread(void *restrict destv, size_t size, size_t nmemb, FILE *restrict f)
 	/* Read the remainder directly */
 	for (; l; l-=k, dest+=k) {
 		k = f->readx(f, dest, l);
-		if (k <= 0) {
-			f->flags |= (k == 0 ? F_EOF : F_ERR);
+		if (!k) {
 			break;
 		}
 	}

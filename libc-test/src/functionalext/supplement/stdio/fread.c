@@ -13,6 +13,8 @@
  * limitations under the License.
  */
 
+#include <sys/stat.h>
+#include <sys/wait.h>
 #include <stdlib.h>
 #include "functionalext.h"
 
@@ -116,11 +118,48 @@ void fread_0400(void)
     remove(ptr);
 }
 
+/**
+ * @tc.name      : fread_0500
+ * @tc.desc      : Verify that the return value of syscall have been processed correctly
+ * @tc.level     : Level 2
+ */
+#define FREAD_0500_BUFSZ (4097)
+void fread_0500(void)
+{
+    pid_t pid = fork();
+    if (pid == -1) {
+    	perror("fread_0500 fork:");
+    	exit(-1);
+    }
+    
+    /* child */
+    if (pid == 0) {
+        /* make sure parent opening the status file */
+    	sleep(1);
+    	exit(-1);
+    }
+    
+    char buf[FREAD_0500_BUFSZ] = {0};
+    sprintf(buf, "/proc/%d/status", pid);
+    FILE *fStatus = fopen(buf, "rb");
+    EXPECT_PTRNE("fread_0500", fStatus, NULL);
+    
+    /* wait child exit, and status file of child will disappear */
+    int status = 0;
+    pid_t w = wait(&status);
+
+    /* read >4K data from file, check if return correctly */
+    size_t rsize = fread(buf, 1, FREAD_0500_BUFSZ, fStatus);
+    EXPECT_EQ("fread_0500", rsize, 0);
+    fclose(fStatus);
+}
+
 TEST_FUN G_Fun_Array[] = {
     fread_0100,
     fread_0200,
     fread_0300,
     fread_0400,
+    fread_0500,
 };
 
 int main(int argc, char *argv[])
