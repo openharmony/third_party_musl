@@ -110,6 +110,12 @@ ${CMD} shell cp ${REMOTE}/src/libdlopen_dso.so ${REMOTE}/src/inherit_0700.so
 ${CMD} shell cp ${REMOTE}/src/libdlopen_dso.so ${REMOTE}/src/inherit_0800.so
 ${CMD} shell cp ${REMOTE}/src/libdlopen_dso.so ${REMOTE}/src/inherit_1100.so
 ${CMD} shell cp ${REMOTE}/src/libdlopen_ns_dso.so /system/lib
+${CMD} shell cp ${REMOTE}/src/libdlopen_dso.so ${REMOTE}/src/lib_for_no_delete.so
+${CMD} shell cp ${REMOTE}/src/libdlopen_dso.so ${REMOTE}/src/lib_for_dlopen.so
+${CMD} shell cp ${REMOTE}/src/libdlopen_ns_dso.so /system/lib64/libdlopen_ns_dso_sys.so
+${CMD} shell cp ${REMOTE}/src/libdlopen_ns_dso.so /system/lib64/ndk/libdlopen_ns_dso_ndk.so
+${CMD} shell cp ${REMOTE}/src/libdlopen_ns_dso.so /system/lib/libdlopen_ns_dso_sys.so
+${CMD} shell cp ${REMOTE}/src/libdlopen_ns_dso.so /system/lib/ndk/libdlopen_ns_dso_ndk.so
 
 ${CMD} shell mv ${REMOTE}/src/zh_CN /tmp/zh_CN
 

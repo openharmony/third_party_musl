@@ -37,7 +37,7 @@ ShieldedList=("trace_stresstest" "syslog" "vsyslog" "runtest"
 "acoshl" "asinhl" "erfcl" "fenv" "fma" "fmaf" "fmal" "lgammal" "nearbyint" "nearbyintf"
 "nearbyintl" "rint" "rintf" "rintl" "sqrt" "sqrtf" "sqrtl" "tgammal"
 #TODO-arm32
-"dlopen_ns" "malloc-brk-fail" "pthread_cancel" "res_send"
+"malloc-brk-fail" "pthread_cancel" "res_send"
 )
 
 #TODO-aarch64
