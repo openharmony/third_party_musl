@@ -44,7 +44,7 @@ void strftime_l_0100(void)
             return;
         }
         char buffer[gBufferSize];
-        locale_t m_locale = newlocale(LC_ALL_MASK, "C.UTF-8", NULL);
+        locale_t m_locale = newlocale(LC_ALL_MASK, "en_US", NULL);
         strftime_l(buffer, sizeof(buffer) - 1, "%c", timeptr, m_locale);
         EXPECT_STREQ("strftime_l_0100", buffer, test_asctime_data[i].result);
     }
