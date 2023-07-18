@@ -37,8 +37,8 @@ void newlocale_0100(void)
         EXPECT_PTRNE("newlocale_0100", lo, NULL);
         return;
     }
-    locale_t newlocale_ = newlocale(LC_ALL_MASK, "en-US", NULL);
-    EXPECT_PTREQ("newlocale_0100", newlocale_, NULL);
+    locale_t newlocale_ = newlocale(LC_ALL_MASK, "en_US", NULL);
+    EXPECT_PTRNE("newlocale_0100", newlocale_, NULL);
 
     if (newlocale_) {
         freelocale(newlocale_);
@@ -81,8 +81,8 @@ void newlocale_0300(void)
         return;
     }
     for (int i = 0; i < sizeof(lcMarkArry) / sizeof(lcMarkArry[0]); i++) {
-        locale_t newlocale_ = newlocale(lcMarkArry[i], "en-US", NULL);
-        EXPECT_PTREQ("newlocale_0300", newlocale_, NULL);
+        locale_t newlocale_ = newlocale(lcMarkArry[i], "en_US", NULL);
+        EXPECT_PTRNE("newlocale_0300", newlocale_, NULL);
 
         if (newlocale_) {
             freelocale(newlocale_);

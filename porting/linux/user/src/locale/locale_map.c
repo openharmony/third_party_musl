@@ -74,8 +74,9 @@ const struct __locale_map *__get_locale(int cat, const char *val)
 		val = "C.UTF-8";
 	}
 	int builtin = (val[0]=='C' && !val[1])
-		|| !strcmp(val, "C.UTF-8")
-		|| !strcmp(val, "POSIX");
+		|| !strcmp(val, "POSIX")
+		|| !strcmp(val, "en")
+		|| !strcmp(val, "en_US");
 
 	if (builtin) {
 		if (cat == LC_CTYPE && val[1] == '.')
@@ -86,6 +87,22 @@ const struct __locale_map *__get_locale(int cat, const char *val)
 	for (p=loc_head; p; p=p->next) {
 		if (!strcmp(val, p->name)) {
 			return p;
+		}
+	}
+
+	if (!strcmp(val, "en_US.UTF-8") || !strcmp(val, "C.UTF-8")) {
+		/* If no locale definition was found, make a locale map
+		* object anyway to store the name, which is kept for the
+		* sake of being able to do message translations at the
+		* application level. */
+		if (!new && (new = malloc(sizeof *new))) {
+			new->map = __c_dot_utf8.map;
+			new->map_size = __c_dot_utf8.map_size;
+			memcpy(new->name, val, n);
+			new->name[n] = 0;
+			new->next = loc_head;
+			new->flag = VALID;
+			loc_head = new;
 		}
 	}
 
