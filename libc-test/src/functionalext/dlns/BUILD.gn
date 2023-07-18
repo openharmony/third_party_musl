@@ -37,7 +37,9 @@ ohos_executable("dlns_dlopen_test") {
     "//third_party/musl/porting/linux/user/include",
     "//third_party/musl/libc-test/src/common",
   ]
-
+  if (musl_arch == "arm") {
+    defines = [ "MUSL_ARM" ]
+  }
   sources = [ "dlns_dlopen.c" ]
   configs = [ "//third_party/musl/libc-test/src/common:config_runtest" ]
 
