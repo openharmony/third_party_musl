@@ -9,8 +9,8 @@ static char buf[LC_ALL*(LOCALE_NAME_MAX+1)];
 
 static inline int Fresh(struct __locale_map *lm)
 {
-	if (lm != NULL && lm->flag == INVALID) {
-		return INVALID;
+	if (lm != NULL) {
+		return lm->flag;
 	}
 	return VALID;
 }
@@ -46,7 +46,9 @@ char *setlocale(int cat, const char *name)
 					UNLOCK(__locale_lock);
 					return 0;
 				}
-				flag = Fresh(lm);
+				if(Fresh(lm) == INVALID) {
+					flag = INVALID;
+				}
 				tmp_locale.cat[i] = lm;
 			}
 			libc.global_locale = tmp_locale;
