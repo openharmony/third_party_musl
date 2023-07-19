@@ -75,7 +75,6 @@ const struct __locale_map *__get_locale(int cat, const char *val)
 	}
 	int builtin = (val[0]=='C' && !val[1])
 		|| !strcmp(val, "POSIX")
-		|| !strcmp(val, "en")
 		|| !strcmp(val, "en_US");
 
 	if (builtin) {
