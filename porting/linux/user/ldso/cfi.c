@@ -184,12 +184,9 @@ static uintptr_t get_cfi_check_addr(uint16_t value, void* func_ptr)
 
 static inline void cfi_slowpath_common(uint64_t call_site_type_id, void *func_ptr, void *diag_data)
 {
-    LD_LOGI("[CFI] [%{public}s] func_ptr[%{public}p] !\n", __FUNCTION__, func_ptr);
-
     uint16_t value = sv_invalid;
 
     if (func_ptr == NULL) {
-        LD_LOGE("[CFI] [%{public}s] func_ptr is NULL!\n", __FUNCTION__);
         return;
     }
 
@@ -214,7 +211,11 @@ static inline void cfi_slowpath_common(uint64_t call_site_type_id, void *func_pt
     } else {
         value = *((uint16_t*)(cfi_shadow_start + offset));
     }
-    LD_LOGI("[CFI] [%{public}s] the value is 0x%{public}x!\n", __FUNCTION__, value);
+    LD_LOGD("[CFI] [%{public}s] called from %{public}s to %{public}s func_ptr:0x%{public}p shadow value:%{public}d diag_data:0x%{public}p call_site_type_id[%{public}p.\n",
+             __FUNCTION__,
+             ((struct dso *)addr2dso((size_t)__builtin_return_address(0)))->name,
+             ((struct dso *)addr2dso((size_t)func_ptr))->name,
+             func_ptr, value, diag_data, call_site_type_id);
 
     struct dso *dso = NULL;
     switch (value)
@@ -232,7 +233,7 @@ static inline void cfi_slowpath_common(uint64_t call_site_type_id, void *func_pt
             LD_LOGE("[CFI] [%{public}s] can not find the dso!\n", __FUNCTION__);
             __builtin_trap();
         }
-        LD_LOGI("[CFI] [%{public}s] dso name[%{public}s]!\n", __FUNCTION__, dso->name);
+        LD_LOGD("[CFI] [%{public}s] dso name[%{public}s]!\n", __FUNCTION__, dso->name);
 
         struct symdef cfi_check_sym = find_cfi_check_sym(dso);
         if (!cfi_check_sym.sym) {
@@ -255,7 +256,7 @@ static inline void cfi_slowpath_common(uint64_t call_site_type_id, void *func_pt
 
 int init_cfi_shadow(struct dso *dso_list, struct dso *ldso)
 {
-    LD_LOGI("[CFI] [%{public}s] start!\n", __FUNCTION__);
+    LD_LOGD("[CFI] [%{public}s] start!\n", __FUNCTION__);
 
     if (dso_list == NULL) {
         LD_LOGW("[CFI] [%{public}s] has null param!\n", __FUNCTION__);
@@ -271,8 +272,6 @@ int init_cfi_shadow(struct dso *dso_list, struct dso *ldso)
 
 int map_dso_to_cfi_shadow(struct dso *dso)
 {
-    LD_LOGI("[CFI] [%{public}s] start!\n", __FUNCTION__);
-
     bool has_cfi_check = false;
 
     if (dso == NULL) {
@@ -285,7 +284,7 @@ int map_dso_to_cfi_shadow(struct dso *dso)
         /* Find __cfi_check symbol in dso list */
         for (struct dso *p = dso; p; p = p->next) {
             if (find_cfi_check_sym(p).sym) {
-                LD_LOGI("[CFI] [%{public}s] find __cfi_check function in dso %{public}s!\n", __FUNCTION__, p->name);
+                LD_LOGD("[CFI] [%{public}s] find __cfi_check function in dso %{public}s!\n", __FUNCTION__, p->name);
                 has_cfi_check = true;
                 break;
             }
@@ -296,13 +295,11 @@ int map_dso_to_cfi_shadow(struct dso *dso)
                 LD_LOGE("[CFI] [%{public}s] create cfi shadow failed!\n", __FUNCTION__);
                 return CFI_FAILED;
             }
-            LD_LOGD("[CFI] [%{public}s] add_dso_to_cfi_shadow with dso_list_head!\n", __FUNCTION__);
             add_dso_to_cfi_shadow(dso_list_head);
             prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, cfi_shadow_start, shadow_size, "cfi_shadow:musl");
         }
     /* If the cfi shadow exists, map the current dso and its dependents to it. */
     } else {
-        LD_LOGD("[CFI] [%{public}s] add_dso_to_cfi_shadow with dso!\n", __FUNCTION__);
         add_dso_to_cfi_shadow(dso);
         prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, cfi_shadow_start, shadow_size, "cfi_shadow:musl");
     }
@@ -312,14 +309,12 @@ int map_dso_to_cfi_shadow(struct dso *dso)
 
 void unmap_dso_from_cfi_shadow(struct dso *dso)
 {
-    LD_LOGD("[CFI] [%{public}s] start!\n", __FUNCTION__);
-
     if (dso == NULL) {
-        LD_LOGE("[CFI] [%{public}s] has null param!\n", __FUNCTION__);
+        LD_LOGD("[CFI] [%{public}s] has null param!\n", __FUNCTION__);
         return;
     }
 
-    LD_LOGI("[CFI] [%{public}s] unmap dso %{public}s from shadow!\n", __FUNCTION__, dso->name);
+    LD_LOGD("[CFI] [%{public}s] unmap dso %{public}s from shadow!\n", __FUNCTION__, dso->name);
 
     if (cfi_shadow_start == NULL)
         return;
@@ -354,17 +349,16 @@ static int create_cfi_shadow(void)
     }
 
     cfi_shadow_start = (char*)mmap_addr;
-    LD_LOGI("[CFI] [%{public}s] the cfi_shadow_start addr is %{public}p!\n", __FUNCTION__, cfi_shadow_start);
+    LD_LOGD("[CFI] [%{public}s] the cfi_shadow_start addr is %{public}p!\n", __FUNCTION__, cfi_shadow_start);
 
     return CFI_SUCCESS;
 }
 
 static int add_dso_to_cfi_shadow(struct dso *dso)
 {
-    LD_LOGI("[CFI] [%{public}s] start!\n", __FUNCTION__);
-
+    LD_LOGD("[CFI] [%{public}s] start with %{public}s !\n", __FUNCTION__, dso->name);
     for (struct dso *p = dso; p; p = p->next) {
-        LD_LOGI("[CFI] [%{public}s] start to deal with dso %{public}s!\n", __FUNCTION__, p->name);
+        LD_LOGD("[CFI] [%{public}s] adding %{public}s to cfi shadow!\n", __FUNCTION__, p->name);
         if (p->map == 0 || p->map_len == 0) {
             LD_LOGW("[CFI] [%{public}s] the dso has no data! map[%{public}p] map_len[0x%{public}x]\n",
                     __FUNCTION__, p->map, p->map_len);
@@ -372,43 +366,44 @@ static int add_dso_to_cfi_shadow(struct dso *dso)
         }
 
         if (p->is_mapped_to_shadow == true) {
-            LD_LOGW("[CFI] [%{public}s] the dso is already in shadow!\n", __FUNCTION__);
+            LD_LOGW("[CFI] [%{public}s] %{public}s is already in shadow!\n", __FUNCTION__, p->name);
             continue;
         }
 
         struct symdef cfi_check_sym = find_cfi_check_sym(p);
         /* If the dso doesn't have __cfi_check(), set it's shadow value unchecked. */
         if (!cfi_check_sym.sym) {
-            LD_LOGI("[CFI] [%{public}s] the dso has no __cfi_check()!\n", __FUNCTION__);
+            LD_LOGD("[CFI] [%{public}s] %{public}s has no __cfi_check()!\n", __FUNCTION__, p->name);
             if (fill_shadow_value_to_shadow(p->map, p->map + p->map_len, 0, sv_uncheck) == CFI_FAILED) {
                 LD_LOGE("[CFI] [%{public}s] add dso to cfi shadow failed!\n", __FUNCTION__);
                 return CFI_FAILED;
             }
         /* If the dso has __cfi_check(), set it's shadow value valid. */
         } else {
-            LD_LOGI("[CFI] [%{public}s] the dso has __cfi_check()!\n", __FUNCTION__);
+            LD_LOGD("[CFI] [%{public}s] %{public}s has __cfi_check()!\n", __FUNCTION__, p->name);
             uintptr_t end = p->map + p->map_len;
             uintptr_t cfi_check = LADDR(cfi_check_sym.dso, cfi_check_sym.sym->st_value);
 
             if (cfi_check == 0) {
-                LD_LOGE("[CFI] [%{public}s] the dso has null cfi_check func!\n", __FUNCTION__);
+                LD_LOGE("[CFI] [%{public}s] %{public}s has null cfi_check func!\n", __FUNCTION__, p->name);
                 return CFI_FAILED;
             }
             if (fill_shadow_value_to_shadow(p->map, end, cfi_check, sv_valid_min) == CFI_FAILED) {
-                LD_LOGE("[CFI] [%{public}s] add dso to cfi shadow failed!\n", __FUNCTION__);
+                LD_LOGE("[CFI] [%{public}s] add %{public}s to cfi shadow failed!\n", __FUNCTION__, p->name);
                 return CFI_FAILED;
             }
         }
         p->is_mapped_to_shadow = true;
-        LD_LOGI("[CFI] [%{public}s] finish to deal with dso %{public}s!\n", __FUNCTION__, p->name);
+        LD_LOGD("[CFI] [%{public}s] add %{public}s to cfi shadow succeed.\n", __FUNCTION__, p->name);
     }
+    LD_LOGD("[CFI] [%{public}s] %{public}s done.\n", __FUNCTION__, dso->name);
 
     return CFI_SUCCESS;
 }
 
 static int fill_shadow_value_to_shadow(uintptr_t begin, uintptr_t end, uintptr_t cfi_check, uint16_t type)
 {
-    LD_LOGI("[CFI] [%{public}s] begin[%{public}x] end[%{public}x] cfi_check[%{public}x] type[%{public}x]!\n",
+    LD_LOGD("[CFI] [%{public}s] begin[%{public}x] end[%{public}x] cfi_check[%{public}x] type[%{public}x]!\n",
             __FUNCTION__, begin, end, cfi_check, type);
 
     /* To ensure the atomicity of the CFI shadow operation, we create a temp_shadow, write the shadow value to 
@@ -445,7 +440,7 @@ static int fill_shadow_value_to_shadow(uintptr_t begin, uintptr_t end, uintptr_t
         uint16_t shadow_value_begin = ((begin + shadow_alignment - cfi_check)
             >> cfi_check_granularity) + sv_valid_min;
 #endif
-        LD_LOGI("[CFI] [%{public}s] shadow_value_begin is 0x%{public}x!\n", __FUNCTION__, shadow_value_begin);
+        LD_LOGD("[CFI] [%{public}s] shadow_value_begin is 0x%{public}x!\n", __FUNCTION__, shadow_value_begin);
         uint16_t shadow_value_step = 1 << (shadow_granularity - cfi_check_granularity);
         uint16_t shadow_value = shadow_value_begin;
 
