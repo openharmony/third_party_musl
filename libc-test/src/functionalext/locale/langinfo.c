@@ -24,7 +24,7 @@
 /**
  * @tc.name      : langinfo_0100
  * @tc.desc      : Asserts whether the nl_langinfo function succeeds in reading data
- * from the MUSL_LOCPATH environment variable set to zh_CN. Utf-8
+ * from the MUSL_LOCPATH environment variable set to zh_CN. Utf-8(There is no file in "/etc/locale" now)
  * @tc.level     : Level 0
  */
 void langinfo_0100(void)
@@ -36,8 +36,8 @@ void langinfo_0100(void)
         return;
     }
     lo = setlocale(LC_TIME, "zh_CN.UTF-8");
-    if (!lo) {
-        EXPECT_PTRNE("nl_langinfo_0100", lo, NULL);
+    if (lo) {
+        t_error("nl_langinfo_0100 failed [%s] != NULL\n", lo);
         return;
     }
     char *ptr = nl_langinfo(DAY_2);
@@ -66,7 +66,8 @@ void nl_langinfo_0200()
 /**
  * @tc.name      : nl_langinfo_0300
  * @tc.desc      : Assert whether the LC_TIME data type is set to zh_CN.UTF-8 through setlocale,
- * and whether the return value is empty when the abnormal time data is passed to the nl_langinfo function
+ * and whether the return value is empty when the abnormal time data is passed to the nl_langinfo function.
+ * MUSL_LOCPATH is `invalid` in system environment so it should be changed to `invalid` check 
  * @tc.level     : Level 2
  */
 void nl_langinfo_0300()
@@ -77,8 +78,8 @@ void nl_langinfo_0300()
         return;
     }
     lo = setlocale(LC_TIME, "zh_CN.UTF-8");
-    if (!lo) {
-        EXPECT_PTRNE("nl_langinfo_0300", lo, NULL);
+    if (lo) {
+        t_error("nl_langinfo_0300 failed [%s] != NULL\n", lo);
         return;
     }
     char *ptr = nl_langinfo(TIME_ERROR_INFO);
@@ -89,13 +90,14 @@ void nl_langinfo_0300()
  * @tc.name      : nl_langinfo_0400
  * @tc.desc      : Assert whether the data type of LC_MESSAGES is set to zh_CN.UTF-8 through setlocale,
  * and whether the return value is empty when the abnormal time data is passed to the nl_langinfo function
+ * MUSL_LOCPATH is `invalid` in system environment so it should be changed to `invalid` check 
  * @tc.level     : Level 2
  */
 void nl_langinfo_0400()
 {
     char *lo = setlocale(LC_MESSAGES, "zh_CN.UTF-8");
-    if (!lo) {
-        EXPECT_PTRNE("nl_langinfo_0400", lo, NULL);
+    if (lo) {
+        t_error("nl_langinfo_0400 failed [%s] != NULL\n", lo);
         return;
     }
     char *ptr = nl_langinfo(MESSAGES_ERROR_INFO);

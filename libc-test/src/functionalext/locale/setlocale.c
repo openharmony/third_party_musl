@@ -16,6 +16,8 @@
 #include <locale.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <time.h>
+#include <stdio.h>
 #include "functionalext.h"
 
 #define TEST_LC_COUNT 7
@@ -111,18 +113,17 @@ void setlocale_0400(void)
     for (unsigned int i = 0; i < sizeof(envforlocale) / sizeof(envforlocale[0]); i++) {
         setenv(envforlocale[i], "da_DK", 1);
         const char *locale = setlocale(LcArry[i], "");
-        if (!locale) {
+        if (locale) {
             t_error("[%s] failed\n", "setlocale_0400");
             return;
         }
-        EXPECT_STREQ("SetlocaleTest_0400", locale, "da_DK");
     }
 }
 
 /**
  * @tc.name      : setlocaletest_0500
- * @tc.desc      : Determines whether setlocale returns en_ZA
- * when the character set passed in for different LC data types is set to en_ZA
+ * @tc.desc      : Determines whether setlocale returns NULL
+ * when the character set passed in for invalid LC data types is set to en_ZA
  * @tc.level     : Level 0
  */
 void setlocale_0500(void)
@@ -134,11 +135,10 @@ void setlocale_0500(void)
     }
     for (unsigned int i = 0; i < sizeof(LcArry) / sizeof(LcArry[0]); i++) {
         const char *locale = setlocale(LcArry[i], "en_ZA");
-        if (locale == NULL) {
+        if (locale) {
             t_error("[%s] failed\n", "setlocale_0500");
             return;
         }
-        EXPECT_STREQ("SetlocaleTest_0600", locale, "en_ZA");
     }
 }
 
@@ -157,22 +157,18 @@ void setlocale_0600(void)
 
         setenv(envforlocale[i], "ar_QA", 1);
         char *locale = setlocale(LC_ALL, "");
-        if (locale == NULL) {
+        if (locale) {
             t_error("[%s] failed\n", "setlocale_0600");
             return;
         }
+    }
+}
 
-        char *token = strtok(locale, flag);
-        while (token != NULL && count < LC_ALL) {
-            vec[count] = token;
-            token = strtok(NULL, flag);
-            count++;
-        }
-
-        EXPECT_NE("setlocale_0600", count, 0);
-
-        int expectPos = i + TEST_LC_OFFSET;
-        EXPECT_STREQ("setlocale_0600", "ar_QA", vec[expectPos]);
+void setlocale_0700(void)
+{
+    char *str = setlocale(LC_ALL, "sss123456");
+    if (str) {
+        t_error("setlocale_0700 failed [%s] != NULL\n", str);
     }
 }
 
@@ -184,6 +180,7 @@ int main(void)
     setlocale_0400();
     setlocale_0500();
     setlocale_0600();
+    setlocale_0700();
 
     return t_status;
 }

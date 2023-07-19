@@ -33,7 +33,7 @@ void wcsftime_l_0100(void)
     wchar_t buffer[80];
     time(&rtime);
     timeinfo = localtime(&rtime);
-    locale_t newlocale_ = newlocale(LC_ALL_MASK, "en-US", NULL);
+    locale_t newlocale_ = newlocale(LC_ALL_MASK, "en_US", NULL);
     size_t result = wcsftime_l(buffer, 80, L"%I:%M%p", timeinfo, newlocale_);
     if (!result) {
         t_error("%s wcsftime_l failed\n", __func__);
@@ -60,7 +60,7 @@ void wcsftime_l_0200(void)
         .tm_min = 10,
         .tm_sec = 20,
     };
-    locale_t newlocale_ = newlocale(LC_ALL_MASK, "en-US", NULL);
+    locale_t newlocale_ = newlocale(LC_ALL_MASK, "en_US", NULL);
     size_t result = wcsftime_l(buff, sizeof buff, L"%A %c", &mtime, newlocale_);
     if (!result) {
         t_error("%s wcsftime_l failed\n", __func__);
