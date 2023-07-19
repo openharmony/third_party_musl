@@ -49,11 +49,13 @@ void uselocale_0200(void)
     }
     uselocale(NULL);
     locale_t newLocale = newlocale(LC_PAPER_MASK, "en_ZA", NULL);
-    if (newLocale == NULL) {
-        EXPECT_PTRNE("uselocale_0200", newLocale, NULL);
+    if (newLocale) {
+        EXPECT_PTREQ("uselocale_0200", newLocale, NULL);
+        freelocale(newLocale);
+        newLocale = NULL;
         return;
     }
-
+    newLocale = newlocale(LC_PAPER_MASK, "C.UTF-8", NULL);
     locale_t usenow = uselocale(newLocale);
     EXPECT_PTREQ("uselocale_0200", usenow, LC_GLOBAL_LOCALE);
     locale_t it = uselocale(NULL);
