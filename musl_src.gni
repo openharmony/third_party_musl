@@ -2207,6 +2207,7 @@ musl_src_porting_file = [
   "src/env/getenv.c",
   "src/string/strcasecmp.c",
   "src/string/strncasecmp.c",
+  "src/string/strncat.c",
   "src/string/stpncpy.c",
   "src/string/strncpy.c",
   "src/string/strcspn.c",
