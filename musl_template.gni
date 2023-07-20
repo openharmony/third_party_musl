@@ -158,7 +158,7 @@ template("musl_libs") {
       defines += [
         "OHOS_DNS_PROXY_BY_NETSYS=1",
         "OHOS_PERMISSION_INTERNET=1",
-        "STANDARD_SYSTEM",
+        "OHOS_DISABLE_IPV6=0",
       ]
     }
 
