@@ -81,6 +81,9 @@ static void error(const char *, ...);
 #define RELOC_CAN_SEARCH_DSO_BASE_CAPACITY 32
 #define ANON_NAME_MAX_LEN 70
 
+#define KPMD_SIZE (1UL << 21)
+#define HUGEPAGES_SUPPORTED_STR_SIZE (32)
+
 #ifdef UNIT_TEST_STATIC
     #define UT_STATIC
 #else
@@ -1301,6 +1304,54 @@ UT_STATIC void fill_random_data(void *buf, size_t buflen)
 	return;
 }
 
+static bool get_transparent_hugepages_supported(void)
+{
+	int fd = -1;
+	ssize_t read_size = 0;
+	bool enable = false;
+	char buf[HUGEPAGES_SUPPORTED_STR_SIZE] = {'0'};
+
+	fd = open("/sys/kernel/mm/transparent_hugepage/enabled", O_RDONLY);
+	if (fd < 0)
+		goto done;
+
+	read_size = read(fd, buf, HUGEPAGES_SUPPORTED_STR_SIZE - 1);
+	if (read_size < 0)
+		goto close_fd;
+
+	buf[HUGEPAGES_SUPPORTED_STR_SIZE - 1] = '\0';
+	if (strstr(buf, "[never]") == NULL)
+		enable = true;
+
+close_fd:
+	close(fd);
+done:
+	return enable;
+}
+
+static size_t phdr_table_get_maxinum_alignment(Phdr *phdr_table, size_t phdr_count)
+{
+#if defined(__LP64__)
+	size_t maxinum_alignment = PAGE_SIZE;
+	size_t i = 0;
+
+	for (i = 0; i < phdr_count; ++i) {
+		const Phdr *phdr = &phdr_table[i];
+
+		/* p_align must be 0, 1, or a positive, integral power of two */
+		if ((phdr->p_type != PT_LOAD) || ((phdr->p_align & (phdr->p_align - 1)) != 0))
+			continue;
+
+		if (phdr->p_align > maxinum_alignment)
+			maxinum_alignment = phdr->p_align;
+	}
+
+	return maxinum_alignment;
+#else
+	return PAGE_SIZE;
+#endif
+}
+
 UT_STATIC void *map_library(int fd, struct dso *dso, struct reserved_address_params *reserved_params)
 {
 	Ehdr buf[(896+sizeof(Ehdr))/sizeof(Ehdr)];
@@ -1319,6 +1370,8 @@ UT_STATIC void *map_library(int fd, struct dso *dso, struct reserved_address_par
 	size_t i;
 	int map_flags = MAP_PRIVATE;
 	size_t start_addr;
+	size_t start_alignment = PAGE_SIZE;
+	bool hugepage_enabled = false;
 
 	ssize_t l = read(fd, buf, sizeof buf);
 	eh = buf;
@@ -1419,6 +1472,14 @@ UT_STATIC void *map_library(int fd, struct dso *dso, struct reserved_address_par
 	off_start &= -PAGE_SIZE;
 	map_len = addr_max - addr_min + off_start;
 	start_addr = addr_min;
+
+	hugepage_enabled = get_transparent_hugepages_supported();
+	if (hugepage_enabled) {
+		size_t maxinum_alignment = phdr_table_get_maxinum_alignment(ph0, eh->e_phnum);
+
+		start_alignment = maxinum_alignment == KPMD_SIZE ? KPMD_SIZE : PAGE_SIZE;
+	}
+
 	if (reserved_params) {
 		if (map_len > reserved_params->reserved_size) {
 			if (reserved_params->must_use_reserved) {
@@ -1430,10 +1491,11 @@ UT_STATIC void *map_library(int fd, struct dso *dso, struct reserved_address_par
 		}
 	}
 
-	/* we will find a LIBRARY_ALIGNMENT aligned address as the start of dso
-	 * so we need a tmp_map_len as map_len + LIBRARY_ALIGNMENT to make sure
+	/* we will find a mapping_align aligned address as the start of dso
+	 * so we need a tmp_map_len as map_len + mapping_align to make sure
 	 * we have enough space to shift the dso to the correct location. */
-	size_t tmp_map_len = ALIGN(map_len, LIBRARY_ALIGNMENT) + LIBRARY_ALIGNMENT - PAGE_SIZE;
+	size_t mapping_align = start_alignment > LIBRARY_ALIGNMENT ? start_alignment : LIBRARY_ALIGNMENT;
+	size_t tmp_map_len = ALIGN(map_len, mapping_align) + mapping_align - PAGE_SIZE;
 
 	/* if reserved_params exists, we should use start_addr as prefered result to do the mmap operation */
 	if (reserved_params) {
@@ -1455,8 +1517,8 @@ UT_STATIC void *map_library(int fd, struct dso *dso, struct reserved_address_par
 			goto error;
 		}
 
-		/* find the LIBRARY_ALIGNMENT aligned address */
-		unsigned char *real_map = (unsigned char*)ALIGN((uintptr_t)temp_map, LIBRARY_ALIGNMENT);
+		/* find the mapping_align aligned address */
+		unsigned char *real_map = (unsigned char*)ALIGN((uintptr_t)temp_map, mapping_align);
 
 		/* mummap the space we mmap before so that we can mmap correct space again */
 		munmap(temp_map, tmp_map_len);
@@ -1505,6 +1567,8 @@ UT_STATIC void *map_library(int fd, struct dso *dso, struct reserved_address_par
 		if ((ph->p_vaddr & -PAGE_SIZE) != addr_min || DL_NOMMU_SUPPORT)
 			if (mmap_fixed(base+this_min, this_max-this_min, prot, MAP_PRIVATE|MAP_FIXED, fd, off_start) == MAP_FAILED)
 				goto error;
+		if ((ph->p_flags & PF_X) && (ph->p_align == KPMD_SIZE) && hugepage_enabled)
+			madvise(base + this_min, this_max - this_min, MADV_HUGEPAGE);
 		if (ph->p_memsz > ph->p_filesz && (ph->p_flags&PF_W)) {
 			size_t brk = (size_t)base+ph->p_vaddr+ph->p_filesz;
 			size_t pgbrk = brk+PAGE_SIZE-1 & -PAGE_SIZE;
@@ -4533,6 +4597,8 @@ static bool task_map_library(struct loadtask *task, struct reserved_address_para
 	size_t i;
 	int map_flags = MAP_PRIVATE;
 	size_t start_addr;
+	size_t start_alignment = PAGE_SIZE;
+	bool hugepage_enabled = false;
 
 	for (i = task->eh->e_phnum; i; i--, ph = (void *)((char *)ph + task->eh->e_phentsize)) {
 		if (ph->p_type == PT_GNU_RELRO) {
@@ -4611,6 +4677,14 @@ static bool task_map_library(struct loadtask *task, struct reserved_address_para
 	off_start &= -PAGE_SIZE;
 	map_len = addr_max - addr_min + off_start;
 	start_addr = addr_min;
+
+	hugepage_enabled = get_transparent_hugepages_supported();
+	if (hugepage_enabled) {
+		size_t maxinum_alignment = phdr_table_get_maxinum_alignment(task->ph0, task->eh->e_phnum);
+
+		start_alignment = maxinum_alignment == KPMD_SIZE ? KPMD_SIZE : PAGE_SIZE;
+	}
+
 	if (reserved_params) {
 		if (map_len > reserved_params->reserved_size) {
 			if (reserved_params->must_use_reserved) {
@@ -4623,10 +4697,11 @@ static bool task_map_library(struct loadtask *task, struct reserved_address_para
 		}
 	}
 
-	/* we will find a LIBRARY_ALIGNMENT aligned address as the start of dso
-	 * so we need a tmp_map_len as map_len + LIBRARY_ALIGNMENT to make sure
+	/* we will find a mapping_align aligned address as the start of dso
+	 * so we need a tmp_map_len as map_len + mapping_align to make sure
 	 * we have enough space to shift the dso to the correct location. */
-	size_t tmp_map_len = ALIGN(map_len, LIBRARY_ALIGNMENT) + LIBRARY_ALIGNMENT - PAGE_SIZE;
+	size_t mapping_align = start_alignment > LIBRARY_ALIGNMENT ? start_alignment : LIBRARY_ALIGNMENT;
+	size_t tmp_map_len = ALIGN(map_len, mapping_align) + mapping_align - PAGE_SIZE;
 
 	/* if reserved_params exists, we should use start_addr as prefered result to do the mmap operation */
 	if (reserved_params) {
@@ -4648,8 +4723,8 @@ static bool task_map_library(struct loadtask *task, struct reserved_address_para
 			goto error;
 		}
 
-		/* find the LIBRARY_ALIGNMENT aligned address */
-		unsigned char *real_map = (unsigned char*)ALIGN((uintptr_t)temp_map, LIBRARY_ALIGNMENT);
+		/* find the mapping_align aligned address */
+		unsigned char *real_map = (unsigned char*)ALIGN((uintptr_t)temp_map, mapping_align);
 
 		/* mummap the space we mmap before so that we can mmap correct space again */
 		munmap(temp_map, tmp_map_len);
@@ -4708,6 +4783,8 @@ static bool task_map_library(struct loadtask *task, struct reserved_address_para
 				goto error;
 			}
 		}
+		if ((ph->p_flags & PF_X) && (ph->p_align == KPMD_SIZE) && hugepage_enabled)
+			madvise(base + this_min, this_max - this_min, MADV_HUGEPAGE);
 		if (ph->p_memsz > ph->p_filesz && (ph->p_flags & PF_W)) {
 			size_t brk = (size_t)base + ph->p_vaddr + ph->p_filesz;
 			size_t pgbrk = brk + PAGE_SIZE - 1 & -PAGE_SIZE;
