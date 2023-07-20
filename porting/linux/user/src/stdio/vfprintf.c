@@ -132,7 +132,14 @@ static void pop_arg(union arg *arg, int type, va_list *ap)
 
 static void out(FILE *f, const char *s, size_t l)
 {
-	if (!(f->flags & F_ERR)) __fwritex((void *)s, l, f);
+	/* write to file buffer if flag F_PBUF is available */
+	if (!(f->flags & F_ERR) && !(f->flags & F_PBUF)) {
+		__fwritex((void *)s, l, f);
+		return;
+	}
+
+	/* otherwise, copy to buffer directly */
+	f->write(f, (void *)s, l);
 }
 
 static void pad(FILE *f, char c, int w, int l, int fl)
@@ -675,13 +682,7 @@ int vfprintf(FILE *restrict f, const char *restrict fmt, va_list ap)
 	olderr = f->flags & F_ERR;
 	if (f->mode < 1) f->flags &= ~F_ERR;
 
-	/* allocate file buffer if need */
-	if (__falloc_buf(f) < 0) {
-		f->flags |= F_ERR;
-		ret = -1;
-	}
-
-	if (!f->buf_size) {
+	if (!f->buf_size && f->buf != NULL) {
 		saved_buf = f->buf;
 		f->buf = internal_buf;
 		f->buf_size = sizeof internal_buf;
@@ -690,7 +691,9 @@ int vfprintf(FILE *restrict f, const char *restrict fmt, va_list ap)
 	if (!f->wend && __towrite(f)) ret = -1;
 	else ret = printf_core(f, fmt, &ap2, nl_arg, nl_type, 0);
 	if (saved_buf) {
-		f->write(f, 0, 0);
+		if (!(f->flags & F_PBUF)) {
+			f->write(f, 0, 0);
+		}
 		if (!f->wpos) ret = -1;
 		f->buf = saved_buf;
 		f->buf_size = 0;

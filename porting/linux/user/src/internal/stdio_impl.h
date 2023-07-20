@@ -18,6 +18,7 @@
 #define F_SVB 64
 #define F_APP 128
 #define F_NOBUF 256
+#define F_PBUF 512
 
 struct _IO_FILE {
 	unsigned flags;
