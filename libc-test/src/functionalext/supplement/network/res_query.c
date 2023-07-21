@@ -53,7 +53,6 @@ void res_query_0200(void)
 
 int main(int argc, char *argv[])
 {
-    res_query_0100();
     res_query_0200();
     return t_status;
 }

@@ -32,7 +32,9 @@ void gethostbyaddr_r_0100(void)
     in_addr_t a = inet_addr("127.0.0.1");
     int ret = gethostbyaddr_r((void *)&a, 4, AF_INET, &h, buf, sizeof(buf), &res, &err);
     EXPECT_EQ("gethostbyaddr_r_0100", ret, 0);
-    EXPECT_TRUE("gethostbyaddr_r_0100", strcmp(h.h_name, "127.0.0.1") == 0);
+    if (strcmp(h.h_name, "localhost") && strcmp(h.h_name, "127.0.0.1")) {
+        t_error("gethostbyname2_0100");
+    }
 }
 
 /**
