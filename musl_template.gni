@@ -288,9 +288,9 @@ template("musl_libs") {
     include_dirs += [
       "//third_party",
       "//third_party/musl/src/include/",
-      "//third_party/jemalloc/include/",
-      "//third_party/jemalloc/include/jemalloc/internal",
-      "//third_party/jemalloc/include/jemalloc",
+      "${musl_malloc_plugin}/include/",
+      "${musl_malloc_plugin}/include/jemalloc/internal",
+      "${musl_malloc_plugin}/include/jemalloc",
     ]
   }
 
@@ -586,7 +586,7 @@ template("musl_libs") {
       if (use_jemalloc_recycle_func) {
         defines += [ "USE_JEMALLOC_RECYCLE_FUNC" ]
       }
-      include_dirs = [ "//third_party/jemalloc/include/jemalloc" ]
+      include_dirs = [ "${musl_malloc_plugin}/include/jemalloc" ]
     }
 
     if (!defined(include_dirs)) {
@@ -802,7 +802,7 @@ template("musl_libs") {
       if (use_jemalloc_recycle_func) {
         defines += [ "USE_JEMALLOC_RECYCLE_FUNC" ]
       }
-      include_dirs = [ "//third_party/jemalloc/include/jemalloc" ]
+      include_dirs = [ "${musl_malloc_plugin}/include/jemalloc" ]
     }
 
     configs -= musl_inherited_configs
@@ -822,7 +822,7 @@ template("musl_libs") {
   }
 
   source_set("soft_musl_jemalloc") {
-    sources = [ "./porting/linux/user/src/malloc/jemalloc/jemalloc.c" ]
+    sources = [ "${musl_malloc_plugin}/src/static.c" ]
 
     deps = [
       "//third_party/musl:create_alltypes_h",
