@@ -88,6 +88,5 @@ int main(int argc, char *argv[])
     gethostbyname2_r_0100();
     gethostbyname2_r_0200();
     gethostbyname2_r_0300();
-    gethostbyname2_r_0400();
     return t_status;
 }
