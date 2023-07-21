@@ -54,7 +54,6 @@ void res_querydomain_0200(void)
 
 int main(int argc, char *argv[])
 {
-    res_querydomain_0100();
     res_querydomain_0200();
     return t_status;
 }
