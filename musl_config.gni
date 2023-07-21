@@ -35,6 +35,7 @@ declare_args() {
       "//prebuilts/clang/ohos/linux-x86_64/llvm/lib/clang/12.0.1/lib"
   user_custom_libc = true
   use_jemalloc = false
+  musl_malloc_plugin = ""
   use_jemalloc_dfx_intf = false
   use_jemalloc_recycle_func = false
   use_pthread_cancel = false
