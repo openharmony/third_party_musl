@@ -3540,6 +3540,10 @@ int dlns_get(const char *name, Dl_namespace *dlns)
 void *dlopen_ns(Dl_namespace *dlns, const char *file, int mode)
 {
 	const void *caller_addr = __builtin_return_address(0);
+	if (is_permitted(caller_addr, dlns->name) == false) {
+		return NULL;
+	}
+
 	musl_log_reset();
 	ld_log_reset();
 	LD_LOGI("dlopen_ns file:%{public}s, mode:%{public}x , caller_addr:%{public}p , dlns->name:%{public}s.",
@@ -3553,6 +3557,10 @@ void *dlopen_ns(Dl_namespace *dlns, const char *file, int mode)
 void *dlopen_ns_ext(Dl_namespace *dlns, const char *file, int mode, const dl_extinfo *extinfo)
 {
 	const void *caller_addr = __builtin_return_address(0);
+	if (is_permitted(caller_addr, dlns->name) == false) {
+		return NULL;
+	}
+
 	musl_log_reset();
 	ld_log_reset();
 	LD_LOGI("dlopen_ns_ext file:%{public}s, mode:%{public}x , caller_addr:%{public}p , "
@@ -3577,7 +3585,7 @@ int dlns_create2(Dl_namespace *dlns, const char *lib_path, int flags)
 	const void *caller_addr = __builtin_return_address(0);
 	if (is_permitted(caller_addr, dlns->name) == false) {
 		pthread_rwlock_unlock(&lock);
-		return EINVAL;
+		return EPERM;
 	}
 
 	ns = find_ns_by_name(dlns->name);
@@ -3604,7 +3612,7 @@ int dlns_create2(Dl_namespace *dlns, const char *lib_path, int flags)
 
 	if ((flags & CREATE_INHERIT_CURRENT) != 0) {
 		struct dso *caller;
-		const void *caller_addr = __builtin_return_address(0);
+		caller_addr = __builtin_return_address(0);
 		caller = (struct dso *)addr2dso((size_t)caller_addr);
 		if (caller && caller->namespace) {
 			ns_add_inherit(ns, caller->namespace, NULL);
@@ -3638,7 +3646,7 @@ int dlns_inherit(Dl_namespace *dlns, Dl_namespace *inherited, const char *shared
 	const void *caller_addr = __builtin_return_address(0);
 	if (is_permitted(caller_addr, dlns->name) == false) {
 		pthread_rwlock_unlock(&lock);
-		return EINVAL;
+		return EPERM;
 	}
 
 	ns_t* ns = find_ns_by_name(dlns->name);
@@ -4162,6 +4170,12 @@ int dlns_set_namespace_lib_path(const char * name, const char * lib_path)
 	}
 
 	pthread_rwlock_wrlock(&lock);
+	const void *caller_addr = __builtin_return_address(0);
+	if (is_permitted(caller_addr, name) == false) {
+		pthread_rwlock_unlock(&lock);
+		return EPERM;
+	}
+
 	ns_t* ns = find_ns_by_name(name);
 	if (!ns) {
 		pthread_rwlock_unlock(&lock);
@@ -4182,6 +4196,12 @@ int dlns_set_namespace_separated(const char * name, const bool separated)
 	}
 
 	pthread_rwlock_wrlock(&lock);
+	const void *caller_addr = __builtin_return_address(0);
+	if (is_permitted(caller_addr, name) == false) {
+		pthread_rwlock_unlock(&lock);
+		return EPERM;
+	}
+
 	ns_t* ns = find_ns_by_name(name);
 	if (!ns) {
 		pthread_rwlock_unlock(&lock);
@@ -4202,6 +4222,12 @@ int dlns_set_namespace_permitted_paths(const char * name, const char * permitted
 	}
 
 	pthread_rwlock_wrlock(&lock);
+	const void *caller_addr = __builtin_return_address(0);
+	if (is_permitted(caller_addr, name) == false) {
+		pthread_rwlock_unlock(&lock);
+		return EPERM;
+	}
+
 	ns_t* ns = find_ns_by_name(name);
 	if (!ns) {
 		pthread_rwlock_unlock(&lock);
@@ -4222,6 +4248,12 @@ int dlns_set_namespace_allowed_libs(const char * name, const char * allowed_libs
 	}
 
 	pthread_rwlock_wrlock(&lock);
+	const void *caller_addr = __builtin_return_address(0);
+	if (is_permitted(caller_addr, name) == false) {
+		pthread_rwlock_unlock(&lock);
+		return EPERM;
+	}
+
 	ns_t* ns = find_ns_by_name(name);
 	if (!ns) {
 		pthread_rwlock_unlock(&lock);
