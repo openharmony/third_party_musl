@@ -2127,6 +2127,7 @@ musl_src_porting_file = [
   "src/thread/pthread_cond_timedwait_monotonic_np.c",
   "src/thread/pthread_cond_timeout_np.c",
   "src/thread/pthread_cond_clockwait.c",
+  "src/thread/pthread_cond_init.c",
   "src/thread/pthread_create.c",
   "src/thread/pthread_rwlock_clockwrlock.c",
   "src/thread/pthread_rwlock_timedwrlock_monotonic_np.c",
