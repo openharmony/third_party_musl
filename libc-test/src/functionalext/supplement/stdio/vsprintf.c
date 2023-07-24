@@ -25,7 +25,7 @@
  */
 void vsprintf_0100(char *format, ...)
 {
-    char buffer[20];
+    char buffer[20] = {0};
     va_list aptr;
     va_start(aptr, format);
     int result = vsprintf(buffer, format, aptr);
@@ -34,7 +34,7 @@ void vsprintf_0100(char *format, ...)
         t_error("%s vsprintf get result is less than 0", __func__);
     }
     if (strcmp(buffer, "1")) {
-        t_error("%s wrong string written to buf", __func__);
+        t_error("%s wrong string written to buf %s\n", __func__, buffer);
     }
 }
 
@@ -45,16 +45,16 @@ void vsprintf_0100(char *format, ...)
  */
 void vsprintf_0200(char *format, ...)
 {
-    char buffer[20];
+    char buffer[20] = {0};
     va_list aptr;
     va_start(aptr, format);
     int result = vsprintf(buffer, format, aptr);
     va_end(aptr);
     if (result < 0) {
-        t_error("%s vsprintf get result is less than 0", __func__);
+        t_error("%s vsprintf get result is less than 0\n", __func__);
     }
     if (strncmp(buffer, "3.0", 3)) {
-        t_error("%s wrong string written to buf", __func__);
+        t_error("%s wrong string written to buf %s\n", __func__, buffer);
     }
 }
 
@@ -71,10 +71,10 @@ void vsprintf_0300(char *format, ...)
     int result = vsprintf(buffer, format, aptr);
     va_end(aptr);
     if (result < 0) {
-        t_error("%s vsprintf get result is less than 0", __func__);
+        t_error("%s vsprintf get result is less than 0\n", __func__);
     }
     if (strcmp(buffer, "vsprintf test")) {
-        t_error("%s wrong string written to buf", __func__);
+        t_error("%s wrong string written to buf %s\n", __func__, buffer);
     }
 }
 

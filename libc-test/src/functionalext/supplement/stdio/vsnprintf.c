@@ -18,6 +18,7 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include "test.h"
+#include "functionalext.h"
 
 void vsnprintf_test(char *str, size_t n, char *fmt, const char *func_name, ...)
 {
@@ -49,6 +50,14 @@ void vsnprintf_zeron(char *str, char *fmt, const char *func_name, ...)
     }
 }
 
+void vsnprintf_zeron_all(char *str, char *fmt, const char *func_name, ...) {
+    va_list ap;
+    va_start(ap, func_name);
+    int result = vsnprintf(0, 0, fmt, ap);
+    va_end(ap);
+    EXPECT_EQ(func_name, result, strlen(str));
+}
+
 int main(int argc, char *argv[])
 {
     /**
@@ -75,5 +84,18 @@ int main(int argc, char *argv[])
      * @tc.level     : Level 2
      */
     vsnprintf_zeron("value is use", "value is %s", "vsnprintf_0400", "use");
+    /**
+     * @tc.name      : vsnprintf_0500
+     * @tc.desc      : truncate buffer, and bits to 0
+     * @tc.level     : Level 3
+     */
+    vsnprintf_zeron_all("value is use", "value is %s", "vsnprintf_0500", "use");
+    /**
+     * @tc.name      : vsnprintf_0600
+     * @tc.desc      : The number of bits to be 1
+     * @tc.level     : Level 2
+     */
+    vsnprintf_test("", 1, "value is %s", "vsnprintf_0600", "use");
+
     return t_status;
 }
