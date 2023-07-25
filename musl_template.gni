@@ -576,6 +576,7 @@ template("musl_libs") {
       "-fPIC",
       "-ffreestanding",
       "-fstack-protector-strong",
+      "-flto",
     ]
 
     if (use_jemalloc) {
