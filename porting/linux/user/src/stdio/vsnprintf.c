@@ -11,7 +11,8 @@ struct cookie {
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 
-static size_t sn_write(FILE *f, const unsigned char *s, size_t l) {
+static size_t sn_write(FILE *f, const unsigned char *s, size_t l)
+{
 	struct cookie *c = f->cookie;
 	size_t already_size = f->wpos - f->wbase;
 	if (already_size <= c->n) {

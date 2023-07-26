@@ -50,7 +50,8 @@ void vsnprintf_zeron(char *str, char *fmt, const char *func_name, ...)
     }
 }
 
-void vsnprintf_zeron_all(char *str, char *fmt, const char *func_name, ...) {
+void vsnprintf_zeron_all(char *str, char *fmt, const char *func_name, ...)
+{
     va_list ap;
     va_start(ap, func_name);
     int result = vsnprintf(0, 0, fmt, ap);
