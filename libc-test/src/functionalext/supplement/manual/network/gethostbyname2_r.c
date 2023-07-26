@@ -33,7 +33,7 @@ void gethostbyname2_r_0100(void)
     char *name = "127.0.0.1";
     int ret = gethostbyname2_r(name, AF_INET, &h, buf, sizeof(buf), &res, &err);
     EXPECT_EQ("gethostbyname2_r_0100", ret, 0);
-    EXPECT_TRUE("gethostbyname2_r_0100", strcmp(h.h_name, "127.0.0.1") == 0);
+    EXPECT_STREQ("gethostbyname2_r_0100", h.h_name, "127.0.0.1");
 }
 
 /**
@@ -80,7 +80,8 @@ void gethostbyname2_r_0400(void)
     int err = 0;
     char *name = "localhost";
     int ret = gethostbyname2_r(name, 0, &h, buf, sizeof(buf), &res, &err);
-    EXPECT_NE("gethostbyname2_r_0400", ret, 0);
+    EXPECT_EQ("gethostbyname2_r_0400", ret, 0);
+    EXPECT_STREQ("gethostbyname2_r_0400", "localhost", h.h_name);
 }
 
 int main(int argc, char *argv[])
@@ -88,5 +89,6 @@ int main(int argc, char *argv[])
     gethostbyname2_r_0100();
     gethostbyname2_r_0200();
     gethostbyname2_r_0300();
+    gethostbyname2_r_0400();
     return t_status;
 }

@@ -2101,6 +2101,7 @@ musl_src_porting_file = [
   "src/malloc/stats.c",
   "src/malloc/calloc.c",
   "src/malloc/free.c",
+  "src/network/getnameinfo.c",
   "src/malloc/libc_calloc.c",
   "src/malloc/realloc.c",
   "src/network/inet_legacy.c",

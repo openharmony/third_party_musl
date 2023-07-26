@@ -20,7 +20,6 @@
 #include <stdio.h>
 #include <sys/socket.h>
 #include <stdbool.h>
-#include <string.h>
 #include "functionalext.h"
 
 typedef void (*TEST_FUN)();
@@ -39,9 +38,7 @@ void gethostbyname2_0100(void)
         flag = true;
     }
     EXPECT_TRUE("gethostbyname2_0100", flag);
-    if (strcmp(hptr->h_name, "localhost") && strcmp(hptr->h_name, "127.0.0.1")) {
-        t_error("gethostbyname2_0100");
-    }
+    EXPECT_STREQ("gethostbyname2_0100", hptr->h_name, "127.0.0.1");
 }
 
 /**
