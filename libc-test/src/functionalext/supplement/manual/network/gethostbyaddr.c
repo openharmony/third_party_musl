@@ -36,9 +36,7 @@ void gethostbyaddre_0100(void)
         t_error("%s gethostbyaddr error:%s\n", __func__, strerror(h_errno));
     }
     EXPECT_TRUE("gethostbyaddre_0100", hptr != NULL);
-    if (strcmp(hptr->h_name, "localhost") && strcmp(hptr->h_name, "127.0.0.1")) {
-        t_error("gethostbyname2_0100");
-    }
+    EXPECT_STREQ("gethostbyaddre_0100", hptr->h_name, "localhost");
 }
 
 /**

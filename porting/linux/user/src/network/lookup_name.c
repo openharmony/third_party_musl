@@ -14,10 +14,16 @@
 #include "lookup.h"
 #include "stdio_impl.h"
 #include "syscall.h"
-
+#define BREAK 0
+#define CONTINUE 1
 #if OHOS_PERMISSION_INTERNET
 uint8_t is_allow_internet(void);
 #endif
+
+char fixed_hosts[][23] = {
+	"127.0.0.1  localhost\r\n\0",
+	"::1  ip6-localhost\r\n\0"
+};
 
 static int is_valid_hostname(const char *host)
 {
@@ -50,6 +56,19 @@ static int name_from_numeric(struct address buf[static 1], const char *name, int
 	return __lookup_ipliteral(buf, name, family);
 }
 
+static inline int get_hosts_str(char *line, int length, FILE *f, int *i)
+{
+	if (f) {
+		return fgets(line, sizeof line, f);
+	}
+	if (*i < 2) {
+		memcpy(line, fixed_hosts[*i], strlen(fixed_hosts[*i]));
+		(*i)++;
+		return 1;
+	}
+	return NULL;
+}
+
 static int name_from_hosts(struct address buf[static MAXADDRS], char canon[static 256], const char *name, int family)
 {
 	char line[512];
@@ -57,15 +76,8 @@ static int name_from_hosts(struct address buf[static MAXADDRS], char canon[stati
 	int cnt = 0, badfam = 0, have_canon = 0;
 	unsigned char _buf[1032];
 	FILE _f, *f = __fopen_rb_ca("/etc/hosts", &_f, _buf, sizeof _buf);
-	if (!f) switch (errno) {
-	case ENOENT:
-	case ENOTDIR:
-	case EACCES:
-		return 0;
-	default:
-		return EAI_SYSTEM;
-	}
-	while (fgets(line, sizeof line, f) && cnt < MAXADDRS) {
+	int i = 0;
+	while (i < 2 && get_hosts_str(line, sizeof line, f, &i) && cnt < MAXADDRS) {
 		char *p, *z;
 
 		if ((p=strchr(line, '#'))) *p++='\n', *p=0;
@@ -98,7 +110,9 @@ static int name_from_hosts(struct address buf[static MAXADDRS], char canon[stati
 			memcpy(canon, p, z-p+1);
 		}
 	}
-	__fclose_ca(f);
+	if (f) {
+		__fclose_ca(f);
+	}
 	return cnt ? cnt : badfam;
 }
 
