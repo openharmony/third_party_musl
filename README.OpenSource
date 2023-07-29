@@ -1,11 +1,11 @@
 [
     {
-        "Name"                  : "musl",
+        "Name"                  : "OpenEuler: musl",
         "License"               : "MIT License",
         "License File"          : "COPYRIGHT",
-        "Version Number"        : "1.2.3",
+        "Version Number"        : "1.2.3-1.oe2203sp1",
         "Owner"                 : "jianghan2@huawei.com",
-        "Upstream URL"          : "http://www.musl-libc.org/",
+        "Upstream URL"          : "https://repo.openeuler.org/openEuler-22.03-LTS-SP1/source/Packages/musl-1.2.3-1.oe2203sp1.src.rpm",
         "Description"           : "musl is an MIT-licensed implementation of the standard C library"
     }
 ]
