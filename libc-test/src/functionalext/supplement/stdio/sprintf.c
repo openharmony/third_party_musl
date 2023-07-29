@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Huawei Device Co., Ltd.
+ * Copyright (C) 2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -17,55 +17,114 @@
 #include <stdlib.h>
 #include "functionalext.h"
 
-const int32_t SPRINTF_0100_RESULT = 4;
-const int32_t SPRINTF_0200_RESULT = 5;
-const int32_t SPRINTF_0300_RESULT = 19;
-const int32_t SECOND_PARAM = 2;
-const int32_t THIRD_PARAM = 12345;
+#define BUFFER_SIZE 1024
 
-/**
- * @tc.name      : sprintf_0100
- * @tc.desc      : Verify sprintf process success with two params
- * @tc.level     : Level 0
- */
-void sprintf_0100(void)
+void sprintf_specifier_tests(void)
 {
-    char str[1024];
-    int ret = sprintf(str, "test");
-    EXPECT_EQ("sprintf_0100", ret, SPRINTF_0100_RESULT);
-    EXPECT_STREQ("sprintf_0100", str, "test");
+    char str[BUFFER_SIZE];
+    int ret = 0;
+
+    ret = sprintf(str, "test");
+    EXPECT_EQ("sprintf_specifier_null", ret, 4);
+    EXPECT_STREQ("sprintf_specifier_null", str, "test");
+
+    ret = sprintf(str, "%d,%i", 1, 2);
+    EXPECT_EQ("sprintf_specifier_integer", ret, 3);
+    EXPECT_STREQ("sprintf_specifier_integer", str, "1,2");
+
+    ret = sprintf(str, "%u,%u", 1, -1);
+    EXPECT_EQ("sprintf_specifier_Unsigned_integer", ret, 12);
+    EXPECT_STREQ("sprintf_specifier_Unsigned_integer", str, "1,4294967295");
+
+    ret = sprintf(str, "%o", 9);
+    EXPECT_EQ("sprintf_specifier_octal_integer", ret, 2);
+    EXPECT_STREQ("sprintf_specifier_octal_integer", str, "11");
+
+    ret = sprintf(str, "%x,%X", 15, 15);
+    EXPECT_EQ("sprintf_specifier_hexadecimal_integer", ret, 3);
+    EXPECT_STREQ("sprintf_specifier_hexadecimal_integer", str, "f,F");
+
+    ret = sprintf(str, "%f,%F", 1.23, 1.23);
+    EXPECT_EQ("sprintf_specifier_float", ret, 17);
+    EXPECT_STREQ("sprintf_specifier_float", str, "1.230000,1.230000");
+
+    ret = sprintf(str, "%e,%E", 1.23, 1.23);
+    EXPECT_EQ("sprintf_specifier_scientific_notation", ret, 25);
+    EXPECT_STREQ("sprintf_specifier_scientific_notation", str, "1.230000e+00,1.230000E+00");
+
+    ret = sprintf(str, "%c", '1');
+    EXPECT_EQ("sprintf_specifier_char", ret, 1);
+    EXPECT_STREQ("sprintf_specifier_char", str, "1");
+
+    ret = sprintf(str, "%s,%s", "123", "456");
+    EXPECT_EQ("sprintf_specifier_str", ret, 7);
+    EXPECT_STREQ("sprintf_specifier_str", str, "123,456");
+
+    ret = sprintf(str, "%p", 6618688);
+    EXPECT_EQ("sprintf_specifier_pointer_address", ret, 8);
+    EXPECT_STREQ("sprintf_specifier_pointer_address", str, "0x64fe40");
+
+    ret = sprintf(str, "%%test");
+    EXPECT_EQ("sprintf_specifier_double_percent_sign", ret, 5);
+    EXPECT_STREQ("sprintf_specifier_double_percent_sign", str, "%test");
+
+    ret = sprintf(str, "%3$d,%2$s,%1$c", 'a', "bc", 123);
+    EXPECT_EQ("sprintf_$_symbol", ret, 8);
+    EXPECT_STREQ("sprintf_$_symbol", str, "123,bc,a");
 }
 
-/**
- * @tc.name      : sprintf_0200
- * @tc.desc      : Verify sprintf process success with three params(the thrid praram type is int_32)
- * @tc.level     : Level 0
- */
-void sprintf_0200(void)
+void sprintf_flag_tests(void)
 {
-    char str[1024];
-    int ret = sprintf(str, "test%d", SECOND_PARAM);
-    EXPECT_EQ("sprintf_0200", ret, SPRINTF_0200_RESULT);
-    EXPECT_STREQ("sprintf_0200", str, "test2");
+    char str[BUFFER_SIZE];
+    int ret = 0;
+
+    ret = sprintf(str, "%+d %+d %d %d", -1, 1, -1, 1);
+    EXPECT_EQ("sprintf_flag_+_and_space", ret, 10);
+    EXPECT_STREQ("sprintf_flag_+_and_space", str, "-1 +1 -1 1");
+
+    ret = sprintf(str, "%#o,%#x,%#X", 9, 9, 9);
+    EXPECT_EQ("sprintf_flag_#", ret, 11);
+    EXPECT_STREQ("sprintf_flag_#", str, "011,0x9,0X9");
+
+    ret = sprintf(str, "%5d,%05d,%0-5d", 123, 123, 123);
+    EXPECT_EQ("sprintf_flag_-_and_0", ret, 17);
+    EXPECT_STREQ("sprintf_flag_-_and_0", str, "  123,00123,123  ");
+
 }
 
-/**
- * @tc.name      : sprintf_0300
- * @tc.desc      : Verify sprintf process success with three params(the thrid praram type is string)
- * @tc.level     : Level 0
- */
-void sprintf_0300(void)
+void sprintf_width_tests(void)
 {
-    char str[1024];
-    int ret = sprintf(str, "testname:%s%d", "test3", THIRD_PARAM);
-    EXPECT_EQ("sprintf_0300", ret, SPRINTF_0300_RESULT);
-    EXPECT_STREQ("sprintf_0300", str, "testname:test312345");
+    char str[BUFFER_SIZE];
+    int ret = 0;
+    ret = sprintf(str, "%d,%3d,%10d", 12345, 12345, 12345);
+    EXPECT_EQ("sprintf_width_num", ret, 22);
+    EXPECT_STREQ("sprintf_width_num", str, "12345,12345,     12345");
+
+    ret = sprintf(str, "%*d", 10, 12345);
+    EXPECT_EQ("sprintf_width_*", ret, 10);
+    EXPECT_STREQ("sprintf_width_*", str, "     12345");
 }
+
+void sprintf_precision_tests(void)
+{
+    char str[BUFFER_SIZE];
+    int ret = 0;
+    ret = sprintf(str, "%f,%.3f", 1.2345, 1.2345);
+    EXPECT_EQ("sprintf_precision_num", ret, 14);
+    EXPECT_STREQ("sprintf_precision_num", str, "1.234500,1.234");
+
+    ret = sprintf(str, "%.*f", 3, 1.2345);
+    EXPECT_EQ("sprintf_precision_*", ret, 5);
+    EXPECT_STREQ("sprintf_precision_*", str, "1.234");
+}
+
 
 int main(void)
 {
-    sprintf_0100();
-    sprintf_0200();
-    sprintf_0300();
+     // %[flags][width][.precision][length]specifier
+    sprintf_specifier_tests();
+    sprintf_flag_tests();
+    sprintf_width_tests();
+    sprintf_precision_tests();
     return t_status;
 }
