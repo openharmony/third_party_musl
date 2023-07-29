@@ -469,9 +469,12 @@ static int printf_core(FILE *f, const char *fmt, va_list *ap, union arg *nl_arg,
 
 		if (isdigit(s[1]) && s[2]=='$') {
 			if (!nl_arg_filled) {
-				if (printf_core(0, fmt, ap, nl_arg, nl_type, 1) < 0) {
+				va_list ap_copy;
+				va_copy(ap_copy, *ap);
+				if (printf_core(0, fmt, &ap_copy, nl_arg, nl_type, 1) < 0) {
 					return -1;
 				}
+				va_end(ap_copy);
 			}
 			l10n=1;
 			argpos = s[1]-'0';
