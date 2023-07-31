@@ -19,6 +19,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/wait.h>
+#include <sigchain.h>
 #include "fortify_test.h"
 #include "functionalext.h"
 #include "test.h"
@@ -918,6 +919,7 @@ static void test_strlen_0020()
 }
 
 int main(int argc, char *argv[]) {
+    remove_all_special_handler(SIGABRT);
     test_strcat_0010();
     test_strcat_0020();
     test_strncat_0010();
