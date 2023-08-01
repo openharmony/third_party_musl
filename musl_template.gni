@@ -576,8 +576,11 @@ template("musl_libs") {
       "-fPIC",
       "-ffreestanding",
       "-fstack-protector-strong",
-      "-flto",
     ]
+
+    if (!(use_libfuzzer || is_mac || is_asan || use_clang_coverage)) {
+      cflags += [ "-flto" ]
+    }
 
     if (use_jemalloc) {
       defines += [ "USE_JEMALLOC" ]
