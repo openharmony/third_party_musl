@@ -2223,6 +2223,7 @@ musl_src_porting_file = [
   "src/aio/aio.c",
   "src/misc/aarch64/syscall.s",
   "src/stdlib/strtod.c",
+  "src/thread/sem_timedwait.c",
   "src/stdio/vfscanf.c",
   "src/stdio/fileno.c",
 ]
