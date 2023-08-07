@@ -19,8 +19,10 @@
 #if OHOS_PERMISSION_INTERNET
 uint8_t is_allow_internet(void);
 #endif
+#define FIXED_HOSTS_MAX_LENGTH 2
+#define FIXED_HOSTS_STR_MAX_LENGTH 23
 
-char fixed_hosts[][23] = {
+char fixed_hosts[][FIXED_HOSTS_STR_MAX_LENGTH] = {
 	"127.0.0.1  localhost\r\n\0",
 	"::1  ip6-localhost\r\n\0"
 };
@@ -61,7 +63,7 @@ static inline int get_hosts_str(char *line, int length, FILE *f, int *i)
 	if (f) {
 		return fgets(line, sizeof line, f);
 	}
-	if (*i < 2) {
+	if (*i < FIXED_HOSTS_MAX_LENGTH) {
 		memcpy(line, fixed_hosts[*i], strlen(fixed_hosts[*i]));
 		(*i)++;
 		return 1;
@@ -77,7 +79,7 @@ static int name_from_hosts(struct address buf[static MAXADDRS], char canon[stati
 	unsigned char _buf[1032];
 	FILE _f, *f = __fopen_rb_ca("/etc/hosts", &_f, _buf, sizeof _buf);
 	int i = 0;
-	while (i < 2 && get_hosts_str(line, sizeof line, f, &i) && cnt < MAXADDRS) {
+	while (i < FIXED_HOSTS_MAX_LENGTH && get_hosts_str(line, sizeof line, f, &i) && cnt < MAXADDRS) {
 		char *p, *z;
 
 		if ((p=strchr(line, '#'))) *p++='\n', *p=0;
