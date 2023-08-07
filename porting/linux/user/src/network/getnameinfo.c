@@ -16,8 +16,10 @@
 #define RR_PTR 12
 #define BREAK 0
 #define CONTINUE 1
+#define FIXED_HOSTS_MAX_LENGTH 2
+#define FIXED_HOSTS_STR_MAX_LENGTH 23
 
-extern char fixed_hosts[][23];
+extern char fixed_hosts[FIXED_HOSTS_MAX_LENGTH][FIXED_HOSTS_STR_MAX_LENGTH];
 
 static char *itoa(char *p, unsigned x) {
 	p += 3*sizeof(int);
@@ -51,7 +53,7 @@ static inline int get_hosts_str(char *line, int length, FILE *f, int *i)
 	if (f) {
 		return fgets(line, sizeof line, f);
 	}
-	if (*i < 2) {
+	if (*i < FIXED_HOSTS_MAX_LENGTH) {
 		memcpy(line, fixed_hosts[*i], strlen(fixed_hosts[*i]));
 		(*i)++;
 		return 1;
@@ -71,7 +73,7 @@ static void reverse_hosts(char *buf, const unsigned char *a, unsigned scopeid, i
 		a = atmp;
 	}
 	int i = 0;
-	while (i < 2 && get_hosts_str(line, sizeof line, f, &i)) {
+	while (i < FIXED_HOSTS_MAX_LENGTH && get_hosts_str(line, sizeof line, f, &i)) {
 		if ((p=strchr(line, '#'))) *p++='\n', *p=0;
 
 		for (p=line; *p && !isspace(*p); p++);
