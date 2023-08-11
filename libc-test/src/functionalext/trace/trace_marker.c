@@ -51,6 +51,8 @@
     _rc;                                       \
     })
 #endif
+#define ENABLE_TRACE system("echo 1 > /sys/kernel/debug/tracing/tracing_on");
+#define DISABLE_TRACE system("echo 0 > /sys/kernel/debug/tracing/tracing_on");
 
 typedef void (*TEST_FUN)(void);
 static const int WAIT_TIME = 1;
@@ -96,10 +98,10 @@ static void dump_trace(int trace_fd)
 static void trace_marker_0010(void)
 {
     clear_trace();
-    system("cd /sys/kernel/debug/tracing;echo 1 > tracing_on");
+    ENABLE_TRACE
     trace_marker_begin(HITRACE_TAG_MUSL, "Musl_Trace_Marker_0010", "");
     trace_marker_end(HITRACE_TAG_MUSL);
-    system("cd /sys/kernel/debug/tracing;echo 0 > tracing_on");
+    DISABLE_TRACE
 
     int trace_fd = open("/sys/kernel/tracing/trace", O_CLOEXEC | O_RDONLY);
     if (trace_fd == -1) {
@@ -147,10 +149,10 @@ static void trace_marker_0010(void)
 static void trace_marker_0020(void)
 {
     clear_trace();
-    system("cd /sys/kernel/debug/tracing;echo 1 > tracing_on");
+    ENABLE_TRACE
     trace_marker_async_begin(HITRACE_TAG_MUSL, "async_begin_0200", "trace_async",1);
     trace_marker_async_end(HITRACE_TAG_MUSL, "async_end_0200", "trace_async",1);
-    system("cd /sys/kernel/debug/tracing;echo 0 > tracing_on");
+    DISABLE_TRACE
 
     int trace_fd = open("/sys/kernel/tracing/trace", O_CLOEXEC | O_RDONLY);
     if (trace_fd == -1) {
@@ -198,10 +200,10 @@ static void trace_marker_0020(void)
 static void trace_marker_0030(void)
 {
     clear_trace();
-    system("cd /sys/kernel/debug/tracing;echo 1 > tracing_on");
+    ENABLE_TRACE
     int traceCount = 5;
     trace_marker_count(HITRACE_TAG_MUSL, "traceCount", traceCount);
-    system("cd /sys/kernel/debug/tracing;echo 0 > tracing_on");
+    DISABLE_TRACE
 
     int trace_fd = open("/sys/kernel/tracing/trace", O_CLOEXEC | O_RDONLY);
     if (trace_fd == -1) {
@@ -256,10 +258,10 @@ static void trace_marker_0040(void)
         printf("error in fork! \n");
     } else if (fpid == 0) {
         int pidChild = getpid();
-        system("cd /sys/kernel/debug/tracing;echo 1 > tracing_on");
+        ENABLE_TRACE
         trace_marker_begin(HITRACE_TAG_MUSL, "Trace_Marker0400_Forkfir", "");
         trace_marker_end(HITRACE_TAG_MUSL);
-        system("cd /sys/kernel/debug/tracing;echo 0 > tracing_on");
+        DISABLE_TRACE
 
         int trace_fd = open("/sys/kernel/tracing/trace", O_CLOEXEC | O_RDONLY | O_APPEND);
         if (trace_fd == -1) {
@@ -294,10 +296,10 @@ static void trace_marker_0040(void)
         close(trace_fd);
         exit(pidChild);
     } else {
-        system("cd /sys/kernel/debug/tracing;echo 1 > tracing_on");
+        ENABLE_TRACE
         trace_marker_begin(HITRACE_TAG_MUSL, "Trace_Marker0400_Forksec", "");
         trace_marker_end(HITRACE_TAG_MUSL);
-        system("cd /sys/kernel/debug/tracing;echo 0 > tracing_on");
+        DISABLE_TRACE
 
         int trace_fd = open("/sys/kernel/tracing/trace", O_CLOEXEC | O_RDONLY | O_APPEND);
         if (trace_fd == -1) {
@@ -353,10 +355,10 @@ static void trace_marker_0050(void)
         printf("error in fork! \n");
     } else if (fpid == 0) {
         int pidChild = getpid();
-        system("cd /sys/kernel/debug/tracing;echo 1 > tracing_on");
+        ENABLE_TRACE
         trace_marker_async_begin(HITRACE_TAG_MUSL, "async0500_Forkfir", "begin_fir", 2);
         trace_marker_async_end(HITRACE_TAG_MUSL, "async0500_Forkfir", "end_fir", 2);
-        system("cd /sys/kernel/debug/tracing;echo 0 > tracing_on");
+        DISABLE_TRACE
 
         int trace_fd = open("/sys/kernel/tracing/trace", O_CLOEXEC | O_RDONLY | O_APPEND);
         if (trace_fd == -1) {
@@ -391,10 +393,10 @@ static void trace_marker_0050(void)
         close(trace_fd);
         exit(pidChild);
     } else {
-        system("cd /sys/kernel/debug/tracing;echo 1 > tracing_on");
+        ENABLE_TRACE
         trace_marker_async_begin(HITRACE_TAG_MUSL, "async0500_Forksec", "begin_sec", 3);
         trace_marker_async_end(HITRACE_TAG_MUSL, "async0500_Forksec", "end_sec", 3);
-        system("cd /sys/kernel/debug/tracing;echo 0 > tracing_on");
+        DISABLE_TRACE
 
         int trace_fd = open("/sys/kernel/tracing/trace", O_CLOEXEC | O_RDONLY | O_APPEND);
         if (trace_fd == -1) {
@@ -451,9 +453,9 @@ static void trace_marker_0060(void)
     } else if (fpid == 0) {
         int pidChild = getpid();
 
-        system("cd /sys/kernel/debug/tracing;echo 1 > tracing_on");
+        ENABLE_TRACE
         trace_marker_count(HITRACE_TAG_MUSL, "traceCount_forkfir", traceCount);
-        system("cd /sys/kernel/debug/tracing;echo 0 > tracing_on");
+        DISABLE_TRACE
 
         int trace_fd = open("/sys/kernel/tracing/trace", O_CLOEXEC | O_RDONLY | O_APPEND);
         if (trace_fd == -1) {
@@ -482,9 +484,9 @@ static void trace_marker_0060(void)
         close(trace_fd);
         exit(pidChild);
     } else {
-        system("cd /sys/kernel/debug/tracing;echo 1 > tracing_on");
+        ENABLE_TRACE
         trace_marker_count(HITRACE_TAG_MUSL, "traceCount_forksec", traceCount);
-        system("cd /sys/kernel/debug/tracing;echo 0 > tracing_on");
+        DISABLE_TRACE
 
         int trace_fd = open("/sys/kernel/tracing/trace", O_CLOEXEC | O_RDONLY | O_APPEND);
         if (trace_fd == -1) {
@@ -516,10 +518,8 @@ static void trace_marker_0060(void)
 
 static void *ThreadTraceMarkerFir(void *arg)
 {
-    system("cd /sys/kernel/debug/tracing;echo 1 > tracing_on");
     trace_marker_begin(HITRACE_TAG_MUSL, "Trace_Marker_Threadfir", "pthreadfir");
     trace_marker_end(HITRACE_TAG_MUSL);
-    system("cd /sys/kernel/debug/tracing;echo 0 > tracing_on");
 
     int trace_fd = open("/sys/kernel/tracing/trace", O_CLOEXEC | O_RDONLY);
     if (trace_fd == -1) {
@@ -562,10 +562,8 @@ static void *ThreadTraceMarkerFir(void *arg)
 
 static void *ThreadTraceMarkerSec(void *arg)
 {
-    system("cd /sys/kernel/debug/tracing;echo 1 > tracing_on");
     trace_marker_begin(HITRACE_TAG_MUSL, "Trace_Marker_Threadsec", "pthreadsec");
     trace_marker_end(HITRACE_TAG_MUSL);
-    system("cd /sys/kernel/debug/tracing;echo 0 > tracing_on");
 
     int trace_fd = open("/sys/kernel/tracing/trace", O_CLOEXEC | O_RDONLY);
     if (trace_fd == -1) {
@@ -613,6 +611,7 @@ static void *ThreadTraceMarkerSec(void *arg)
  */
 static void trace_marker_0070(void)
 {
+    ENABLE_TRACE
     clear_trace();
     int res;
     const char msgThread1[1024] = {"msgThread1"};
@@ -622,21 +621,19 @@ static void trace_marker_0070(void)
     if (res != 0) {
         t_printf("pthread_create1 error.");
     }
-    sleep(WAIT_TIME);
     res = pthread_create(&fatalMessageThread2, NULL, ThreadTraceMarkerSec, (void *)msgThread2);
     if (res != 0) {
         t_printf("pthread_create2 error.");
     }
     pthread_join(fatalMessageThread1, NULL);
     pthread_join(fatalMessageThread2, NULL);
+    DISABLE_TRACE
 }
 
 static void *ThreadTraceMarkerAsyncFir(void *arg)
 {
-    system("cd /sys/kernel/debug/tracing;echo 1 > tracing_on");
     trace_marker_async_begin(HITRACE_TAG_MUSL, "Async_Threadfir", "begin_threadfir",4);
     trace_marker_async_end(HITRACE_TAG_MUSL, "Async_Threadfir", "end_threadfir", 4);
-    system("cd /sys/kernel/debug/tracing;echo 0 > tracing_on");
 
     int trace_fd = open("/sys/kernel/tracing/trace", O_CLOEXEC | O_RDONLY);
     if (trace_fd == -1) {
@@ -679,10 +676,8 @@ static void *ThreadTraceMarkerAsyncFir(void *arg)
 
 static void *ThreadTraceMarkerAsyncSec(void *arg)
 {
-    system("cd /sys/kernel/debug/tracing;echo 1 > tracing_on");
     trace_marker_async_begin(HITRACE_TAG_MUSL, "Async_Threadsec", "begin_threadsec",5);
     trace_marker_async_end(HITRACE_TAG_MUSL, "Async_Threadsec", "end_threadsec",5);
-    system("cd /sys/kernel/debug/tracing;echo 0 > tracing_on");
 
     int trace_fd = open("/sys/kernel/tracing/trace", O_CLOEXEC | O_RDONLY);
     if (trace_fd == -1) {
@@ -730,6 +725,7 @@ static void *ThreadTraceMarkerAsyncSec(void *arg)
  */
 static void trace_marker_0080(void)
 {
+    ENABLE_TRACE
     clear_trace();
     int res;
     const char msgThread1[1024] = {"msgThread3"};
@@ -739,21 +735,19 @@ static void trace_marker_0080(void)
     if (res != 0) {
         t_printf("pthread_create3 error.");
     }
-    sleep(WAIT_TIME);
     res = pthread_create(&fatalMessageThread2, NULL, ThreadTraceMarkerAsyncSec, (void *)msgThread2);
     if (res != 0) {
         t_printf("pthread_create4 error.");
     }
     pthread_join(fatalMessageThread1, NULL);
     pthread_join(fatalMessageThread2, NULL);
+    DISABLE_TRACE
 }
 
 static void *ThreadTraceMarkerCountFir(void *arg)
 {
-    system("cd /sys/kernel/debug/tracing;echo 1 > tracing_on");
     int traceCount = 5;
     trace_marker_count(HITRACE_TAG_MUSL, "traceCount_Threadfir", traceCount);
-    system("cd /sys/kernel/debug/tracing;echo 0 > tracing_on");
 
     int trace_fd = open("/sys/kernel/tracing/trace", O_CLOEXEC | O_RDONLY);
     if (trace_fd == -1) {
@@ -791,10 +785,8 @@ static void *ThreadTraceMarkerCountFir(void *arg)
 
 static void *ThreadTraceMarkerCountSec(void *arg)
 {
-    system("cd /sys/kernel/debug/tracing;echo 1 > tracing_on");
     int traceCount = 5;
     trace_marker_count(HITRACE_TAG_MUSL, "traceCount_Threadsec", traceCount);
-    system("cd /sys/kernel/debug/tracing;echo 0 > tracing_on");
 
     int trace_fd = open("/sys/kernel/tracing/trace", O_CLOEXEC | O_RDONLY);
     if (trace_fd == -1) {
@@ -836,6 +828,7 @@ static void *ThreadTraceMarkerCountSec(void *arg)
  */
 static void trace_marker_0090(void)
 {
+    ENABLE_TRACE
     clear_trace();
     int res;
     const char msgThread1[1024] = {"msgThread5"};
@@ -845,13 +838,13 @@ static void trace_marker_0090(void)
     if (res != 0) {
         t_printf("pthread_create5 error.");
     }
-    sleep(WAIT_TIME);
     res = pthread_create(&fatalMessageThread2, NULL, ThreadTraceMarkerCountSec, (void *)msgThread2);
     if (res != 0) {
         t_printf("pthread_create6 error.");
     }
     pthread_join(fatalMessageThread1, NULL);
     pthread_join(fatalMessageThread2, NULL);
+    DISABLE_TRACE
 }
 
 /**
@@ -862,10 +855,10 @@ static void trace_marker_0090(void)
 static void trace_marker_0100(void)
 {
     clear_trace();
-    system("cd /sys/kernel/debug/tracing;echo 1 > tracing_on");
+    ENABLE_TRACE
     trace_marker_begin(HITRACE_TAG_MUSL, "Musl_Trace_Marker_0100", NULL);
     trace_marker_end(HITRACE_TAG_MUSL);
-    system("cd /sys/kernel/debug/tracing;echo 0 > tracing_on");
+    DISABLE_TRACE
 
     int trace_fd = open("/sys/kernel/tracing/trace", O_CLOEXEC | O_RDONLY);
     if (trace_fd == -1) {
@@ -918,10 +911,10 @@ static void trace_marker_0110(void)
     memset(message, 1, 1025);
     message[1025] = '\0';
 
-    system("cd /sys/kernel/debug/tracing;echo 1 > tracing_on");
+    ENABLE_TRACE
     trace_marker_begin(HITRACE_TAG_MUSL, message, "");
     trace_marker_end(HITRACE_TAG_MUSL);
-    system("cd /sys/kernel/debug/tracing;echo 0 > tracing_on");
+    DISABLE_TRACE
 
     int trace_fd = open("/sys/kernel/tracing/trace", O_CLOEXEC | O_RDONLY);
     if (trace_fd == -1) {
@@ -971,10 +964,10 @@ static void trace_marker_0110(void)
 static void trace_marker_0120(void)
 {
     clear_trace();
-    system("cd /sys/kernel/debug/tracing;echo 1 > tracing_on");
+    ENABLE_TRACE
     trace_marker_begin(HITRACE_TAG_MUSL, NULL, "");
     trace_marker_end(HITRACE_TAG_MUSL);
-    system("cd /sys/kernel/debug/tracing;echo 0 > tracing_on");
+    DISABLE_TRACE
 
     int trace_fd = open("/sys/kernel/tracing/trace", O_CLOEXEC | O_RDONLY);
     if (trace_fd == -1) {
@@ -1015,10 +1008,10 @@ static void trace_marker_0120(void)
 static void trace_marker_0140(void)
 {
     clear_trace();
-    system("cd /sys/kernel/debug/tracing;echo 1 > tracing_on");
+    ENABLE_TRACE
     trace_marker_async_begin(HITRACE_TAG_MUSL, "async_begin_0200", NULL,1);
     trace_marker_async_end(HITRACE_TAG_MUSL, "async_end_0200", NULL,1);
-    system("cd /sys/kernel/debug/tracing;echo 0 > tracing_on");
+    DISABLE_TRACE
 
     int trace_fd = open("/sys/kernel/tracing/trace", O_CLOEXEC | O_RDONLY);
     if (trace_fd == -1) {
@@ -1072,10 +1065,10 @@ static void trace_marker_0150(void)
     memset(message, 1, 1025);
     message[1025] = '\0';
 
-    system("cd /sys/kernel/debug/tracing;echo 1 > tracing_on");
+    ENABLE_TRACE
     trace_marker_async_begin(HITRACE_TAG_MUSL, message, "trace_async",1);
     trace_marker_async_end(HITRACE_TAG_MUSL, message, "trace_async",1);
-    system("cd /sys/kernel/debug/tracing;echo 0 > tracing_on");
+    DISABLE_TRACE
 
     int trace_fd = open("/sys/kernel/tracing/trace", O_CLOEXEC | O_RDONLY);
     if (trace_fd == -1) {
@@ -1123,10 +1116,10 @@ static void trace_marker_0150(void)
 static void trace_marker_0160(void)
 {
     clear_trace();
-    system("cd /sys/kernel/debug/tracing;echo 1 > tracing_on");
+    ENABLE_TRACE
     trace_marker_async_begin(HITRACE_TAG_MUSL, NULL, "trace_async",1);
     trace_marker_async_end(HITRACE_TAG_MUSL, NULL, "trace_async",1);
-    system("cd /sys/kernel/debug/tracing;echo 0 > tracing_on");
+    DISABLE_TRACE
 
     int trace_fd = open("/sys/kernel/tracing/trace", O_CLOEXEC | O_RDONLY);
     if (trace_fd == -1) {
@@ -1174,14 +1167,14 @@ static void trace_marker_0160(void)
 static void trace_marker_0180(void)
 {
     clear_trace();
-    system("cd /sys/kernel/debug/tracing;echo 1 > tracing_on");
+    ENABLE_TRACE
     int traceCount = 5;
     char message[1026]= {0};
     memset(message, 1, 1025);
     message[1025] = '\0';
 
     trace_marker_count(HITRACE_TAG_MUSL, message, traceCount);
-    system("cd /sys/kernel/debug/tracing;echo 0 > tracing_on");
+    DISABLE_TRACE
 
     int trace_fd = open("/sys/kernel/tracing/trace", O_CLOEXEC | O_RDONLY);
     if (trace_fd == -1) {
@@ -1224,10 +1217,10 @@ static void trace_marker_0180(void)
 static void trace_marker_0190(void)
 {
     clear_trace();
-    system("cd /sys/kernel/debug/tracing;echo 1 > tracing_on");
+    ENABLE_TRACE
     int traceCount = 5;
     trace_marker_count(HITRACE_TAG_MUSL, NULL, traceCount);
-    system("cd /sys/kernel/debug/tracing;echo 0 > tracing_on");
+    DISABLE_TRACE
 
     int trace_fd = open("/sys/kernel/tracing/trace", O_CLOEXEC | O_RDONLY);
     if (trace_fd == -1) {
