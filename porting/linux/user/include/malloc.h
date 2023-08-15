@@ -60,6 +60,12 @@ void malloc_stats_print(void (*write_cb) (void *, const char *), void *cbopaque,
 #define M_DELAYED_FREE_ENABLE 1
 #define M_DELAYED_FREE_DISABLE 0
 
+#define M_OHOS_CONFIG -1004
+#define M_DISABLE_OPT_TCACHE 100
+#define M_ENABLE_OPT_TCACHE 101
+#define M_TCACHE_PERFORMANCE_MODE 102
+#define M_TCACHE_NORMAL_MODE 103
+
 int mallopt(int param, int value);
 ssize_t malloc_backtrace(void* pointer, uintptr_t* frames, size_t frame_count);
 
