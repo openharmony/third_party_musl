@@ -19,6 +19,12 @@ extern "C" {
 #define M_DELAYED_FREE_ENABLE 1
 #define M_DELAYED_FREE_DISABLE 0
 
+#define M_OHOS_CONFIG -1004
+#define M_DISABLE_OPT_TCACHE 100
+#define M_ENABLE_OPT_TCACHE 101
+#define M_TCACHE_PERFORMANCE_MODE 102
+#define M_TCACHE_NORMAL_MODE 103
+
 void *malloc (size_t);
 void *calloc (size_t, size_t);
 void *realloc (void *, size_t);
