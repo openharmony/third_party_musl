@@ -40,22 +40,24 @@ void forkpty_0100(void)
         fp = fopen("test1.txt", "w+");
         fwrite(sign_r, sizeof(char), strlen(sign_r), fp);
         fclose(fp);
+        exit(EXIT_SUCCESS);
     } else {
+        wait(NULL);
         fp = fopen("test2.txt", "w+");
         fwrite(sign_r, sizeof(char), strlen(sign_r), fp);
         fclose(fp);
+
+        FILE *fp1 = fopen("test1.txt", "r");
+        FILE *fp2 = fopen("test2.txt", "r");
+        fread(list1, sizeof(list1), 1, fp1);
+        fread(list2, sizeof(list2), 1, fp2);
+        EXPECT_EQ("forkpty_0100", list1[0], '1');
+        EXPECT_EQ("forkpty_0100", list2[0], '1');
+        fclose(fp1);
+        fclose(fp2);
+        remove("test1.txt");
+        remove("test2.txt");
     }
-    sleep(1);
-    FILE *fp1 = fopen("test1.txt", "r");
-    FILE *fp2 = fopen("test2.txt", "r");
-    fread(list1, sizeof(list1), 1, fp1);
-    fread(list2, sizeof(list2), 1, fp2);
-    EXPECT_EQ("forkpty_0100", list1[0], '1');
-    EXPECT_EQ("forkpty_0100", list2[0], '1');
-    fclose(fp1);
-    fclose(fp2);
-    remove("test1.txt");
-    remove("test2.txt");
 }
 
 int main(int argc, char *argv[])
