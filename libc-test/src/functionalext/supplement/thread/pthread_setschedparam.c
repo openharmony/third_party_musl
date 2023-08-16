@@ -16,13 +16,16 @@
 #include <pthread.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <semaphore.h>
 #include "functionalext.h"
 
 static int32_t priorityTen = 10;
 static int32_t priorityHundred = 100;
+static sem_t g_sem;
 
 void *threadfuncA(void *arg)
 {
+    sem_wait(&g_sem);
     return arg;
 }
 
@@ -34,12 +37,16 @@ void *threadfuncA(void *arg)
 void pthread_setschedparam_0100(void)
 {
     pthread_t tid;
+    sem_init(&g_sem, 0, 0);
     pthread_create(&tid, NULL, threadfuncA, NULL);
     struct sched_param sched;
     sched.sched_priority = 0;
     int32_t ret = pthread_setschedparam(tid, SCHED_OTHER, &sched);
     EXPECT_EQ("pthread_setschedparam_0100", ret, 0);
+    int32_t semRet = sem_post(&g_sem);
+    EXPECT_EQ("pthread_setschedparam_0100", semRet, 0);
     pthread_join(tid, NULL);
+    sem_destroy(&g_sem);
 }
 
 int main(void)
