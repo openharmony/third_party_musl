@@ -5,6 +5,11 @@
 #include <unistd.h>
 #include "test.h"
 
+#define CONTENT "0.1234567\n"
+#define EXPECT 0.1234567
+#define TMP_FILE "/data/local/tmp/fscanf_test.txt"
+#define TOTAL 515
+
 #define TEST(r, f, x, m) ( \
 	errno=0, ((r) = (f)) == (x) || \
 	(t_error("%s failed (" m ")\n", #f, r, x, strerror(errno)), 0) )
@@ -24,6 +29,45 @@ static FILE *writetemp(const char *data)
 	rewind(f);
 	return f;
 }
+
+void write_content()
+{
+	FILE *fp;
+	fp = fopen(TMP_FILE, "w");
+	if (fp == NULL) {  
+		t_error("FAIL %s create failed!\n", TMP_FILE);
+	}
+	for (size_t i = 0; i < TOTAL; i++) {
+		fwrite(CONTENT, sizeof(char), strlen(CONTENT), fp);
+	}
+	fclose(fp);
+}
+
+void check_content()
+{
+	FILE *fp;
+	int res;
+	double value = 0;
+	fp = fopen(TMP_FILE, "r");
+	if (fp == NULL) {  
+		t_error("FAIL %s open failed!\n", TMP_FILE);
+	}
+	for (size_t i = 0; i < TOTAL; i++) {
+		res = fscanf(fp, "%lf", &value);
+		if (res != 1 || value != EXPECT) {
+			t_error("FAIL: fscanf expect %lf but get %lf, index=%d\n", EXPECT, value, i);
+		}
+	}
+	fclose(fp);
+}
+
+void test_read_large_data()
+{
+	write_content();
+	check_content();
+	remove(TMP_FILE);
+}
+
 
 int main(void)
 {
@@ -130,6 +174,8 @@ int main(void)
 		TEST(i, feof(f), 0, "%d != %d");
 		fclose(f);
 	}
+
+	test_read_large_data();
 
 	return t_status;
 }
