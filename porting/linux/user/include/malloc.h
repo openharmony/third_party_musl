@@ -50,17 +50,17 @@ int malloc_info(int options, FILE* fp);
 void malloc_stats_print(void (*write_cb) (void *, const char *), void *cbopaque, const char *opts);
 
 
-#define M_SET_THREAD_CACHE -1001
+#define M_SET_THREAD_CACHE (-1001)
 #define M_THREAD_CACHE_ENABLE 1
 #define M_THREAD_CACHE_DISABLE 0
 
-#define M_FLUSH_THREAD_CACHE -1002
+#define M_FLUSH_THREAD_CACHE (-1002)
 
-#define M_DELAYED_FREE -1003
+#define M_DELAYED_FREE (-1003)
 #define M_DELAYED_FREE_ENABLE 1
 #define M_DELAYED_FREE_DISABLE 0
 
-#define M_OHOS_CONFIG -1004
+#define M_OHOS_CONFIG (-1004)
 #define M_DISABLE_OPT_TCACHE 100
 #define M_ENABLE_OPT_TCACHE 101
 #define M_TCACHE_PERFORMANCE_MODE 102
