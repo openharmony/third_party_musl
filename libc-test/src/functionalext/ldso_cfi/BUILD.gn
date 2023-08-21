@@ -16,6 +16,9 @@ import("../../../test_template.gni")
 group("ldso_cfi_test") {
   testonly = true
   deps = [
+    ":cfi_avaiable_schemes_test",
+    ":cfi_cross_dso_test_exe",
+    ":cfi_cross_dso_test_lib",
     ":ldso_cfi_check",
     ":ldso_cfi_test_lib",
   ]
@@ -43,4 +46,63 @@ ohos_shared_library("ldso_cfi_test_lib") {
   output_extension = "so"
   subsystem_name = "musl"
   part_name = "libc-test-lib"
+}
+
+ohos_shared_library("cfi_cross_dso_test_lib") {
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = true
+  }
+  subsystem_name = "musl"
+  part_name = "libc-test"
+  include_dirs = [
+    "../common",
+    "//third_party/musl/porting/linux/user/include",
+    "//third_party/musl/porting/linux/user/ldso",
+    "//third_party/musl/libc-test/src/common",
+  ]
+  use_rtti = true
+
+  sources = [ "./crossdso/cfi_test_lib.cpp" ]
+}
+
+ohos_executable("cfi_cross_dso_test_exe") {
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = true
+  }
+  subsystem_name = "musl"
+  part_name = "libc-test"
+  include_dirs = [
+    "../common",
+    "//third_party/musl/porting/linux/user/include",
+    "//third_party/musl/porting/linux/user/ldso",
+    "//third_party/musl/libc-test/src/common",
+  ]
+  use_rtti = true
+
+  sources = [ "./crossdso/cfi_test_exe.cpp" ]
+  configs = [ "//third_party/musl/libc-test/src/common:config_runtest" ]
+}
+
+ohos_executable("cfi_avaiable_schemes_test") {
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = true
+  }
+  subsystem_name = "musl"
+  part_name = "libc-test"
+  include_dirs = [
+    "../common",
+    "//third_party/musl/porting/linux/user/include",
+    "//third_party/musl/porting/linux/user/ldso",
+    "//third_party/musl/libc-test/src/common",
+  ]
+  use_rtti = true
+
+  sources = [ "cfi_avaiable_schemes_test.cpp" ]
+  configs = [ "//third_party/musl/libc-test/src/common:config_runtest" ]
 }
