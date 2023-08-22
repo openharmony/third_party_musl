@@ -29,6 +29,7 @@
 #include "pthread_arch.h"
 
 #define pthread __pthread
+#define TLS_RESERVE_SLOT 15
 
 struct pthread {
 	/* Part 1 -- these fields may be external or
@@ -83,6 +84,13 @@ struct pthread {
 	/* Part 3 -- the positions of these fields relative to
 	 * the end of the structure is external and internal ABI. */
 #ifdef TLS_ABOVE_TP
+	/* The tls_slots will be accessed by kernel, so don't use it.
+	 * To solve the problem that the kernel isn't synchronized with the musl,
+ 	 * so make pre/post reserved slots for musl.
+ 	 * pre-reserved  : tls_slots[0-4]
+ 	 * kernel used   : tls_slots[5-9]
+ 	 * post-reserved : tls_slot[10-14] */
+	void *tls_slots[TLS_RESERVE_SLOT];
 	uintptr_t canary;
 	uintptr_t *dtv;
 #endif
