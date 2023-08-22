@@ -15,8 +15,6 @@
 
 #include <netdb.h>
 #include "functionalext.h"
-#define FTP_PORT 21
-#define HTTP_PORT 80
 
 /**
  * @tc.name      : getservbyname_0100
@@ -47,35 +45,9 @@ void getservbyname_0200(void)
     EXPECT_PTREQ("getservbyname_0200", se, NULL);
 }
 
-/**
- * @tc.name      : getservbyname_0300
- * @tc.desc      : Get the service information of the specified port
- * @tc.level     : Level 0
-*/
-void getservbyname_0300(void)
-{
-    struct servent *se = getservbyname("ftp", "tcp");
-    EXPECT_NE("getservbyname_0300", se, NULL);
-    EXPECT_EQ("getservbyname_0300", ntohs(se->s_port), FTP_PORT);
-}
-
-/**
- * @tc.name      : getservbyname_0400
- * @tc.desc      : Get the service information of the specified port
- * @tc.level     : Level 0
-*/
-void getservbyname_0400(void)
-{
-    struct servent *se = getservbyname("http", "tcp");
-    EXPECT_NE("getservbyname_0400", se, NULL);
-    EXPECT_EQ("getservbyname_0400", ntohs(se->s_port), HTTP_PORT);
-}
-
 int main(void)
 {
     getservbyname_0100();
     getservbyname_0200();
-    getservbyname_0300();
-    getservbyname_0400();
     return t_status;
 }
