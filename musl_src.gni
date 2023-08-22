@@ -141,6 +141,7 @@ if (musl_arch == "arm") {
     "src/thread/aarch64/clone.s",
     "src/thread/aarch64/syscall_cp.s",
     "src/misc/aarch64/syscall.s",
+    "src/misc/aarch64/prctl.s",
   ]
 } else if (musl_arch == "x86_64") {
   musl_src_arch_file = [
@@ -2229,6 +2230,7 @@ musl_src_porting_file = [
   "src/mq/mq_notify.c",
   "src/aio/aio.c",
   "src/misc/aarch64/syscall.s",
+  "src/misc/aarch64/prctl.s",
   "src/stdlib/strtol.c",
   "src/stdlib/strtod.c",
   "src/thread/sem_timedwait.c",
