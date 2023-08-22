@@ -21,14 +21,6 @@
 
 extern char fixed_hosts[FIXED_HOSTS_MAX_LENGTH][FIXED_HOSTS_STR_MAX_LENGTH];
 
-char *g_fixedServices[] = {
-#define PORT_DESC(a) a
-#include "services.h"
-#undef PORT_DESC(a)
-};
-
-#define FIXED_SERVICES_COUNT (sizeof(g_fixedServices) / sizeof(char*))
-
 static char *itoa(char *p, unsigned x) {
 	p += 3*sizeof(int);
 	*--p = 0;
@@ -111,27 +103,14 @@ static void reverse_hosts(char *buf, const unsigned char *a, unsigned scopeid, i
 	}
 }
 
-static inline int get_services_str(char *line, int length, FILE *f, int *indexPtr)
-{
-	if (f) {
-		return fgets(line, sizeof line, f);
-	}
-	if (*indexPtr < FIXED_SERVICES_COUNT) {
-		memcpy(line, g_fixedServices[*indexPtr], strlen(g_fixedServices[*indexPtr]));
-		(*indexPtr)++;
-		return 1;
-	}
-	return NULL;
-}
-
 static void reverse_services(char *buf, int port, int dgram)
 {
 	unsigned long svport;
 	char line[128], *p, *z;
 	unsigned char _buf[1032];
 	FILE _f, *f = __fopen_rb_ca("/etc/services", &_f, _buf, sizeof _buf);
-	int indexPtr = 0;
-	while (indexPtr < FIXED_SERVICES_COUNT && get_services_str(line, sizeof line, f, &indexPtr)) {
+	if (!f) return;
+	while (fgets(line, sizeof line, f)) {
 		if ((p=strchr(line, '#'))) *p++='\n', *p=0;
 
 		for (p=line; *p && !isspace(*p); p++);
@@ -147,9 +126,7 @@ static void reverse_services(char *buf, int port, int dgram)
 		memcpy(buf, line, p-line);
 		break;
 	}
-	if (f) {
-		__fclose_ca(f);
-	}
+	__fclose_ca(f);
 }
 
 static int dns_parse_callback(void *c, int rr, const void *data, int len, const void *packet)
@@ -242,5 +219,3 @@ int getnameinfo(const struct sockaddr *restrict sa, socklen_t sl,
 
 	return 0;
 }
-
-#undef FIXED_SERVICES_COUNT
