@@ -39,6 +39,11 @@ test_sharedlib("tls_align_dso") {
 }
 test_sharedlib("atexit_dlclose_dso") {
 }
+test_sharedlib("dlopen_weak_deps") {
+}
+test_sharedlib("dlopen_weak") {
+  deps = [ ":dlopen_weak_deps" ]
+}
 
 group("dso_shared") {
   testonly = true
@@ -51,6 +56,8 @@ group("dso_shared") {
     ":dlopen_for_load_by_local_dso",
     ":dlopen_ns_dso",
     ":dlopen_so_dep_dlopen_ns_dso",
+    ":dlopen_weak",
+    ":dlopen_weak_deps",
     ":tls_align_dso",
     ":tls_init_dso",
   ]
