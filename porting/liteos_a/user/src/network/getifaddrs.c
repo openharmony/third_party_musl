@@ -251,16 +251,16 @@ int getifaddrs(struct ifaddrs **ifap)
 	if ((fd = socket(AF_INET, SOCK_DGRAM | SOCK_CLOEXEC, 0)) < 0) 
 		return -1;
 	if (ioctl(fd, SIOCGIFCONF, &ifconfig) < 0)
-		goto error;
+		goto exit;
 	if (ifconfig.ifc_len % sizeof(struct ifreq)) {
 		errno = EINVAL;
-		goto error;
+		goto exit;
 	}
 	ifno = ifconfig.ifc_len / sizeof(struct ifreq);
 
 	if (!(ifstart = ifaddrs_init())) {
 		errno = ENOMEM;
-		goto error;
+		goto exit;
 	}
 	struct ifaddrs *ifa = ifstart;
 
@@ -287,10 +287,12 @@ int getifaddrs(struct ifaddrs **ifap)
 	}
 
 	*ifap = ifstart;
+	__syscall(SYS_close, fd);
 	return 0;
 
 error:	
 	freeifaddrs(ifstart);
+exit:
 	__syscall(SYS_close, fd);
 	return -1;
 }
