@@ -14,6 +14,7 @@
 #include "lookup.h"
 #include "stdio_impl.h"
 #include "syscall.h"
+#include <dlfcn.h>
 #define BREAK 0
 #define CONTINUE 1
 #if OHOS_PERMISSION_INTERNET
@@ -155,6 +156,30 @@ static int dns_parse_callback(void *c, int rr, const void *data, int len, const 
 	return 0;
 }
 
+static int IsIpv6Enable()
+{
+    int ret = 0;
+#if OHOS_DNS_PROXY_BY_NETSYS
+    static JudgeIpv6 func = NULL;
+    if (func != NULL) {
+        return func(0);
+    }
+    void *handle = dlopen(DNS_SO_PATH, RTLD_LAZY);
+    if (handle == NULL) {
+        return 0;
+    }
+
+    func = dlsym(handle, OHOS_JUDGE_IPV6_FUNC_NAME);
+    if (func == NULL) {
+        dlclose(handle);
+        return 0;
+    }
+
+    ret = func(0);
+#endif
+    return ret;
+}
+
 static int name_from_dns(struct address buf[static MAXADDRS], char canon[static 256], const char *name, int family, const struct resolvconf *conf)
 {
 	unsigned char qbuf[2][280], abuf[2][512];
@@ -168,11 +193,8 @@ static int name_from_dns(struct address buf[static MAXADDRS], char canon[static 
 		{ .af = AF_INET, .rr = RR_AAAA },
 	};
 
-#if OHOS_DISABLE_IPV6
-    for (i = 0; i < 1; i++) {
-#else
-	for (i = 0; i < 2; i++) {
-#endif
+    int queryNum = IsIpv6Enable() ? 2 : 1;
+    for (i = 0; i < queryNum; i++) {
 		if (family != afrr[i].af) {
 			qlens[nq] = __res_mkquery(0, name, 1, afrr[i].rr,
 				0, 0, 0, qbuf[nq], sizeof *qbuf);
