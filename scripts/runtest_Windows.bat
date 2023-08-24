@@ -32,6 +32,24 @@ if exist %TESTDIR% (
 	goto end
 )
 
+@REM Xts test require all so should exist in DYNLIB
+setlocal enabledelayedexpansion
+for %%j in (%TESTDIR%\*) do (
+    set tmp_file=%%j
+    set tmp_file_suffix=!tmp_file:~-3!
+    if "!tmp_file_suffix!" == ".so" (
+        set /a TOTAL_SO_IN_TESTDIR+=1
+        call set SO_NAMES=%%SO_NAMES%%;%%j
+    )
+)
+
+if !TOTAL_SO_IN_TESTDIR! gtr 0 (
+    echo Error: so shoul not exist in %TESTDIR%, you should modify your part_name in gn to set so in %DYNLIB%.
+    echo Total so:%TOTAL_SO_IN_TESTDIR%
+    echo So list:&echo\    %SO_NAMES:~1,10000%
+    goto end
+)
+
 @REM 在单板创建目录, 需要预先创建好才能传输到相应位置。
 :hdcStart
 for /F "usebackq delims==" %%r in (`hdc shell param get const.product.cpu.abilist`) DO (
