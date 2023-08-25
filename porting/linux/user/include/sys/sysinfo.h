@@ -5,7 +5,7 @@
 extern "C" {
 #endif
 
-#ifndef _LINUX_KERNEL_H
+#if !defined (__linux__) || !defined(STANDARD_SYSTEM)
 #define SI_LOAD_SHIFT 16
 
 struct sysinfo {
@@ -23,6 +23,8 @@ struct sysinfo {
 	unsigned mem_unit;
 	char __reserved[256];
 };
+#else
+#include <linux/sysinfo.h>
 #endif
 
 int sysinfo (struct sysinfo *);
