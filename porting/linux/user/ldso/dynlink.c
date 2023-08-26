@@ -3868,14 +3868,6 @@ static int dlclose_impl(struct dso *p, struct dso **dso_close_list, int *dso_clo
 	dso_close_list[*dso_close_list_size] = p;
 	*dso_close_list_size += 1;
 
-	if (p->parents) {
-		free(p->parents);
-	}
-
-	free_reloc_can_search_dso(p);
-	if (p->tls.size == 0) {
-		free(p);
-	}
 	trace_marker_end(HITRACE_TAG_MUSL);
 
 	return 0;
@@ -3924,6 +3916,15 @@ static int do_dlclose(struct dso *p)
 
 	for (size_t i = 0; i < dso_close_list_size; i++) {
 		unmap_library(dso_close_list[i]);
+
+		if (dso_close_list[i]->parents) {
+			free(dso_close_list[i]->parents);
+		}
+
+		free_reloc_can_search_dso(dso_close_list[i]);
+		if (dso_close_list[i]->tls.size == 0) {
+			free(dso_close_list[i]);
+		}
 	}
 
 	free(dso_close_list);
