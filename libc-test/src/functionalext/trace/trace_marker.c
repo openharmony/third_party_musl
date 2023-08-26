@@ -51,8 +51,12 @@
     _rc;                                       \
     })
 #endif
-#define ENABLE_TRACE system("echo 1 > /sys/kernel/debug/tracing/tracing_on");
-#define DISABLE_TRACE system("echo 0 > /sys/kernel/debug/tracing/tracing_on");
+#define SET_TRACE(str) \
+    do                                 \
+    {                                  \
+        system("echo "#str" > /sys/kernel/debug/tracing/tracing_on"); \
+    } while (0)
+
 
 typedef void (*TEST_FUN)(void);
 static const int WAIT_TIME = 1;
@@ -98,10 +102,10 @@ static void dump_trace(int trace_fd)
 static void trace_marker_0010(void)
 {
     clear_trace();
-    ENABLE_TRACE
+    SET_TRACE(1);
     trace_marker_begin(HITRACE_TAG_MUSL, "Musl_Trace_Marker_0010", "");
     trace_marker_end(HITRACE_TAG_MUSL);
-    DISABLE_TRACE
+    SET_TRACE(0);
 
     int trace_fd = open("/sys/kernel/tracing/trace", O_CLOEXEC | O_RDONLY);
     if (trace_fd == -1) {
@@ -149,10 +153,10 @@ static void trace_marker_0010(void)
 static void trace_marker_0020(void)
 {
     clear_trace();
-    ENABLE_TRACE
+    SET_TRACE(1);
     trace_marker_async_begin(HITRACE_TAG_MUSL, "async_begin_0200", "trace_async",1);
     trace_marker_async_end(HITRACE_TAG_MUSL, "async_end_0200", "trace_async",1);
-    DISABLE_TRACE
+    SET_TRACE(0);
 
     int trace_fd = open("/sys/kernel/tracing/trace", O_CLOEXEC | O_RDONLY);
     if (trace_fd == -1) {
@@ -200,10 +204,10 @@ static void trace_marker_0020(void)
 static void trace_marker_0030(void)
 {
     clear_trace();
-    ENABLE_TRACE
+    SET_TRACE(1);
     int traceCount = 5;
     trace_marker_count(HITRACE_TAG_MUSL, "traceCount", traceCount);
-    DISABLE_TRACE
+    SET_TRACE(0);
 
     int trace_fd = open("/sys/kernel/tracing/trace", O_CLOEXEC | O_RDONLY);
     if (trace_fd == -1) {
@@ -258,10 +262,10 @@ static void trace_marker_0040(void)
         printf("error in fork! \n");
     } else if (fpid == 0) {
         int pidChild = getpid();
-        ENABLE_TRACE
+        SET_TRACE(1);
         trace_marker_begin(HITRACE_TAG_MUSL, "Trace_Marker0400_Forkfir", "");
         trace_marker_end(HITRACE_TAG_MUSL);
-        DISABLE_TRACE
+        SET_TRACE(0);
 
         int trace_fd = open("/sys/kernel/tracing/trace", O_CLOEXEC | O_RDONLY | O_APPEND);
         if (trace_fd == -1) {
@@ -296,10 +300,10 @@ static void trace_marker_0040(void)
         close(trace_fd);
         exit(pidChild);
     } else {
-        ENABLE_TRACE
+        SET_TRACE(1);
         trace_marker_begin(HITRACE_TAG_MUSL, "Trace_Marker0400_Forksec", "");
         trace_marker_end(HITRACE_TAG_MUSL);
-        DISABLE_TRACE
+        SET_TRACE(0);
 
         int trace_fd = open("/sys/kernel/tracing/trace", O_CLOEXEC | O_RDONLY | O_APPEND);
         if (trace_fd == -1) {
@@ -355,10 +359,10 @@ static void trace_marker_0050(void)
         printf("error in fork! \n");
     } else if (fpid == 0) {
         int pidChild = getpid();
-        ENABLE_TRACE
+        SET_TRACE(1);
         trace_marker_async_begin(HITRACE_TAG_MUSL, "async0500_Forkfir", "begin_fir", 2);
         trace_marker_async_end(HITRACE_TAG_MUSL, "async0500_Forkfir", "end_fir", 2);
-        DISABLE_TRACE
+        SET_TRACE(0);
 
         int trace_fd = open("/sys/kernel/tracing/trace", O_CLOEXEC | O_RDONLY | O_APPEND);
         if (trace_fd == -1) {
@@ -393,10 +397,10 @@ static void trace_marker_0050(void)
         close(trace_fd);
         exit(pidChild);
     } else {
-        ENABLE_TRACE
+        SET_TRACE(1);
         trace_marker_async_begin(HITRACE_TAG_MUSL, "async0500_Forksec", "begin_sec", 3);
         trace_marker_async_end(HITRACE_TAG_MUSL, "async0500_Forksec", "end_sec", 3);
-        DISABLE_TRACE
+        SET_TRACE(0);
 
         int trace_fd = open("/sys/kernel/tracing/trace", O_CLOEXEC | O_RDONLY | O_APPEND);
         if (trace_fd == -1) {
@@ -453,9 +457,9 @@ static void trace_marker_0060(void)
     } else if (fpid == 0) {
         int pidChild = getpid();
 
-        ENABLE_TRACE
+        SET_TRACE(1);
         trace_marker_count(HITRACE_TAG_MUSL, "traceCount_forkfir", traceCount);
-        DISABLE_TRACE
+        SET_TRACE(0);
 
         int trace_fd = open("/sys/kernel/tracing/trace", O_CLOEXEC | O_RDONLY | O_APPEND);
         if (trace_fd == -1) {
@@ -484,9 +488,9 @@ static void trace_marker_0060(void)
         close(trace_fd);
         exit(pidChild);
     } else {
-        ENABLE_TRACE
+        SET_TRACE(1);
         trace_marker_count(HITRACE_TAG_MUSL, "traceCount_forksec", traceCount);
-        DISABLE_TRACE
+        SET_TRACE(0);
 
         int trace_fd = open("/sys/kernel/tracing/trace", O_CLOEXEC | O_RDONLY | O_APPEND);
         if (trace_fd == -1) {
@@ -611,7 +615,7 @@ static void *ThreadTraceMarkerSec(void *arg)
  */
 static void trace_marker_0070(void)
 {
-    ENABLE_TRACE
+    SET_TRACE(1);
     clear_trace();
     int res;
     const char msgThread1[1024] = {"msgThread1"};
@@ -627,7 +631,7 @@ static void trace_marker_0070(void)
     }
     pthread_join(fatalMessageThread1, NULL);
     pthread_join(fatalMessageThread2, NULL);
-    DISABLE_TRACE
+    SET_TRACE(0);
 }
 
 static void *ThreadTraceMarkerAsyncFir(void *arg)
@@ -725,7 +729,7 @@ static void *ThreadTraceMarkerAsyncSec(void *arg)
  */
 static void trace_marker_0080(void)
 {
-    ENABLE_TRACE
+    SET_TRACE(1);
     clear_trace();
     int res;
     const char msgThread1[1024] = {"msgThread3"};
@@ -741,7 +745,7 @@ static void trace_marker_0080(void)
     }
     pthread_join(fatalMessageThread1, NULL);
     pthread_join(fatalMessageThread2, NULL);
-    DISABLE_TRACE
+    SET_TRACE(0);
 }
 
 static void *ThreadTraceMarkerCountFir(void *arg)
@@ -828,7 +832,7 @@ static void *ThreadTraceMarkerCountSec(void *arg)
  */
 static void trace_marker_0090(void)
 {
-    ENABLE_TRACE
+    SET_TRACE(1);
     clear_trace();
     int res;
     const char msgThread1[1024] = {"msgThread5"};
@@ -844,7 +848,7 @@ static void trace_marker_0090(void)
     }
     pthread_join(fatalMessageThread1, NULL);
     pthread_join(fatalMessageThread2, NULL);
-    DISABLE_TRACE
+    SET_TRACE(0);
 }
 
 /**
@@ -855,10 +859,10 @@ static void trace_marker_0090(void)
 static void trace_marker_0100(void)
 {
     clear_trace();
-    ENABLE_TRACE
+    SET_TRACE(1);
     trace_marker_begin(HITRACE_TAG_MUSL, "Musl_Trace_Marker_0100", NULL);
     trace_marker_end(HITRACE_TAG_MUSL);
-    DISABLE_TRACE
+    SET_TRACE(0);
 
     int trace_fd = open("/sys/kernel/tracing/trace", O_CLOEXEC | O_RDONLY);
     if (trace_fd == -1) {
@@ -911,10 +915,10 @@ static void trace_marker_0110(void)
     memset(message, 1, 1025);
     message[1025] = '\0';
 
-    ENABLE_TRACE
+    SET_TRACE(1);
     trace_marker_begin(HITRACE_TAG_MUSL, message, "");
     trace_marker_end(HITRACE_TAG_MUSL);
-    DISABLE_TRACE
+    SET_TRACE(0);
 
     int trace_fd = open("/sys/kernel/tracing/trace", O_CLOEXEC | O_RDONLY);
     if (trace_fd == -1) {
@@ -964,10 +968,10 @@ static void trace_marker_0110(void)
 static void trace_marker_0120(void)
 {
     clear_trace();
-    ENABLE_TRACE
+    SET_TRACE(1);
     trace_marker_begin(HITRACE_TAG_MUSL, NULL, "");
     trace_marker_end(HITRACE_TAG_MUSL);
-    DISABLE_TRACE
+    SET_TRACE(0);
 
     int trace_fd = open("/sys/kernel/tracing/trace", O_CLOEXEC | O_RDONLY);
     if (trace_fd == -1) {
@@ -1008,10 +1012,10 @@ static void trace_marker_0120(void)
 static void trace_marker_0140(void)
 {
     clear_trace();
-    ENABLE_TRACE
+    SET_TRACE(1);
     trace_marker_async_begin(HITRACE_TAG_MUSL, "async_begin_0200", NULL,1);
     trace_marker_async_end(HITRACE_TAG_MUSL, "async_end_0200", NULL,1);
-    DISABLE_TRACE
+    SET_TRACE(0);
 
     int trace_fd = open("/sys/kernel/tracing/trace", O_CLOEXEC | O_RDONLY);
     if (trace_fd == -1) {
@@ -1065,10 +1069,10 @@ static void trace_marker_0150(void)
     memset(message, 1, 1025);
     message[1025] = '\0';
 
-    ENABLE_TRACE
+    SET_TRACE(1);
     trace_marker_async_begin(HITRACE_TAG_MUSL, message, "trace_async",1);
     trace_marker_async_end(HITRACE_TAG_MUSL, message, "trace_async",1);
-    DISABLE_TRACE
+    SET_TRACE(0);
 
     int trace_fd = open("/sys/kernel/tracing/trace", O_CLOEXEC | O_RDONLY);
     if (trace_fd == -1) {
@@ -1116,10 +1120,10 @@ static void trace_marker_0150(void)
 static void trace_marker_0160(void)
 {
     clear_trace();
-    ENABLE_TRACE
+    SET_TRACE(1);
     trace_marker_async_begin(HITRACE_TAG_MUSL, NULL, "trace_async",1);
     trace_marker_async_end(HITRACE_TAG_MUSL, NULL, "trace_async",1);
-    DISABLE_TRACE
+    SET_TRACE(0);
 
     int trace_fd = open("/sys/kernel/tracing/trace", O_CLOEXEC | O_RDONLY);
     if (trace_fd == -1) {
@@ -1167,14 +1171,14 @@ static void trace_marker_0160(void)
 static void trace_marker_0180(void)
 {
     clear_trace();
-    ENABLE_TRACE
+    SET_TRACE(1);
     int traceCount = 5;
     char message[1026]= {0};
     memset(message, 1, 1025);
     message[1025] = '\0';
 
     trace_marker_count(HITRACE_TAG_MUSL, message, traceCount);
-    DISABLE_TRACE
+    SET_TRACE(0);
 
     int trace_fd = open("/sys/kernel/tracing/trace", O_CLOEXEC | O_RDONLY);
     if (trace_fd == -1) {
@@ -1217,10 +1221,10 @@ static void trace_marker_0180(void)
 static void trace_marker_0190(void)
 {
     clear_trace();
-    ENABLE_TRACE
+    SET_TRACE(1);
     int traceCount = 5;
     trace_marker_count(HITRACE_TAG_MUSL, NULL, traceCount);
-    DISABLE_TRACE
+    SET_TRACE(0);
 
     int trace_fd = open("/sys/kernel/tracing/trace", O_CLOEXEC | O_RDONLY);
     if (trace_fd == -1) {
