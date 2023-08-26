@@ -55,7 +55,7 @@ ohos_shared_library("cfi_cross_dso_test_lib") {
     debug = true
   }
   subsystem_name = "musl"
-  part_name = "libc-test"
+  part_name = "libc-test-lib"
   include_dirs = [
     "../common",
     "//third_party/musl/porting/linux/user/include",

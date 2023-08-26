@@ -70,6 +70,15 @@ if [ ! -d ${TESTDIR} ]; then
     exit 1
 fi
 
+# Xts test require all so should exist in ${DYNLIB}
+TOTAL_SO_IN_TESTDIR=$(ls ${TESTDIR} | grep -E "*.so$" | wc -l)
+SO_NAMES=$(ls ${TESTDIR} | grep -E "*.so$")
+if [ $TOTAL_SO_IN_TESTDIR -gt 0  ]; then
+    echo Error: so shoul not exist in ${TESTDIR}, you should modify your part_name in gn to set so in ${DYNLIB}.
+    echo "Total so:${TOTAL_SO_IN_TESTDIR}"
+    echo -e "So list:\n${SO_NAMES}"
+    exit 1
+fi
 
 echo now mkdir
 ${CMD} shell rm -rf ${REMOTE}
