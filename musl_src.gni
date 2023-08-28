@@ -2227,6 +2227,7 @@ musl_src_porting_file = [
   "src/mq/mq_notify.c",
   "src/aio/aio.c",
   "src/misc/aarch64/syscall.s",
+  "src/stdlib/strtol.c",
   "src/stdlib/strtod.c",
   "src/thread/sem_timedwait.c",
   "src/stdio/vfscanf.c",
