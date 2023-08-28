@@ -11,6 +11,7 @@
 #include <resolv.h>
 #include "lookup.h"
 #include "stdio_impl.h"
+#include "network_conf_function.h"
 
 #define PTR_MAX (64 + sizeof ".in-addr.arpa")
 #define RR_PTR 12
@@ -109,8 +110,8 @@ static void reverse_services(char *buf, int port, int dgram)
 	char line[128], *p, *z;
 	unsigned char _buf[1032];
 	FILE _f, *f = __fopen_rb_ca("/etc/services", &_f, _buf, sizeof _buf);
-	if (!f) return;
-	while (fgets(line, sizeof line, f)) {
+	int indexPtr = 0;
+	while (get_services_str(line, f, &indexPtr)) {
 		if ((p=strchr(line, '#'))) *p++='\n', *p=0;
 
 		for (p=line; *p && !isspace(*p); p++);
@@ -126,7 +127,9 @@ static void reverse_services(char *buf, int port, int dgram)
 		memcpy(buf, line, p-line);
 		break;
 	}
-	__fclose_ca(f);
+	if (f) {
+		__fclose_ca(f);
+	}
 }
 
 static int dns_parse_callback(void *c, int rr, const void *data, int len, const void *packet)
@@ -219,3 +222,4 @@ int getnameinfo(const struct sockaddr *restrict sa, socklen_t sl,
 
 	return 0;
 }
+

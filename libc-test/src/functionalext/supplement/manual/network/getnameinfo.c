@@ -18,6 +18,11 @@
 #include <stdlib.h>
 #include <sys/socket.h>
 #include "functionalext.h"
+#define HTTP_PORT 80
+#define TCPMUX_PORT 1
+#define FIDO_PORT 60179
+#define NOT_EXIST_PORT 62000
+#define NOT_EXIST_PORT_STR "62000"
 
 const int INFO_RESULT = 0;
 const int FAMILY_NOTSUPPORTED = -6;
@@ -166,6 +171,87 @@ void getnameinfo_0700()
     EXPECT_EQ("getnameinfo_0700", ret, FAMILY_NOTSUPPORTED);
 }
 
+void getnameinfo_0900()
+{
+    int ret;
+    char *ptr = "127.0.0.1";
+    char hostname[128] = {0};
+    char servername[128] = {0};
+    struct sockaddr_in addrDst;
+
+    memset(&addrDst, 0, sizeof(addrDst));
+    addrDst.sin_family = AF_INET;
+    addrDst.sin_addr.s_addr =  inet_addr(ptr);
+    addrDst.sin_port = htons(HTTP_PORT);
+
+    ret = getnameinfo((struct sockaddr *)&addrDst, sizeof(addrDst), hostname, sizeof(hostname),
+     servername, sizeof(servername), 0);
+    EXPECT_EQ("getnameinfo_0900", ret, 0);
+    EXPECT_STREQ("getnameinfo_0900 hostname", hostname, "localhost");
+    EXPECT_STREQ("getnameinfo_0900 hostname", servername, "http");
+}
+
+void getnameinfo_1000()
+{
+    int ret;
+    char *ptr = "127.0.0.1";
+    char hostname[128] = {0};
+    char servername[128] = {0};
+    struct sockaddr_in addrDst;
+
+    memset(&addrDst, 0, sizeof(addrDst));
+    addrDst.sin_family = AF_INET;
+    addrDst.sin_addr.s_addr =  inet_addr(ptr);
+    addrDst.sin_port = htons(TCPMUX_PORT);
+
+    ret = getnameinfo((struct sockaddr *)&addrDst, sizeof(addrDst), hostname, sizeof(hostname),
+     servername, sizeof(servername), 0);
+    EXPECT_EQ("getnameinfo_1000", ret, 0);
+    EXPECT_STREQ("getnameinfo_1000 hostname", hostname, "localhost");
+    EXPECT_STREQ("getnameinfo_1000 hostname", servername, "tcpmux");
+}
+
+
+void getnameinfo_1100()
+{
+    int ret;
+    char *ptr = "127.0.0.1";
+    char hostname[128] = {0};
+    char servername[128] = {0};
+    struct sockaddr_in addrDst;
+
+    memset(&addrDst, 0, sizeof(addrDst));
+    addrDst.sin_family = AF_INET;
+    addrDst.sin_addr.s_addr =  inet_addr(ptr);
+    addrDst.sin_port = htons(FIDO_PORT);
+
+    ret = getnameinfo((struct sockaddr *)&addrDst, sizeof(addrDst), hostname, sizeof(hostname),
+     servername, sizeof(servername), 0);
+    EXPECT_EQ("getnameinfo_1100", ret, 0);
+    EXPECT_STREQ("getnameinfo_1100 hostname", hostname, "localhost");
+    EXPECT_STREQ("getnameinfo_1100 hostname", servername, "fido");
+}
+
+void getnameinfo_1200()
+{
+    int ret;
+    char *ptr = "127.0.0.1";
+    char hostname[128] = {0};
+    char servername[128] = {0};
+    struct sockaddr_in addrDst;
+
+    memset(&addrDst, 0, sizeof(addrDst));
+    addrDst.sin_family = AF_INET;
+    addrDst.sin_addr.s_addr =  inet_addr(ptr);
+    addrDst.sin_port = htons(NOT_EXIST_PORT);
+
+    ret = getnameinfo((struct sockaddr *)&addrDst, sizeof(addrDst), hostname, sizeof(hostname),
+     servername, sizeof(servername), 0);
+    EXPECT_EQ("getnameinfo_1200", ret, 0);
+    EXPECT_STREQ("getnameinfo_1200 hostname", hostname, "localhost");
+    EXPECT_STREQ("getnameinfo_1200 hostname", servername, NOT_EXIST_PORT_STR);
+}
+
 int main(int argc, char *argv[])
 {
     getnameinfo_0100();
@@ -175,5 +261,9 @@ int main(int argc, char *argv[])
     getnameinfo_0500();
     getnameinfo_0600();
     getnameinfo_0700();
+    getnameinfo_0900();
+    getnameinfo_1000();
+    getnameinfo_1100();
+    getnameinfo_1200();
     return t_status;
 }
