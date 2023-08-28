@@ -402,6 +402,7 @@ template("musl_libs") {
         "src/math/sincos.c",
         "src/math/pow.c",
         "src/math/powf.c",
+        "src/math/frexpl.c",
       ]
     } else if (musl_arch == "x86_64") {
       sources_orig -= [ "src/thread/${musl_arch}/__set_thread_area.s" ]
@@ -473,6 +474,7 @@ template("musl_libs") {
         "-D__strlen_armv6t2 = strlen",
       ]
     } else if (musl_arch == "aarch64") {
+      sources += [ "$FREEBSD_DIR/lib/msun/src/s_frexpl.c" ]
       if (defined(ARM_FEATURE_SVE)) {
         sources += [
           "$OPTRTDIR/string/aarch64/memchr-sve.S",
@@ -596,6 +598,7 @@ template("musl_libs") {
     if (!defined(include_dirs)) {
       if (musl_arch == "aarch64") {
         include_dirs = [ "//third_party/FreeBSD/lib/libc/aarch64" ]
+        include_dirs += [ "//third_party/FreeBSD/lib/libc/include" ]
       }
       if (musl_arch == "arm") {
         include_dirs = [ "//third_party/FreeBSD/lib/libc/arm" ]
@@ -603,6 +606,7 @@ template("musl_libs") {
     } else {
       if (musl_arch == "aarch64") {
         include_dirs += [ "//third_party/FreeBSD/lib/libc/aarch64" ]
+        include_dirs += [ "//third_party/FreeBSD/lib/libc/include" ]
       }
       if (musl_arch == "arm") {
         include_dirs += [ "//third_party/FreeBSD/lib/libc/arm" ]
