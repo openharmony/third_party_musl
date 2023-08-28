@@ -72,6 +72,7 @@ hidden int __dns_parse(const unsigned char *, int, int (*)(void *, int, const vo
 #define OHOS_GET_CONFIG_FUNC_NAME "NetSysGetResolvConf"
 #define OHOS_GET_CACHE_FUNC_NAME "NetSysGetResolvCache"
 #define OHOS_SET_CACHE_FUNC_NAME "NetSysSetResolvCache"
+#define OHOS_JUDGE_IPV6_FUNC_NAME "NetSysIsIpv6Enable"
 #define MAX_RESULTS 32
 #define MAX_CANON_NAME 256
 #define MACRO_MIN(a, b) ((a) < (b) ? (a) : (b))
@@ -112,6 +113,8 @@ typedef int32_t (*GetCache)(uint16_t netId, struct param_wrapper param,
 							uint32_t *num);
 
 typedef int32_t (*SetCache)(uint16_t netId, struct param_wrapper param, struct addrinfo *res);
+
+typedef int (*JudgeIpv6)(uint16_t netId);
 
 /* If the memory holder points to stores NULL value, try to load symbol from the
  * dns lib into holder; otherwise, it does nothing. */
