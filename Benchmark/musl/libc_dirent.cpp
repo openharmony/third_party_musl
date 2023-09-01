@@ -13,9 +13,10 @@
  * limitations under the License.
  */
 
-#include <benchmark/benchmark.h>
 #include "sys/types.h"
 #include "dirent.h"
+#include "unistd.h"
+#include "fcntl.h"
 #include "util.h"
 
 using namespace std;
@@ -35,4 +36,93 @@ static void Bm_function_Opendir(benchmark::State &state)
     }
 }
 
+static void Bm_function_ScanDir(benchmark::State &state)
+{
+    const char* dir = "/dev/block";
+    struct dirent **entry = nullptr;
+    for (auto _ : state) {
+        int n = scandir(dir, &entry, nullptr, alphasort);
+        if (n <= 0) {
+            continue;
+        }
+        state.PauseTiming();
+        for (int i = 0; i < n; i++) {
+            free(entry[i]);
+        }
+        free(entry);
+        state.ResumeTiming();
+    }
+}
+
+static void Bm_function_Closedir(benchmark::State &state)
+{
+    for (auto _ : state) {
+        state.PauseTiming();
+        DIR *dir = opendir("/dev/block");
+        if (dir == nullptr) {
+            perror("opendir proc");
+            exit(EXIT_FAILURE);
+        }
+        state.ResumeTiming();
+
+        benchmark::DoNotOptimize(closedir(dir));
+    }
+}
+
+static void Bm_function_Readdir(benchmark::State &state)
+{
+    DIR *dir = opendir("/dev/block");
+    if (dir == nullptr) {
+        perror("opendir proc");
+        exit(EXIT_FAILURE);
+    }
+
+    for (auto _ : state) {
+        struct dirent *entry = nullptr;
+        do {
+            entry = readdir(dir);
+            benchmark::DoNotOptimize(entry);
+        } while (entry != nullptr);
+    }
+    closedir(dir);
+}
+
+// Open the table of contents
+static void Bm_function_Fdopendir(benchmark::State &state)
+{
+    int fd = open("/dev/", O_RDONLY, OPEN_MODE);
+    if (fd == -1) {
+        perror("open fdopendir");
+        exit(EXIT_FAILURE);
+    }
+    for (auto _ : state) {
+        DIR *dir = fdopendir(fd);
+        if (dir == nullptr) {
+            perror("fdopendir proc");
+            exit(EXIT_FAILURE);
+        }
+        benchmark::DoNotOptimize(dir);
+    }
+    close(fd);
+}
+
+static void Bm_function_Rewinddir(benchmark::State &state)
+{
+    DIR *dir = opendir("/data/local");
+    if (dir == nullptr) {
+        perror("opendir rewinddir");
+        exit(EXIT_FAILURE);
+    }
+    while (readdir(dir) != nullptr) {}
+    for (auto _ : state) {
+        rewinddir(dir);
+    }
+    closedir(dir);
+}
+
 MUSL_BENCHMARK(Bm_function_Opendir);
+MUSL_BENCHMARK(Bm_function_ScanDir);
+MUSL_BENCHMARK(Bm_function_Closedir);
+MUSL_BENCHMARK(Bm_function_Readdir);
+MUSL_BENCHMARK(Bm_function_Fdopendir);
+MUSL_BENCHMARK(Bm_function_Rewinddir);

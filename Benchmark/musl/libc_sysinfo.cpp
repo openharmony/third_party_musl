@@ -13,27 +13,22 @@
  * limitations under the License.
  */
 
-#include "sys/select.h"
-#include "sys/time.h"
-#include "sys/types.h"
-#include "unistd.h"
+#include "sys/sysinfo.h"
 #include "util.h"
 
-using namespace std;
-
-#define MAX_MONITOR_FDS 2
-
-static void Bm_function_Select(benchmark::State &state)
+static void Bm_function_Get_nprocs(benchmark::State &state)
 {
-    fd_set readfds, writefds;
-    FD_ZERO(&readfds);
-    FD_ZERO(&writefds);
-    FD_SET(0, &readfds);
-    FD_SET(1, &writefds);
     for (auto _ : state) {
-        benchmark::DoNotOptimize(select(MAX_MONITOR_FDS, &readfds, &writefds, 0, 0));
+        benchmark::DoNotOptimize(get_nprocs());
     }
-    state.SetItemsProcessed(state.iterations());
 }
 
-MUSL_BENCHMARK(Bm_function_Select);
+static void Bm_function_Get_nprocs_conf(benchmark::State &state)
+{
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(get_nprocs_conf());
+    }
+}
+
+MUSL_BENCHMARK(Bm_function_Get_nprocs);
+MUSL_BENCHMARK(Bm_function_Get_nprocs_conf);

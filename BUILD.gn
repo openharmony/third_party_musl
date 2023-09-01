@@ -433,6 +433,7 @@ if (is_lite_system && current_os == "ohos") {
   }
 
   group("benchmark-musl") {
+    testonly = true
     deps = [ "Benchmark/musl:benchmark_musl_group" ]
   }
 }

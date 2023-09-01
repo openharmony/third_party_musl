@@ -13,7 +13,6 @@
  * limitations under the License.
  */
 
-#include <benchmark/benchmark.h>
 #include "sys/random.h"
 #include "util.h"
 

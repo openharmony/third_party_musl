@@ -13,27 +13,28 @@
  * limitations under the License.
  */
 
-#include "sys/select.h"
-#include "sys/time.h"
-#include "sys/types.h"
-#include "unistd.h"
+#include "grp.h"
+#include "pwd.h"
 #include "util.h"
 
 using namespace std;
 
-#define MAX_MONITOR_FDS 2
+#define NGROUPS 64
 
-static void Bm_function_Select(benchmark::State &state)
+static void Bm_function_Getgrouplist(benchmark::State &state)
 {
-    fd_set readfds, writefds;
-    FD_ZERO(&readfds);
-    FD_ZERO(&writefds);
-    FD_SET(0, &readfds);
-    FD_SET(1, &writefds);
-    for (auto _ : state) {
-        benchmark::DoNotOptimize(select(MAX_MONITOR_FDS, &readfds, &writefds, 0, 0));
+    const char *user = "root";
+    struct passwd *pw = getpwnam(user);
+    if (pw == nullptr) {
+        perror("getpwnam");
+        exit(EXIT_FAILURE);
     }
-    state.SetItemsProcessed(state.iterations());
+
+    gid_t groups[NGROUPS];
+    for (auto _ : state) {
+        int ngroups = NGROUPS;
+        benchmark::DoNotOptimize(getgrouplist(user, pw->pw_gid, groups, &ngroups));
+    }
 }
 
-MUSL_BENCHMARK(Bm_function_Select);
+MUSL_BENCHMARK(Bm_function_Getgrouplist);

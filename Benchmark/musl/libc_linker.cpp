@@ -14,7 +14,6 @@
  */
 
 #include "util.h"
-#include <benchmark/benchmark.h>
 #include <dlfcn.h>
 #include <iostream>
 

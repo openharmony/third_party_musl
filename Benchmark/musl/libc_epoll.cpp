@@ -13,7 +13,6 @@
  * limitations under the License.
  */
 
-#include <benchmark/benchmark.h>
 #include <sys/epoll.h>
 #include <errno.h>
 #include <stdlib.h>

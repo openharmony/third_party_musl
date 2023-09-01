@@ -13,9 +13,12 @@
  * limitations under the License.
  */
 
-#include <benchmark/benchmark.h>
 #include "sched.h"
+#include "stdlib.h"
+#include "unistd.h"
 #include "util.h"
+
+#define MALLOC_SIZE (1024 * 8192)
 
 static void Bm_function_sched_yield(benchmark::State &state)
 {
@@ -24,4 +27,30 @@ static void Bm_function_sched_yield(benchmark::State &state)
     }
 }
 
+int ThreadWaitFunc(void* arg) {
+    return 0;
+}
+
+// Used to create a new process
+static void Bm_function_Clone(benchmark::State &state)
+{
+    void *stack = malloc(MALLOC_SIZE);
+    if (stack == nullptr) {
+        perror("malloc clone");
+        exit(EXIT_FAILURE);
+    }
+    int flags = CLONE_VM | CLONE_FS | CLONE_FILES | CLONE_SIGHAND | CLONE_THREAD | CLONE_SYSVSEM | CLONE_SETTLS;
+    int pid = -1;
+    for (auto _ : state) {
+        pid = clone(ThreadWaitFunc, (char*)stack + MALLOC_SIZE, flags, nullptr);
+        if (pid == -1) {
+            perror("clone proc");
+            exit(EXIT_FAILURE);
+        }
+        sleep(1);
+    }
+    free(stack);
+}
+
 MUSL_BENCHMARK(Bm_function_sched_yield);
+MUSL_BENCHMARK(Bm_function_Clone);
