@@ -13,7 +13,6 @@
  * limitations under the License.
  */
 
-#include <benchmark/benchmark.h>
 #include "math.h"
 #include "util.h"
 
@@ -28,6 +27,10 @@ static const long double DIVIDEND_VALUES[] = { 10.5L, -10.5L, 2.71L, -2.71L, 3.1
                                                -3.14159265358979323846L, 1.0 / 3.0L, -1.0 / 3.0L };
 static const long double DIVISOR_VALUES[] = { 3.0L, -3.0L, 1.414L, -1.414L, 0.5L, -0.5L,
                                               2.7182818284590452354L, -2.7182818284590452354L };
+
+static const double FLOAT_VALUES[] = { 0.1, 10.0, -100.0, 0.0001, 5.14e11, -0.0001, 10000000.0, -100000000.0 };
+static const double ATANHF_FLOAT_VALUES[] = { -1.0, -0.0, 0.0, -0.5, 0.9, 1.0, -100, 1000000.0 };
+static const double RINTF_FLOAT_VALUES[] = { -3.52467, 0.0, 2.0 / 0.0, 3.37562, 3.76542 };
 // The function generates a value that has the size of the parameter x and the symbol of the parameter y
 static void Bm_function_Copysignl_Allpositive(benchmark::State &state)
 {
@@ -75,6 +78,14 @@ static void Bm_function_Fmodl(benchmark::State &state)
     }
 }
 
+static void Bm_function_Fmodf(benchmark::State &state)
+{
+    float x = DIVIDEND_VALUES[state.range(0)];
+    float y = DIVISOR_VALUES[state.range(0)];
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(fmodf(x, y));
+    }
+}
 // The 3.14th power of e
 static void Bm_function_Exp(benchmark::State &state)
 {
@@ -313,11 +324,182 @@ static void Bm_function_Expm1(benchmark::State &state)
     state.SetItemsProcessed(state.iterations());
 }
 
+// Rounds up one floating-point number
+static void Bm_function_Ceilf(benchmark::State &state)
+{
+    float a = (float)DOUBLE_VALUES[state.range(0)];
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(ceilf(a));
+    }
+}
+
+// Returns the largest integer value less than or equal to the input value
+static void Bm_function_Floor(benchmark::State &state)
+{
+    double a = DOUBLE_VALUES[state.range(0)];
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(floor(a));
+    }
+}
+
+// The logarithmic value used to calculate the gamma function
+static void Bm_function_Lgammaf(benchmark::State &state)
+{
+    float a = (float)DOUBLE_VALUES[state.range(0)];
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(lgammaf(a));
+    }
+}
+
+static void Bm_function_Erfcf(benchmark::State &state)
+{
+    float a = (float)DOUBLE_VALUES[state.range(0)];
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(erfcf(a));
+    }
+}
+
+static void Bm_function_Ilogbf(benchmark::State &state)
+{
+    float a = (float)DOUBLE_VALUES[state.range(0)];
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(ilogbf(a));
+    }
+}
+
+// Used to perform multiplication and addition operations on floating-point numbers
+// a * b + c
+static void Bm_function_Fmaf(benchmark::State &state)
+{
+    srand(time(nullptr));
+    for (int i = 0; i <= state.range(0); i++) {
+        for (auto _ : state) {
+            float a = (float)DOUBLE_VALUES[rand() % 8];
+            float b = (float)DOUBLE_VALUES[(rand()+1) % 8];
+            float c = (float)DOUBLE_VALUES[(rand()+2) % 8];
+            benchmark::DoNotOptimize(fmaf(a, b, c));
+        }
+    }
+}
+
+// create a floating-point number that represents a non-numeric value
+static void Bm_function_Nan(benchmark::State &state)
+{
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(nan("5.14e11"));
+    }
+}
+
+static void Bm_function_Nan_null(benchmark::State &state)
+{
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(nan(""));
+    }
+}
+
+static void Bm_function_Acoshf(benchmark::State &state)
+{
+    float a = COSSIN_VALUES[state.range(0)];
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(acoshf(a));
+    }
+}
+
+static void Bm_function_Asinhf(benchmark::State &state)
+{
+    float a = COSSIN_VALUES[state.range(0)];
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(asinhf(a));
+    }
+}
+
+static void Bm_function_Modff(benchmark::State &state)
+{
+    float value = (float)COSSIN_VALUES[state.range(0)];
+    float ipart;
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(modff(value, &ipart));
+    }
+}
+
+static void Bm_function_Llroundf(benchmark::State &state)
+{
+    float x = (float)DOUBLE_VALUES[state.range(0)];
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(llroundf(x));
+    }
+}
+
+static void Bm_function_Logbf_0(benchmark::State &state)
+{
+    float x = 0.0;
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(logbf(x));
+    }
+}
+
+static void Bm_function_Logbf_nan(benchmark::State &state)
+{
+    float x = 0.0 / 0.0;
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(logbf(x));
+    }
+}
+
+static void Bm_function_Logbf_finite(benchmark::State &state)
+{
+    float x = 20.0;
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(logbf(x));
+    }
+}
+
+static void Bm_function_Logbf_nofinite(benchmark::State &state)
+{
+    float x = 9.6 / 0.0;
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(logbf(x));
+    }
+}
+
+static void Bm_function_Expm1f(benchmark::State &state)
+{
+    float x = FLOAT_VALUES[state.range(0)];
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(expm1f(x));
+    }
+}
+
+static void Bm_function_Atanhf(benchmark::State &state)
+{
+    float x = ATANHF_FLOAT_VALUES[state.range(0)];
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(atanhf(x));
+    }
+}
+
+static void Bm_function_Rintf(benchmark::State &state)
+{
+    float x = RINTF_FLOAT_VALUES[state.range(0)];
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(rintf(x));
+    }
+}
+
+static void Bm_function_Log1pf(benchmark::State &state)
+{
+    float a = (float)DOUBLE_VALUES[state.range(0)];
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(log1pf(a));
+    }
+}
+
 MUSL_BENCHMARK(Bm_function_Copysignl_Allpositive);
 MUSL_BENCHMARK(Bm_function_Copysignl_Allnegative);
 MUSL_BENCHMARK(Bm_function_Copysignl_Np);
 MUSL_BENCHMARK(Bm_function_Copysignl_Pn);
 MUSL_BENCHMARK_WITH_ARG(Bm_function_Fmodl, "BENCHMARK_8");
+MUSL_BENCHMARK_WITH_ARG(Bm_function_Fmodf, "BENCHMARK_8");
 MUSL_BENCHMARK_WITH_ARG(Bm_function_Log, "BENCHMARK_8");
 MUSL_BENCHMARK_WITH_ARG(Bm_function_Cos, "BENCHMARK_8");
 MUSL_BENCHMARK_WITH_ARG(Bm_function_Frexpl, "BENCHMARK_8");
@@ -341,3 +523,23 @@ MUSL_BENCHMARK(Bm_function_fpclassifyl2);
 MUSL_BENCHMARK(Bm_function_fpclassifyl3);
 MUSL_BENCHMARK_WITH_ARG(Bm_function_Expm1, "BENCHMARK_8");
 MUSL_BENCHMARK_WITH_ARG(Bm_function_Exp, "BENCHMARK_8");
+MUSL_BENCHMARK_WITH_ARG(Bm_function_Ceilf, "BENCHMARK_8");
+MUSL_BENCHMARK_WITH_ARG(Bm_function_Floor, "BENCHMARK_8");
+MUSL_BENCHMARK_WITH_ARG(Bm_function_Lgammaf, "BENCHMARK_8");
+MUSL_BENCHMARK_WITH_ARG(Bm_function_Erfcf, "BENCHMARK_8");
+MUSL_BENCHMARK_WITH_ARG(Bm_function_Ilogbf, "BENCHMARK_8");
+MUSL_BENCHMARK_WITH_ARG(Bm_function_Fmaf, "BENCHMARK_8");
+MUSL_BENCHMARK(Bm_function_Nan);
+MUSL_BENCHMARK(Bm_function_Nan_null);
+MUSL_BENCHMARK_WITH_ARG(Bm_function_Acoshf, "BENCHMARK_8");
+MUSL_BENCHMARK_WITH_ARG(Bm_function_Asinhf, "BENCHMARK_8");
+MUSL_BENCHMARK_WITH_ARG(Bm_function_Modff, "BENCHMARK_8");
+MUSL_BENCHMARK_WITH_ARG(Bm_function_Llroundf, "BENCHMARK_8");
+MUSL_BENCHMARK(Bm_function_Logbf_0);
+MUSL_BENCHMARK(Bm_function_Logbf_nan);
+MUSL_BENCHMARK(Bm_function_Logbf_finite);
+MUSL_BENCHMARK(Bm_function_Logbf_nofinite);
+MUSL_BENCHMARK_WITH_ARG(Bm_function_Expm1f, "BENCHMARK_8");
+MUSL_BENCHMARK_WITH_ARG(Bm_function_Atanhf, "BENCHMARK_8");
+MUSL_BENCHMARK_WITH_ARG(Bm_function_Rintf, "BENCHMARK_5");
+MUSL_BENCHMARK_WITH_ARG(Bm_function_Log1pf, "BENCHMARK_8");

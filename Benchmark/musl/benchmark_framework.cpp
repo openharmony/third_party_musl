@@ -26,6 +26,7 @@
 #include <sstream>
 #include <string>
 #include <utility>
+#include <regex>
 #include <vector>
 
 #include "util.h"
@@ -50,6 +51,8 @@ static const std::vector<int> commonArgs {
 
 std::map<std::string, std::pair<BenchmarkFunc, std::string>> g_allBenchmarks;
 std::mutex g_benchmarkLock;
+std::map<std::string, std::pair<BenchmarkFunc, ApplyBenchmarkFunc>> g_applyBenchmarks;
+
 typedef std::vector<std::vector<int64_t>> args_vector;
 
 static struct option g_benchmarkLongOptions[] = {
@@ -189,6 +192,18 @@ args_vector *ResolveArgs(args_vector *argsVector, std::string args,
     return argsVector;
 }
 
+bool MatchFuncNameInJson(const std::string& str, const std::string& pattern)
+{
+    size_t jsonwildcard = pattern.find("*");
+    if (jsonwildcard == std::string::npos) {
+        return str == pattern;
+    }
+    std::string prefix = pattern.substr(0, jsonwildcard);
+    std::string jsonFuncName = prefix + ".*";
+    std::regex re(jsonFuncName, std::regex::icase);
+    return std::regex_match(str, re);
+}
+
 static args_vector GetArgs(const std::vector<int> &sizes)
 {
     args_vector args;
@@ -224,6 +239,8 @@ std::map<std::string, args_vector> GetPresetArgs()
         {"ALIGNED_TWOBUF", GetArgs(commonArgs, 0, 0)},
         {"BENCHMARK_5", args_vector{{0}, {1}, {2}, {3}, {4}}},
         {"BENCHMARK_8", args_vector{{0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}}},
+        {"BENCHMARK_22", args_vector{{0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}, {8}, {9}, {10}, {11}, {12}, {13},
+                                     {14}, {15}, {16}, {17}, {18}, {19}, {20}, {21}}},
     };
 
     return presetArgs;
@@ -232,7 +249,12 @@ std::map<std::string, args_vector> GetPresetArgs()
 void RegisterSingleBenchmark(bench_opts_t optsFromJson, bench_opts_t optsFromCommandLine,
     const std::string &funcName, args_vector *runArgs)
 {
-    if (g_allBenchmarks.find(funcName) == g_allBenchmarks.end()) {
+    bool isApplyUseCase = false;
+    if (g_allBenchmarks.find(funcName) != g_allBenchmarks.end()) {
+        isApplyUseCase = false;
+    } else if (g_applyBenchmarks.find(funcName) != g_applyBenchmarks.end()) {
+        isApplyUseCase = true;
+    } else {
         errx(1, "ERROR: No benchmark for function %s", funcName.c_str());
     }
 
@@ -244,12 +266,20 @@ void RegisterSingleBenchmark(bench_opts_t optsFromJson, bench_opts_t optsFromCom
         cpuNum = optsFromJson.cpuNum;
     }
 
-    BenchmarkFunc func = g_allBenchmarks.at(funcName).first;
-    for (const std::vector<int64_t> &args : (*runArgs)) {
-        // It will call LockAndRun(func, opts.cpuNum).
-        auto registration = benchmark::RegisterBenchmark(funcName.c_str(), LockAndRun, func, cpuNum)->Args(args);
+    if (isApplyUseCase) {
+        BenchmarkFunc func = g_applyBenchmarks.at(funcName).first;
+        auto registration = benchmark::RegisterBenchmark(funcName.c_str(), LockAndRun, func, cpuNum)->Apply(g_applyBenchmarks.at(funcName).second);
         if (iterNum > 0) {
             registration->Iterations(iterNum);
+        }
+    } else {
+        BenchmarkFunc func = g_allBenchmarks.at(funcName).first;
+        for (const std::vector<int64_t> &args : (*runArgs)) {
+            // It will call LockAndRun(func, opts.cpuNum).
+            auto registration = benchmark::RegisterBenchmark(funcName.c_str(), LockAndRun, func, cpuNum)->Args(args);
+            if (iterNum > 0) {
+                registration->Iterations(iterNum);
+            }
         }
     }
 }
@@ -260,6 +290,11 @@ void RegisterAllBenchmarks(const bench_opts_t &opts, std::map<std::string, args_
         auto &funcInfo = entry.second;
         args_vector argVector;
         args_vector *runArgs = ResolveArgs(&argVector, funcInfo.second, presetArgs);
+        RegisterSingleBenchmark(bench_opts_t(), opts, entry.first, runArgs);
+    }
+
+    for (auto &entry : g_applyBenchmarks) {
+        args_vector *runArgs = nullptr;
         RegisterSingleBenchmark(bench_opts_t(), opts, entry.first, runArgs);
     }
 }
@@ -334,7 +369,28 @@ int RegisterJsonBenchmarks(const bench_opts_t &opts, std::map<std::string, args_
             if (obj != nullptr) {
                 jsonOpts.cpuNum = obj->valueint;
             }
-            RegisterSingleBenchmark(jsonOpts, opts, fnName, runArgs);
+
+            std::vector<std::string> matchedFuncNames;
+            for (const auto& muslbenchmark : g_allBenchmarks) {
+                if (MatchFuncNameInJson(muslbenchmark.first, fnName)) {
+                    matchedFuncNames.push_back(muslbenchmark.first);
+                }
+            }
+
+            for (const auto& useapply : g_applyBenchmarks) {
+                if (MatchFuncNameInJson(useapply.first, fnName)) {
+                    matchedFuncNames.push_back(useapply.first);
+                }
+            }
+
+            if (matchedFuncNames.empty()) {
+                errx(1, "JSONERROR: No benchmark found for function like %s in matchedFuncNames", fnName.c_str());
+            }
+
+            for (const auto& matchedFuncName : matchedFuncNames) {
+                fnName = matchedFuncName;
+                RegisterSingleBenchmark(jsonOpts, opts, fnName, runArgs);
+            }
         }
     }
 

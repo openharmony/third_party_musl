@@ -13,7 +13,6 @@
  * limitations under the License.
  */
 
-#include <benchmark/benchmark.h>
 #include <sys/syscall.h>
 #include <string.h>
 #include <sys/timex.h>
@@ -28,6 +27,7 @@
 #include <time.h>
 #include <unistd.h>
 #include <sys/utsname.h>
+#include <sys/eventfd.h>
 #include "util.h"
 
 using namespace std;
@@ -146,6 +146,40 @@ static void Bm_function_Syscall_uname(benchmark::State &state)
     }
 }
 
+static void Bm_function_Syscall_getpriority(benchmark::State &state)
+{
+    pid_t pid = getpid();
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(getpriority(PRIO_PROCESS, pid));
+    }
+}
+
+static void Bm_function_Syscall_setpriority(benchmark::State &state)
+{
+    pid_t pid = getpid();
+    int prio = getpriority(PRIO_PROCESS, pid);
+    if (prio == -1) {
+        perror("getpriority failed");
+        exit(EXIT_FAILURE);
+    }
+
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(setpriority(PRIO_PROCESS, pid, prio));
+    }
+}
+
+static void Bm_function_Syscall_eventfd(benchmark::State &state)
+{
+    for (auto _ : state) {
+        int fd = eventfd(0, 0);
+        if (fd >= 0) {
+            state.PauseTiming();
+            close(fd);
+            state.ResumeTiming();
+        }
+    }
+}
+
 MUSL_BENCHMARK(Bm_function_Syscall_getpid);
 MUSL_BENCHMARK(Bm_function_Syscall_gettid);
 MUSL_BENCHMARK(Bm_function_Syscall_adjtimex);
@@ -154,3 +188,6 @@ MUSL_BENCHMARK(Bm_function_Syscall_read);
 MUSL_BENCHMARK(Bm_function_Syscall_fcntl);
 MUSL_BENCHMARK(Bm_function_Syscall_getrusage);
 MUSL_BENCHMARK(Bm_function_Syscall_uname);
+MUSL_BENCHMARK(Bm_function_Syscall_getpriority);
+MUSL_BENCHMARK(Bm_function_Syscall_setpriority);
+MUSL_BENCHMARK(Bm_function_Syscall_eventfd);

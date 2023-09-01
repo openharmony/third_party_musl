@@ -13,15 +13,16 @@
  * limitations under the License.
  */
 
-#include <benchmark/benchmark.h>
 #include "sys/types.h"
 #include "sys/socket.h"
+#include "arpa/inet.h"
 #include "netdb.h"
 #include "util.h"
 
 using namespace std;
 
-static void Bm_function_Getaddrinfo_external_network(benchmark::State &state)
+// Free up memory
+static void Bm_function_Getaddrinfo_Freeaddrinfo_external_network(benchmark::State &state)
 {
     struct addrinfo *res;
     for (auto _ : state) {
@@ -31,11 +32,13 @@ static void Bm_function_Getaddrinfo_external_network(benchmark::State &state)
             exit(EXIT_FAILURE);
         }
         benchmark::DoNotOptimize(n);
+        freeaddrinfo(res);
     }
+    res = nullptr;
     state.SetBytesProcessed(state.iterations());
 }
 
-static void Bm_function_Getaddrinfo_intranet1(benchmark::State &state)
+static void Bm_function_Getaddrinfo_Freeaddrinfo_intranet1(benchmark::State &state)
 {
     struct addrinfo hint;
     struct addrinfo *res;
@@ -49,11 +52,13 @@ static void Bm_function_Getaddrinfo_intranet1(benchmark::State &state)
             exit(EXIT_FAILURE);
         }
         benchmark::DoNotOptimize(n);
+        freeaddrinfo(res);
     }
+    res = nullptr;
     state.SetBytesProcessed(state.iterations());
 }
 
-static void Bm_function_Getaddrinfo_intranet2(benchmark::State &state)
+static void Bm_function_Getaddrinfo_Freeaddrinfo_intranet2(benchmark::State &state)
 {
     struct addrinfo hint;
     struct addrinfo *res;
@@ -67,11 +72,13 @@ static void Bm_function_Getaddrinfo_intranet2(benchmark::State &state)
             exit(EXIT_FAILURE);
         }
         benchmark::DoNotOptimize(n);
+        freeaddrinfo(res);
     }
+    res = nullptr;
     state.SetBytesProcessed(state.iterations());
 }
 
-static void Bm_function_Getaddrinfo_intranet3(benchmark::State &state)
+static void Bm_function_Getaddrinfo_Freeaddrinfo_intranet3(benchmark::State &state)
 {
     struct addrinfo hint;
     struct addrinfo *res;
@@ -85,11 +92,13 @@ static void Bm_function_Getaddrinfo_intranet3(benchmark::State &state)
             exit(EXIT_FAILURE);
         }
         benchmark::DoNotOptimize(n);
+        freeaddrinfo(res);
     }
+    res = nullptr;
     state.SetBytesProcessed(state.iterations());
 }
 
-static void Bm_function_Getaddrinfo_intranet4(benchmark::State &state)
+static void Bm_function_Getaddrinfo_Freeaddrinfo_intranet4(benchmark::State &state)
 {
     struct addrinfo hint;
     struct addrinfo *res;
@@ -103,11 +112,13 @@ static void Bm_function_Getaddrinfo_intranet4(benchmark::State &state)
             exit(EXIT_FAILURE);
         }
         benchmark::DoNotOptimize(n);
+        freeaddrinfo(res);
     }
+    res = nullptr;
     state.SetBytesProcessed(state.iterations());
 }
 
-static void Bm_function_Getaddrinfo_intranet5(benchmark::State &state)
+static void Bm_function_Getaddrinfo_Freeaddrinfo_intranet5(benchmark::State &state)
 {
     struct addrinfo hint;
     struct addrinfo *res;
@@ -121,11 +132,13 @@ static void Bm_function_Getaddrinfo_intranet5(benchmark::State &state)
             exit(EXIT_FAILURE);
         }
         benchmark::DoNotOptimize(n);
+        freeaddrinfo(res);
     }
+    res = nullptr;
     state.SetBytesProcessed(state.iterations());
 }
 
-static void Bm_function_Getaddrinfo_intranet6(benchmark::State &state)
+static void Bm_function_Getaddrinfo_Freeaddrinfo_intranet6(benchmark::State &state)
 {
     struct addrinfo hint;
     struct addrinfo *res;
@@ -139,11 +152,13 @@ static void Bm_function_Getaddrinfo_intranet6(benchmark::State &state)
             exit(EXIT_FAILURE);
         }
         benchmark::DoNotOptimize(n);
+        freeaddrinfo(res);
     }
+    res = nullptr;
     state.SetBytesProcessed(state.iterations());
 }
 
-static void Bm_function_Getaddrinfo_intranet7(benchmark::State &state)
+static void Bm_function_Getaddrinfo_Freeaddrinfo_intranet7(benchmark::State &state)
 {
     struct addrinfo *res;
     for (auto _ : state) {
@@ -153,7 +168,9 @@ static void Bm_function_Getaddrinfo_intranet7(benchmark::State &state)
             exit(EXIT_FAILURE);
         }
         benchmark::DoNotOptimize(n);
+        freeaddrinfo(res);
     }
+    res = nullptr;
     state.SetBytesProcessed(state.iterations());
 }
 
@@ -165,12 +182,36 @@ static void Bm_function_Network_ntohs(benchmark::State &state)
     }
 }
 
-MUSL_BENCHMARK(Bm_function_Getaddrinfo_external_network);
-MUSL_BENCHMARK(Bm_function_Getaddrinfo_intranet1);
-MUSL_BENCHMARK(Bm_function_Getaddrinfo_intranet2);
-MUSL_BENCHMARK(Bm_function_Getaddrinfo_intranet3);
-MUSL_BENCHMARK(Bm_function_Getaddrinfo_intranet4);
-MUSL_BENCHMARK(Bm_function_Getaddrinfo_intranet5);
-MUSL_BENCHMARK(Bm_function_Getaddrinfo_intranet6);
-MUSL_BENCHMARK(Bm_function_Getaddrinfo_intranet7);
+static void Bm_function_Inet_pton(benchmark::State &state)
+{
+    unsigned char buf[sizeof(struct in_addr)];
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(inet_pton(AF_INET, "127.0.0.1", buf));
+    }
+}
+
+static void Bm_function_Inet_ntop(benchmark::State &state)
+{
+    unsigned char buf[sizeof(struct in_addr)];
+    if (inet_pton(AF_INET, "127.0.0.1", buf) <= 0) {
+        perror("inet_pton failed");
+        exit(EXIT_FAILURE);
+    }
+
+    for (auto _ : state) {
+        char str[INET_ADDRSTRLEN] = {0};
+        benchmark::DoNotOptimize(inet_ntop(AF_INET, buf, str, INET_ADDRSTRLEN));
+    }
+}
+
+MUSL_BENCHMARK(Bm_function_Getaddrinfo_Freeaddrinfo_external_network);
+MUSL_BENCHMARK(Bm_function_Getaddrinfo_Freeaddrinfo_intranet1);
+MUSL_BENCHMARK(Bm_function_Getaddrinfo_Freeaddrinfo_intranet2);
+MUSL_BENCHMARK(Bm_function_Getaddrinfo_Freeaddrinfo_intranet3);
+MUSL_BENCHMARK(Bm_function_Getaddrinfo_Freeaddrinfo_intranet4);
+MUSL_BENCHMARK(Bm_function_Getaddrinfo_Freeaddrinfo_intranet5);
+MUSL_BENCHMARK(Bm_function_Getaddrinfo_Freeaddrinfo_intranet6);
+MUSL_BENCHMARK(Bm_function_Getaddrinfo_Freeaddrinfo_intranet7);
 MUSL_BENCHMARK(Bm_function_Network_ntohs);
+MUSL_BENCHMARK(Bm_function_Inet_pton);
+MUSL_BENCHMARK(Bm_function_Inet_ntop);

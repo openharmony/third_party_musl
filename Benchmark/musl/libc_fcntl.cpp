@@ -13,17 +13,19 @@
  * limitations under the License.
  */
 
-#include <benchmark/benchmark.h>
 #include "sys/types.h"
 #include "sys/stat.h"
 #include "fcntl.h"
 #include "unistd.h"
 #include "stdio.h"
+#include "dirent.h"
+#include "time.h"
 #include "util.h"
 
 using namespace std;
 
 #define LOCK_SIZE 10
+#define TIME_SIZE 2
 static void Bm_function_Fcntl_getfl(benchmark::State &state)
 {
     int fd = open("/etc/passwd", O_RDONLY, OPEN_MODE);
@@ -285,6 +287,127 @@ static void Bm_function_Open_creat_rdwr(benchmark::State &state)
     state.SetItemsProcessed(state.iterations());
 }
 
+// Used to modify the access time and modification time of a file or directory
+// function default behavior
+static void Bm_function_Utimensat_Normal(benchmark::State &state)
+{
+    int dirfd = AT_FDCWD;
+    const char* path = "hotspot_function.json";
+    struct timespec times[TIME_SIZE];
+    clock_gettime(CLOCK_REALTIME, &times[0]);
+    times[1] = times[0];
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(utimensat(dirfd, path, times, AT_EACCESS));
+    }
+    state.SetItemsProcessed(state.iterations());
+}
+
+// avoid dealing with symbolic links
+static void Bm_function_Utimensat_Nofollow(benchmark::State &state)
+{
+    int dirfd = AT_FDCWD;
+    const char* path = "hotspot_function.json";
+    struct timespec times[TIME_SIZE];
+    clock_gettime(CLOCK_REALTIME, &times[0]);
+    times[1] = times[0];
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(utimensat(dirfd, path, times, AT_SYMLINK_NOFOLLOW));
+    }
+    state.SetItemsProcessed(state.iterations());
+}
+
+static void Bm_function_Creat(benchmark::State &state)
+{
+    const char *filename = "/dev/zero";
+    for (auto _ : state) {
+        int fd = creat(filename, OPEN_MODE);
+        if (fd == -1) {
+            perror("creat proc");
+            exit(EXIT_FAILURE);
+        }
+        benchmark::DoNotOptimize(fd);
+        close(fd);
+    }
+    state.SetBytesProcessed(state.iterations());
+}
+
+// Used to open or create a file
+// current directory absolute path read only
+static void Bm_function_Openat_rdonly(benchmark::State &state)
+{
+    const char *filename = "/proc/self/cmdline";
+    for (auto _ : state) {
+        int fd = openat(AT_FDCWD, filename, O_RDONLY, OPEN_MODE);
+        if (fd == -1) {
+            perror("openat_rdonly proc");
+            exit(EXIT_FAILURE);
+        }
+        benchmark::DoNotOptimize(fd);
+        state.PauseTiming();
+        close(fd);
+        state.ResumeTiming();
+    }
+    state.SetBytesProcessed(state.iterations());
+}
+
+// current directory create read write
+static void Bm_function_Openat_creat_rdwr(benchmark::State &state)
+{
+    const char *filename = "/data/log/hiview/sys_event_logger/event.db";
+    for (auto _ : state) {
+        int fd = openat(AT_FDCWD, filename, O_RDWR | O_CREAT, OPEN_MODE);
+        if (fd == -1) {
+            perror("openat_creat_rdwr proc");
+            exit(EXIT_FAILURE);
+        }
+        benchmark::DoNotOptimize(fd);
+        state.PauseTiming();
+        close(fd);
+        state.ResumeTiming();
+    }
+    state.SetItemsProcessed(state.iterations());
+}
+
+// current directory relative path
+static void Bm_function_Openat_RelativePath_AT_FDCWD(benchmark::State &state)
+{
+    const char *filename = "testOpenat.txt";
+    for (auto _ : state) {
+        int fd = openat(AT_FDCWD, filename, O_RDWR | O_CREAT, OPEN_MODE);
+        if (fd == -1) {
+            perror("openat_creat_rdwr proc");
+            exit(EXIT_FAILURE);
+        }
+        benchmark::DoNotOptimize(fd);
+        state.PauseTiming();
+        close(fd);
+        state.ResumeTiming();
+    }
+    remove(filename);
+    state.SetItemsProcessed(state.iterations());
+}
+
+// other directories
+static void Bm_function_Openat_RelativePath_fd(benchmark::State &state)
+{
+    const char *filename = "/dev/";
+    DIR *dir = opendir(filename);
+    int fdDir = dirfd(dir);
+    for (auto _ : state) {
+        int fd = openat(fdDir, "zero", O_RDWR | O_CREAT, OPEN_MODE);
+        if (fd == -1) {
+            perror("open_rdwr proc");
+            exit(EXIT_FAILURE);
+        }
+        benchmark::DoNotOptimize(fd);
+        state.PauseTiming();
+        close(fd);
+        state.ResumeTiming();
+    }
+    closedir(dir);
+    state.SetItemsProcessed(state.iterations());
+}
+
 MUSL_BENCHMARK(Bm_function_Fcntl_getfl);
 MUSL_BENCHMARK(Bm_function_Fcntl_setfl);
 MUSL_BENCHMARK(Bm_function_Fcntl_setlkw);
@@ -296,3 +419,10 @@ MUSL_BENCHMARK(Bm_function_Fcntl_setfd);
 MUSL_BENCHMARK(Bm_function_Open_rdonly);
 MUSL_BENCHMARK(Bm_function_Open_rdwr);
 MUSL_BENCHMARK(Bm_function_Open_creat_rdwr);
+MUSL_BENCHMARK(Bm_function_Utimensat_Normal);
+MUSL_BENCHMARK(Bm_function_Utimensat_Nofollow);
+MUSL_BENCHMARK(Bm_function_Creat);
+MUSL_BENCHMARK(Bm_function_Openat_rdonly);
+MUSL_BENCHMARK(Bm_function_Openat_creat_rdwr);
+MUSL_BENCHMARK(Bm_function_Openat_RelativePath_AT_FDCWD);
+MUSL_BENCHMARK(Bm_function_Openat_RelativePath_fd);

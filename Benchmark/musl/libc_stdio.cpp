@@ -13,7 +13,6 @@
  * limitations under the License.
  */
 
-#include <benchmark/benchmark.h>
 #include "stdio.h"
 #include "stdlib.h"
 #include "stdarg.h"
@@ -622,6 +621,20 @@ static void Bm_function_Fseek_set(benchmark::State &state)
     state.SetItemsProcessed(state.iterations());
 }
 
+static void Bm_function_Fseeko_set(benchmark::State &state)
+{
+    FILE *f = fopen("/dev/zero", "r");
+    if (f == nullptr) {
+        perror("fopen fseeko set");
+        exit(EXIT_FAILURE);
+    }
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(fseeko(f, 0, SEEK_SET));
+    }
+    fclose(f);
+    state.SetItemsProcessed(state.iterations());
+}
+
 #define OFFSET_SIZE 10L
 static void Bm_function_Fseek_cur(benchmark::State &state)
 {
@@ -646,6 +659,34 @@ static void Bm_function_Fseek_end(benchmark::State &state)
     }
     for (auto _ : state) {
         benchmark::DoNotOptimize(fseek(f, -OFFSET_SIZE, SEEK_END));
+    }
+    fclose(f);
+    state.SetItemsProcessed(state.iterations());
+}
+
+static void Bm_function_Fseeko_cur(benchmark::State &state)
+{
+    FILE *f = fopen("/dev/zero", "r");
+    if (f == nullptr) {
+        perror("fopen fseeko cur");
+        exit(EXIT_FAILURE);
+    }
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(fseeko(f, OFFSET_SIZE, SEEK_CUR));
+    }
+    fclose(f);
+    state.SetItemsProcessed(state.iterations());
+}
+
+static void Bm_function_Fseeko_end(benchmark::State &state)
+{
+    FILE *f = fopen("/dev/zero", "r");
+    if (f == nullptr) {
+        perror("fopen fseeko end");
+        exit(EXIT_FAILURE);
+    }
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(fseeko(f, -OFFSET_SIZE, SEEK_END));
     }
     fclose(f);
     state.SetItemsProcessed(state.iterations());
@@ -1214,7 +1255,6 @@ static void Bm_function_Fseek_fflush(benchmark::State &state)
     state.SetItemsProcessed(state.iterations());
 }
 
-
 static void Bm_function_Sscanf_vsscanf_int(benchmark::State &state)
 {
     int year, month, day;
@@ -1236,6 +1276,127 @@ static void Bm_function_Feof(benchmark::State &state)
     }
     fclose(fp);
     state.SetBytesProcessed(state.iterations());
+}
+
+// Push the char character into the specified stream stream,
+// so that it is the next character to be read
+static void Bm_function_Ungetc(benchmark::State &state)
+{
+    int c;
+    FILE *fp = fopen("/dev/zero", "r");
+    if (fp == nullptr) {
+        perror("ungetc open");
+        exit(EXIT_FAILURE);
+    }
+    while (state.KeepRunning()) {
+        c = fgetc(fp);
+        ungetc(c, fp);
+    }
+    fclose(fp);
+}
+
+static void Bm_function_Setbuf(benchmark::State &state)
+{
+    FILE *stream = stdout;
+
+    const size_t nbytes = state.range(0);
+    const size_t bufAlignment = state.range(1);
+
+    vector<char> src;
+    char *bufAligned = GetAlignedPtr(&src, bufAlignment, nbytes);
+    for (auto _ : state) {
+        setbuf(stream, bufAligned);
+    }
+    setbuf(stream, nullptr);
+}
+
+static void Bm_function_Getchar(benchmark::State &state)
+{
+    FILE *fp = freopen("/dev/zero", "r", stdin);
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(getchar());
+    }
+    fclose(fp);
+}
+
+static void Bm_function_Fputc(benchmark::State &state)
+{
+    FILE *fp = fopen("/dev/zero", "w+");
+    if (fp == nullptr) {
+        perror("fopen fputc");
+        exit(EXIT_FAILURE);
+    }
+    char c = 'Z';
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(fputc(c, fp));
+    }
+    fclose(fp);
+    state.SetBytesProcessed(state.iterations());
+}
+
+static void Bm_function_Fputs(benchmark::State &state)
+{
+    FILE *fp = fopen("/dev/zero", "w+");
+    if (fp == nullptr) {
+        perror("fopen fputs");
+        exit(EXIT_FAILURE);
+    }
+    char str[BUFFERSIZE] = "asdhfdf";
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(fputs(str, fp));
+    }
+    fclose(fp);
+    state.SetBytesProcessed(state.iterations());
+}
+
+// Used to get the number of bytes offset from the beginning of the file
+// position pointer from the current position of the file
+static void Bm_function_Ftell(benchmark::State &state)
+{
+    FILE * fp = fopen("/dev/zero", "w+");
+    if (fp == nullptr) {
+        perror("fopen ftell");
+        exit(EXIT_FAILURE);
+    }
+    fseek(fp, 0, SEEK_END);
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(ftell(fp));
+    }
+    fclose(fp);
+    state.SetBytesProcessed(state.iterations());
+}
+
+// Rename files and directories
+static void Bm_function_Renameat(benchmark::State &state)
+{
+    const char *oldPath = "/data/data/test_old_renameat.txt";
+    int oldFd = open(oldPath, O_RDWR | O_CREAT, OPEN_MODE);
+    if (oldFd == -1) {
+        perror("open renameat old");
+        exit(EXIT_FAILURE);
+    }
+    close(oldFd);
+    const char *newPath = "/data/data/test_new_renameat.txt";
+    int newFd = open(newPath, O_RDWR | O_CREAT, OPEN_MODE);
+    if (newFd == -1) {
+        perror("open renameat new");
+        exit(EXIT_FAILURE);
+    }
+    close(newFd);
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(renameat(oldFd, oldPath, newFd, newPath));
+    }
+    remove(newPath);
+    state.SetBytesProcessed(state.iterations());
+}
+
+static void BM_function_Printf_d4(benchmark::State& state)
+{
+    char buf[BUFSIZ];
+    char a[4] = {127, 0, 0, 1};
+    while (state.KeepRunning()) {
+        snprintf(buf, sizeof(buf), "%d.%d.%d.%d", a[0],a[1],a[2],a[3]);
+    }
 }
 
 MUSL_BENCHMARK(Bm_function_Fopen_read);
@@ -1281,6 +1442,9 @@ MUSL_BENCHMARK(Bm_function_Rename);
 MUSL_BENCHMARK(Bm_function_Fseek_set);
 MUSL_BENCHMARK(Bm_function_Fseek_cur);
 MUSL_BENCHMARK(Bm_function_Fseek_end);
+MUSL_BENCHMARK(Bm_function_Fseeko_set);
+MUSL_BENCHMARK(Bm_function_Fseeko_cur);
+MUSL_BENCHMARK(Bm_function_Fseeko_end);
 MUSL_BENCHMARK(Bm_function_Sscanf_int);
 MUSL_BENCHMARK(Bm_function_Sscanf_double);
 MUSL_BENCHMARK(Bm_function_Sscanf_str);
@@ -1314,3 +1478,11 @@ MUSL_BENCHMARK(Bm_function_Fileno_unlocked);
 MUSL_BENCHMARK(Bm_function_Fseek_fflush);
 MUSL_BENCHMARK(Bm_function_Sscanf_vsscanf_int);
 MUSL_BENCHMARK(Bm_function_Feof);
+MUSL_BENCHMARK(Bm_function_Ungetc);
+MUSL_BENCHMARK_WITH_ARG(Bm_function_Setbuf, "ALIGNED_ONEBUF");
+MUSL_BENCHMARK(Bm_function_Getchar);
+MUSL_BENCHMARK(Bm_function_Fputc);
+MUSL_BENCHMARK(Bm_function_Fputs);
+MUSL_BENCHMARK(Bm_function_Ftell);
+MUSL_BENCHMARK(Bm_function_Renameat);
+MUSL_BENCHMARK(BM_function_Printf_d4);

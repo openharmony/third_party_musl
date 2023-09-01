@@ -13,11 +13,13 @@
  * limitations under the License.
  */
 
-#include <benchmark/benchmark.h>
 #include "errno.h"
 #include "util.h"
 
 using namespace std;
+
+#define BUFFERSIZE 1024
+char g_errorBuffer[BUFFERSIZE];
 
 static void Bm_function_Strerror_noerror(benchmark::State &state)
 {
@@ -34,7 +36,6 @@ static void Bm_function_Strerror_enoent(benchmark::State &state)
     for (auto _ : state) {
         benchmark::DoNotOptimize(strerror(e));
     }
-
     state.SetItemsProcessed(state.iterations());
 }
 
@@ -62,7 +63,6 @@ static void Bm_function_Strerror_eexist(benchmark::State &state)
     for (auto _ : state) {
         benchmark::DoNotOptimize(strerror(e));
     }
-
     state.SetItemsProcessed(state.iterations());
 }
 
@@ -93,6 +93,79 @@ static void Bm_function_Strerror_etimeout(benchmark::State &state)
     state.SetItemsProcessed(state.iterations());
 }
 
+// Used to convert the error number into the corresponding error message
+static void Bm_function_Strerror_r_noerror(benchmark::State &state)
+{
+    int e = 0;
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(strerror_r(e, g_errorBuffer, sizeof(g_errorBuffer)));
+    }
+    state.SetItemsProcessed(state.iterations());
+}
+
+static void Bm_function_Strerror_r_enoent(benchmark::State &state)
+{
+    int e = 2;
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(strerror_r(e, g_errorBuffer, sizeof(g_errorBuffer)));
+    }
+    state.SetItemsProcessed(state.iterations());
+}
+
+static void Bm_function_Strerror_r_enomem(benchmark::State &state)
+{
+    int e = 12;
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(strerror_r(e, g_errorBuffer, sizeof(g_errorBuffer)));
+    }
+    state.SetItemsProcessed(state.iterations());
+}
+
+static void Bm_function_Strerror_r_eacces(benchmark::State &state)
+{
+    int e = 13;
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(strerror_r(e, g_errorBuffer, sizeof(g_errorBuffer)));
+    }
+    state.SetItemsProcessed(state.iterations());
+}
+
+static void Bm_function_Strerror_r_eexist(benchmark::State &state)
+{
+    int e = 17;
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(strerror_r(e, g_errorBuffer, sizeof(g_errorBuffer)));
+    }
+    state.SetItemsProcessed(state.iterations());
+}
+
+static void Bm_function_Strerror_r_einval(benchmark::State &state)
+{
+    int e = 22;
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(strerror_r(e, g_errorBuffer, sizeof(g_errorBuffer)));
+    }
+    state.SetItemsProcessed(state.iterations());
+}
+
+static void Bm_function_Strerror_r_erofs(benchmark::State &state)
+{
+    int e = 30;
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(strerror_r(e, g_errorBuffer, sizeof(g_errorBuffer)));
+    }
+    state.SetItemsProcessed(state.iterations());
+}
+
+static void Bm_function_Strerror_r_etimeout(benchmark::State &state)
+{
+    int e = 110;
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(strerror_r(e, g_errorBuffer, sizeof(g_errorBuffer)));
+    }
+    state.SetItemsProcessed(state.iterations());
+}
+
 MUSL_BENCHMARK(Bm_function_Strerror_noerror);
 MUSL_BENCHMARK(Bm_function_Strerror_enoent);
 MUSL_BENCHMARK(Bm_function_Strerror_enomem);
@@ -101,3 +174,11 @@ MUSL_BENCHMARK(Bm_function_Strerror_eexist);
 MUSL_BENCHMARK(Bm_function_Strerror_einval);
 MUSL_BENCHMARK(Bm_function_Strerror_erofs);
 MUSL_BENCHMARK(Bm_function_Strerror_etimeout);
+MUSL_BENCHMARK(Bm_function_Strerror_r_noerror);
+MUSL_BENCHMARK(Bm_function_Strerror_r_enoent);
+MUSL_BENCHMARK(Bm_function_Strerror_r_enomem);
+MUSL_BENCHMARK(Bm_function_Strerror_r_eacces);
+MUSL_BENCHMARK(Bm_function_Strerror_r_eexist);
+MUSL_BENCHMARK(Bm_function_Strerror_r_einval);
+MUSL_BENCHMARK(Bm_function_Strerror_r_erofs);
+MUSL_BENCHMARK(Bm_function_Strerror_r_etimeout);

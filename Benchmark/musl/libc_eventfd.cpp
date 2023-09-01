@@ -13,27 +13,26 @@
  * limitations under the License.
  */
 
-#include "sys/select.h"
-#include "sys/time.h"
-#include "sys/types.h"
+#include "sys/eventfd.h"
 #include "unistd.h"
 #include "util.h"
 
-using namespace std;
-
-#define MAX_MONITOR_FDS 2
-
-static void Bm_function_Select(benchmark::State &state)
+// Write a value to eventfd
+static void Bm_function_eventfd_write(benchmark::State &state)
 {
-    fd_set readfds, writefds;
-    FD_ZERO(&readfds);
-    FD_ZERO(&writefds);
-    FD_SET(0, &readfds);
-    FD_SET(1, &writefds);
-    for (auto _ : state) {
-        benchmark::DoNotOptimize(select(MAX_MONITOR_FDS, &readfds, &writefds, 0, 0));
+    unsigned int initValue = 2;
+    int fd = eventfd(initValue, O_NONBLOCK);
+    if (fd == -1) {
+        perror("evevtfd eventfd_write");
+        exit(EXIT_FAILURE);
     }
-    state.SetItemsProcessed(state.iterations());
+    for (auto _ : state) {
+        if (eventfd_write(fd, initValue + 1) != 0) {
+            perror("eventfd_write proc");
+            exit(EXIT_FAILURE);
+        }
+    }
+    close(fd);
 }
 
-MUSL_BENCHMARK(Bm_function_Select);
+MUSL_BENCHMARK(Bm_function_eventfd_write);
