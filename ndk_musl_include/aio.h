@@ -44,10 +44,6 @@ struct aiocb {
 #define off64_t off_t
 #endif
 
-#if _REDIR_TIME64
-__REDIR(aio_suspend, __aio_suspend_time64);
-#endif
-
 #ifdef __cplusplus
 }
 #endif
