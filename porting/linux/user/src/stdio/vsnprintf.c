@@ -19,7 +19,6 @@ static size_t sn_write(FILE *f, const unsigned char *s, size_t l)
 		size_t k = MIN(l, c->n - already_size);
 		memcpy(f->wpos, s, k);
 		f->wpos += k;
-		*f->wpos = '\0';
 	}
 	/* pretend to succeed, even if we discarded extra data */
 	return l;
