@@ -132,6 +132,8 @@ static void pop_arg(union arg *arg, int type, va_list *ap)
 
 static void out(FILE *f, const char *s, size_t l)
 {
+	if (!l) return;
+
 	/* write to file buffer if flag F_PBUF is available */
 	if (!(f->flags & F_ERR) && !(f->flags & F_PBUF)) {
 		__fwritex((void *)s, l, f);
@@ -144,10 +146,10 @@ static void out(FILE *f, const char *s, size_t l)
 
 static void pad(FILE *f, char c, int w, int l, int fl)
 {
-	char pad[256];
+	char pad[16];
 	if (fl & (LEFT_ADJ | ZERO_PAD) || l >= w) return;
 	l = w - l;
-	memset(pad, c, l>sizeof pad ? sizeof pad : l);
+	__builtin_memset(pad, c, sizeof pad);
 	for (; l >= sizeof pad; l -= sizeof pad)
 		out(f, pad, sizeof pad);
 	out(f, pad, l);
@@ -702,6 +704,13 @@ int vfprintf(FILE *restrict f, const char *restrict fmt, va_list ap)
 		f->buf_size = 0;
 		f->wpos = f->wbase = f->wend = 0;
 	}
+	else
+	{
+		if (f->flags & F_PBUF) {
+			*f->wpos = '\0';
+		}
+	}
+
 	if (f->flags & F_ERR) ret = -1;
 	f->flags |= olderr;
 	FUNLOCK(f);
