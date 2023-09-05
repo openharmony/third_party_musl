@@ -13,7 +13,6 @@
  * limitations under the License.
  */
 
-#include <benchmark/benchmark.h>
 #include "sys/types.h"
 #include "sys/stat.h"
 #include "fcntl.h"
@@ -34,6 +33,12 @@ static const vector<int> mmapFlags = {
     MAP_PRIVATE | MAP_ANONYMOUS | MAP_HUGETLB | MAP_POPULATE,
     MAP_PRIVATE | MAP_ANONYMOUS | MAP_HUGE_2MB | MAP_POPULATE,
     MAP_PRIVATE | MAP_ANONYMOUS | MAP_HUGE_1GB | MAP_POPULATE,
+};
+
+static const vector<int> msyncFlags = {
+    MS_ASYNC,
+    MS_SYNC,
+    MS_INVALIDATE,
 };
 
 static const vector<int> mmapLength {
@@ -88,6 +93,24 @@ static void PrepareArgsInMdvise(benchmark::internal::Benchmark* b)
     for (auto l : mmapLength) {
         for (auto t : mdviseType) {
             b->Args({l, t});
+        }
+    }
+}
+
+static void PrepareArgsInMremap(benchmark::internal::Benchmark* b)
+{
+    for (auto oldLength : mmapLength) {
+        for (auto newLength : mmapLength) {
+            b->Args({oldLength, newLength});
+        }
+    }
+}
+
+static void PrepareArgsInMsync(benchmark::internal::Benchmark* b)
+{
+    for (auto l : mmapLength) {
+        for (auto f : msyncFlags) {
+            b->Args({l, f});
         }
     }
 }
@@ -180,6 +203,49 @@ static void Bm_function_Madvise(benchmark::State &state)
     munmap(addr, length);
 }
 
+static void Bm_function_Mremap(benchmark::State &state)
+{
+    size_t oldLength = state.range(0);
+    size_t newLength = state.range(1);
+
+    for (auto _ : state) {
+        state.PauseTiming();
+        void *oldAddr = mmap(nullptr, oldLength, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+        state.ResumeTiming();
+
+        if (oldAddr != MAP_FAILED) {
+            void *newAddr = mremap(oldAddr, oldLength, newLength, MREMAP_MAYMOVE);
+            if (newAddr != MAP_FAILED) {
+                state.PauseTiming();
+                munmap(newAddr, newLength);
+                state.ResumeTiming();
+            } else {
+                perror("mmap");
+                exit(EXIT_FAILURE);
+            }
+        }
+    }
+}
+
+static void Bm_function_Msync(benchmark::State &state)
+{
+    size_t length = state.range(0);
+    int flags = state.range(1);
+    for (auto _ : state) {
+        state.PauseTiming();
+        char* mem = (char *)mmap(nullptr, length, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+        state.ResumeTiming();
+
+        if (mem != MAP_FAILED) {
+            msync(mem, length, flags);
+
+            state.PauseTiming();
+            munmap(mem, length);
+            state.ResumeTiming();
+        }
+    }
+}
+
 static void Bm_function_mprotect(benchmark::State &state)
 {
     size_t pagesize = sysconf(_SC_PAGE_SIZE);
@@ -194,9 +260,37 @@ static void Bm_function_mprotect(benchmark::State &state)
     free(pages);
 }
 
-BENCHMARK(Bm_function_Mmap_anonymous)->Apply(PrepareArgs);
-BENCHMARK(Bm_function_Munmap_anonymous)->Apply(PrepareArgs);
-BENCHMARK(Bm_function_Mmap_fd)->Apply(PrepareArgs);
-BENCHMARK(Bm_function_Munmap_fd)->Apply(PrepareArgs);
-BENCHMARK(Bm_function_Madvise)->Apply(PrepareArgsInMdvise);
+// Used to unlock some or all of a process's virtual memory
+// allowing it to be swapped out to swap space on disk
+static void Bm_function_Mlock_Munlock(benchmark::State &state)
+{
+    size_t length = state.range(0);
+    void *addr = mmap(nullptr, length, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
+    if (addr == MAP_FAILED) {
+        perror("mmap munlock");
+        exit(EXIT_FAILURE);
+    }
+
+    for (auto _ : state) {
+        if (mlock(addr, length) != 0) {
+            perror("mlock munlock");
+            exit(EXIT_FAILURE);
+        }
+
+        if (munlock(addr, length) != 0) {
+            perror("munlock proc");
+            exit(EXIT_FAILURE);
+        }
+    }
+    munmap(addr, length);
+}
+
+MUSL_BENCHMARK_WITH_APPLY(Bm_function_Mmap_anonymous, PrepareArgs);
+MUSL_BENCHMARK_WITH_APPLY(Bm_function_Munmap_anonymous, PrepareArgs);
+MUSL_BENCHMARK_WITH_APPLY(Bm_function_Mmap_fd, PrepareArgs);
+MUSL_BENCHMARK_WITH_APPLY(Bm_function_Munmap_fd, PrepareArgs);
+MUSL_BENCHMARK_WITH_APPLY(Bm_function_Madvise, PrepareArgsInMdvise);
+MUSL_BENCHMARK_WITH_APPLY(Bm_function_Mremap, PrepareArgsInMremap);
+MUSL_BENCHMARK_WITH_APPLY(Bm_function_Msync, PrepareArgsInMsync);
 MUSL_BENCHMARK_WITH_ARG(Bm_function_mprotect, "BENCHMARK_8");
+MUSL_BENCHMARK_WITH_ARG(Bm_function_Mlock_Munlock, "COMMON_ARGS");

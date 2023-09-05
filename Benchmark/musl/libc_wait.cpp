@@ -13,27 +13,26 @@
  * limitations under the License.
  */
 
-#include "sys/select.h"
-#include "sys/time.h"
+#include "sys/wait.h"
 #include "sys/types.h"
 #include "unistd.h"
 #include "util.h"
 
-using namespace std;
-
-#define MAX_MONITOR_FDS 2
-
-static void Bm_function_Select(benchmark::State &state)
+// Wait for the child thread to finish executing
+static void Bm_function_Wait(benchmark::State &state)
 {
-    fd_set readfds, writefds;
-    FD_ZERO(&readfds);
-    FD_ZERO(&writefds);
-    FD_SET(0, &readfds);
-    FD_SET(1, &writefds);
-    for (auto _ : state) {
-        benchmark::DoNotOptimize(select(MAX_MONITOR_FDS, &readfds, &writefds, 0, 0));
+    pid_t pid = fork();
+    if (pid < 0) {
+        perror("fork execlp ls");
+        exit(EXIT_FAILURE);
     }
-    state.SetItemsProcessed(state.iterations());
+    for (auto _ : state) {
+        if (pid == 0) {
+            exit(EXIT_SUCCESS);
+        } else {
+            wait(nullptr);
+        }
+    }
 }
 
-MUSL_BENCHMARK(Bm_function_Select);
+MUSL_BENCHMARK(Bm_function_Wait);

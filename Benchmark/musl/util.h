@@ -15,6 +15,7 @@
 
 #pragma once
 
+#include <benchmark/benchmark.h>
 #include <stdint.h>
 
 #include <map>
@@ -33,10 +34,22 @@
 #endif
 
 typedef void (*BenchmarkFunc) (void);
+typedef void (*ApplyBenchmarkFunc) (benchmark::internal::Benchmark*);
 
 extern std::mutex g_benchmarkLock;
 
 extern std::map<std::string, std::pair<BenchmarkFunc, std::string>> g_allBenchmarks;
+
+extern std::map<std::string, std::pair<BenchmarkFunc, ApplyBenchmarkFunc>> g_applyBenchmarks;
+
+static int __attribute__((unused)) AddApplyBenchmark(const std::string& funcName, BenchmarkFunc funcPtr,
+                                                     ApplyBenchmarkFunc applyFuncPtr)
+{
+    g_benchmarkLock.lock();
+    g_applyBenchmarks.emplace(std::string(funcName), std::make_pair(funcPtr, applyFuncPtr));
+    g_benchmarkLock.unlock();
+    return 0;
+}
 
 static int  __attribute__((unused)) AddBenchmark(const std::string& funcName,
                                                  BenchmarkFunc funcPtr, const std::string& arg = "")
@@ -53,6 +66,11 @@ static int  __attribute__((unused)) AddBenchmark(const std::string& funcName,
 #define MUSL_BENCHMARK_WITH_ARG(n, arg) \
     int _musl_benchmark_##n __attribute__((unused)) = AddBenchmark(std::string(#n), \
                                                                    reinterpret_cast<BenchmarkFunc>(n), arg)
+
+#define MUSL_BENCHMARK_WITH_APPLY(n, arg) \
+    int _apply_musl_benchmark_##n __attribute__((unused)) = AddApplyBenchmark(std::string(#n), \
+                                                                   reinterpret_cast<BenchmarkFunc>(n), \
+                                                                   reinterpret_cast<ApplyBenchmarkFunc>(arg))
 
 constexpr auto K = 1024;
 constexpr auto M = 1024 * 1024;

@@ -13,10 +13,13 @@
  * limitations under the License.
  */
 
-#include <benchmark/benchmark.h>
 #include "stdlib.h"
 #include "stdio.h"
 #include "string.h"
+#include "fcntl.h"
+#include "unistd.h"
+#include "wchar.h"
+#include "locale.h"
 #include "util.h"
 
 using namespace std;
@@ -25,6 +28,44 @@ typedef struct {
     char name[20];
     int age;
 } Nier;
+
+static const vector<int> memalignLength {
+    8,
+    16,
+    64,
+    1 * K,
+    4 * K,
+    64 * K,
+    256 * K,
+    1 * M,
+    4 * M,
+    64 * M,
+    256 * M,
+    1 * G,
+};
+
+static const vector<int> memalignAlign {
+    8,
+    16,
+    64,
+    256,
+    1 * K,
+    4 * K,
+    64 * K,
+    256 * K,
+    1 * M,
+};
+
+static void PrepareArgsMemalign(benchmark::internal::Benchmark* b)
+{
+    for (auto a : memalignAlign) {
+        for (auto l : memalignLength) {
+            if (l >= a && l % a == 0) {
+                b->Args({a, l});
+            }
+        }
+    }
+}
 
 int CompareInt(const void *a, const void *b)
 {
@@ -145,7 +186,6 @@ static void Bm_function_Qsortstring(benchmark::State &state)
 static void Bm_function_Qsortstruct(benchmark::State &state)
 {
     const int len = 9;
-
     for (auto _ : state) {
         Nier nidate[len] = { {"Meihuagao", 23}, {"Sdifenzhou", 68}, {"Amusterlang", 99},
                              {"elun", 56}, {"yishinuala", 120}, {"huajiahaochi", 22},
@@ -221,6 +261,88 @@ static void Bm_function_Realpath(benchmark::State &state)
     }
 }
 
+static void Bm_function_Posix_Memalign(benchmark::State &state)
+{
+    size_t align = state.range(0);
+    size_t length = state.range(1);
+    for (auto _ : state) {
+        void *buf = nullptr;
+        int ret = posix_memalign(&buf, align, length);
+        if (ret) {
+            perror("posix_memalign failed");
+            exit(EXIT_FAILURE);
+        }
+
+        state.PauseTiming();
+        free(buf);
+        state.ResumeTiming();
+    }
+}
+
+static void Bm_function_Mkostemps(benchmark::State &state)
+{
+    char fileTemplate[] = "/tmp/mkostemps-XXXXXX-test";
+    for (auto _ : state) {
+        int fd = mkostemps(fileTemplate, 5, O_SYNC);
+        if (fd >= 0) {
+            unlink(fileTemplate);
+            close(fd);
+        }
+    }
+}
+
+// Generate a random number seed and receive a sequence of random numbers
+static void Bm_function_Srand48_Lrand48(benchmark::State &state)
+{
+    for (auto _ : state) {
+        srand48(time(nullptr));
+        benchmark::DoNotOptimize(lrand48());
+    }
+}
+
+// Customize the value of the environment variable and delete it
+static void Bm_function_Putenv_Unsetenv(benchmark::State &state)
+{
+    const char *putpath[] = { "TEST_A=/usr/local/myapp", "TEST_B=/bin/yes", "TEST_C=/usr/local/bin:/usr/bin:/bin",
+                              "TEST_D=vim", "TEST_E=hello", "TEST_F=en_US.UTF-8", "TEST_G=myname", "TEST_H=nichenzhan" };
+    const char *unsetpath[] = { "TEST_A", "TEST_B", "TEST_C", "TEST_D",
+                                "TEST_E", "TEST_F", "TEST_G", "TEST_H" };
+    const char *a = putpath[state.range(0)];
+    const char *b = unsetpath[state.range(0)];
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(putenv((char*)a));
+        benchmark::DoNotOptimize(unsetenv(b));
+    }
+}
+
+static void Bm_function_Wcstombs(benchmark::State &state)
+{
+    setlocale(LC_ALL, "");
+    const wchar_t wstr[] = L"z\u00df\u6c34\U0001f34c";
+    size_t len = wcslen(wstr);
+    char *str = (char*)malloc(sizeof(char) * (len + 1));
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(wcstombs(str, wstr, len));
+    }
+    free(str);
+}
+
+void ExitFunc(){};
+static void Bm_function_cxa_atexit(benchmark::State &state)
+{
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(atexit(ExitFunc));
+    }
+}
+
+static void Bm_function_Srandom(benchmark::State &state)
+{
+    unsigned int seed = (unsigned int)time(nullptr);
+    for (auto _ : state) {
+        srandom(seed);
+    }
+}
+
 MUSL_BENCHMARK_WITH_ARG(Bm_function_Strtod, "BENCHMARK_8");
 MUSL_BENCHMARK_WITH_ARG(Bm_function_Strtof, "BENCHMARK_8");
 MUSL_BENCHMARK_WITH_ARG(Bm_function_Strtold, "BENCHMARK_8");
@@ -235,3 +357,10 @@ MUSL_BENCHMARK(Bm_function_Getenv_LD_LIBRARY_PATH);
 MUSL_BENCHMARK(Bm_function_Getenv_LD_PRELOAD);
 MUSL_BENCHMARK(Bm_function_Getenv_LC_ALL);
 MUSL_BENCHMARK(Bm_function_Getenv_LOGNAME);
+MUSL_BENCHMARK_WITH_APPLY(Bm_function_Posix_Memalign, PrepareArgsMemalign);
+MUSL_BENCHMARK(Bm_function_Mkostemps);
+MUSL_BENCHMARK(Bm_function_Srand48_Lrand48);
+MUSL_BENCHMARK_WITH_ARG(Bm_function_Putenv_Unsetenv, "BENCHMARK_8");
+MUSL_BENCHMARK(Bm_function_Wcstombs);
+MUSL_BENCHMARK(Bm_function_cxa_atexit);
+MUSL_BENCHMARK(Bm_function_Srandom);

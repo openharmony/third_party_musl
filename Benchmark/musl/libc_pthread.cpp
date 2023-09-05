@@ -13,12 +13,13 @@
  * limitations under the License.
  */
 
-#include <benchmark/benchmark.h>
 #include "pthread.h"
 #include "semaphore.h"
 #include "signal.h"
 #include "threads.h"
 #include "unistd.h"
+#include "sys/tgkill.h"
+#include "time.h"
 #include "util.h"
 
 static void Bm_function_pthread_mutexattr_settype(benchmark::State &state)
@@ -274,6 +275,27 @@ static void Bm_function_pthread_cond_init_destroy(benchmark::State &state)
     state.SetBytesProcessed(state.iterations());
 }
 
+static void Bm_function_pthread_rwlock_init(benchmark::State &state)
+{
+    pthread_rwlock_t rwlock;
+
+    for (auto _ : state) {
+        pthread_rwlock_init(&rwlock, nullptr);
+    }
+    state.SetBytesProcessed(state.iterations());
+}
+
+static void Bm_function_pthread_rwlock_init_destroy(benchmark::State &state)
+{
+    pthread_rwlock_t rwlock;
+
+    for (auto _ : state) {
+        pthread_rwlock_init(&rwlock, nullptr);
+        pthread_rwlock_destroy(&rwlock);
+    }
+    state.SetBytesProcessed(state.iterations());
+}
+
 static void BM_pthread_rwlock_tryread(benchmark::State& state)
 {
     pthread_rwlock_t lock;
@@ -473,6 +495,248 @@ static void Bm_function_pthread_setcancelstate(benchmark::State &state)
     state.SetBytesProcessed(state.iterations());
 }
 
+void *GetThreadId(void *arg)
+{
+    pthread_t tid = pthread_self();
+    if (tid == 0) {
+        perror("thread create fail");
+        exit(EXIT_FAILURE);
+    }
+    pthread_exit(nullptr);
+}
+
+// Check that the two threads are equal
+static void Bm_function_pthread_equal(benchmark::State &state)
+{
+    pthread_t thread1, thread2;
+    pthread_create(&thread1, nullptr, GetThreadId, nullptr);
+    pthread_create(&thread2, nullptr, GetThreadId, nullptr);
+    pthread_join(thread1, nullptr);
+    pthread_join(thread2, nullptr);
+    while (state.KeepRunning()) {
+        benchmark::DoNotOptimize(pthread_equal(thread1, thread2));
+    }
+    state.SetBytesProcessed(state.iterations());
+}
+
+// Initialize and destroy thread properties
+static void Bm_function_pthread_attr_init_destroy(benchmark::State &state)
+{
+    pthread_attr_t attr;
+    int ret;
+    pthread_t thread1, thread2;
+    while (state.KeepRunning()) {
+        ret = pthread_attr_init(&attr);
+        benchmark::DoNotOptimize(ret);
+        state.PauseTiming();
+        pthread_create(&thread1, &attr, GetThreadId, nullptr);
+        pthread_create(&thread2, &attr, GetThreadId, nullptr);
+        pthread_join(thread1, nullptr);
+        pthread_join(thread2, nullptr);
+        state.ResumeTiming();
+        benchmark::DoNotOptimize(pthread_attr_destroy(&attr));
+    }
+    state.SetBytesProcessed(state.iterations());
+}
+
+static void Bm_function_pthread_sigmask(benchmark::State &state)
+{
+    sigset_t set, oset;
+    sigemptyset(&set);
+    sigaddset(&set, SIGQUIT);
+    sigaddset(&set, SIGUSR1);
+
+    while (state.KeepRunning()) {
+        benchmark::DoNotOptimize(pthread_sigmask(SIG_BLOCK, &set, &oset));
+        benchmark::DoNotOptimize(pthread_sigmask(SIG_SETMASK, &oset, nullptr));
+    }
+    state.SetBytesProcessed(state.iterations());
+}
+
+static pthread_spinlock_t g_spinLock;
+void* Func(void* arg)
+{
+    benchmark::State *statePtr = (benchmark::State *)arg;
+    statePtr->ResumeTiming();
+    benchmark::DoNotOptimize(pthread_spin_lock(&g_spinLock));
+    pthread_spin_unlock(&g_spinLock);
+    statePtr->PauseTiming();
+    pthread_exit(nullptr);
+}
+
+// Requests a lock spin lock
+static void Bm_function_pthread_spin_lock_and_spin_unlock(benchmark::State &state)
+{
+    pthread_t tid;
+    pthread_spin_init(&g_spinLock, PTHREAD_PROCESS_PRIVATE);
+    while (state.KeepRunning()) {
+        state.PauseTiming();
+        pthread_create(&tid, nullptr, Func, &state);
+        pthread_join(tid, nullptr);
+        state.ResumeTiming();
+    }
+    pthread_spin_destroy(&g_spinLock);
+    state.SetBytesProcessed(state.iterations());
+}
+
+static void Bm_function_pthread_mutexattr_init_and_mutexattr_destroy(benchmark::State &state)
+{
+    pthread_mutexattr_t mutexAttr;
+    while (state.KeepRunning()) {
+        pthread_mutexattr_init(&mutexAttr);
+        pthread_mutexattr_destroy(&mutexAttr);
+    }
+    state.SetBytesProcessed(state.iterations());
+}
+
+void* ThreadFunc(void* arg)
+{
+    return nullptr;
+}
+
+static void Bm_function_pthread_detach(benchmark::State &state)
+{
+    while (state.KeepRunning()) {
+        state.PauseTiming();
+        pthread_t tid;
+        pthread_create(&tid, nullptr, ThreadFunc, nullptr);
+        state.ResumeTiming();
+        pthread_detach(tid);
+    }
+    state.SetBytesProcessed(state.iterations());
+}
+
+void* ThreadFuncWait(void* arg) {
+    sleep(1);
+    return nullptr;
+}
+
+// Set a unique name for the thread which is limited to 16 characters in length
+// including terminating null bytes
+#define NAME_LEN 16
+static void Bm_function_pthread_setname_np(benchmark::State &state)
+{
+    pthread_t tid;
+    char threadName[NAME_LEN] = "THREADFOO";
+    if (pthread_create(&tid, nullptr, ThreadFuncWait, nullptr) != 0) {
+        perror("pthread_create pthread_setname_np");
+        exit(EXIT_FAILURE);
+    }
+
+    while (state.KeepRunning()) {
+        if (pthread_setname_np(tid, threadName) != 0) {
+            perror("pthread_setname_np proc");
+            exit(EXIT_FAILURE);
+        }
+    }
+    pthread_join(tid, nullptr);
+
+    state.SetBytesProcessed(state.iterations());
+}
+
+static void Bm_function_pthread_attr_setschedpolicy(benchmark::State &state)
+{
+    pthread_attr_t attr;
+    pthread_attr_init(&attr);
+    int setpolicy = 1;
+    while (state.KeepRunning()) {
+        if (pthread_attr_setschedpolicy(&attr, setpolicy) != 0) {
+            perror("pthread_attr_setschedpolicy proc");
+            exit(EXIT_FAILURE);
+        }
+    }
+    pthread_attr_destroy(&attr);
+}
+
+// Get the scheduling parameter param of the thread attribute ATTR
+static void Bm_function_pthread_attr_getschedparam(benchmark::State &state)
+{
+    pthread_attr_t attr;
+    struct sched_param setparam;
+    struct sched_param getparam;
+    setparam.sched_priority = 1;
+    pthread_attr_init(&attr);
+    if (pthread_attr_setschedparam(&attr, &setparam) != 0) {
+        perror("pthread_attr_setschedparam pthread_attr_getschedparam");
+        exit(EXIT_FAILURE);
+    }
+    getparam.sched_priority = 0;
+    while (state.KeepRunning()) {
+        if (pthread_attr_getschedparam(&attr, &getparam) != 0) {
+            perror("pthread_attr_getschedparam proc");
+            exit(EXIT_FAILURE);
+        }
+    }
+    pthread_attr_destroy(&attr);
+}
+
+static void Bm_function_pthread_condattr_setclock(benchmark::State &state)
+{
+    pthread_condattr_t attr;
+    pthread_condattr_init(&attr);
+    while (state.KeepRunning()) {
+        if (pthread_condattr_setclock(&attr,  CLOCK_MONOTONIC_RAW) != 0) {
+            perror("pthread_condattr_setclock proc");
+            exit(EXIT_FAILURE);
+        }
+    }
+    pthread_condattr_destroy(&attr);
+    state.SetBytesProcessed(state.iterations());
+}
+
+static void Bm_function_Tgkill(benchmark::State &state)
+{
+    pid_t pid = getpid();
+    pid_t pgid = getpgid(pid);
+    for (auto _ : state) {
+        if (tgkill(pgid, pid, SIGCONT) == -1) {
+            perror("tgkill proc");
+            exit(EXIT_FAILURE);
+        }
+    }
+}
+
+// Set the scheduling parameter param of the thread attribute ATTR
+static void Bm_function_pthread_attr_setschedparam(benchmark::State &state)
+{
+    pthread_attr_t attr;
+    struct sched_param setparam;
+    setparam.sched_priority = 1;
+    pthread_attr_init(&attr);
+    while (state.KeepRunning()) {
+        if (pthread_attr_setschedparam(&attr, &setparam) != 0) {
+            perror("pthread_attr_setschedparam pthread_attr_getschedparam");
+            exit(EXIT_FAILURE);
+        }
+    }
+    pthread_attr_destroy(&attr);
+}
+void PthreadCleanup(void* arg)
+{
+    //empty
+}
+
+void* CleanupPushAndPop(void* arg)
+{
+    benchmark::State *statePtr = (benchmark::State *)arg;
+    statePtr->ResumeTiming();
+    pthread_cleanup_push(PthreadCleanup, NULL);
+    pthread_cleanup_pop(0);
+    statePtr->PauseTiming();
+    pthread_exit(nullptr);
+}
+
+static void Bm_function_pthread_clean_push_and_pop(benchmark::State &state)
+{
+    pthread_t tid;
+    while (state.KeepRunning()) {
+        state.PauseTiming();
+        pthread_create(&tid, nullptr, CleanupPushAndPop, &state);
+        pthread_join(tid, nullptr);
+        state.ResumeTiming();
+    }
+}
+
 MUSL_BENCHMARK(Bm_function_Sigaddset);
 MUSL_BENCHMARK(Bm_function_pthread_cond_signal);
 MUSL_BENCHMARK(Bm_function_pthread_mutexattr_settype);
@@ -493,6 +757,8 @@ MUSL_BENCHMARK(Bm_function_pthread_mutex_init);
 MUSL_BENCHMARK(Bm_function_pthread_mutex_init_destroy);
 MUSL_BENCHMARK(Bm_function_pthread_cond_init);
 MUSL_BENCHMARK(Bm_function_pthread_cond_init_destroy);
+MUSL_BENCHMARK(Bm_function_pthread_rwlock_init);
+MUSL_BENCHMARK(Bm_function_pthread_rwlock_init_destroy);
 MUSL_BENCHMARK(BM_pthread_rwlock_tryread);
 MUSL_BENCHMARK(BM_pthread_rwlock_trywrite);
 MUSL_BENCHMARK(Bm_function_tss_get);
@@ -503,3 +769,16 @@ MUSL_BENCHMARK(Bm_function_pthread_cond_broadcast);
 MUSL_BENCHMARK(Bm_function_Sem_timewait);
 MUSL_BENCHMARK(Bm_function_Sem_post_wait);
 MUSL_BENCHMARK(Bm_function_pthread_setcancelstate);
+MUSL_BENCHMARK(Bm_function_pthread_equal);
+MUSL_BENCHMARK(Bm_function_pthread_attr_init_destroy);
+MUSL_BENCHMARK(Bm_function_pthread_sigmask);
+MUSL_BENCHMARK(Bm_function_pthread_spin_lock_and_spin_unlock);
+MUSL_BENCHMARK(Bm_function_pthread_mutexattr_init_and_mutexattr_destroy);
+MUSL_BENCHMARK(Bm_function_pthread_detach);
+MUSL_BENCHMARK(Bm_function_pthread_setname_np);
+MUSL_BENCHMARK(Bm_function_pthread_attr_setschedpolicy);
+MUSL_BENCHMARK(Bm_function_pthread_attr_getschedparam);
+MUSL_BENCHMARK(Bm_function_pthread_condattr_setclock);
+MUSL_BENCHMARK(Bm_function_Tgkill);
+MUSL_BENCHMARK(Bm_function_pthread_attr_setschedparam);
+MUSL_BENCHMARK(Bm_function_pthread_clean_push_and_pop);

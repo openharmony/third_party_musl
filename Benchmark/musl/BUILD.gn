@@ -14,6 +14,7 @@
 import("//build/ohos.gni")
 
 group("benchmark_musl_group") {
+  testonly = true
   deps = [
     ":musl_benchmark",
     ":musl_dlopen",
@@ -27,9 +28,11 @@ ohos_executable("musl_benchmark") {
     "libc_dirent.cpp",
     "libc_epoll.cpp",
     "libc_errno.cpp",
+    "libc_eventfd.cpp",
     "libc_fcntl.cpp",
     "libc_fenv.cpp",
-    "libc_ioctl.cpp",
+    "libc_grp.cpp",
+    "libc_inotify.cpp",
     "libc_linker.cpp",
     "libc_locale.cpp",
     "libc_malloc.cpp",
@@ -37,6 +40,7 @@ ohos_executable("musl_benchmark") {
     "libc_mman.cpp",
     "libc_network.cpp",
     "libc_pthread.cpp",
+    "libc_pwd.cpp",
     "libc_random.cpp",
     "libc_sched.cpp",
     "libc_select.cpp",
@@ -46,8 +50,10 @@ ohos_executable("musl_benchmark") {
     "libc_stdlib.cpp",
     "libc_string.cpp",
     "libc_syscall.cpp",
+    "libc_sysinfo.cpp",
     "libc_time.cpp",
     "libc_unistd.cpp",
+    "libc_wait.cpp",
     "socket_test.cpp",
     "util.cpp",
   ]
@@ -58,7 +64,7 @@ ohos_executable("musl_benchmark") {
   ]
 
   if (current_cpu == "arm") {
-    defines = ["SYSTEM_32_BIT"]
+    defines = [ "SYSTEM_32_BIT" ]
   }
 
   part_name = "musl"
@@ -68,8 +74,10 @@ ohos_executable("musl_benchmark") {
 ohos_executable("musl_dlopen") {
   sources = [ "libc_dlopen.cpp" ]
 
+  deps = [ "//third_party/benchmark:benchmark" ]
+
   if (current_cpu == "arm") {
-    defines = ["SYSTEM_32_BIT"]
+    defines = [ "SYSTEM_32_BIT" ]
   }
 
   part_name = "musl"
