@@ -13,7 +13,6 @@
  * limitations under the License.
  */
 
-#include <benchmark/benchmark.h>
 #include "signal.h"
 #include "util.h"
 
@@ -30,4 +29,70 @@ static void Bm_function_Sigaction(benchmark::State &state)
     }
 }
 
+static void Bm_function_Sigemptyset(benchmark::State &state)
+{
+    for (auto _ : state) {
+        sigset_t set;
+        benchmark::DoNotOptimize(sigemptyset(&set));
+    }
+}
+
+static void Bm_function_Sigaltstack(benchmark::State &state)
+{
+    for (auto _ : state) {
+        state.PauseTiming();
+        stack_t ss, old_ss;
+        ss.ss_sp = malloc(SIGSTKSZ);
+        if (ss.ss_sp == nullptr) {
+            perror("malloc");
+            exit(EXIT_FAILURE);
+        }
+
+        ss.ss_size = SIGSTKSZ;
+        ss.ss_flags = 0;
+        state.ResumeTiming();
+        if (sigaltstack(&ss, &old_ss) == -1) {
+            perror("sigaltstack");
+            exit(EXIT_FAILURE);
+        }
+
+        state.PauseTiming();
+        if (sigaltstack(&old_ss, nullptr) == -1) {
+            perror("sigaltstack");
+            exit(EXIT_FAILURE);
+        }
+        free(ss.ss_sp);
+        state.ResumeTiming();
+    }
+}
+
+static void Bm_function_Sigdelset(benchmark::State &state)
+{
+    sigset_t set;
+    for (auto _ : state) {
+        sigaddset(&set, SIGINT);
+        sigdelset(&set, SIGINT);
+    }
+}
+
+static void Bm_function_Sigtimedwait(benchmark::State &state)
+{
+    sigset_t set;
+    sigemptyset(&set);
+    sigaddset(&set, SIGUSR1);
+    sigaddset(&set, SIGTERM);
+    siginfo_t info{0};
+    timespec ts;
+    ts.tv_sec = 0;
+    ts.tv_nsec = 0;
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(sigtimedwait(&set, &info, &ts));
+    }
+    
+}
+
 MUSL_BENCHMARK(Bm_function_Sigaction);
+MUSL_BENCHMARK(Bm_function_Sigemptyset);
+MUSL_BENCHMARK(Bm_function_Sigaltstack);
+MUSL_BENCHMARK(Bm_function_Sigdelset);
+MUSL_BENCHMARK(Bm_function_Sigtimedwait);

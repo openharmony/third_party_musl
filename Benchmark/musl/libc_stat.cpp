@@ -13,7 +13,6 @@
  * limitations under the License.
  */
 
-#include <benchmark/benchmark.h>
 #include "sys/stat.h"
 #include "sys/types.h"
 #include "fcntl.h"
@@ -98,8 +97,19 @@ static void Bm_function_Mkdir(benchmark::State &state)
     state.SetItemsProcessed(state.iterations());
 }
 
+static void Bm_function_Mkdirat(benchmark::State &state)
+{
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(mkdirat(AT_FDCWD, "/data/data/test_mkdirat", S_IRWXU | S_IRWXG | S_IXOTH | S_IROTH));
+        state.PauseTiming();
+        rmdir("/data/data/test_mkdirat");
+        state.ResumeTiming();
+    }
+}
+
 MUSL_BENCHMARK(Bm_function_Fstatat_relativepath);
 MUSL_BENCHMARK(Bm_function_Fstatat_symbollink);
 MUSL_BENCHMARK(Bm_function_Fstatat_absolutepath);
 MUSL_BENCHMARK(Bm_function_Fstat64);
 MUSL_BENCHMARK(Bm_function_Mkdir);
+MUSL_BENCHMARK(Bm_function_Mkdirat);

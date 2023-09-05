@@ -13,7 +13,6 @@
  * limitations under the License.
  */
 
-#include <benchmark/benchmark.h>
 #include <locale.h>
 #include <langinfo.h>
 #include "sys/types.h"

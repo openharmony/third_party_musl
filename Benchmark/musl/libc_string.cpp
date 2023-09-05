@@ -13,10 +13,11 @@
  * limitations under the License.
  */
 
-#include <benchmark/benchmark.h>
 #include "string.h"
 #include "wchar.h"
 #include "err.h"
+#include "errno.h"
+#include "locale.h"
 #include "util.h"
 
 using namespace std;
@@ -35,7 +36,7 @@ static const std::vector<int> bufferSizes {
     128 * K,
 };
 
-static const std::vector<int> limitSizes{
+static const std::vector<int> limitSizes {
     1,
     2,
     3,
@@ -87,7 +88,6 @@ static void Bm_function_Strrchr(benchmark::State &state)
     for (auto _ : state) {
         benchmark::DoNotOptimize(strrchr(test, ch));
     }
-
     state.SetBytesProcessed(state.iterations());
 }
 
@@ -105,7 +105,6 @@ static void Bm_function_Strnlen(benchmark::State &state)
     while (state.KeepRunning()) {
         c += strnlen(bmstrnlenAligned, limitsize);
     }
-
     state.SetBytesProcessed(uint64_t(state.iterations()) * uint64_t(nbytes));
 }
 
@@ -129,6 +128,7 @@ static void Bm_function_Stpncpy(benchmark::State &state)
     state.SetBytesProcessed(uint64_t(state.iterations()) * uint64_t(nbytes));
 }
 
+// Used to copy one string to another, you can limit the maximum length of copying
 static void Bm_function_Strncpy(benchmark::State &state)
 {
     const size_t nbytes = state.range(0);
@@ -143,7 +143,7 @@ static void Bm_function_Strncpy(benchmark::State &state)
     srcAligned[nbytes - 1] = '\0';
 
     while (state.KeepRunning()) {
-        stpncpy(dstAligned, srcAligned, limitsize);
+        strncpy(dstAligned, srcAligned, limitsize);
     }
     state.SetBytesProcessed(uint64_t(state.iterations()) * uint64_t(nbytes));
 }
@@ -164,7 +164,6 @@ static void Bm_function_Bcmp(benchmark::State &state)
     while (state.KeepRunning()) {
         c += bcmp(dstAligned, srcAligned, nbytes);
     }
-
     state.SetBytesProcessed(uint64_t(state.iterations()) * uint64_t(nbytes));
 }
 
@@ -194,10 +193,10 @@ static void Bm_function_Wmemset(benchmark::State &state)
     while (state.KeepRunning()) {
         wmemset(bufAligned, L'n', nbytes);
     }
-
     state.SetBytesProcessed(uint64_t(state.iterations()) * uint64_t(nbytes));
 }
 
+// The first n characters in the source memory region are copied to the destination memory region
 static void Bm_function_Wmemcpy(benchmark::State &state)
 {
     const size_t nbytes = state.range(0);
@@ -362,10 +361,218 @@ static void Bm_function_Strncat(benchmark::State &state)
     state.SetBytesProcessed(uint64_t(state.iterations()) * uint64_t(nbytes));
 }
 
-BENCHMARK(Bm_function_Memchr)->Apply(StringtestArgs);
-BENCHMARK(Bm_function_Strnlen)->Apply(StringtestArgs);
-BENCHMARK(Bm_function_Stpncpy)->Apply(StringtestArgs);
-BENCHMARK(Bm_function_Strncpy)->Apply(StringtestArgs);
+// Compare two wide strings according to the current local environment
+static void BM_function_Wcscoll(benchmark::State& state)
+{
+    setlocale(LC_ALL, "");
+    const size_t nbytes = state.range(0);
+    const size_t srcAlignment = state.range(1);
+    const size_t dstAlignment = state.range(2);
+
+    vector<wchar_t> src;
+    vector<wchar_t> dst;
+    wchar_t* srcAligned = GetAlignedPtrFilled(&src, srcAlignment, nbytes, L'n');
+    wchar_t* dstAligned = GetAlignedPtrFilled(&dst, dstAlignment, nbytes, L'z');
+
+    volatile int c __attribute__((unused)) = 0;
+    while (state.KeepRunning()) {
+        c += wcscoll(dstAligned, srcAligned);
+    }
+    state.SetBytesProcessed(uint64_t(state.iterations()) * uint64_t(nbytes));
+}
+
+// Similar to wcscoll the main difference is its support for localization
+static void BM_function_Wcscoll_l(benchmark::State& state)
+{
+    setlocale(LC_ALL, "");
+    locale_t loc = newlocale(LC_ALL_MASK, "", nullptr);
+    const size_t nbytes = state.range(0);
+    const size_t srcAlignment = state.range(1);
+    const size_t dstAlignment = state.range(2);
+
+    vector<wchar_t> src;
+    vector<wchar_t> dst;
+    wchar_t* srcAligned = GetAlignedPtrFilled(&src, srcAlignment, nbytes, L'n');
+    wchar_t* dstAligned = GetAlignedPtrFilled(&dst, dstAlignment, nbytes, L'z');
+
+    volatile int c __attribute__((unused)) = 0;
+    while (state.KeepRunning()) {
+        c += wcscoll_l(dstAligned, srcAligned, loc);
+    }
+    state.SetBytesProcessed(uint64_t(state.iterations()) * uint64_t(nbytes));
+}
+
+// Converts wide characters to single bytes
+static void Bm_function_Wctob(benchmark::State &state)
+{
+    setlocale(LC_ALL, "");
+    const wchar_t test [] = { L'Y', L'd', L'M', L'O', L'K', L'J', L'L', L's', L'\0' };
+    const wchar_t a = test[state.range(0)];
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(wctob(a));
+    }
+}
+
+// Converts single-byte characters to wide characters
+static void Bm_function_Btowc(benchmark::State &state)
+{
+    setlocale(LC_ALL, "");
+    const char c [] = { 't', 'h', 'i', 's', 'a', 'm', 'z', 'g', '\0'};
+    const char a = c[state.range(0)];
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(btowc(a));
+    }
+}
+
+// According to the program's current regional options the character set converts
+// the first n characters of the string src and places them in the string dest
+static void Bm_function_Strxfrm(benchmark::State &state)
+{
+    const size_t nbytes = state.range(0);
+    const size_t srcAlignment = state.range(1);
+    const size_t dstAlignment = state.range(2);
+
+    vector<char> src;
+    vector<char> dst;
+    char *srcAligned = GetAlignedPtrFilled(&src, srcAlignment, nbytes, 'z');
+    char *dstAligned = GetAlignedPtr(&dst, dstAlignment, nbytes);
+    srcAligned[nbytes - 1] = '\0';
+
+    while (state.KeepRunning()) {
+        strxfrm(dstAligned, srcAligned, nbytes);
+    }
+    state.SetBytesProcessed(uint64_t(state.iterations()) * uint64_t(nbytes));
+}
+
+// Similar to strxfrm the main difference is its support for localization
+static void Bm_function_Strxfrm_l(benchmark::State &state)
+{
+    setlocale(LC_ALL, "");
+    locale_t loc = newlocale(LC_ALL_MASK, "", nullptr);
+    const size_t nbytes = state.range(0);
+    const size_t srcAlignment = state.range(1);
+    const size_t dstAlignment = state.range(2);
+
+    vector<char> src;
+    vector<char> dst;
+    char *srcAligned = GetAlignedPtrFilled(&src, srcAlignment, nbytes, 'z');
+    char *dstAligned = GetAlignedPtr(&dst, dstAlignment, nbytes);
+    srcAligned[nbytes - 1] = '\0';
+
+    while (state.KeepRunning()) {
+        strxfrm_l(dstAligned, srcAligned, nbytes, loc);
+    }
+    state.SetBytesProcessed(uint64_t(state.iterations()) * uint64_t(nbytes));
+}
+
+// Converts a wide-character string into a sequenced string
+// according to specified localization rules
+static void Bm_function_Wcsxfrm(benchmark::State &state)
+{
+    setlocale(LC_ALL, "");
+    const size_t nbytes = state.range(0);
+    const size_t srcAlignment = state.range(1);
+    const size_t dstAlignment = state.range(2);
+
+    vector<wchar_t> src;
+    vector<wchar_t> dst;
+    wchar_t *srcAligned = GetAlignedPtrFilled(&src, srcAlignment, nbytes, L'A');
+    wchar_t *dstAligned = GetAlignedPtr(&dst, dstAlignment, nbytes);
+    srcAligned[nbytes - 1] = '\0';
+
+    while (state.KeepRunning()) {
+        wcsxfrm(dstAligned, srcAligned, nbytes);
+    }
+    state.SetBytesProcessed(uint64_t(state.iterations()) * uint64_t(nbytes));
+}
+
+// Similar to wcsxfrm the main difference is its support for localization
+static void Bm_function_Wcsxfrm_l(benchmark::State &state)
+{
+    setlocale(LC_ALL, "");
+    locale_t loc = newlocale(LC_ALL_MASK, "", nullptr);
+    const size_t nbytes = state.range(0);
+    const size_t srcAlignment = state.range(1);
+    const size_t dstAlignment = state.range(2);
+
+    vector<wchar_t> src;
+    vector<wchar_t> dst;
+    wchar_t *srcAligned = GetAlignedPtrFilled(&src, srcAlignment, nbytes, L'A');
+    wchar_t *dstAligned = GetAlignedPtr(&dst, dstAlignment, nbytes);
+    srcAligned[nbytes - 1] = '\0';
+
+    while (state.KeepRunning()) {
+        wcsxfrm_l(dstAligned, srcAligned, nbytes, loc);
+    }
+    state.SetBytesProcessed(uint64_t(state.iterations()) * uint64_t(nbytes));
+}
+
+// compare two strings according to localized language rules
+static void BM_function_Strcoll(benchmark::State& state)
+{
+    setlocale(LC_ALL, "");
+    const size_t nbytes = state.range(0);
+    const size_t s1Alignment = state.range(1);
+    const size_t s2Alignment = state.range(2);
+
+    vector<char> s1;
+    vector<char> s2;
+    char* s1ALigned = GetAlignedPtrFilled(&s1, s1Alignment, nbytes, 'x');
+    char* s2ALigned = GetAlignedPtrFilled(&s2, s2Alignment, nbytes, 'x');
+    s1ALigned[nbytes - 1] = '\0';
+    s2ALigned[nbytes - 1] = '\0';
+
+    volatile int c __attribute__((unused));
+    while (state.KeepRunning()) {
+        c = strcoll(s1ALigned, s2ALigned);
+    }
+    state.SetBytesProcessed(uint64_t(state.iterations()) * uint64_t(nbytes));
+}
+
+// Similar to strcoll the main difference is its support for localization
+static void BM_function_Strcoll_l(benchmark::State& state)
+{
+    setlocale(LC_ALL, "");
+    locale_t loc = newlocale(LC_ALL_MASK, "", nullptr);
+    const size_t nbytes = state.range(0);
+    const size_t s1Alignment = state.range(1);
+    const size_t s2Alignment = state.range(2);
+
+    vector<char> s1;
+    vector<char> s2;
+    char* s1ALigned = GetAlignedPtrFilled(&s1, s1Alignment, nbytes, 'x');
+    char* s2ALigned = GetAlignedPtrFilled(&s2, s2Alignment, nbytes, 'x');
+    s1ALigned[nbytes - 1] = '\0';
+    s2ALigned[nbytes - 1] = '\0';
+
+    volatile int c __attribute__((unused));
+    while (state.KeepRunning()) {
+        c = strcoll_l(s1ALigned, s2ALigned, loc);
+    }
+    state.SetBytesProcessed(uint64_t(state.iterations()) * uint64_t(nbytes));
+}
+
+static void Bm_function_Wmemcmp(benchmark::State &state)
+{
+    const size_t nbytes = state.range(0);
+    const size_t srcAlignment = state.range(1);
+    const size_t dstAlignment = state.range(2);
+
+    vector<wchar_t> src;
+    vector<wchar_t> dst;
+    wchar_t *srcAligned = GetAlignedPtrFilled(&src, srcAlignment, nbytes, 'x');
+    wchar_t *dstAligned = GetAlignedPtrFilled(&dst, dstAlignment, nbytes, 'x');
+
+    while (state.KeepRunning()) {
+        benchmark::DoNotOptimize(wmemcmp(dstAligned, srcAligned, nbytes));
+    }
+    state.SetBytesProcessed(uint64_t(state.iterations()) * uint64_t(nbytes));
+}
+
+MUSL_BENCHMARK_WITH_APPLY(Bm_function_Memchr, StringtestArgs);
+MUSL_BENCHMARK_WITH_APPLY(Bm_function_Strnlen, StringtestArgs);
+MUSL_BENCHMARK_WITH_APPLY(Bm_function_Stpncpy, StringtestArgs);
+MUSL_BENCHMARK_WITH_APPLY(Bm_function_Strncpy, StringtestArgs);
 MUSL_BENCHMARK_WITH_ARG(Bm_function_Strcspn, "BENCHMARK_8");
 MUSL_BENCHMARK(Bm_function_Strchrnul_exist);
 MUSL_BENCHMARK(Bm_function_Strchrnul_noexist);
@@ -383,3 +590,14 @@ MUSL_BENCHMARK_WITH_ARG(Bm_function_Wmemset, "ALIGNED_ONEBUF");
 MUSL_BENCHMARK_WITH_ARG(Bm_function_Wmemcpy, "ALIGNED_TWOBUF");
 MUSL_BENCHMARK_WITH_ARG(Bm_function_Strdup, "ALIGNED_ONEBUF");
 MUSL_BENCHMARK_WITH_ARG(Bm_function_Strncat, "ALIGNED_ONEBUF");
+MUSL_BENCHMARK_WITH_ARG(BM_function_Wcscoll, "ALIGNED_TWOBUF");
+MUSL_BENCHMARK_WITH_ARG(BM_function_Wcscoll_l, "ALIGNED_TWOBUF");
+MUSL_BENCHMARK_WITH_ARG(Bm_function_Wctob, "BENCHMARK_8");
+MUSL_BENCHMARK_WITH_ARG(Bm_function_Btowc, "BENCHMARK_8");
+MUSL_BENCHMARK_WITH_ARG(Bm_function_Strxfrm, "ALIGNED_TWOBUF");
+MUSL_BENCHMARK_WITH_ARG(Bm_function_Strxfrm_l, "ALIGNED_TWOBUF");
+MUSL_BENCHMARK_WITH_ARG(Bm_function_Wcsxfrm, "ALIGNED_TWOBUF");
+MUSL_BENCHMARK_WITH_ARG(Bm_function_Wcsxfrm_l, "ALIGNED_TWOBUF");
+MUSL_BENCHMARK_WITH_ARG(BM_function_Strcoll, "ALIGNED_TWOBUF");
+MUSL_BENCHMARK_WITH_ARG(BM_function_Strcoll_l, "ALIGNED_TWOBUF");
+MUSL_BENCHMARK_WITH_ARG(Bm_function_Wmemcmp, "ALIGNED_TWOBUF");

@@ -13,7 +13,6 @@
  * limitations under the License.
  */
 
-#include <benchmark/benchmark.h>
 #include "malloc.h"
 #include "stdlib.h"
 #include "util.h"
