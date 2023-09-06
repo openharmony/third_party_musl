@@ -192,18 +192,28 @@ static void Bm_function_Inet_pton(benchmark::State &state)
 
 static void Bm_function_Inet_ntop(benchmark::State &state)
 {
-    unsigned char buf[sizeof(struct in_addr)];
-    if (inet_pton(AF_INET, "127.0.0.1", buf) <= 0) {
+    struct in_addr addr;
+    if (inet_pton(AF_INET, "127.0.0.1", &addr.s_addr) <= 0) {
         perror("inet_pton failed");
         exit(EXIT_FAILURE);
     }
-
     for (auto _ : state) {
         char str[INET_ADDRSTRLEN] = {0};
-        benchmark::DoNotOptimize(inet_ntop(AF_INET, buf, str, INET_ADDRSTRLEN));
+        benchmark::DoNotOptimize(inet_ntop(AF_INET, &addr.s_addr, str, INET_ADDRSTRLEN));
     }
 }
-
+static void Bm_function_Inet_ntop_ipv6(benchmark::State &state)
+{
+    struct in6_addr addr;
+    if (inet_pton(AF_INET6, "fe80::cd01:7cd8:bd13:98d5", &addr.s6_addr) <= 0) {
+        perror("inet_pton failed");
+        exit(EXIT_FAILURE);
+    }
+    for (auto _ : state) {
+        char str[INET6_ADDRSTRLEN] = {0};
+        benchmark::DoNotOptimize(inet_ntop(AF_INET6, &addr.s6_addr, str, INET6_ADDRSTRLEN));
+    }
+}
 MUSL_BENCHMARK(Bm_function_Getaddrinfo_Freeaddrinfo_external_network);
 MUSL_BENCHMARK(Bm_function_Getaddrinfo_Freeaddrinfo_intranet1);
 MUSL_BENCHMARK(Bm_function_Getaddrinfo_Freeaddrinfo_intranet2);
@@ -215,3 +225,4 @@ MUSL_BENCHMARK(Bm_function_Getaddrinfo_Freeaddrinfo_intranet7);
 MUSL_BENCHMARK(Bm_function_Network_ntohs);
 MUSL_BENCHMARK(Bm_function_Inet_pton);
 MUSL_BENCHMARK(Bm_function_Inet_ntop);
+MUSL_BENCHMARK(Bm_function_Inet_ntop_ipv6);

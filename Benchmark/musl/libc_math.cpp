@@ -275,6 +275,23 @@ static void Bm_function_Sin(benchmark::State &state)
     }
 }
 
+static void Bm_function_Atanf(benchmark::State &state)
+{
+    float x = ATANHF_FLOAT_VALUES[state.range(0)];
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(atanf(x));
+    }
+}
+
+static void Bm_function_Atan2f(benchmark::State &state)
+{
+    float x = DIVIDEND_VALUES[state.range(0)];
+    float y = DIVISOR_VALUES[state.range(0)];
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(atan2f(x, y));
+    }
+}
+
 // FP_INFINITE  The specified value is positive or negative infinity
 static void Bm_function_fpclassifyl(benchmark::State &state)
 {
@@ -517,6 +534,8 @@ MUSL_BENCHMARK(Bm_function_Scalbnf3);
 MUSL_BENCHMARK(Bm_function_Scalbnf4);
 MUSL_BENCHMARK_WITH_ARG(Bm_function_Fmod, "BENCHMARK_8");
 MUSL_BENCHMARK_WITH_ARG(Bm_function_Sin, "BENCHMARK_8");
+MUSL_BENCHMARK_WITH_ARG(Bm_function_Atanf, "BENCHMARK_8");
+MUSL_BENCHMARK_WITH_ARG(Bm_function_Atan2f, "BENCHMARK_8");
 MUSL_BENCHMARK(Bm_function_fpclassifyl);
 MUSL_BENCHMARK(Bm_function_fpclassifyl1);
 MUSL_BENCHMARK(Bm_function_fpclassifyl2);
