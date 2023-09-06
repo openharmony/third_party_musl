@@ -19,7 +19,10 @@
 #include "errno.h"
 #include "locale.h"
 #include "util.h"
-
+#include <stdio_ext.h>
+#include <unistd.h>
+#include <thread>
+#include <iostream>
 using namespace std;
 
 static const std::vector<int> bufferSizes {
@@ -569,6 +572,103 @@ static void Bm_function_Wmemcmp(benchmark::State &state)
     state.SetBytesProcessed(uint64_t(state.iterations()) * uint64_t(nbytes));
 }
 
+static void BM_function_Wcsstr(benchmark::State& state) {
+    const size_t nbytes = state.range(0);
+    const size_t haystack_alignment = state.range(1);
+    const size_t needle_alignment = state.range(2);
+
+    std::vector<wchar_t> haystack;
+    std::vector<wchar_t> needle;
+    wchar_t* haystack_aligned = GetAlignedPtrFilled(&haystack, haystack_alignment, nbytes, L'x');
+    wchar_t* needle_aligned = GetAlignedPtrFilled(&needle, needle_alignment,
+                                                std::min(nbytes, static_cast<size_t>(5)), L'x');
+
+    if (nbytes / 4 > 2) {
+        for (size_t i = 0; nbytes / 4 >= 2 && i < nbytes / 4 - 2; i++) {
+        haystack_aligned[4 * i + 3] = L'y';
+        }
+    }
+    haystack_aligned[nbytes - 1] = L'\0';
+    needle_aligned[needle.size() - 1] = L'\0';
+
+    while (state.KeepRunning()) {
+        if (wcsstr(haystack_aligned, needle_aligned) == nullptr) {
+        errx(1, "ERROR: strstr failed to find valid substring.");
+        }
+    }
+    state.SetBytesProcessed(uint64_t(state.iterations()) * uint64_t(nbytes));
+}
+
+static void BM_function_Strcasestr(benchmark::State& state) {
+    const size_t nbytes = state.range(0);
+    const size_t haystack_alignment = state.range(1);
+    const size_t needle_alignment = state.range(2);
+
+    std::vector<char> haystack;
+    std::vector<char> needle;
+    char* haystack_aligned = GetAlignedPtrFilled(&haystack, haystack_alignment, nbytes, 'x');
+    char* needle_aligned = GetAlignedPtrFilled(&needle, needle_alignment,
+                                                std::min(nbytes, static_cast<size_t>(5)), 'X');
+    if (nbytes / 4 > 2) {
+        for (size_t i = 0; nbytes / 4 >= 2 && i < nbytes / 4 - 2; i++) {
+        haystack_aligned[4 * i + 3] = 'y';
+        }
+    }
+    haystack_aligned[nbytes - 1] = '\0';
+    needle_aligned[needle.size() - 1] = '\0';
+
+    while (state.KeepRunning()) {
+        if (strcasestr(haystack_aligned, needle_aligned) == nullptr) {
+            errx(1, "ERROR: strcasestr failed to find valid substring.");
+        }
+    }
+    state.SetBytesProcessed(uint64_t(state.iterations()) * uint64_t(nbytes));
+}
+
+static void BM_function_Strlcat(benchmark::State& state) {
+    const size_t nbytes = state.range(0);
+    const size_t needle_alignment = state.range(1);
+
+    std::vector<char> haystack(nbytes);
+    std::vector<char> needle;
+    char* dstBuf = haystack.data();
+    char* srcBuf = GetAlignedPtrFilled(&needle, needle_alignment, nbytes, 'x');
+    srcBuf[needle.size() - 1] = '\0';
+
+    while (state.KeepRunning()) {
+        benchmark::DoNotOptimize(strlcat(dstBuf, srcBuf, nbytes));
+    }
+    state.SetBytesProcessed(uint64_t(state.iterations()) * uint64_t(nbytes));
+}
+
+static void BM_function_Getdelim(benchmark::State& state) {
+
+    FILE* fp = fopen("/data/getdlim.txt", "w+");
+    if (fp == nullptr) {
+        errx(1, "ERROR: fp is nullptr\n");
+    }
+    const char* buf = "123 4567 78901 ";
+    fwrite(buf, strlen(buf), 1, fp);
+    fflush(fp);
+    fseek(fp, 0, SEEK_SET);
+
+    size_t maxReadLen = 1024;
+    char* readBuf = (char*)malloc(maxReadLen);
+    if (readBuf == nullptr){
+         errx(1, "ERROR: readBuf is nullptr\n");
+    }
+
+    while (state.KeepRunning()) {
+        ssize_t n = getdelim(&readBuf, &maxReadLen, ' ', fp);
+        if (n == -1) {
+            fseek(fp, 0, SEEK_SET);
+        }
+    }
+    free(readBuf);
+    fclose(fp);
+}
+MUSL_BENCHMARK(BM_function_Getdelim);
+MUSL_BENCHMARK_WITH_ARG(BM_function_Strlcat, "ALIGNED_ONEBUF");
 MUSL_BENCHMARK_WITH_APPLY(Bm_function_Memchr, StringtestArgs);
 MUSL_BENCHMARK_WITH_APPLY(Bm_function_Strnlen, StringtestArgs);
 MUSL_BENCHMARK_WITH_APPLY(Bm_function_Stpncpy, StringtestArgs);
@@ -601,3 +701,5 @@ MUSL_BENCHMARK_WITH_ARG(Bm_function_Wcsxfrm_l, "ALIGNED_TWOBUF");
 MUSL_BENCHMARK_WITH_ARG(BM_function_Strcoll, "ALIGNED_TWOBUF");
 MUSL_BENCHMARK_WITH_ARG(BM_function_Strcoll_l, "ALIGNED_TWOBUF");
 MUSL_BENCHMARK_WITH_ARG(Bm_function_Wmemcmp, "ALIGNED_TWOBUF");
+MUSL_BENCHMARK_WITH_ARG(BM_function_Wcsstr, "ALIGNED_TWOBUF");
+MUSL_BENCHMARK_WITH_ARG(BM_function_Strcasestr, "ALIGNED_TWOBUF");

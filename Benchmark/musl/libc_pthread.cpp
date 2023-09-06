@@ -394,7 +394,6 @@ static void Bm_function_pthread_cond_timedwait(benchmark::State &state)
 
 pthread_cond_t g_cond = PTHREAD_COND_INITIALIZER;
 pthread_mutex_t g_mutex1 = PTHREAD_MUTEX_INITIALIZER;
-pthread_mutex_t g_mutex2 = PTHREAD_MUTEX_INITIALIZER;
 void* ThreadTaskOne(void* arg)
 {
     pthread_mutex_lock(&g_mutex1);
@@ -406,10 +405,10 @@ void* ThreadTaskOne(void* arg)
 
 void* ThreadTaskTwo(void* arg)
 {
-    pthread_mutex_lock(&g_mutex2);
-    pthread_cond_wait(&g_cond, &g_mutex2);
+    pthread_mutex_lock(&g_mutex1);
+    pthread_cond_wait(&g_cond, &g_mutex1);
     sleep(1);
-    pthread_mutex_unlock(&g_mutex2);
+    pthread_mutex_unlock(&g_mutex1);
     return nullptr;
 }
 
@@ -474,6 +473,21 @@ static void Bm_function_pthread_cond_signal(benchmark::State &state)
         pthread_cond_signal(&cond);
     }
     pthread_cond_destroy(&cond);
+    state.SetBytesProcessed(state.iterations());
+}
+
+static void Bm_function_pthread_cond_signal_wait(benchmark::State &state)
+{
+    while (state.KeepRunning())
+    {
+        state.PauseTiming();
+        pthread_t threadOne;
+        pthread_create(&threadOne, nullptr, ThreadTaskOne, nullptr);
+        sleep(1);
+        state.ResumeTiming();
+        pthread_cond_signal(&g_cond);
+        pthread_join(threadOne, nullptr);
+    }
     state.SetBytesProcessed(state.iterations());
 }
 
@@ -739,6 +753,7 @@ static void Bm_function_pthread_clean_push_and_pop(benchmark::State &state)
 
 MUSL_BENCHMARK(Bm_function_Sigaddset);
 MUSL_BENCHMARK(Bm_function_pthread_cond_signal);
+MUSL_BENCHMARK(Bm_function_pthread_cond_signal_wait);
 MUSL_BENCHMARK(Bm_function_pthread_mutexattr_settype);
 MUSL_BENCHMARK(Bm_function_pthread_mutex_trylock_fast);
 MUSL_BENCHMARK(Bm_function_pthread_mutex_trylock_errchk);

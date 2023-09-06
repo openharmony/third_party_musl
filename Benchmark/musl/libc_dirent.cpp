@@ -13,6 +13,7 @@
  * limitations under the License.
  */
 
+#include "sys/stat.h"
 #include "sys/types.h"
 #include "dirent.h"
 #include "unistd.h"
@@ -120,9 +121,27 @@ static void Bm_function_Rewinddir(benchmark::State &state)
     closedir(dir);
 }
 
+static void Bm_function_Open_Dir(benchmark::State &state)
+{
+    const char *filename = "/dev/block";
+    for (auto _ : state) {
+        int fd = open(filename, O_RDONLY|O_DIRECTORY|O_CLOEXEC);
+        if (fd == -1) {
+            perror("open_dir proc");
+            exit(EXIT_FAILURE);
+        }
+        benchmark::DoNotOptimize(fd);
+        state.PauseTiming();
+        close(fd);
+        state.ResumeTiming();
+    }
+    state.SetItemsProcessed(state.iterations());
+}
+
 MUSL_BENCHMARK(Bm_function_Opendir);
 MUSL_BENCHMARK(Bm_function_ScanDir);
 MUSL_BENCHMARK(Bm_function_Closedir);
 MUSL_BENCHMARK(Bm_function_Readdir);
 MUSL_BENCHMARK(Bm_function_Fdopendir);
 MUSL_BENCHMARK(Bm_function_Rewinddir);
+MUSL_BENCHMARK(Bm_function_Open_Dir);
