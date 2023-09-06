@@ -18,6 +18,7 @@
 #include "stdarg.h"
 #include "sys/types.h"
 #include "sys/stat.h"
+#include "sys/file.h"
 #include "fcntl.h"
 #include "unistd.h"
 #include "util.h"
@@ -592,6 +593,21 @@ static void Bm_function_Flock_Funlockfile(benchmark::State &state)
         funlockfile(fp);
     }
     fclose(fp);
+    state.SetBytesProcessed(state.iterations());
+}
+
+static void Bm_function_Flock(benchmark::State &state)
+{
+    int fd = open("/dev/zero", O_RDONLY);
+    if (fd == -1) {
+        perror("open flock");
+        exit(EXIT_FAILURE);
+    }
+    for (auto _ : state) {
+        flock(fd, LOCK_EX);
+        flock(fd, LOCK_UN);
+    }
+    close(fd);
     state.SetBytesProcessed(state.iterations());
 }
 
@@ -1438,6 +1454,7 @@ MUSL_BENCHMARK(Bm_function_Vsnprintf_long);
 MUSL_BENCHMARK(Bm_function_Vsnprintf_short);
 MUSL_BENCHMARK(Bm_function_Vsnprintf_char);
 MUSL_BENCHMARK(Bm_function_Flock_Funlockfile);
+MUSL_BENCHMARK(Bm_function_Flock);
 MUSL_BENCHMARK(Bm_function_Rename);
 MUSL_BENCHMARK(Bm_function_Fseek_set);
 MUSL_BENCHMARK(Bm_function_Fseek_cur);

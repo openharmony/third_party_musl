@@ -44,6 +44,7 @@ ohos_executable("musl_benchmark") {
     "libc_random.cpp",
     "libc_sched.cpp",
     "libc_select.cpp",
+    "libc_setjmp.cpp",
     "libc_signal.cpp",
     "libc_stat.cpp",
     "libc_stdio.cpp",
