@@ -1366,6 +1366,36 @@ static void Bm_function_Ftell(benchmark::State &state)
     state.SetBytesProcessed(state.iterations());
 }
 
+static void Bm_function_fread_unlocked(benchmark::State& state) {
+    FILE *fp = fopen("/dev/zero", "r");
+    if (fp == nullptr) {
+        perror("fopen read");
+        exit(EXIT_FAILURE);
+    }
+    int n = 256;
+    char* buf = new char[n];
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(fread_unlocked(buf, n, 1, fp));
+    }
+    delete[] buf;
+    fclose(fp);
+}
+
+static void Bm_function_fgets_unlocked(benchmark::State& state) {
+    FILE *fp = fopen("/dev/zero", "r");
+    if (fp == nullptr) {
+        perror("fopen read");
+        exit(EXIT_FAILURE);
+    }
+    int n = 256;
+    char* buf = new char[n];
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(fgets_unlocked(buf, n, fp));
+    }
+    delete[] buf;
+    fclose(fp);
+}
+
 // Rename files and directories
 static void Bm_function_Renameat(benchmark::State &state)
 {
@@ -1390,15 +1420,17 @@ static void Bm_function_Renameat(benchmark::State &state)
     state.SetBytesProcessed(state.iterations());
 }
 
-static void BM_function_Printf_d4(benchmark::State& state)
+static void BM_function_Snprintf_d4(benchmark::State& state)
 {
     char buf[BUFSIZ];
     char a[4] = {127, 0, 0, 1};
     while (state.KeepRunning()) {
-        snprintf(buf, sizeof(buf), "%d.%d.%d.%d", a[0],a[1],a[2],a[3]);
+        benchmark::DoNotOptimize(snprintf(buf, sizeof(buf), "%d.%d.%d.%d", a[0],a[1],a[2],a[3]));
     }
 }
 
+MUSL_BENCHMARK(Bm_function_fgets_unlocked);
+MUSL_BENCHMARK(Bm_function_fread_unlocked);
 MUSL_BENCHMARK(Bm_function_Fopen_read);
 MUSL_BENCHMARK(Bm_function_Fopen_write);
 MUSL_BENCHMARK(Bm_function_Fopen_append);
@@ -1485,4 +1517,4 @@ MUSL_BENCHMARK(Bm_function_Fputc);
 MUSL_BENCHMARK(Bm_function_Fputs);
 MUSL_BENCHMARK(Bm_function_Ftell);
 MUSL_BENCHMARK(Bm_function_Renameat);
-MUSL_BENCHMARK(BM_function_Printf_d4);
+MUSL_BENCHMARK(BM_function_Snprintf_d4);
