@@ -406,6 +406,7 @@ template("musl_libs") {
         "src/math/pow.c",
         "src/math/powf.c",
         "src/math/frexpl.c",
+        "src/linux/prctl.c",
       ]
     } else if (musl_arch == "x86_64") {
       sources_orig -= [ "src/thread/${musl_arch}/__set_thread_area.s" ]
