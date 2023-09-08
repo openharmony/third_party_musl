@@ -29,6 +29,7 @@
 #include "err.h"
 #include "string.h"
 #include "errno.h"
+#include "dirent.h"
 #include "util.h"
 
 using namespace std;
@@ -169,6 +170,29 @@ static void Bm_function_Readlink(benchmark::State &state)
         len = readlink("/data/local/tmp/tmplink", path, sizeof(path));
         benchmark::DoNotOptimize(len);
     }
+    remove("/data/local/tmp/tmplink");
+}
+
+static void Bm_function_Readlinkat(benchmark::State &state)
+{
+    char path[BUFFER] = {0};
+    ssize_t len;
+    int i = symlink("/dev/zero", "/data/local/tmp/tmplink");
+    if (i == -1) {
+        perror("symlink");
+        exit(EXIT_FAILURE);
+    }
+    DIR *dir = opendir("/data/local/tmp");
+    if (dir == nullptr) {
+        perror("opendir");
+        exit(EXIT_FAILURE);
+    }
+    int fd = dirfd(dir);
+    for (auto _ : state) {
+        len = readlinkat(fd, "./tmplink", path, sizeof(path));
+        benchmark::DoNotOptimize(len);
+    }
+    closedir(dir);
     remove("/data/local/tmp/tmplink");
 }
 
@@ -577,6 +601,7 @@ MUSL_BENCHMARK(Bm_function_Getpid);
 MUSL_BENCHMARK(Bm_function_Geteuid);
 MUSL_BENCHMARK_WITH_ARG(Bm_function_Pwrite64, "COMMON_ARGS");
 MUSL_BENCHMARK(Bm_function_Readlink);
+MUSL_BENCHMARK(Bm_function_Readlinkat);
 MUSL_BENCHMARK_WITH_ARG(Bm_function_Pread64, "COMMON_ARGS");
 MUSL_BENCHMARK(Bm_function_Close);
 MUSL_BENCHMARK(Bm_function_Usleep);

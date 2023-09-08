@@ -25,6 +25,7 @@
 #define BACKLOG 5
 #define PIPE_FD_COUNT  2
 #define BUFFER_SIZE 100
+#define MSG_COUNT 10
 
 static void Bm_function_socket_server(benchmark::State &state)
 {
@@ -79,7 +80,7 @@ static void Bm_function_socketpair_sendmsg_recvmsg(benchmark::State &state)
             break;
         }
 
-        bzero(&msg, sizeof(msg));
+        bzero(&msgr, sizeof(msgr));
         msgr.msg_name = nullptr;
         msgr.msg_namelen = 0;
         iovr[0].iov_base = &recvBuf;
@@ -89,6 +90,61 @@ static void Bm_function_socketpair_sendmsg_recvmsg(benchmark::State &state)
         ret = recvmsg(socks[0], &msgr, 0);
         if (ret == -1) {
             printf("recvmsg err\n");
+        }
+        close(socks[0]);
+        close(socks[1]);
+    }
+    state.SetBytesProcessed(state.iterations());
+}
+
+static void Bm_function_socketpair_sendmmsg_recvmmsg(benchmark::State &state)
+{
+    int ret;
+    int socks[2];
+    struct mmsghdr msgs[MSG_COUNT];
+    struct iovec iovs[MSG_COUNT][1];
+    char sendBuf[BUFFER_SIZE] = "it is a test";
+    struct mmsghdr msgsr[MSG_COUNT];
+    struct iovec iovsr[MSG_COUNT][1];
+    char recvBuf[BUFFER_SIZE];
+
+    for (auto _ : state) {
+        ret = socketpair(AF_LOCAL, SOCK_STREAM, 0, socks);
+        if (ret == -1) {
+            printf("socketpair sendmsg err\n");
+            break;
+        }
+
+        for (int i = 0; i < MSG_COUNT; i++) {
+            bzero(&msgs[i], sizeof(msgs[i]));
+            msgs[i].msg_hdr.msg_name = nullptr;
+            msgs[i].msg_hdr.msg_namelen = 0;
+            iovs[i][0].iov_base = sendBuf;
+            iovs[i][0].iov_len = sizeof(sendBuf);
+            msgs[i].msg_hdr.msg_iov = iovs[i];
+            msgs[i].msg_hdr.msg_iovlen = 1;
+        }
+        
+        ret = sendmmsg(socks[1], msgs, MSG_COUNT, 0);
+        if (ret == -1) {
+            printf("sendmmsg err\n");
+            close(socks[0]);
+            close(socks[1]);
+            break;
+        }
+
+        for (int i = 0; i < MSG_COUNT; i++) {
+            bzero(&msgsr[i], sizeof(msgsr[i]));
+            msgsr[i].msg_hdr.msg_name = nullptr;
+            msgsr[i].msg_hdr.msg_namelen = 0;
+            iovsr[i][0].iov_base = &recvBuf;
+            iovsr[i][0].iov_len = sizeof(recvBuf);
+            msgsr[i].msg_hdr.msg_iov = iovsr[i];
+            msgsr[i].msg_hdr.msg_iovlen = 1;
+        }
+        ret = recvmmsg(socks[0], msgsr, MSG_COUNT, 0, nullptr);
+        if (ret == -1) {
+            printf("recvmmsg err\n");
         }
         close(socks[0]);
         close(socks[1]);
@@ -543,6 +599,7 @@ static void Bm_function_bind(benchmark::State &state)
 
 MUSL_BENCHMARK(Bm_function_socket_server);
 MUSL_BENCHMARK(Bm_function_socketpair_sendmsg_recvmsg);
+MUSL_BENCHMARK(Bm_function_socketpair_sendmmsg_recvmmsg);
 MUSL_BENCHMARK(Bm_function_socketpair_sendto_recvfrom);
 MUSL_BENCHMARK(Bm_function_getsockopt);
 MUSL_BENCHMARK(Bm_function_setsockopt);
