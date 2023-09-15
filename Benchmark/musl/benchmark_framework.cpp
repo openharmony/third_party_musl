@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2020-2023. All rights reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -16,8 +16,8 @@
 #include <benchmark/benchmark.h>
 #include <err.h>
 #include <getopt.h>
-#include <inttypes.h>
-#include <math.h>
+#include <cinttypes>
+#include <cmath>
 #include <sys/resource.h>
 #include <sys/stat.h>
 
@@ -53,7 +53,7 @@ std::map<std::string, std::pair<BenchmarkFunc, std::string>> g_allBenchmarks;
 std::mutex g_benchmarkLock;
 std::map<std::string, std::pair<BenchmarkFunc, ApplyBenchmarkFunc>> g_applyBenchmarks;
 
-typedef std::vector<std::vector<int64_t>> args_vector;
+using args_vector=std::vector<std::vector<int64_t>>;
 
 static struct option g_benchmarkLongOptions[] = {
     {"musl_cpu", required_argument, nullptr, 'c'},
@@ -105,15 +105,14 @@ bench_opts_t ParseOptions(int argc, char **argv)
 {
     bench_opts_t opts;
     int opt;
-    extern int opterr;
-    opterr = 0; // Don't show unrecognized option error.
 
-    while ((opt = getopt_long(argc, argv, "c:i:j:h", g_benchmarkLongOptions, 0)) != -1) {
+    while ((opt = getopt_long(argc, argv, "c:i:j:h", g_benchmarkLongOptions, nullptr)) != -1) {
+        int decimal = 10;
         switch (opt) {
             case 'c':
                 if (*optarg) {
                     char *errorCheck;
-                    opts.cpuNum = strtol(optarg, &errorCheck, 10);
+                    opts.cpuNum = strtol(optarg, &errorCheck, decimal);
                     if (*errorCheck) {
                         errx(1, "ERROR: Args %s is not a valid integer.", optarg);
                     }
@@ -125,7 +124,7 @@ bench_opts_t ParseOptions(int argc, char **argv)
             case 'i':
                 if (*optarg) {
                     char *errorCheck;
-                    opts.iterNum = strtol(optarg, &errorCheck, 10);
+                    opts.iterNum = strtol(optarg, &errorCheck, decimal);
                     if (*errorCheck != '\0' or opts.iterNum < 0) {
                         errx(1, "ERROR: Args %s is not a valid number of iterations.", optarg);
                     }
@@ -268,7 +267,9 @@ void RegisterSingleBenchmark(bench_opts_t optsFromJson, bench_opts_t optsFromCom
 
     if (isApplyUseCase) {
         BenchmarkFunc func = g_applyBenchmarks.at(funcName).first;
-        auto registration = benchmark::RegisterBenchmark(funcName.c_str(), LockAndRun, func, cpuNum)->Apply(g_applyBenchmarks.at(funcName).second);
+        auto registration = benchmark::RegisterBenchmark(funcName.c_str(), LockAndRun, func,
+            cpuNum)->Apply(g_applyBenchmarks.at(funcName).second);
+
         if (iterNum > 0) {
             registration->Iterations(iterNum);
         }

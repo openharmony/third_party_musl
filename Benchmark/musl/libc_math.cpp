@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2020-2023. All rights reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,13 +13,13 @@
  * limitations under the License.
  */
 
-#include "math.h"
+#include "cmath"
 #include "util.h"
 
 using namespace std;
 
-#define PI 3.14159265
-#define FLT_MIN 1.175494351e-38F
+constexpr double PI = 3.14159265;
+constexpr double FLT_MIN = 1.175494351e-38F;
 
 static const double DOUBLE_VALUES[] = { 0.1, 10.0, -100.0, 0.0001, 5.14e11, -0.0001, 10000000.0, -100000000.0 };
 static const double COSSIN_VALUES[] = { -334.143, -2.0, -1.0, 0.0, 0.5, 1.0, 243.01, 3.14 };
@@ -172,7 +172,7 @@ static void Bm_function_Scalbn4(benchmark::State &state)
 // x * 2 ^ n
 static void Bm_function_Scalbnl1(benchmark::State &state)
 {
-    long double x = (long double)2e-10;
+    long double x = static_cast<long double>(2e-10);
     int n = -16384;
     for (auto _ : state) {
         benchmark::DoNotOptimize(scalbnl(x, n));
@@ -183,7 +183,7 @@ static void Bm_function_Scalbnl1(benchmark::State &state)
 // x * 2 ^ n
 static void Bm_function_Scalbnl2(benchmark::State &state)
 {
-    long double x = (long double)2e-10;
+    long double x = static_cast<long double>(2e-10);
     int n = 16384;
 
     for (auto _ : state) {

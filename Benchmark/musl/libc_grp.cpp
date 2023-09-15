@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2020-2023. All rights reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -19,7 +19,7 @@
 
 using namespace std;
 
-#define NGROUPS 64
+constexpr int NGROUPS = 64;
 
 static void Bm_function_Getgrouplist(benchmark::State &state)
 {
@@ -27,7 +27,6 @@ static void Bm_function_Getgrouplist(benchmark::State &state)
     struct passwd *pw = getpwnam(user);
     if (pw == nullptr) {
         perror("getpwnam");
-        exit(EXIT_FAILURE);
     }
 
     gid_t groups[NGROUPS];

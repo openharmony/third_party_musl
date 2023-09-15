@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2020-2023. All rights reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,9 +13,9 @@
  * limitations under the License.
  */
 
-#include "stdio.h"
-#include "stdlib.h"
-#include "stdarg.h"
+#include "cstdio"
+#include "cstdlib"
+#include "cstdarg"
 #include "sys/types.h"
 #include "sys/stat.h"
 #include "sys/file.h"
@@ -25,8 +25,8 @@
 
 using namespace std;
 
-#define SSCANF_SIZE 32
-#define BUFFERSIZE 100
+constexpr int SSCANF_SIZE = 32;
+constexpr int BUFFERSIZE = 100;
 char g_buffer[BUFFERSIZE];
 
 int MyPrintfVf(FILE *stream, const char *format, ...)
@@ -65,7 +65,6 @@ static void Bm_function_Fopen_read(benchmark::State &state)
         FILE *fp = fopen("/dev/zero", "r");
         if (fp == nullptr) {
             perror("fopen read");
-            exit(EXIT_FAILURE);
         }
         benchmark::DoNotOptimize(fp);
         state.PauseTiming();
@@ -82,7 +81,6 @@ static void Bm_function_Fopen_write(benchmark::State &state)
         FILE *fp = fopen("/dev/zero", "w");
         if (fp == nullptr) {
             perror("fopen write");
-            exit(EXIT_FAILURE);
         }
         benchmark::DoNotOptimize(fp);
         state.PauseTiming();
@@ -99,7 +97,6 @@ static void Bm_function_Fopen_append(benchmark::State &state)
         FILE *fp = fopen("/dev/zero", "a");
         if (fp == nullptr) {
             perror("fopen append");
-            exit(EXIT_FAILURE);
         }
         benchmark::DoNotOptimize(fp);
         state.PauseTiming();
@@ -116,7 +113,6 @@ static void Bm_function_Fopen_rplus(benchmark::State &state)
         FILE *fp = fopen("/dev/zero", "r+");
         if (fp == nullptr) {
             perror("fopen r+");
-            exit(EXIT_FAILURE);
         }
         benchmark::DoNotOptimize(fp);
         state.PauseTiming();
@@ -133,7 +129,6 @@ static void Bm_function_Fopen_wplus(benchmark::State &state)
         FILE *fp = fopen("/dev/zero", "w+");
         if (fp == nullptr) {
             perror("fopen w+");
-            exit(EXIT_FAILURE);
         }
         benchmark::DoNotOptimize(fp);
         state.PauseTiming();
@@ -150,7 +145,6 @@ static void Bm_function_Fopen_append_plus(benchmark::State &state)
         FILE *fp = fopen("/dev/zero", "a+");
         if (fp == nullptr) {
             perror("fopen a+");
-            exit(EXIT_FAILURE);
         }
         benchmark::DoNotOptimize(fp);
         state.PauseTiming();
@@ -167,7 +161,6 @@ static void Bm_function_Fopen_rb(benchmark::State &state)
         FILE *fp = fopen("/dev/zero", "rb");
         if (fp == nullptr) {
             perror("fopen rb");
-            exit(EXIT_FAILURE);
         }
         benchmark::DoNotOptimize(fp);
         state.PauseTiming();
@@ -184,7 +177,6 @@ static void Bm_function_Fopen_wb(benchmark::State &state)
         FILE *fp = fopen("/dev/zero", "wb");
         if (fp == nullptr) {
             perror("fopen wb");
-            exit(EXIT_FAILURE);
         }
         benchmark::DoNotOptimize(fp);
         state.PauseTiming();
@@ -201,7 +193,6 @@ static void Bm_function_Fopen_ab(benchmark::State &state)
         FILE *fp = fopen("/dev/zero", "ab");
         if (fp == nullptr) {
             perror("fopen ab");
-            exit(EXIT_FAILURE);
         }
         benchmark::DoNotOptimize(fp);
         state.PauseTiming();
@@ -218,7 +209,6 @@ static void Bm_function_Fopen_rb_plus(benchmark::State &state)
         FILE *fp = fopen("/dev/zero", "rb+");
         if (fp == nullptr) {
             perror("fopen rb+");
-            exit(EXIT_FAILURE);
         }
         benchmark::DoNotOptimize(fp);
         state.PauseTiming();
@@ -235,7 +225,6 @@ static void Bm_function_Fopen_wb_plus(benchmark::State &state)
         FILE *fp = fopen("/dev/zero", "wb+");
         if (fp == nullptr) {
             perror("fopen wb+");
-            exit(EXIT_FAILURE);
         }
         benchmark::DoNotOptimize(fp);
         state.PauseTiming();
@@ -252,7 +241,6 @@ static void Bm_function_Fopen_ab_plus(benchmark::State &state)
         FILE *fp = fopen("/dev/zero", "ab+");
         if (fp == nullptr) {
             perror("fopen ab+");
-            exit(EXIT_FAILURE);
         }
         benchmark::DoNotOptimize(fp);
         state.PauseTiming();
@@ -270,7 +258,6 @@ static void Bm_function_Fclose(benchmark::State &state)
         FILE *fp = fopen("/dev/zero", "w+");
         if (fp == nullptr) {
             perror("fclose proc");
-            exit(EXIT_FAILURE);
         }
         if (fp != nullptr) {
             state.ResumeTiming();
@@ -287,7 +274,6 @@ static void Bm_function_Fdopen(benchmark::State &state)
         FILE *fd = fdopen(fp, "r");
         if (fd == nullptr) {
             perror("fdopen");
-            exit(EXIT_FAILURE);
         }
         benchmark::DoNotOptimize(fd);
         fclose(fd);
@@ -586,7 +572,6 @@ static void Bm_function_Flock_Funlockfile(benchmark::State &state)
     FILE *fp = fopen("/dev/zero", "r");
     if (fp == nullptr) {
         perror("fopen funlockfile");
-        exit(EXIT_FAILURE);
     }
     for (auto _ : state) {
         flockfile(fp);
@@ -601,7 +586,6 @@ static void Bm_function_Flock(benchmark::State &state)
     int fd = open("/dev/zero", O_RDONLY);
     if (fd == -1) {
         perror("open flock");
-        exit(EXIT_FAILURE);
     }
     for (auto _ : state) {
         flock(fd, LOCK_EX);
@@ -628,7 +612,6 @@ static void Bm_function_Fseek_set(benchmark::State &state)
     FILE *f = fopen("/dev/zero", "r");
     if (f == nullptr) {
         perror("fopen fseek set");
-        exit(EXIT_FAILURE);
     }
     for (auto _ : state) {
         benchmark::DoNotOptimize(fseek(f, 0, SEEK_SET));
@@ -642,7 +625,6 @@ static void Bm_function_Fseeko_set(benchmark::State &state)
     FILE *f = fopen("/dev/zero", "r");
     if (f == nullptr) {
         perror("fopen fseeko set");
-        exit(EXIT_FAILURE);
     }
     for (auto _ : state) {
         benchmark::DoNotOptimize(fseeko(f, 0, SEEK_SET));
@@ -651,13 +633,12 @@ static void Bm_function_Fseeko_set(benchmark::State &state)
     state.SetItemsProcessed(state.iterations());
 }
 
-#define OFFSET_SIZE 10L
+constexpr int OFFSET_SIZE = 10L;
 static void Bm_function_Fseek_cur(benchmark::State &state)
 {
     FILE *f = fopen("/dev/zero", "r");
     if (f == nullptr) {
         perror("fopen fseek cur");
-        exit(EXIT_FAILURE);
     }
     for (auto _ : state) {
         benchmark::DoNotOptimize(fseek(f, OFFSET_SIZE, SEEK_CUR));
@@ -671,7 +652,6 @@ static void Bm_function_Fseek_end(benchmark::State &state)
     FILE *f = fopen("/dev/zero", "r");
     if (f == nullptr) {
         perror("fopen fseek end");
-        exit(EXIT_FAILURE);
     }
     for (auto _ : state) {
         benchmark::DoNotOptimize(fseek(f, -OFFSET_SIZE, SEEK_END));
@@ -685,7 +665,6 @@ static void Bm_function_Fseeko_cur(benchmark::State &state)
     FILE *f = fopen("/dev/zero", "r");
     if (f == nullptr) {
         perror("fopen fseeko cur");
-        exit(EXIT_FAILURE);
     }
     for (auto _ : state) {
         benchmark::DoNotOptimize(fseeko(f, OFFSET_SIZE, SEEK_CUR));
@@ -699,7 +678,6 @@ static void Bm_function_Fseeko_end(benchmark::State &state)
     FILE *f = fopen("/dev/zero", "r");
     if (f == nullptr) {
         perror("fopen fseeko end");
-        exit(EXIT_FAILURE);
     }
     for (auto _ : state) {
         benchmark::DoNotOptimize(fseeko(f, -OFFSET_SIZE, SEEK_END));
@@ -719,7 +697,8 @@ static void Bm_function_Sscanf_int(benchmark::State &state)
 
 static void Bm_function_Sscanf_double(benchmark::State &state)
 {
-    double longitude, latitude;
+    double longitude;
+    double latitude;
     for (auto _ : state) {
         benchmark::DoNotOptimize(sscanf("113.123456789 31.123456789", "%lf %lf", &longitude, &latitude));
     }
@@ -787,11 +766,9 @@ static void Bm_function_Vfscanf_str(benchmark::State &state)
     FILE *stream = fopen("/data/data/vfscanf_str.txt", "w+");
     if (stream == nullptr) {
         perror("fopen vfscanf str");
-        exit(EXIT_FAILURE);
     }
     if (fprintf(stream, "%s", "vfscanfStrTest") < 0) {
         perror("fprintf vfscanf str");
-        exit(EXIT_FAILURE);
     }
     for (auto _ : state) {
         char str[1024] = {'0'};
@@ -807,11 +784,10 @@ static void Bm_function_Vfscanf_int(benchmark::State &state)
     FILE *stream = fopen("/data/data/vfscanf_int.txt", "w+");
     if (stream == nullptr) {
         perror("fopen vfscanf int");
-        exit(EXIT_FAILURE);
     }
-    if (fprintf(stream, "%d", 123) < 0) {
+    int testNumber = 123;
+    if (fprintf(stream, "%d", testNumber) < 0) {
         perror("fprintf vfscanf int");
-        exit(EXIT_FAILURE);
     }
     for (auto _ : state) {
         int val = 0;
@@ -827,11 +803,10 @@ static void Bm_function_Vfscanf_double(benchmark::State &state)
     FILE *stream = fopen("/data/data/vfscanf_double.txt", "w+");
     if (stream == nullptr) {
         perror("fopen vfscanf double");
-        exit(EXIT_FAILURE);
     }
-    if (fprintf(stream, "%lf", 123.4567) < 0) {
+    double testNumber = 123.4567;
+    if (fprintf(stream, "%lf", testNumber) < 0) {
         perror("fprintf vfscanf double");
-        exit(EXIT_FAILURE);
     }
     for (auto _ : state) {
         int val = 0;
@@ -847,11 +822,10 @@ static void Bm_function_Vfscanf_float(benchmark::State &state)
     FILE *stream = fopen("/data/data/vfscanf_float.txt", "w+");
     if (stream == nullptr) {
         perror("fopen vfscanf float");
-        exit(EXIT_FAILURE);
     }
-    if (fprintf(stream, "%f", 40.0) < 0) {
+    double testNumber = 40.0;
+    if (fprintf(stream, "%f", testNumber) < 0) {
         perror("fprintf vfscanf float");
-        exit(EXIT_FAILURE);
     }
     for (auto _ : state) {
         float val = 0.0;
@@ -867,11 +841,9 @@ static void Bm_function_Vfscanf_char(benchmark::State &state)
     FILE *stream = fopen("/data/data/vfscanf_char.txt", "w+");
     if (stream == nullptr) {
         perror("fopen vfscanf char");
-        exit(EXIT_FAILURE);
     }
     if (fprintf(stream, "%c", 'a') < 0) {
         perror("fprintf vfscanf char");
-        exit(EXIT_FAILURE);
     }
     for (auto _ : state) {
         char val = ' ';
@@ -887,11 +859,9 @@ static void Bm_function_Vfscanf_iformat(benchmark::State &state)
     FILE *stream = fopen("/data/data/vfscanf_iformat.txt", "w+");
     if (stream == nullptr) {
         perror("fopen vfscanf iformat");
-        exit(EXIT_FAILURE);
     }
     if (fprintf(stream, "%i", -1) < 0) {
         perror("fprintf vfscanf iformat");
-        exit(EXIT_FAILURE);
     }
     for (auto _ : state) {
         signed int val = 0;
@@ -907,11 +877,10 @@ static void Bm_function_Vfscanf_oformat(benchmark::State &state)
     FILE *stream = fopen("/data/data/vfscanf_oformat.txt", "w+");
     if (stream == nullptr) {
         perror("fopen vfscanf oformat");
-        exit(EXIT_FAILURE);
     }
-    if (fprintf(stream, "%o", 0123) < 0) {
+    int testNumber = 0123;
+    if (fprintf(stream, "%o", testNumber) < 0) {
         perror("fprintf vfscanf oformat");
-        exit(EXIT_FAILURE);
     }
     for (auto _ : state) {
         unsigned int val = 0;
@@ -927,11 +896,10 @@ static void Bm_function_Vfscanf_uformat(benchmark::State &state)
     FILE *stream = fopen("/data/data/vfscanf_uformat.txt", "w+");
     if (stream == nullptr) {
         perror("fopen vfscanf uformat");
-        exit(EXIT_FAILURE);
     }
-    if (fprintf(stream, "%u", 1024) < 0) {
+    int testNumber = 1024;
+    if (fprintf(stream, "%u", testNumber) < 0) {
         perror("fprintf vfscanf uformat");
-        exit(EXIT_FAILURE);
     }
     for (auto _ : state) {
         unsigned int val = 0;
@@ -947,11 +915,9 @@ static void Bm_function_Vfscanf_xformat(benchmark::State &state)
     FILE *stream = fopen("/data/data/vfscanf_xformat.txt", "w+");
     if (stream == nullptr) {
         perror("fopen vfscanf xformat");
-        exit(EXIT_FAILURE);
     }
     if (fprintf(stream, "%x", 0xabc) < 0) {
         perror("fprintf vfscanf xformat");
-        exit(EXIT_FAILURE);
     }
     for (auto _ : state) {
         int val = 0x000;
@@ -967,11 +933,9 @@ static void Bm_function_Vfscanf_Xformat(benchmark::State &state)
     FILE *stream = fopen("/data/data/vfscanf_Xformat.txt", "w+");
     if (stream == nullptr) {
         perror("fopen vfscanf Xformat");
-        exit(EXIT_FAILURE);
     }
     if (fprintf(stream, "%X", 0xabc) < 0) {
         perror("fprintf vfscanf Xformat");
-        exit(EXIT_FAILURE);
     }
     for (auto _ : state) {
         int val = 0x000;
@@ -987,11 +951,10 @@ static void Bm_function_Vfscanf_eformat(benchmark::State &state)
     FILE *stream = fopen("/data/data/vfscanf_eformat.txt", "w+");
     if (stream == nullptr) {
         perror("fopen vfscanf eformat");
-        exit(EXIT_FAILURE);
     }
-    if (fprintf(stream, "%.2e", 123456.0) < 0) {
+    float testNumber = 123456.0;
+    if (fprintf(stream, "%.2e", testNumber) < 0) {
         perror("fprintf vfscanf eformat");
-        exit(EXIT_FAILURE);
     }
     for (auto _ : state) {
         float val = 0.0;
@@ -1007,11 +970,10 @@ static void Bm_function_Vfscanf_gformat(benchmark::State &state)
     FILE *stream = fopen("/data/data/vfscanf_gformat.txt", "w+");
     if (stream == nullptr) {
         perror("fopen vfscanf gformat");
-        exit(EXIT_FAILURE);
     }
-    if (fprintf(stream, "%g", 12.3) < 0) {
+    float testNumber = 12.3;
+    if (fprintf(stream, "%g", testNumber) < 0) {
         perror("fprintf vfscanf gformat");
-        exit(EXIT_FAILURE);
     }
     for (auto _ : state) {
         float val = 12.3;
@@ -1027,11 +989,9 @@ static void Bm_function_Vfscanf_ldformat(benchmark::State &state)
     FILE *stream = fopen("/data/data/vfscanf_gformat.txt", "w+");
     if (stream == nullptr) {
         perror("fopen vfscanf ldformat");
-        exit(EXIT_FAILURE);
     }
     if (fprintf(stream, "%ld", 2147483646L) < 0) {
         perror("fprintf vfscanf ldformat");
-        exit(EXIT_FAILURE);
     }
     for (auto _ : state) {
         long int val = 0;
@@ -1047,11 +1007,9 @@ static void Bm_function_Vfscanf_luformat(benchmark::State &state)
     FILE *stream = fopen("/data/data/vfscanf_luformat.txt", "w+");
     if (stream == nullptr) {
         perror("fopen vfscanf luformat");
-        exit(EXIT_FAILURE);
     }
     if (fprintf(stream, "%lu", 4294967294UL) < 0) {
         perror("fprintf vfscanf luformat");
-        exit(EXIT_FAILURE);
     }
     for (auto _ : state) {
         unsigned long val = 0UL;
@@ -1067,11 +1025,9 @@ static void Bm_function_Vfscanf_lxformat(benchmark::State &state)
     FILE *stream = fopen("/data/data/vfscanf_lxformat.txt", "w+");
     if (stream == nullptr) {
         perror("fopen vfscanf lxformat");
-        exit(EXIT_FAILURE);
     }
     if (fprintf(stream, "%lx", 0x41L) < 0) {
         perror("fprintf vfscanf lxformat");
-        exit(EXIT_FAILURE);
     }
     for (auto _ : state) {
         long val = 0x0L;
@@ -1087,11 +1043,9 @@ static void Bm_function_Vfscanf_loformat(benchmark::State &state)
     FILE *stream = fopen("/data/data/vfscanf_loformat.txt", "w+");
     if (stream == nullptr) {
         perror("fopen vfscanf loformat");
-        exit(EXIT_FAILURE);
     }
     if (fprintf(stream, "%lo", 0234L) < 0) {
         perror("fprintf vfscanf loformat");
-        exit(EXIT_FAILURE);
     }
     for (auto _ : state) {
         long val = 00L;
@@ -1107,11 +1061,9 @@ static void Bm_function_Vfscanf_hdformat(benchmark::State &state)
     FILE *stream = fopen("/data/data/vfscanf_hdformat.txt", "w+");
     if (stream == nullptr) {
         perror("fopen vfscanf hdformat");
-        exit(EXIT_FAILURE);
     }
-    if (fprintf(stream, "%hd", (short)144) < 0) {
+    if (fprintf(stream, "%hd", static_cast<short>(144)) < 0) {
         perror("fprintf vfscanf hdformat");
-        exit(EXIT_FAILURE);
     }
     for (auto _ : state) {
         short int val = 0;
@@ -1127,11 +1079,9 @@ static void Bm_function_Vfscanf_huformat(benchmark::State &state)
     FILE *stream = fopen("/data/data/vfscanf_huformat.txt", "w+");
     if (stream == nullptr) {
         perror("fopen vfscanf huformat");
-        exit(EXIT_FAILURE);
     }
-    if (fprintf(stream, "%hu", (unsigned short)256) < 0) {
+    if (fprintf(stream, "%hu", static_cast<unsigned short>(256)) < 0) {
         perror("fprintf vfscanf huformat");
-        exit(EXIT_FAILURE);
     }
     for (auto _ : state) {
         unsigned short int val = 0;
@@ -1147,11 +1097,9 @@ static void Bm_function_Vfscanf_hhuformat(benchmark::State &state)
     FILE *stream = fopen("/data/data/vfscanf_hhuformat.txt", "w+");
     if (stream == nullptr) {
         perror("fopen vfscanf hhuformat");
-        exit(EXIT_FAILURE);
     }
-    if (fprintf(stream, "%hhu", (unsigned char)256) < 0) {
+    if (fprintf(stream, "%hhu", static_cast<unsigned char>(256)) < 0) {
         perror("fprintf vfscanf hhuformat");
-        exit(EXIT_FAILURE);
     }
     for (auto _ : state) {
         unsigned char val = 0;
@@ -1167,11 +1115,9 @@ static void Bm_function_Vfscanf_hhxformat(benchmark::State &state)
     FILE *stream = fopen("/data/data/vfscanf_hhxformat.txt", "w+");
     if (stream == nullptr) {
         perror("fopen vfscanf hhxformat");
-        exit(EXIT_FAILURE);
     }
-    if (fprintf(stream, "%hhx", (unsigned char)0x23) < 0) {
+    if (fprintf(stream, "%hhx", static_cast<unsigned char>(0x23)) < 0) {
         perror("fprintf vfscanf hhxformat");
-        exit(EXIT_FAILURE);
     }
     for (auto _ : state) {
         short val = 0x0;
@@ -1187,11 +1133,9 @@ static void Bm_function_Vfscanf_llxformat(benchmark::State &state)
     FILE *stream = fopen("/data/data/vfscanf_llxformat.txt", "w+");
     if (stream == nullptr) {
         perror("fopen vfscanf llxformat");
-        exit(EXIT_FAILURE);
     }
     if (fprintf(stream, "%llx", 0x6543LL) < 0) {
         perror("fprintf vfscanf llxformat");
-        exit(EXIT_FAILURE);
     }
     for (auto _ : state) {
         long long val = 0x0LL;
@@ -1207,11 +1151,9 @@ static void Bm_function_Vfscanf_lldformat(benchmark::State &state)
     FILE *stream = fopen("/data/data/vfscanf_lldformat.txt", "w+");
     if (stream == nullptr) {
         perror("fopen vfscanf lldformat");
-        exit(EXIT_FAILURE);
     }
     if (fprintf(stream, "%lld", -23234534LL) < 0) {
         perror("fprintf vfscanf lldformat");
-        exit(EXIT_FAILURE);
     }
     for (auto _ : state) {
         long long val = 0;
@@ -1227,11 +1169,9 @@ static void Bm_function_Vfscanf_lluformat(benchmark::State &state)
     FILE *stream = fopen("/data/data/vfscanf_lluformat.txt", "w+");
     if (stream == nullptr) {
         perror("fopen vfscanf lluformat");
-        exit(EXIT_FAILURE);
     }
     if (fprintf(stream, "%llu", 23234534LL) < 0) {
         perror("fprintf vfscanf lluformat");
-        exit(EXIT_FAILURE);
     }
     for (auto _ : state) {
         unsigned long long val = 0;
@@ -1247,7 +1187,6 @@ static void Bm_function_Fileno_unlocked(benchmark::State &state)
     FILE *stream = fopen("/data/data/vfscanf_lluformat.txt", "w+");
     if (stream == nullptr) {
         perror("fopen vfscanf lluformat");
-        exit(EXIT_FAILURE);
     }
     for (auto _ : state) {
         benchmark::DoNotOptimize(fileno_unlocked(stream));
@@ -1262,7 +1201,6 @@ static void Bm_function_Fseek_fflush(benchmark::State &state)
     FILE *f = fopen("/dev/zero", "r");
     if (f == nullptr) {
         perror("fopen fseek set");
-        exit(EXIT_FAILURE);
     }
     for (auto _ : state) {
         benchmark::DoNotOptimize(fflush(f));
@@ -1273,7 +1211,9 @@ static void Bm_function_Fseek_fflush(benchmark::State &state)
 
 static void Bm_function_Sscanf_vsscanf_int(benchmark::State &state)
 {
-    int year, month, day;
+    int year;
+    int month;
+    int day;
     const char* src = "20230515";
     for (auto _ : state) {
         benchmark::DoNotOptimize(MyVfscanf(src, "%04d%02d%02d", &year, &month, &day));
@@ -1285,7 +1225,6 @@ static void Bm_function_Feof(benchmark::State &state)
     FILE *fp = fopen("/dev/zero", "r");
     if (fp == nullptr) {
         perror("feof");
-        exit(EXIT_FAILURE);
     }
     for (auto _ : state) {
         benchmark::DoNotOptimize(feof(fp));
@@ -1302,7 +1241,6 @@ static void Bm_function_Ungetc(benchmark::State &state)
     FILE *fp = fopen("/dev/zero", "r");
     if (fp == nullptr) {
         perror("ungetc open");
-        exit(EXIT_FAILURE);
     }
     while (state.KeepRunning()) {
         c = fgetc(fp);
@@ -1340,7 +1278,6 @@ static void Bm_function_Fputc(benchmark::State &state)
     FILE *fp = fopen("/dev/zero", "w+");
     if (fp == nullptr) {
         perror("fopen fputc");
-        exit(EXIT_FAILURE);
     }
     char c = 'Z';
     for (auto _ : state) {
@@ -1355,7 +1292,6 @@ static void Bm_function_Fputs(benchmark::State &state)
     FILE *fp = fopen("/dev/zero", "w+");
     if (fp == nullptr) {
         perror("fopen fputs");
-        exit(EXIT_FAILURE);
     }
     char str[BUFFERSIZE] = "asdhfdf";
     for (auto _ : state) {
@@ -1369,10 +1305,9 @@ static void Bm_function_Fputs(benchmark::State &state)
 // position pointer from the current position of the file
 static void Bm_function_Ftell(benchmark::State &state)
 {
-    FILE * fp = fopen("/dev/zero", "w+");
+    FILE* fp = fopen("/dev/zero", "w+");
     if (fp == nullptr) {
         perror("fopen ftell");
-        exit(EXIT_FAILURE);
     }
     fseek(fp, 0, SEEK_END);
     for (auto _ : state) {
@@ -1382,11 +1317,11 @@ static void Bm_function_Ftell(benchmark::State &state)
     state.SetBytesProcessed(state.iterations());
 }
 
-static void Bm_function_fread_unlocked(benchmark::State& state) {
+static void Bm_function_fread_unlocked(benchmark::State& state)
+{
     FILE *fp = fopen("/dev/zero", "r");
     if (fp == nullptr) {
         perror("fopen read");
-        exit(EXIT_FAILURE);
     }
     int n = 256;
     char* buf = new char[n];
@@ -1397,11 +1332,11 @@ static void Bm_function_fread_unlocked(benchmark::State& state) {
     fclose(fp);
 }
 
-static void Bm_function_fgets_unlocked(benchmark::State& state) {
+static void Bm_function_fgets_unlocked(benchmark::State& state)
+{
     FILE *fp = fopen("/dev/zero", "r");
     if (fp == nullptr) {
         perror("fopen read");
-        exit(EXIT_FAILURE);
     }
     int n = 256;
     char* buf = new char[n];
@@ -1419,14 +1354,12 @@ static void Bm_function_Renameat(benchmark::State &state)
     int oldFd = open(oldPath, O_RDWR | O_CREAT, OPEN_MODE);
     if (oldFd == -1) {
         perror("open renameat old");
-        exit(EXIT_FAILURE);
     }
     close(oldFd);
     const char *newPath = "/data/data/test_new_renameat.txt";
     int newFd = open(newPath, O_RDWR | O_CREAT, OPEN_MODE);
     if (newFd == -1) {
         perror("open renameat new");
-        exit(EXIT_FAILURE);
     }
     close(newFd);
     for (auto _ : state) {
@@ -1441,7 +1374,7 @@ static void BM_function_Snprintf_d4(benchmark::State& state)
     char buf[BUFSIZ];
     char a[4] = {127, 0, 0, 1};
     while (state.KeepRunning()) {
-        benchmark::DoNotOptimize(snprintf(buf, sizeof(buf), "%d.%d.%d.%d", a[0],a[1],a[2],a[3]));
+        benchmark::DoNotOptimize(snprintf(buf, sizeof(buf), "%d.%d.%d.%d", a[0], a[1], a[2], a[3]));
     }
 }
 

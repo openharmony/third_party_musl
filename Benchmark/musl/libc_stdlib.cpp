@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2020-2023. All rights reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,21 +13,21 @@
  * limitations under the License.
  */
 
-#include "stdlib.h"
-#include "stdio.h"
-#include "string.h"
+#include "cstdlib"
+#include "cstdio"
+#include "cstring"
 #include "fcntl.h"
 #include "unistd.h"
-#include "wchar.h"
-#include "locale.h"
+#include "cwchar"
+#include "clocale"
 #include "util.h"
 
 using namespace std;
 
-typedef struct {
+using Nier = struct {
     char name[20];
     int age;
-} Nier;
+};
 
 static const vector<int> memalignLength {
     8,
@@ -270,7 +270,6 @@ static void Bm_function_Posix_Memalign(benchmark::State &state)
         int ret = posix_memalign(&buf, align, length);
         if (ret) {
             perror("posix_memalign failed");
-            exit(EXIT_FAILURE);
         }
 
         state.PauseTiming();

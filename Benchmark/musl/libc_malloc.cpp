@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2020-2023. All rights reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -14,12 +14,12 @@
  */
 
 #include "malloc.h"
-#include "stdlib.h"
+#include "cstdlib"
 #include "util.h"
 
 using namespace std;
 
-#define MALLOC_SIZE 2
+constexpr int MALLOC_SIZE = 2;
 static const vector<int> blockSize {
     1,
     4,
@@ -41,7 +41,8 @@ static void PrepareCallocArgs(benchmark::internal::Benchmark* b)
     }
 }
 
-static void Bm_function_Calloc(benchmark::State& state) {
+static void Bm_function_Calloc(benchmark::State& state)
+{
     int m = state.range(0);
     int n = state.range(1);
     void* ptr;
@@ -59,7 +60,6 @@ static void Bm_function_realloc_twice(benchmark::State &state)
     char *p =  (char *)malloc(size);
     if (p == nullptr) {
         perror("malloc Je_realloc");
-        exit(EXIT_FAILURE);
     }
 
     for (auto _ : state) {
@@ -78,7 +78,6 @@ static void Bm_function_realloc_half(benchmark::State &state)
     char *p =  (char *)malloc(size);
     if (p == nullptr) {
         perror("malloc Je_realloc");
-        exit(EXIT_FAILURE);
     }
 
     for (auto _ : state) {
@@ -97,7 +96,6 @@ static void Bm_function_realloc_equal(benchmark::State &state)
     char *p =  (char *)malloc(size);
     if (p == nullptr) {
         perror("malloc Je_realloc");
-        exit(EXIT_FAILURE);
     }
 
     for (auto _ : state) {
@@ -115,7 +113,6 @@ static void Bm_function_malloc_usable_size(benchmark::State &state)
     char *p =  (char *)malloc(MALLOC_SIZE);
     if (p == nullptr) {
         perror("malloc Je_malloc_usable_size");
-        exit(EXIT_FAILURE);
     }
 
     for (auto _ : state) {
