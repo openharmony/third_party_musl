@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2020-2023. All rights reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -14,8 +14,8 @@
  */
 
 #include "unistd.h"
-#include "stddef.h"
-#include "fenv.h"
+#include "cstddef"
+#include "cfenv"
 #include "sys/mman.h"
 #include "sys/prctl.h"
 #include "sys/types.h"
@@ -23,19 +23,19 @@
 #include "sys/uio.h"
 #include "sys/utsname.h"
 #include "fcntl.h"
-#include "stdio.h"
+#include "cstdio"
 #include "sys/time.h"
-#include "time.h"
+#include "ctime"
 #include "err.h"
-#include "string.h"
-#include "errno.h"
+#include "cstring"
+#include "cerrno"
 #include "dirent.h"
 #include "util.h"
 
 using namespace std;
 
-#define BUFFER 1024
-#define IOV_SIZE 2
+constexpr int BUFFER = 1024;
+constexpr int IOV_SIZE = 2;
 
 static const vector<int> pipe2Flags {
     O_CLOEXEC,
@@ -56,7 +56,6 @@ void ReadWriteTest(benchmark::State& state, bool isRead)
     int fd = open("/dev/zero", O_RDWR, OPEN_MODE);
     if (fd == -1) {
         perror("open ReadWriteTest");
-        exit(EXIT_FAILURE);
     }
     char* bufRead = new char[chunkSize];
     const char *bufWrite = "hello world!";
@@ -68,12 +67,10 @@ void ReadWriteTest(benchmark::State& state, bool isRead)
         if (isRead) {
             if (read(fd, bufRead, chunkSize) == -1) {
                 perror("Read proc");
-                exit(EXIT_FAILURE);
             }
         } else {
             if (write(fd, bufWrite, chunkSize) == -1) {
                 perror("write proc");
-                exit(EXIT_FAILURE);
             }
         }
     }
@@ -128,7 +125,6 @@ static void Bm_function_Close(benchmark::State &state)
         int fd = open("/dev/zero", O_RDONLY, OPEN_MODE);
         if (fd == -1) {
             perror("open Close");
-            exit(EXIT_FAILURE);
         }
         state.ResumeTiming();
         benchmark::DoNotOptimize(close(fd));
@@ -136,7 +132,7 @@ static void Bm_function_Close(benchmark::State &state)
     state.SetBytesProcessed(state.iterations());
 }
 
-#define SECOND  50
+constexpr int SECOND = 50;
 
 static void Bm_function_Usleep(benchmark::State &state)
 {
@@ -180,12 +176,10 @@ static void Bm_function_Readlinkat(benchmark::State &state)
     int i = symlink("/dev/zero", "/data/local/tmp/tmplink");
     if (i == -1) {
         perror("symlink");
-        exit(EXIT_FAILURE);
     }
     DIR *dir = opendir("/data/local/tmp");
     if (dir == nullptr) {
         perror("opendir");
-        exit(EXIT_FAILURE);
     }
     int fd = dirfd(dir);
     for (auto _ : state) {
@@ -305,7 +299,6 @@ static void Bm_function_Lseek(benchmark::State &state)
     int fd = open("/etc/passwd", O_RDONLY, OPEN_MODE);
     if (fd == -1) {
         perror("open lseek");
-        exit(EXIT_FAILURE);
     }
 
     for (auto _ : state) {
@@ -323,7 +316,6 @@ static void Bm_function_Dup(benchmark::State &state)
         fd = dup(STDOUT_FILENO);
         if (fd == -1) {
             perror("dup");
-            exit(EXIT_FAILURE);
         }
 
         state.PauseTiming();
@@ -339,7 +331,6 @@ static void Bm_function_Pipe2(benchmark::State &state)
         int fd[2];
         if (pipe2(fd, flags) < 0) {
             perror("pipe");
-            exit(EXIT_FAILURE);
         }
 
         state.PauseTiming();
@@ -353,7 +344,7 @@ static void Bm_function_Getopt(benchmark::State &state)
 {
     for (auto _ : state) {
         int argc = 4;
-        char * argv[] = {
+        char* argv[] = {
             (char*)"exe",
             (char*)"-ab",
             (char*)"-c",
@@ -372,9 +363,9 @@ static void Bm_function_Fsync(benchmark::State &state)
     int fd = open(filepath, O_CREAT | O_WRONLY, OPEN_MODE);
     if (fd < 0) {
         perror("open fsync");
-        exit(EXIT_FAILURE);
     }
-    write(fd, "test", 4);
+    int testNumber = 4;
+    write(fd, "test", testNumber);
     for (auto _ : state) {
         fsync(fd);
     }
@@ -388,9 +379,9 @@ static void Bm_function_Fdatasync(benchmark::State &state)
     int fd = open(filepath, O_CREAT | O_WRONLY, OPEN_MODE);
     if (fd < 0) {
         perror("open fdatasync");
-        exit(EXIT_FAILURE);
     }
-    write(fd, "test", 4);
+    int testNumber = 4;
+    write(fd, "test", testNumber);
     for (auto _ : state) {
         fdatasync(fd);
     }
@@ -406,7 +397,6 @@ static void Bm_function_Ftruncate(benchmark::State &state)
     int fd = open(filepath, O_CREAT | O_WRONLY, OPEN_MODE);
     if (fd < 0) {
         perror("open ftruncate");
-        exit(EXIT_FAILURE);
     }
     write(fd, buf, BUFFER);
     for (auto _ : state) {
@@ -422,7 +412,6 @@ static void Bm_function_Unlink(benchmark::State &state)
     int fd = open(filepath, O_CREAT | O_RDWR, OPEN_MODE);
     if (fd < 0) {
         perror("open unlink");
-        exit(EXIT_FAILURE);
     }
     for (auto _ : state) {
         unlink(filepath);
@@ -459,7 +448,6 @@ static void Bm_function_Readv(benchmark::State &state)
     int fd = open("/dev/zero", O_RDONLY, OPEN_MODE);
     if (fd == -1) {
         perror("readv fail");
-        exit(EXIT_FAILURE);
     }
 
     const size_t nbytes = state.range(0);
@@ -492,12 +480,10 @@ static void Bm_function_Chown(benchmark::State &state)
     int fd = open(filename, O_RDWR | O_CREAT, OPEN_MODE);
     if (fd == -1) {
         perror("open chown");
-        exit(EXIT_FAILURE);
     }
     for (auto _ : state) {
         if (chown(filename, 1, 1) != 0) {
             perror("chown proc");
-            exit(EXIT_FAILURE);
         }
     }
     close(fd);
@@ -512,7 +498,6 @@ static void Bm_function_Getpgrp(benchmark::State &state)
         pgid = getpgrp();
         if (pgid == -1) {
             perror("getpgrp proc");
-            exit(EXIT_FAILURE);
         }
         benchmark::DoNotOptimize(pgid);
     }
@@ -529,12 +514,10 @@ static void Bm_function_Unlinkat_ZeroFlag(benchmark::State &state)
         fd = open(path, O_RDWR | O_CREAT, OPEN_MODE);
         if (fd == -1) {
             perror("open fstatUnlinkat zero");
-            exit(EXIT_FAILURE);
         }
         state.ResumeTiming();
         if (unlinkat(fd, path, 0) != 0) {
             perror("unlinkat zero proc");
-            exit(EXIT_FAILURE);
         }
         state.PauseTiming();
         close(fd);
@@ -550,12 +533,10 @@ static void Bm_function_Unlinkat_AT_REMOVEDIR(benchmark::State &state)
         state.PauseTiming();
         if (mkdir(path, S_IRWXU | S_IRWXG | S_IXGRP | S_IROTH | S_IXOTH) == -1) {
             perror("mkdir unlinkat removedir");
-            exit(EXIT_FAILURE);
         }
         state.ResumeTiming();
         if (unlinkat(AT_FDCWD, path, AT_REMOVEDIR) != 0) {
             perror("unlinkat removedir proc");
-            exit(EXIT_FAILURE);
         }
     }
 }
@@ -565,7 +546,6 @@ static void Bm_function_Execlp_ls(benchmark::State &state)
     pid_t pid = fork();
     if (pid < 0) {
         perror("fork execlp ls");
-        exit(EXIT_FAILURE);
     }
     for (auto _ : state) {
         if (pid == 0) {
@@ -579,7 +559,6 @@ static void Bm_function_Sysconf(benchmark::State &state)
     for (auto _ : state) {
         benchmark::DoNotOptimize(sysconf(_SC_PAGESIZE));
     }
-    
 }
 
 static void Bm_function_Prctl(benchmark::State &state)
@@ -588,7 +567,6 @@ static void Bm_function_Prctl(benchmark::State &state)
     void *addr = mmap(nullptr, pagesize, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
     if (addr == nullptr) {
         perror("mmap error");
-        exit(EXIT_FAILURE);
     }
     static char addrName[] = "prctl_test";
     for (auto _ : state) {

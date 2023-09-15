@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2020-2023. All rights reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -17,27 +17,25 @@
 #include "sys/stat.h"
 #include "fcntl.h"
 #include "unistd.h"
-#include "stdio.h"
+#include "cstdio"
 #include "dirent.h"
-#include "time.h"
+#include "ctime"
 #include "util.h"
 
 using namespace std;
 
-#define LOCK_SIZE 10
-#define TIME_SIZE 2
+constexpr int LOCK_SIZE = 10;
+constexpr int TIME_SIZE = 2;
 static void Bm_function_Fcntl_getfl(benchmark::State &state)
 {
     int fd = open("/etc/passwd", O_RDONLY, OPEN_MODE);
     if (fd == -1) {
         perror("open fcntl_getfl");
-        exit(EXIT_FAILURE);
     }
     for (auto _ : state) {
         int ret = fcntl(fd, F_GETFL);
         if (ret < 0) {
             perror("fcntl_getfl proc");
-            exit(EXIT_FAILURE);
         }
         benchmark::DoNotOptimize(ret);
     }
@@ -50,14 +48,12 @@ static void Bm_function_Fcntl_setfl(benchmark::State &state)
     int flags = fcntl(STDIN_FILENO, F_GETFL, 0);
     if (flags < 0) {
         perror("fcntl_setfl F_GETFL");
-        exit(EXIT_FAILURE);
     }
     flags |= O_NONBLOCK;
     for (auto _ : state) {
         int ret = fcntl(STDIN_FILENO, F_SETFL, flags);
         if (ret < 0) {
             perror("fcntl_setfl proc");
-            exit(EXIT_FAILURE);
         }
         benchmark::DoNotOptimize(ret);
 
@@ -65,7 +61,6 @@ static void Bm_function_Fcntl_setfl(benchmark::State &state)
         flags &= ~O_NONBLOCK;
         if (fcntl(STDOUT_FILENO, F_SETFL, flags) < -1) {
             perror("fcntl_setfl proc");
-            exit(EXIT_FAILURE);
         }
         state.ResumeTiming();
     }
@@ -77,7 +72,6 @@ static void Bm_function_Fcntl_setlkw(benchmark::State &state)
     int fd = open("/dev/zero", O_RDWR, OPEN_MODE);
     if (fd == -1) {
         perror("open fcntl_setlkw");
-        exit(EXIT_FAILURE);
     }
     struct flock fdLock;
     for (auto _ : state) {
@@ -88,14 +82,12 @@ static void Bm_function_Fcntl_setlkw(benchmark::State &state)
         fdLock.l_len = LOCK_SIZE;
         if (fcntl(fd, F_SETLKW, &fdLock) < 0) {
             perror("fcntl_setlkw F_WRLCK");
-            exit(EXIT_FAILURE);
         }
         fdLock.l_type = F_UNLCK;
         state.ResumeTiming();
         int ret = fcntl(fd, F_SETLKW, &fdLock);
         if (ret < 0) {
             perror("fcntl_setlkw proc");
-            exit(EXIT_FAILURE);
         }
         benchmark::DoNotOptimize(ret);
     }
@@ -108,13 +100,11 @@ static void Bm_function_Fcntl_dupfd(benchmark::State &state)
     int fd = open("/etc/passwd", O_RDONLY, OPEN_MODE);
     if (fd == -1) {
         perror("open fcntl_dupfd");
-        exit(EXIT_FAILURE);
     }
     for (auto _ : state) {
         int dupfd = fcntl(fd, F_DUPFD, 0);
         if (dupfd < 0) {
             perror("fcntl_dupfd proc");
-            exit(EXIT_FAILURE);
         }
         benchmark::DoNotOptimize(dupfd);
         state.PauseTiming();
@@ -130,7 +120,6 @@ static void Bm_function_Fcntl_setlk(benchmark::State &state)
     int fd = open("/dev/zero", O_RDWR, OPEN_MODE);
     if (fd == -1) {
         perror("open fcntl_setlk");
-        exit(EXIT_FAILURE);
     }
     struct flock fdLock;
     for (auto _ : state) {
@@ -141,14 +130,12 @@ static void Bm_function_Fcntl_setlk(benchmark::State &state)
         fdLock.l_len = LOCK_SIZE;
         if (fcntl(fd, F_SETLK, &fdLock) < 0) {
             perror("fcntl_setlk F_WRLCK");
-            exit(EXIT_FAILURE);
         }
         fdLock.l_type = F_UNLCK;
         state.ResumeTiming();
         int ret = fcntl(fd, F_SETLK, &fdLock);
         if (ret < 0) {
             perror("fcntl_setlk proc");
-            exit(EXIT_FAILURE);
         }
         benchmark::DoNotOptimize(ret);
     }
@@ -161,7 +148,6 @@ static void Bm_function_Fcntl_getlk(benchmark::State &state)
     int fd = open("/dev/zero", O_RDWR, OPEN_MODE);
     if (fd == -1) {
         perror("open fcntl_getlk");
-        exit(EXIT_FAILURE);
     }
     struct flock fdLock;
     for (auto _ : state) {
@@ -174,7 +160,6 @@ static void Bm_function_Fcntl_getlk(benchmark::State &state)
         int ret = fcntl(fd, F_GETLK, &fdLock);
         if (ret < 0) {
             perror("fcntl_getlk proc");
-            exit(EXIT_FAILURE);
         }
         benchmark::DoNotOptimize(ret);
     }
@@ -187,13 +172,11 @@ static void Bm_function_Fcntl_getfd(benchmark::State &state)
     int fd = open("/dev/zero", O_RDWR, OPEN_MODE);
     if (fd == -1) {
         perror("open fcntl_getfd");
-        exit(EXIT_FAILURE);
     }
     for (auto _ : state) {
         int ret = fcntl(fd, F_GETFD);
         if (ret < 0) {
             perror("fcntl_getfd proc");
-            exit(EXIT_FAILURE);
         }
         benchmark::DoNotOptimize(ret);
     }
@@ -206,21 +189,18 @@ static void Bm_function_Fcntl_setfd(benchmark::State &state)
     int fd = open("/dev/zero", O_RDWR, OPEN_MODE);
     if (fd == -1) {
         perror("open fcntl_setfd");
-        exit(EXIT_FAILURE);
     }
     for (auto _ : state) {
         state.PauseTiming();
         int flags = fcntl(fd, F_GETFD);
         if (flags < 0) {
             perror("fcntl_setfd F_GETFD");
-            exit(EXIT_FAILURE);
         }
         flags |= FD_CLOEXEC;
         state.ResumeTiming();
         int ret = fcntl(fd, F_SETFD, flags);
         if (ret < 0) {
             perror("fcntl_setfd proc");
-            exit(EXIT_FAILURE);
         }
         benchmark::DoNotOptimize(ret);
 
@@ -228,7 +208,6 @@ static void Bm_function_Fcntl_setfd(benchmark::State &state)
         flags &= ~FD_CLOEXEC;
         if (fcntl(fd, F_SETFD, flags) < -1) {
             perror("fcntl_setfd F_SETFD");
-            exit(EXIT_FAILURE);
         }
         state.ResumeTiming();
     }
@@ -243,7 +222,6 @@ static void Bm_function_Open_rdonly(benchmark::State &state)
         int fd = open(filename, O_RDONLY, OPEN_MODE);
         if (fd == -1) {
             perror("open_rdonly proc");
-            exit(EXIT_FAILURE);
         }
         benchmark::DoNotOptimize(fd);
         state.PauseTiming();
@@ -260,7 +238,6 @@ static void Bm_function_Open_rdwr(benchmark::State &state)
         int fd = open(filename, O_RDWR, OPEN_MODE);
         if (fd == -1) {
             perror("open_rdwr proc");
-            exit(EXIT_FAILURE);
         }
         benchmark::DoNotOptimize(fd);
         state.PauseTiming();
@@ -277,7 +254,6 @@ static void Bm_function_Open_creat_rdwr(benchmark::State &state)
         int fd = open(filename, O_RDWR | O_CREAT, OPEN_MODE);
         if (fd == -1) {
             perror("open_creat_rdwr proc");
-            exit(EXIT_FAILURE);
         }
         benchmark::DoNotOptimize(fd);
         state.PauseTiming();
@@ -323,7 +299,6 @@ static void Bm_function_Creat(benchmark::State &state)
         int fd = creat(filename, OPEN_MODE);
         if (fd == -1) {
             perror("creat proc");
-            exit(EXIT_FAILURE);
         }
         benchmark::DoNotOptimize(fd);
         close(fd);
@@ -340,7 +315,6 @@ static void Bm_function_Openat_rdonly(benchmark::State &state)
         int fd = openat(AT_FDCWD, filename, O_RDONLY, OPEN_MODE);
         if (fd == -1) {
             perror("openat_rdonly proc");
-            exit(EXIT_FAILURE);
         }
         benchmark::DoNotOptimize(fd);
         state.PauseTiming();
@@ -358,7 +332,6 @@ static void Bm_function_Openat_creat_rdwr(benchmark::State &state)
         int fd = openat(AT_FDCWD, filename, O_RDWR | O_CREAT, OPEN_MODE);
         if (fd == -1) {
             perror("openat_creat_rdwr proc");
-            exit(EXIT_FAILURE);
         }
         benchmark::DoNotOptimize(fd);
         state.PauseTiming();
@@ -376,7 +349,6 @@ static void Bm_function_Openat_RelativePath_AT_FDCWD(benchmark::State &state)
         int fd = openat(AT_FDCWD, filename, O_RDWR | O_CREAT, OPEN_MODE);
         if (fd == -1) {
             perror("openat_creat_rdwr proc");
-            exit(EXIT_FAILURE);
         }
         benchmark::DoNotOptimize(fd);
         state.PauseTiming();
@@ -397,7 +369,6 @@ static void Bm_function_Openat_RelativePath_fd(benchmark::State &state)
         int fd = openat(fdDir, "zero", O_RDWR | O_CREAT, OPEN_MODE);
         if (fd == -1) {
             perror("open_rdwr proc");
-            exit(EXIT_FAILURE);
         }
         benchmark::DoNotOptimize(fd);
         state.PauseTiming();

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2020-2023. All rights reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -12,17 +12,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#include "string.h"
-#include "wchar.h"
-#include "err.h"
-#include "errno.h"
-#include "locale.h"
-#include "util.h"
+#include <iostream>
 #include <stdio_ext.h>
 #include <unistd.h>
 #include <thread>
-#include <iostream>
+#include "cstring"
+#include "cwchar"
+#include "err.h"
+#include "cerrno"
+#include "clocale"
+#include "util.h"
 using namespace std;
 
 static const std::vector<int> bufferSizes {
@@ -41,19 +40,24 @@ static const std::vector<int> bufferSizes {
 
 static const std::vector<int> limitSizes {
     1,
-    2,
-    3,
-    4,
-    5,
-    6,
-    7,
+    8,
+    64,
+    1 * K,
+    16 * K,
+    64 * K,
+    128 * K,
 };
 
 static void StringtestArgs(benchmark::internal::Benchmark* b)
 {
     for (auto l : bufferSizes) {
         for (auto f : limitSizes) {
-            b->Args({l, f, 0});
+            if(f > l){
+                b->Args({l, l, 0});
+            }
+            else{
+                b->Args({l, f, 0});
+            }
         }
     }
 }
@@ -340,7 +344,7 @@ static void Bm_function_Strdup(benchmark::State &state)
     std::vector<char> haystack;
     char *haystackAligned = GetAlignedPtrFilled(&haystack, haystackAlignment, nbytes, 'x');
     haystackAligned[nbytes - 1] = '\0';
-    char* ptr = 0;
+    char* ptr = nullptr;
     while (state.KeepRunning()) {
         benchmark::DoNotOptimize(ptr = strdup(haystackAligned));
         free(ptr);
@@ -572,67 +576,71 @@ static void Bm_function_Wmemcmp(benchmark::State &state)
     state.SetBytesProcessed(uint64_t(state.iterations()) * uint64_t(nbytes));
 }
 
-static void BM_function_Wcsstr(benchmark::State& state) {
+constexpr int BYTE_SIZE = 4;
+
+static void BM_function_Wcsstr(benchmark::State& state)
+{
     const size_t nbytes = state.range(0);
-    const size_t haystack_alignment = state.range(1);
-    const size_t needle_alignment = state.range(2);
+    const size_t haystackAlignment = state.range(1);
+    const size_t needleAlignment = state.range(2);
 
     std::vector<wchar_t> haystack;
     std::vector<wchar_t> needle;
-    wchar_t* haystack_aligned = GetAlignedPtrFilled(&haystack, haystack_alignment, nbytes, L'x');
-    wchar_t* needle_aligned = GetAlignedPtrFilled(&needle, needle_alignment,
-                                                std::min(nbytes, static_cast<size_t>(5)), L'x');
-
-    if (nbytes / 4 > 2) {
-        for (size_t i = 0; nbytes / 4 >= 2 && i < nbytes / 4 - 2; i++) {
-        haystack_aligned[4 * i + 3] = L'y';
+    wchar_t* haystackAligned = GetAlignedPtrFilled(&haystack, haystackAlignment, nbytes, L'x');
+    wchar_t* needleAligned = GetAlignedPtrFilled(&needle, needleAlignment, std::min(nbytes, static_cast<size_t>(5)),
+        L'x');
+    
+    if (nbytes / BYTE_SIZE > 2) {
+        for (size_t i = 0; nbytes / BYTE_SIZE >= 2 && i < nbytes / BYTE_SIZE - 2; i++) {
+        haystackAligned[BYTE_SIZE * i + 3] = L'y';
         }
     }
-    haystack_aligned[nbytes - 1] = L'\0';
-    needle_aligned[needle.size() - 1] = L'\0';
+    haystackAligned[nbytes - 1] = L'\0';
+    needleAligned[needle.size() - 1] = L'\0';
 
     while (state.KeepRunning()) {
-        if (wcsstr(haystack_aligned, needle_aligned) == nullptr) {
+        if (wcsstr(haystackAligned, needleAligned) == nullptr) {
         errx(1, "ERROR: strstr failed to find valid substring.");
         }
     }
     state.SetBytesProcessed(uint64_t(state.iterations()) * uint64_t(nbytes));
 }
 
-static void BM_function_Strcasestr(benchmark::State& state) {
+static void BM_function_Strcasestr(benchmark::State& state)
+{
     const size_t nbytes = state.range(0);
-    const size_t haystack_alignment = state.range(1);
-    const size_t needle_alignment = state.range(2);
+    const size_t haystackAlignment = state.range(1);
+    const size_t needleAlignment = state.range(2);
 
     std::vector<char> haystack;
     std::vector<char> needle;
-    char* haystack_aligned = GetAlignedPtrFilled(&haystack, haystack_alignment, nbytes, 'x');
-    char* needle_aligned = GetAlignedPtrFilled(&needle, needle_alignment,
-                                                std::min(nbytes, static_cast<size_t>(5)), 'X');
-    if (nbytes / 4 > 2) {
-        for (size_t i = 0; nbytes / 4 >= 2 && i < nbytes / 4 - 2; i++) {
-        haystack_aligned[4 * i + 3] = 'y';
+    char* haystackAligned = GetAlignedPtrFilled(&haystack, haystackAlignment, nbytes, 'x');
+    char* needleAligned = GetAlignedPtrFilled(&needle, needleAlignment, std::min(nbytes, static_cast<size_t>(5)), 'X');
+    if (nbytes / BYTE_SIZE > 2) {
+        for (size_t i = 0; nbytes / BYTE_SIZE >= 2 && i < nbytes / BYTE_SIZE - 2; i++) {
+        haystackAligned[BYTE_SIZE * i + 3] = 'y';
         }
     }
-    haystack_aligned[nbytes - 1] = '\0';
-    needle_aligned[needle.size() - 1] = '\0';
+    haystackAligned[nbytes - 1] = '\0';
+    needleAligned[needle.size() - 1] = '\0';
 
     while (state.KeepRunning()) {
-        if (strcasestr(haystack_aligned, needle_aligned) == nullptr) {
+        if (strcasestr(haystackAligned, needleAligned) == nullptr) {
             errx(1, "ERROR: strcasestr failed to find valid substring.");
         }
     }
     state.SetBytesProcessed(uint64_t(state.iterations()) * uint64_t(nbytes));
 }
 
-static void BM_function_Strlcat(benchmark::State& state) {
+static void BM_function_Strlcat(benchmark::State& state)
+{
     const size_t nbytes = state.range(0);
-    const size_t needle_alignment = state.range(1);
+    const size_t needleAlignment = state.range(1);
 
     std::vector<char> haystack(nbytes);
     std::vector<char> needle;
     char* dstBuf = haystack.data();
-    char* srcBuf = GetAlignedPtrFilled(&needle, needle_alignment, nbytes, 'x');
+    char* srcBuf = GetAlignedPtrFilled(&needle, needleAlignment, nbytes, 'x');
     srcBuf[needle.size() - 1] = '\0';
 
     while (state.KeepRunning()) {
@@ -641,8 +649,8 @@ static void BM_function_Strlcat(benchmark::State& state) {
     state.SetBytesProcessed(uint64_t(state.iterations()) * uint64_t(nbytes));
 }
 
-static void BM_function_Getdelim(benchmark::State& state) {
-
+static void BM_function_Getdelim(benchmark::State& state)
+{
     FILE* fp = fopen("/data/getdlim.txt", "w+");
     if (fp == nullptr) {
         errx(1, "ERROR: fp is nullptr\n");
@@ -654,8 +662,8 @@ static void BM_function_Getdelim(benchmark::State& state) {
 
     size_t maxReadLen = 1024;
     char* readBuf = (char*)malloc(maxReadLen);
-    if (readBuf == nullptr){
-         errx(1, "ERROR: readBuf is nullptr\n");
+    if (readBuf == nullptr) {
+        errx(1, "ERROR: readBuf is nullptr\n");
     }
 
     while (state.KeepRunning()) {

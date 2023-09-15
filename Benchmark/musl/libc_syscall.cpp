@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2020-2023. All rights reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -14,17 +14,17 @@
  */
 
 #include <sys/syscall.h>
-#include <string.h>
+#include <cstring>
 #include <sys/timex.h>
-#include <signal.h>
+#include <csignal>
 #include <sys/resource.h>
-#include <stdio.h>
+#include <cstdio>
 #include <sys/types.h>
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/time.h>
-#include <time.h>
+#include <ctime>
 #include <unistd.h>
 #include <sys/utsname.h>
 #include <sys/eventfd.h>
@@ -32,8 +32,8 @@
 
 using namespace std;
 
-#define BYTES_WRITTEN 8
-#define BUFSIZE 10
+constexpr int BYTES_WRITTEN = 8;
+constexpr int BUFSIZE = 10;
 
 // Gets the identification code of the current process
 static void Bm_function_Syscall_getpid(benchmark::State &state)
@@ -70,7 +70,6 @@ static void Bm_function_Syscall_write(benchmark::State &state)
     int fp = open("/dev/zero", O_RDWR, OPEN_MODE);
     if (fp == -1) {
         perror("open SYS_write");
-        exit(EXIT_FAILURE);
     }
     for (auto _ : state) {
         benchmark::DoNotOptimize(syscall(SYS_write, fp, "Bad Mind", BYTES_WRITTEN));
@@ -85,13 +84,11 @@ static void Bm_function_Syscall_read(benchmark::State &state)
     int fd = open("/dev/zero", O_RDONLY, OPEN_MODE);
     if (fd == -1) {
         perror("open SYS_read");
-        exit(EXIT_FAILURE);
     }
     for (auto _ : state) {
         ssize_t ret = syscall(SYS_read, fd, buf, BUFSIZE);
         if (ret < 0) {
             perror("STS_read");
-            exit(EXIT_FAILURE);
         }
         benchmark::DoNotOptimize(ret);
     }
@@ -105,13 +102,11 @@ static void Bm_function_Syscall_fcntl(benchmark::State &state)
     int fd = open("/dev/zero", O_RDONLY, OPEN_MODE);
     if (fd == -1) {
         perror("open SYS_fcntl");
-        exit(EXIT_FAILURE);
     }
     for (auto _ : state) {
         ret = syscall(SYS_fcntl, fd, F_GETFL);
         if (ret == -1) {
             perror("SYS_fcntl");
-            exit(EXIT_FAILURE);
         }
         benchmark::DoNotOptimize(ret);
     }
@@ -160,7 +155,6 @@ static void Bm_function_Syscall_setpriority(benchmark::State &state)
     int prio = getpriority(PRIO_PROCESS, pid);
     if (prio == -1) {
         perror("getpriority failed");
-        exit(EXIT_FAILURE);
     }
 
     for (auto _ : state) {

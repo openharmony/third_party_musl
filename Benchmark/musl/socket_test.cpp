@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2020-2023. All rights reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -21,11 +21,10 @@
 #include <pthread.h>
 #include "util.h"
 
-#define PORT 1500 // port
-#define BACKLOG 5
-#define PIPE_FD_COUNT  2
-#define BUFFER_SIZE 100
-#define MSG_COUNT 10
+constexpr int PORT = 1500; // port
+constexpr int PIPE_FD_COUNT = 2;
+constexpr int BUFFER_SIZE = 100;
+constexpr int MSG_COUNT = 10;
 
 static void Bm_function_socket_server(benchmark::State &state)
 {
@@ -34,7 +33,8 @@ static void Bm_function_socket_server(benchmark::State &state)
     serverAddr.sin_family = AF_INET;
     serverAddr.sin_addr.s_addr = htonl(INADDR_ANY); // Any IP address of this host
     serverAddr.sin_port = htons(PORT);
-    bzero(&(serverAddr.sin_zero), 8); // Set other attributes to 0
+    int eight = 8;
+    bzero(&(serverAddr.sin_zero), eight); // Set other attributes to 0
     for (auto _ : state) {
         int serverFd = socket(AF_INET, SOCK_STREAM, 0);
         if (serverFd == -1) {
@@ -338,7 +338,6 @@ static void Bm_function_getpeername_client_local(benchmark::State &state)
 {
     int sfd = ConnectTo("127.0.0.1", "80", SOCK_DGRAM, nullptr);
     if (sfd == -1) {
-        exit(EXIT_FAILURE);
     }
 
     struct sockaddr_in peerAddr;
@@ -347,7 +346,6 @@ static void Bm_function_getpeername_client_local(benchmark::State &state)
         if (getpeername(sfd, (struct sockaddr *)&peerAddr, &peerLen) == -1) {
             perror("getpeername");
             printf("peer addr: %s:%d\n", inet_ntoa(peerAddr.sin_addr), ntohs(peerAddr.sin_port));
-            exit(EXIT_FAILURE);
         }
     }
 
@@ -358,7 +356,6 @@ static void Bm_function_getpeername_client_external(benchmark::State &state)
 {
     int sfd = ConnectTo("www.baidu.com", "80", SOCK_DGRAM, nullptr);
     if (sfd == -1) {
-        exit(EXIT_FAILURE);
     }
 
     struct sockaddr_in peerAddr;
@@ -367,7 +364,6 @@ static void Bm_function_getpeername_client_external(benchmark::State &state)
         if (getpeername(sfd, (struct sockaddr *)&peerAddr, &peerLen) == -1) {
             perror("getpeername");
             printf("peer addr: %s:%d\n", inet_ntoa(peerAddr.sin_addr), ntohs(peerAddr.sin_port));
-            exit(EXIT_FAILURE);
         }
     }
 
@@ -419,7 +415,6 @@ static void Bm_function_getpeername_server(benchmark::State &state)
     int connfd;
     int sfd = StartServer(&connfd);
     if (sfd < 0) {
-        exit(EXIT_FAILURE);
     }
 
     struct sockaddr_in peerAddr;
@@ -428,7 +423,6 @@ static void Bm_function_getpeername_server(benchmark::State &state)
         if (getpeername(connfd, (struct sockaddr *)&peerAddr, &peerLen) == -1) {
             perror("getpeername");
             printf("peer addr: %s:%d\n", inet_ntoa(peerAddr.sin_addr), ntohs(peerAddr.sin_port));
-            exit(EXIT_FAILURE);
         }
     }
 
@@ -439,7 +433,6 @@ static void Bm_function_getsockname_client_local(benchmark::State &state)
 {
     int sfd = ConnectTo("127.0.0.1", "80", SOCK_DGRAM, nullptr);
     if (sfd == -1) {
-        exit(EXIT_FAILURE);
     }
 
     struct sockaddr_in addr;
@@ -448,7 +441,6 @@ static void Bm_function_getsockname_client_local(benchmark::State &state)
         if (getsockname(sfd, (struct sockaddr *)&addr, &len) == -1) {
             perror("getsockname");
             printf("sock addr: %s:%d\n", inet_ntoa(addr.sin_addr), ntohs(addr.sin_port));
-            exit(EXIT_FAILURE);
         }
     }
 
@@ -459,7 +451,6 @@ static void Bm_function_getsockname_client_external(benchmark::State &state)
 {
     int sfd = ConnectTo("www.baidu.com", "80", SOCK_DGRAM, nullptr);
     if (sfd == -1) {
-        exit(EXIT_FAILURE);
     }
 
     struct sockaddr_in addr;
@@ -468,7 +459,6 @@ static void Bm_function_getsockname_client_external(benchmark::State &state)
         if (getsockname(sfd, (struct sockaddr *)&addr, &len) == -1) {
             perror("getsockname");
             printf("sock addr: %s:%d\n", inet_ntoa(addr.sin_addr), ntohs(addr.sin_port));
-            exit(EXIT_FAILURE);
         }
     }
 
@@ -480,7 +470,6 @@ static void Bm_function_getsockname_server(benchmark::State &state)
     int connfd;
     int sfd = StartServer(&connfd);
     if (sfd < 0) {
-        exit(EXIT_FAILURE);
     }
 
     struct sockaddr_in addr;
@@ -489,7 +478,6 @@ static void Bm_function_getsockname_server(benchmark::State &state)
         if (getsockname(connfd, (struct sockaddr *)&addr, &len) == -1) {
             perror("getsockname");
             printf("sock addr: %s:%d\n", inet_ntoa(addr.sin_addr), ntohs(addr.sin_port));
-            exit(EXIT_FAILURE);
         }
     }
 
@@ -503,13 +491,11 @@ static void Bm_function_connect_local_dgram(benchmark::State &state)
     addr.ai_addr = (struct sockaddr*)&aiAddr;
     int sfd = ConnectTo("127.0.0.1", "80", SOCK_DGRAM, &addr);
     if (sfd < 0) {
-        exit(EXIT_FAILURE);
     }
 
     for (auto _ : state) {
         if (connect(sfd, addr.ai_addr, addr.ai_addrlen) == -1) {
             perror("connect");
-            exit(EXIT_FAILURE);
         }
     }
 
@@ -520,12 +506,10 @@ static void Bm_function_connect_accept(benchmark::State &state)
 {
     int sfd = BindAt("1500");
     if (sfd == -1) {
-        exit(EXIT_FAILURE);
     }
 
     if (listen(sfd, 1) < 0) {
         perror("listen");
-        exit(EXIT_FAILURE);
     }
 
     struct addrinfo addr;
@@ -533,14 +517,12 @@ static void Bm_function_connect_accept(benchmark::State &state)
     addr.ai_addr = (struct sockaddr*)&aiAddr;
     int sfd2 = ConnectTo("127.0.0.1", "1500", SOCK_STREAM, &addr);
     if (sfd2 == -1) {
-        exit(EXIT_FAILURE);
     }
 
     for (auto _ : state) {
         int connfd = accept(sfd, nullptr, nullptr);
         if (connfd < 0) {
             perror("accept");
-            exit(EXIT_FAILURE);
         }
 
         state.PauseTiming();
@@ -549,11 +531,9 @@ static void Bm_function_connect_accept(benchmark::State &state)
         sfd2 = socket(addr.ai_family, addr.ai_socktype, addr.ai_protocol);
         if (sfd == -1) {
             perror("socket");
-            exit(EXIT_FAILURE);
         }
         if (connect(sfd2, addr.ai_addr, addr.ai_addrlen) == -1) {
             perror("connect2");
-            exit(EXIT_FAILURE);
         }
         state.ResumeTiming();
     }
@@ -574,21 +554,18 @@ static void Bm_function_bind(benchmark::State &state)
         int sfd = socket(AF_INET, SOCK_STREAM, 0);
         if (sfd == -1) {
             perror("socket");
-            exit(EXIT_FAILURE);
         }
 
         int reuse = 1;
         if (setsockopt(sfd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)) == -1) {
             perror("setsockopt");
             close(sfd);
-            exit(EXIT_FAILURE);
         }
 
         state.ResumeTiming();
 
         if (bind(sfd, (struct sockaddr*)&addr, sizeof(addr)) == -1) {
             perror("bind");
-            exit(EXIT_FAILURE);
         }
 
         state.PauseTiming();

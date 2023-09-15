@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2020-2023. All rights reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,20 +13,20 @@
  * limitations under the License.
  */
 
-#include <locale.h>
+#include <clocale>
 #include <langinfo.h>
 #include "sys/types.h"
 #include "sys/epoll.h"
 #include "sys/stat.h"
 #include "fcntl.h"
-#include "stdarg.h"
-#include "wchar.h"
-#include "time.h"
-#include "math.h"
-#include "string.h"
-#include "stdlib.h"
+#include "cstdarg"
+#include "cwchar"
+#include "ctime"
+#include "cmath"
+#include "cstring"
+#include "cstdlib"
 #include "pthread.h"
-#include "stdio.h"
+#include "cstdio"
 #include "unistd.h"
 #include "util.h"
 #include "sys/syscall.h"

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2020-2023. All rights reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-#include "signal.h"
+#include "csignal"
 #include "util.h"
 
 static void SignalHandler(int i) {}
@@ -45,7 +45,6 @@ static void Bm_function_Sigaltstack(benchmark::State &state)
         ss.ss_sp = malloc(SIGSTKSZ);
         if (ss.ss_sp == nullptr) {
             perror("malloc");
-            exit(EXIT_FAILURE);
         }
 
         ss.ss_size = SIGSTKSZ;
@@ -53,13 +52,11 @@ static void Bm_function_Sigaltstack(benchmark::State &state)
         state.ResumeTiming();
         if (sigaltstack(&ss, &old_ss) == -1) {
             perror("sigaltstack");
-            exit(EXIT_FAILURE);
         }
 
         state.PauseTiming();
         if (sigaltstack(&old_ss, nullptr) == -1) {
             perror("sigaltstack");
-            exit(EXIT_FAILURE);
         }
         free(ss.ss_sp);
         state.ResumeTiming();
@@ -88,7 +85,6 @@ static void Bm_function_Sigtimedwait(benchmark::State &state)
     for (auto _ : state) {
         benchmark::DoNotOptimize(sigtimedwait(&set, &info, &ts));
     }
-    
 }
 
 MUSL_BENCHMARK(Bm_function_Sigaction);
