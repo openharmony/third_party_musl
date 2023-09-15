@@ -2116,8 +2116,6 @@ musl_src_porting_file = [
   "src/network/lookup_name.c",
   "src/network/lookup_serv.c",
   "src/network/resolvconf.c",
-  "src/network/if_indextoname.c",
-  "src/network/if_nametoindex.c",
   "src/network/socket.c",
   "src/passwd/getspnam_r.c",
   "src/sched/sched_setparam.c",
