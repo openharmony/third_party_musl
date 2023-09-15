@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2020-2023. All rights reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,21 +13,23 @@
  * limitations under the License.
  */
 
-#include "time.h"
+#include "ctime"
 #include "sys/timerfd.h"
 #include "sys/time.h"
-#include "stdlib.h"
-#include "stdio.h"
-#include "signal.h"
+#include "cstdlib"
+#include "cstdio"
+#include "csignal"
 #include "unistd.h"
 #include "util.h"
 
 using namespace std;
-
+constexpr int TEN = 10;
+constexpr int HUNDRED = 100;
 // Used to put the current thread to sleep for the specified time
 static void Bm_function_Nanosleep_0ns(benchmark::State &state)
 {
-    struct timespec req, rem;
+    struct timespec req;
+    struct timespec rem;
     req.tv_nsec = 0;
     for (auto _ : state) {
         benchmark::DoNotOptimize(nanosleep(&req, &rem));
@@ -36,8 +38,9 @@ static void Bm_function_Nanosleep_0ns(benchmark::State &state)
 
 static void Bm_function_Nanosleep_10ns(benchmark::State &state)
 {
-    struct timespec req, rem;
-    req.tv_nsec = 10;
+    struct timespec req;
+    struct timespec rem;
+    req.tv_nsec = TEN;
     for (auto _ : state) {
         benchmark::DoNotOptimize(nanosleep(&req, &rem));
     }
@@ -45,8 +48,9 @@ static void Bm_function_Nanosleep_10ns(benchmark::State &state)
 
 static void Bm_function_Nanosleep_100ns(benchmark::State &state)
 {
-    struct timespec req, rem;
-    req.tv_nsec = 100;
+    struct timespec req;
+    struct timespec rem;
+    req.tv_nsec = HUNDRED;
     for (auto _ : state) {
         benchmark::DoNotOptimize(nanosleep(&req, &rem));
     }
@@ -61,8 +65,9 @@ static void Bm_function_Tzset(benchmark::State &state)
 }
 static void Bm_function_Clock_nanosleep_realtime(benchmark::State &state)
 {
-    struct timespec req, rem;
-    req.tv_nsec = 10;
+    struct timespec req;
+    struct timespec rem;
+    req.tv_nsec = TEN;
     for (auto _ : state) {
         benchmark::DoNotOptimize(clock_nanosleep(CLOCK_REALTIME, 0, &req, &rem));
     }
@@ -70,8 +75,9 @@ static void Bm_function_Clock_nanosleep_realtime(benchmark::State &state)
 
 static void Bm_function_Clock_nanosleep_realtime_raw(benchmark::State &state)
 {
-    struct timespec req, rem;
-    req.tv_nsec = 10;
+    struct timespec req;
+    struct timespec rem;
+    req.tv_nsec = TEN;
     for (auto _ : state) {
         benchmark::DoNotOptimize(clock_nanosleep(CLOCK_REALTIME_COARSE, 0, &req, &rem));
     }
@@ -79,8 +85,9 @@ static void Bm_function_Clock_nanosleep_realtime_raw(benchmark::State &state)
 
 static void Bm_function_Clock_nanosleep_realtime_coarse(benchmark::State &state)
 {
-    struct timespec req, rem;
-    req.tv_nsec = 10;
+    struct timespec req;
+    struct timespec rem;
+    req.tv_nsec = TEN;
     for (auto _ : state) {
         benchmark::DoNotOptimize(clock_nanosleep(CLOCK_REALTIME_COARSE, 0, &req, &rem));
     }
@@ -88,38 +95,42 @@ static void Bm_function_Clock_nanosleep_realtime_coarse(benchmark::State &state)
 
 static void Bm_function_Clock_nanosleep_monotonic(benchmark::State &state)
 {
-    struct timespec req, rem;
-    req.tv_nsec = 10;
+    struct timespec req;
+    struct timespec rem;
+    req.tv_nsec = TEN;
     for (auto _ : state) {
         benchmark::DoNotOptimize(clock_nanosleep(CLOCK_MONOTONIC, 0, &req, &rem));
     }
 }
 static void Bm_function_Clock_nanosleep_monotonic_coarse(benchmark::State &state)
 {
-    struct timespec req, rem;
-    req.tv_nsec = 10;
+    struct timespec req;
+    struct timespec rem;
+    req.tv_nsec = TEN;
     for (auto _ : state) {
         benchmark::DoNotOptimize(clock_nanosleep(CLOCK_MONOTONIC_COARSE, 0, &req, &rem));
     }
 }
 static void Bm_function_Clock_nanosleep_monotonic_raw(benchmark::State &state)
 {
-    struct timespec req, rem;
-    req.tv_nsec = 10;
+    struct timespec req;
+    struct timespec rem;
+    req.tv_nsec = TEN;
     for (auto _ : state) {
         benchmark::DoNotOptimize(clock_nanosleep(CLOCK_MONOTONIC_RAW, 0, &req, &rem));
     }
 }
 static void Bm_function_Clock_nanosleep_boottime(benchmark::State &state)
 {
-    struct timespec req, rem;
-    req.tv_nsec = 10;
+    struct timespec req;
+    struct timespec rem;
+    req.tv_nsec = TEN;
     for (auto _ : state) {
         benchmark::DoNotOptimize(clock_nanosleep(CLOCK_BOOTTIME, 0, &req, &rem));
     }
 }
 
-#define BUFFER_SIZE 32
+constexpr int BUFFER_SIZE = 32;
 
 static void Bm_function_Strftime(benchmark::State &state)
 {
@@ -153,14 +164,12 @@ static void Bm_function_Timerfd_settime(benchmark::State &state)
     int fd = timerfd_create(CLOCK_REALTIME, 0);
     if (fd < 0) {
         perror("timerfd_create");
-        exit(EXIT_FAILURE);
     }
 
     struct timespec now;
     struct itimerspec newValue;
     if (clock_gettime(CLOCK_REALTIME, &now) == -1) {
         perror("clock_gettime");
-        exit(EXIT_FAILURE);
     }
 
     newValue.it_value.tv_sec = now.tv_sec + 3;
@@ -171,7 +180,6 @@ static void Bm_function_Timerfd_settime(benchmark::State &state)
     while (state.KeepRunning()) {
         if (timerfd_settime(fd, TFD_TIMER_ABSTIME, &newValue, nullptr) == -1) {
             perror("timerfd_settime");
-            exit(EXIT_FAILURE);
         }
     }
 
@@ -199,6 +207,8 @@ void HandleTimer(int signum) {
         case SIGPROF:
             // do nothing
             break;
+        default:
+            break;
     }
 }
 
@@ -216,7 +226,6 @@ static void Bm_function_Setitimer_realtime(benchmark::State &state)
         signal(SIGALRM, HandleTimer);
         if (setitimer(ITIMER_REAL, &timer, nullptr) == -1) {
             perror("Set timer error!");
-            exit(EXIT_FAILURE);
         }
         benchmark::DoNotOptimize(timer);
     }
@@ -235,7 +244,6 @@ static void Bm_function_Setitimer_peoftime(benchmark::State &state)
         signal(SIGPROF, HandleTimer);
         if (setitimer(ITIMER_PROF, &timer, nullptr) == -1) {
             perror("Set timer error!");
-            exit(EXIT_FAILURE);
         }
         benchmark::DoNotOptimize(timer);
     }
@@ -254,14 +262,13 @@ static void Bm_function_Setitimer_virtualtime(benchmark::State &state)
         signal(SIGVTALRM, HandleTimer);
         if (setitimer(ITIMER_VIRTUAL, &timer, nullptr) == -1) {
             perror("Set timer error!");
-            exit(EXIT_FAILURE);
         }
         benchmark::DoNotOptimize(timer);
     }
 }
 
 static void Handler(int signum) {
-    //do nothing
+    // do nothing
 }
 
 // Use the timer function to create a timer
@@ -285,13 +292,11 @@ static void Bm_function_Timer(benchmark::State &state)
         ret = timer_create(CLOCK_REALTIME, &evp, &timerid);
         if (ret) {
             perror("timer_create");
-            exit(EXIT_FAILURE);
         }
 
         ret = timer_settime(timerid, 0, &itVal, nullptr);
         if (ret) {
             perror("timer_settime");
-            exit(EXIT_FAILURE);
         }
 
         signal(SIGUSR1, Handler);
@@ -299,7 +304,6 @@ static void Bm_function_Timer(benchmark::State &state)
         ret = timer_delete(timerid);
         if (ret) {
             perror("timer_delete");
-            exit(EXIT_FAILURE);
         }
     }
 }

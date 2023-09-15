@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2020-2023. All rights reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -24,12 +24,10 @@ static void Bm_function_eventfd_write(benchmark::State &state)
     int fd = eventfd(initValue, O_NONBLOCK);
     if (fd == -1) {
         perror("evevtfd eventfd_write");
-        exit(EXIT_FAILURE);
     }
     for (auto _ : state) {
         if (eventfd_write(fd, initValue + 1) != 0) {
             perror("eventfd_write proc");
-            exit(EXIT_FAILURE);
         }
     }
     close(fd);

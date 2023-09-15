@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2020-2023. All rights reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -21,11 +21,12 @@
 
 using namespace std;
 
-#define MAX_MONITOR_FDS 2
+constexpr int MAX_MONITOR_FDS = 2;
 
 static void Bm_function_Select(benchmark::State &state)
 {
-    fd_set readfds, writefds;
+    fd_set readfds;
+    fd_set writefds;
     FD_ZERO(&readfds);
     FD_ZERO(&writefds);
     FD_SET(0, &readfds);

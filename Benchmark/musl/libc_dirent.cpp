@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2020-2023. All rights reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -28,7 +28,6 @@ static void Bm_function_Opendir(benchmark::State &state)
         DIR *dir = opendir("/dev/block");
         if (dir == nullptr) {
             perror("opendir proc");
-            exit(EXIT_FAILURE);
         }
         benchmark::DoNotOptimize(dir);
         state.PauseTiming();
@@ -62,7 +61,6 @@ static void Bm_function_Closedir(benchmark::State &state)
         DIR *dir = opendir("/dev/block");
         if (dir == nullptr) {
             perror("opendir proc");
-            exit(EXIT_FAILURE);
         }
         state.ResumeTiming();
 
@@ -75,7 +73,6 @@ static void Bm_function_Readdir(benchmark::State &state)
     DIR *dir = opendir("/dev/block");
     if (dir == nullptr) {
         perror("opendir proc");
-        exit(EXIT_FAILURE);
     }
 
     for (auto _ : state) {
@@ -94,13 +91,11 @@ static void Bm_function_Fdopendir(benchmark::State &state)
     int fd = open("/dev/", O_RDONLY, OPEN_MODE);
     if (fd == -1) {
         perror("open fdopendir");
-        exit(EXIT_FAILURE);
     }
     for (auto _ : state) {
         DIR *dir = fdopendir(fd);
         if (dir == nullptr) {
             perror("fdopendir proc");
-            exit(EXIT_FAILURE);
         }
         benchmark::DoNotOptimize(dir);
     }
@@ -112,7 +107,6 @@ static void Bm_function_Rewinddir(benchmark::State &state)
     DIR *dir = opendir("/data/local");
     if (dir == nullptr) {
         perror("opendir rewinddir");
-        exit(EXIT_FAILURE);
     }
     while (readdir(dir) != nullptr) {}
     for (auto _ : state) {
@@ -128,7 +122,6 @@ static void Bm_function_Open_Dir(benchmark::State &state)
         int fd = open(filename, O_RDONLY|O_DIRECTORY|O_CLOEXEC);
         if (fd == -1) {
             perror("open_dir proc");
-            exit(EXIT_FAILURE);
         }
         benchmark::DoNotOptimize(fd);
         state.PauseTiming();

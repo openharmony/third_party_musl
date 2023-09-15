@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2020-2023. All rights reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -18,7 +18,7 @@
 #include "fcntl.h"
 #include "sys/mman.h"
 #include "unistd.h"
-#include "stdio.h"
+#include "cstdio"
 #include "malloc.h"
 #include "util.h"
 
@@ -152,7 +152,6 @@ static void Bm_function_Mmap_fd(benchmark::State &state)
     int fd = open("/dev/zero", O_RDWR, OPEN_MODE);
     if (fd == -1) {
         perror("open /dev/zero failed.");
-        exit(EXIT_FAILURE);
     }
     size_t length = state.range(0);
     int flags = state.range(1);
@@ -174,7 +173,6 @@ static void Bm_function_Munmap_fd(benchmark::State &state)
     int fd = open("/dev/zero", O_RDWR, OPEN_MODE);
     if (fd == -1) {
         perror("open /dev/zero failed.");
-        exit(EXIT_FAILURE);
     }
     size_t length = state.range(0);
     int flags = state.range(1);
@@ -221,7 +219,6 @@ static void Bm_function_Mremap(benchmark::State &state)
                 state.ResumeTiming();
             } else {
                 perror("mmap");
-                exit(EXIT_FAILURE);
             }
         }
     }
@@ -268,18 +265,15 @@ static void Bm_function_Mlock_Munlock(benchmark::State &state)
     void *addr = mmap(nullptr, length, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
     if (addr == MAP_FAILED) {
         perror("mmap munlock");
-        exit(EXIT_FAILURE);
     }
 
     for (auto _ : state) {
         if (mlock(addr, length) != 0) {
             perror("mlock munlock");
-            exit(EXIT_FAILURE);
         }
 
         if (munlock(addr, length) != 0) {
             perror("munlock proc");
-            exit(EXIT_FAILURE);
         }
     }
     munmap(addr, length);

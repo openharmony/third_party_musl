@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2020-2023. All rights reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -14,11 +14,11 @@
  */
 
 #include "sched.h"
-#include "stdlib.h"
+#include "cstdlib"
 #include "unistd.h"
 #include "util.h"
 
-#define MALLOC_SIZE (1024 * 8192)
+constexpr long MALLOC_SIZE = (1024 * 8192);
 
 static void Bm_function_sched_yield(benchmark::State &state)
 {
@@ -27,7 +27,8 @@ static void Bm_function_sched_yield(benchmark::State &state)
     }
 }
 
-int ThreadWaitFunc(void* arg) {
+int ThreadWaitFunc(void* arg)
+{
     return 0;
 }
 
@@ -37,7 +38,6 @@ static void Bm_function_Clone(benchmark::State &state)
     void *stack = malloc(MALLOC_SIZE);
     if (stack == nullptr) {
         perror("malloc clone");
-        exit(EXIT_FAILURE);
     }
     int flags = CLONE_VM | CLONE_FS | CLONE_FILES | CLONE_SIGHAND | CLONE_THREAD | CLONE_SYSVSEM | CLONE_SETTLS;
     int pid = -1;
@@ -45,7 +45,6 @@ static void Bm_function_Clone(benchmark::State &state)
         pid = clone(ThreadWaitFunc, (char*)stack + MALLOC_SIZE, flags, nullptr);
         if (pid == -1) {
             perror("clone proc");
-            exit(EXIT_FAILURE);
         }
         sleep(1);
     }

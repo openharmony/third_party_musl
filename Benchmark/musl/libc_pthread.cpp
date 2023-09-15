@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2020-2023. All rights reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -15,11 +15,11 @@
 
 #include "pthread.h"
 #include "semaphore.h"
-#include "signal.h"
+#include "csignal"
 #include "threads.h"
 #include "unistd.h"
 #include "sys/tgkill.h"
-#include "time.h"
+#include "ctime"
 #include "util.h"
 
 static void Bm_function_pthread_mutexattr_settype(benchmark::State &state)
@@ -425,7 +425,9 @@ static void Bm_function_pthread_cond_broadcast(benchmark::State &state)
 {
     while (state.KeepRunning()) {
         state.PauseTiming();
-        pthread_t threadOne, threadTwo, threadThree;
+        pthread_t threadOne;
+        pthread_t threadTwo;
+        pthread_t threadThree;
         pthread_create(&threadOne, nullptr, ThreadTaskOne, nullptr);
         pthread_create(&threadTwo, nullptr, ThreadTaskTwo, nullptr);
         sleep(3);
@@ -468,8 +470,7 @@ static void Bm_function_pthread_cond_signal(benchmark::State &state)
 {
     pthread_cond_t cond;
     pthread_cond_init(&cond, nullptr);
-    while (state.KeepRunning())
-    {
+    while (state.KeepRunning()) {
         pthread_cond_signal(&cond);
     }
     pthread_cond_destroy(&cond);
@@ -478,8 +479,7 @@ static void Bm_function_pthread_cond_signal(benchmark::State &state)
 
 static void Bm_function_pthread_cond_signal_wait(benchmark::State &state)
 {
-    while (state.KeepRunning())
-    {
+    while (state.KeepRunning()) {
         state.PauseTiming();
         pthread_t threadOne;
         pthread_create(&threadOne, nullptr, ThreadTaskOne, nullptr);
@@ -514,15 +514,15 @@ void *GetThreadId(void *arg)
     pthread_t tid = pthread_self();
     if (tid == 0) {
         perror("thread create fail");
-        exit(EXIT_FAILURE);
     }
-    pthread_exit(nullptr);
+    return nullptr;
 }
 
 // Check that the two threads are equal
 static void Bm_function_pthread_equal(benchmark::State &state)
 {
-    pthread_t thread1, thread2;
+    pthread_t thread1;
+    pthread_t thread2;
     pthread_create(&thread1, nullptr, GetThreadId, nullptr);
     pthread_create(&thread2, nullptr, GetThreadId, nullptr);
     pthread_join(thread1, nullptr);
@@ -538,7 +538,8 @@ static void Bm_function_pthread_attr_init_destroy(benchmark::State &state)
 {
     pthread_attr_t attr;
     int ret;
-    pthread_t thread1, thread2;
+    pthread_t thread1;
+    pthread_t thread2;
     while (state.KeepRunning()) {
         ret = pthread_attr_init(&attr);
         benchmark::DoNotOptimize(ret);
@@ -555,7 +556,8 @@ static void Bm_function_pthread_attr_init_destroy(benchmark::State &state)
 
 static void Bm_function_pthread_sigmask(benchmark::State &state)
 {
-    sigset_t set, oset;
+    sigset_t set;
+    sigset_t oset;
     sigemptyset(&set);
     sigaddset(&set, SIGQUIT);
     sigaddset(&set, SIGUSR1);
@@ -575,7 +577,7 @@ void* Func(void* arg)
     benchmark::DoNotOptimize(pthread_spin_lock(&g_spinLock));
     pthread_spin_unlock(&g_spinLock);
     statePtr->PauseTiming();
-    pthread_exit(nullptr);
+    return nullptr;
 }
 
 // Requests a lock spin lock
@@ -620,27 +622,26 @@ static void Bm_function_pthread_detach(benchmark::State &state)
     state.SetBytesProcessed(state.iterations());
 }
 
-void* ThreadFuncWait(void* arg) {
+void* ThreadFuncWait(void* arg)
+{
     sleep(1);
     return nullptr;
 }
 
 // Set a unique name for the thread which is limited to 16 characters in length
 // including terminating null bytes
-#define NAME_LEN 16
+constexpr int NAME_LEN = 16;
 static void Bm_function_pthread_setname_np(benchmark::State &state)
 {
     pthread_t tid;
     char threadName[NAME_LEN] = "THREADFOO";
     if (pthread_create(&tid, nullptr, ThreadFuncWait, nullptr) != 0) {
         perror("pthread_create pthread_setname_np");
-        exit(EXIT_FAILURE);
     }
 
     while (state.KeepRunning()) {
         if (pthread_setname_np(tid, threadName) != 0) {
             perror("pthread_setname_np proc");
-            exit(EXIT_FAILURE);
         }
     }
     pthread_join(tid, nullptr);
@@ -656,7 +657,6 @@ static void Bm_function_pthread_attr_setschedpolicy(benchmark::State &state)
     while (state.KeepRunning()) {
         if (pthread_attr_setschedpolicy(&attr, setpolicy) != 0) {
             perror("pthread_attr_setschedpolicy proc");
-            exit(EXIT_FAILURE);
         }
     }
     pthread_attr_destroy(&attr);
@@ -672,13 +672,11 @@ static void Bm_function_pthread_attr_getschedparam(benchmark::State &state)
     pthread_attr_init(&attr);
     if (pthread_attr_setschedparam(&attr, &setparam) != 0) {
         perror("pthread_attr_setschedparam pthread_attr_getschedparam");
-        exit(EXIT_FAILURE);
     }
     getparam.sched_priority = 0;
     while (state.KeepRunning()) {
         if (pthread_attr_getschedparam(&attr, &getparam) != 0) {
             perror("pthread_attr_getschedparam proc");
-            exit(EXIT_FAILURE);
         }
     }
     pthread_attr_destroy(&attr);
@@ -691,7 +689,6 @@ static void Bm_function_pthread_condattr_setclock(benchmark::State &state)
     while (state.KeepRunning()) {
         if (pthread_condattr_setclock(&attr,  CLOCK_MONOTONIC_RAW) != 0) {
             perror("pthread_condattr_setclock proc");
-            exit(EXIT_FAILURE);
         }
     }
     pthread_condattr_destroy(&attr);
@@ -705,7 +702,6 @@ static void Bm_function_Tgkill(benchmark::State &state)
     for (auto _ : state) {
         if (tgkill(pgid, pid, SIGCONT) == -1) {
             perror("tgkill proc");
-            exit(EXIT_FAILURE);
         }
     }
 }
@@ -720,14 +716,13 @@ static void Bm_function_pthread_attr_setschedparam(benchmark::State &state)
     while (state.KeepRunning()) {
         if (pthread_attr_setschedparam(&attr, &setparam) != 0) {
             perror("pthread_attr_setschedparam pthread_attr_getschedparam");
-            exit(EXIT_FAILURE);
         }
     }
     pthread_attr_destroy(&attr);
 }
 void PthreadCleanup(void* arg)
 {
-    //empty
+    // empty
 }
 
 void* CleanupPushAndPop(void* arg)
@@ -737,7 +732,7 @@ void* CleanupPushAndPop(void* arg)
     pthread_cleanup_push(PthreadCleanup, NULL);
     pthread_cleanup_pop(0);
     statePtr->PauseTiming();
-    pthread_exit(nullptr);
+    return nullptr;
 }
 
 static void Bm_function_pthread_clean_push_and_pop(benchmark::State &state)
