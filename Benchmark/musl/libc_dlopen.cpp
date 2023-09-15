@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2020-2023. All rights reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -12,12 +12,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#include "util.h"
+#include <cstdio>
+#include <iostream>
 #include <dlfcn.h>
 #include <sys/time.h>
-#include <stdio.h>
-#include <iostream>
+#include "util.h"
+
+constexpr double THOUSAND = 1000.0;
 
 class ScopeTime {
 public:
@@ -30,15 +31,16 @@ public:
     {
         struct timeval timeCurrent;
         gettimeofday(&timeCurrent, nullptr);
-        cost = (timeCurrent.tv_sec - timeStart.tv_sec) * 1000.0 +
-            (double)(timeCurrent.tv_usec - timeStart.tv_usec) / 1000.0;
+        cost = (timeCurrent.tv_sec - timeStart.tv_sec) * THOUSAND +
+            static_cast<double>(timeCurrent.tv_usec - timeStart.tv_usec) / THOUSAND;
         printf("%s current cost %f ms.\n", soName, cost);
     }
 
     ~ScopeTime()
     {
         gettimeofday(&timeEnd, nullptr);
-        cost = (timeEnd.tv_sec - timeStart.tv_sec) * 1000.0 + (double)(timeEnd.tv_usec - timeStart.tv_usec) / 1000.0;
+        cost = (timeEnd.tv_sec - timeStart.tv_sec) * THOUSAND +
+            static_cast<double>(timeEnd.tv_usec - timeStart.tv_usec) / THOUSAND;
         printf("dlopen %s cost %f ms.\n", soName, cost);
     }
 private:

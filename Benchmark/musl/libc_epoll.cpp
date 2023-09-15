@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2020-2023. All rights reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -14,10 +14,10 @@
  */
 
 #include <sys/epoll.h>
-#include <errno.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdio.h>
+#include <cerrno>
+#include <cstdlib>
+#include <cstring>
+#include <cstdio>
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -25,7 +25,7 @@
 #include "util.h"
 
 using namespace std;
-#define EVENTSIZE 10
+constexpr int EVENTSIZE = 10;
 struct epoll_event g_events[EVENTSIZE], g_event;
 
 // Used to create an epoll object to record events for files to be listened to
@@ -35,7 +35,6 @@ static void Bm_function_Epoll_createl(benchmark::State &state)
         int epollFd = epoll_create1(0);
         if (epollFd == -1) {
             perror("epoll_createl");
-            exit(EXIT_FAILURE);
         }
         benchmark::DoNotOptimize(epollFd);
         close(epollFd);
@@ -50,12 +49,10 @@ static void Bm_function_Epoll_ctl(benchmark::State &state)
     int epollFd = epoll_create1(0);
     if (epollFd == -1) {
         perror("epoll_createl");
-        exit(EXIT_FAILURE);
     }
     int fd = open("/dev/zero", O_RDONLY, OPEN_MODE);
     if (fd == -1) {
         perror("open epoll_ctl");
-        exit(EXIT_FAILURE);
     }
     g_event.events = EPOLLIN | EPOLLET;
     g_event.data.fd = fd;
@@ -73,13 +70,11 @@ static void Bm_function_Epoll_wait(benchmark::State &state)
     int epollFd = epoll_create1(0);
     if (epollFd == -1) {
         perror("epoll_createl");
-        exit(EXIT_FAILURE);
     }
 
     int fd = open("/dev/zero", O_RDONLY, OPEN_MODE);
     if (fd == -1) {
         perror("open epoll_wait");
-        exit(EXIT_FAILURE);
     }
 
     g_event.events = EPOLLIN | EPOLLET;

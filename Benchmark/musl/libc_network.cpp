@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2020-2023. All rights reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -29,7 +29,6 @@ static void Bm_function_Getaddrinfo_Freeaddrinfo_external_network(benchmark::Sta
         int n = getaddrinfo("www.baidu.com", nullptr, nullptr, &res);
         if (n != 0) {
             perror("getaddrinfo external_network");
-            exit(EXIT_FAILURE);
         }
         benchmark::DoNotOptimize(n);
         freeaddrinfo(res);
@@ -49,7 +48,6 @@ static void Bm_function_Getaddrinfo_Freeaddrinfo_intranet1(benchmark::State &sta
         int n = getaddrinfo("127.0.0.1", nullptr, &hint, &res);
         if (n != 0) {
             perror("getaddrinfo intranet1");
-            exit(EXIT_FAILURE);
         }
         benchmark::DoNotOptimize(n);
         freeaddrinfo(res);
@@ -69,7 +67,6 @@ static void Bm_function_Getaddrinfo_Freeaddrinfo_intranet2(benchmark::State &sta
         int n = getaddrinfo("127.0.0.1", nullptr, &hint, &res);
         if (n != 0) {
             perror("getaddrinfo intranet2");
-            exit(EXIT_FAILURE);
         }
         benchmark::DoNotOptimize(n);
         freeaddrinfo(res);
@@ -89,7 +86,6 @@ static void Bm_function_Getaddrinfo_Freeaddrinfo_intranet3(benchmark::State &sta
         int n = getaddrinfo("127.0.0.1", nullptr, &hint, &res);
         if (n != 0) {
             perror("getaddrinfo intranet3");
-            exit(EXIT_FAILURE);
         }
         benchmark::DoNotOptimize(n);
         freeaddrinfo(res);
@@ -109,7 +105,6 @@ static void Bm_function_Getaddrinfo_Freeaddrinfo_intranet4(benchmark::State &sta
         int n = getaddrinfo("127.0.0.1", nullptr, &hint, &res);
         if (n != 0) {
             perror("getaddrinfo intranet4");
-            exit(EXIT_FAILURE);
         }
         benchmark::DoNotOptimize(n);
         freeaddrinfo(res);
@@ -129,7 +124,6 @@ static void Bm_function_Getaddrinfo_Freeaddrinfo_intranet5(benchmark::State &sta
         int n = getaddrinfo("127.0.0.1", nullptr, &hint, &res);
         if (n != 0) {
             perror("getaddrinfo intranet5");
-            exit(EXIT_FAILURE);
         }
         benchmark::DoNotOptimize(n);
         freeaddrinfo(res);
@@ -149,7 +143,6 @@ static void Bm_function_Getaddrinfo_Freeaddrinfo_intranet6(benchmark::State &sta
         int n = getaddrinfo("127.0.0.1", nullptr, &hint, &res);
         if (n != 0) {
             perror("getaddrinfo intranet6");
-            exit(EXIT_FAILURE);
         }
         benchmark::DoNotOptimize(n);
         freeaddrinfo(res);
@@ -165,7 +158,6 @@ static void Bm_function_Getaddrinfo_Freeaddrinfo_intranet7(benchmark::State &sta
         int n = getaddrinfo("127.0.0.1", nullptr, nullptr, &res);
         if (n != 0) {
             perror("getaddrinfo intranet7");
-            exit(EXIT_FAILURE);
         }
         benchmark::DoNotOptimize(n);
         freeaddrinfo(res);
@@ -195,7 +187,6 @@ static void Bm_function_Inet_ntop(benchmark::State &state)
     struct in_addr addr;
     if (inet_pton(AF_INET, "127.0.0.1", &addr.s_addr) <= 0) {
         perror("inet_pton failed");
-        exit(EXIT_FAILURE);
     }
     for (auto _ : state) {
         char str[INET_ADDRSTRLEN] = {0};
@@ -207,7 +198,6 @@ static void Bm_function_Inet_ntop_ipv6(benchmark::State &state)
     struct in6_addr addr;
     if (inet_pton(AF_INET6, "fe80::cd01:7cd8:bd13:98d5", &addr.s6_addr) <= 0) {
         perror("inet_pton failed");
-        exit(EXIT_FAILURE);
     }
     for (auto _ : state) {
         char str[INET6_ADDRSTRLEN] = {0};
