@@ -2078,6 +2078,7 @@ musl_src_porting_file = [
   "include/unistd.h",
   "include/dlfcn.h",
   "include/dlfcn_ext.h",
+  "src/fcntl/open.c",
   "src/hilog/hilog_common.h",
   "src/hilog/vsnprintf_s_p.h",
   "src/internal/hilog_adapter.h",
