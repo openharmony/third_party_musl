@@ -11,6 +11,11 @@ static struct l_l t[] = {
 #include "sanity/erfl.h"
 #include "special/erfl.h"
 
+#elif LDBL_MANT_DIG == 113
+#ifdef LD128_ENABLE
+#include "ld128/erfl.h"
+#endif
+
 #endif
 };
 

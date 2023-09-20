@@ -77,3 +77,10 @@ declare_args() {
   # for unit test
   musl_unit_test_flag = false
 }
+
+declare_args() {
+  musl_ld128_flag = false
+  if (musl_arch == "x86_64") {
+    musl_ld128_flag = true
+  }
+}
