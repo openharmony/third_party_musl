@@ -11,6 +11,11 @@ static struct l_l t[] = {
 #include "sanity/asinhl.h"
 #include "special/asinhl.h"
 
+#elif LDBL_MANT_DIG == 113
+#ifdef LD128_ENABLE
+#include "ld128/asinhl.h"
+#endif
+
 #endif
 };
 

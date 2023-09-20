@@ -14,6 +14,11 @@ static struct l_li t[] = {
 #include "sanity/lgammal.h"
 #include "special/lgammal.h"
 
+#elif LDBL_MANT_DIG == 113
+#ifdef LD128_ENABLE
+#include "ld128/lgammal.h"
+#endif
+
 #endif
 };
 

@@ -13,6 +13,11 @@ static struct l_l t[] = {
 #include "sanity/sinhl.h"
 #include "special/sinhl.h"
 
+#elif LDBL_MANT_DIG == 113
+#ifdef LD128_ENABLE
+#include "ld128/sinhl.h"
+#endif
+
 #endif
 };
 
