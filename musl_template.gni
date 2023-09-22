@@ -406,7 +406,6 @@ template("musl_libs") {
         "src/math/pow.c",
         "src/math/powf.c",
         "src/math/frexpl.c",
-        "src/linux/prctl.c",
         "src/stat/fstat.c",
       ]
     } else if (musl_arch == "x86_64") {
