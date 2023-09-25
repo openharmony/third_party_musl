@@ -19,11 +19,6 @@ struct mq_attr {
 };
 struct sigevent;
 
-#if _REDIR_TIME64
-__REDIR(mq_timedreceive, __mq_timedreceive_time64);
-__REDIR(mq_timedsend, __mq_timedsend_time64);
-#endif
-
 #ifdef __cplusplus
 }
 #endif
