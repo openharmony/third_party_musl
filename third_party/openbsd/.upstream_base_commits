@@ -1,0 +1,2 @@
+#openbsd = https://github.com/openbsd/src.git
+lib/libc/string/strcasestr.c	openbsd	lib/libc/string/strcasestr.c	71ab85de86c9965af0a2d6132e10736e2dd4e37f

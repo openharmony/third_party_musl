@@ -1282,7 +1282,6 @@ musl_src_file = [
   "src/string/stpcpy.c",
   "src/string/stpncpy.c",
   "src/string/strcasecmp.c",
-  "src/string/strcasestr.c",
   "src/string/strcat.c",
   "src/string/strchr.c",
   "src/string/strchrnul.c",
