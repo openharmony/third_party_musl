@@ -422,6 +422,7 @@ template("musl_libs") {
       "third_party/netbsd/lib/libc/regex/regexec.c",
       "third_party/netbsd/lib/libc/regex/regfree.c",
       "third_party/netbsd/lib/libc/stdlib/reallocarr.c",
+      "third_party/openbsd/lib/libc/string/strcasestr.c",
     ]
 
     if (!is_llvm_build) {
