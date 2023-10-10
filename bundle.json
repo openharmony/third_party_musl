@@ -21,13 +21,6 @@
         "adapted_system_type": ["mini", "small", "standard"],
         "rom": "",
         "ram": "",
-        "deps": {
-            "components": [],
-            "third_party": [
-                "benchmark",
-                "cJSON"
-            ]
-        },
         "build": {
             "sub_component": [],
             "inner_kits": [],
