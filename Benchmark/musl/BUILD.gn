@@ -22,6 +22,7 @@ group("benchmark_musl_group") {
 }
 
 ohos_executable("musl_benchmark") {
+  testonly = true
   sources = [
     "benchmark_framework.cpp",
     "libc_ctype.cpp",
@@ -73,6 +74,7 @@ ohos_executable("musl_benchmark") {
 }
 
 ohos_executable("musl_dlopen") {
+  testonly = true
   sources = [ "libc_dlopen.cpp" ]
 
   deps = [ "//third_party/benchmark:benchmark" ]
