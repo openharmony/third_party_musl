@@ -15,6 +15,8 @@
 
 #include <dirent.h>
 #include "functionalext.h"
+#include <stdlib.h>
+#include "../../../../../src/dirent/__dirent.h"
 
 /**
  * @tc.name      : readdir_0100
@@ -40,10 +42,16 @@ void readdir_0100(void)
  */
 void readdir_0200(void)
 {
-    DIR *dir = (DIR *)"";
+    struct __dirstream *dir = (struct __dirstream *)malloc(sizeof(struct __dirstream));
+    if (dir == NULL) {
+        EXPECT_PTRNE("readdir_0200", dir, NULL);
+        return;
+    }
     struct dirent *ret;
     ret = readdir(dir);
     EXPECT_TRUE(" readdir_0200", NULL == ret);
+
+    free(dir);
 }
 
 int main(int argc, char *argv[])
