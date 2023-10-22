@@ -28,8 +28,11 @@
  */
 void dlopen_ns_special_0100(void)
 {
+    Dl_namespace dlns_default;
+    dlns_get(NULL, &dlns_default);
     Dl_namespace dlns;
     dlns_init(&dlns, "ns_no_allowed_libs");
+    dlns_inherit(&dlns, &dlns_default, "libc++.so");
 
     void* handle1 = dlopen_ns(&dlns, dllName, RTLD_LAZY);
     EXPECT_TRUE("dlopen_ns_special_0100", handle1);
@@ -52,10 +55,15 @@ void dlopen_ns_special_0100(void)
  */
 void dlopen_ns_special_0200(void)
 {
+    Dl_namespace dlns_default;
+    dlns_get(NULL, &dlns_default);
     Dl_namespace dlns_no_allowed_libs, dlns_normal, dlns_wrong_lib_path;
     dlns_init(&dlns_no_allowed_libs, "ns_no_allowed_libs");
     dlns_init(&dlns_normal, "ns_normal");
     dlns_init(&dlns_wrong_lib_path, "inherited_class");
+    dlns_inherit(&dlns_no_allowed_libs, &dlns_default, "libc++.so");
+    dlns_inherit(&dlns_normal, &dlns_default, "libc++.so");
+    dlns_inherit(&dlns_wrong_lib_path, &dlns_default, "libc++.so");
 
     void* handle1 = dlopen_ns(&dlns_no_allowed_libs, dllName, RTLD_LAZY);
     EXPECT_TRUE("dlopen_ns_special_0200", handle1);
@@ -85,7 +93,6 @@ void dlopen_ns_sys_path_0100(void)
     EXPECT_TRUE("dlopen_ns_sys_path_0100", handle);
     dlclose(handle);
 }
-
 
 int main(void)
 {

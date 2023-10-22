@@ -143,10 +143,12 @@ void dlopen_same_so_by_different_inherit_ns(char * dllPath_ns)
 
 void dlopen_seperated(char * dllPath_ns)
 {
+    Dl_namespace dlns_default;
+    dlns_get(NULL, &dlns_default);
     Dl_namespace dlns1;
     dlns_init(&dlns1, "ns_for_no_seperated");
     dlns_create2(&dlns1, errPath_ns, 0);
-
+    dlns_inherit(&dlns1, &dlns_default, "libc++.so");
     void* handle = NULL;
     // current ns can't load this so.
     handle = dlopen_ns(&dlns1, dllName, RTLD_NOW);
@@ -173,11 +175,14 @@ void dlopen_seperated(char * dllPath_ns)
 
 void dlopen_inherit(char* dllPath_ns)
 {
+    Dl_namespace dlns_default;
+    dlns_get(NULL, &dlns_default);
     Dl_namespace inherit_A, inherit_B;
     dlns_init(&inherit_A, "inherir_error_lib_A");
     dlns_init(&inherit_B, "inherir_error_lib_B");
     dlns_create2(&inherit_A, NULL, 0);
     dlns_create2(&inherit_B, dllPath_ns, 0);
+    dlns_inherit(&inherit_B, &dlns_default, "libc++.so");
 
     // inherit_A can't load the so because search path is NULL.
     void* handle1 = dlopen_ns(&inherit_A, dllName, RTLD_LAZY);
@@ -206,6 +211,8 @@ void dlopen_inherit(char* dllPath_ns)
 
 void dlopen_inherit_check_can_pass(char* dllPath_ns)
 {
+    Dl_namespace dlns_default;
+    dlns_get(NULL, &dlns_default);
     Dl_namespace transitivity_A, transitivity_B, transitivity_C;
     dlns_init(&transitivity_A, "transitivity_A");
     dlns_init(&transitivity_B, "transitivity_B");
@@ -215,6 +222,7 @@ void dlopen_inherit_check_can_pass(char* dllPath_ns)
     dlns_create2(&transitivity_C, dllPath_ns, 0);
     dlns_inherit(&transitivity_A, &transitivity_B, NULL);
     dlns_inherit(&transitivity_B, &transitivity_C, dllName);
+    dlns_inherit(&transitivity_C, &dlns_default, "libc++.so");
 
     void* handleB = dlopen_ns(&transitivity_B, dllName, RTLD_LAZY);
     if(!handleB)
@@ -256,7 +264,6 @@ void dlopen_test_dlns_create2()
         t_error("%s namespace can't see %s but dlopen succee.\n", "ns_for_create2", dllName);
 }
 
-
 int main(int argc, char *argv[])
 {
     char buf[512],path[512];
@@ -282,7 +289,6 @@ int main(int argc, char *argv[])
     dlopen_test_dlns_create2();
     dlopen_inherit(path);
     dlopen_inherit_check_can_pass(path);
-
 
     return t_status;
 }
