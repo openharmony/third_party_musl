@@ -138,6 +138,10 @@ bool is_musl_log_enable()
 
 bool HiLogAdapterIsLoggable(unsigned int domain, const char *tag, LogLevel level)
 {
+    if ((level == LOG_ERROR) || (level == LOG_FATAL)) {
+        return true;
+    }
+
     if (!is_musl_log_enable()) {
         return false;
     }

@@ -156,8 +156,11 @@ void dlns_create_0500(void)
  */
 void dlopen_ns_0100(void)
 {
+    Dl_namespace dlns_default;
+    dlns_get(NULL, &dlns_default);
     Dl_namespace dlns;
     dlns_init(&dlns, "ns_no_allowed_libs");
+    dlns_inherit(&dlns, &dlns_default, "libc++.so");
 
     void* handle = dlopen_ns(&dlns, dllNamePath, RTLD_LAZY);
     EXPECT_TRUE("dlopen_ns_0100", handle);
@@ -171,8 +174,11 @@ void dlopen_ns_0100(void)
  */
 void dlopen_ns_0200(void)
 {
+    Dl_namespace dlns_default;
+    dlns_get(NULL, &dlns_default);
     Dl_namespace dlns;
     dlns_init(&dlns, "ns_no_allowed_libs");
+    dlns_inherit(&dlns, &dlns_default, "libc++.so");
 
     void* handle = dlopen_ns(&dlns, errdllNamePath, RTLD_LAZY);
     EXPECT_FALSE("dlopen_ns_0200", handle);
@@ -185,8 +191,11 @@ void dlopen_ns_0200(void)
  */
 void dlopen_ns_0300(void)
 {
+    Dl_namespace dlns_default;
+    dlns_get(NULL, &dlns_default);
     Dl_namespace dlns;
     dlns_init(&dlns, "ns_no_allowed_libs");
+    dlns_inherit(&dlns, &dlns_default, "libc++.so");
 
     void* handle = dlopen_ns(&dlns, dllName, RTLD_LAZY);
     EXPECT_TRUE("dlopen_ns_0300", handle);
