@@ -157,6 +157,7 @@ template("musl_libs") {
     if (is_standard_system) {
       defines += [
         "OHOS_DNS_PROXY_BY_NETSYS=1",
+        "OHOS_FWMARK_CLIENT_BY_NETSYS=1",
         "OHOS_PERMISSION_INTERNET=1",
         "OHOS_DISABLE_IPV6=0",
       ]
