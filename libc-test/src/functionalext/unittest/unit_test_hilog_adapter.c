@@ -33,6 +33,8 @@ static void HiLogAdapterPrint_0010(void)
 {
     musl_log_reset();
     int ret = HiLogAdapterPrint(MUSL_LOG_TYPE, LOG_ERROR, MUSL_LOG_DOMAIN, MUSL_LOG_TAG, "a");
+    EXPECT_NE("HiLogAdapterPrint_0010", ret, 0);
+    ret = HiLogAdapterPrint(MUSL_LOG_TYPE, LOG_INFO, MUSL_LOG_DOMAIN, MUSL_LOG_TAG, "b");
     EXPECT_EQ("HiLogAdapterPrint_0010", ret, -1);
 }
 
