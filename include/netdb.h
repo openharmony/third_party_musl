@@ -24,6 +24,21 @@ struct addrinfo {
 	struct addrinfo *ai_next;
 };
 
+typedef int (*net_dnsquery_hook)(int, int, int);
+
+enum {
+	QEURY_TYPE_NORMAL = 0,
+	QEURY_TYPE_NETSYS,
+};
+
+struct queryparam {
+	int qp_type;
+	int qp_netid;
+	int qp_mark;
+	int qp_flag;
+	net_dnsquery_hook qhook;
+};
+
 #define AI_PASSIVE      0x01
 #define AI_CANONNAME    0x02
 #define AI_NUMERICHOST  0x04
@@ -52,6 +67,8 @@ struct addrinfo {
 #define EAI_OVERFLOW   -12
 
 int getaddrinfo (const char *__restrict, const char *__restrict, const struct addrinfo *__restrict, struct addrinfo **__restrict);
+int getaddrinfo_ext (const char *__restrict, const char *__restrict, const struct addrinfo *__restrict,
+					 struct addrinfo **__restrict, struct queryparam *__restrict);
 void freeaddrinfo (struct addrinfo *);
 int getnameinfo (const struct sockaddr *__restrict, socklen_t, char *__restrict, socklen_t, char *__restrict, socklen_t, int);
 const char *gai_strerror(int);
