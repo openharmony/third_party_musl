@@ -769,6 +769,7 @@
     get_nprocs_conf;
     get_phys_pages;
     getaddrinfo;
+    getaddrinfo_ext;
     getauxval;
     getc;
     getc_unlocked;
