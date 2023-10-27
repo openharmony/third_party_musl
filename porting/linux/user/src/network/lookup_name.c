@@ -180,7 +180,7 @@ static int IsIpv6Enable()
     return ret;
 }
 
-static int name_from_dns(struct address buf[static MAXADDRS], char canon[static 256], const char *name, int family, const struct resolvconf *conf)
+static int name_from_dns(struct address buf[static MAXADDRS], char canon[static 256], const char *name, int family, const struct resolvconf *conf, int netid)
 {
 	unsigned char qbuf[2][280], abuf[2][512];
 	const unsigned char *qp[2] = { qbuf[0], qbuf[1] };
@@ -205,7 +205,7 @@ static int name_from_dns(struct address buf[static MAXADDRS], char canon[static 
 		}
 	}
 
-	if (__res_msend_rc(nq, qp, qlens, ap, alens, sizeof *abuf, conf) < 0)
+	if (res_msend_rc_ext(netid, nq, qp, qlens, ap, alens, sizeof *abuf, conf) < 0)
 		return EAI_SYSTEM;
 
 	for (i=0; i<nq; i++) {
@@ -221,7 +221,7 @@ static int name_from_dns(struct address buf[static MAXADDRS], char canon[static 
 	return EAI_NONAME;
 }
 
-static int name_from_dns_search(struct address buf[static MAXADDRS], char canon[static 256], const char *name, int family)
+static int name_from_dns_search(struct address buf[static MAXADDRS], char canon[static 256], const char *name, int family, int netid)
 {
 #if OHOS_PERMISSION_INTERNET
 	if (is_allow_internet() == 0) {
@@ -264,13 +264,13 @@ static int name_from_dns_search(struct address buf[static MAXADDRS], char canon[
 		if (z-p < 256 - l - 1) {
 			memcpy(canon+l+1, p, z-p);
 			canon[z-p+1+l] = 0;
-			int cnt = name_from_dns(buf, canon, canon, family, &conf);
+			int cnt = name_from_dns(buf, canon, canon, family, &conf, netid);
 			if (cnt) return cnt;
 		}
 	}
 
 	canon[l] = 0;
-	return name_from_dns(buf, canon, name, family, &conf);
+	return name_from_dns(buf, canon, name, family, &conf, netid);
 }
 
 static const struct policy {
@@ -347,9 +347,14 @@ static int addrcmp(const void *_a, const void *_b)
 	return b->sortkey - a->sortkey;
 }
 
-int __lookup_name(struct address buf[static MAXADDRS], char canon[static 256], const char *name, int family, int flags)
+int lookup_name_ext(struct address buf[static MAXADDRS], char canon[static 256], const char *name,
+					int family, int flags, int netid)
 {
 	int cnt = 0, i, j;
+
+#if OHOS_DNS_PROXY_BY_NETSYS
+	DNS_CONFIG_PRINT("lookup_name_ext \n");
+#endif
 
 	*canon = 0;
 	if (name) {
@@ -373,7 +378,7 @@ int __lookup_name(struct address buf[static MAXADDRS], char canon[static 256], c
 	if (!cnt) cnt = name_from_numeric(buf, name, family);
 	if (!cnt && !(flags & AI_NUMERICHOST)) {
 		cnt = name_from_hosts(buf, canon, name, family);
-		if (!cnt) cnt = name_from_dns_search(buf, canon, name, family);
+		if (!cnt) cnt = name_from_dns_search(buf, canon, name, family, netid);
 	}
 	if (cnt<=0) return cnt ? cnt : EAI_NONAME;
 
@@ -476,4 +481,9 @@ int __lookup_name(struct address buf[static MAXADDRS], char canon[static 256], c
 	pthread_setcancelstate(cs, 0);
 
 	return cnt;
+}
+
+int __lookup_name(struct address buf[static MAXADDRS], char canon[static 256], const char *name, int family, int flags)
+{
+	return lookup_name_ext(buf, canon, name, family, flags, 0);
 }
