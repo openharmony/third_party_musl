@@ -35,6 +35,21 @@ void vsnprintf_test(char *str, size_t n, char *fmt, const char *func_name, ...)
     }
 }
 
+void vsnprintf_test2(char *fmt, const char *func_name, ...)
+{
+    char s[2] = "a";
+    va_list ap;
+    va_start(ap, func_name);
+    int result = vsnprintf(s, 1, fmt, ap);
+    va_end(ap);
+    if (result < 0) {
+        t_error("%s vsnprintf get result is %d are less 0\n", func_name, result);
+    }
+    if(s[0] != '\0'){
+        t_error("%s vsnprintf n is 1 but s[0] is not a mull character\n", func_name);;
+    }
+}
+
 void vsnprintf_zeron(char *str, char *fmt, const char *func_name, ...)
 {
     char s[10];
@@ -97,6 +112,13 @@ int main(int argc, char *argv[])
      * @tc.level     : Level 2
      */
     vsnprintf_test("", 1, "value is %s", "vsnprintf_0600", "use");
+     /**
+     * @tc.name      : vsnprintf_0700
+     * @tc.desc      : This test case aims to validate that when vsnprintf is called with a buffer size of 1, 
+     *                 and the buffer initially contains data, it properly overwrites the buffer to contain only a null character.
+     * @tc.level     : Level 2
+     */
+    vsnprintf_test2("value is %s", "vsnprintf_0700", "use");
 
     return t_status;
 }
