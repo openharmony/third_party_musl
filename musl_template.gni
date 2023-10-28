@@ -337,7 +337,11 @@ template("musl_libs") {
     ]
 
     sources += [
+      "$FREEBSD_DIR/contrib/libexecinfo/backtrace.c",
+      "$FREEBSD_DIR/contrib/libexecinfo/unwind.c",
       "$FREEBSD_DIR/contrib/tcp_wrappers/strcasecmp.c",
+      "$FREEBSD_DIR/lib/libc/gen/arc4random.c",
+      "$FREEBSD_DIR/lib/libc/gen/arc4random_uniform.c",
       "$FREEBSD_DIR/lib/libc/stdlib/qsort.c",
       "$FREEBSD_DIR/lib/libc/stdlib/strtoimax.c",
       "$FREEBSD_DIR/lib/libc/stdlib/strtoul.c",
@@ -642,22 +646,17 @@ template("musl_libs") {
     }
 
     if (!defined(include_dirs)) {
-      if (musl_arch == "aarch64") {
-        include_dirs = [ "//third_party/FreeBSD/lib/libc/aarch64" ]
-        include_dirs += [ "//third_party/FreeBSD/lib/libc/include" ]
-      }
-      if (musl_arch == "arm") {
-        include_dirs = [ "//third_party/FreeBSD/lib/libc/arm" ]
-      }
-    } else {
-      if (musl_arch == "aarch64") {
-        include_dirs += [ "//third_party/FreeBSD/lib/libc/aarch64" ]
-        include_dirs += [ "//third_party/FreeBSD/lib/libc/include" ]
-      }
-      if (musl_arch == "arm") {
-        include_dirs += [ "//third_party/FreeBSD/lib/libc/arm" ]
-      }
+      include_dirs = []
     }
+    if (musl_arch == "aarch64") {
+      include_dirs += [ "//third_party/FreeBSD/lib/libc/aarch64" ]
+    } else if (musl_arch == "arm") {
+      include_dirs += [ "//third_party/FreeBSD/lib/libc/arm" ]
+    }
+    include_dirs += [ "//third_party/FreeBSD/lib/libc/include" ]
+    include_dirs += [ "//third_party/FreeBSD/contrib/libexecinfo" ]
+    include_dirs += [ "//third_party/FreeBSD/sys" ]
+    include_dirs += [ "//third_party/FreeBSD/crypto/openssh/openbsd-compat" ]
 
     configs -= musl_inherited_configs
     configs += [ ":soft_musl_config" ]

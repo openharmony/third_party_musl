@@ -76,6 +76,7 @@ if (is_lite_system && current_os == "ohos") {
 
   group("musl_headers") {
     deps = [
+      ":FreeBSD_copy",
       ":copy_uapi",
       ":create_alltypes_h",
       ":create_syscall_h",
@@ -425,6 +426,26 @@ if (is_lite_system && current_os == "ohos") {
   copy("musl_copy_inc_hook") {
     sources = musl_inc_hook_files
     outputs = [ "${target_out_dir}/${musl_inc_out_dir}/{{source_file_part}}" ]
+  }
+
+  group("FreeBSD_copy") {
+    deps = [
+      ":FreeBSD_headers",
+      ":FreeBSD_sys_headers",
+    ]
+  }
+
+  copy("FreeBSD_headers") {
+    sources = freebsd_headers
+    outputs = [ "${target_out_dir}/${musl_inc_out_dir}/{{source_file_part}}" ]
+    deps = [ ":create_porting_src" ]
+  }
+
+  copy("FreeBSD_sys_headers") {
+    sources = freebsd_sys_headers
+    outputs =
+        [ "${target_out_dir}/${musl_inc_out_dir}/sys/{{source_file_part}}" ]
+    deps = [ ":create_porting_src" ]
   }
 
   group("libctest") {
