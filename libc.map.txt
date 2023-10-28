@@ -331,6 +331,9 @@
     aligned_alloc;
     alphasort;
     alphasort64;
+    arc4random;
+    arc4random_buf;
+    arc4random_uniform;
     asctime;
     asctime_r;
     asin;
@@ -355,6 +358,11 @@
     atoi;
     atol;
     atoll;
+    backtrace;
+    backtrace_symbols;
+    backtrace_symbols_fd;
+    backtrace_symbols_fmt;
+    backtrace_symbols_fd_fmt;
     basename;
     bcmp;
     bcopy;
@@ -1608,8 +1616,8 @@
     setutxent;
     setvbuf;
     setxattr;
-    # shm_open;
-    # shm_unlink;
+    shm_open;
+    shm_unlink;
     shmat;
     shmctl;
     shmdt;
