@@ -698,6 +698,8 @@ int vfprintf(FILE *restrict f, const char *restrict fmt, va_list ap)
 	if (saved_buf) {
 		if (!(f->flags & F_PBUF)) {
 			f->write(f, 0, 0);
+		} else {
+			*saved_buf = '\0';
 		}
 		if (!f->wpos) ret = -1;
 		f->buf = saved_buf;
