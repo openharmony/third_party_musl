@@ -115,6 +115,22 @@ static void Bm_function_Strnlen(benchmark::State &state)
     state.SetBytesProcessed(uint64_t(state.iterations()) * uint64_t(nbytes));
 }
 
+extern "C" size_t __strlen_chk(const char* s, size_t s_len);
+
+static void Bm_function_Strlen_chk(benchmark::State& state)
+{
+    const size_t nbytes = bufferSizes[state.range(0)];
+    vector<char> bmstrlen;
+    char *bmstrlenAligned = GetAlignedPtrFilled(&bmstrlen, 0, nbytes + 1, 'n');
+    bmstrlenAligned[nbytes - 1] = '\0';
+
+    volatile int c __attribute__((unused)) = 0;
+    while (state.KeepRunning()) {
+        c += __strlen_chk(bmstrlenAligned, __builtin_object_size(bmstrlenAligned, 0));
+    }
+    state.SetBytesProcessed(uint64_t(state.iterations()) * uint64_t(nbytes));
+}
+
 // Specifies the maximum number of copies to replicate
 static void Bm_function_Stpncpy(benchmark::State &state)
 {
@@ -679,6 +695,7 @@ MUSL_BENCHMARK(BM_function_Getdelim);
 MUSL_BENCHMARK_WITH_ARG(BM_function_Strlcat, "ALIGNED_ONEBUF");
 MUSL_BENCHMARK_WITH_APPLY(Bm_function_Memchr, StringtestArgs);
 MUSL_BENCHMARK_WITH_APPLY(Bm_function_Strnlen, StringtestArgs);
+MUSL_BENCHMARK_WITH_ARG(Bm_function_Strlen_chk, "BENCHMARK_8");
 MUSL_BENCHMARK_WITH_APPLY(Bm_function_Stpncpy, StringtestArgs);
 MUSL_BENCHMARK_WITH_APPLY(Bm_function_Strncpy, StringtestArgs);
 MUSL_BENCHMARK_WITH_ARG(Bm_function_Strcspn, "BENCHMARK_8");

@@ -26,6 +26,7 @@ ohos_executable("musl_benchmark") {
   sources = [
     "benchmark_framework.cpp",
     "libc_ctype.cpp",
+    "libc_cxa_finalize.cpp",
     "libc_dirent.cpp",
     "libc_epoll.cpp",
     "libc_errno.cpp",
