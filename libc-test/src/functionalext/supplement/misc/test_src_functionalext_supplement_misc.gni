@@ -49,4 +49,5 @@ functionalext_supplement_misc_test = [
   "getentropy",
   "getrusage",
   "ioctl",
+  "functionalext_wordfree",
 ]

@@ -21,4 +21,7 @@ functionalext_supplement_locale_test = [
   "strxfrm",
   "wcscoll",
   "wcsxfrm",
+  "functionalext_gettext",
+  "functionalext_dgettext",
+  "functionalext_dcgettext",
 ]

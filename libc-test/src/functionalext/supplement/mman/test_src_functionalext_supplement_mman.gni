@@ -24,4 +24,5 @@ functionalext_supplement_mman_test = [
   "mincore",
   "munlock",
   "posix_madvise",
+  "functionalext_shm_open",
 ]
