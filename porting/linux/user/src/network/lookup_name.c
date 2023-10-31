@@ -235,7 +235,7 @@ static int name_from_dns_search(struct address buf[static MAXADDRS], char canon[
 	size_t l, dots;
 	char *p, *z;
 
-	int res = __get_resolv_conf(&conf, search, sizeof search);
+	int res = get_resolv_conf_ext(&conf, search, sizeof search, netid);
 	if (res < 0) return res;
 
 	/* Count dots, suppress search when >=ndots or name ends in
