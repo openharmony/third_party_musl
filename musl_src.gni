@@ -2268,3 +2268,10 @@ added_freebsd_files = [
   "$FREEBSD_DIR/lib/libc/gdtoa/glue.c",
   "$FREEBSD_DIR/lib/libc/stdio/parsefloat.c",
 ]
+
+freebsd_headers = [ "$FREEBSD_DIR/contrib/libexecinfo/execinfo.h" ]
+
+freebsd_sys_headers = [
+  "$FREEBSD_DIR/sys/sys/cdefs.h",
+  "$FREEBSD_DIR/sys/sys/queue.h",
+]

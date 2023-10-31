@@ -30,4 +30,7 @@ functionalext_list = [
   "unittest:functionalext_unittest_test",
   "legacy:functionalext_legacy_test",
   "sigchain:functionalext_sigchain_test",
+  "queue:functionalext_queue_test",
+  "crypt:functionalext_crypt_test",
+  "backtrace:functionalext_backtrace_test",
 ]
