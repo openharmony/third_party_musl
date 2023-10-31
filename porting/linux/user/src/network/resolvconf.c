@@ -127,6 +127,11 @@ static GetConfig load_config_getter(void** libhandler)
 
 int __get_resolv_conf(struct resolvconf *conf, char *search, size_t search_sz)
 {
+       return get_resolv_conf_ext(conf, search, search_sz, 0);
+}
+
+int get_resolv_conf_ext(struct resolvconf *conf, char *search, size_t search_sz, int netid)
+{
 	char line[256];
 	unsigned char _buf[256];
 	FILE *f, _f;
@@ -147,7 +152,7 @@ int __get_resolv_conf(struct resolvconf *conf, char *search, size_t search_sz)
 	}
 
 	struct resolv_config config = {0};
-	int ret = func(0, &config);
+	int ret = func(netid, &config);
 	if (ret < 0) {
 		DNS_CONFIG_PRINT("__get_resolv_conf OHOS_GET_CONFIG_FUNC_NAME err %d\n", ret);
 		return EAI_NONAME;

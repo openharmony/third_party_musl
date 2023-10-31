@@ -63,6 +63,7 @@ hidden int __lookup_name(struct address buf[static MAXADDRS], char canon[static 
 hidden int __lookup_ipliteral(struct address buf[static 1], const char *name, int family);
 
 hidden int __get_resolv_conf(struct resolvconf *, char *, size_t);
+hidden int get_resolv_conf_ext(struct resolvconf *, char *, size_t, int netid);
 hidden int __res_msend_rc(int, const unsigned char *const *, const int *, unsigned char *const *, int *, int, const struct resolvconf *);
 hidden int res_msend_rc_ext(int, int, const unsigned char *const *, const int *, unsigned char *const *,
 							int *, int, const struct resolvconf *);
