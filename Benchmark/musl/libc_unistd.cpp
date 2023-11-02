@@ -190,6 +190,29 @@ static void Bm_function_Readlinkat(benchmark::State &state)
     remove("/data/local/tmp/tmplink");
 }
 
+extern "C" ssize_t __readlinkat_chk(int dirfd, const char*, char*, size_t, size_t);
+
+static void Bm_function_Readlinkat_chk(benchmark::State& state)
+{
+    char path[BUFFER] = {0};
+    ssize_t len;
+    int i = symlink("/dev/zero", "/data/local/tmp/tmplink");
+    if (i == -1) {
+        perror("symlink");
+    }
+    DIR *dir = opendir("/data/local/tmp");
+    if (dir == nullptr) {
+        perror("opendir");
+    }
+    int fd = dirfd(dir);
+    for (auto _ : state) {
+        len = __readlinkat_chk(fd, "./tmplink", path, sizeof(path), __builtin_object_size(path, 1));
+        benchmark::DoNotOptimize(len);
+    }
+    closedir(dir);
+    remove("/data/local/tmp/tmplink");
+}
+
 static void Bm_function_Getuid(benchmark::State &state)
 {
     uid_t uid;
@@ -580,6 +603,7 @@ MUSL_BENCHMARK(Bm_function_Geteuid);
 MUSL_BENCHMARK_WITH_ARG(Bm_function_Pwrite64, "COMMON_ARGS");
 MUSL_BENCHMARK(Bm_function_Readlink);
 MUSL_BENCHMARK(Bm_function_Readlinkat);
+MUSL_BENCHMARK(Bm_function_Readlinkat_chk);
 MUSL_BENCHMARK_WITH_ARG(Bm_function_Pread64, "COMMON_ARGS");
 MUSL_BENCHMARK(Bm_function_Close);
 MUSL_BENCHMARK(Bm_function_Usleep);
