@@ -655,7 +655,6 @@ template("musl_libs") {
     }
     include_dirs += [ "//third_party/FreeBSD/lib/libc/include" ]
     include_dirs += [ "//third_party/FreeBSD/contrib/libexecinfo" ]
-    include_dirs += [ "//third_party/FreeBSD/sys" ]
     include_dirs += [ "//third_party/FreeBSD/crypto/openssh/openbsd-compat" ]
 
     configs -= musl_inherited_configs
