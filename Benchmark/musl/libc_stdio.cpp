@@ -387,6 +387,111 @@ static void Bm_function_Vfprintf_char(benchmark::State &state)
     state.SetBytesProcessed(state.iterations());
 }
 
+// Use the parameter list to send formatted output to the stream.
+// string type
+static void Bm_function_Fprintf_str(benchmark::State &state)
+{
+    FILE *fp = fopen("/dev/zero", "w+");
+    const char *arr1 = "hello";
+    const char *arr2 = "world";
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(fprintf(fp, "Set parameter %s %s success", arr1, arr2));
+    }
+    fclose(fp);
+    state.SetBytesProcessed(state.iterations());
+}
+
+// int type
+static void Bm_function_Fprintf_int(benchmark::State &state)
+{
+    FILE *fp = fopen("/dev/zero", "w+");
+    int arr1 = 233;
+    int arr2 = 322;
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(fprintf(fp, "Set parameter %d %d success", arr1, arr2));
+    }
+    fclose(fp);
+    state.SetBytesProcessed(state.iterations());
+}
+
+// float type
+static void Bm_function_Fprintf_float(benchmark::State &state)
+{
+    FILE *fp = fopen("/dev/zero", "w+");
+    float i = 22.33f;
+    float j = 33.22f;
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(fprintf(fp, "Set parameter %f %f success", i, j));
+    }
+    fclose(fp);
+    state.SetBytesProcessed(state.iterations());
+}
+
+// longdouble type
+static void Bm_function_Fprintf_longdouble(benchmark::State &state)
+{
+    FILE *fp = fopen("/dev/zero", "w+");
+    long double i = 2250996946.3365252546L;
+    long double j = 9583454321234.226342465121L;
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(fprintf(fp, "Set parameter %Lf %Lf success", i, j));
+    }
+    fclose(fp);
+    state.SetBytesProcessed(state.iterations());
+}
+
+// unsigned type
+static void Bm_function_Fprintf_unsigned(benchmark::State &state)
+{
+    FILE *fp = fopen("/dev/zero", "w+");
+    unsigned int i = 4294967295U;
+    unsigned int j = 3456264567U;
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(fprintf(fp, "Set parameter %u %u success", i, j));
+    }
+    fclose(fp);
+    state.SetBytesProcessed(state.iterations());
+}
+
+// long type
+static void Bm_function_Fprintf_long(benchmark::State &state)
+{
+    FILE *fp = fopen("/dev/zero", "w+");
+    long i = 1234567890L;
+    long j = 954611731L;
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(fprintf(fp, "Set parameter %ld %ld success", i, j));
+    }
+    fclose(fp);
+    state.SetBytesProcessed(state.iterations());
+}
+
+// short type
+static void Bm_function_Fprintf_short(benchmark::State &state)
+{
+    FILE *fp = fopen("/dev/zero", "w+");
+    short i = 32767;
+    short j = -32768;
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(fprintf(fp, "Set parameter %hd %hd success", i, j));
+    }
+    fclose(fp);
+    state.SetBytesProcessed(state.iterations());
+}
+
+// char type
+static void Bm_function_Fprintf_char(benchmark::State &state)
+{
+    FILE *fp = fopen("/dev/zero", "w+");
+    char i = 'n';
+    char j = 'Z';
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(fprintf(fp, "Set parameter %c %c success", i, j));
+    }
+    fclose(fp);
+    state.SetBytesProcessed(state.iterations());
+}
+
 // Use the parameter list to send formatted output to a string
 // string type
 static void Bm_function_Vsprintf_str(benchmark::State &state)
@@ -1402,6 +1507,14 @@ MUSL_BENCHMARK(Bm_function_Vfprintf_unsigned);
 MUSL_BENCHMARK(Bm_function_Vfprintf_long);
 MUSL_BENCHMARK(Bm_function_Vfprintf_short);
 MUSL_BENCHMARK(Bm_function_Vfprintf_char);
+MUSL_BENCHMARK(Bm_function_Fprintf_str);
+MUSL_BENCHMARK(Bm_function_Fprintf_int);
+MUSL_BENCHMARK(Bm_function_Fprintf_float);
+MUSL_BENCHMARK(Bm_function_Fprintf_longdouble);
+MUSL_BENCHMARK(Bm_function_Fprintf_unsigned);
+MUSL_BENCHMARK(Bm_function_Fprintf_long);
+MUSL_BENCHMARK(Bm_function_Fprintf_short);
+MUSL_BENCHMARK(Bm_function_Fprintf_char);
 MUSL_BENCHMARK(Bm_function_Vsprintf_str);
 MUSL_BENCHMARK(Bm_function_Vsprintf_int);
 MUSL_BENCHMARK(Bm_function_Vsprintf_float);
