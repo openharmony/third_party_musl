@@ -1917,6 +1917,7 @@ musl_inc_sys_files = [
   "include/sys/vt.h",
   "include/sys/wait.h",
   "include/sys/xattr.h",
+  "include/sys/cdefs.h",
 ]
 
 musl_inc_trace_files = [ "include/trace/trace_marker.h" ]
@@ -2065,6 +2066,7 @@ musl_src_porting_file = [
   "include/fortify/stdio.h",
   "src/fortify/fortify.c",
   "include/sys/capability.h",
+  "include/sys/cdefs.h",
   "include/sys/reboot.h",
   "include/sys/socket.h",
   "include/sys/sysinfo.h",
@@ -2271,7 +2273,4 @@ added_freebsd_files = [
 
 freebsd_headers = [ "$FREEBSD_DIR/contrib/libexecinfo/execinfo.h" ]
 
-freebsd_sys_headers = [
-  "$FREEBSD_DIR/sys/sys/cdefs.h",
-  "$FREEBSD_DIR/sys/sys/queue.h",
-]
+freebsd_sys_headers = [ "$FREEBSD_DIR/sys/sys/queue.h" ]
