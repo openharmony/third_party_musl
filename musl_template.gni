@@ -376,6 +376,7 @@ template("musl_libs") {
         "src/math/powl.c",
         "src/math/sinf.c",
         "src/math/cosf.c",
+        "src/linux/flock.c",
       ]
     } else if (musl_arch == "aarch64") {
       sources_orig -= [
@@ -412,9 +413,13 @@ template("musl_libs") {
         "src/math/powf.c",
         "src/math/frexpl.c",
         "src/stat/fstat.c",
+        "src/linux/flock.c",
       ]
     } else if (musl_arch == "x86_64") {
-      sources_orig -= [ "src/thread/${musl_arch}/__set_thread_area.s" ]
+      sources_orig -= [
+        "src/thread/${musl_arch}/__set_thread_area.s",
+        "src/linux/flock.c",
+      ]
     }
     if (musl_ld128_flag) {
       if (musl_arch == "x86_64") {

@@ -31,6 +31,7 @@ if (musl_arch == "arm") {
     "src/thread/arm/atomics.s",
     "src/thread/arm/clone.s",
     "src/thread/arm/syscall_cp.s",
+    "src/linux/arm/flock.s",
     "compat/time32/adjtime32.c",
     "compat/time32/adjtimex_time32.c",
     "compat/time32/aio_suspend_time32.c",
@@ -142,6 +143,7 @@ if (musl_arch == "arm") {
     "src/misc/aarch64/fstat.s",
     "src/thread/aarch64/syscall_cp.s",
     "src/misc/aarch64/syscall.s",
+    "src/linux/aarch64/flock.s",
   ]
 } else if (musl_arch == "x86_64") {
   musl_src_arch_file = [
@@ -192,6 +194,7 @@ if (musl_arch == "arm") {
     "src/thread/x86_64/__unmapself.s",
     "src/thread/x86_64/clone.s",
     "src/thread/x86_64/syscall_cp.s",
+    "src/linux/x86_64/flock.s",
   ]
 }
 
@@ -2243,6 +2246,10 @@ musl_src_porting_file = [
   "src/thread/sem_timedwait.c",
   "src/stdio/vfscanf.c",
   "src/stdio/fileno.c",
+  "src/linux/arm/flock.s",
+  "src/linux/aarch64/flock.s",
+  "src/linux/x86_64/flock.s",
+  "src/linux/flock.c",
 ]
 
 musl_inc_hook_files = [
