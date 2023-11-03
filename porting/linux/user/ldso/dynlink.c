@@ -747,12 +747,12 @@ __attribute__((always_inline))
 #endif
 
 struct symdef find_sym_impl(
-	struct dso *dso, struct verinfo *verinfo, struct sym_info_pair s_info_p, int need_def, ns_t *ns)
+	struct dso *dso, struct verinfo *verinfo, struct sym_info_pair s_info_g, int need_def, ns_t *ns)
 {
 	Sym *sym;
+	struct sym_info_pair s_info_s = {0, 0};
 	uint32_t *ght;
-	uint32_t h = 0;
-	uint32_t gh = s_info_p.sym_h;
+	uint32_t gh = s_info_g.sym_h;
 	uint32_t gho = gh / (8 * sizeof(size_t));
 	size_t ghm = 1ul << gh % (8 * sizeof(size_t));
 	struct symdef def = {0};
@@ -769,12 +769,12 @@ struct symdef find_sym_impl(
 		if (!(f & 1))
 			return def;
 
-		sym = gnu_lookup(s_info_p, ght, dso, verinfo);
+		sym = gnu_lookup(s_info_g, ght, dso, verinfo);
 	} else {
-		if (!h)
-			s_info_p = sysv_hash(verinfo->s);
+		if (!s_info_s.sym_h)
+			s_info_s = sysv_hash(verinfo->s);
 
-		sym = sysv_lookup(verinfo, s_info_p, dso);
+		sym = sysv_lookup(verinfo, s_info_s, dso);
 	}
 
 	if (!sym)
@@ -801,8 +801,9 @@ struct symdef find_sym_impl(
 
 static inline struct symdef find_sym2(struct dso *dso, struct verinfo *verinfo, int need_def, int use_deps, ns_t *ns)
 {
-	struct sym_info_pair s_info_p = gnu_hash(verinfo->s);
-	uint32_t h = 0, gh = s_info_p.sym_h, gho = gh / (8*sizeof(size_t)), *ght;
+	struct sym_info_pair s_info_g = gnu_hash(verinfo->s);
+	struct sym_info_pair s_info_s = {0, 0};
+	uint32_t gh = s_info_g.sym_h, gho = gh / (8*sizeof(size_t)), *ght;
 	size_t ghm = 1ul << gh % (8*sizeof(size_t));
 	struct symdef def = {0};
 	struct dso **deps = use_deps ? dso->deps : 0;
@@ -813,10 +814,10 @@ static inline struct symdef find_sym2(struct dso *dso, struct verinfo *verinfo, 
 		}
 		if ((ght = dso->ghashtab)) {
 			GNU_HASH_FILTER(ght, ghm, gho)
-			sym = gnu_lookup(s_info_p, ght, dso, verinfo);
+			sym = gnu_lookup(s_info_g, ght, dso, verinfo);
 		} else {
-			if (!h) s_info_p = sysv_hash(verinfo->s);
-			sym = sysv_lookup(verinfo, s_info_p, dso);
+			if (!s_info_s.sym_h) s_info_s = sysv_hash(verinfo->s);
+			sym = sysv_lookup(verinfo, s_info_s, dso);
 		}
 
 		if (!sym) continue;
@@ -838,8 +839,9 @@ static inline struct symdef find_sym2(struct dso *dso, struct verinfo *verinfo, 
 
 static inline struct symdef find_sym_by_deps(struct dso *dso, struct verinfo *verinfo, int need_def, ns_t *ns)
 {
-	struct sym_info_pair s_info_p = gnu_hash(verinfo->s);
-	uint32_t h = 0, gh = s_info_p.sym_h, gho = gh / (8*sizeof(size_t)), *ght;
+	struct sym_info_pair s_info_g = gnu_hash(verinfo->s);
+	struct sym_info_pair s_info_s = {0, 0};
+	uint32_t h = 0, gh = s_info_g.sym_h, gho = gh / (8*sizeof(size_t)), *ght;
 	size_t ghm = 1ul << gh % (8*sizeof(size_t));
 	struct symdef def = {0};
 	struct dso **deps = dso->deps;
@@ -850,10 +852,10 @@ static inline struct symdef find_sym_by_deps(struct dso *dso, struct verinfo *ve
 		}
 		if ((ght = dso->ghashtab)) {
 			GNU_HASH_FILTER(ght, ghm, gho)
-			sym = gnu_lookup(s_info_p, ght, dso, verinfo);
+			sym = gnu_lookup(s_info_g, ght, dso, verinfo);
 		} else {
-			if (!h) s_info_p = sysv_hash(verinfo->s);
-			sym = sysv_lookup(verinfo, s_info_p, dso);
+			if (!s_info_s.sym_h) s_info_s = sysv_hash(verinfo->s);
+			sym = sysv_lookup(verinfo, s_info_s, dso);
 		}
 
 		if (!sym) continue;
@@ -876,8 +878,9 @@ static inline struct symdef find_sym_by_deps(struct dso *dso, struct verinfo *ve
 static inline struct symdef find_sym_by_saved_so_list(
 	int sym_type, struct dso *dso, struct verinfo *verinfo, int need_def, struct dso *dso_relocating)
 {
-	struct sym_info_pair s_info_p = gnu_hash(verinfo->s);
-	uint32_t h = 0, gh = s_info_p.sym_h, gho = gh / (8 * sizeof(size_t)), *ght;
+	struct sym_info_pair s_info_g = gnu_hash(verinfo->s);
+	struct sym_info_pair s_info_s = {0, 0};
+	uint32_t gh = s_info_g.sym_h, gho = gh / (8 * sizeof(size_t)), *ght;
 	size_t ghm = 1ul << gh % (8 * sizeof(size_t));
 	struct symdef def = {0};
 	// skip head dso.
@@ -888,10 +891,10 @@ static inline struct symdef find_sym_by_saved_so_list(
 		Sym *sym;
 		if ((ght = dso_searching->ghashtab)) {
 			GNU_HASH_FILTER(ght, ghm, gho)
-			sym = gnu_lookup(s_info_p, ght, dso_searching, verinfo);
+			sym = gnu_lookup(s_info_g, ght, dso_searching, verinfo);
 		} else {
-			if (!h) s_info_p = sysv_hash(verinfo->s);
-			sym = sysv_lookup(verinfo, s_info_p, dso_searching);
+			if (!s_info_s.sym_h) s_info_s = sysv_hash(verinfo->s);
+			sym = sysv_lookup(verinfo, s_info_s, dso_searching);
 		}
 		if (!sym) continue;
 		if (!sym->st_shndx)
