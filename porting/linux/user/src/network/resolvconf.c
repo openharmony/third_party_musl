@@ -39,52 +39,44 @@
 
 #include <dlfcn.h>
 
-static void *open_lib(char* libname)
+static void *open_dns_lib(void)
 {
-	static void *lib_handle = NULL;
-	if (lib_handle != NULL) {
+	static void *dns_lib_handle = NULL;
+	if (dns_lib_handle != NULL) {
 		a_barrier();
-		return lib_handle;
+		return dns_lib_handle;
 	}
 
-	void *lib = dlopen(libname, RTLD_LAZY);
+	void *lib = dlopen(DNS_SO_PATH, RTLD_LAZY);
 	if (lib == NULL) {
 		DNS_CONFIG_PRINT("%s: dlopen %s failed: %s",
-			__func__, libname, dlerror());
+			__func__, DNS_SO_PATH, dlerror());
 		return NULL;
 	}
 
-	void *old_lib = a_cas_p(&lib_handle, NULL, lib);
+	void *old_lib = a_cas_p(&dns_lib_handle, NULL, lib);
 	if (old_lib == NULL) {
-		DNS_CONFIG_PRINT("%s: %s loaded", __func__, libname);
+		DNS_CONFIG_PRINT("%s: %s loaded", __func__, DNS_SO_PATH);
 		return lib;
 	} else {
 		/* Another thread has already loaded the library,
 		 * dlclose is invoked to make refcount correct */
 		DNS_CONFIG_PRINT("%s: %s has been loaded by another thread",
-			__func__, libname);
+			__func__, DNS_SO_PATH);
 		if (dlclose(lib)) {
 			DNS_CONFIG_PRINT("%s: dlclose %s failed: %s",
-				__func__, libname, dlerror());
+				__func__, DNS_SO_PATH, dlerror());
 		}
 		return old_lib;
 	}
 }
 
-static void close_lib(void* libhandler)
+static void *load_from_dns_lib(const char *symbol)
 {
-	dlclose(libhandler);
-}
-
-static void *load_from_lib(void **libhandler, const char *libname, const char *symbol)
-{
-	void *lib_handle = open_lib(libname);
+	void *lib_handle = open_dns_lib();
 	if (lib_handle == NULL) {
-		DNS_CONFIG_PRINT("%s: opem lib %s in fun %s failed %s", libname, __func__, dlerror());
 		return NULL;
 	}
-
-	*libhandler = lib_handle;
 
 	void *sym_addr = dlsym(lib_handle, symbol);
 	if (sym_addr == NULL) {
@@ -94,14 +86,14 @@ static void *load_from_lib(void **libhandler, const char *libname, const char *s
 	return sym_addr;
 }
 
-void resolve_func_sym(void **libhandler, void **holder, const char *libname, const char *symbol)
+void resolve_dns_sym(void **holder, const char *symbol)
 {
 	if (*holder != NULL) {
 		a_barrier();
 		return;
 	}
 
-	void *ptr = load_from_lib(libhandler, libname, symbol);
+	void *ptr = load_from_dns_lib(symbol);
 	if (ptr == NULL) {
 		return;
 	}
@@ -114,15 +106,14 @@ void resolve_func_sym(void **libhandler, void **holder, const char *libname, con
 		DNS_CONFIG_PRINT("%s: %s found", __func__, symbol);
 	}
 }
-#endif
 
-#if OHOS_DNS_PROXY_BY_NETSYS
-static GetConfig load_config_getter(void** libhandler)
+static GetConfig load_config_getter(void)
 {
 	static GetConfig config_getter = NULL;
-	resolve_func_sym(libhandler, (void **) &config_getter, DNS_SO_PATH, OHOS_GET_CONFIG_FUNC_NAME);
+	resolve_dns_sym((void **) &config_getter, OHOS_GET_CONFIG_FUNC_NAME);
 	return config_getter;
 }
+
 #endif
 
 int __get_resolv_conf(struct resolvconf *conf, char *search, size_t search_sz)
@@ -136,7 +127,6 @@ int get_resolv_conf_ext(struct resolvconf *conf, char *search, size_t search_sz,
 	unsigned char _buf[256];
 	FILE *f, _f;
 	int nns = 0;
-	void *libhandler;
 
 	conf->ndots = 1;
 	conf->timeout = 5;
@@ -144,7 +134,7 @@ int get_resolv_conf_ext(struct resolvconf *conf, char *search, size_t search_sz,
 	if (search) *search = 0;
 
 #if OHOS_DNS_PROXY_BY_NETSYS
-	GetConfig func = load_config_getter(&libhandler);
+	GetConfig func = load_config_getter();
 	if (!func) {
 		DNS_CONFIG_PRINT("%s: loading %s failed, use %s as a fallback",
 			__func__, OHOS_GET_CONFIG_FUNC_NAME, DNS_RESOLV_CONF_PATH);
@@ -157,7 +147,6 @@ int get_resolv_conf_ext(struct resolvconf *conf, char *search, size_t search_sz,
 		DNS_CONFIG_PRINT("__get_resolv_conf OHOS_GET_CONFIG_FUNC_NAME err %d\n", ret);
 		return EAI_NONAME;
 	}
-	close_lib(libhandler);
 	int32_t timeout_second = config.timeout_ms / 1000;
 
 netsys_conf:
@@ -266,15 +255,6 @@ get_conf_ok:
 	return 0;
 }
 
-#ifdef OHOS_FWMARK_CLIENT_BY_NETSYS
-static BindSocket load_bindsocket(void** libhandler)
-{
-	static BindSocket func_bindsocket = NULL;
-	resolve_func_sym((void**) libhandler, (void **) &func_bindsocket, FWMARKCLIENT_SO_PATH, OHOS_BIND_SOCKET_FUNC_NAME);
-	return func_bindsocket;
-}
-#endif
-
 int res_bind_socket(int fd, int netid)
 {
 	int ret = -1;
@@ -303,16 +283,3 @@ int res_bind_socket(int fd, int netid)
 	return ret;
 }
 
-void resolve_dns_sym(void **holder, void **handler, const char *symbol)
-{
-#if OHOS_DNS_PROXY_BY_NETSYS
-	resolve_func_sym(handler, holder, DNS_SO_PATH, symbol);
-#endif
-}
-
-void close_dns_lib(void *libhandler)
-{
-#if OHOS_DNS_PROXY_BY_NETSYS
-	close_lib(libhandler);
-#endif
-}

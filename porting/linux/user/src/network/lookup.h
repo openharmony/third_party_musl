@@ -132,6 +132,7 @@ typedef int (*GetDefaultNet)(uint16_t netId, int32_t *currentnetid);
 
 /* If the memory holder points to stores NULL value, try to load symbol from the
  * dns lib into holder; otherwise, it does nothing. */
+hidden void resolve_dns_sym(void **holder, const char *symbol);
 
 void
 dns_set_addr_info_to_netsys_cache(const char *__restrict host, const char *__restrict serv,
@@ -164,8 +165,4 @@ typedef int32_t (*BindSocket)(int32_t fd, uint32_t netId);
 typedef int32_t (*BindSocket_Ext)(int32_t fd, uint32_t netId);
 
 #endif
-
-void resolve_dns_sym(void **holder, void **handler, const char *symbol);
-void close_dns_lib(void *libhandler);
-
 #endif
