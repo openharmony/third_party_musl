@@ -37,10 +37,14 @@ int getaddrinfo_ext(const char *restrict host, const char *restrict serv, const 
 	int usedtime = 0;
 	time_t t_start, t_end;
 
-	if (!host && !serv && !param) return EAI_NONAME;
-	
-	netid = param->qp_netid;
-	type = param->qp_type;
+	if (!host && !serv) return EAI_NONAME;
+	if (!param) {
+		netid = 0;
+		type = 0;
+	} else {
+		netid = param->qp_netid;
+		type = param->qp_type;
+	}
 
 #if OHOS_DNS_PROXY_BY_NETSYS
 	GETADDRINFO_PRINT_DEBUG("getaddrinfo_ext netid:%{public}d type:%{public}d \n", netid, type);
