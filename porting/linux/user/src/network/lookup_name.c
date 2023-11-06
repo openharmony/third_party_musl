@@ -156,26 +156,28 @@ static int dns_parse_callback(void *c, int rr, const void *data, int len, const 
 	return 0;
 }
 
-static int IsIpv6Enable()
+#if OHOS_DNS_PROXY_BY_NETSYS
+static JudgeIpv6 load_ipv6_judger(void)
+{
+	static JudgeIpv6 ipv6_judger = NULL;
+	resolve_dns_sym((void **) &ipv6_judger, OHOS_JUDGE_IPV6_FUNC_NAME);
+	return ipv6_judger;
+}
+#endif
+
+static int IsIpv6Enable(int netid)
 {
     int ret = 0;
 #if OHOS_DNS_PROXY_BY_NETSYS
-    static JudgeIpv6 func = NULL;
-    if (func != NULL) {
-        return func(0);
-    }
-    void *handle = dlopen(DNS_SO_PATH, RTLD_LAZY);
-    if (handle == NULL) {
-        return 0;
-    }
+    JudgeIpv6 func = load_ipv6_judger();
+	if (!func) {
+		return -1;
+	}
 
-    func = dlsym(handle, OHOS_JUDGE_IPV6_FUNC_NAME);
-    if (func == NULL) {
-        dlclose(handle);
-        return 0;
-    }
-
-    ret = func(0);
+	ret = func(netid);
+	if (ret < 0) {
+		return -1;
+	}
 #endif
     return ret;
 }
@@ -193,7 +195,7 @@ static int name_from_dns(struct address buf[static MAXADDRS], char canon[static 
 		{ .af = AF_INET, .rr = RR_AAAA },
 	};
 
-    int queryNum = IsIpv6Enable() ? 2 : 1;
+    int queryNum = IsIpv6Enable(netid) ? 2 : 1;
     for (i = 0; i < queryNum; i++) {
 		if (family != afrr[i].af) {
 			qlens[nq] = __res_mkquery(0, name, 1, afrr[i].rr,
