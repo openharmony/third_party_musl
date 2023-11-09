@@ -35,6 +35,7 @@ ohos_executable("musl_benchmark") {
     "libc_fenv.cpp",
     "libc_grp.cpp",
     "libc_inotify.cpp",
+    "libc_ioctl.cpp",
     "libc_linker.cpp",
     "libc_locale.cpp",
     "libc_malloc.cpp",
