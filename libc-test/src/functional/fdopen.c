@@ -11,7 +11,7 @@
 		t_error("%s failed (errno = %d)\n", #c, errno); \
 } while(0)
 
-int main(void)
+void fdopen_1()
 {
 	char tmp[] = "/tmp/testsuite-XXXXXX";
 	char foo[6];
@@ -31,5 +31,18 @@ int main(void)
 	}
 	if (fd > 2)
 		TEST(unlink(tmp) != -1);
+}
+
+void fdopen_2()
+{
+	FILE *f = fdopen(-1, "w");
+	TEST(f == NULL);
+	printf("f == %p\n", f);
+}
+
+int main(void)
+{
+	fdopen_1();
+	fdopen_2();
 	return t_status;
 }
