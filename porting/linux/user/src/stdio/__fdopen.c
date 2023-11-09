@@ -70,6 +70,11 @@ FILE *__fdopen(int fd, const char *mode)
 	int file_flags = 0;
 	int mode_flags = 0;
 
+	int flags = syscall(SYS_fcntl, fd, F_GETFL, 0);
+	if (flags == -1) {
+		return NULL;
+	}
+
 	/* Compute the flags to pass to open() */
 	mode_flags = __fmodeflags(mode, &file_flags);
 	if (mode_flags < 0) {
@@ -81,7 +86,7 @@ FILE *__fdopen(int fd, const char *mode)
 	}
 
 	if (mode_flags & O_APPEND) {
-		int flags = __syscall(SYS_fcntl, fd, F_GETFL);
+		flags = __syscall(SYS_fcntl, fd, F_GETFL);
 		if (!(flags & O_APPEND))
 			__syscall(SYS_fcntl, fd, F_SETFL, flags | O_APPEND);
 	}
