@@ -10,9 +10,13 @@ template("musl_libs") {
   forward_variables_from(invoker, [ "*" ])
 
   _libs_path_prefix = "."
-  _libs_out_dir = "usr/lib/${musl_target_triple}"
+  _libs_out_dir = "usr/lib/${musl_target_triple}/${musl_target_multilib}"
 
-  dfx_deps = [ "//base/hiviewdfx/faultloggerd/interfaces/innerkits/signal_handler:dfxsignalhandler" ]
+  if (is_llvm_build) {
+    dfx_deps = []
+  } else {
+    dfx_deps = [ "//base/hiviewdfx/faultloggerd/interfaces/innerkits/signal_handler:dfxsignalhandler" ]
+  }
   porting_deps = [
     "//third_party/musl:create_alltypes_h",
     "//third_party/musl:create_porting_src",
@@ -25,6 +29,23 @@ template("musl_libs") {
       ":soft_create_linker",
       ":soft_libc_musl_shared",
       ":soft_libc_musl_static",
+      ":soft_musl_crt_libs",
+    ]
+  }
+
+  group("soft_musl_libs") {
+    deps = [
+      ":musl_headers",
+      ":soft_libc_musl_shared",
+      ":soft_libc_musl_static",
+      ":soft_libcrypt",
+      ":soft_libdl",
+      ":soft_libm",
+      ":soft_libpthread",
+      ":soft_libresolv",
+      ":soft_librt",
+      ":soft_libutil",
+      ":soft_libxnet",
       ":soft_musl_crt_libs",
     ]
   }
@@ -116,8 +137,6 @@ template("musl_libs") {
       "-g",
       "-pipe",
       "-fno-omit-frame-pointer",
-      "-funwind-tables",
-      "-fasynchronous-unwind-tables",
       "-ffunction-sections",
       "-fdata-sections",
       "-Werror=implicit-function-declaration",
@@ -128,11 +147,27 @@ template("musl_libs") {
       "-Wno-int-conversion",
     ]
 
-    if (!is_asan) {
+    if (is_llvm_build) {
+      cflags_auto += [
+        "-fno-unwind-tables",
+        "-fno-asynchronous-unwind-tables",
+      ]
+    } else {
+      cflags_auto += [
+        "-funwind-tables",
+        "-fasynchronous-unwind-tables",
+      ]
+    }
+
+    if (!is_asan && musl_arch != "mips") {
       cflags_auto += [
         "-DHOOK_ENABLE",
         "-DOHOS_SOCKET_HOOK_ENABLE",
       ]
+    }
+
+    if (musl_arch == "mips" && is_legacy) {
+      cflags_auto += [ "-mnan=legacy" ]
     }
 
     if (use_pthread_cancel) {
@@ -184,6 +219,9 @@ template("musl_libs") {
       "-Wl,--exclude-libs=ALL",
       "-Wl,--dynamic-list=${dynamic_list}",
     ]
+    if (musl_arch == "mips") {
+      ldflags -= [ "-Wl,--hash-style=both" ]
+    }
     asmflags = cflags
   }
 
@@ -208,7 +246,7 @@ template("musl_libs") {
       "__BUILD_LINUX_WITH_CLANG",
     ]
 
-    if (!is_asan) {
+    if (!is_asan && musl_arch != "mips") {
       defines += [
         "HOOK_ENABLE",
         "OHOS_SOCKET_HOOK_ENABLE",
@@ -250,7 +288,6 @@ template("musl_libs") {
       "-fvisibility=hidden",
       "-O3",
       "-funroll-loops",
-      "-funwind-tables",
 
       # The following flags are for avoiding errors when compiling.
       "-Wno-unused-parameter",
@@ -268,6 +305,12 @@ template("musl_libs") {
       "-DOHOS_TCACHE_NSLOTS_LARGE=16",
     ]
 
+    if (is_llvm_build) {
+      cflags += [ "-fno-unwind-tables" ]
+    } else {
+      cflags += [ "-funwind-tables" ]
+    }
+
     if (is_debug || musl_secure_level > 1) {
       cflags += [ "-DOHOS_TCACHE_NSLOTS_RANDOM" ]
     }
@@ -284,6 +327,10 @@ template("musl_libs") {
       ]
     } else if (musl_arch == "x86_64") {
       cflags += [ "-march=x86-64" ]
+    } else if (musl_arch == "mips") {
+      cflags += [ "-march=mips32r2" ]
+    } else if (musl_arch == "riscv64") {
+      cflags += [ "-march=rv64gc" ]
     }
 
     include_dirs += [
@@ -297,13 +344,22 @@ template("musl_libs") {
 
   source_set("soft_musl_crt") {
     sources = [
-      "${target_out_dir}/${musl_ported_dir}/crt/${musl_arch}/crti.s",
-      "${target_out_dir}/${musl_ported_dir}/crt/${musl_arch}/crtn.s",
       "${target_out_dir}/${musl_ported_dir}/crt/Scrt1.c",
       "${target_out_dir}/${musl_ported_dir}/crt/crt1.c",
       "${target_out_dir}/${musl_ported_dir}/crt/crtplus.c",
       "${target_out_dir}/${musl_ported_dir}/crt/rcrt1.c",
     ]
+    if (musl_arch == "riscv64") {
+      sources += [
+        "${target_out_dir}/${musl_ported_dir}/crt/crti.c",
+        "${target_out_dir}/${musl_ported_dir}/crt/crtn.c",
+      ]
+    } else {
+      sources += [
+        "${target_out_dir}/${musl_ported_dir}/crt/${musl_arch}/crti.s",
+        "${target_out_dir}/${musl_ported_dir}/crt/${musl_arch}/crtn.s",
+      ]
+    }
 
     defines = [ "CRT" ]
 
@@ -338,7 +394,6 @@ template("musl_libs") {
 
     sources += [
       "$FREEBSD_DIR/contrib/libexecinfo/backtrace.c",
-      "$FREEBSD_DIR/contrib/libexecinfo/unwind.c",
       "$FREEBSD_DIR/contrib/tcp_wrappers/strcasecmp.c",
       "$FREEBSD_DIR/lib/libc/gen/arc4random.c",
       "$FREEBSD_DIR/lib/libc/gen/arc4random_uniform.c",
@@ -347,6 +402,10 @@ template("musl_libs") {
       "$FREEBSD_DIR/lib/libc/stdlib/strtoul.c",
       "$FREEBSD_DIR/lib/libc/stdlib/strtoumax.c",
     ]
+
+    if (!is_llvm_build) {
+      sources += [ "$FREEBSD_DIR/contrib/libexecinfo/unwind.c" ]
+    }
 
     if (musl_arch == "arm") {
       sources_orig -= [
@@ -419,6 +478,12 @@ template("musl_libs") {
       sources_orig -= [
         "src/thread/${musl_arch}/__set_thread_area.s",
         "src/linux/flock.c",
+      ]
+    } else if (musl_arch == "riscv64") {
+      sources_orig -= [
+        "src/thread/${musl_arch}/__set_thread_area.s",
+        "src/math/copysign.c",
+        "src/math/copysignf.c",
       ]
     }
     if (musl_ld128_flag) {
@@ -761,6 +826,13 @@ template("musl_libs") {
         "src/thread/${musl_arch}/__set_thread_area.s",
         "src/string/memset.c",
       ]
+    } else if (musl_arch == "mips") {
+      sources_orig += [ "src/string/memset.c" ]
+    } else if (musl_arch == "riscv64") {
+      sources_orig += [
+        "src/thread/${musl_arch}/__set_thread_area.s",
+        "src/string/memset.c",
+      ]
     }
 
     foreach(s, sources_orig) {
@@ -1032,8 +1104,13 @@ template("musl_libs") {
     output_name = "libc"
     output_extension = "so"
 
-    libclang_rt_path = rebase_path(
-            "${runtime_lib_path}/${musl_target_triple}/${_libs_path_prefix}")
+    if (is_legacy) {
+      libclang_rt_path = rebase_path(
+              "${runtime_lib_path}/${musl_target_triple}/nanlegacy/${_libs_path_prefix}")
+    } else {
+      libclang_rt_path = rebase_path(
+              "${runtime_lib_path}/${musl_target_triple}/${_libs_path_prefix}")
+    }
 
     musl_lib_path = rebase_path("${target_out_dir}/${_libs_out_dir}")
 
@@ -1049,11 +1126,14 @@ template("musl_libs") {
       "-Wl,-e,_dlstart",
       "-L${libclang_rt_path}",
       "-lclang_rt.builtins",
-      "-lunwind",
       "-L${musl_lib_path}",
       "-ldl",
       "-lpthread",
     ]
+
+    if (!is_llvm_build) {
+      ldflags += [ "-lunwind" ]
+    }
 
     configs -= musl_inherited_configs
     configs -= [ "//build/config:default_libs" ]
@@ -1087,12 +1167,22 @@ template("musl_libs") {
     redir = "${root_out_dir}/obj"
     script = "${target_out_dir}/${musl_ported_dir}/scripts/install.py"
     sources = [
-      "${redir}/${target_out_dir}/${musl_ported_dir}/crt/${musl_arch}/soft_musl_crt/crti.o",
-      "${redir}/${target_out_dir}/${musl_ported_dir}/crt/${musl_arch}/soft_musl_crt/crtn.o",
       "${redir}/${target_out_dir}/${musl_ported_dir}/crt/soft_musl_crt/Scrt1.o",
       "${redir}/${target_out_dir}/${musl_ported_dir}/crt/soft_musl_crt/crt1.o",
       "${redir}/${target_out_dir}/${musl_ported_dir}/crt/soft_musl_crt/rcrt1.o",
     ]
+
+    if (musl_arch == "riscv64") {
+      sources += [
+        "${redir}/${target_out_dir}/${musl_ported_dir}/crt/soft_musl_crt/crti.o",
+        "${redir}/${target_out_dir}/${musl_ported_dir}/crt/soft_musl_crt/crtn.o",
+      ]
+    } else {
+      sources += [
+        "${redir}/${target_out_dir}/${musl_ported_dir}/crt/${musl_arch}/soft_musl_crt/crti.o",
+        "${redir}/${target_out_dir}/${musl_ported_dir}/crt/${musl_arch}/soft_musl_crt/crtn.o",
+      ]
+    }
 
     outputs = [ "${root_build_dir}/obj/third_party/musl/${_libs_out_dir}/{{source_file_part}}" ]
 
