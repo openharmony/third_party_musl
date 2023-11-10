@@ -141,6 +141,16 @@ musl_install_for_liteos_a_user: CFLAGS += -funwind-tables -fasynchronous-unwind-
 musl_install_for_liteos_a_user: musl_patch_for_liteos_a_user_debug
 endif
 
+musl_header_install_for_liteos_a_user: musl_patch_for_liteos_a_user
+		$(HIDE) cd musl_copy_for_liteos_a_user && mkdir -p $(MUSLBUILDDIR) && cd $(MUSLBUILDDIR) && \
+		../configure --prefix=$(SYSROOTDIR)/usr --target=$(TARGET) \
+			--includedir=$(SYSROOTDIR)/usr/include/$(TARGET) \
+			--libdir=$(SYSROOTDIR)/usr/lib/$(TARGET)/$(MULTILIB) \
+			--with-malloc=oldmalloc	\
+			$(if $(LDFLAGS),LDFLAGS="$(LDFLAGS)",) \
+			CC="$(CC)" CROSS_COMPILE="$(CROSS_COMPILE)" CFLAGS="$(CFLAGS)" >/dev/null && \
+		sed $(SED_ARGS) Makefile | make -sj install-headers
+
 musl_install_for_liteos_a_user: musl_patch_for_liteos_a_user
 	$(HIDE) cd musl_copy_for_liteos_a_user && mkdir -p $(MUSLBUILDDIR) && cd $(MUSLBUILDDIR) && \
 	../configure --prefix=$(SYSROOTDIR)/usr --target=$(TARGET) \

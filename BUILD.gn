@@ -31,25 +31,31 @@ if (is_lite_system && current_os == "ohos") {
     ]
   }
 
-  ohos_prebuilt_etc("ld-musl-namespace-${musl_arch}-test.ini") {
-    source =
-        "${musl_porting_dir}/config/ld-musl-namespace-${musl_arch}-test.ini"
-  }
+  if (musl_arch != "mips" && musl_arch != "riscv64") {
+    ohos_prebuilt_etc("ld-musl-namespace-${musl_arch}-test.ini") {
+      source =
+          "${musl_porting_dir}/config/ld-musl-namespace-${musl_arch}-test.ini"
+    }
 
-  ohos_prebuilt_etc("ld-musl-namespace-${musl_arch}.ini") {
-    source = "${musl_porting_dir}/config/ld-musl-namespace-${musl_arch}.ini"
-    install_images = [
-      "system",
-      "updater",
-      "ramdisk",
-    ]
-  }
+    ohos_prebuilt_etc("ld-musl-namespace-${musl_arch}.ini") {
+      source = "${musl_porting_dir}/config/ld-musl-namespace-${musl_arch}.ini"
+      install_images = [
+        "system",
+        "updater",
+        "ramdisk",
+      ]
+    }
 
-  group("musl_ns_config") {
-    deps = [
-      ":ld-musl-namespace-${musl_arch}-test.ini",
-      ":ld-musl-namespace-${musl_arch}.ini",
-    ]
+    group("musl_ns_config") {
+      deps = [
+        ":ld-musl-namespace-${musl_arch}-test.ini",
+        ":ld-musl-namespace-${musl_arch}.ini",
+      ]
+    }
+  } else {
+    group("musl_ns_config") {
+      deps = []
+    }
   }
 
   group("musl_libs") {
@@ -116,9 +122,8 @@ if (is_lite_system && current_os == "ohos") {
     src_files += musl_inc_sys_files
     src_files += musl_inc_fortify_files
     src_files += musl_inc_root_files
+
     src_files += [
-      "crt/${musl_arch}/crti.s",
-      "crt/${musl_arch}/crtn.s",
       "crt/Scrt1.c",
       "crt/crt1.c",
       "crt/rcrt1.c",
@@ -134,6 +139,17 @@ if (is_lite_system && current_os == "ohos") {
       "scripts/create_vesion.sh",
       "scripts/create_syscall.sh",
     ]
+    if (musl_arch == "riscv64") {
+      src_files += [
+        "crt/crti.c",
+        "crt/crtn.c",
+      ]
+    } else {
+      src_files += [
+        "crt/${musl_arch}/crti.s",
+        "crt/${musl_arch}/crtn.s",
+      ]
+    }
 
     args = [ "-i" ] + rebase_path(sources_dir)
     args += [ "-o" ] + rebase_path(outdir)
