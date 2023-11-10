@@ -11,7 +11,9 @@ declare_args() {
   } else if (current_cpu == "x86_64" || current_cpu == "x64") {
     musl_arch = "x86_64"
   } else if (current_cpu == "mipsel") {
-    musl_arch = "mipsel"
+    musl_arch = "mips"
+  } else if (current_cpu == "riscv64") {
+    musl_arch = "riscv64"
   }
   # musl_root = "$root_out_dir/obj/third_party/musl"
   # musl_sub_arch = ""
@@ -23,7 +25,11 @@ declare_args() {
   if ((defined(target_os) && target_os == "ohos") ||
       (defined(ohos_kernel_type) && ohos_kernel_type == "linux")) {
     musl_target_os = "linux"
-    musl_target_triple = "${musl_arch}-linux-ohos"
+    if (musl_arch == "mips") {
+      musl_target_triple = "mipsel-linux-ohos"
+    } else {
+      musl_target_triple = "${musl_arch}-linux-ohos"
+    }
   } else if (defined(ohos_kernel_type) && ohos_kernel_type == "liteos_a") {
     musl_target_os = "liteos_a"
     musl_target_triple = "arm-liteos-ohos"
@@ -31,8 +37,12 @@ declare_args() {
 }
 
 declare_args() {
-  runtime_lib_path =
-      "//prebuilts/clang/ohos/linux-x86_64/llvm/lib/clang/12.0.1/lib"
+  if (is_llvm_build) {
+    runtime_lib_path = "//out/llvm-install/lib/clang/15.0.4/lib"
+  } else {
+    runtime_lib_path =
+        "//prebuilts/clang/ohos/linux-x86_64/llvm/lib/clang/15.0.4/lib"
+  }
   user_custom_libc = true
   use_jemalloc = false
   musl_malloc_plugin = ""
@@ -83,4 +93,14 @@ declare_args() {
   if (musl_arch == "x86_64") {
     musl_ld128_flag = true
   }
+}
+
+declare_args() {
+  # for multi lib
+  musl_target_multilib = ""
+}
+
+declare_args() {
+  # whether clang select the legacy encoding
+  is_legacy = false
 }
