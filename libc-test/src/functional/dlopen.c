@@ -5,6 +5,7 @@
 #define SO_FOR_DLOPEN "lib_for_dlopen.so"
 #define SO_LOAD_BY_LOCAL "libdlopen_for_load_by_local_dso.so"
 #define SO_LOAD_BY_GLOBAL "libdlopen_for_load_by_global_dso.so"
+#define SO_CLOSE_RECURSIVE_OPEN_SO "libdlclose_recursive_dlopen_so.so"
 typedef void(*TEST_PTR)(void);
 
 void do_dlopen(const char *name, int mode)
@@ -138,6 +139,18 @@ void dlopen_dlclose_weak()
 	dlclose(handle);
 }
 
+void dlclose_recursive()
+{
+    void *handle = dlopen(SO_CLOSE_RECURSIVE_OPEN_SO, RTLD_LAZY | RTLD_LOCAL);
+    if (!handle)
+        t_error("dlopen(name=%s, mode=%d) failed: %s\n", SO_CLOSE_RECURSIVE_OPEN_SO, RTLD_LAZY | RTLD_LOCAL, dlerror());
+
+    /* close handle normally, if libc doesn't support close .so file recursivly
+     * it will be deedlock, and timed out error will happen
+     */
+    dlclose(handle);
+}
+
 int main(int argc, char *argv[])
 {
 	void *h, *g;
@@ -197,6 +210,7 @@ int main(int argc, char *argv[])
 	dlopen_nodelete_and_noload();
 	dlopen_dlclose();
 	dlopen_dlclose_weak();
+        dlclose_recursive();
 
 	return t_status;
 }
