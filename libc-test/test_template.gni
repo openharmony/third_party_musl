@@ -261,16 +261,28 @@ template("test_sharedlib") {
          "shared_lib name is required in target ${target_name}")
 
   target_name = invoker.target_name
+  if (defined(invoker.cpp_file)) {
+    cpp_file = invoker.cpp_file
+  } else {
+    cpp_file = false
+  }
 
   target("ohos_shared_library", "${target_name}") {
     include_dirs = [ "//${test_dir}/src/common" ]
 
-    sources = [ "${target_name}.c" ]
+    if (cpp_file) {
+      sources = [ "${target_name}.cpp" ]
+      cflags = [ "-std=c++17" ]
+    } else {
+      sources = [ "${target_name}.c" ]
+      cflags = [
+        "-std=c99",
+        "-D_POSIX_C_SOURCE=200809L",
+      ]
+    }
 
-    cflags_c = [
+    cflags_common = [
       "-pipe",
-      "-std=c99",
-      "-D_POSIX_C_SOURCE=200809L",
       "-Wall",
       "-Wno-unused",
       "-Wno-unused-function",
@@ -291,6 +303,9 @@ template("test_sharedlib") {
       "-c",
       "-o",
     ]
+
+    cflags_c = cflags
+    cflags_c += cflags_common
 
     ldflags = [
       "-shared",
