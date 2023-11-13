@@ -189,13 +189,24 @@ static int name_from_dns(struct address buf[static MAXADDRS], char canon[static 
 	unsigned char *ap[2] = { abuf[0], abuf[1] };
 	int qlens[2], alens[2];
 	int i, nq = 0;
+	int queryNum = 2;
 	struct dpc_ctx ctx = { .addrs = buf, .canon = canon };
-	static const struct { int af; int rr; } afrr[2] = {
-		{ .af = AF_INET6, .rr = RR_A },
+	static const struct { int af; int rr; } afrr_ipv6_enable[2] = {
 		{ .af = AF_INET, .rr = RR_AAAA },
+		{ .af = AF_INET6, .rr = RR_A },
 	};
+	static const struct { int af; int rr; } afrr_ipv4_only[1] = {
+		{ .af = AF_INET6, .rr = RR_A },
+	};
+	static struct {int af; int rr;} *afrr = afrr_ipv6_enable;
 
-    int queryNum = IsIpv6Enable(netid) ? 2 : 1;
+	if (!IsIpv6Enable(netid)) {
+		if (family == AF_INET6) {
+			return EAI_SYSTEM;
+		}
+		queryNum = 1;
+		afrr = afrr_ipv4_only;
+	}
     for (i = 0; i < queryNum; i++) {
 		if (family != afrr[i].af) {
 			qlens[nq] = __res_mkquery(0, name, 1, afrr[i].rr,
