@@ -41,6 +41,7 @@ ohos_executable("musl_benchmark") {
     "libc_math.cpp",
     "libc_mman.cpp",
     "libc_network.cpp",
+    "libc_poll.cpp",
     "libc_pthread.cpp",
     "libc_pwd.cpp",
     "libc_random.cpp",
