@@ -179,11 +179,6 @@ enum {
     ((sigset_t *)(const unsigned long [_NSIG/8/sizeof(long)]){ \
     0x80000000 })
 
-/*
- * recursive lock initializer
- */
-#define PTHREAD_MUTEX_RECURSIVE_INITIALIZER {{{PTHREAD_MUTEX_RECURSIVE}}}
-
 void *__tls_get_addr(tls_mod_off_t *);
 hidden int __init_tp(void *);
 hidden void *__copy_tls(unsigned char *);

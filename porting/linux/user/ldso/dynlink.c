@@ -130,12 +130,12 @@ static int ldso_fail;
 static int noload;
 static int shutting_down;
 static jmp_buf *rtld_fail;
-static pthread_mutex_t lock = PTHREAD_MUTEX_RECURSIVE_INITIALIZER;
+static pthread_rwlock_t lock;
 static struct debug debug;
 static struct tls_module *tls_tail;
 static size_t tls_cnt, tls_offset, tls_align = MIN_TLS_ALIGN;
 static size_t static_tls_cnt;
-static pthread_mutex_t init_fini_lock = PTHREAD_MUTEX_RECURSIVE_INITIALIZER;
+static pthread_mutex_t init_fini_lock;
 static pthread_cond_t ctor_cond;
 static struct dso *builtin_deps[2];
 static struct dso *const no_deps[1];
@@ -2475,10 +2475,10 @@ void __libc_exit_fini()
 	/* Take both locks before setting shutting_down, so that
 	 * either lock is sufficient to read its value. The lock
 	 * order matches that in dlopen to avoid deadlock. */
-	pthread_mutex_lock(&lock);
+	pthread_rwlock_wrlock(&lock);
 	pthread_mutex_lock(&init_fini_lock);
 	shutting_down = 1;
-	pthread_mutex_unlock(&lock);
+	pthread_rwlock_unlock(&lock);
 	for (p=fini_head; p; p=p->fini_next) {
 		while (p->ctor_visitor && p->ctor_visitor!=self)
 			pthread_cond_wait(&ctor_cond, &init_fini_lock);
@@ -2499,24 +2499,11 @@ void __libc_exit_fini()
 void __ldso_atfork(int who)
 {
 	if (who<0) {
-		// lock in parent process
-		pthread_mutex_lock(&lock);
+		pthread_rwlock_wrlock(&lock);
 		pthread_mutex_lock(&init_fini_lock);
-	} else if (who == 0) {
-		// unlock in parent process
-		pthread_mutex_unlock(&init_fini_lock);
-		pthread_mutex_unlock(&lock);
 	} else {
-		// unlock in child process
-		// The recursived lock should be initialized again, and
-		// cann't be released by pthread_mutex_unlock, due to the __pthread_self()->tid are
-		// different between parent and child process.
-		// means, in child process, the owner(parent tid) of lock is not equal __pthread_self()->tid(child tid).
-		// so, initialize the lock again as below.
-                pthread_mutexattr_t attr;
-		pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
-		pthread_mutex_init(&lock, &attr);
-		pthread_mutex_init(&init_fini_lock, &attr);
+		pthread_mutex_unlock(&init_fini_lock);
+		pthread_rwlock_unlock(&lock);
 	}
 }
 
@@ -3276,7 +3263,7 @@ static void *dlopen_impl(
 	}
 
 	pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &cs);
-	pthread_mutex_lock(&lock);
+	pthread_rwlock_wrlock(&lock);
 	__inhibit_ptc();
 	trace_marker_reset();
 	trace_marker_begin(HITRACE_TAG_MUSL, "dlopen: ", file);
@@ -3485,7 +3472,7 @@ end:
 #endif
 	__release_ptc();
 	if (p) gencnt++;
-	pthread_mutex_unlock(&lock);
+	pthread_rwlock_unlock(&lock);
 	if (ctor_queue) {
 		do_init_fini(ctor_queue);
 		free(ctor_queue);
@@ -3531,7 +3518,7 @@ int dlns_get(const char *name, Dl_namespace *dlns)
 	}
 	int ret = 0;
 	ns_t *ns = NULL;
-	pthread_mutex_lock(&lock);
+	pthread_rwlock_rdlock(&lock);
 	if (!name) {
 		struct dso *caller;
 		const void *caller_addr = __builtin_return_address(0);
@@ -3549,7 +3536,7 @@ int dlns_get(const char *name, Dl_namespace *dlns)
 			ret = ENOKEY;
 		}
 	}
-	pthread_mutex_unlock(&lock);
+	pthread_rwlock_unlock(&lock);
 	return ret;
 }
 
@@ -3597,23 +3584,23 @@ int dlns_create2(Dl_namespace *dlns, const char *lib_path, int flags)
 	}
 	ns_t *ns;
 
-	pthread_mutex_lock(&lock);
+	pthread_rwlock_wrlock(&lock);
 	const void *caller_addr = __builtin_return_address(0);
 	if (is_permitted(caller_addr, dlns->name) == false) {
-		pthread_mutex_unlock(&lock);
+		pthread_rwlock_unlock(&lock);
 		return EPERM;
 	}
 
 	ns = find_ns_by_name(dlns->name);
 	if (ns) {
 		LD_LOGE("dlns_create2 ns is exist.");
-		pthread_mutex_unlock(&lock);
+		pthread_rwlock_unlock(&lock);
 		return EEXIST;
 	}
 	ns = ns_alloc();
 	if (!ns) {
 		LD_LOGE("dlns_create2 no memery.");
-		pthread_mutex_unlock(&lock);
+		pthread_rwlock_unlock(&lock);
 		return ENOMEM;
 	}
 	ns_set_name(ns, dlns->name);
@@ -3640,7 +3627,7 @@ int dlns_create2(Dl_namespace *dlns, const char *lib_path, int flags)
 			"separated:%{public}d ,"
 			"lib_paths:%{public}s ",
 			ns->ns_name, ns->separated, ns->lib_paths);
-	pthread_mutex_unlock(&lock);
+	pthread_rwlock_unlock(&lock);
 
 	return 0;
 }
@@ -3658,10 +3645,10 @@ int dlns_inherit(Dl_namespace *dlns, Dl_namespace *inherited, const char *shared
 		return EINVAL;
 	}
 
-	pthread_mutex_lock(&lock);
+	pthread_rwlock_wrlock(&lock);
 	const void *caller_addr = __builtin_return_address(0);
 	if (is_permitted(caller_addr, dlns->name) == false) {
-		pthread_mutex_unlock(&lock);
+		pthread_rwlock_unlock(&lock);
 		return EPERM;
 	}
 
@@ -3669,11 +3656,11 @@ int dlns_inherit(Dl_namespace *dlns, Dl_namespace *inherited, const char *shared
 	ns_t* ns_inherited = find_ns_by_name(inherited->name);
 	if (!ns || !ns_inherited) {
 		LD_LOGE("dlns_inherit ns or ns_inherited is not found.");
-		pthread_mutex_unlock(&lock);
+		pthread_rwlock_unlock(&lock);
 		return ENOKEY;
 	}
 	ns_add_inherit(ns, ns_inherited, shared_libs);
-	pthread_mutex_unlock(&lock);
+	pthread_rwlock_unlock(&lock);
 
 	return 0;
 }
@@ -3773,7 +3760,7 @@ extern int invalidate_exit_funcs(struct dso *p);
 static int dlclose_impl(struct dso *p, struct dso **dso_close_list, int *dso_close_list_size)
 {
 	size_t n;
-	struct dso *d = NULL;
+	struct dso *d;
 
 	if (__dl_invalid_handle(p))
 		return -1;
@@ -3952,17 +3939,18 @@ static int do_dlclose(struct dso *p)
 hidden int __dlclose(void *p)
 {
 	int rc;
-	pthread_mutex_lock(&lock);
+	pthread_rwlock_wrlock(&lock);
+	__inhibit_ptc();
 #ifdef HANDLE_RANDOMIZATION
 	struct dso *dso = find_dso_by_handle(p);
 	if (dso == NULL) {
 		errno = EINVAL;
 		error("Handle is invalid.");
 		LD_LOGE("Handle is not find.");
-		pthread_mutex_unlock(&lock);
+		__release_ptc();
+		pthread_rwlock_unlock(&lock);
 		return -1;
 	}
-
 	rc = do_dlclose(dso);
 	if (!rc) {
 		struct dso *t = head;
@@ -3976,7 +3964,8 @@ hidden int __dlclose(void *p)
 #else
 	rc = do_dlclose(p);
 #endif
-	pthread_mutex_unlock(&lock);
+	__release_ptc();
+	pthread_rwlock_unlock(&lock);
 	return rc;
 }
 
@@ -4046,9 +4035,9 @@ int dladdr(const void *addr_arg, Dl_info *info)
 	Sym *match_sym = NULL;
 	char *strings;
 
-	pthread_mutex_lock(&lock);
+	pthread_rwlock_rdlock(&lock);
 	p = addr2dso(addr);
-	pthread_mutex_unlock(&lock);
+	pthread_rwlock_unlock(&lock);
 
 	if (!p) return 0;
 
@@ -4078,12 +4067,12 @@ int dladdr(const void *addr_arg, Dl_info *info)
 hidden void *__dlsym(void *restrict p, const char *restrict s, void *restrict ra)
 {
 	void *res;
-	pthread_mutex_lock(&lock);
+	pthread_rwlock_rdlock(&lock);
 #ifdef HANDLE_RANDOMIZATION
 	if ((p != RTLD_DEFAULT) && (p != RTLD_NEXT)) {
 		struct dso *dso = find_dso_by_handle(p);
 		if (dso == NULL) {
-			pthread_mutex_unlock(&lock);
+			pthread_rwlock_unlock(&lock);
 			return 0;
 		}
 		res = do_dlsym(dso, s, "", ra);
@@ -4093,19 +4082,19 @@ hidden void *__dlsym(void *restrict p, const char *restrict s, void *restrict ra
 #else
 	res = do_dlsym(p, s, "", ra);
 #endif
-	pthread_mutex_unlock(&lock);
+	pthread_rwlock_unlock(&lock);
 	return res;
 }
 
 hidden void *__dlvsym(void *restrict p, const char *restrict s, const char *restrict v, void *restrict ra)
 {
 	void *res;
-	pthread_mutex_lock(&lock);
+	pthread_rwlock_rdlock(&lock);
 #ifdef HANDLE_RANDOMIZATION
 	if ((p != RTLD_DEFAULT) && (p != RTLD_NEXT)) {
 		struct dso *dso = find_dso_by_handle(p);
 		if (dso == NULL) {
-			pthread_mutex_unlock(&lock);
+			pthread_rwlock_unlock(&lock);
 			return 0;
 		}
 		res = do_dlsym(dso, s, v, ra);
@@ -4115,7 +4104,7 @@ hidden void *__dlvsym(void *restrict p, const char *restrict s, const char *rest
 #else
 	res = do_dlsym(p, s, v, ra);
 #endif
-	pthread_mutex_unlock(&lock);
+	pthread_rwlock_unlock(&lock);
 	return res;
 }
 
@@ -4166,9 +4155,9 @@ int dl_iterate_phdr(int(*callback)(struct dl_phdr_info *info, size_t size, void 
 
 		if (ret != 0) break;
 
-		pthread_mutex_lock(&lock);
+		pthread_rwlock_rdlock(&lock);
 		current = current->next;
-		pthread_mutex_unlock(&lock);
+		pthread_rwlock_unlock(&lock);
 	}
 	return ret;
 }
@@ -4195,22 +4184,22 @@ int dlns_set_namespace_lib_path(const char * name, const char * lib_path)
 		return EINVAL;
 	}
 
-	pthread_mutex_lock(&lock);
+	pthread_rwlock_wrlock(&lock);
 	const void *caller_addr = __builtin_return_address(0);
 	if (is_permitted(caller_addr, name) == false) {
-		pthread_mutex_unlock(&lock);
+		pthread_rwlock_unlock(&lock);
 		return EPERM;
 	}
 
 	ns_t* ns = find_ns_by_name(name);
 	if (!ns) {
-		pthread_mutex_unlock(&lock);
+		pthread_rwlock_unlock(&lock);
 		LD_LOGE("dlns_set_namespace_lib_path fail, input ns name : [%{public}s] is not found.", name);
 		return ENOKEY;
 	}
 
 	ns_set_lib_paths(ns, lib_path);
-	pthread_mutex_unlock(&lock);
+	pthread_rwlock_unlock(&lock);
 	return 0;
 }
 
@@ -4221,22 +4210,22 @@ int dlns_set_namespace_separated(const char * name, const bool separated)
 		return EINVAL;
 	}
 
-	pthread_mutex_lock(&lock);
+	pthread_rwlock_wrlock(&lock);
 	const void *caller_addr = __builtin_return_address(0);
 	if (is_permitted(caller_addr, name) == false) {
-		pthread_mutex_unlock(&lock);
+		pthread_rwlock_unlock(&lock);
 		return EPERM;
 	}
 
 	ns_t* ns = find_ns_by_name(name);
 	if (!ns) {
-		pthread_mutex_unlock(&lock);
+		pthread_rwlock_unlock(&lock);
 		LD_LOGE("dlns_set_namespace_separated fail, input ns name : [%{public}s] is not found.", name);
 		return ENOKEY;
 	}
 
 	ns_set_separated(ns, separated);
-	pthread_mutex_unlock(&lock);
+	pthread_rwlock_unlock(&lock);
 	return 0;
 }
 
@@ -4247,22 +4236,22 @@ int dlns_set_namespace_permitted_paths(const char * name, const char * permitted
 		return EINVAL;
 	}
 
-	pthread_mutex_lock(&lock);
+	pthread_rwlock_wrlock(&lock);
 	const void *caller_addr = __builtin_return_address(0);
 	if (is_permitted(caller_addr, name) == false) {
-		pthread_mutex_unlock(&lock);
+		pthread_rwlock_unlock(&lock);
 		return EPERM;
 	}
 
 	ns_t* ns = find_ns_by_name(name);
 	if (!ns) {
-		pthread_mutex_unlock(&lock);
+		pthread_rwlock_unlock(&lock);
 		LD_LOGE("dlns_set_namespace_permitted_paths fail, input ns name : [%{public}s] is not found.", name);
 		return ENOKEY;
 	}
 
 	ns_set_permitted_paths(ns, permitted_paths);
-	pthread_mutex_unlock(&lock);
+	pthread_rwlock_unlock(&lock);
 	return 0;
 }
 
@@ -4273,22 +4262,22 @@ int dlns_set_namespace_allowed_libs(const char * name, const char * allowed_libs
 		return EINVAL;
 	}
 
-	pthread_mutex_lock(&lock);
+	pthread_rwlock_wrlock(&lock);
 	const void *caller_addr = __builtin_return_address(0);
 	if (is_permitted(caller_addr, name) == false) {
-		pthread_mutex_unlock(&lock);
+		pthread_rwlock_unlock(&lock);
 		return EPERM;
 	}
 
 	ns_t* ns = find_ns_by_name(name);
 	if (!ns) {
-		pthread_mutex_unlock(&lock);
+		pthread_rwlock_unlock(&lock);
 		LD_LOGE("dlns_set_namespace_allowed_libs fail, input ns name : [%{public}s] is not found.", name);
 		return ENOKEY;
 	}
 
 	ns_set_allowed_libs(ns, allowed_libs);
-	pthread_mutex_unlock(&lock);
+	pthread_rwlock_unlock(&lock);
 	return 0;
 }
 
