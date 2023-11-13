@@ -42,5 +42,24 @@ static void Bm_function_Regcomp(benchmark::State &state)
     }
 }
 
+static void Bm_function_Regexec(benchmark::State &state)
+{
+    const char* pattern = "hello.*world";
+    int flag = state.range(0);
+    regex_t reg;
+    if (regcomp(&reg, pattern, flag)) {
+        perror("regcomp");
+        exit(-1);
+    }
+
+    regmatch_t pmatch;
+    for (auto _state: state) {
+        benchmark::DoNotOptimize(regexec(&reg, "hello test world", 1, &pmatch, 0));
+    }
+
+    regfree(&reg);
+}
+
 MUSL_BENCHMARK_WITH_APPLY(Bm_function_Regcomp, PrepareRegcompArgs);
+MUSL_BENCHMARK_WITH_APPLY(Bm_function_Regexec, PrepareRegcompArgs);
 
