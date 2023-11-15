@@ -1,11 +1,18 @@
 #include <stdlib.h>
 #include "meta.h"
 
+#ifdef USE_GWP_ASAN
+	extern size_t libc_gwp_asan_malloc_usable_size(void *mem);
+#endif
+
 #ifdef USE_JEMALLOC
 extern size_t je_malloc_usable_size(void *p);
 #endif
 #ifndef HOOK_ENABLE
 size_t malloc_usable_size(void *p)
+#ifdef USE_GWP_ASAN
+	return libc_gwp_asan_malloc_usable_size(p);
+#endif
 #else
 size_t __libc_malloc_usable_size(void *p)
 #endif

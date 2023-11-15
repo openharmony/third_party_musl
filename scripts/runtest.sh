@@ -59,10 +59,33 @@ function ShieldedCases() {
 	done
 }
 
+gwpasanTestList=(
+    "gwp_asan_buffer_overflow_test"
+    "gwp_asan_buffer_underflow_test"
+    "gwp_asan_double_free_test"
+    "gwp_asan_invalid_free_left_test"
+    "gwp_asan_invalid_free_right_test"
+    "gwp_asan_use_after_free_test"
+    "gwp_asan_unwind_test"
+    "gwp_asan_smoke_test"
+    "gwp_asan_random_sample_test"
+)
+
+function IsGwpasanTest() {
+	for filename in ${gwpasanTestList[*]}
+	do
+		if [ "$1" = "$filename" ];
+		then
+			echo "yes"
+		fi
+	done
+}
+
 for file in `ls *`
 do
 	if [ "$(FileSuffix ${file})" = "so" ] \
 	|| [ "$(ShieldedCases ${file})" = "ShieldedCases" ] \
+	|| [ "$(IsGwpasanTest ${file})" = "yes" ] \
 	|| [ -d $file ]
 	then
 		continue
@@ -77,3 +100,31 @@ do
 		fi
 	fi
 done
+
+echo "--- gwp_asan test running --- " >> /data/tests/libc-test/REPORT
+# gwp_asan test need to be executed at last.
+for file in `ls *`
+do
+	if [ "$(IsGwpasanTest ${file})" = "yes" ]
+	then
+		echo $file >> /data/tests/libc-test/FileList.txt
+
+		param set gwp_asan.log.path file
+		param set gwp_asan.enable.app.${file} true
+		if [ "${file}" != "gwp_asan_random_sample_test" ]
+		then 
+			param set gwp_asan.sample.all true
+		fi
+
+		echo "*** ${file} running ***" >> /data/tests/libc-test/REPORT
+		./${file} >> /data/tests/libc-test/REPORT
+		echo "*** ${file} done *** " >> /data/tests/libc-test/REPORT
+		param set gwp_asan.log.path default
+		param set gwp_asan.enable.app.${file} false
+		if [ "${file}" != "gwp_asan_random_sample_test" ]
+		then 
+			param set gwp_asan.sample.all false
+		fi
+	fi
+done
+echo "--- gwp_asan test done ---" >> /data/tests/libc-test/REPORT

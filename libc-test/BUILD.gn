@@ -1,4 +1,5 @@
 import("//build/test.gni")
+import("../musl_config.gni")
 
 group("musl_libc_test") {
   testonly = true
@@ -14,6 +15,10 @@ group("musl_libc_test") {
     "src/regression:regression_test",
     "//third_party/googletest:gtest_main",
   ]
+
+  if (use_gwp_asan) {
+    deps += [ "src/gwp_asan:gwp_asan_test" ]
+  }
 
   if (current_cpu == "arm") {
     deps += [ "src/eabi:eabi_test" ]

@@ -10,6 +10,14 @@
 
 #define MALLOC_REPORT_LIMIT (300 * 1024 * 1024)
 
+#ifdef USE_GWP_ASAN
+extern void* libc_gwp_asan_malloc(size_t bytes);
+extern void libc_gwp_asan_free(void *mem);
+extern size_t libc_gwp_asan_malloc_usable_size(void *mem);
+extern void* libc_gwp_asan_realloc(void *ptr, size_t size);
+extern void* libc_gwp_asan_calloc(size_t nmemb, size_t size);
+#endif
+
 void* malloc(size_t bytes)
 {
 	if (bytes >= MALLOC_REPORT_LIMIT) {
@@ -22,13 +30,22 @@ void* malloc(size_t bytes)
 			return dispatch_table->malloc(bytes);
 		}
 		if (!__get_global_hook_flag()) {
+#ifdef USE_GWP_ASAN
+			return libc_gwp_asan_malloc(bytes);
+#endif
 			return MuslFunc(malloc)(bytes);
 		}
 		else if (!__get_hook_flag()) {
+#ifdef USE_GWP_ASAN
+			return libc_gwp_asan_malloc(bytes);
+#endif
 			return MuslFunc(malloc)(bytes);
 		}
 		return dispatch_table->malloc(bytes);
 	}
+#ifdef USE_GWP_ASAN
+	return libc_gwp_asan_malloc(bytes);
+#endif
 	return  MuslFunc(malloc)(bytes);
 }
 
@@ -42,16 +59,25 @@ void free(void* mem)
 			return;
 		}
 		if (!__get_global_hook_flag()) {
+#ifdef USE_GWP_ASAN
+			return libc_gwp_asan_free(mem);
+#endif
 			MuslFunc(free)(mem);
 			return;
 		}
 		else if (!__get_hook_flag()) {
+#ifdef USE_GWP_ASAN
+			return libc_gwp_asan_free(mem);
+#endif
 			MuslFunc(free)(mem);
 			return;
 		}
 		dispatch_table->free(mem);
 		return;
 	}
+#ifdef USE_GWP_ASAN
+	return libc_gwp_asan_free(mem);
+#endif
 	MuslFunc(free)(mem);
 }
 
@@ -84,6 +110,9 @@ void* calloc(size_t m, size_t n)
 	if (__predict_false(dispatch_table != NULL)) {
 		return dispatch_table->calloc(m, n);
 	} else {
+#ifdef USE_GWP_ASAN
+		return libc_gwp_asan_calloc(m, n);
+#endif
 		return MuslFunc(calloc)(m, n);
 	}
 }
@@ -97,6 +126,9 @@ void* realloc(void *p, size_t n)
 	if (__predict_false(dispatch_table != NULL)) {
 		return dispatch_table->realloc(p, n);
 	} else {
+#ifdef USE_GWP_ASAN
+		return libc_gwp_asan_realloc(p, n);
+#endif
 		return MuslFunc(realloc)(p, n);
 	}
 }
@@ -107,6 +139,9 @@ size_t malloc_usable_size(void* addr)
 	if (__predict_false(dispatch_table != NULL)) {
 		return dispatch_table->malloc_usable_size(addr);
 	} else {
+#ifdef USE_GWP_ASAN
+		return libc_gwp_asan_malloc_usable_size(addr);
+#endif
 		return MuslMalloc(malloc_usable_size)(addr);
 	}
 }
