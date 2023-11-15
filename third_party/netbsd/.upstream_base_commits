@@ -1,0 +1,12 @@
+#netbsd = https://github.com/NetBSD/src.git
+include/regex.h	netbsd	include/regex.h	0dce4216e03a7597b71c9631bb9dbf41544b4167
+lib/libc/regex/cclass.h	netbsd	lib/libc/regex/cclass.h	0dce4216e03a7597b71c9631bb9dbf41544b4167
+lib/libc/regex/cname.h	netbsd	lib/libc/regex/cname.h	0dce4216e03a7597b71c9631bb9dbf41544b4167
+lib/libc/regex/engine.c	netbsd	lib/libc/regex/engine.c	0dce4216e03a7597b71c9631bb9dbf41544b4167
+lib/libc/regex/regcomp.c	netbsd	lib/libc/regex/regcomp.c	0dce4216e03a7597b71c9631bb9dbf41544b4167
+lib/libc/regex/regerror.c	netbsd	lib/libc/regex/regerror.c	0dce4216e03a7597b71c9631bb9dbf41544b4167
+lib/libc/regex/regex2.h	netbsd	lib/libc/regex/regex2.h	0dce4216e03a7597b71c9631bb9dbf41544b4167
+lib/libc/regex/regexec.c	netbsd	lib/libc/regex/regexec.c	0dce4216e03a7597b71c9631bb9dbf41544b4167
+lib/libc/regex/regfree.c	netbsd	lib/libc/regex/regfree.c	0dce4216e03a7597b71c9631bb9dbf41544b4167
+lib/libc/regex/utils.h	netbsd	lib/libc/regex/utils.h	0dce4216e03a7597b71c9631bb9dbf41544b4167
+lib/libc/stdlib/reallocarr.c	netbsd	lib/libc/stdlib/reallocarr.c	0dce4216e03a7597b71c9631bb9dbf41544b4167
