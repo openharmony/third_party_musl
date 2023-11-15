@@ -3485,12 +3485,12 @@ end:
 #endif
 	__release_ptc();
 	if (p) gencnt++;
-	pthread_mutex_unlock(&lock);
 	if (ctor_queue) {
 		do_init_fini(ctor_queue);
 		free(ctor_queue);
 	}
 	pthread_setcancelstate(cs, 0);
+	pthread_mutex_unlock(&lock);
 	trace_marker_end(HITRACE_TAG_MUSL); // "dlopen: " trace end.
 	return p;
 }
