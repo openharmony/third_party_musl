@@ -43,6 +43,8 @@ declare_args() {
     runtime_lib_path =
         "//prebuilts/clang/ohos/linux-x86_64/llvm/lib/clang/15.0.4/lib"
   }
+
+  use_gwp_asan = false
   user_custom_libc = true
   use_jemalloc = false
   musl_malloc_plugin = ""

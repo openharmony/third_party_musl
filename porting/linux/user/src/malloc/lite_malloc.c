@@ -113,9 +113,15 @@ void *__libc_malloc(size_t n)
 {
 	return __libc_malloc_impl(n);
 }
-
+#ifdef USE_GWP_ASAN
+extern void* libc_gwp_asan_malloc(size_t n);
+#endif
 static void *default_malloc(size_t n)
 {
+#ifdef USE_GWP_ASAN
+	return libc_gwp_asan_malloc(n);
+#endif
+
 #ifdef USE_JEMALLOC
 	return je_malloc(n);
 #endif

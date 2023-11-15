@@ -152,6 +152,10 @@ hidden void (*const __init_array_start)(void)=0, (*const __fini_array_start)(voi
 
 extern hidden void (*const __init_array_end)(void), (*const __fini_array_end)(void);
 
+#ifdef USE_GWP_ASAN
+extern bool init_gwp_asan_by_libc(bool force_init);
+#endif
+
 weak_alias(__init_array_start, __init_array_end);
 weak_alias(__fini_array_start, __fini_array_end);
 #ifdef DFX_SIGNAL_LIBC
@@ -2800,7 +2804,7 @@ void __dls2b(size_t *sp, size_t *auxv, size_t *aux)
 	if (__init_tp(__copy_tls((void *)builtin_tls)) < 0) {
 		a_crash();
 	}
-
+	__pthread_self()->stack = (void *)(sp + 1);
 	struct symdef dls3_def = find_sym(&ldso, "__dls3", 0);
 	if (DL_FDPIC) ((stage3_func)&ldso.funcdescs[dls3_def.sym-ldso.syms])(sp, auxv, aux);
 	else ((stage3_func)laddr(&ldso, dls3_def.sym->st_value))(sp, auxv, aux);
@@ -3129,6 +3133,10 @@ void __dls3(size_t *sp, size_t *auxv, size_t *aux)
 	_dl_debug_state();
 
 	if (replace_argv0) argv[0] = replace_argv0;
+
+#ifdef USE_GWP_ASAN
+	init_gwp_asan_by_libc(false);
+#endif
 
 #ifdef DFX_SIGNAL_LIBC
 	DFX_InstallSignalHandler();
