@@ -27,7 +27,7 @@ extern int __libc_sigaction(int sig, const struct sigaction *restrict sa,
                             struct sigaction *restrict old);
 
 #define SIG_CHAIN_KEY_VALUE_1 1
-#define SIGNAL_CHAIN_SPECIAL_ACTION_MAX 2
+#define SIGNAL_CHAIN_SPECIAL_ACTION_MAX 3
 
 #define SIGCHAIN_LOG_TAG "MUSL-SIGCHAIN"
 

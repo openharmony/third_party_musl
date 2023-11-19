@@ -150,7 +150,7 @@ all=$(ls -l ${TESTDIR} | grep "^-" | wc -l)
 #for /f %%b in (' find /c /v "" ^<"FileList.txt" ') do set /a run=%%b
 run=$(cat -t ${SHDIR}/FileList.txt | grep -v ^\s*$ | wc -l)
 #for /f %%c in (' find /c "FAIL" ^<"REPORT" ') do set fail=%%c
-fail=$(cat -t ${SHDIR}/REPORT | grep '^FAIL ' | wc -l)
+fail=$(cat -t ${SHDIR}/REPORT | grep 'FAIL ' | wc -l)
 #
 #
 echo ===================================
@@ -165,7 +165,7 @@ echo Fail: [${fail}/${run}]
 
 #
 echo "[Failed List]: 
-$(cat -t ${SHDIR}/REPORT | grep '^FAIL ')
+$(cat -t ${SHDIR}/REPORT | grep 'FAIL ')
 " | tee -a Summary.txt
 echo "[Skip List]:  " | tee -a Summary.txt
 
