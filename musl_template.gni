@@ -117,6 +117,8 @@ template("musl_libs") {
       "${target_out_dir}/${musl_ported_dir}/arch/generic",
       "${target_out_dir}/${musl_ported_dir}/src/internal",
       "${target_out_dir}/${musl_ported_dir}/src/include",
+      "${target_out_dir}/${musl_ported_dir}/src/gwp_asan",
+      "${target_out_dir}/${musl_ported_dir}/src/hook",
       "${target_out_dir}/${musl_ported_dir}/include",
       "${target_out_dir}/${musl_inc_out_dir}",
     ]
@@ -204,6 +206,15 @@ template("musl_libs") {
       }
     }
 
+    if (use_gwp_asan) {
+      defines += [ "USE_GWP_ASAN" ]
+      if (!defined(libs)) {
+        libs = [ rebase_path(libgwp_asan_file) ]
+      } else {
+        libs += [ rebase_path(libgwp_asan_file) ]
+      }
+    }
+
     dynamic_list =
         rebase_path("${target_out_dir}/${musl_ported_dir}/dynamic.list")
 
@@ -255,6 +266,11 @@ template("musl_libs") {
     ldflags = [ "-nostdlib" ]
 
     libs = []
+
+    if (use_gwp_asan) {
+      defines += [ "USE_GWP_ASAN" ]
+      libs += [ rebase_path(libgwp_asan_file) ]
+    }
 
     if (is_component_build) {
       defines += [ "COMPONENT_BUILD" ]

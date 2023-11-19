@@ -4,6 +4,7 @@ ohos_static_library("libtest") {
   include_dirs = [ "." ]
 
   sources = [
+    "check_log.c",
     "fdfill.c",
     "memfill.c",
     "mtest.c",
