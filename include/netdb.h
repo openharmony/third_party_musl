@@ -25,6 +25,8 @@ struct addrinfo {
 };
 
 typedef int (*net_dnsquery_hook)(int, int, int);
+typedef int (*custom_dns_resolver)(const char *host, const char *serv,
+	const struct addrinfo *hint, struct addrinfo **res);
 
 enum {
 	QEURY_TYPE_NORMAL = 0,
@@ -73,6 +75,12 @@ void freeaddrinfo (struct addrinfo *);
 int getnameinfo (const struct sockaddr *__restrict, socklen_t, char *__restrict, socklen_t, char *__restrict, socklen_t, int);
 const char *gai_strerror(int);
 
+int setdnsresolvehook(custom_dns_resolver hookfunc);
+int removednsresolvehook();
+int predefined_host_set_host(const char* host, const char* ip);
+int predefined_host_set_hosts(const char* host_ips);
+int predefined_host_clear_all_hosts(void);
+int predefined_host_remove_host(const char *host);
 
 /* Legacy functions follow (marked OBsolete in SUS) */
 
