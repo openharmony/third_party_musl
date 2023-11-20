@@ -39,6 +39,7 @@ static void Bm_function_Regcomp(benchmark::State &state)
     for (auto _state: state) {
         regex_t reg;
         benchmark::DoNotOptimize(regcomp(&reg, pattern, flag));
+	regfree(&reg);
     }
 }
 
