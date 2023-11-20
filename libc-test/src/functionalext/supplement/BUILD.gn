@@ -22,3 +22,89 @@ group("functionalext_supplement_test") {
     deps += [ "${s}" ]
   }
 }
+
+config("module_private_config") {
+  visibility = [ ":*" ]
+}
+
+ohos_executable("musl_unittest") {
+  testonly = true
+  subsystem_name = "musl"
+  part_name = "libc-gtest"
+
+  sources = [
+    "math/math_gtest/complex_test.cpp",
+    "math/math_gtest/math_acos_test.cpp",
+    "math/math_gtest/math_acosh_test.cpp",
+    "math/math_gtest/math_asin_test.cpp",
+    "math/math_gtest/math_asinh_test.cpp",
+    "math/math_gtest/math_atan2_test.cpp",
+    "math/math_gtest/math_atan_test.cpp",
+    "math/math_gtest/math_atanh_test.cpp",
+    "math/math_gtest/math_cbrt_test.cpp",
+    "math/math_gtest/math_ceil_test.cpp",
+    "math/math_gtest/math_copysign_test.cpp",
+    "math/math_gtest/math_cos_test.cpp",
+    "math/math_gtest/math_cosh_test.cpp",
+    "math/math_gtest/math_data_test.cpp",
+    "math/math_gtest/math_drem_test.cpp",
+    "math/math_gtest/math_erf_test.cpp",
+    "math/math_gtest/math_erfc_test.cpp",
+    "math/math_gtest/math_exp2_test.cpp",
+    "math/math_gtest/math_exp_test.cpp",
+    "math/math_gtest/math_expm1_test.cpp",
+    "math/math_gtest/math_fabs_test.cpp",
+    "math/math_gtest/math_fdim_test.cpp",
+    "math/math_gtest/math_finite_test.cpp",
+    "math/math_gtest/math_floor_test.cpp",
+    "math/math_gtest/math_fma_test.cpp",
+    "math/math_gtest/math_fmax_test.cpp",
+    "math/math_gtest/math_fmin_test.cpp",
+    "math/math_gtest/math_fmod_test.cpp",
+    "math/math_gtest/math_frexp_test.cpp",
+    "math/math_gtest/math_hypot_test.cpp",
+    "math/math_gtest/math_ilogb_test.cpp",
+    "math/math_gtest/math_j0_test.cpp",
+    "math/math_gtest/math_j1_test.cpp",
+    "math/math_gtest/math_jn_test.cpp",
+    "math/math_gtest/math_ldexp_test.cpp",
+    "math/math_gtest/math_lgamma_r_test.cpp",
+    "math/math_gtest/math_lgamma_test.cpp",
+    "math/math_gtest/math_llrint_test.cpp",
+    "math/math_gtest/math_log10_test.cpp",
+    "math/math_gtest/math_log1p_test.cpp",
+    "math/math_gtest/math_log2_test.cpp",
+    "math/math_gtest/math_log_test.cpp",
+    "math/math_gtest/math_logb_test.cpp",
+    "math/math_gtest/math_lrint_test.cpp",
+    "math/math_gtest/math_modf_test.cpp",
+    "math/math_gtest/math_nearbyint_test.cpp",
+    "math/math_gtest/math_nextafter_test.cpp",
+    "math/math_gtest/math_nexttoward_test.cpp",
+    "math/math_gtest/math_pow_test.cpp",
+    "math/math_gtest/math_remainder_test.cpp",
+    "math/math_gtest/math_remquo_test.cpp",
+    "math/math_gtest/math_rint_test.cpp",
+    "math/math_gtest/math_round_test.cpp",
+    "math/math_gtest/math_scalb_test.cpp",
+    "math/math_gtest/math_scalbn_test.cpp",
+    "math/math_gtest/math_signbit_test.cpp",
+    "math/math_gtest/math_significand_test.cpp",
+    "math/math_gtest/math_sin_test.cpp",
+    "math/math_gtest/math_sincos_test.cpp",
+    "math/math_gtest/math_sinh_test.cpp",
+    "math/math_gtest/math_sqrt_test.cpp",
+    "math/math_gtest/math_tan_test.cpp",
+    "math/math_gtest/math_tanh_test.cpp",
+    "math/math_gtest/math_tgamma_test.cpp",
+    "math/math_gtest/math_trunc_test.cpp",
+    "math/math_gtest/math_y0_test.cpp",
+    "math/math_gtest/math_y1_test.cpp",
+    "math/math_gtest/math_yn_test.cpp",
+  ]
+
+  include_dirs = [ "//third_party/musl" ]
+  configs = [ ":module_private_config" ]
+
+  deps = [ "//third_party/googletest:gtest_main" ]
+}
