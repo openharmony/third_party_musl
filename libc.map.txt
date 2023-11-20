@@ -1309,6 +1309,10 @@
     pread64;
     preadv;
     preadv64;
+    predefined_host_clear_all_hosts;
+    predefined_host_remove_host;
+    predefined_host_set_host;
+    predefined_host_set_hosts;
     printf;
     prlimit;
     prlimit64;
@@ -1497,6 +1501,7 @@
     remove;
     remove_all_special_handler;
     remove_special_signal_handler;
+    removednsresolvehook;
     removexattr;
     remque;
     remquo;
@@ -1572,6 +1577,7 @@
     set_fatal_message;
     setbuf;
     setbuffer;
+    setdnsresolvehook;
     setdomainname;
     setegid;
     setenv;

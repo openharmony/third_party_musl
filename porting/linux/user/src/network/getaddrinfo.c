@@ -23,6 +23,38 @@ int reportdnsresult(int netid, char* name, int usedtime, int queryret, struct ad
 	return 0;
 }
 
+static custom_dns_resolver g_customdnsresolvehook;
+static pthread_key_t g_recursiveKey;
+static int* g_recursive;
+
+int setdnsresolvehook(custom_dns_resolver hookfunc)
+{
+	int ret = -1;
+	if (g_customdnsresolvehook) {
+		return ret;
+	}
+	if (hookfunc) {
+		g_customdnsresolvehook = hookfunc;
+		pthread_key_create(&g_recursiveKey, NULL);
+		ret = 0;
+	}
+	return ret;
+}
+
+int removednsresolvehook()
+{
+	g_customdnsresolvehook = NULL;
+	if (g_recursive) {
+		free(g_recursive);
+		g_recursive = NULL;
+	}
+	if (g_recursiveKey) {
+		pthread_key_delete(g_recursiveKey);
+		g_recursiveKey = NULL;
+	}
+	return 0;
+}
+
 int getaddrinfo(const char *restrict host, const char *restrict serv, const struct addrinfo *restrict hint, struct addrinfo **restrict res)
 {
 	struct queryparam param = {0, 0, 0, 0, NULL};
@@ -44,6 +76,22 @@ int getaddrinfo_ext(const char *restrict host, const char *restrict serv, const 
 	} else {
 		netid = param->qp_netid;
 		type = param->qp_type;
+	}
+
+	if (g_customdnsresolvehook) {
+		g_recursive = pthread_getspecific(g_recursiveKey);
+		if (g_recursive == NULL) {
+			int *newRecursive = malloc(sizeof(int));
+			*newRecursive = 0;
+			pthread_setspecific(g_recursiveKey, newRecursive);
+			g_recursive = newRecursive;
+		}
+		if (*g_recursive == 0) {
+			++(*g_recursive);
+			int ret = g_customdnsresolvehook(host, serv, hint, res);
+			--(*g_recursive);
+			return ret;
+		}
 	}
 
 #if OHOS_DNS_PROXY_BY_NETSYS
@@ -182,9 +230,9 @@ int getaddrinfo_ext(const char *restrict host, const char *restrict serv, const 
 	*res = &out->ai;
 
 	reportdnsresult(netid, host, difftime(t_end, t_start), DNS_QUERY_SUCCESS, *res, &param);
-
+	int cnt = predefined_host_is_contain_host(host);
 #if OHOS_DNS_PROXY_BY_NETSYS
-	if (type == QEURY_TYPE_NORMAL) {
+	if (type == QEURY_TYPE_NORMAL && cnt == 0) {
 		dns_set_addr_info_to_netsys_cache2(netid, host, serv, hint, *res);
 	}
 #endif
