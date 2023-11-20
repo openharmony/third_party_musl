@@ -100,6 +100,7 @@ if (is_lite_system && current_os == "ohos") {
       ":musl_copy_inc_sys",
       ":musl_copy_inc_trace",
       ":musl_ns_config",
+      ":netbsd_headers",
     ]
   }
 
@@ -461,6 +462,12 @@ if (is_lite_system && current_os == "ohos") {
     sources = freebsd_sys_headers
     outputs =
         [ "${target_out_dir}/${musl_inc_out_dir}/sys/{{source_file_part}}" ]
+    deps = [ ":create_porting_src" ]
+  }
+
+  copy("netbsd_headers") {
+    sources = netbsd_headers
+    outputs = [ "${target_out_dir}/${musl_inc_out_dir}/{{source_file_part}}" ]
     deps = [ ":create_porting_src" ]
   }
 
