@@ -153,12 +153,22 @@ static void Bm_function_Towupper_A(benchmark::State &state)
     state.SetItemsProcessed(state.iterations());
 }
 
-static void Bm_function_Towupper_all(benchmark::State &state)
+static void Bm_function_Towupper_all_ascii(benchmark::State &state)
 {
     for (auto _ : state) {
         for (int i = 0; i < TOTAL_COMMON_CHARACTERS; i++) {
             benchmark::DoNotOptimize(towupper(i));
         }
+    }
+    state.SetItemsProcessed(state.iterations());
+}
+
+static void Bm_function_Towupper_unicode(benchmark::State &state)
+{
+    const wint_t test[] = {L'à', L'ζ', L'в', L'գ', L'კ', L'ａ', L'文', L'♬'};
+    wint_t wc = test[state.range(0)];
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(towupper(wc));
     }
     state.SetItemsProcessed(state.iterations());
 }
@@ -342,7 +352,8 @@ MUSL_BENCHMARK_WITH_ARG(Bm_function_Isxdigit_l, "BENCHMARK_5");
 MUSL_BENCHMARK_WITH_ARG(Bm_function_Iswalpha_l, "BENCHMARK_8");
 MUSL_BENCHMARK(Bm_function_Towupper_a);
 MUSL_BENCHMARK(Bm_function_Towupper_A);
-MUSL_BENCHMARK(Bm_function_Towupper_all);
+MUSL_BENCHMARK(Bm_function_Towupper_all_ascii);
+MUSL_BENCHMARK_WITH_ARG(Bm_function_Towupper_unicode, "BENCHMARK_8");
 MUSL_BENCHMARK(Bm_function_Isascii_yes);
 MUSL_BENCHMARK(Bm_function_Isascii_no);
 MUSL_BENCHMARK(Bm_function_Isdigit_l_numericCharacters);
