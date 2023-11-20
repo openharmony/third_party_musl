@@ -168,6 +168,7 @@ static int do_dlclose(struct dso *p);
 #ifdef LOAD_ORDER_RANDOMIZATION
 static bool map_library_header(struct loadtask *task);
 static bool task_map_library(struct loadtask *task, struct reserved_address_params *reserved_params);
+static bool resolve_fd_to_realpath(struct loadtask *task);
 static bool load_library_header(struct loadtask *task);
 static void task_load_library(struct loadtask *task, struct reserved_address_params *reserved_params);
 static void preload_direct_deps(struct dso *p, ns_t *namespace, struct loadtasks *tasks);
@@ -4890,6 +4891,25 @@ error:
 	return false;
 }
 
+static bool resolve_fd_to_realpath(struct loadtask *task)
+{
+	char proc_self_fd[32];
+	static char resolved_path[PATH_MAX];
+
+	int ret = snprintf(proc_self_fd, sizeof(proc_self_fd), "/proc/self/fd/%d", task->fd);
+	if (ret < 0 || ret >= sizeof(proc_self_fd)) {
+		return false;
+	}
+	ssize_t len = readlink(proc_self_fd, resolved_path, sizeof(resolved_path) - 1);
+	if (len < 0) {
+		return false;
+	}
+	resolved_path[len] = '\0';
+	strncpy(task->buf, resolved_path, PATH_MAX);
+
+	return true;
+}
+
 static bool load_library_header(struct loadtask *task)
 {
 	const char *name = task->name;
@@ -5001,6 +5021,12 @@ static bool load_library_header(struct loadtask *task)
 			}
 			if (task->p->rpath) {
 				open_library_by_path(name, task->p->rpath, task, &z_info);
+				if (task->fd != -1 && resolve_fd_to_realpath(task)) {
+					if (!is_accessible(namespace, task->buf, g_is_asan, check_inherited)) {
+						close(task->fd);
+						task->fd = -1;
+					}
+				}
 			}
 		}
 		if (g_is_asan) {
@@ -5095,6 +5121,12 @@ static bool load_library_header(struct loadtask *task)
 	task->p->tls = task->tls;
 	task->p->dynv = task->dyn_addr;
 	task->p->strings = task->str_addr;
+	size_t rpath_offset;
+	size_t runpath_offset;
+	if (search_vec(task->p->dynv, &rpath_offset, DT_RPATH))
+		task->p->rpath_orig = task->p->strings + rpath_offset;
+	if (search_vec(task->p->dynv, &runpath_offset, DT_RUNPATH))
+		task->p->rpath_orig = task->p->strings + runpath_offset;
 
 	/* Add a shortname only if name arg was not an explicit pathname. */
 	if (task->pathname != name) {

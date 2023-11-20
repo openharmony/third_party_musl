@@ -533,8 +533,8 @@
     dlns_init;
     dlns_set_namespace_allowed_libs;
     # dlns_set_namespace_lib_path;
-    # dlns_set_namespace_permitted_paths;
-    # dlns_set_namespace_separated;
+    dlns_set_namespace_permitted_paths;
+    dlns_set_namespace_separated;
     dlopen;
     dlopen_ext;
     dlopen_ns;
