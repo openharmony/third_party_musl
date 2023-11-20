@@ -6,9 +6,15 @@
 #include "musl_malloc_dispatch_table.h"
 #include "common_def.h"
 #include "musl_preinit_common.h"
+#include "signal.h"
+
+#define MALLOC_REPORT_LIMIT (300 * 1024 * 1024)
 
 void* malloc(size_t bytes)
 {
+	if (bytes >= MALLOC_REPORT_LIMIT) {
+		raise(MUSL_SIGNAL_LEAK_STACK);
+	}
 	volatile const struct MallocDispatchType* dispatch_table = get_current_dispatch_table();
 	if (__predict_false(dispatch_table != NULL)) {
 		void*ret = dispatch_table->malloc(bytes);
@@ -53,6 +59,9 @@ int munmap(void* addr, size_t length)
 
 void* calloc(size_t m, size_t n)
 {
+	if ((m <= (UINT32_MAX / n)) && ((m * n) >= MALLOC_REPORT_LIMIT)) {
+		raise(MUSL_SIGNAL_LEAK_STACK);
+	}
 	volatile const struct MallocDispatchType* dispatch_table = get_current_dispatch_table();
 	if (__predict_false(dispatch_table != NULL)) {
 		return dispatch_table->calloc(m, n);
@@ -63,6 +72,9 @@ void* calloc(size_t m, size_t n)
 
 void* realloc(void *p, size_t n)
 {
+	if (n >= MALLOC_REPORT_LIMIT) {
+		raise(MUSL_SIGNAL_LEAK_STACK);
+	}
 	volatile const struct MallocDispatchType* dispatch_table = get_current_dispatch_table();
 	if (__predict_false(dispatch_table != NULL)) {
 		return dispatch_table->realloc(p, n);
