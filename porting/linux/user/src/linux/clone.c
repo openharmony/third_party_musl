@@ -12,6 +12,14 @@ struct __clone_args {
 	void *arg;
 };
 
+#if defined(__arm__) || defined(__aarch64__)
+#define GET_SP_REG(stack)	__asm__ __volatile__ ("mov %0, sp" : "=r"(stack))
+#elif defined(__x86_64__)
+#define GET_SP_REG(stack)	__asm__ __volatile__ ("mov %%rsp, %0;" : "=r"(stack) :)
+#else
+#define GET_SP_REG(stack)
+#endif
+
 static int __start_child(void *clone_args)
 {
 	int status;
@@ -66,6 +74,9 @@ int clone(int (*func)(void *), void *stack, int flags, void *arg, ...)
 			clone_args->arg = arg;
 			clone_func = __start_child;
 		}
+	}
+	if (!stack) {
+		GET_SP_REG(stack);
 	}
 	ret = __syscall_ret(__clone(clone_func, stack, flags, (void *)clone_args, ptid, tls, ctid));
 	if (!(flags & (CLONE_VM | CLONE_VFORK)) && func) {
