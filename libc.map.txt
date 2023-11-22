@@ -842,6 +842,7 @@
     getpgrp;
     getpid;
     getppid;
+    getprocpid;
     getpriority;
     GetProcessName;
     GetProcStatus;

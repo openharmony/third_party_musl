@@ -85,4 +85,5 @@ functionalext_supplement_linux_test = [
   "epoll_pwait",
   "epoll_wait",
   "__ppoll_time64",
+  "getprocpid",
 ]

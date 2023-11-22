@@ -54,9 +54,23 @@ void clone_0200(void)
     EXPECT_NE("clone_0200", cpid, -1);
 }
 
+/**
+ * @tc.name      : clone_0300
+ * @tc.desc      : Parameter stack is NULL.
+ * @tc.level     : Level 2
+ */
+void clone_0300(void)
+{
+    int cpid = -1;
+    cpid = clone((int (*)(void *))test, NULL, 0, NULL);
+    sleep(1);
+    EXPECT_NE("clone_0300", cpid, -1);
+}
+
 int main(int argc, char *argv[])
 {
     clone_0100();
     clone_0200();
+    clone_0300();
     return t_status;
 }

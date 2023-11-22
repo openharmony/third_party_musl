@@ -96,6 +96,7 @@ int execlp(const char *, const char *, ...);
 int fexecve(int, char *const [], char *const []);
 _Noreturn void _exit(int);
 
+pid_t getprocpid(void);
 pid_t getpid(void);
 pid_t getppid(void);
 pid_t getpgrp(void);
