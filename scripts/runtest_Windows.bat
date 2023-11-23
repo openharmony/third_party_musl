@@ -106,6 +106,8 @@ hdc shell cp %REMOTE%/src/libdlopen_ns_dso.so /system/lib64/libdlopen_ns_dso_sys
 hdc shell cp %REMOTE%/src/libdlopen_ns_dso.so /system/lib/libdlopen_ns_dso_sys.so
 hdc shell cp %REMOTE%/src/libdlopen_ns_dso.so /system/lib64/ndk/libdlopen_ns_dso_ndk.so
 hdc shell cp %REMOTE%/src/libdlopen_ns_dso.so /system/lib/ndk/libdlopen_ns_dso_ndk.so
+hdc shell cp %REMOTE%/src/libdlclose_recursive.so /system/lib64/libdlclose_recursive.so
+hdc shell cp %REMOTE%/src/libdlclose_recursive_dlopen_so.so /system/lib64/libdlclose_recursive_dlopen_so.so
 
 hdc shell mv %REMOTE%/src/zh_CN /tmp/zh_CN
 

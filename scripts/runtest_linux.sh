@@ -125,6 +125,9 @@ ${CMD} shell cp ${REMOTE}/src/libdlopen_ns_dso.so /system/lib64/libdlopen_ns_dso
 ${CMD} shell cp ${REMOTE}/src/libdlopen_ns_dso.so /system/lib64/ndk/libdlopen_ns_dso_ndk.so
 ${CMD} shell cp ${REMOTE}/src/libdlopen_ns_dso.so /system/lib/libdlopen_ns_dso_sys.so
 ${CMD} shell cp ${REMOTE}/src/libdlopen_ns_dso.so /system/lib/ndk/libdlopen_ns_dso_ndk.so
+${CMD} shell cp ${REMOTE}/src/libdlclose_recursive.so /system/lib64/libdlclose_recursive.so
+${CMD} shell cp ${REMOTE}/src/libdlclose_recursive_dlopen_so.so /system/lib64/libdlclose_recursive_dlopen_so.so
+
 
 ${CMD} shell mv ${REMOTE}/src/zh_CN /tmp/zh_CN
 

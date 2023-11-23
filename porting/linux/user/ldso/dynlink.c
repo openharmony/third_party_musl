@@ -2519,8 +2519,8 @@ void __ldso_atfork(int who)
 		// so, initialize the lock again as below.
                 pthread_mutexattr_t attr;
 		pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
-		pthread_mutex_init(&lock, &attr);
 		pthread_mutex_init(&init_fini_lock, &attr);
+		pthread_mutex_init(&lock, &attr);
 	}
 }
 
@@ -2601,10 +2601,6 @@ static void do_init_fini(struct dso **queue)
 		p->ctor_visitor = self;
 		
 		decode_vec(p->dynv, dyn, DYN_CNT);
-		if (dyn[0] & ((1<<DT_FINI) | (1<<DT_FINI_ARRAY))) {
-			p->fini_next = fini_head;
-			fini_head = p;
-		}
 
 		pthread_mutex_unlock(&init_fini_lock);
 
@@ -2625,6 +2621,15 @@ static void do_init_fini(struct dso **queue)
 		}
 
 		pthread_mutex_lock(&init_fini_lock);
+		/* 
+		 * while use recursive lock, update the fini_next/fini_head
+		 * after the possiable recursive call in DT_INIT_ARRAY.
+		 */
+		if (dyn[0] & ((1<<DT_FINI) | (1<<DT_FINI_ARRAY))) {
+			p->fini_next = fini_head;
+			fini_head = p;
+		}
+
 		p->ctor_visitor = 0;
 		p->constructed = 1;
 		pthread_cond_broadcast(&ctor_cond);
