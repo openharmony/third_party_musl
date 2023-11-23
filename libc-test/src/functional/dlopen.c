@@ -1,4 +1,5 @@
 #include <dlfcn.h>
+#include <pthread.h>
 #include "test.h"
 
 #define SO_FOR_NO_DELETE "lib_for_no_delete.so"
@@ -6,6 +7,8 @@
 #define SO_LOAD_BY_LOCAL "libdlopen_for_load_by_local_dso.so"
 #define SO_LOAD_BY_GLOBAL "libdlopen_for_load_by_global_dso.so"
 #define SO_CLOSE_RECURSIVE_OPEN_SO "libdlclose_recursive_dlopen_so.so"
+#define NR_DLCLOSE_THREADS 10
+
 typedef void(*TEST_PTR)(void);
 
 void do_dlopen(const char *name, int mode)
@@ -151,6 +154,24 @@ void dlclose_recursive()
     dlclose(handle);
 }
 
+void *dlclose_recursive_thread()
+{
+	dlclose_recursive();
+	return NULL;
+}
+
+void dlclose_recursive_by_multipthread()
+{
+	pthread_t testThreads[NR_DLCLOSE_THREADS] = {0};
+	for (int i = 0; i < NR_DLCLOSE_THREADS; ++i) {
+		pthread_create(&testThreads[i], NULL, dlclose_recursive_thread, NULL);
+	}
+
+	for (int i = 0; i < NR_DLCLOSE_THREADS; ++i) {
+		pthread_join(testThreads[i], NULL);
+	}
+}
+
 int main(int argc, char *argv[])
 {
 	void *h, *g;
@@ -211,6 +232,7 @@ int main(int argc, char *argv[])
 	dlopen_dlclose();
 	dlopen_dlclose_weak();
         dlclose_recursive();
+	dlclose_recursive_by_multipthread();
 
 	return t_status;
 }
