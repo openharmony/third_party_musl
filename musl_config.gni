@@ -44,7 +44,7 @@ declare_args() {
         "//prebuilts/clang/ohos/linux-x86_64/llvm/lib/clang/15.0.4/lib"
   }
 
-  use_gwp_asan = false
+  use_gwp_asan = true
   user_custom_libc = true
   use_jemalloc = false
   musl_malloc_plugin = ""
