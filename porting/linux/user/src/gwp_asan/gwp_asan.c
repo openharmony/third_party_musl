@@ -317,10 +317,10 @@ bool may_init_gwp_asan(bool force_init)
         .printf_backtrace = gwp_asan_printf_backtrace,
         .segv_backtrace = libc_gwp_asan_unwind_fast,
     };
-    GWP_ASAN_LOGD("[gwp_asan]: %{public}d gwp_asan initializing.\n", getpid());
+    MUSL_LOGE("[gwp_asan]: %{public}d gwp_asan initializing.\n", getpid());
     init_gwp_asan((void*)&gwp_asan_option);
     gwp_asan_initialized = true;
-    GWP_ASAN_LOGD("[gwp_asan]: %{public}d gwp_asan initialized.\n", getpid());
+    MUSL_LOGE("[gwp_asan]: %{public}d gwp_asan initialized.\n", getpid());
     return true;
 }
 bool init_gwp_asan_by_libc(bool force_init)
