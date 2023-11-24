@@ -106,9 +106,17 @@ ${CMD} shell mkdir ${REMOTE}/src/A
 ${CMD} shell mkdir ${REMOTE}/src/B
 ${CMD} shell mkdir ${REMOTE}/src/C
 ${CMD} shell mkdir ${REMOTE}/src/D
+${CMD} shell mkdir -p ${REMOTE}/src/rpath_lib/rpath_support_A
+${CMD} shell mkdir -p ${REMOTE}/src/rpath_lib/rpath_support_B
+${CMD} shell mkdir -p ${REMOTE}/src/rpath_support_C
 ${CMD} shell mv ${REMOTE}/src/libdlns_dlsym_dep_a.so ${REMOTE}/src/A
 ${CMD} shell mv ${REMOTE}/src/libdlns_dlsym_dep_b.so ${REMOTE}/src/B
 ${CMD} shell mv ${REMOTE}/src/libdlns_dlsym_dep_c.so ${REMOTE}/src/C
+${CMD} shell mv ${REMOTE}/src/libprimary_absolute.so ${REMOTE}/src/rpath_lib
+${CMD} shell mv ${REMOTE}/src/libprimary_origin.so ${REMOTE}/src/rpath_lib
+${CMD} shell mv ${REMOTE}/src/libprimary_multiple.so ${REMOTE}/src/rpath_lib
+${CMD} shell mv ${REMOTE}/src/libsupport_002.so ${REMOTE}/src/rpath_support_C
+${CMD} shell mv ${REMOTE}/src/libsupport_001.so ${REMOTE}/src/rpath_lib/rpath_support_A
 ${CMD} shell cp ${REMOTE}/src/libdlopen_dso.so ${REMOTE}/src/B/libB.so
 ${CMD} shell cp ${REMOTE}/src/libdlopen_dso.so ${REMOTE}/src/C/libC.so
 ${CMD} shell cp ${REMOTE}/src/libdlopen_dso.so ${REMOTE}/src/D/libD.so
