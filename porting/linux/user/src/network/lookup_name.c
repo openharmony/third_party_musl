@@ -390,7 +390,8 @@ int lookup_name_ext(struct address buf[static MAXADDRS], char canon[static 256],
 	cnt = name_from_null(buf, name, family, flags);
 	if (!cnt) cnt = name_from_numeric(buf, name, family);
 	if (!cnt && !(flags & AI_NUMERICHOST)) {
-		cnt = name_from_hosts(buf, canon, name, family);
+		cnt = predefined_host_name_from_hosts(buf, canon, name, family);
+		if (!cnt) cnt = name_from_hosts(buf, canon, name, family);
 		if (!cnt) cnt = name_from_dns_search(buf, canon, name, family, netid);
 	}
 	if (cnt<=0) return cnt ? cnt : EAI_NONAME;
@@ -499,4 +500,411 @@ int lookup_name_ext(struct address buf[static MAXADDRS], char canon[static 256],
 int __lookup_name(struct address buf[static MAXADDRS], char canon[static 256], const char *name, int family, int flags)
 {
 	return lookup_name_ext(buf, canon, name, family, flags, 0);
+}
+
+typedef struct _linknode {
+    struct _linknode *_next;
+    void *_data;
+}linknode;
+
+typedef struct _linkList {
+    linknode *_phead;
+    int _count;
+}linkList;
+
+static linkList *create_linklist(void);
+static int destory_linklist(linkList *plist);
+static int linklist_size(linkList *plist);
+static linknode *get_linknode(linkList *plist, int index);
+static int linklist_append_last(linkList *plist, void *pdata);
+static int linklist_delete(linkList *plist, int index);
+static int linklist_delete_first(linkList *plist);
+static int linklist_delete_last(linkList *plist);
+
+typedef struct {
+	char*    host;
+	char*    ip;
+}host_ip_pair;
+
+static const char GROUP_SEPARATOR[] = "|";
+static const char SEPARATOR[]       = ",";
+
+static linkList   *host_ips_list_ = NULL;
+
+static char *strsep(char **s, const char *ct)
+{
+	char *sbegin = *s;
+	char *end;
+	if (sbegin == NULL) {
+		return NULL;
+	}
+	end = strpbrk(sbegin, ct);
+	if (end) {
+		*end++ = '\0';
+	}
+	*s = end;
+	return sbegin;
+}
+
+int predefined_host_clear_all_hosts(void)
+{
+	if (host_ips_list_ != NULL) {
+		linknode *pnode = host_ips_list_->_phead;
+		while (pnode != NULL) {
+			free(pnode->_data);
+			pnode->_data = NULL;
+			pnode = pnode->_next;
+		}
+
+		destory_linklist(host_ips_list_);
+		free(host_ips_list_);
+		host_ips_list_ = NULL;
+		return 0;
+	}
+	return -1;
+}
+
+int predefined_host_remove_host(const char *host)
+{
+	int remove_cnt = 0;
+	if (host_ips_list_ != NULL) {
+		linknode     *pnode = NULL;
+		host_ip_pair *pinfo = NULL;
+		int cnt = linklist_size(host_ips_list_);
+
+		for (int i = cnt - 1; i >= 0; i--) {
+			pnode = get_linknode(host_ips_list_, i);
+			if (pnode != NULL) {
+				pinfo = (host_ip_pair*)pnode->_data;
+				if (strcmp(pinfo->host, host) == 0) {
+					free(pinfo);
+					linklist_delete(host_ips_list_, i);
+					remove_cnt++;
+				}
+			}
+		}
+	}
+
+	return remove_cnt == 0 ? -1 : 0;
+}
+
+static int _predefined_host_is_contain_host_ip(const char* host, const char* ip, int is_check_ip)
+{
+	if (host_ips_list_ != NULL) {
+		linknode *pnode = host_ips_list_->_phead;
+
+		while (pnode != NULL) {
+			host_ip_pair *pinfo = (host_ip_pair*)pnode->_data;
+			if (strcmp(pinfo->host, host) == 0) {
+				if (is_check_ip) {
+					if (strcmp(pinfo->ip, ip) == 0) {
+						return 1;
+					}
+				} else {
+					return 1;
+				}
+			}
+			pnode = pnode->_next;
+		}
+	}
+	return 0;
+}
+
+int predefined_host_is_contain_host(const char *host)
+{
+	return _predefined_host_is_contain_host_ip(host, NULL, 0);
+}
+
+static int _predefined_host_add_record(char* host, char* ip)
+{
+	int head_len        = sizeof(host_ip_pair);
+	int host_len        = strlen(host);
+	int ip_len          = strlen(ip);
+	int total           = host_len + 1 + ip_len + 1 + head_len;
+	char *pdata         = calloc(1, total);
+	host_ip_pair *pinfo = (host_ip_pair*)pdata;
+
+	if (pdata == NULL) {
+		return EAI_NONAME;
+	}
+
+	char*  i_host = (char*)(pdata + head_len);
+	char*  i_ip   = (char*)(pdata + head_len + host_len + 1);
+
+	memcpy(i_host, host, host_len + 1);
+	memcpy(i_ip, ip, ip_len + 1);
+
+	pinfo->host = i_host;
+	pinfo->ip   = i_ip;
+
+	linklist_append_last(host_ips_list_, pdata);
+	return 0;
+}
+
+static int _predefined_host_parse_host_ips(char* params)
+{
+	char* cmd  = NULL;
+	int   ret  = 0;
+	int   cnt  = 0;
+
+	while ((cmd = strsep(&params, GROUP_SEPARATOR)) != NULL) {
+		char* host = strsep(&cmd, SEPARATOR);
+		char* ip = NULL;
+
+		while ((ip = strsep(&cmd, SEPARATOR)) != NULL) {
+			cnt++;
+			if (!_predefined_host_is_contain_host_ip(host, ip, 1)) {
+				ret = _predefined_host_add_record(host, ip);
+				if (ret != 0) {
+					return ret;
+				}
+			}
+		}
+	}
+
+	return cnt > 0 ? 0 : -1;
+}
+
+int predefined_host_set_hosts(const char* host_ips)
+{
+	if (host_ips == NULL) {
+	    return EAI_NONAME;
+	}
+
+	int len = strlen(host_ips);
+	if (len == 0) {
+		return EAI_NONAME;
+	}
+
+	if (host_ips_list_ == NULL) {
+		host_ips_list_ = create_linklist();
+		if (host_ips_list_ == NULL) {
+			return EAI_MEMORY;
+		}
+	}
+
+	char *host_ips_str = calloc(1, len + 1);
+	if (host_ips_str == NULL) {
+		return EAI_MEMORY;
+	}
+
+	memcpy(host_ips_str, host_ips, len + 1);
+
+	int ret = _predefined_host_parse_host_ips(host_ips_str);
+
+	free(host_ips_str);
+
+	return ret;
+}
+
+int predefined_host_set_host(const char* host, const char* ip)
+{
+	if (host == NULL || strlen(host) == 0 || ip == NULL || strlen(ip) == 0) {
+		return -1;
+	}
+
+	if (host_ips_list_ == NULL) {
+		host_ips_list_ = create_linklist();
+		if (host_ips_list_ == NULL) {
+			return EAI_NONAME;
+		}
+	}
+
+	if (_predefined_host_is_contain_host_ip(host, ip, 1)) {
+		return 0;
+	}
+
+	return _predefined_host_add_record(host, ip);
+}
+
+int predefined_host_name_from_hosts(
+		struct address buf[static MAXADDRS],
+		char canon[static 256], const char *name, int family)
+{
+	int size = 256;
+	int cnt = 0;
+	if (host_ips_list_ != NULL) {
+		linknode *pnode = host_ips_list_->_phead;
+
+		while (pnode != NULL && cnt < MAXADDRS) {
+			host_ip_pair *pinfo = (host_ip_pair*)pnode->_data;
+			if (strcmp(pinfo->host, name) == 0) {
+				if (__lookup_ipliteral(buf+cnt, pinfo->ip, family) == 1) {
+					cnt++;
+				}
+			}
+			pnode = pnode->_next;
+		}
+	}
+
+	if (cnt > 0) {
+		memcpy(canon, name, size);
+	}
+	return cnt;
+}
+
+static inline void free_linknodedata(linknode *pnode)
+{
+	if (NULL != pnode) {
+		free(pnode);
+	}
+}
+
+static linknode *create_linknode(void *data)
+{
+	linknode *pnode = (linknode *)calloc(1, sizeof(linknode));
+	if (NULL == pnode) {
+		return NULL;
+	}
+	pnode->_data = data;
+	pnode->_next = NULL;
+
+	return pnode;
+}
+
+static linkList *create_linklist(void)
+{
+	linkList *plist = (linkList *)calloc(1, sizeof(linkList));
+	if (NULL == plist) {
+		return NULL;
+	}
+	plist->_phead = NULL;
+	plist->_count = 0;
+
+	return plist;
+}
+
+static int destory_linklist(linkList *plist)
+{
+	if (NULL == plist) {
+		return -1;
+	}
+
+	linknode *pnode = plist->_phead;
+	linknode *ptmp = NULL;
+	while (pnode != NULL) {
+		ptmp = pnode;
+		pnode = pnode->_next;
+		free_linknodedata(ptmp);
+	}
+
+	plist->_phead = NULL;
+	plist->_count = 0;
+
+	return 0;
+}
+
+static int linklist_size(linkList *plist)
+{
+	if (NULL == plist) {
+		return 0;
+	}
+
+	return plist->_count;
+}
+
+static linknode *get_linknode(linkList *plist, int index)
+{
+	if (index < 0 || index >= plist->_count) {
+		return NULL;
+	}
+
+	int i = 0;
+	linknode *pnode = plist->_phead;
+	while ((i++) < index) {
+		pnode = pnode->_next;
+	}
+
+	return pnode;
+}
+
+static int linklist_append_last(linkList *plist, void *pdata)
+{
+	if (NULL == plist) {
+		return -1;
+	}
+
+	linknode *pnode = create_linknode(pdata);
+	if (NULL == pnode) {
+		return -1;
+	}
+
+	if (NULL == plist->_phead) {
+		plist->_phead = pnode;
+		plist->_count++;
+	} else {
+		linknode *plastnode = get_linknode(plist, plist->_count - 1);
+		plastnode->_next = pnode;
+		plist->_count++;
+	}
+
+	return 0;
+}
+
+static int linklist_delete(linkList *plist, int index)
+{
+	if (NULL == plist || NULL == plist->_phead || plist->_count <= 0) {
+		return -1;
+	}
+
+	if (index == 0) {
+		return linklist_delete_first(plist);
+	} else if (index == (plist->_count - 1)) {
+		return linklist_delete_last(plist);
+	} else {
+		linknode *pindex = get_linknode(plist, index);
+		if (NULL == pindex) {
+			return -1;
+		}
+		linknode *preindex = get_linknode(plist, index - 1);
+		if (NULL == preindex) {
+			return -1;
+		}
+
+		preindex->_next = pindex->_next;
+
+		free_linknodedata(pindex);
+		plist->_count--;
+	}
+
+	return 0;
+}
+
+static int linklist_delete_first(linkList *plist)
+{
+	if (NULL == plist || NULL == plist->_phead || plist->_count <= 0) {
+		return -1;
+	}
+
+	linknode *phead = plist->_phead;
+	plist->_phead = plist->_phead->_next;
+
+	free_linknodedata(phead);
+	plist->_count--;
+
+	return 0;
+}
+
+static int linklist_delete_last(linkList *plist)
+{
+	if (NULL == plist || NULL == plist->_phead || plist->_count <= 0) {
+		return -1;
+	}
+
+	linknode *plastsecondnode = get_linknode(plist, plist->_count - 2);
+	if (NULL != plastsecondnode) {
+		linknode *plastnode = plastsecondnode->_next;
+		plastsecondnode->_next = NULL;
+
+		free_linknodedata(plastnode);
+		plist->_count--;
+	} else {
+		linknode *plastnode = get_linknode(plist, plist->_count - 1);
+		plist->_phead = NULL;
+		plist->_count = 0;
+
+		free_linknodedata(plastnode);
+	}
+
+	return 0;
 }
