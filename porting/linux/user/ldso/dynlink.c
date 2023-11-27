@@ -3944,6 +3944,11 @@ static int do_dlclose(struct dso *p)
 	}
 
 	for (size_t i = 0; i < dso_close_list_size; i++) {
+#ifdef ENABLE_HWASAN
+		if (libc.unload_hook) {
+			libc.unload_hook((unsigned long int)dso_close_list[i]->base, dso_close_list[i]->phdr, dso_close_list[i]->phnum);
+		}
+#endif
 		unmap_library(dso_close_list[i]);
 
 		if (dso_close_list[i]->parents) {
@@ -5184,6 +5189,12 @@ static void task_load_library(struct loadtask *task, struct reserved_address_par
 	if (ldd_mode) {
 		dprintf(1, "\t%s => %s (%p)\n", task->name, task->pathname, task->p->base);
 	}
+
+#ifdef ENABLE_HWASAN
+	if (libc.load_hook) {
+		libc.load_hook((long unsigned int)task->p->base, task->p->phdr, task->p->phnum);
+	}
+#endif
 }
 
 static void preload_direct_deps(struct dso *p, ns_t *namespace, struct loadtasks *tasks)
