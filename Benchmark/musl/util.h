@@ -99,4 +99,6 @@ enum JSONError {
     JOSN_ERROR_JSON_FORMAT,
 };
 
+void open_tcache();
+
 #define OPEN_MODE 0666

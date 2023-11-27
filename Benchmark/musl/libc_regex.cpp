@@ -21,8 +21,8 @@ static const std::vector<int> regCompFlags {
     0,
     REG_EXTENDED,
     REG_ICASE,
+    REG_NOSUB,
     REG_NEWLINE,
-    REG_NOSUB
 };
 
 static void PrepareRegcompArgs(benchmark::internal::Benchmark* b)
@@ -36,10 +36,11 @@ static void Bm_function_Regcomp(benchmark::State &state)
 {
     const char* pattern = "hello.*world";
     int flag = state.range(0);
+    open_tcache();
     for (auto _state: state) {
         regex_t reg;
         benchmark::DoNotOptimize(regcomp(&reg, pattern, flag));
-	regfree(&reg);
+        regfree(&reg);
     }
 }
 
@@ -52,7 +53,7 @@ static void Bm_function_Regexec(benchmark::State &state)
         perror("regcomp");
         exit(-1);
     }
-
+    open_tcache();
     regmatch_t pmatch;
     for (auto _state: state) {
         benchmark::DoNotOptimize(regexec(&reg, "hello test world", 1, &pmatch, 0));

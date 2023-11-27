@@ -14,6 +14,7 @@
  */
 
 #include "util.h"
+#include "malloc.h"
 
 #include <err.h>
 #include <cmath>
@@ -22,6 +23,12 @@
 #include <cwchar>
 #include <cstdlib>
 
+void open_tcache() {
+    mallopt(M_OHOS_CONFIG, M_TACHE_PERFORMANCE_MODE);
+    mallopt(M_OHOS_CONFIG, M_ENABLE_OPT_CACHE);
+    mallopt(M_SET_THREAD_CACHE, M_THREAD_OPT_CACHE);
+    mallopt(M_DELAYED_FREE, M_DELAYED_FREE_ENABLE);
+}
 char* AlignUpMemoy(char* origPtr, size_t alignment)
 {
     if ((alignment & (alignment - 1)) != 0) {
