@@ -161,6 +161,10 @@ template("musl_libs") {
       ]
     }
 
+    if (is_asan && use_hwasan) {
+      cflags_auto += [ "-DENABLE_HWASAN" ]
+    }
+
     if (!is_asan && musl_arch != "mips") {
       cflags_auto += [
         "-DHOOK_ENABLE",

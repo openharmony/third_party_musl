@@ -135,6 +135,12 @@ void __tl_sync(pthread_t td)
 	if (tl_lock_waiters) __wake(&__thread_list_lock, 1, 0);
 }
 
+#ifdef ENABLE_HWASAN
+weak void __hwasan_thread_enter();
+weak void __hwasan_thread_exit();
+
+__attribute__((no_sanitize("hwaddress")))
+#endif
 _Noreturn void __pthread_exit(void *result)
 {
 	pthread_t self = __pthread_self();
@@ -191,6 +197,9 @@ _Noreturn void __pthread_exit(void *result)
 		UNLOCK(self->killlock);
 		self->detach_state = state;
 		__restore_sigs(&set);
+#ifdef ENABLE_HWASAN
+		__hwasan_thread_exit();
+#endif
 		exit(0);
 	}
 
@@ -254,6 +263,10 @@ _Noreturn void __pthread_exit(void *result)
 	self->tid = 0;
 	UNLOCK(self->killlock);
 
+#ifdef ENABLE_HWASAN
+	__hwasan_thread_exit();
+#endif
+
 	for (;;) __syscall(SYS_exit, 0);
 }
 
@@ -276,8 +289,14 @@ struct start_args {
 	unsigned long sig_mask[_NSIG/8/sizeof(long)];
 };
 
+#ifdef ENABLE_HWASAN
+__attribute__((no_sanitize("hwaddress")))
+#endif
 static int start(void *p)
 {
+#ifdef ENABLE_HWASAN
+	__hwasan_thread_enter();
+#endif
 	struct start_args *args = p;
 	int state = args->control;
 	if (state) {
@@ -296,10 +315,16 @@ static int start(void *p)
 	return 0;
 }
 
+#ifdef ENABLE_HWASAN
+__attribute__((no_sanitize("hwaddress")))
+#endif
 static int start_c11(void *p)
 {
 #ifdef RESERVE_SIGNAL_STACK
 	__pthread_reserve_signal_stack();
+#endif
+#ifdef ENABLE_HWASAN
+	__hwasan_thread_enter();
 #endif
 	struct start_args *args = p;
 	int (*start)(void*) = (int(*)(void*)) args->start_func;
@@ -325,6 +350,9 @@ static void init_file_lock(FILE *f)
 	if (f && f->lock<0) f->lock = 0;
 }
 
+#ifdef ENABLE_HWASAN
+__attribute__((no_sanitize("hwaddress")))
+#endif
 int __pthread_create(pthread_t *restrict res, const pthread_attr_t *restrict attrp, void *(*entry)(void *), void *restrict arg)
 {
 	int ret, c11 = (attrp == __ATTRP_C11_THREAD);
