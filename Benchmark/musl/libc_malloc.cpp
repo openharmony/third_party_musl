@@ -46,6 +46,7 @@ static void Bm_function_Calloc(benchmark::State& state)
     int m = state.range(0);
     int n = state.range(1);
     void* ptr;
+    open_tcache();
     for (auto _ : state) {
         benchmark::DoNotOptimize(ptr = calloc(m, n));
         if (ptr) {
@@ -61,7 +62,7 @@ static void Bm_function_realloc_twice(benchmark::State &state)
     if (p == nullptr) {
         perror("malloc Je_realloc");
     }
-
+    open_tcache();
     for (auto _ : state) {
         benchmark::DoNotOptimize(realloc(p, size * 2));
     }
@@ -79,7 +80,7 @@ static void Bm_function_realloc_half(benchmark::State &state)
     if (p == nullptr) {
         perror("malloc Je_realloc");
     }
-
+    open_tcache();
     for (auto _ : state) {
         benchmark::DoNotOptimize(realloc(p, size / 2));
     }
@@ -97,7 +98,7 @@ static void Bm_function_realloc_equal(benchmark::State &state)
     if (p == nullptr) {
         perror("malloc Je_realloc");
     }
-
+    open_tcache();
     for (auto _ : state) {
         benchmark::DoNotOptimize(realloc(p, size));
     }
@@ -114,7 +115,7 @@ static void Bm_function_malloc_usable_size(benchmark::State &state)
     if (p == nullptr) {
         perror("malloc Je_malloc_usable_size");
     }
-
+    open_tcache();
     for (auto _ : state) {
         benchmark::DoNotOptimize(malloc_usable_size(p));
     }
