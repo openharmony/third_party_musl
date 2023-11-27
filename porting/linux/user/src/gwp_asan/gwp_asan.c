@@ -24,6 +24,7 @@
 
 #include "musl_log.h"
 #include "musl_malloc.h"
+#include "pthread.h"
 #include "pthread_impl.h"
 
 #ifdef OHOS_ENABLE_PARAMETER
@@ -158,6 +159,12 @@ bool should_sample_process()
     return (random_value % process_sample_rate) == 0 ? true : false;
 }
 
+#define ASAN_LOG_LIB "libasan_logger.z.so"
+static void (*WriteGwpAsanLog)(char*, size_t);
+static void* handle = NULL;
+static bool try_load_asan_logger = false;
+static pthread_mutex_t gwpasan_mutex = PTHREAD_MUTEX_INITIALIZER;
+
 void gwp_asan_printf(const char *fmt, ...)
 {
     char para_name[GWP_ASAN_NAME_LEN] = "gwp_asan.log.path";
@@ -166,7 +173,7 @@ void gwp_asan_printf(const char *fmt, ...)
         para_handler = CachedParameterCreate(para_name, "default");
     }
     char *para_value = CachedParameterGet(para_handler);
-    if (strcmp(para_value, "file") == 0 || strcmp(para_value, "default") == 0) {
+    if (strcmp(para_value, "file") == 0) {
         char process_short_name[GWP_ASAN_NAME_LEN];
         char *path = get_process_short_name(process_short_name, GWP_ASAN_NAME_LEN);
         if (!path) {
@@ -186,6 +193,43 @@ void gwp_asan_printf(const char *fmt, ...)
         if (result < 0) {
             MUSL_LOGE("[gwp_asan] write log failed!\n");
         }
+        return;
+    }
+    if (strcmp(para_value, "default") == 0) {
+        va_list ap;
+        va_start(ap, fmt);
+        char log_buffer[PATH_MAX];
+        int result = vsnprintf(log_buffer, PATH_MAX, fmt, ap);
+        va_end(ap);
+        if (result < 0) {
+            MUSL_LOGE("[gwp_asan] write log failed!\n");
+        }
+        if(WriteGwpAsanLog != NULL) {
+            WriteGwpAsanLog(log_buffer, strlen(log_buffer));
+            return;
+	}
+        if(try_load_asan_logger) {
+            return;
+        }
+        pthread_mutex_lock(&gwpasan_mutex);
+        if(WriteGwpAsanLog != NULL) {
+            WriteGwpAsanLog(log_buffer, strlen(log_buffer));
+            pthread_mutex_unlock(&gwpasan_mutex);
+            return;
+        }
+        if (!try_load_asan_logger && handle == NULL) {
+            try_load_asan_logger = true;
+            handle = dlopen("ASAN_LOG_LIB", RTLD_LAZY);
+	    if (handle == NULL) {
+                pthread_mutex_unlock(&gwpasan_mutex);
+                return;
+            }
+            *(void**)(&WriteGwpAsanLog) = dlsym(handle, "WriteGwpAsanLog");
+            if (WriteGwpAsanLog != NULL) {
+                WriteGwpAsanLog(log_buffer, strlen(log_buffer));
+            }
+        }
+        pthread_mutex_unlock(&gwpasan_mutex);
         return;
     }
     if (strcmp(para_value, "stdout") == 0) {
