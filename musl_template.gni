@@ -986,6 +986,11 @@ template("musl_libs") {
       "//third_party/musl:musl_copy_inc_sys",
     ]
 
+    if (!startup_init_with_param_base) {
+      defines = [ "OHOS_ENABLE_PARAMETER" ]
+      deps += [ "//base/startup/init/services/param/base:parameterbase" ]
+    }
+
     configs -= musl_inherited_configs
 
     configs += [ ":soft_jemalloc" ]
