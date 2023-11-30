@@ -101,10 +101,40 @@ ohos_executable("musl_unittest") {
     "math/math_gtest/math_y0_test.cpp",
     "math/math_gtest/math_y1_test.cpp",
     "math/math_gtest/math_yn_test.cpp",
+    "network/network_gtest/arpa_inet_test.cpp",
+    "network/network_gtest/endian_test.cpp",
+    "network/network_gtest/fortify_test.cpp",
+    "network/network_gtest/net_if_test.cpp",
+    "network/network_gtest/netdb_test.cpp",
+    "network/network_gtest/netinet_ether_test.cpp",
+    "network/network_gtest/resolv_test.cpp",
+    "network/network_gtest/socket_test.cpp",
+    "thread/thread_gtest/pthread_attr_test.cpp",
+    "thread/thread_gtest/pthread_barrier_test.cpp",
+    "thread/thread_gtest/pthread_cleanup_test.cpp",
+    "thread/thread_gtest/pthread_cond_test.cpp",
+    "thread/thread_gtest/pthread_key_test.cpp",
+    "thread/thread_gtest/pthread_spin_test.cpp",
+    "thread/thread_gtest/thread_callonce_test.cpp",
+    "thread/thread_gtest/thread_cnd_test.cpp",
+    "thread/thread_gtest/thread_mutex_test.cpp",
+    "thread/thread_gtest/thread_mutexattr_test.cpp",
+    "thread/thread_gtest/thread_pthrd_test.cpp",
+    "thread/thread_gtest/thread_rwlock_test.cpp",
+    "thread/thread_gtest/thread_sem_test.cpp",
+    "thread/thread_gtest/thread_thrd_test.cpp",
+    "thread/thread_gtest/thread_tls_get_addr_test.cpp",
+    "thread/thread_gtest/thread_tss_test.cpp",
+    "time/time_gtest/sys_clock_test.cpp",
+    "time/time_gtest/time_test.cpp",
+    "time/time_gtest/timer_test.cpp",
   ]
 
   include_dirs = [ "//third_party/musl" ]
   configs = [ ":module_private_config" ]
 
+  if (use_pthread_cancel) {
+    cflags += [ "-DFEATURE_PTHREAD_CANCEL" ]
+  }
   deps = [ "//third_party/googletest:gtest_main" ]
 }
