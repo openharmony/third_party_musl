@@ -14,7 +14,7 @@
 #####################hydra-fuzz###################
 import("//build/config/features.gni")
 import("//build/test.gni")
-module_output_path = "musl/services"
+module_output_path = "musl/musl"
 
 ##############################fuzztest##########################################
 ohos_fuzztest("AtoiFuzzTest") {
