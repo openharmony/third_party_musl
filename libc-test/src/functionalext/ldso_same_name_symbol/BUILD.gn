@@ -1,0 +1,100 @@
+import("../../../test_template.gni")
+
+group("ldso_same_symbol_name_with_different_version") {
+  testonly = true
+  deps = [
+    ":ldso_reloc_diff_version_A",
+    ":ldso_reloc_diff_version_B",
+    ":ldso_reloc_diff_version_exe",
+  ]
+}
+
+ohos_shared_library("ldso_reloc_diff_version_A") {
+  include_dirs = [ "." ]
+
+  sources = [ "ldso_relocation_diff_version_test_Aso.c" ]
+
+  output_name = "ldso_relocation_diff_version_test_Aso"
+
+  output_extension = "so"
+
+  cflags = [ "-fPIC" ]
+
+  ldflags = [
+    "-shared",
+    "-Wl,-rpath=./:/data/local/tmp/libc-test-lib/",
+  ]
+
+  version_script = "A.map.txt"
+
+  subsystem_name = "musl"
+  part_name = "libc-test-lib"
+}
+
+ohos_shared_library("ldso_reloc_diff_version_B") {
+  include_dirs = [ "." ]
+
+  sources = [
+    "ldso_relocation_diff_version_test_Bso.c",
+    "ldso_relocation_diff_version_test_Bso_2.c",
+  ]
+
+  output_name = "ldso_relocation_diff_version_test_Bso"
+
+  output_extension = "so"
+
+  cflags = [ "-fPIC" ]
+
+  ldflags = [
+    "-shared",
+    "-Wl,-rpath=./:/data/local/tmp/libc-test-lib/",
+  ]
+
+  version_script = "B.map.txt"
+
+  subsystem_name = "musl"
+  part_name = "libc-test-lib"
+}
+
+ohos_shared_library("ldso_reloc_diff_version_C") {
+  include_dirs = [ "." ]
+
+  sources = [ "ldso_relocation_diff_version_test_Cso.c" ]
+
+  output_name = "ldso_relocation_diff_version_test_Cso"
+
+  output_extension = "so"
+
+  cflags = [ "-fPIC" ]
+
+  deps = [
+    ":ldso_reloc_diff_version_A",
+    ":ldso_reloc_diff_version_B",
+  ]
+
+  ldflags = [
+    "-shared",
+    "-Wl,-rpath=./:/data/local/tmp/libc-test-lib/",
+    "-Lmusl/libc-test-lib",
+    "-lldso_relocation_diff_version_test_Aso",
+  ]
+
+  version_script = "B.map.txt"
+
+  subsystem_name = "musl"
+  part_name = "libc-test-lib"
+}
+
+ohos_executable("ldso_reloc_diff_version_exe") {
+  sources = [ "ldso_relocation_diff_version_test.c" ]
+  testonly = true
+  deps = [ ":ldso_reloc_diff_version_C" ]
+  include_dirs = [
+    "../common",
+    "//third_party/musl/libc-test/src/common",
+  ]
+  ldflags = [ "-Wl,-rpath=./:/data/local/tmp/libc-test-lib/" ]
+  configs = [ "//third_party/musl/libc-test/src/common:config_runtest" ]
+  subsystem_name = "musl"
+  part_name = "libc-test"
+}
