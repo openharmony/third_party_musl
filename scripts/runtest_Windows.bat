@@ -87,9 +87,17 @@ hdc shell mkdir %REMOTE%/src/A
 hdc shell mkdir %REMOTE%/src/B
 hdc shell mkdir %REMOTE%/src/C
 hdc shell mkdir %REMOTE%/src/D
+hdc shell mkdir -p %REMOTE%/src/rpath_lib/rpath_support_A
+hdc shell mkdir -p %REMOTE%/src/rpath_lib/rpath_support_B
+hdc shell mkdir -p %REMOTE%/src/rpath_support_C
 hdc shell mv %REMOTE%/src/libdlns_dlsym_dep_a.so %REMOTE%/src/A
 hdc shell mv %REMOTE%/src/libdlns_dlsym_dep_b.so %REMOTE%/src/B
 hdc shell mv %REMOTE%/src/libdlns_dlsym_dep_c.so %REMOTE%/src/C
+hdc shell mv %REMOTE%/src/libprimary_absolute.so %REMOTE%/src/rpath_lib
+hdc shell mv %REMOTE%/src/libprimary_origin.so %REMOTE%/src/rpath_lib
+hdc shell mv %REMOTE%/src/libprimary_multiple.so %REMOTE%/src/rpath_lib
+hdc shell mv %REMOTE%/src/libsupport_002.so %REMOTE%/src/rpath_support_C
+hdc shell mv %REMOTE%/src/libsupport_001.so %REMOTE%/src/rpath_lib/rpath_support_A
 hdc shell cp %REMOTE%/src/libdlopen_dso.so %REMOTE%/src/B/libB.so
 hdc shell cp %REMOTE%/src/libdlopen_dso.so %REMOTE%/src/C/libC.so
 hdc shell cp %REMOTE%/src/libdlopen_dso.so %REMOTE%/src/D/libD.so
