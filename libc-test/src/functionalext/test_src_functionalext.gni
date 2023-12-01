@@ -33,4 +33,5 @@ functionalext_list = [
   "queue:functionalext_queue_test",
   "crypt:functionalext_crypt_test",
   "backtrace:functionalext_backtrace_test",
+  "ldso_same_name_symbol:ldso_same_symbol_name_with_different_version",
 ]
