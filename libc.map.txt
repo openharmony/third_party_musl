@@ -843,6 +843,7 @@
     getpid;
     getppid;
     getprocpid;
+    getproctid;
     getpriority;
     GetProcessName;
     GetProcStatus;
