@@ -966,6 +966,38 @@ static bool get_vna_hash(struct dso *dso, int sym_index, uint32_t *vna_hash)
 	return result;
 }
 
+static void get_verinfo(struct dso *dso, int sym_index, struct verinfo *vinfo)
+{
+	char *strings = dso->strings;
+	// try to get version number from .gnu.version
+	int16_t vsym = dso->versym[sym_index];
+	Verdef *verdef = dso->verdef;
+	vsym &= 0x7fff;
+	if (!verdef) {
+		return;
+	}
+	int version_found = 0;
+	for (;;) {
+		if (!verdef) {
+			break;
+		}
+		if (!(verdef->vd_flags & VER_FLG_BASE) && (verdef->vd_ndx & 0x7fff) == vsym) {
+			version_found = 1;
+			break;
+		}
+		if (verdef->vd_next == 0) {
+			break;
+		}
+		verdef = (Verdef *)((char *)verdef + verdef->vd_next);
+	}
+	if (version_found) {
+		Verdaux *aux = (Verdaux *)((char *)verdef + verdef->vd_aux);
+		if (aux && aux->vda_name && strings && (dso->strings + aux->vda_name)) {
+			vinfo->v = dso->strings + aux->vda_name;
+		}
+	}
+}
+
 static void do_relocs(struct dso *dso, size_t *rel, size_t rel_size, size_t stride)
 {
 	unsigned char *base = dso->base;
@@ -1016,8 +1048,12 @@ static void do_relocs(struct dso *dso, size_t *rel, size_t rel_size, size_t stri
 			sym = syms + sym_index;
 			name = strings + sym->st_name;
 			ctx = type==REL_COPY ? head->syms_next : head;
-			struct verinfo vinfo = { .s = name, .v = "" };
+			struct verinfo vinfo = { .s = name, .v = ""};
+
 			vinfo.use_vna_hash = get_vna_hash(dso, sym_index, &vinfo.vna_hash);
+			if (!vinfo.use_vna_hash && dso->versym && (dso->versym[sym_index] & 0x7fff) >= 0) {
+				get_verinfo(dso, sym_index, &vinfo);
+			}
 			if (dso->cache_sym_index == sym_index) {
 				def = (struct symdef){ .dso = dso->cache_dso, .sym = dso->cache_sym };
 			} else {
