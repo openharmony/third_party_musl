@@ -96,7 +96,27 @@ int execlp(const char *, const char *, ...);
 int fexecve(int, char *const [], char *const []);
 _Noreturn void _exit(int);
 
+/**
+ * @brief Get the pid in the system namespace
+ *
+ * get the pid in the system namespace, used to globally mark processes in the pid sandbox.\n
+ *
+ * @param NA
+ * @return pid
+ * @since 4.1
+ */
 pid_t getprocpid(void);
+
+/**
+ * @brief Get the tid in the system namespace
+ *
+ * get the tid in the system namespace, used to globally mark processes in the pid sandbox.\n
+ *
+ * @param NA
+ * @return pid
+ * @since 4.1
+ */
+pid_t getproctid(void);
 pid_t getpid(void);
 pid_t getppid(void);
 pid_t getpgrp(void);
