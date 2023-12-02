@@ -16,6 +16,10 @@
 #include "grp.h"
 #include "pwd.h"
 #include "util.h"
+#if defined __APPLE__
+#include <sys/types.h>
+#include <unistd.h>
+#endif
 
 using namespace std;
 
@@ -29,7 +33,11 @@ static void Bm_function_Getgrouplist(benchmark::State &state)
         perror("getpwnam");
     }
 
+#if defined __APPLE__
+    int groups[NGROUPS];
+#else
     gid_t groups[NGROUPS];
+#endif
     for (auto _ : state) {
         int ngroups = NGROUPS;
         benchmark::DoNotOptimize(getgrouplist(user, pw->pw_gid, groups, &ngroups));

@@ -702,8 +702,8 @@ static void Bm_function_Flock(benchmark::State &state)
 
 static void Bm_function_Rename(benchmark::State &state)
 {
-    mkdir("/data/data/test_rename", S_IRWXU);
-    char oldname[32] = "/data/data/test_rename";
+    mkdir(DATA_ROOT"/data/data/test_rename", S_IRWXU);
+    char oldname[32] = DATA_ROOT"/data/data/test_rename";
     char newname[32] = "test_newname";
     for (auto _ : state) {
         benchmark::DoNotOptimize(rename(oldname, newname));
@@ -868,7 +868,7 @@ int MyVfscanf(const char* str, const char *format, ...)
 
 static void Bm_function_Vfscanf_str(benchmark::State &state)
 {
-    FILE *stream = fopen("/data/data/vfscanf_str.txt", "w+");
+    FILE *stream = fopen(DATA_ROOT"/data/data/vfscanf_str.txt", "w+");
     if (stream == nullptr) {
         perror("fopen vfscanf str");
     }
@@ -880,13 +880,13 @@ static void Bm_function_Vfscanf_str(benchmark::State &state)
         benchmark::DoNotOptimize(MyScanf1(stream, "%s", str));
     }
     fclose(stream);
-    remove("/data/data/vfscanf_str.txt");
+    remove(DATA_ROOT"/data/data/vfscanf_str.txt");
     state.SetBytesProcessed(state.iterations());
 }
 
 static void Bm_function_Vfscanf_int(benchmark::State &state)
 {
-    FILE *stream = fopen("/data/data/vfscanf_int.txt", "w+");
+    FILE *stream = fopen(DATA_ROOT"/data/data/vfscanf_int.txt", "w+");
     if (stream == nullptr) {
         perror("fopen vfscanf int");
     }
@@ -899,13 +899,13 @@ static void Bm_function_Vfscanf_int(benchmark::State &state)
         benchmark::DoNotOptimize(MyScanf1(stream, "%d", &val));
     }
     fclose(stream);
-    remove("/data/data/vfscanf_int.txt");
+    remove(DATA_ROOT"/data/data/vfscanf_int.txt");
     state.SetBytesProcessed(state.iterations());
 }
 
 static void Bm_function_Vfscanf_double(benchmark::State &state)
 {
-    FILE *stream = fopen("/data/data/vfscanf_double.txt", "w+");
+    FILE *stream = fopen(DATA_ROOT"/data/data/vfscanf_double.txt", "w+");
     if (stream == nullptr) {
         perror("fopen vfscanf double");
     }
@@ -918,13 +918,13 @@ static void Bm_function_Vfscanf_double(benchmark::State &state)
         benchmark::DoNotOptimize(MyScanf1(stream, "%d", &val));
     }
     fclose(stream);
-    remove("/data/data/vfscanf_double.txt");
+    remove(DATA_ROOT"/data/data/vfscanf_double.txt");
     state.SetBytesProcessed(state.iterations());
 }
 
 static void Bm_function_Vfscanf_float(benchmark::State &state)
 {
-    FILE *stream = fopen("/data/data/vfscanf_float.txt", "w+");
+    FILE *stream = fopen(DATA_ROOT"/data/data/vfscanf_float.txt", "w+");
     if (stream == nullptr) {
         perror("fopen vfscanf float");
     }
@@ -937,13 +937,13 @@ static void Bm_function_Vfscanf_float(benchmark::State &state)
         benchmark::DoNotOptimize(MyScanf1(stream, "%f", &val));
     }
     fclose(stream);
-    remove("/data/data/vfscanf_float.txt");
+    remove(DATA_ROOT"/data/data/vfscanf_float.txt");
     state.SetBytesProcessed(state.iterations());
 }
 
 static void Bm_function_Vfscanf_char(benchmark::State &state)
 {
-    FILE *stream = fopen("/data/data/vfscanf_char.txt", "w+");
+    FILE *stream = fopen(DATA_ROOT"/data/data/vfscanf_char.txt", "w+");
     if (stream == nullptr) {
         perror("fopen vfscanf char");
     }
@@ -955,13 +955,13 @@ static void Bm_function_Vfscanf_char(benchmark::State &state)
         benchmark::DoNotOptimize(MyScanf1(stream, "%c", &val));
     }
     fclose(stream);
-    remove("/data/data/vfscanf_char.txt");
+    remove(DATA_ROOT"/data/data/vfscanf_char.txt");
     state.SetBytesProcessed(state.iterations());
 }
 
 static void Bm_function_Vfscanf_iformat(benchmark::State &state)
 {
-    FILE *stream = fopen("/data/data/vfscanf_iformat.txt", "w+");
+    FILE *stream = fopen(DATA_ROOT"/data/data/vfscanf_iformat.txt", "w+");
     if (stream == nullptr) {
         perror("fopen vfscanf iformat");
     }
@@ -973,13 +973,13 @@ static void Bm_function_Vfscanf_iformat(benchmark::State &state)
         benchmark::DoNotOptimize(MyScanf1(stream, "%i", &val));
     }
     fclose(stream);
-    remove("/data/data/vfscanf_iformat.txt");
+    remove(DATA_ROOT"/data/data/vfscanf_iformat.txt");
     state.SetBytesProcessed(state.iterations());
 }
 
 static void Bm_function_Vfscanf_oformat(benchmark::State &state)
 {
-    FILE *stream = fopen("/data/data/vfscanf_oformat.txt", "w+");
+    FILE *stream = fopen(DATA_ROOT"/data/data/vfscanf_oformat.txt", "w+");
     if (stream == nullptr) {
         perror("fopen vfscanf oformat");
     }
@@ -992,13 +992,13 @@ static void Bm_function_Vfscanf_oformat(benchmark::State &state)
         benchmark::DoNotOptimize(MyScanf1(stream, "%o", &val));
     }
     fclose(stream);
-    remove("/data/data/vfscanf_oformat.txt");
+    remove(DATA_ROOT"/data/data/vfscanf_oformat.txt");
     state.SetBytesProcessed(state.iterations());
 }
 
 static void Bm_function_Vfscanf_uformat(benchmark::State &state)
 {
-    FILE *stream = fopen("/data/data/vfscanf_uformat.txt", "w+");
+    FILE *stream = fopen(DATA_ROOT"/data/data/vfscanf_uformat.txt", "w+");
     if (stream == nullptr) {
         perror("fopen vfscanf uformat");
     }
@@ -1011,13 +1011,13 @@ static void Bm_function_Vfscanf_uformat(benchmark::State &state)
         benchmark::DoNotOptimize(MyScanf1(stream, "%u", &val));
     }
     fclose(stream);
-    remove("/data/data/vfscanf_uformat.txt");
+    remove(DATA_ROOT"/data/data/vfscanf_uformat.txt");
     state.SetBytesProcessed(state.iterations());
 }
 
 static void Bm_function_Vfscanf_xformat(benchmark::State &state)
 {
-    FILE *stream = fopen("/data/data/vfscanf_xformat.txt", "w+");
+    FILE *stream = fopen(DATA_ROOT"/data/data/vfscanf_xformat.txt", "w+");
     if (stream == nullptr) {
         perror("fopen vfscanf xformat");
     }
@@ -1029,13 +1029,13 @@ static void Bm_function_Vfscanf_xformat(benchmark::State &state)
         benchmark::DoNotOptimize(MyScanf1(stream, "%x", &val));
     }
     fclose(stream);
-    remove("/data/data/vfscanf_xformat.txt");
+    remove(DATA_ROOT"/data/data/vfscanf_xformat.txt");
     state.SetBytesProcessed(state.iterations());
 }
 
 static void Bm_function_Vfscanf_Xformat(benchmark::State &state)
 {
-    FILE *stream = fopen("/data/data/vfscanf_Xformat.txt", "w+");
+    FILE *stream = fopen(DATA_ROOT"/data/data/vfscanf_Xformat.txt", "w+");
     if (stream == nullptr) {
         perror("fopen vfscanf Xformat");
     }
@@ -1047,13 +1047,13 @@ static void Bm_function_Vfscanf_Xformat(benchmark::State &state)
         benchmark::DoNotOptimize(MyScanf1(stream, "%X", &val));
     }
     fclose(stream);
-    remove("/data/data/vfscanf_Xformat.txt");
+    remove(DATA_ROOT"/data/data/vfscanf_Xformat.txt");
     state.SetBytesProcessed(state.iterations());
 }
 
 static void Bm_function_Vfscanf_eformat(benchmark::State &state)
 {
-    FILE *stream = fopen("/data/data/vfscanf_eformat.txt", "w+");
+    FILE *stream = fopen(DATA_ROOT"/data/data/vfscanf_eformat.txt", "w+");
     if (stream == nullptr) {
         perror("fopen vfscanf eformat");
     }
@@ -1066,13 +1066,13 @@ static void Bm_function_Vfscanf_eformat(benchmark::State &state)
         benchmark::DoNotOptimize(MyScanf1(stream, "%.2e", &val));
     }
     fclose(stream);
-    remove("/data/data/vfscanf_eformat.txt");
+    remove(DATA_ROOT"/data/data/vfscanf_eformat.txt");
     state.SetBytesProcessed(state.iterations());
 }
 
 static void Bm_function_Vfscanf_gformat(benchmark::State &state)
 {
-    FILE *stream = fopen("/data/data/vfscanf_gformat.txt", "w+");
+    FILE *stream = fopen(DATA_ROOT"/data/data/vfscanf_gformat.txt", "w+");
     if (stream == nullptr) {
         perror("fopen vfscanf gformat");
     }
@@ -1085,13 +1085,13 @@ static void Bm_function_Vfscanf_gformat(benchmark::State &state)
         benchmark::DoNotOptimize(MyScanf1(stream, "%g", &val));
     }
     fclose(stream);
-    remove("/data/data/vfscanf_gformat.txt");
+    remove(DATA_ROOT"/data/data/vfscanf_gformat.txt");
     state.SetBytesProcessed(state.iterations());
 }
 
 static void Bm_function_Vfscanf_ldformat(benchmark::State &state)
 {
-    FILE *stream = fopen("/data/data/vfscanf_gformat.txt", "w+");
+    FILE *stream = fopen(DATA_ROOT"/data/data/vfscanf_gformat.txt", "w+");
     if (stream == nullptr) {
         perror("fopen vfscanf ldformat");
     }
@@ -1103,13 +1103,13 @@ static void Bm_function_Vfscanf_ldformat(benchmark::State &state)
         benchmark::DoNotOptimize(MyScanf1(stream, "%ld", &val));
     }
     fclose(stream);
-    remove("/data/data/vfscanf_ldformat.txt");
+    remove(DATA_ROOT"/data/data/vfscanf_ldformat.txt");
     state.SetBytesProcessed(state.iterations());
 }
 
 static void Bm_function_Vfscanf_luformat(benchmark::State &state)
 {
-    FILE *stream = fopen("/data/data/vfscanf_luformat.txt", "w+");
+    FILE *stream = fopen(DATA_ROOT"/data/data/vfscanf_luformat.txt", "w+");
     if (stream == nullptr) {
         perror("fopen vfscanf luformat");
     }
@@ -1121,13 +1121,13 @@ static void Bm_function_Vfscanf_luformat(benchmark::State &state)
         benchmark::DoNotOptimize(MyScanf1(stream, "%lu", &val));
     }
     fclose(stream);
-    remove("/data/data/vfscanf_luformat.txt");
+    remove(DATA_ROOT"/data/data/vfscanf_luformat.txt");
     state.SetBytesProcessed(state.iterations());
 }
 
 static void Bm_function_Vfscanf_lxformat(benchmark::State &state)
 {
-    FILE *stream = fopen("/data/data/vfscanf_lxformat.txt", "w+");
+    FILE *stream = fopen(DATA_ROOT"/data/data/vfscanf_lxformat.txt", "w+");
     if (stream == nullptr) {
         perror("fopen vfscanf lxformat");
     }
@@ -1139,13 +1139,13 @@ static void Bm_function_Vfscanf_lxformat(benchmark::State &state)
         benchmark::DoNotOptimize(MyScanf1(stream, "%lx", &val));
     }
     fclose(stream);
-    remove("/data/data/vfscanf_lxformat.txt");
+    remove(DATA_ROOT"/data/data/vfscanf_lxformat.txt");
     state.SetBytesProcessed(state.iterations());
 }
 
 static void Bm_function_Vfscanf_loformat(benchmark::State &state)
 {
-    FILE *stream = fopen("/data/data/vfscanf_loformat.txt", "w+");
+    FILE *stream = fopen(DATA_ROOT"/data/data/vfscanf_loformat.txt", "w+");
     if (stream == nullptr) {
         perror("fopen vfscanf loformat");
     }
@@ -1157,13 +1157,13 @@ static void Bm_function_Vfscanf_loformat(benchmark::State &state)
         benchmark::DoNotOptimize(MyScanf1(stream, "%lo", &val));
     }
     fclose(stream);
-    remove("/data/data/vfscanf_loformat.txt");
+    remove(DATA_ROOT"/data/data/vfscanf_loformat.txt");
     state.SetBytesProcessed(state.iterations());
 }
 
 static void Bm_function_Vfscanf_hdformat(benchmark::State &state)
 {
-    FILE *stream = fopen("/data/data/vfscanf_hdformat.txt", "w+");
+    FILE *stream = fopen(DATA_ROOT"/data/data/vfscanf_hdformat.txt", "w+");
     if (stream == nullptr) {
         perror("fopen vfscanf hdformat");
     }
@@ -1175,13 +1175,13 @@ static void Bm_function_Vfscanf_hdformat(benchmark::State &state)
         benchmark::DoNotOptimize(MyScanf1(stream, "%hd", &val));
     }
     fclose(stream);
-    remove("/data/data/vfscanf_hdformat.txt");
+    remove(DATA_ROOT"/data/data/vfscanf_hdformat.txt");
     state.SetBytesProcessed(state.iterations());
 }
 
 static void Bm_function_Vfscanf_huformat(benchmark::State &state)
 {
-    FILE *stream = fopen("/data/data/vfscanf_huformat.txt", "w+");
+    FILE *stream = fopen(DATA_ROOT"/data/data/vfscanf_huformat.txt", "w+");
     if (stream == nullptr) {
         perror("fopen vfscanf huformat");
     }
@@ -1193,13 +1193,13 @@ static void Bm_function_Vfscanf_huformat(benchmark::State &state)
         benchmark::DoNotOptimize(MyScanf1(stream, "%hu", &val));
     }
     fclose(stream);
-    remove("/data/data/vfscanf_huformat.txt");
+    remove(DATA_ROOT"/data/data/vfscanf_huformat.txt");
     state.SetBytesProcessed(state.iterations());
 }
 
 static void Bm_function_Vfscanf_hhuformat(benchmark::State &state)
 {
-    FILE *stream = fopen("/data/data/vfscanf_hhuformat.txt", "w+");
+    FILE *stream = fopen(DATA_ROOT"/data/data/vfscanf_hhuformat.txt", "w+");
     if (stream == nullptr) {
         perror("fopen vfscanf hhuformat");
     }
@@ -1211,13 +1211,13 @@ static void Bm_function_Vfscanf_hhuformat(benchmark::State &state)
         benchmark::DoNotOptimize(MyScanf1(stream, "%hhu", &val));
     }
     fclose(stream);
-    remove("/data/data/vfscanf_hhuformat.txt");
+    remove(DATA_ROOT"/data/data/vfscanf_hhuformat.txt");
     state.SetBytesProcessed(state.iterations());
 }
 
 static void Bm_function_Vfscanf_hhxformat(benchmark::State &state)
 {
-    FILE *stream = fopen("/data/data/vfscanf_hhxformat.txt", "w+");
+    FILE *stream = fopen(DATA_ROOT"/data/data/vfscanf_hhxformat.txt", "w+");
     if (stream == nullptr) {
         perror("fopen vfscanf hhxformat");
     }
@@ -1229,13 +1229,13 @@ static void Bm_function_Vfscanf_hhxformat(benchmark::State &state)
         benchmark::DoNotOptimize(MyScanf1(stream, "%hhx", &val));
     }
     fclose(stream);
-    remove("/data/data/vfscanf_hhxformat.txt");
+    remove(DATA_ROOT"/data/data/vfscanf_hhxformat.txt");
     state.SetBytesProcessed(state.iterations());
 }
 
 static void Bm_function_Vfscanf_llxformat(benchmark::State &state)
 {
-    FILE *stream = fopen("/data/data/vfscanf_llxformat.txt", "w+");
+    FILE *stream = fopen(DATA_ROOT"/data/data/vfscanf_llxformat.txt", "w+");
     if (stream == nullptr) {
         perror("fopen vfscanf llxformat");
     }
@@ -1247,13 +1247,13 @@ static void Bm_function_Vfscanf_llxformat(benchmark::State &state)
         benchmark::DoNotOptimize(MyScanf1(stream, "%llx", &val));
     }
     fclose(stream);
-    remove("/data/data/vfscanf_llxformat.txt");
+    remove(DATA_ROOT"/data/data/vfscanf_llxformat.txt");
     state.SetBytesProcessed(state.iterations());
 }
 
 static void Bm_function_Vfscanf_lldformat(benchmark::State &state)
 {
-    FILE *stream = fopen("/data/data/vfscanf_lldformat.txt", "w+");
+    FILE *stream = fopen(DATA_ROOT"/data/data/vfscanf_lldformat.txt", "w+");
     if (stream == nullptr) {
         perror("fopen vfscanf lldformat");
     }
@@ -1265,13 +1265,13 @@ static void Bm_function_Vfscanf_lldformat(benchmark::State &state)
         benchmark::DoNotOptimize(MyScanf1(stream, "%lld", &val));
     }
     fclose(stream);
-    remove("/data/data/vfscanf_lldformat.txt");
+    remove(DATA_ROOT"/data/data/vfscanf_lldformat.txt");
     state.SetBytesProcessed(state.iterations());
 }
 
 static void Bm_function_Vfscanf_lluformat(benchmark::State &state)
 {
-    FILE *stream = fopen("/data/data/vfscanf_lluformat.txt", "w+");
+    FILE *stream = fopen(DATA_ROOT"/data/data/vfscanf_lluformat.txt", "w+");
     if (stream == nullptr) {
         perror("fopen vfscanf lluformat");
     }
@@ -1283,13 +1283,13 @@ static void Bm_function_Vfscanf_lluformat(benchmark::State &state)
         benchmark::DoNotOptimize(MyScanf1(stream, "%llu", &val));
     }
     fclose(stream);
-    remove("/data/data/vfscanf_lluformat.txt");
+    remove(DATA_ROOT"/data/data/vfscanf_lluformat.txt");
     state.SetBytesProcessed(state.iterations());
 }
 
 static void Bm_function_Fileno_unlocked(benchmark::State &state)
 {
-    FILE *stream = fopen("/data/data/vfscanf_lluformat.txt", "w+");
+    FILE *stream = fopen(DATA_ROOT"/data/data/vfscanf_lluformat.txt", "w+");
     if (stream == nullptr) {
         perror("fopen vfscanf lluformat");
     }
@@ -1297,7 +1297,7 @@ static void Bm_function_Fileno_unlocked(benchmark::State &state)
         benchmark::DoNotOptimize(fileno_unlocked(stream));
     }
     fclose(stream);
-    remove("/data/data/vfscanf_lluformat.txt");
+    remove(DATA_ROOT"/data/data/vfscanf_lluformat.txt");
     state.SetBytesProcessed(state.iterations());
 }
 
@@ -1421,7 +1421,7 @@ static void Bm_function_Ftell(benchmark::State &state)
     fclose(fp);
     state.SetBytesProcessed(state.iterations());
 }
-
+#if not defined __APPLE__
 static void Bm_function_fread_unlocked(benchmark::State& state)
 {
     FILE *fp = fopen("/dev/zero", "r");
@@ -1451,17 +1451,18 @@ static void Bm_function_fgets_unlocked(benchmark::State& state)
     delete[] buf;
     fclose(fp);
 }
+#endif
 
 // Rename files and directories
 static void Bm_function_Renameat(benchmark::State &state)
 {
-    const char *oldPath = "/data/data/test_old_renameat.txt";
+    const char *oldPath = DATA_ROOT"/data/data/test_old_renameat.txt";
     int oldFd = open(oldPath, O_RDWR | O_CREAT, OPEN_MODE);
     if (oldFd == -1) {
         perror("open renameat old");
     }
     close(oldFd);
-    const char *newPath = "/data/data/test_new_renameat.txt";
+    const char *newPath = DATA_ROOT"/data/data/test_new_renameat.txt";
     int newFd = open(newPath, O_RDWR | O_CREAT, OPEN_MODE);
     if (newFd == -1) {
         perror("open renameat new");
@@ -1483,8 +1484,10 @@ static void BM_function_Snprintf_d4(benchmark::State& state)
     }
 }
 
+#if not defined __APPLE__
 MUSL_BENCHMARK(Bm_function_fgets_unlocked);
 MUSL_BENCHMARK(Bm_function_fread_unlocked);
+#endif
 MUSL_BENCHMARK(Bm_function_Fopen_read);
 MUSL_BENCHMARK(Bm_function_Fopen_write);
 MUSL_BENCHMARK(Bm_function_Fopen_append);

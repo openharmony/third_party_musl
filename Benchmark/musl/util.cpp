@@ -14,7 +14,11 @@
  */
 
 #include "util.h"
+#if defined __APPLE__
+#include "malloc/malloc.h"
+#else
 #include "malloc.h"
+#endif
 
 #include <err.h>
 #include <cmath>
@@ -24,10 +28,12 @@
 #include <cstdlib>
 
 void open_tcache() {
+#if not defined __APPLE__
     mallopt(M_OHOS_CONFIG, M_TACHE_PERFORMANCE_MODE);
     mallopt(M_OHOS_CONFIG, M_ENABLE_OPT_CACHE);
     mallopt(M_SET_THREAD_CACHE, M_THREAD_OPT_CACHE);
     mallopt(M_DELAYED_FREE, M_DELAYED_FREE_ENABLE);
+#endif
 }
 char* AlignUpMemoy(char* origPtr, size_t alignment)
 {

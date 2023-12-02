@@ -14,7 +14,9 @@
  */
 
 #include "ctime"
+#if not defined __APPLE__
 #include "sys/timerfd.h"
+#endif
 #include "sys/time.h"
 #include "cstdlib"
 #include "cstdio"

@@ -39,17 +39,17 @@ static void Bm_function_Fstatat_relativepath(benchmark::State &state)
 
 static void Bm_function_Fstatat_symbollink(benchmark::State &state)
 {
-    symlink("/etc/passwd", "/data/local/tmp/passwd_link");
+    symlink("/etc/passwd", DATA_ROOT"/data/local/tmp/passwd_link");
     struct stat st;
     int fd = -1;
     for (auto _ : state) {
-        fd = fstatat(AT_FDCWD, "/data/local/tmp/passwd_link", &st, AT_SYMLINK_NOFOLLOW);
+        fd = fstatat(AT_FDCWD, DATA_ROOT"/data/local/tmp/passwd_link", &st, AT_SYMLINK_NOFOLLOW);
         if (fd == -1) {
             perror("fstatat symbollink");
         }
         benchmark::DoNotOptimize(fd);
     }
-    remove("/data/local/tmp/passwd_link");
+    remove(DATA_ROOT"/data/local/tmp/passwd_link");
     state.SetBytesProcessed(state.iterations());
 }
 
@@ -85,9 +85,9 @@ static void Bm_function_Fstat64(benchmark::State &state)
 static void Bm_function_Mkdir(benchmark::State &state)
 {
     for (auto _ : state) {
-        benchmark::DoNotOptimize(mkdir("/data/data/test_mkdir", S_IRWXU | S_IRWXG | S_IXGRP | S_IROTH | S_IXOTH));
+        benchmark::DoNotOptimize(mkdir(DATA_ROOT"/data/data/test_mkdir", S_IRWXU | S_IRWXG | S_IXGRP | S_IROTH | S_IXOTH));
         state.PauseTiming();
-        rmdir("/data/data/test_mkdir");
+        rmdir(DATA_ROOT"/data/data/test_mkdir");
         state.ResumeTiming();
     }
     state.SetItemsProcessed(state.iterations());
@@ -96,9 +96,9 @@ static void Bm_function_Mkdir(benchmark::State &state)
 static void Bm_function_Mkdirat(benchmark::State &state)
 {
     for (auto _ : state) {
-        benchmark::DoNotOptimize(mkdirat(AT_FDCWD, "/data/data/test_mkdirat", S_IRWXU | S_IRWXG | S_IXOTH | S_IROTH));
+        benchmark::DoNotOptimize(mkdirat(AT_FDCWD, DATA_ROOT"/data/data/test_mkdirat", S_IRWXU | S_IRWXG | S_IXOTH | S_IROTH));
         state.PauseTiming();
-        rmdir("/data/data/test_mkdirat");
+        rmdir(DATA_ROOT"/data/data/test_mkdirat");
         state.ResumeTiming();
     }
 }

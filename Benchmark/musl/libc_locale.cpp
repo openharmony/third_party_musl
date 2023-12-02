@@ -16,7 +16,9 @@
 #include <clocale>
 #include <langinfo.h>
 #include "sys/types.h"
+#if not defined __APPLE__
 #include "sys/epoll.h"
+#endif
 #include "sys/stat.h"
 #include "fcntl.h"
 #include "cstdarg"
@@ -30,6 +32,9 @@
 #include "unistd.h"
 #include "util.h"
 #include "sys/syscall.h"
+#if defined __APPLE__
+#include <xlocale.h>
+#endif
 
 using namespace std;
 
