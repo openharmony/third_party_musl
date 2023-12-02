@@ -27,7 +27,9 @@
 #include <ctime>
 #include <unistd.h>
 #include <sys/utsname.h>
+#if not defined __APPLE__
 #include <sys/eventfd.h>
+#endif
 #include "util.h"
 
 using namespace std;

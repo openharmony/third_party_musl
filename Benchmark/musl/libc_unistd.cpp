@@ -17,7 +17,9 @@
 #include "cstddef"
 #include "cfenv"
 #include "sys/mman.h"
+#if not defined __APPLE__
 #include "sys/prctl.h"
+#endif
 #include "sys/types.h"
 #include "sys/stat.h"
 #include "sys/uio.h"
