@@ -19,13 +19,18 @@
 #include "sys/mman.h"
 #include "unistd.h"
 #include "cstdio"
+#if defined __APPLE__
+#include <malloc/malloc.h>
+#else
 #include "malloc.h"
+#endif
 #include "util.h"
 
 using namespace std;
 
 static const vector<int> mmapFlags = {
     MAP_PRIVATE | MAP_ANONYMOUS,
+#if not defined __APPLE__
     MAP_PRIVATE | MAP_ANONYMOUS | MAP_HUGETLB,
     MAP_PRIVATE | MAP_ANONYMOUS | MAP_HUGE_2MB,
     MAP_PRIVATE | MAP_ANONYMOUS | MAP_HUGE_1GB,
@@ -33,6 +38,7 @@ static const vector<int> mmapFlags = {
     MAP_PRIVATE | MAP_ANONYMOUS | MAP_HUGETLB | MAP_POPULATE,
     MAP_PRIVATE | MAP_ANONYMOUS | MAP_HUGE_2MB | MAP_POPULATE,
     MAP_PRIVATE | MAP_ANONYMOUS | MAP_HUGE_1GB | MAP_POPULATE,
+#endif
 };
 
 static const vector<int> msyncFlags = {
@@ -63,9 +69,11 @@ static const vector<int> mdviseType {
     MADV_WILLNEED,
     MADV_DONTNEED,
     MADV_FREE,
+#if not defined __APPLE__
     MADV_REMOVE,
     MADV_HUGEPAGE,
     MADV_SOFT_OFFLINE
+#endif
 };
 
 static const vector<int> mprotectLength {
@@ -212,7 +220,11 @@ static void Bm_function_Mremap(benchmark::State &state)
         state.ResumeTiming();
 
         if (oldAddr != MAP_FAILED) {
+#if defined __APPLE__
+            void *newAddr = MAP_FAILED;
+#else
             void *newAddr = mremap(oldAddr, oldLength, newLength, MREMAP_MAYMOVE);
+#endif
             if (newAddr != MAP_FAILED) {
                 state.PauseTiming();
                 munmap(newAddr, newLength);
@@ -247,7 +259,12 @@ static void Bm_function_mprotect(benchmark::State &state)
 {
     size_t pagesize = sysconf(_SC_PAGE_SIZE);
     size_t size = pagesize * mprotectLength[state.range(0)];
+#if defined __APPLE__
+    void *pages;
+    posix_memalign(&pages, pagesize, size);
+#else
     void *pages = memalign(pagesize, size);
+#endif
 
     for (auto _ : state) {
         benchmark::DoNotOptimize(mprotect(pages, size, PROT_READ | PROT_WRITE));

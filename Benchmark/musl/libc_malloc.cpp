@@ -13,7 +13,11 @@
  * limitations under the License.
  */
 
+#if defined __APPLE__
+#include <malloc/malloc.h>
+#else
 #include "malloc.h"
+#endif
 #include "cstdlib"
 #include "util.h"
 
@@ -117,7 +121,11 @@ static void Bm_function_malloc_usable_size(benchmark::State &state)
     }
     open_tcache();
     for (auto _ : state) {
+#if defined __APPLE__
+        benchmark::DoNotOptimize(malloc_size(p));
+#else
         benchmark::DoNotOptimize(malloc_usable_size(p));
+#endif
     }
 
     if (p != nullptr) {

@@ -17,6 +17,9 @@
 #include "cwctype"
 #include "clocale"
 #include "util.h"
+#if defined __APPLE__
+#include <xlocale.h>
+#endif
 
 using namespace std;
 

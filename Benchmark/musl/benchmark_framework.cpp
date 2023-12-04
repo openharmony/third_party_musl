@@ -155,6 +155,7 @@ bench_opts_t ParseOptions(int argc, char **argv)
 
 void LockAndRun(benchmark::State &state, BenchmarkFunc func, int cpuNum)
 {
+#if not defined __APPLE__
     if (cpuNum >= 0) {
         cpu_set_t cpuset;
         CPU_ZERO(&cpuset);
@@ -164,6 +165,7 @@ void LockAndRun(benchmark::State &state, BenchmarkFunc func, int cpuNum)
             printf("lock CPU failed, ERROR:%s\n", strerror(errno));
         }
     }
+#endif
 
     reinterpret_cast<void (*)(benchmark::State &)>(func)(state);
 }
