@@ -170,20 +170,24 @@ void gwp_asan_printf(const char *fmt, ...)
     char para_name[GWP_ASAN_NAME_LEN] = "gwp_asan.log.path";
     static CachedHandle para_handler = NULL;
     if (para_handler == NULL) {
-        para_handler = CachedParameterCreate(para_name, "default");
+        para_handler = CachedParameterCreate(para_name, "file");
     }
     char *para_value = CachedParameterGet(para_handler);
     if (strcmp(para_value, "file") == 0) {
         char process_short_name[GWP_ASAN_NAME_LEN];
         char *path = get_process_short_name(process_short_name, GWP_ASAN_NAME_LEN);
         if (!path) {
+            MUSL_LOGE("[gwp_asan]: get_process_short_name failed!");
             return;
         }
         char log_path[GWP_ASAN_NAME_LEN];
         snprintf(log_path, GWP_ASAN_NAME_LEN, "%s%s.%s.%d.log", GWP_ASAN_LOG_DIR, GWP_ASAN_LOG_TAG, path, getpid());
         FILE *fp = fopen(log_path, "a+");
         if (!fp) {
+            MUSL_LOGE("[gwp_asan]: %{public}s fopen %{public}s succeed.", path, log_path);
             return;
+        } else {
+            MUSL_LOGE("[gwp_asan]: %{public}s fopen %{public}s failed!", path, log_path);
         }
         va_list ap;
         va_start(ap, fmt);
@@ -191,7 +195,7 @@ void gwp_asan_printf(const char *fmt, ...)
         va_end(ap);
         fclose(fp);
         if (result < 0) {
-            MUSL_LOGE("[gwp_asan] write log failed!\n");
+            MUSL_LOGE("[gwp_asan] %{public}s write log failed!\n", path);
         }
         return;
     }
@@ -327,7 +331,7 @@ GWP_ASAN_NO_ADDRESS size_t libc_gwp_asan_unwind_fast(size_t *frame_buf, size_t m
 
 bool may_init_gwp_asan(bool force_init)
 {
-    GWP_ASAN_LOGD("[gwp_asan]: may_init_gwp_asan enter force_init:%d.\n", force_init);
+    GWP_ASAN_LOGD("[gwp_asan]: may_init_gwp_asan enter force_init:%{public}d.\n", force_init);
     if (gwp_asan_initialized) {
         GWP_ASAN_LOGD("[gwp_asan]: may_init_gwp_asan return because gwp_asan_initialized is true.\n");
         return false;
@@ -361,10 +365,17 @@ bool may_init_gwp_asan(bool force_init)
         .printf_backtrace = gwp_asan_printf_backtrace,
         .segv_backtrace = libc_gwp_asan_unwind_fast,
     };
-    MUSL_LOGE("[gwp_asan]: %{public}d gwp_asan initializing.\n", getpid());
+
+    char buf[GWP_ASAN_NAME_LEN];
+    char *path = get_process_short_name(buf, GWP_ASAN_NAME_LEN);
+    if (!path) {
+        return false;
+    }
+
+    MUSL_LOGE("[gwp_asan]: %{public}d %{public}s gwp_asan initializing.\n", getpid(), path);
     init_gwp_asan((void*)&gwp_asan_option);
     gwp_asan_initialized = true;
-    MUSL_LOGE("[gwp_asan]: %{public}d gwp_asan initialized.\n", getpid());
+    MUSL_LOGE("[gwp_asan]: %{public}d %{public}s gwp_asan initialized.\n", getpid(), path);
     return true;
 }
 bool init_gwp_asan_by_libc(bool force_init)
@@ -375,7 +386,7 @@ bool init_gwp_asan_by_libc(bool force_init)
         return false;
     }
     // We don't sample appspawn, and the chaild process decides whether to sample or not.
-    if (strcmp(path, "appspawn") == 0) {
+    if (strcmp(path, "appspawn") == 0 || strcmp(path, "sh") == 0) {
         return false;
     }
     return may_init_gwp_asan(force_init);
