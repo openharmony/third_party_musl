@@ -31,7 +31,7 @@ static const long double DIVISOR_VALUES[] = { 3.0L, -3.0L, 1.414L, -1.414L, 0.5L
 static const double FLOAT_VALUES[] = { 0.1, 10.0, -100.0, 0.0001, 5.14e11, -0.0001, 10000000.0, -100000000.0 };
 static const double ATANHF_FLOAT_VALUES[] = { -1.0, -0.0, 0.0, -0.5, 0.9, 1.0, -100, 1000000.0 };
 static const double RINTF_FLOAT_VALUES[] = { -3.52467, 0.0, 2.0 / 0.0, 3.37562, 3.76542 };
-static const float LOGF_VALUES[] = { 0.0, 0.0 / 0.0, 20.0, 9.6 / 0.0, 0.0001, 5.14e11, -1.0, -100 };
+static const float LOGF_VALUES[] = { 0.0, static_cast<float>(0.0 / 0.0), 20.0, static_cast<float>(9.6 / 0.0), 0.0001, 5.14e11, -1.0, -100 };
 // The function generates a value that has the size of the parameter x and the symbol of the parameter y
 static void Bm_function_Copysignl_Allpositive(benchmark::State &state)
 {

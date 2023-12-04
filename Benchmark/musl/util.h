@@ -33,6 +33,12 @@
 #define LIBGLES_MALI_PATH "/vendor/lib64/chipsetsdk/libGLES_mali.so"
 #endif
 
+#if defined __APPLE__
+#define DATA_ROOT "."
+#else
+#define DATA_ROOT 
+#endif
+
 typedef void (*BenchmarkFunc) (void);
 typedef void (*ApplyBenchmarkFunc) (benchmark::internal::Benchmark*);
 

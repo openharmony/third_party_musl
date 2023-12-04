@@ -16,9 +16,13 @@
 #include "pthread.h"
 #include "semaphore.h"
 #include "csignal"
+#if not defined __APPLE__
 #include "threads.h"
+#endif
 #include "unistd.h"
+#if not defined __APPLE__
 #include "sys/tgkill.h"
+#endif
 #include "ctime"
 #include "util.h"
 

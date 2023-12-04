@@ -13,7 +13,9 @@
  * limitations under the License.
  */
 #include <iostream>
+#if not defined __APPLE__
 #include <stdio_ext.h>
+#endif
 #include <unistd.h>
 #include <thread>
 #include "cstring"
@@ -114,7 +116,7 @@ static void Bm_function_Strnlen(benchmark::State &state)
     }
     state.SetBytesProcessed(uint64_t(state.iterations()) * uint64_t(nbytes));
 }
-
+#if not defined __APPLE__
 extern "C" size_t __strlen_chk(const char* s, size_t s_len);
 
 static void Bm_function_Strlen_chk(benchmark::State& state)
@@ -130,6 +132,7 @@ static void Bm_function_Strlen_chk(benchmark::State& state)
     }
     state.SetBytesProcessed(uint64_t(state.iterations()) * uint64_t(nbytes));
 }
+#endif
 
 // Specifies the maximum number of copies to replicate
 static void Bm_function_Stpncpy(benchmark::State &state)
@@ -252,6 +255,7 @@ static void Bm_function_Strcspn(benchmark::State &state)
     }
 }
 
+#if not defined __APPLE__
 static void Bm_function_Strchrnul_exist(benchmark::State &state)
 {
     const char *str = "musl.ld.debug.dlclose";
@@ -283,6 +287,7 @@ static void Bm_function_Strchrnul(benchmark::State &state)
     }
     state.SetBytesProcessed(uint64_t(state.iterations()) * uint64_t(nbytes));
 }
+#endif
 
 static void Bm_function_Strcasecmp_capital_equal(benchmark::State &state)
 {
@@ -667,7 +672,7 @@ static void BM_function_Strlcat(benchmark::State& state)
 
 static void BM_function_Getdelim(benchmark::State& state)
 {
-    FILE* fp = fopen("/data/getdlim.txt", "w+");
+    FILE* fp = fopen(DATA_ROOT"/data/getdlim.txt", "w+");
     if (fp == nullptr) {
         errx(1, "ERROR: fp is nullptr\n");
     }
@@ -695,13 +700,17 @@ MUSL_BENCHMARK(BM_function_Getdelim);
 MUSL_BENCHMARK_WITH_ARG(BM_function_Strlcat, "ALIGNED_ONEBUF");
 MUSL_BENCHMARK_WITH_APPLY(Bm_function_Memchr, StringtestArgs);
 MUSL_BENCHMARK_WITH_APPLY(Bm_function_Strnlen, StringtestArgs);
+#if not defined __APPLE__
 MUSL_BENCHMARK_WITH_ARG(Bm_function_Strlen_chk, "BENCHMARK_8");
+#endif
 MUSL_BENCHMARK_WITH_APPLY(Bm_function_Stpncpy, StringtestArgs);
 MUSL_BENCHMARK_WITH_APPLY(Bm_function_Strncpy, StringtestArgs);
 MUSL_BENCHMARK_WITH_ARG(Bm_function_Strcspn, "BENCHMARK_8");
+#if not defined __APPLE__
 MUSL_BENCHMARK(Bm_function_Strchrnul_exist);
 MUSL_BENCHMARK(Bm_function_Strchrnul_noexist);
 MUSL_BENCHMARK_WITH_ARG(Bm_function_Strchrnul, "ALIGNED_ONEBUF");
+#endif
 MUSL_BENCHMARK(Bm_function_Strcasecmp_capital_equal);
 MUSL_BENCHMARK(Bm_function_Strcasecmp_small_equal);
 MUSL_BENCHMARK(Bm_function_Strcasecmp_equal);
