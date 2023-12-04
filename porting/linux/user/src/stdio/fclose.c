@@ -1,6 +1,5 @@
 #include "stdio_impl.h"
 #include <stdlib.h>
-#include <errno.h>
 
 static void dummy(FILE *f) { }
 weak_alias(dummy, __unlist_locked_file);
@@ -10,13 +9,6 @@ int fclose(FILE *f)
 	int r;
 	
 	FLOCK(f);
-	if (!f || f->flags == 0) {
-		/* already free */
-		errno = EBADF;
-		FUNLOCK(f);
-		return -EBADF;
-	}
-
 	r = fflush(f);
 	r |= f->close(f);
 	FUNLOCK(f);
@@ -37,10 +29,6 @@ int fclose(FILE *f)
 	/* release base instead of buf which may be modified by setvbuf
 	 * or iniitalize by local variable */
 	free(f->base);
-
-	/* reset flags before put f into free list */
-	f->flags = 0;
-
 	__ofl_free(f);
 
 	return r;
