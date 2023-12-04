@@ -219,7 +219,7 @@ void gwp_asan_printf(const char *fmt, ...)
         }
         if (!try_load_asan_logger && handle == NULL) {
             try_load_asan_logger = true;
-            handle = dlopen("ASAN_LOG_LIB", RTLD_LAZY);
+            handle = dlopen(ASAN_LOG_LIB, RTLD_LAZY);
 	    if (handle == NULL) {
                 pthread_mutex_unlock(&gwpasan_mutex);
                 return;
