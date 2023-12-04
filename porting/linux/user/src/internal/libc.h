@@ -19,6 +19,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <limits.h>
+#include <link.h>
 #include <locale.h>
 struct __locale_map;
 
@@ -43,6 +44,10 @@ struct __libc {
 	size_t tls_size, tls_align, tls_cnt;
 	size_t page_size;
 	struct __locale_struct global_locale;
+#ifdef ENABLE_HWASAN
+	void (*load_hook)(unsigned long int base, const Elf64_Phdr* phdr, int phnum);
+	void (*unload_hook)(unsigned long int base, const Elf64_Phdr* phdr, int phnum);
+#endif
 };
 
 #ifndef PAGE_SIZE
