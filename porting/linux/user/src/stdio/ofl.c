@@ -32,6 +32,8 @@ FILE *__ofl_alloc()
 	if (ofl_free) {
 		f = ofl_free;
 		ofl_free = ofl_free->next;
+		f->next = NULL;
+		f->prev = NULL;
 		UNLOCK(ofl_lock);
 
 		return f;
@@ -63,6 +65,8 @@ FILE *__ofl_alloc()
 	if (ofl_free) {
 		ofl_free->prev = NULL;
 	}
+	f->next = NULL;
+	f->prev = NULL;
 
 	UNLOCK(ofl_lock);
 	return f;
