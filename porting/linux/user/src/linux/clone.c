@@ -6,6 +6,7 @@
 #include "pthread_impl.h"
 #include "syscall.h"
 #include "libc.h"
+#include "proc_xid_impl.h"
 
 struct __clone_args {
 	int (*func)(void *);
@@ -31,11 +32,14 @@ static int __start_child(void *clone_args)
 	__block_all_sigs(&set);
 	pthread_t self = __pthread_self();
 	self->tid = __syscall(SYS_gettid);
+	self->pid = self->tid;
+	self->proc_tid = -1;
 	self->robust_list.off = 0;
 	self->robust_list.pending = 0;
 	self->next = self->prev = self;
 	__thread_list_lock = 0;
 	libc.threads_minus_1 = 0;
+	__clear_proc_pid();
 	__restore_sigs(&set);
 
 	status = func(arg);

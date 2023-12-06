@@ -2255,6 +2255,7 @@ musl_src_porting_file = [
   "src/internal/services.h",
   "src/internal/network_conf_function.h",
   "src/internal/network_conf_function.c",
+  "src/internal/proc_xid_impl.h",
   "ldso/namespace.h",
   "ldso/ns_config.h",
   "ldso/strops.h",

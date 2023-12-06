@@ -50,6 +50,7 @@ struct pthread {
     /* Part 2 -- implementation details, non-ABI. */
     int tid;
     int pid;
+    int proc_tid;
     int errno_val;
     volatile int detach_state;
 #ifdef FEATURE_PTHREAD_CANCEL
