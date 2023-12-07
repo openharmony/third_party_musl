@@ -127,7 +127,7 @@ void getproctid_0100(void)
 
     ret = pthread_join(thread, &retVal);
     EXPECT_EQ("getproctid_0100", ret, 0);
-    EXPECT_EQ("getproctid_0100", (int)retVal, 0);
+    EXPECT_EQ("getproctid_0100", retVal, NULL);
 }
 
 /**
