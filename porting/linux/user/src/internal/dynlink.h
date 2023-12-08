@@ -148,7 +148,19 @@ struct dso {
 	char runtime_loaded;
 	char by_dlopen;
 	bool is_mapped_to_shadow;
+	struct dso_debug_info *debug_info;
 	char buf[];
+};
+
+struct dso_debug_info {
+#if DL_FDPIC
+	struct fdpic_loadmap *loadmap;
+#else
+	unsigned char *base;
+#endif
+	char *name;
+	size_t *dynv;
+	struct dso_debug_info *next, *prev;
 };
 
 struct symdef {
