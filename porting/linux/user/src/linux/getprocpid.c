@@ -3,18 +3,27 @@
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
+#include "pthread_impl.h"
 
 #define PID_MAX_LEN 11
-#define PID_STR_LEN 5
 #define STATUS_LINE_SIZE 255
+#define PID_STR "Tgid:"
+#define TID_STR "Pid:"
 
-static int __find_and_convert_pid(char *buf, int len)
+static pid_t proc_pid = -1;
+
+void __clear_proc_pid(void)
+{
+    proc_pid = -1;
+}
+
+static int __find_and_convert_pid(char *buf, int len, int min_len)
 {
 	int count = 0;
 	char pid_buf[PID_MAX_LEN] = {0};
 	char *str = buf;
 
-	if (len <= PID_STR_LEN) {
+	if (len <= min_len) {
 		return -1;
 	}
 	while (*str != '\0') {
@@ -33,9 +42,8 @@ static int __find_and_convert_pid(char *buf, int len)
 	return atoi(pid_buf);
 }
 
-static int __parse_pid_form_proc(void)
+static int __parse_pid_form_proc(const char *path, const char *id_buf, size_t len)
 {
-	const char *path = "/proc/self/status";
 	char buf[STATUS_LINE_SIZE] = {0};
 
 	FILE *fp = fopen(path, "r");
@@ -47,21 +55,20 @@ static int __parse_pid_form_proc(void)
 			fclose(fp);
 			return -errno;
 		}
-		if (strncmp(buf, "Tgid:", PID_STR_LEN) == 0) {
+		if (strncmp(buf, id_buf, len) == 0) {
 			break;
 		}
 	}
 	(void)fclose(fp);
-	return __find_and_convert_pid(buf, strlen(buf));
+	return __find_and_convert_pid(buf, strlen(buf), len);
 }
 
 pid_t getprocpid(void)
 {
-	static pid_t proc_pid = -1;
 	int pid;
 
 	if (proc_pid < 0) {
-		pid = __parse_pid_form_proc();
+		pid = __parse_pid_form_proc("/proc/self/status", PID_STR, strlen(PID_STR));
 		if (pid < 1) {
 			return -1;
 		}
@@ -69,3 +76,19 @@ pid_t getprocpid(void)
 	}
 	return proc_pid;
 }
+
+pid_t getproctid(void)
+{
+	pthread_t self = __pthread_self();
+	int pid;
+
+	if (self->proc_tid < 0) {
+		pid = __parse_pid_form_proc("/proc/thread-self/status", TID_STR, strlen(TID_STR));
+		if (pid < 1) {
+			return -1;
+		}
+		self->proc_tid = (pid_t)pid;
+	}
+	return self->proc_tid;
+}
+

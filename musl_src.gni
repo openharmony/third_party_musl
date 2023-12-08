@@ -1044,6 +1044,10 @@ musl_src_file = [
   "src/process/waitpid.c",
   "src/regex/fnmatch.c",
   "src/regex/glob.c",
+  "src/regex/regcomp.c",
+  "src/regex/regerror.c",
+  "src/regex/regexec.c",
+  "src/regex/tre-mem.c",
   "src/sched/sched_cpualloc.c",
   "src/sched/affinity.c",
   "src/sched/sched_cpucount.c",
@@ -2152,6 +2156,7 @@ musl_inc_root_files = [
   "include/pthread.h",
   "include/pty.h",
   "include/pwd.h",
+  "include/regex.h",
   "include/resolv.h",
   "include/sched.h",
   "include/search.h",
@@ -2255,6 +2260,7 @@ musl_src_porting_file = [
   "src/internal/services.h",
   "src/internal/network_conf_function.h",
   "src/internal/network_conf_function.c",
+  "src/internal/proc_xid_impl.h",
   "ldso/namespace.h",
   "ldso/ns_config.h",
   "ldso/strops.h",
@@ -2442,5 +2448,3 @@ added_freebsd_files = [
 freebsd_headers = [ "$FREEBSD_DIR/contrib/libexecinfo/execinfo.h" ]
 
 freebsd_sys_headers = [ "$FREEBSD_DIR/sys/sys/queue.h" ]
-
-netbsd_headers = [ "third_party/netbsd/include/regex.h" ]
