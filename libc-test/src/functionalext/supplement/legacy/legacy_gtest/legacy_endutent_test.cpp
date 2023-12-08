@@ -1,6 +1,7 @@
+#include <errno.h>
 #include <gtest/gtest.h>
 #include <utmp.h>
-#include <errno.h>
+
 using namespace testing::ext;
 
 class LegacyEndutentTest : public testing::Test {

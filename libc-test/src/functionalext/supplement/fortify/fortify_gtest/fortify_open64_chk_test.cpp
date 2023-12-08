@@ -3,7 +3,6 @@
 #define _LARGEFILE64_SOURCE
 #include <fortify/fcntl.h>
 
-
 using namespace testing::ext;
 
 class FortifyOpen64chkTest : public testing::Test {

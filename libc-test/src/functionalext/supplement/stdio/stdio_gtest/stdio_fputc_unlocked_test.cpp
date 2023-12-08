@@ -18,7 +18,7 @@ HWTEST_F(StdioFputcunlockedTest, fputc_unlocked_001, TestSize.Level1)
     FILE* file;
     char ch = 'A';
     file = fopen("/proc/version", "w");
-    EXPECT_NE(nullptr, file);
+    ASSERT_NE(nullptr, file);
     int result = fputc_unlocked(ch, file);
     EXPECT_EQ(NUM, result);
     fclose(file);

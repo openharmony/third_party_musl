@@ -1,7 +1,6 @@
 #include <gtest/gtest.h>
 #include <string.h>
 
-
 constexpr size_t TEST_SIZE = 10;
 constexpr int COMPER_NUMBER = 7;
 constexpr int COMPER_NUMBER_TWO = 9;

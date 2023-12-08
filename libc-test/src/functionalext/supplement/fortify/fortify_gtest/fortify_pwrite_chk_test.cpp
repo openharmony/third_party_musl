@@ -22,10 +22,11 @@ class FortifyPwritechkTest : public testing::Test {
 HWTEST_F(FortifyPwritechkTest, __pwrite_chk_001, TestSize.Level1)
 {
     char buf[1];
-    int fd = open("/dev/null", O_WRONLY);
+    int fd = open("/data/pwrite_chk.txt", O_WRONLY | O_CREAT | O_TRUNC, 0644);
     EXPECT_EQ(BUF_SIZE, __pwrite_chk(fd, buf, BUF_SIZE, 0, BUF_SIZE));
-    fd = open("/dev/null", O_RDONLY);
+    fd = open("/data/pwrite_chk.txt", O_RDONLY);
     int ret = __pwrite_chk(fd, buf, BUF_SIZE, 0, BUF_SIZE);
     EXPECT_EQ(-1, ret);
     close(fd);
+    remove("/data/pwrite_chk.txt");
 }

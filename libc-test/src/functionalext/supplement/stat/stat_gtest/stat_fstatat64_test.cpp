@@ -22,7 +22,7 @@ HWTEST_F(StatFstatatTest, fstatat64_001, TestSize.Level1)
     const char* dirName = "test_fstatat64.txt";
     mode_t mode = S_IRWXU | S_IRWXG | S_IRWXO;
     int result = mkdir(dirName, mode);
-    EXPECT_NE(-1, result);
+    ASSERT_NE(-1, result);
     struct stat64 st;
     const char* linkName = "test_fstatat64.txt";
     EXPECT_EQ(0, fstatat64(AT_FDCWD, linkName, &st, AT_NO_AUTOMOUNT));
@@ -44,7 +44,7 @@ HWTEST_F(StatFstatatTest, fstatat64_002, TestSize.Level1)
     const char* dirName = "test_fstatat64.txt";
     mode_t mode = S_IRWXU | S_IRWXG | S_IRWXO;
     int result = mkdir(dirName, mode);
-    EXPECT_NE(-1, result);
+    ASSERT_NE(-1, result);
     struct stat64 st;
     const char* linkName = "test_fstatat64.txt";
     int ret = fstatat64(AT_FDCWD, linkName, &st, AT_SYMLINK_NOFOLLOW);
@@ -67,7 +67,7 @@ HWTEST_F(StatFstatatTest, fstatat64_003, TestSize.Level1)
     const char* dirName = "test_fstatat64.txt";
     mode_t mode = S_IRWXU | S_IRWXG | S_IRWXO;
     int result = mkdir(dirName, mode);
-    EXPECT_NE(-1, result);
+    ASSERT_NE(-1, result);
     struct stat64 st;
     const char* linkName = "test_fstatat64.txt";
     int ret = fstatat64(AT_FDCWD, linkName, &st, AT_EMPTY_PATH);

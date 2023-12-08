@@ -26,8 +26,8 @@ HWTEST_F(ExitAssertfailTest, __assert_fail_001, TestSize.Level1)
         int status;
         waitpid(pid, &status, 0);
         if (WIFSIGNALED(status)) {
-            int signum = WTERMSIG(status);
-            EXPECT_EQ(SIGABRT, signum);
+            int sigNum = WTERMSIG(status);
+            EXPECT_EQ(SIGABRT, sigNum);
         }
     }
 }

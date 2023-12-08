@@ -16,7 +16,7 @@ class StdioPerrorTest : public testing::Test {
 HWTEST_F(StdioPerrorTest, perror_001, TestSize.Level1)
 {
     FILE* file = fopen("failedOpenFile.txt", "r");
-    ASSERT_EQ(file, nullptr);
+    EXPECT_EQ(file, nullptr);
     testing::internal::CaptureStderr();
     perror("test perror success");
     std::string out = testing::internal::GetCapturedStderr();

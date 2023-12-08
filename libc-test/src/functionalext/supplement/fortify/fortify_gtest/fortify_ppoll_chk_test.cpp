@@ -2,7 +2,6 @@
 #include <fortify/poll.h>
 #include <gtest/gtest.h>
 
-
 using namespace testing::ext;
 
 class FortifyPpollchkTest : public testing::Test {

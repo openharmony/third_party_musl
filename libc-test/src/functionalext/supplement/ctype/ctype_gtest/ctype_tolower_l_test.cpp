@@ -16,9 +16,12 @@ class CtypeTolowerlTest : public testing::Test {
  **/
 HWTEST_F(CtypeTolowerlTest, tolower_l_001, TestSize.Level1)
 {
-    locale_t loc = newlocale(LC_ALL_MASK, "en_US.UTF-8", nullptr);
-    uselocale(loc);
-    char str = 'A';
-    char lowerCase = tolower_l(str, loc);
-    EXPECT_EQ('a', lowerCase);
+    locale_t loc = newlocale(LC_ALL_MASK, "", nullptr);
+    int lowerCase1 = tolower_l('?', loc);
+    int lowerCase2 = tolower_l('A', loc);
+    int lowerCase3 = tolower_l('a', loc);
+    EXPECT_EQ('?', lowerCase1);
+    EXPECT_EQ('a', lowerCase2);
+    EXPECT_EQ('a', lowerCase3);
+    freelocale(loc);
 }

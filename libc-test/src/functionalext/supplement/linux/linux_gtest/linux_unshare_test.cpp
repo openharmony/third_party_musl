@@ -17,7 +17,7 @@ constexpr int NUM = -10;
 HWTEST_F(LinuxUnshareTest, unshare_001, TestSize.Level1)
 {
     pid_t pid = fork();
-    EXPECT_NE(-1, pid);
+    ASSERT_NE(-1, pid);
 
     if (pid == 0) {
         int result = unshare(CLONE_NEWPID);

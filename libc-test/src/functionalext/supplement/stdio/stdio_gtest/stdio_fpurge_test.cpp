@@ -16,7 +16,7 @@ extern "C" int fpurge(FILE*);
 HWTEST_F(StdioFpurgeTest, fpurge_001, TestSize.Level1)
 {
     FILE* file = fopen("test_fpurge.txt", "w+");
-    EXPECT_NE(nullptr, file);
+    ASSERT_NE(nullptr, file);
     fputs("Hello, World!", file);
     int result = fpurge(file);
     EXPECT_EQ(0, result);
