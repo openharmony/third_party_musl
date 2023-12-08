@@ -33,6 +33,20 @@ ohos_executable("musl_unittest") {
   part_name = "libc-gtest"
 
   sources = [
+    # ldso unittest
+    "ldso/ldso_gtest/ldso_cfi_test.cpp",
+    "ldso/ldso_gtest/ldso_dl_iterate_phdr_test.cpp",
+    "ldso/ldso_gtest/ldso_dladdr_test.cpp",
+    "ldso/ldso_gtest/ldso_dlclose_test.cpp",
+    "ldso/ldso_gtest/ldso_dlerror_test.cpp",
+    "ldso/ldso_gtest/ldso_dlns_create_test.cpp",
+    "ldso/ldso_gtest/ldso_dlns_inherit_test.cpp",
+    "ldso/ldso_gtest/ldso_dlopen_ext_test.cpp",
+    "ldso/ldso_gtest/ldso_dlopen_ns_test.cpp",
+    "ldso/ldso_gtest/ldso_dlopen_test.cpp",
+    "ldso/ldso_gtest/ldso_dlsym_test.cpp",
+
+    # math unittest
     "math/math_gtest/complex_test.cpp",
     "math/math_gtest/math_acos_test.cpp",
     "math/math_gtest/math_acosh_test.cpp",
@@ -101,6 +115,10 @@ ohos_executable("musl_unittest") {
     "math/math_gtest/math_y0_test.cpp",
     "math/math_gtest/math_y1_test.cpp",
     "math/math_gtest/math_yn_test.cpp",
+  ]
+
+  ldflags = [
+    "-Wl,-rpath=/data/tmp/libcgtest/libs:/data/tmp/libcgtest/libs/rpath-test/",
   ]
 
   include_dirs = [ "//third_party/musl" ]
