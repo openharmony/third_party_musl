@@ -163,6 +163,14 @@ ohos_executable("musl_unittest") {
     "mman/mman_gtest/mman_mprotect_test.cpp",
     "mman/mman_gtest/mman_msync_test.cpp",
     "multibyte/multibyte_gtest/multibyte_mbrtowc_test.cpp",
+    "network/network_gtest/arpa_inet_test.cpp",
+    "network/network_gtest/endian_test.cpp",
+    "network/network_gtest/fortify_test.cpp",
+    "network/network_gtest/net_if_test.cpp",
+    "network/network_gtest/netdb_test.cpp",
+    "network/network_gtest/netinet_ether_test.cpp",
+    "network/network_gtest/resolv_test.cpp",
+    "network/network_gtest/socket_test.cpp",
     "prng/prng_gtest/prng_rand_r_test.cpp",
     "prng/prng_gtest/prng_rand_test.cpp",
     "select/select_gtest/select_poll_test.cpp",
@@ -204,6 +212,25 @@ ohos_executable("musl_unittest") {
     "string/string_gtest/string_strstr_test.cpp",
     "string/string_gtest/string_wmemchr_test.cpp",
     "string/string_gtest/string_wmemcmp_test.cpp",
+    "thread/thread_gtest/pthread_attr_test.cpp",
+    "thread/thread_gtest/pthread_barrier_test.cpp",
+    "thread/thread_gtest/pthread_cleanup_test.cpp",
+    "thread/thread_gtest/pthread_cond_test.cpp",
+    "thread/thread_gtest/pthread_key_test.cpp",
+    "thread/thread_gtest/pthread_spin_test.cpp",
+    "thread/thread_gtest/thread_callonce_test.cpp",
+    "thread/thread_gtest/thread_cnd_test.cpp",
+    "thread/thread_gtest/thread_mutex_test.cpp",
+    "thread/thread_gtest/thread_mutexattr_test.cpp",
+    "thread/thread_gtest/thread_pthrd_test.cpp",
+    "thread/thread_gtest/thread_rwlock_test.cpp",
+    "thread/thread_gtest/thread_sem_test.cpp",
+    "thread/thread_gtest/thread_thrd_test.cpp",
+    "thread/thread_gtest/thread_tls_get_addr_test.cpp",
+    "thread/thread_gtest/thread_tss_test.cpp",
+    "time/time_gtest/sys_clock_test.cpp",
+    "time/time_gtest/time_test.cpp",
+    "time/time_gtest/timer_test.cpp",
     "unistd/unistd_gtest/unistd_Exit_test.cpp",
     "unistd/unistd_gtest/unistd_access_test.cpp",
     "unistd/unistd_gtest/unistd_dup_test.cpp",
@@ -227,5 +254,8 @@ ohos_executable("musl_unittest") {
   include_dirs = [ "//third_party/musl" ]
   configs = [ ":module_private_config" ]
 
+  if (use_pthread_cancel) {
+    cflags += [ "-DFEATURE_PTHREAD_CANCEL" ]
+  }
   deps = [ "//third_party/googletest:gtest_main" ]
 }

@@ -421,11 +421,6 @@ template("musl_libs") {
       "$FREEBSD_DIR/lib/libc/stdlib/strtoimax.c",
       "$FREEBSD_DIR/lib/libc/stdlib/strtoul.c",
       "$FREEBSD_DIR/lib/libc/stdlib/strtoumax.c",
-      "third_party/netbsd/lib/libc/regex/regcomp.c",
-      "third_party/netbsd/lib/libc/regex/regerror.c",
-      "third_party/netbsd/lib/libc/regex/regexec.c",
-      "third_party/netbsd/lib/libc/regex/regfree.c",
-      "third_party/netbsd/lib/libc/stdlib/reallocarr.c",
       "third_party/openbsd/lib/libc/string/strcasestr.c",
     ]
 
@@ -752,7 +747,6 @@ template("musl_libs") {
     include_dirs += [ "//third_party/FreeBSD/lib/libc/include" ]
     include_dirs += [ "//third_party/FreeBSD/contrib/libexecinfo" ]
     include_dirs += [ "//third_party/FreeBSD/crypto/openssh/openbsd-compat" ]
-    include_dirs += [ "third_party/netbsd/include" ]
 
     configs -= musl_inherited_configs
     configs += [ ":soft_musl_config" ]

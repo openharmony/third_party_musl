@@ -447,6 +447,7 @@ int __pthread_create(pthread_t *restrict res, const pthread_attr_t *restrict att
 	new->guard_size = guard;
 	new->self = new;
 	new->pid = getpid();
+	new->proc_tid = -1;
 	new->tsd = (void *)tsd;
 	new->locale = &libc.global_locale;
 	if (attr._a_detach) {

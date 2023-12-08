@@ -3,6 +3,7 @@
 #include <signal.h>
 #include "syscall.h"
 #include "pthread_impl.h"
+#include "proc_xid_impl.h"
 
 hidden pid_t __vfork(void)
 {
@@ -22,6 +23,9 @@ pid_t vfork(void)
 	pid_t ret = __vfork();
 	if (ret != 0) {
 		self->pid = parent_pid;
+	} else {
+		self->proc_tid = -1;
+		__clear_proc_pid();
 	}
 	return ret;
 }
