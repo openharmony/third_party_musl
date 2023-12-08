@@ -26,5 +26,8 @@ group("musl_libc_test") {
 
 group("libc_gtest") {
   testonly = true
-  deps = [ "src/functionalext/supplement:musl_unittest" ]
+  deps = [
+    "src/functionalext/supplement:musl_unittest",
+    "src/functionalext/supplement/ldso/ldso_gtest/libs:ldso_libs",
+  ]
 }
