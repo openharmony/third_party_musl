@@ -19,7 +19,7 @@ HWTEST_F(StdioFeofunlockedTest, feof_unlocked_001, TestSize.Level1)
     FILE* file;
     char ch;
     file = fopen("/proc/version", "r");
-    EXPECT_NE(nullptr, file);
+    ASSERT_NE(nullptr, file);
     EXPECT_TRUE(!feof_unlocked(file));
     ch = fgetc(file);
     fclose(file);

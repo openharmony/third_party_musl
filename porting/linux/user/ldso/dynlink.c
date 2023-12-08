@@ -122,6 +122,7 @@ static size_t *saved_addends, *apply_addends_to;
 static bool g_is_asan;
 static struct dso ldso;
 static struct dso *head, *tail, *fini_head, *syms_tail, *lazy_head;
+static struct dso_debug_info *debug_tail = NULL;
 static char *env_path, *sys_path;
 static unsigned long long gencnt;
 static int runtime;
@@ -194,6 +195,13 @@ int handle_asan_path_open(int fd, const char *name, ns_t *namespace, char *buf, 
 static void set_bss_vma_name(char *path_name, void *addr, size_t zeromap_size);
 
 static void find_and_set_bss_name(struct dso *p);
+
+/* lldb debug function */
+static void sync_with_debugger();
+static void notify_addition_to_debugger(struct dso *p);
+static void notify_remove_to_debugger(struct dso *p);
+static void add_dso_info_to_debug_map(struct dso *p);
+static void remove_dso_info_from_debug_map(struct dso *p);
 
 /* add namespace function */
 static void get_sys_path(ns_configor *conf);
@@ -3154,12 +3162,7 @@ void __dls3(size_t *sp, size_t *auxv, size_t *aux)
 	 * error. */
 	runtime = 1;
 
-	debug.ver = 1;
-	debug.bp = dl_debug_state;
-	debug.head = head;
-	debug.base = ldso.base;
-	debug.state = RT_CONSISTENT;
-	_dl_debug_state();
+	sync_with_debugger();
 
 	if (replace_argv0) argv[0] = replace_argv0;
 
@@ -3318,8 +3321,6 @@ static void *dlopen_impl(
 	trace_marker_reset();
 	trace_marker_begin(HITRACE_TAG_MUSL, "dlopen: ", file);
 
-	debug.state = RT_ADD;
-	_dl_debug_state();
 	/* When namespace does not exist, use caller's namespce
 	 * and when caller does not exist, use default namespce. */
 	caller = (struct dso *)addr2dso((size_t)caller_addr);
@@ -3508,12 +3509,15 @@ static void *dlopen_impl(
 	update_tls_size();
 	if (tls_cnt != orig_tls_cnt)
 		install_new_tls();
+
+	if (orig_tail != tail) {
+		notify_addition_to_debugger(orig_tail->next);
+	}
+
 	orig_tail = tail;
 
 	p = dlopen_post(p, mode);
 end:
-	debug.state = RT_CONSISTENT;
-	_dl_debug_state();
 #ifdef LOAD_ORDER_RANDOMIZATION
 	if (!is_task_appended) {
 		free_task(task);
@@ -3913,6 +3917,8 @@ static int dlclose_impl(struct dso *p, struct dso **dso_close_list, int *dso_clo
 		p->next->prev = p->prev;
 		p->prev->next = p->next;
 	}
+
+	notify_remove_to_debugger(p);
 
 	/* remove dso from namespace */
 	dlclose_ns(p);
@@ -5601,4 +5607,81 @@ static void find_and_set_bss_name(struct dso *p)
 			set_bss_vma_name(p->name, (void *)seg_file_end, zeromap_size);
 		}
 	}
+}
+
+static void sync_with_debugger(void)
+{
+	debug.ver = 1;
+	debug.bp = dl_debug_state;
+	debug.head = NULL;
+	debug.base = ldso.base;
+
+	add_dso_info_to_debug_map(head);
+
+	debug.state = RT_CONSISTENT;
+	_dl_debug_state();
+}
+
+static void notify_addition_to_debugger(struct dso *p)
+{
+	debug.state = RT_ADD;
+	_dl_debug_state();
+
+	add_dso_info_to_debug_map(p);
+
+	debug.state = RT_CONSISTENT;
+	_dl_debug_state();
+}
+
+static void notify_remove_to_debugger(struct dso *p)
+{
+	debug.state = RT_DELETE;
+	_dl_debug_state();
+
+	remove_dso_info_from_debug_map(p);
+
+	debug.state = RT_CONSISTENT;
+	_dl_debug_state();
+}
+
+static void add_dso_info_to_debug_map(struct dso *p)
+{
+	for (struct dso *so = p; so != NULL; so = so->next) {
+		struct dso_debug_info *debug_info = malloc(sizeof(struct dso_debug_info));
+		if (debug_info == NULL) {
+			LD_LOGE("malloc error! dso name: %{public}s.", so->name);
+			continue;
+		}
+#if DL_FDPIC
+		debug_info->loadmap = so->loadmap;
+#else
+		debug_info->base = so->base;
+#endif
+		debug_info->name = so->name;
+		debug_info->dynv = so->dynv;
+		if (debug.head == NULL) {
+			debug_info->prev = NULL;
+			debug_info->next = NULL;
+			debug.head = debug_tail = debug_info;
+		} else {
+			debug_info->prev = debug_tail;
+			debug_info->next = NULL;
+			debug_tail->next = debug_info;
+			debug_tail = debug_info;
+		}
+		so->debug_info = debug_info;
+	}
+}
+
+static void remove_dso_info_from_debug_map(struct dso *p)
+{
+	struct dso_debug_info *debug_info = p->debug_info;
+	if (debug_info == debug_tail) {
+		debug_tail = debug_tail->prev;
+		debug_tail->next = NULL;
+	} else {
+		debug_info->next->prev = debug_info->prev;
+		debug_info->prev->next = debug_info->next;
+	}
+	free(debug_info);
 }

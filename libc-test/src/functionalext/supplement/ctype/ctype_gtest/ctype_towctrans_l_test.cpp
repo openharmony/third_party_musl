@@ -18,8 +18,6 @@ class CtypeTowctranslTest : public testing::Test {
 HWTEST_F(CtypeTowctranslTest, towctrans_l_001, TestSize.Level1)
 {
     locale_t loc = newlocale(LC_ALL_MASK, "", nullptr);
-    uselocale(loc);
-
     wctrans_t trans = wctrans_l("toupper", loc);
     wchar_t wc = L'a';
     wchar_t converted = towctrans_l(wc, trans, loc);

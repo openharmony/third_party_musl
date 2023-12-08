@@ -15,7 +15,7 @@ class StdioFgetpos64Test : public testing::Test {
 HWTEST_F(StdioFgetpos64Test, fgetpos64_001, TestSize.Level1)
 {
     FILE* file = fopen("/proc/version", "r");
-    EXPECT_NE(nullptr, file);
+    ASSERT_NE(nullptr, file);
     fpos64_t position;
     int result = fgetpos64(file, &position);
     EXPECT_EQ(0, result);

@@ -21,17 +21,13 @@ HWTEST_F(StatFstat64Test, fstat64_001, TestSize.Level1)
     const char* dirName = "test_fstat64.txt";
     mode_t mode = S_IRWXU | S_IRWXG | S_IRWXO;
     int result1 = mkdir(dirName, mode);
-    EXPECT_NE(-1, result1);
+    ASSERT_NE(-1, result1);
 
-    int fd;
+    int fd = open("test_fstat64.txt", O_RDONLY);
+    ASSERT_NE(-1, fd);
     struct stat64 statBuf;
-
-    fd = open("test_fstat64.txt", O_RDONLY);
-    EXPECT_NE(-1, fd);
     int result2 = fstat64(fd, &statBuf);
     EXPECT_NE(-1, result2);
-
     close(fd);
-
     remove("test_fstat64.txt");
 }

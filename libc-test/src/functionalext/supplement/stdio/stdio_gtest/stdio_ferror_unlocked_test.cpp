@@ -18,10 +18,10 @@ HWTEST_F(StdioFerrorunlockedTest, ferror_unlocked_001, TestSize.Level1)
     const char* dirName = "test_ferror_unlocked.txt";
     mode_t mode = S_IRWXU | S_IRWXG | S_IRWXO;
     int ret = mkdir(dirName, mode);
-    EXPECT_NE(-1, ret);
+    ASSERT_NE(-1, ret);
 
     FILE* file = fopen("test_ferror_unlocked.txt", "r");
-    EXPECT_NE(nullptr, file);
+    ASSERT_NE(nullptr, file);
     bool result = false;
     char buffer[BUFSIZ];
     if (fgets(buffer, BUFSIZ, file) == nullptr) {

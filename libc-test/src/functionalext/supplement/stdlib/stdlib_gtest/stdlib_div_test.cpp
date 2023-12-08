@@ -13,7 +13,7 @@ constexpr int EXPONE = 3;
 constexpr int EXPTWO = 2;
 /**
  * @tc.name: div_001
- * @tc.desc: Verify the functionality of the div() function by checking if it correctly computes the quotient and 
+ * @tc.desc: Verify the functionality of the div() function by checking if it correctly computes the quotient and
  *           remainder of division between two given integers.
  * @tc.type: FUNC
  **/

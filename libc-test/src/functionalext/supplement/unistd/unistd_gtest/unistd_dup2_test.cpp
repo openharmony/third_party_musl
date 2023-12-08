@@ -19,7 +19,7 @@ class UnistdDup2Test : public testing::Test {
 HWTEST_F(UnistdDup2Test, dup2_001, TestSize.Level1)
 {
     int fd = open("/dev/null", O_RDONLY);
-    EXPECT_NE(-1, fd);
+    ASSERT_NE(-1, fd);
     FILE* fp = tmpfile();
     EXPECT_TRUE(fp != nullptr);
     setbuf(fp, nullptr);

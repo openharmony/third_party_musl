@@ -9,7 +9,7 @@ class MiscDirnameTest : public testing::Test {
 
 /**
  * @tc.name: dirname_001
- * @tc.desc: Verify the functionality of the dirname() function by checking if it correctly extracts the parent 
+ * @tc.desc: Verify the functionality of the dirname() function by checking if it correctly extracts the parent
  *           directory from a given file path and returns a non-null pointer.
  * @tc.type: FUNC
  **/

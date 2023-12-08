@@ -20,7 +20,7 @@ class TermiosCfsetspeedTest : public testing::Test {
 HWTEST_F(TermiosCfsetspeedTest, cfsetspeed_001, TestSize.Level1)
 {
     int fd = open("/proc/version", O_RDWR | O_NOCTTY);
-    EXPECT_NE(-1, fd);
+    ASSERT_NE(-1, fd);
     struct termios tty;
     int result1 = tcgetattr(fd, &tty);
     EXPECT_NE(0, result1);

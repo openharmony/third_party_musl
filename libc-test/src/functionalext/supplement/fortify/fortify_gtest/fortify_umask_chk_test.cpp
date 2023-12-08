@@ -1,7 +1,6 @@
 #include <gtest/gtest.h>
 #include <fortify/stat.h>
 
-
 using namespace testing::ext;
 
 class FortifyUmaskchkTest : public testing::Test {

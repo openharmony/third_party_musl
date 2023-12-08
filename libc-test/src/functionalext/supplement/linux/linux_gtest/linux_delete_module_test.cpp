@@ -13,7 +13,7 @@ class LinuxDeletemoduleTest : public testing::Test {
 extern "C" int delete_module(const char* a, unsigned b);
 /**
  * @tc.name: delete_module_001
- * @tc.desc: Test case appears to be to verify that the delete_module function returns an error code when called 
+ * @tc.desc: Test case appears to be to verify that the delete_module function returns an error code when called
  *           with an incorrect or non-existent module name.
  * @tc.type: FUNC
  **/

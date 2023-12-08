@@ -17,12 +17,12 @@ class CtypeToupperlTest : public testing::Test {
  **/
 HWTEST_F(CtypeToupperlTest, toupper_l_001, TestSize.Level1)
 {
-    locale_t loc = newlocale(LC_ALL_MASK, "en_US.UTF-8", nullptr);
-    uselocale(loc);
+    locale_t loc = newlocale(LC_ALL_MASK, "", nullptr);
     int lowerCase1 = toupper_l('?', loc);
     int lowerCase2 = toupper_l('A', loc);
     int lowerCase3 = toupper_l('a', loc);
     EXPECT_EQ('?', lowerCase1);
     EXPECT_EQ('A', lowerCase2);
     EXPECT_EQ('A', lowerCase3);
+    freelocale(loc);
 }

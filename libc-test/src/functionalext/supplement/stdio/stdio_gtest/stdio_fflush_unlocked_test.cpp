@@ -15,7 +15,7 @@ class StdioFflushunlockedTest : public testing::Test {
 HWTEST_F(StdioFflushunlockedTest, fflush_unlocked_001, TestSize.Level1)
 {
     FILE* file = fopen("test_fflush_unlocked", "w");
-    EXPECT_TRUE(file);
+    ASSERT_NE(nullptr, file);
     fprintf(file, "This is a test message\n");
     int result = fflush_unlocked(file);
     EXPECT_EQ(0, result);

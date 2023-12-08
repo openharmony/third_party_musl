@@ -16,7 +16,6 @@ bool SameLocale(locale_t loc1, locale_t loc2)
 
         wchar_t lower1 = towlower_l(c, loc1);
         wchar_t lower2 = towlower_l(c, loc2);
-
         if (lower1 != lower2) {
             return false;
         }

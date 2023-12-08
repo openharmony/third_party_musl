@@ -15,7 +15,7 @@ class StdioFerrorTest : public testing::Test {
 HWTEST_F(StdioFerrorTest, ferror_001, TestSize.Level1)
 {
     FILE* file = fopen("/proc/version", "r");
-    EXPECT_TRUE(file);
+    ASSERT_TRUE(file);
     EXPECT_EQ(0, ferror(file));
     fclose(file);
 }

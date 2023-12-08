@@ -8,6 +8,8 @@ constexpr int BUF_SIZE = 10;
 
 using namespace testing::ext;
 
+constexpr size_t DATA_LEN = 11;
+
 class FortifySendtochkTest : public testing::Test {
     void SetUp() override {}
     void TearDown() override {}
@@ -25,24 +27,22 @@ static void SignalHandler(int signum)
  * */
 HWTEST_F(FortifySendtochkTest, __sendto_chk_001, TestSize.Level1)
 {
-    struct sigaction sigabrt = {
+    struct sigaction signalAbort = {
         .sa_handler = SignalHandler,
     };
-    sigaction(SIGABRT, &sigabrt, nullptr);
-
-    size_t dataLen = atoi("11");
+    sigaction(SIGABRT, &signalAbort, nullptr);
     char buf[BUF_SIZE];
     int status;
     int pid = fork();
-    switch (pid) {
-        case 0:
-            __sendto_chk(0, buf, dataLen, dataLen, 0, nullptr, 0);
-            exit(0);
-        default:
-            waitpid(pid, &status, WUNTRACED);
-            EXPECT_TRUE(WIFEXITED(status));
-            EXPECT_FALSE(WIFSTOPPED(status));
-            kill(pid, SIGCONT);
-            break;
+    if (pid == 0) {
+        __sendto_chk(0, buf, DATA_LEN, DATA_LEN, 0, nullptr, 0);
+        exit(0);
+    } else if (pid > 0) {
+        waitpid(pid, &status, WUNTRACED);
+        EXPECT_TRUE(WIFEXITED(status));
+        EXPECT_FALSE(WIFSTOPPED(status));
+        kill(pid, SIGCONT);
+    } else {
+        FAIL();
     }
 }

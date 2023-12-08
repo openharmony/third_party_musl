@@ -3,7 +3,6 @@
 #define __FORTIFY_COMPILATION
 #include <fortify/stdio.h>
 
-
 using namespace testing::ext;
 
 class FortifyFwritechkTest : public testing::Test {

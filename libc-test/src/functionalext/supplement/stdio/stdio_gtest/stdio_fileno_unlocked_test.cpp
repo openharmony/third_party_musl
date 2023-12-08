@@ -15,7 +15,7 @@ class StdioFilenounlockedTest : public testing::Test {
 HWTEST_F(StdioFilenounlockedTest, fileno_unlocked_001, TestSize.Level1)
 {
     FILE* file = fopen("/proc/version", "r");
-    EXPECT_NE(nullptr, file);
+    ASSERT_NE(nullptr, file);
     int fd = fileno_unlocked(file);
     EXPECT_NE(-1, fd);
     fclose(file);

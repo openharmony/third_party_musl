@@ -28,8 +28,8 @@ HWTEST_F(FortifyStrchrchkTest, __strchr_chk_001, TestSize.Level1)
     for (int i = 0; i < CANCEL_NUMBER; i++) {
         int dest = 'A';
         memset(srcChar, ~dest, MAX_SIZE);
-        pos = random() % MAX_SIZE;
-        obj = random() % MAX_SIZE;
+        pos = random() % (MAX_SIZE - 1);
+        obj = random() % (MAX_SIZE - 1);
         if (pos > obj) {
             excepted = nullptr;
         } else {
