@@ -1,3 +1,18 @@
+/**
+ * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <dlfcn.h>
@@ -69,13 +84,13 @@ static void RpathNsOrigin(void)
     dlns_create2(&dlns, g_dlpath, 0);
     dlns_set_namespace_separated(g_dlName, true);
     dlns_set_namespace_permitted_paths(g_dlName, g_errPath);
-    void *handleErr = dlopen_ns(&dlns, g_nsOriginLib, RTLD_LAZY);
+    void *handleErr = dlopen_ns(&dlns, g_originLib, RTLD_LAZY);
     EXPECT_FALSE("RpathNsOrigin_err", handleErr);
     if (handleErr) {
         dlclose(handleErr);
     }
     dlns_set_namespace_permitted_paths(g_dlName, g_path);
-    void *handle = dlopen_ns(&dlns, g_nsOriginLib, RTLD_LAZY);
+    void *handle = dlopen_ns(&dlns, g_originLib, RTLD_LAZY);
     EXPECT_TRUE("RpathNsOrigin_correct", handle);
     if (handle) {
         dlclose(handle);
@@ -97,7 +112,7 @@ static void RpathNsMultiple(void)
     dlns_create2(&dlns, g_dlpath, 0);
     dlns_set_namespace_separated(g_dlName, true);
     dlns_set_namespace_permitted_paths(g_dlName, g_path);
-    void *handle = dlopen_ns(&dlns, g_nsMultipleLib, RTLD_LAZY);
+    void *handle = dlopen_ns(&dlns, g_multipleLib, RTLD_LAZY);
     EXPECT_TRUE("RpathNsMultiple", handle);
     if (handle) {
         dlclose(handle);
