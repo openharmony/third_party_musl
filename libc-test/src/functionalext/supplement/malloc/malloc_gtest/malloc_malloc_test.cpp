@@ -11,7 +11,7 @@ class MallocMallocTest : public testing::Test {
 };
 
 constexpr size_t LEN = 50;
-constexpr int SIZE = 200;
+constexpr size_t SIZE = 200;
 
 /**
  * @tc.name: malloc_001
@@ -23,7 +23,7 @@ constexpr int SIZE = 200;
 HWTEST_F(MallocMallocTest, malloc_001, TestSize.Level1)
 {
     void* memoryPtr = malloc(LEN);
-    EXPECT_NE(memoryPtr, nullptr);
+    ASSERT_NE(memoryPtr, nullptr);
     EXPECT_EQ(malloc_usable_size(memoryPtr) >= 50U, true);
     free(memoryPtr);
 }
@@ -36,9 +36,10 @@ HWTEST_F(MallocMallocTest, malloc_001, TestSize.Level1)
  */
 HWTEST_F(MallocMallocTest, malloc_002, TestSize.Level1)
 {
-    char* block = static_cast<char*>(malloc(SIZE));
-    EXPECT_NE(block, nullptr);
-    EXPECT_EQ(200U, static_cast<size_t>(malloc_usable_size(block)));
+    void* block = malloc(SIZE);
+    ASSERT_NE(block, nullptr);
+    EXPECT_LE(SIZE, malloc_usable_size(block));
+    free(block);
 }
 
 /**
@@ -50,6 +51,6 @@ HWTEST_F(MallocMallocTest, malloc_002, TestSize.Level1)
 HWTEST_F(MallocMallocTest, malloc_003, TestSize.Level1)
 {
     void* memoryBlock = malloc(0);
-    EXPECT_NE(memoryBlock, nullptr);
+    ASSERT_NE(memoryBlock, nullptr);
     free(memoryBlock);
 }

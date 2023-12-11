@@ -18,10 +18,11 @@ class LinuxEpollctlTest : public testing::Test {
 HWTEST_F(LinuxEpollctlTest, epoll_ctl_001, TestSize.Level1)
 {
     int epollFd = epoll_create(1);
-    EXPECT_TRUE(epollFd != -1);
+    ASSERT_NE(epollFd, -1);
     int fds[2];
     epoll_event ev;
     EXPECT_TRUE(epoll_ctl(epollFd, EPOLL_CTL_ADD, fds[0], &ev) != -1);
+    close(epollFd);
 }
 
 /**
@@ -33,10 +34,11 @@ HWTEST_F(LinuxEpollctlTest, epoll_ctl_001, TestSize.Level1)
 HWTEST_F(LinuxEpollctlTest, epoll_ctl_002, TestSize.Level1)
 {
     int epollFd = epoll_create(1);
-    EXPECT_TRUE(epollFd != -1);
+    ASSERT_NE(epollFd, -1);
     int fds[2];
     epoll_event ev;
     EXPECT_TRUE(epoll_ctl(epollFd, EPOLL_CTL_MOD, fds[0], &ev) == -1);
+    close(epollFd);
 }
 
 /**
@@ -48,8 +50,9 @@ HWTEST_F(LinuxEpollctlTest, epoll_ctl_002, TestSize.Level1)
 HWTEST_F(LinuxEpollctlTest, epoll_ctl_003, TestSize.Level1)
 {
     int epollFd = epoll_create(1);
-    EXPECT_TRUE(epollFd != -1);
+    ASSERT_NE(epollFd, -1);
     int fds[2];
     epoll_event ev;
     EXPECT_TRUE(epoll_ctl(epollFd, EPOLL_CTL_DEL, fds[0], &ev) == -1);
+    close(epollFd);
 }

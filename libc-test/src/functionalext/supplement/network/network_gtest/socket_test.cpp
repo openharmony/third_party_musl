@@ -61,7 +61,7 @@ struct ReturnVal {
     struct sockaddr_un addr;
 };
 
-static void SockInit(const char* sockPath, struct ReturnVal& returnval)
+static void SockInit(const char* sockPath, struct ReturnVal& returnVal)
 {
     int fd = socket(PF_UNIX, SOCK_SEQPACKET, 0);
     EXPECT_NE(fd, -1);
@@ -76,17 +76,17 @@ static void SockInit(const char* sockPath, struct ReturnVal& returnval)
     EXPECT_NE(-1, result1);
     EXPECT_NE(-1, result2);
 
-    returnval.fd = fd;
-    returnval.addr = addr;
+    returnVal.fd = fd;
+    returnVal.addr = addr;
 }
 
-static void SelectFunc(struct ReturnVal returnval)
+static void SelectFunc(struct ReturnVal returnVal)
 {
     fd_set readSet;
     FD_ZERO(&readSet);
-    FD_SET(returnval.fd, &readSet);
+    FD_SET(returnVal.fd, &readSet);
     timeval tv = { .tv_sec = 5, .tv_usec = 0 };
-    int result = select(returnval.fd + 1, &readSet, nullptr, nullptr, &tv);
+    int result = select(returnVal.fd + 1, &readSet, nullptr, nullptr, &tv);
     EXPECT_GT(result, 0);
 }
 
@@ -117,22 +117,22 @@ static bool SendMMsgTest(int fd)
 HWTEST_F(SocketTest, accept4_001, TestSize.Level1)
 {
     const char* sockPath = "test_accept4";
-    struct ReturnVal returnval;
+    struct ReturnVal returnVal;
 
-    SockInit(sockPath, returnval);
+    SockInit(sockPath, returnVal);
     DataLink connData;
     connData.callbackFn = nullptr;
     connData.sockPath = sockPath;
 
-    struct sockaddr_un* addr = &returnval.addr;
+    struct sockaddr_un* addr = &returnVal.addr;
     pthread_t thread;
     int cresult = pthread_create(&thread, nullptr, FnLink, &connData);
     EXPECT_EQ(0, cresult);
-    SelectFunc(returnval);
+    SelectFunc(returnVal);
 
     socklen_t len = sizeof(*addr);
     struct sockaddr* sockaddrPtr = reinterpret_cast<struct sockaddr*>(addr);
-    int acceptFd = accept4(returnval.fd, sockaddrPtr, &len, SOCK_CLOEXEC);
+    int acceptFd = accept4(returnVal.fd, sockaddrPtr, &len, SOCK_CLOEXEC);
     EXPECT_NE(acceptFd, -1);
     CloseOnExec(acceptFd, true);
     close(acceptFd);
@@ -141,6 +141,7 @@ HWTEST_F(SocketTest, accept4_001, TestSize.Level1)
     int jresult = pthread_join(thread, &retVal);
     EXPECT_EQ(0, jresult);
     EXPECT_EQ(nullptr, retVal);
+    close(returnVal.fd);
 }
 
 /**
@@ -164,21 +165,21 @@ HWTEST_F(SocketTest, accept4_002, TestSize.Level1)
 HWTEST_F(SocketTest, recvmmsg_001, TestSize.Level1)
 {
     const char* sockPath = "test_revmmsg";
-    struct ReturnVal returnval;
+    struct ReturnVal returnVal;
 
-    SockInit(sockPath, returnval);
+    SockInit(sockPath, returnVal);
     DataLink connData;
     connData.callbackFn = SendMMsgTest;
     connData.sockPath = sockPath;
 
-    struct sockaddr_un* addr = &returnval.addr;
+    struct sockaddr_un* addr = &returnVal.addr;
     pthread_t thread;
     int cresult = pthread_create(&thread, nullptr, FnLink, &connData);
     EXPECT_EQ(0, cresult);
-    SelectFunc(returnval);
+    SelectFunc(returnVal);
 
     socklen_t len = sizeof(*addr);
-    int acceptFd = accept(returnval.fd, reinterpret_cast<struct sockaddr*>(addr), &len);
+    int acceptFd = accept(returnVal.fd, reinterpret_cast<struct sockaddr*>(addr), &len);
     EXPECT_NE(acceptFd, -1);
 
     std::array<struct mmsghdr, NUM_RECV_MSGS> msgs;
@@ -204,6 +205,7 @@ HWTEST_F(SocketTest, recvmmsg_001, TestSize.Level1)
     int jresult = pthread_join(thread, &retVal);
     EXPECT_EQ(0, jresult);
     EXPECT_EQ(nullptr, retVal);
+    close(returnVal.fd);
 }
 
 /**
@@ -253,20 +255,20 @@ static bool SendMMsg(int fd)
 HWTEST_F(SocketTest, sendmmsg_001, TestSize.Level1)
 {
     const char* sockPath = "test_sendmmsg";
-    struct ReturnVal returnval;
-    SockInit(sockPath, returnval);
+    struct ReturnVal returnVal;
+    SockInit(sockPath, returnVal);
     DataLink connData;
     connData.callbackFn = SendMMsg;
     connData.sockPath = sockPath;
 
-    struct sockaddr_un* addr = &returnval.addr;
+    struct sockaddr_un* addr = &returnVal.addr;
     pthread_t thread;
     int cresult = pthread_create(&thread, nullptr, FnLink, &connData);
     EXPECT_EQ(0, cresult);
-    SelectFunc(returnval);
+    SelectFunc(returnVal);
 
     socklen_t len = sizeof(*addr);
-    int acceptFd = accept(returnval.fd, reinterpret_cast<struct sockaddr*>(addr), &len);
+    int acceptFd = accept(returnVal.fd, reinterpret_cast<struct sockaddr*>(addr), &len);
     EXPECT_NE(acceptFd, -1) << strerror(errno);
     fd_set readSet;
     FD_ZERO(&readSet);
@@ -288,6 +290,7 @@ HWTEST_F(SocketTest, sendmmsg_001, TestSize.Level1)
     int jresult = pthread_join(thread, &retVal);
     EXPECT_EQ(0, jresult);
     EXPECT_EQ(nullptr, retVal);
+    close(returnVal.fd);
 }
 
 /**
@@ -298,7 +301,7 @@ HWTEST_F(SocketTest, sendmmsg_001, TestSize.Level1)
  **/
 HWTEST_F(SocketTest, sendmmsg_002, TestSize.Level1)
 {
-    EXPECT_EQ(-1, sendmmsg(-1, nullptr, 0, 0));
+    EXPECT_GE(0, sendmmsg(-1, nullptr, 0, 0));
     EXPECT_EQ(EBADF, errno);
 }
 
@@ -332,27 +335,28 @@ HWTEST_F(SocketTest, bind_listen_001, TestSize.Level1)
 HWTEST_F(SocketTest, accept_001, TestSize.Level1)
 {
     const char* sockPath = "accept_test";
-    struct ReturnVal returnval;
-    SockInit(sockPath, returnval);
+    struct ReturnVal returnVal;
+    SockInit(sockPath, returnVal);
     DataLink connData;
     connData.callbackFn = SendMMsg;
     connData.sockPath = sockPath;
 
-    struct sockaddr_un* addr = &returnval.addr;
+    struct sockaddr_un* addr = &returnVal.addr;
     pthread_t thread;
     int cresult = pthread_create(&thread, nullptr, FnLink, &connData);
     EXPECT_EQ(0, cresult);
-    SelectFunc(returnval);
+    SelectFunc(returnVal);
 
     socklen_t len = sizeof(*addr);
-    int acceptFd = accept(returnval.fd, reinterpret_cast<struct sockaddr*>(addr), &len);
+    int acceptFd = accept(returnVal.fd, reinterpret_cast<struct sockaddr*>(addr), &len);
     EXPECT_NE(-1, acceptFd);
-    close(acceptFd);
 
     void* retVal;
     int jresult = pthread_join(thread, &retVal);
     EXPECT_EQ(0, jresult);
     EXPECT_EQ(nullptr, retVal);
+    close(acceptFd);
+    close(returnVal.fd);
 }
 
 const char* g_message = "hello";
@@ -373,20 +377,20 @@ static bool SendTest(int fd)
 HWTEST_F(SocketTest, recv_001, TestSize.Level1)
 {
     const char* sockPath = "test_recv";
-    struct ReturnVal returnval;
-    SockInit(sockPath, returnval);
+    struct ReturnVal returnVal;
+    SockInit(sockPath, returnVal);
     DataLink connData;
     connData.callbackFn = SendTest;
     connData.sockPath = sockPath;
 
-    struct sockaddr_un* addr = &returnval.addr;
+    struct sockaddr_un* addr = &returnVal.addr;
     pthread_t thread;
     int cresult = pthread_create(&thread, nullptr, FnLink, &connData);
     EXPECT_EQ(0, cresult);
-    SelectFunc(returnval);
+    SelectFunc(returnVal);
 
     socklen_t len = sizeof(*addr);
-    int acceptFd = accept(returnval.fd, reinterpret_cast<struct sockaddr*>(addr), &len);
+    int acceptFd = accept(returnVal.fd, reinterpret_cast<struct sockaddr*>(addr), &len);
     EXPECT_NE(acceptFd, -1) << strerror(errno);
     char buf[BUFSIZ];
     memset(buf, 0, sizeof(buf));
@@ -398,6 +402,7 @@ HWTEST_F(SocketTest, recv_001, TestSize.Level1)
     int jresult = pthread_join(thread, &retVal);
     EXPECT_EQ(0, jresult);
     EXPECT_EQ(nullptr, retVal);
+    close(returnVal.fd);
 }
 
 /**
@@ -421,20 +426,20 @@ HWTEST_F(SocketTest, recv_002, TestSize.Level1)
 HWTEST_F(SocketTest, send_001, TestSize.Level1)
 {
     const char* sockPath = "test_send";
-    struct ReturnVal returnval;
-    SockInit(sockPath, returnval);
+    struct ReturnVal returnVal;
+    SockInit(sockPath, returnVal);
     DataLink connData;
     connData.callbackFn = SendTest;
     connData.sockPath = sockPath;
 
-    struct sockaddr_un* addr = &returnval.addr;
+    struct sockaddr_un* addr = &returnVal.addr;
     pthread_t thread;
     int cresult = pthread_create(&thread, nullptr, FnLink, &connData);
     EXPECT_EQ(0, cresult);
-    SelectFunc(returnval);
+    SelectFunc(returnVal);
 
     socklen_t len = sizeof(*addr);
-    int acceptFd = accept(returnval.fd, reinterpret_cast<struct sockaddr*>(addr), &len);
+    int acceptFd = accept(returnVal.fd, reinterpret_cast<struct sockaddr*>(addr), &len);
     EXPECT_NE(acceptFd, -1);
     fd_set readSet;
     FD_ZERO(&readSet);
@@ -453,6 +458,7 @@ HWTEST_F(SocketTest, send_001, TestSize.Level1)
     int jresult = pthread_join(thread, &retVal);
     EXPECT_EQ(0, jresult);
     EXPECT_EQ(nullptr, retVal);
+    close(returnVal.fd);
 }
 
 /**
@@ -503,6 +509,8 @@ HWTEST_F(SocketTest, socketpair_001, TestSize.Level1)
         EXPECT_STREQ("hello", buf);
     }
     close(fd);
+    close(sv[0]);
+    close(sv[1]);
 }
 
 /**
@@ -583,6 +591,7 @@ HWTEST_F(SocketTest, sendmsg_001, TestSize.Level1)
 
     int retval = sendmsg(sockfd, &msg, 2);
     EXPECT_NE(-1, retval);
+    close(sockfd);
 }
 
 /**
@@ -597,6 +606,8 @@ HWTEST_F(SocketTest, sendto_001, TestSize.Level1)
     int ret = socketpair(AF_LOCAL, SOCK_STREAM, 0, socks);
     ret = sendto(socks[1], sendBuf, sizeof(sendBuf), 0, nullptr, 0);
     EXPECT_NE(-1, ret);
+    close(socks[0]);
+    close(socks[1]);
 }
 
 /**

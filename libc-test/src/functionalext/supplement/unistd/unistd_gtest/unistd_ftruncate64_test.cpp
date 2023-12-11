@@ -7,6 +7,8 @@
 
 using namespace testing::ext;
 
+constexpr int SIZE_1024 = 1024;
+
 class UnistdFtruncate64Test : public testing::Test {
     void SetUp() override {}
     void TearDown() override {}
@@ -21,12 +23,12 @@ class UnistdFtruncate64Test : public testing::Test {
 HWTEST_F(UnistdFtruncate64Test, ftruncate64_001, TestSize.Level1)
 {
     FILE* fptr = fopen("test.txt", "w");
-    EXPECT_EQ(0, ftruncate64(fileno(fptr), 666));
-    EXPECT_EQ(0, fclose(fptr));
+    EXPECT_EQ(0, ftruncate64(fileno(fptr), SIZE_1024));
 
     struct stat statbuff;
     EXPECT_EQ(0, stat("test.txt", &statbuff));
-    EXPECT_EQ(666, statbuff.st_size);
+    EXPECT_EQ(SIZE_1024, statbuff.st_size);
 
-    fptr = nullptr;
+    fclose(fptr);
+    remove("test.txt");
 }

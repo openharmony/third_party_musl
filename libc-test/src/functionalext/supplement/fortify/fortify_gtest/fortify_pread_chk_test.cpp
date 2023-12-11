@@ -24,7 +24,7 @@ HWTEST_F(FortifyPreadChkTest, __pread_chk_001, TestSize.Level1)
     char buf[BUF_SIZE];
     off_t offset = 0;
     int file = open("test.txt", O_RDONLY | O_CREAT, 0644);
-    EXPECT_TRUE(file != -1);
+    ASSERT_NE(file, -1);
     size_t bufSize = sizeof(buf);
     ssize_t result = __pread_chk(file, buf, COUNT, offset, bufSize);
     close(file);

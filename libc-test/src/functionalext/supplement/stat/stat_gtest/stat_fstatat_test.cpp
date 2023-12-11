@@ -17,18 +17,18 @@ class StatFstatatTest : public testing::Test {
  **/
 HWTEST_F(StatFstatatTest, fstatat_001, TestSize.Level1)
 {
-    const char* dirname = "test_fstatat.txt";
+    const char* dirname = "test_fstatat";
     mode_t mode = S_IRWXU | S_IRWXG | S_IRWXO;
-    EXPECT_NE(-1, mkdir(dirname, mode));
+    ASSERT_NE(-1, mkdir(dirname, mode));
 
     struct stat st;
-    const char* linkname = "test_fstatat.txt";
+    const char* linkname = "test_fstatat";
 
     EXPECT_EQ(0, fstatat(AT_FDCWD, linkname, &st, AT_NO_AUTOMOUNT));
     mode_t mask = S_IRWXU | S_IRWXG | S_IRWXO;
     EXPECT_EQ(0755 & mask, static_cast<mode_t>(st.st_mode) & mask);
 
-    remove("test_fstatat.txt");
+    remove("test_fstatat");
 }
 
 /**
@@ -39,17 +39,15 @@ HWTEST_F(StatFstatatTest, fstatat_001, TestSize.Level1)
  **/
 HWTEST_F(StatFstatatTest, fstatat_002, TestSize.Level1)
 {
-    const char* dirname = "test_fstatat.txt";
+    const char* dirname = "test_fstatat";
     mode_t mode = S_IRWXU | S_IRWXG | S_IRWXO;
-
     EXPECT_NE(-1, mkdir(dirname, mode));
 
     struct stat st;
-    const char* linkname = "test_fstatat.txt";
+    const char* linkname = "test_fstatat";
 
     EXPECT_EQ(0, fstatat(AT_FDCWD, linkname, &st, AT_SYMLINK_NOFOLLOW));
     mode_t mask = S_IRWXU | S_IRWXG | S_IRWXO;
     EXPECT_EQ(0755 & mask, static_cast<mode_t>(st.st_mode) & mask);
-
-    remove("test_fstatat.txt");
+    remove("test_fstatat");
 }

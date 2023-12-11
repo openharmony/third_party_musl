@@ -18,7 +18,7 @@ HWTEST_F(FortifyOpenChkTest, __open_chk_001, TestSize.Level1)
     int file = open("test.txt", O_RDONLY | O_CREAT, 0644);
     close(file);
     int fd = __open_chk("test.txt", O_RDONLY);
-    EXPECT_TRUE(fd != -1);
+    ASSERT_NE(fd, -1);
     close(fd);
     EXPECT_EQ(0, remove("test.txt"));
 }

@@ -45,5 +45,5 @@ HWTEST_F(StringMemchrTest, memchr_003, TestSize.Level1)
 {
     const char* sourceString = "Hello, world";
     const void* foundChar = memchr(sourceString, 'w', strlen(sourceString));
-    EXPECT_NE(foundChar, nullptr);
+    ASSERT_NE(foundChar, nullptr);
 }

@@ -26,6 +26,7 @@ HWTEST_F(FortifyTest, __send_chk_001, TestSize.Level1)
 
     int retval = __send_chk(sockfd, buf, 0, sizeof(addr), 0);
     EXPECT_NE(-1, retval);
+    close(sockfd);
 }
 
 /**

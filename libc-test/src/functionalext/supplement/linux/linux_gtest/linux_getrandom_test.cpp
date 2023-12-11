@@ -19,5 +19,5 @@ HWTEST_F(LinuxGetrandomTest, getrandom_001, TestSize.Level1)
 {
     unsigned int randomValue;
     int32_t result = getrandom(&randomValue, sizeof(unsigned int), GRND_NONBLOCK);
-    EXPECT_TRUE(result != -1);
+    ASSERT_NE(result, -1);
 }

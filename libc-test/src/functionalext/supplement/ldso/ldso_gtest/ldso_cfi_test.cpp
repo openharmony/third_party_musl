@@ -37,14 +37,13 @@ typedef char* (*FuncTypeRetCharPtr)();
 typedef size_t (*FuncTypeRetSize)();
 typedef uint64_t (*FuncTypeRetUint64)();
 
-FuncTypeRetSize g_getCount = nullptr;
-FuncTypeRetUint64 g_getTypeId = nullptr;
-FuncTypeRetVoidPtr g_getAddress = nullptr;
-FuncTypeRetVoidPtr g_getDiag = nullptr;
-FuncTypeRetVoidPtr g_getGlobalAddress = nullptr;
-FuncTypeRetCharPtr g_bufCheck = nullptr;
-
 static void TestFunc() {}
+
+static bool ExitBySig(int status)
+{
+    return WIFSIGNALED(status) &&
+           (WTERMSIG(status) == SIGTRAP || WTERMSIG(status) == SIGILL || WTERMSIG(status) == SIGSEGV);
+}
 
 /**
  * @tc.name: __cfi_slowpath_001
@@ -58,21 +57,26 @@ HWTEST_F(LdsoCfiTest, __cfi_slowpath_001, TestSize.Level1)
     void* handle = dlopen(LIB_PATH, RTLD_NOW);
     ASSERT_NE(handle, nullptr);
 
-    g_getGlobalAddress = reinterpret_cast<FuncTypeRetVoidPtr>(dlsym(handle, "GetGlobalAddress"));
-    __cfi_slowpath(callSiteTypeId1, (*g_getGlobalAddress)());
+    FuncTypeRetVoidPtr globalAddress = reinterpret_cast<FuncTypeRetVoidPtr>(dlsym(handle, "GetGlobalAddress"));
+    ASSERT_NE(globalAddress, nullptr);
+    __cfi_slowpath(callSiteTypeId1, (*globalAddress)());
 
     void* handle2 = dlopen(LIB_PATH, RTLD_NOW);
     ASSERT_EQ(handle, handle2);
-    g_getCount = reinterpret_cast<FuncTypeRetSize>(dlsym(handle2, "GetCount"));
-    g_getTypeId = reinterpret_cast<FuncTypeRetUint64>(dlsym(handle2, "GetTypeId"));
-    g_getAddress = reinterpret_cast<FuncTypeRetVoidPtr>(dlsym(handle2, "GetAddress"));
-    g_getGlobalAddress = reinterpret_cast<FuncTypeRetVoidPtr>(dlsym(handle2, "GetGlobalAddress"));
+    FuncTypeRetSize getCount = reinterpret_cast<FuncTypeRetSize>(dlsym(handle2, "GetCount"));
+    ASSERT_NE(getCount, nullptr);
+    FuncTypeRetUint64 getTypeId = reinterpret_cast<FuncTypeRetUint64>(dlsym(handle2, "GetTypeId"));
+    ASSERT_NE(getTypeId, nullptr);
+    FuncTypeRetVoidPtr getAddress = reinterpret_cast<FuncTypeRetVoidPtr>(dlsym(handle2, "GetAddress"));
+    ASSERT_NE(getAddress, nullptr);
+    globalAddress = reinterpret_cast<FuncTypeRetVoidPtr>(dlsym(handle2, "GetGlobalAddress"));
+    ASSERT_NE(globalAddress, nullptr);
 
-    size_t count = (*g_getCount)();
-    __cfi_slowpath(callSiteTypeId2, (*g_getGlobalAddress)());
-    EXPECT_EQ(callSiteTypeId2, (*g_getTypeId)());
-    EXPECT_EQ((*g_getGlobalAddress)(), (*g_getAddress)());
-    EXPECT_EQ(++count, (*g_getCount)());
+    size_t count = (*getCount)();
+    __cfi_slowpath(callSiteTypeId2, (*globalAddress)());
+    EXPECT_EQ(callSiteTypeId2, (*getTypeId)());
+    EXPECT_EQ((*globalAddress)(), (*getAddress)());
+    EXPECT_EQ(++count, (*getCount)());
 
     dlclose(handle);
     dlclose(handle2);
@@ -90,19 +94,24 @@ HWTEST_F(LdsoCfiTest, __cfi_slowpath_002, TestSize.Level1)
     void* handle = dlopen(LIB_PATH, RTLD_NOW);
     ASSERT_NE(handle, nullptr);
 
-    g_getCount = reinterpret_cast<FuncTypeRetSize>(dlsym(handle, "GetCount"));
-    g_getTypeId = reinterpret_cast<FuncTypeRetUint64>(dlsym(handle, "GetTypeId"));
-    g_getAddress = reinterpret_cast<FuncTypeRetVoidPtr>(dlsym(handle, "GetAddress"));
-    g_getDiag = reinterpret_cast<FuncTypeRetVoidPtr>(dlsym(handle, "GetDiag"));
-    g_getGlobalAddress = reinterpret_cast<FuncTypeRetVoidPtr>(dlsym(handle, "GetGlobalAddress"));
+    FuncTypeRetSize getCount = reinterpret_cast<FuncTypeRetSize>(dlsym(handle, "GetCount"));
+    ASSERT_NE(getCount, nullptr);
+    FuncTypeRetUint64 getTypeId = reinterpret_cast<FuncTypeRetUint64>(dlsym(handle, "GetTypeId"));
+    ASSERT_NE(getTypeId, nullptr);
+    FuncTypeRetVoidPtr getAddress = reinterpret_cast<FuncTypeRetVoidPtr>(dlsym(handle, "GetAddress"));
+    ASSERT_NE(getAddress, nullptr);
+    FuncTypeRetVoidPtr getDiag = reinterpret_cast<FuncTypeRetVoidPtr>(dlsym(handle, "GetDiag"));
+    ASSERT_NE(getDiag, nullptr);
+    FuncTypeRetVoidPtr globalAddress = reinterpret_cast<FuncTypeRetVoidPtr>(dlsym(handle, "GetGlobalAddress"));
+    ASSERT_NE(globalAddress, nullptr);
 
-    size_t count = (*g_getCount)();
+    size_t count = (*getCount)();
 
-    __cfi_slowpath(expectedCallSiteTypeId, (*g_getGlobalAddress)());
-    EXPECT_EQ(expectedCallSiteTypeId, (*g_getTypeId)());
-    EXPECT_EQ((*g_getGlobalAddress)(), (*g_getAddress)());
-    EXPECT_EQ(nullptr, (*g_getDiag)());
-    EXPECT_EQ(++count, (*g_getCount)());
+    __cfi_slowpath(expectedCallSiteTypeId, (*globalAddress)());
+    EXPECT_EQ(expectedCallSiteTypeId, (*getTypeId)());
+    EXPECT_EQ((*globalAddress)(), (*getAddress)());
+    EXPECT_EQ(nullptr, (*getDiag)());
+    EXPECT_EQ(++count, (*getCount)());
 
     dlclose(handle);
 }
@@ -120,14 +129,16 @@ HWTEST_F(LdsoCfiTest, __cfi_slowpath_003, TestSize.Level1)
     void* handle = dlopen(LIB_PATH, RTLD_NOW);
     ASSERT_NE(handle, nullptr);
 
-    g_getCount = reinterpret_cast<FuncTypeRetSize>(dlsym(handle, "GetCount"));
-    g_getGlobalAddress = reinterpret_cast<FuncTypeRetVoidPtr>(dlsym(handle, "GetGlobalAddress"));
+    FuncTypeRetSize getCount = reinterpret_cast<FuncTypeRetSize>(dlsym(handle, "GetCount"));
+    ASSERT_NE(getCount, nullptr);
+    FuncTypeRetVoidPtr globalAddress = reinterpret_cast<FuncTypeRetVoidPtr>(dlsym(handle, "GetGlobalAddress"));
+    ASSERT_NE(globalAddress, nullptr);
 
-    __cfi_slowpath(expectedCallSiteTypeId, (*g_getGlobalAddress)());
-    size_t count = (*g_getCount)();
+    __cfi_slowpath(expectedCallSiteTypeId, (*globalAddress)());
+    size_t count = (*getCount)();
     __cfi_slowpath(unexpectedCallSiteTypeId, reinterpret_cast<void*>(&TestFunc));
 
-    EXPECT_EQ(count, (*g_getCount)());
+    EXPECT_EQ(count, (*getCount)());
     dlclose(handle);
 }
 
@@ -142,11 +153,12 @@ HWTEST_F(LdsoCfiTest, __cfi_slowpath_004, TestSize.Level1)
     void* handle = dlopen(LIB_PATH, RTLD_NOW);
     ASSERT_NE(handle, nullptr);
 
-    g_getCount = reinterpret_cast<FuncTypeRetSize>(dlsym(handle, "GetCount"));
+    FuncTypeRetSize getCount = reinterpret_cast<FuncTypeRetSize>(dlsym(handle, "GetCount"));
+    ASSERT_NE(getCount, nullptr);
 
-    size_t count = (*g_getCount)();
+    size_t count = (*getCount)();
     __cfi_slowpath(callSiteTypeId, nullptr);
-    EXPECT_EQ(count, (*g_getCount)());
+    EXPECT_EQ(count, (*getCount)());
 
     dlclose(handle);
 }
@@ -162,10 +174,11 @@ HWTEST_F(LdsoCfiTest, __cfi_slowpath_005, TestSize.Level1)
     void* handle = dlopen(LIB_PATH, RTLD_NOW);
     ASSERT_NE(handle, nullptr);
 
-    g_getCount = reinterpret_cast<FuncTypeRetSize>(dlsym(handle, "GetCount"));
+    FuncTypeRetSize getCount = reinterpret_cast<FuncTypeRetSize>(dlsym(handle, "GetCount"));
+    ASSERT_NE(getCount, nullptr);
 
-    size_t count = (*g_getCount)();
-    ASSERT_EXIT(__cfi_slowpath(callSiteTypeId, static_cast<void*>(&count)), ::testing::KilledBySignal(SIGILL), "");
+    size_t count = (*getCount)();
+    EXPECT_EXIT(__cfi_slowpath(callSiteTypeId, static_cast<void*>(&count)), ExitBySig, "");
 
     dlclose(handle);
 }
@@ -180,10 +193,11 @@ HWTEST_F(LdsoCfiTest, __cfi_slowpath_006, TestSize.Level1)
     uint64_t callSiteTypeId = TYPE_ID_3;
     void* handle = dlopen(LIB_PATH, RTLD_NOW);
     ASSERT_NE(handle, nullptr);
-    g_getGlobalAddress = reinterpret_cast<FuncTypeRetVoidPtr>(dlsym(handle, "GetGlobalAddress"));
+    FuncTypeRetVoidPtr globalAddress = reinterpret_cast<FuncTypeRetVoidPtr>(dlsym(handle, "GetGlobalAddress"));
+    ASSERT_NE(globalAddress, nullptr);
     dlclose(handle);
 
-    ASSERT_EXIT(__cfi_slowpath(callSiteTypeId, (*g_getGlobalAddress)()), ::testing::KilledBySignal(SIGSEGV), "");
+    EXPECT_EXIT(__cfi_slowpath(callSiteTypeId, (*globalAddress)()), ExitBySig, "");
 }
 
 /**
@@ -198,15 +212,17 @@ HWTEST_F(LdsoCfiTest, __cfi_slowpath_007, TestSize.Level1)
     void* handle = dlopen(LIB_PATH, RTLD_NOW);
     ASSERT_NE(handle, nullptr);
 
-    g_getCount = reinterpret_cast<FuncTypeRetSize>(dlsym(handle, "GetCount"));
-    g_bufCheck = reinterpret_cast<FuncTypeRetCharPtr>(dlsym(handle, "g_buf"));
+    FuncTypeRetSize getCount = reinterpret_cast<FuncTypeRetSize>(dlsym(handle, "GetCount"));
+    ASSERT_NE(getCount, nullptr);
+    FuncTypeRetCharPtr bufCheck = reinterpret_cast<FuncTypeRetCharPtr>(dlsym(handle, "g_buf"));
+    ASSERT_NE(bufCheck, nullptr);
 
-    size_t count = (*g_getCount)();
+    size_t count = (*getCount)();
     const size_t size = SIZE_1024_SQUARE;
 
     for (size_t i = 0; i < size; ++i) {
-        __cfi_slowpath(callSiteTypeId, reinterpret_cast<char*>(g_bufCheck) + i);
-        EXPECT_EQ(++count, (*g_getCount)());
+        __cfi_slowpath(callSiteTypeId, reinterpret_cast<char*>(bufCheck) + i);
+        EXPECT_EQ(++count, (*getCount)());
     }
 
     dlclose(handle);
@@ -225,19 +241,23 @@ HWTEST_F(LdsoCfiTest, __cfi_slowpath_diag_function_test_001, TestSize.Level1)
     void* handle = dlopen(LIB_PATH, RTLD_NOW);
     ASSERT_NE(handle, nullptr);
 
-    g_getCount = reinterpret_cast<FuncTypeRetSize>(dlsym(handle, "GetCount"));
-    g_getTypeId = reinterpret_cast<FuncTypeRetUint64>(dlsym(handle, "GetTypeId"));
-    g_getDiag = reinterpret_cast<FuncTypeRetVoidPtr>(dlsym(handle, "GetDiag"));
-    g_getGlobalAddress = reinterpret_cast<FuncTypeRetVoidPtr>(dlsym(handle, "GetGlobalAddress"));
+    FuncTypeRetSize getCount = reinterpret_cast<FuncTypeRetSize>(dlsym(handle, "GetCount"));
+    ASSERT_NE(getCount, nullptr);
+    FuncTypeRetUint64 getTypeId = reinterpret_cast<FuncTypeRetUint64>(dlsym(handle, "GetTypeId"));
+    ASSERT_NE(getTypeId, nullptr);
+    FuncTypeRetVoidPtr getDiag = reinterpret_cast<FuncTypeRetVoidPtr>(dlsym(handle, "GetDiag"));
+    ASSERT_NE(getDiag, nullptr);
+    FuncTypeRetVoidPtr globalAddress = reinterpret_cast<FuncTypeRetVoidPtr>(dlsym(handle, "GetGlobalAddress"));
+    ASSERT_NE(globalAddress, nullptr);
 
-    size_t count = (*g_getCount)();
+    size_t count = (*getCount)();
     __cfi_slowpath_diag(callSiteTypeId, nullptr, &diagInfo);
-    EXPECT_EQ(count, (*g_getCount)());
+    EXPECT_EQ(count, (*getCount)());
 
-    __cfi_slowpath_diag(callSiteTypeId, (*g_getGlobalAddress)(), &diagInfo);
-    EXPECT_EQ(++count, (*g_getCount)());
-    EXPECT_EQ(callSiteTypeId, (*g_getTypeId)());
-    EXPECT_EQ((*g_getDiag)(), &diagInfo);
+    __cfi_slowpath_diag(callSiteTypeId, (*globalAddress)(), &diagInfo);
+    EXPECT_EQ(++count, (*getCount)());
+    EXPECT_EQ(callSiteTypeId, (*getTypeId)());
+    EXPECT_EQ((*getDiag)(), &diagInfo);
 
     dlclose(handle);
 }

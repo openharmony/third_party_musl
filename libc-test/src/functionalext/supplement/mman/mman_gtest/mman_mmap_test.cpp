@@ -46,8 +46,8 @@ void CloseFileAndRemove(const char* path, FILE* filePtr, int fd)
 HWTEST_F(MmanMmapTest, mmap_001, TestSize.Level1)
 {
     void* mapping = mmap(nullptr, SIZE, PROT_READ | PROT_WRITE, MAP_ANON | MAP_PRIVATE, -1, 0);
+    ASSERT_NE(MAP_FAILED, mapping);
     int munmapResult = munmap(mapping, SIZE);
-    EXPECT_TRUE(MAP_FAILED != mapping);
     EXPECT_TRUE(munmapResult == 0);
 }
 
@@ -115,8 +115,10 @@ HWTEST_F(MmanMmapTest, mmap_005, TestSize.Level1)
     int status = stat(g_path, &sb);
     void* mmapping = mmap(nullptr, sb.st_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
     EXPECT_EQ(status, 0);
-    EXPECT_NE(mmapping, MAP_FAILED);
+    ASSERT_NE(mmapping, MAP_FAILED);
     CloseFileAndRemove(g_path, g_filePtr, fd);
+    int unmapResult = munmap(mmapping, sb.st_size);
+    EXPECT_EQ(unmapResult, 0);
 }
 
 /**
@@ -134,8 +136,10 @@ HWTEST_F(MmanMmapTest, mmap_006, TestSize.Level1)
     int status = stat(g_path, &sb);
     void* mmapping = mmap(nullptr, sb.st_size, PROT_EXEC, MAP_PRIVATE | MAP_LOCKED, fd, 0);
     EXPECT_EQ(status, 0);
-    EXPECT_NE(mmapping, MAP_FAILED);
+    ASSERT_NE(mmapping, MAP_FAILED);
     CloseFileAndRemove(g_path, g_filePtr, fd);
+    int unmapResult = munmap(mmapping, sb.st_size);
+    EXPECT_EQ(unmapResult, 0);
 }
 
 /**

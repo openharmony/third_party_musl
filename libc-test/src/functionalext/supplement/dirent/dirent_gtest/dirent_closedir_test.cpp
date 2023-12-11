@@ -17,6 +17,6 @@ class DirentClosedirTest : public testing::Test {
 HWTEST_F(DirentClosedirTest, closedir_001, TestSize.Level1)
 {
     DIR* dir = opendir("/proc/self");
-    EXPECT_NE(dir, nullptr);
+    ASSERT_NE(dir, nullptr);
     EXPECT_EQ(closedir(dir), 0);
 }

@@ -11,18 +11,23 @@ class LdsoDlnsCreateTest : public testing::Test {
 };
 
 /**
- * @tc.name: dlns_create_001
- * @tc.desc: Check dlns_create flag run success without exception.
+ * @tc.name: dlns_create2_001
+ * @tc.desc: Check dlns_create2 flag run success without exception.
  * @tc.type: FUNC
  */
-HWTEST_F(LdsoDlnsCreateTest, dlns_create_001, TestSize.Level1)
+HWTEST_F(LdsoDlnsCreateTest, dlns_create2_001, TestSize.Level1)
 {
+    const char* rootSo = "libldso_ns_root.so";
+    void* handle = dlopen(rootSo, RTLD_LAZY);
+    ASSERT_EQ(handle, nullptr);
+
+    const std::string searchPath =
+        "/data/tmp/libcgtest/libs/namespace_one_libs:/data/tmp/libcgtest/libs/namespace_two_libs";
     Dl_namespace dlns;
     dlns_init(&dlns, "create2_ns");
-    void* handle = dlopen_ns(&dlns, "libldso_ns_empty.so", RTLD_LAZY);
+    dlns_create2(&dlns, searchPath.c_str(), CREATE_INHERIT_DEFAULT);
+    handle = dlopen_ns(&dlns, rootSo, RTLD_LAZY);
     ASSERT_NE(handle, nullptr);
+
     dlclose(handle);
-    dlns_create2(&dlns, "src/test", 0);
-    void* handle2 = dlopen_ns(&dlns, "libldso_ns_empty.so", RTLD_LAZY);
-    ASSERT_EQ(handle2, nullptr);
 }

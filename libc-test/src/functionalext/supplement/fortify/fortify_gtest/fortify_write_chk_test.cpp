@@ -21,7 +21,7 @@ HWTEST_F(FortifyWriteChkTest, __write_chk_001, TestSize.Level1)
     const char* data = "Hello, this is a test.";
     size_t count = strlen(data);
     int fd = open("test.txt", O_RDWR | O_CREAT, 0644);
-    EXPECT_NE(fd, -1);
+    ASSERT_NE(fd, -1);
     ssize_t result = __write_chk(fd, data, count, count);
     EXPECT_EQ(result, count);
     close(fd);

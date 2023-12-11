@@ -21,7 +21,7 @@ class FortifyReadChkTest : public testing::Test {
 HWTEST_F(FortifyReadChkTest, __read_chk_001, TestSize.Level1)
 {
     int fd = open("/proc/version", O_RDONLY);
-    EXPECT_TRUE(fd != -1);
+    ASSERT_NE(fd, -1);
     char buf[BUF_SIZE];
     ssize_t result = __read_chk(fd, buf, BUF_SIZE, sizeof(buf));
     EXPECT_EQ(result, BUF_SIZE);

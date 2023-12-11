@@ -1,3 +1,4 @@
+#include <errno.h>
 #include <gtest/gtest.h>
 #include <stdlib.h>
 
