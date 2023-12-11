@@ -17,7 +17,6 @@ import("../../../../../../test_template.gni")
 group("ldso_libs") {
   testonly = true
   deps = [
-    ":copy_zip_lib",
     ":dlopen_004",
     ":dlopen_005",
     ":dlopen_009_1",
@@ -67,6 +66,9 @@ group("ldso_libs") {
     ":ldso_thread_test",
     ":ldso_thread_test_2",
   ]
+  if ("${musl_arch}" == "arm" || "${musl_arch}" == "aarch64") {
+    deps += [ ":copy_zip_lib" ]
+  }
 }
 
 root_libs_dir = "/data/tmp/libcgtest/libs"
@@ -776,10 +778,11 @@ ohos_shared_library("dlopen_zip_test") {
 action("copy_zip_lib") {
   script = "//third_party/musl/scripts/copy_libs.sh"
 
+  libs_dir = []
   if ("${musl_arch}" == "arm") {
-    libs_dir = [ "//third_party/musl/libc-test/src/functionalext/supplement/ldso/ldso_gtest/libs/ziplibs_32" ]
+    libs_dir += [ "//third_party/musl/libc-test/src/functionalext/supplement/ldso/ldso_gtest/libs/ziplibs_32" ]
   } else if ("${musl_arch}" == "aarch64") {
-    libs_dir = [ "//third_party/musl/libc-test/src/functionalext/supplement/ldso/ldso_gtest/libs/ziplibs_64" ]
+    libs_dir += [ "//third_party/musl/libc-test/src/functionalext/supplement/ldso/ldso_gtest/libs/ziplibs_64" ]
   }
 
   target_dir = [ "${root_out_dir}/musl/libc-gtest-lib" ]

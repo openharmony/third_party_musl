@@ -143,6 +143,7 @@ HWTEST_F(LdsoDlopenNsTest, dlopen_ns_004, TestSize.Level1)
     EXPECT_TRUE(handle == nullptr);
 }
 
+#if defined(__arm__) || defined(__aarch64__)
 /**
  * @tc.name: dlopen_ns_005
  * @tc.desc: Open an uncompressed link library in an aligned zip file by setting search path.
@@ -166,3 +167,4 @@ HWTEST_F(LdsoDlopenNsTest, dlopen_ns_005, TestSize.Level1)
 
     dlclose(handle);
 }
+#endif
