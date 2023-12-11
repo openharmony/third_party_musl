@@ -12,6 +12,8 @@ class UnistdWriteTest : public testing::Test {
     void TearDown() override {}
 };
 
+constexpr size_t BUF_SIZE = 2;
+
 /**
  * @tc.name: write_001
  * @tc.desc: checks whether the write function behaves correctly when writing data to a file opened in write-only
@@ -21,11 +23,14 @@ class UnistdWriteTest : public testing::Test {
 HWTEST_F(UnistdWriteTest, write_001, TestSize.Level1)
 {
     char buf[1];
-    size_t ct = atoi("2");
-    int fd = open("/dev/null", O_RDONLY);
-    EXPECT_EQ(-1, write(fd, buf, ct));
-
-    fd = open("/dev/null", O_WRONLY);
-    EXPECT_EQ(2, write(fd, buf, ct));
+    int fd = open("/data/write.txt", O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    ASSERT_NE(-1, fd);
+    EXPECT_EQ(BUF_SIZE, write(fd, buf, BUF_SIZE));
     close(fd);
+    fd = open("/data/write.txt", O_RDONLY);
+    ASSERT_NE(-1, fd);
+    int ret = write(fd, buf, BUF_SIZE);
+    EXPECT_EQ(-1, ret);
+    close(fd);
+    remove("/data/write.txt");
 }

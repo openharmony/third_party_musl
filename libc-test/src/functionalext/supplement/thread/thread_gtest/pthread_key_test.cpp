@@ -78,6 +78,7 @@ HWTEST_F(PthreadKeyTest, pthread_key_create_003, TestSize.Level1)
     pthread_join(thread, &attrStackResult);
     EXPECT_EQ(nullptr, attrStackResult);
     EXPECT_EQ(0, pthread_key_delete(pthreadKey));
+    munmap(attrStack, stackSize);
 }
 
 /**

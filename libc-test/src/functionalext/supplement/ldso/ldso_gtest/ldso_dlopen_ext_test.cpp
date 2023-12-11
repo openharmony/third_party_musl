@@ -78,6 +78,7 @@ HWTEST_F(LdsoDlopenExtTest, dlopen_ext_003, TestSize.Level1)
     EXPECT_LT(testValue, reinterpret_cast<char*>(addr) + SIZE_1024_SQUARE);
 
     dlclose(handle);
+    munmap(addr, SIZE_1024_SQUARE);
 }
 
 /**
@@ -97,6 +98,7 @@ HWTEST_F(LdsoDlopenExtTest, dlopen_ext_004, TestSize.Level1)
     extInfo.reserved_size = SIZE_128;
     void* handle = dlopen_ext("libdlopen_common_relro.so", RTLD_NOW, &extInfo);
     EXPECT_TRUE(handle == nullptr);
+    munmap(addr, SIZE_128);
 }
 
 /**
@@ -126,6 +128,7 @@ HWTEST_F(LdsoDlopenExtTest, dlopen_ext_005, TestSize.Level1)
     EXPECT_EQ(TEST_NUM_1000, *testValue);
 
     dlclose(handle);
+    munmap(addr, SIZE_1024_SQUARE);
 }
 
 /**
@@ -165,6 +168,7 @@ HWTEST_F(LdsoDlopenExtTest, dlopen_ext_006, TestSize.Level1)
     EXPECT_EQ(TEST_NUM_1000, *num);
 
     dlclose(handle);
+    munmap(addr, SIZE_1024_SQUARE);
 }
 
 /**
@@ -184,6 +188,8 @@ HWTEST_F(LdsoDlopenExtTest, dlopen_ext_007, TestSize.Level1)
     extInfo.reserved_size = SIZE_128;
     void* handle = dlopen_ext("libldso_relro_recursive_test.so", RTLD_NOW, &extInfo);
     EXPECT_TRUE(handle == nullptr);
+
+    munmap(addr, SIZE_128);
 }
 
 static int CreateTempRelroFile(char* path)
@@ -303,6 +309,7 @@ HWTEST_F(LdsoDlopenExtTest, dlopen_ext_008, TestSize.Level1)
     close(fd);
 
     unlink(relroFile);
+    munmap(addr, SIZE_1024_SQUARE);
 }
 
 /**
@@ -338,6 +345,7 @@ HWTEST_F(LdsoDlopenExtTest, dlopen_ext_009, TestSize.Level1)
     close(fd);
 
     unlink(relroFile);
+    munmap(addr, SIZE_1024_SQUARE);
 }
 
 /**
@@ -372,6 +380,7 @@ HWTEST_F(LdsoDlopenExtTest, dlopen_ext_010, TestSize.Level1)
     close(fd);
 
     unlink(relroFile);
+    munmap(addr, SIZE_1024_SQUARE);
 }
 
 /**
@@ -382,23 +391,23 @@ HWTEST_F(LdsoDlopenExtTest, dlopen_ext_010, TestSize.Level1)
  */
 HWTEST_F(LdsoDlopenExtTest, dlopen_ext_011, TestSize.Level1)
 {
-    size_t size = 128;
-    void* addr = mmap(nullptr, size, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS, INVALID_VALUE, 0);
+    void* addr = mmap(nullptr, SIZE_128, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS, INVALID_VALUE, 0);
     ASSERT_NE(addr, MAP_FAILED);
 
     dl_extinfo extInfo;
     extInfo.flag = DL_EXT_RESERVED_ADDRESS_HINT;
     extInfo.reserved_addr = addr;
-    extInfo.reserved_size = size;
+    extInfo.reserved_size = SIZE_128;
     void* handle = dlopen_ext("libldso_relro_recursive_test.so", RTLD_NOW, &extInfo);
     ASSERT_NE(handle, nullptr);
 
     void* fn = dlsym(handle, "GetRelroValue");
     ASSERT_NE(fn, nullptr);
-    EXPECT_TRUE((fn < addr) || (fn >= (reinterpret_cast<char*>(addr) + size)));
+    EXPECT_TRUE((fn < addr) || (fn >= (reinterpret_cast<char*>(addr) + SIZE_128)));
 
     FuncTypeRetInt func = reinterpret_cast<FuncTypeRetInt>(fn);
     EXPECT_EQ(TEST_NUM_50, func());
 
     dlclose(handle);
+    munmap(addr, SIZE_128);
 }

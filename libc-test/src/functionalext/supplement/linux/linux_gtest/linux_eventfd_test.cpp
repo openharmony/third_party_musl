@@ -22,8 +22,8 @@ constexpr unsigned int VALUE = 2;
 HWTEST_F(LinuxEventfdTest, eventfd_001, TestSize.Level1)
 {
     int eventFd = eventfd(VALUE, EFD_CLOEXEC);
+    ASSERT_NE(eventFd, -1);
     int flags = fcntl(eventFd, F_GETFD);
-    EXPECT_TRUE(eventFd != -1);
     EXPECT_NE(flags, -1);
     EXPECT_EQ(FD_CLOEXEC, flags & FD_CLOEXEC);
     close(eventFd);
@@ -39,8 +39,8 @@ HWTEST_F(LinuxEventfdTest, eventfd_001, TestSize.Level1)
 HWTEST_F(LinuxEventfdTest, eventfd_002, TestSize.Level1)
 {
     int eventFd = eventfd(VALUE, EFD_NONBLOCK | EFD_CLOEXEC);
+    ASSERT_NE(eventFd, -1);
     int flags = fcntl(eventFd, F_GETFD);
-    EXPECT_TRUE(eventFd != -1);
     EXPECT_NE(flags, -1);
     EXPECT_EQ(FD_CLOEXEC, flags & FD_CLOEXEC);
     close(eventFd);

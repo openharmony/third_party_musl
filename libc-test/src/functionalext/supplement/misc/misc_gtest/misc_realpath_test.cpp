@@ -64,6 +64,7 @@ HWTEST_F(MiscRealpathTest, realpath_005, TestSize.Level1)
     errno = 0;
     char* ptr = realpath(existingPath, nullptr);
     ASSERT_NE(ptr, nullptr);
+    free(ptr);
 }
 
 /**

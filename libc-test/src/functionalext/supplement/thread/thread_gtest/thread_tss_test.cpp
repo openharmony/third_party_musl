@@ -14,6 +14,9 @@ static int g_callCount = 0;
 
 static void TssThreadFunc(void* ptr)
 {
+    if (ptr == nullptr) {
+        return;
+    }
     ++g_callCount;
     free(ptr);
 }

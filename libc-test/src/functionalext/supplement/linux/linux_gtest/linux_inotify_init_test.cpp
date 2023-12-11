@@ -17,8 +17,6 @@ class LinuxInotifyinitTest : public testing::Test {
 HWTEST_F(LinuxInotifyinitTest, inotify_init_001, TestSize.Level1)
 {
     int fd = inotify_init();
-    EXPECT_TRUE(fd != -1);
-    if (fd != -1) {
-        close(fd);
-    }
+    ASSERT_NE(fd, -1);
+    close(fd);
 }

@@ -18,6 +18,6 @@ class LinuxTimerfdcreateTest : public testing::Test {
 HWTEST_F(LinuxTimerfdcreateTest, timerfd_create_001, TestSize.Level1)
 {
     int timerfd = timerfd_create(CLOCK_MONOTONIC, 0);
-    EXPECT_EQ(timerfd >= 0, true);
+    EXPECT_GE(timerfd, 0);
     close(timerfd);
 }
