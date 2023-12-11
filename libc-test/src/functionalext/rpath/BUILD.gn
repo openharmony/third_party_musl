@@ -40,6 +40,7 @@ ohos_executable("rpath_test") {
     "//third_party/musl/porting/linux/user/include",
     "//third_party/musl/libc-test/src/common",
   ]
+  ldflags = [ "-Wl,-rpath=/data/tests/libc-test/src/rpath_lib" ]
   configs = [ "//third_party/musl/libc-test/src/common:config_runtest" ]
 }
 
