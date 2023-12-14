@@ -2411,6 +2411,7 @@ musl_src_porting_file = [
   "src/linux/x86_64/flock.s",
   "src/linux/flock.c",
   "src/ctype/towctrans.c",
+  "src/stdio/ofl_add.c",
 ]
 
 musl_inc_hook_files = [
