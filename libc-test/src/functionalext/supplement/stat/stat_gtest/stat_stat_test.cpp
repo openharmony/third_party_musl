@@ -16,13 +16,13 @@ class StatStatTest : public testing::Test {
  **/
 HWTEST_F(StatStatTest, stat_001, TestSize.Level1)
 {
-    const char* dirname = "test_stat.txt";
+    const char* dirname = "test_stat";
     mode_t mode = S_IRWXU | S_IRWXG | S_IRWXO;
-    EXPECT_NE(-1, mkdir(dirname, mode));
-    const char* path = "test_stat.txt";
+    ASSERT_NE(-1, mkdir(dirname, mode));
+    const char* path = "test_stat";
     struct stat fileStat;
     EXPECT_EQ(0, stat(path, &fileStat));
-    remove("test_stat.txt");
+    remove("test_stat");
 }
 
 /**

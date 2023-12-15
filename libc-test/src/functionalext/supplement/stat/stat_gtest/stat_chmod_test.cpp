@@ -16,14 +16,11 @@ class StatChmodTest : public testing::Test {
  **/
 HWTEST_F(StatChmodTest, chmod_001, TestSize.Level1)
 {
-    const char* dirname = "test_chmod.txt";
-    mode_t mode1 = S_IRWXU | S_IRWXG | S_IRWXO;
-    EXPECT_NE(-1, mkdir(dirname, mode1));
-
     mode_t mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
-    open("test_chmod.txt", O_RDWR | O_CREAT);
-    EXPECT_EQ(chmod("test_chmod.txt", mode), 0);
-    remove("test_chmod.txt");
+    int fd = open("test_chmod", O_RDWR | O_CREAT, 0755);
+    EXPECT_GE(fd, 0);
+    EXPECT_EQ(chmod("test_chmod", mode), 0);
+    remove("test_chmod");
 }
 
 /**

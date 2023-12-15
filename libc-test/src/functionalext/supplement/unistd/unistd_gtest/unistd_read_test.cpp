@@ -9,6 +9,7 @@ using namespace testing::ext;
 
 constexpr size_t N_BITES = 2;
 constexpr size_t READ_COUNT = 5;
+constexpr size_t READ_SIZE = 6;
 
 class UnistdReadTest : public testing::Test {
     void SetUp() override {}
@@ -25,8 +26,11 @@ HWTEST_F(UnistdReadTest, read_001, TestSize.Level1)
 {
     char buf[1];
     int fd = open("/dev/null", O_RDONLY);
+    ASSERT_NE(-1, fd);
     EXPECT_EQ(0, read(fd, buf, N_BITES));
+    close(fd);
     fd = open("/dev/null", O_WRONLY);
+    ASSERT_NE(-1, fd);
     EXPECT_EQ(-1, read(fd, buf, N_BITES));
     close(fd);
 }
@@ -39,8 +43,8 @@ HWTEST_F(UnistdReadTest, read_001, TestSize.Level1)
 HWTEST_F(UnistdReadTest, read_002, TestSize.Level1)
 {
     int fd = open("/proc/version", O_RDONLY);
-    ASSERT_TRUE(fd != -1);
-    char buf[READ_COUNT];
+    ASSERT_NE(-1, fd);
+    char buf[READ_SIZE];
     EXPECT_EQ(READ_COUNT, read(fd, buf, READ_COUNT));
     EXPECT_STREQ("Linux", buf);
     close(fd);

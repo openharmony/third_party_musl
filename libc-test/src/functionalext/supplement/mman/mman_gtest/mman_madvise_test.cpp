@@ -19,10 +19,15 @@ constexpr size_t LEN = 2048;
  */
 HWTEST_F(MmanMadviseTest, madvise_001, TestSize.Level1)
 {
-    int fileDescriptor = open("madvise_function_test.c", O_RDWR | O_CREAT, 0666);
-    EXPECT_TRUE(fileDescriptor != -1);
-    void* memoryPointer = mmap(nullptr, LEN, PROT_READ | PROT_WRITE, MAP_SHARED, fileDescriptor, 0);
-    EXPECT_TRUE(memoryPointer != MAP_FAILED);
-    int result = madvise(memoryPointer, LEN, MADV_NORMAL);
+    int fd = open("madvise_001.txt", O_RDWR | O_CREAT, 0666);
+    ASSERT_NE(fd, -1);
+
+    void* addr = mmap(nullptr, LEN, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+    ASSERT_NE(addr, MAP_FAILED);
+    int result = madvise(addr, LEN, MADV_NORMAL);
     EXPECT_TRUE(result == 0);
+
+    munmap(addr, LEN);
+    close(fd);
+    remove("madvise_001.txt");
 }

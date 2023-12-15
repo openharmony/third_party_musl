@@ -26,16 +26,17 @@ HWTEST_F(UnistdPipeTest, pipe_001, TestSize.Level1)
     char buffer[BUF_SIZE];
     EXPECT_EQ(0, pipe(fd));
     pid_t pid = fork();
+    ASSERT_LE(0, pid);
     if (pid == 0) {
         const char* message = "test pipe";
         EXPECT_EQ(0, close(fd[0]));
         write(fd[1], message, strlen(message));
         EXPECT_EQ(0, close(fd[1]));
+        _exit(0);
     } else {
         EXPECT_EQ(0, close(fd[1]));
         read(fd[0], buffer, sizeof(buffer));
         EXPECT_STREQ("test pipe", buffer);
         EXPECT_EQ(0, close(fd[0]));
-        _exit(0);
     }
 }

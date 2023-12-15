@@ -20,7 +20,7 @@ HWTEST_F(LocaleNllanginfolTest, nl_langinfo_l_001, TestSize.Level1)
     setlocale(LC_ALL, "A");
     locale_t testLocale = newlocale(LC_ALL, "A", nullptr);
     const char* decimalSeparator = nl_langinfo_l(RADIXCHAR, testLocale);
-    EXPECT_NE(decimalSeparator, nullptr);
+    ASSERT_NE(decimalSeparator, nullptr);
     if (decimalSeparator != nullptr) {
         EXPECT_TRUE(strlen(decimalSeparator) > 0);
     } else {

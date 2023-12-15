@@ -21,7 +21,7 @@ HWTEST_F(MallocFreeTest, free_001, TestSize.Level1)
 {
     int* memoryBlock = static_cast<int*>(malloc(sizeof(int)));
     *memoryBlock = VALUE;
-    EXPECT_TRUE(memoryBlock != nullptr);
+    ASSERT_NE(memoryBlock, nullptr);
     EXPECT_TRUE(*memoryBlock == VALUE);
     free(memoryBlock);
 }

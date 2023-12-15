@@ -21,10 +21,10 @@ constexpr int SIZE = 2;
 HWTEST_F(MallocMallocusablesizeTest, malloc_usable_size_001, TestSize.Level1)
 {
     void* p = malloc(INITIALSIZE);
-    EXPECT_NE(p, nullptr);
+    ASSERT_NE(p, nullptr);
     p = realloc(p, INITIALSIZE * SIZE);
-    EXPECT_NE(p, nullptr);
+    ASSERT_NE(p, nullptr);
     size_t ret = malloc_usable_size(p);
-    EXPECT_TRUE(ret >= INITIALSIZE * SIZE);
+    EXPECT_GE(ret, INITIALSIZE * SIZE);
     free(p);
 }

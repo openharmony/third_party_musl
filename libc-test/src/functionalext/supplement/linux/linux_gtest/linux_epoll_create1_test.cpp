@@ -19,6 +19,6 @@ class LinuxEpollcreate1Test : public testing::Test {
 HWTEST_F(LinuxEpollcreate1Test, epoll_create1_001, TestSize.Level1)
 {
     int fd = epoll_create1(0);
-    EXPECT_NE(fd, -1);
+    ASSERT_NE(fd, -1);
     close(fd);
 }

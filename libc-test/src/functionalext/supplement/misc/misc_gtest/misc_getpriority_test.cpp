@@ -1,59 +1,70 @@
+#include <errno.h>
 #include <gtest/gtest.h>
+#include <sys/resource.h>
 
 using namespace testing::ext;
 
 class MiscGetpriorityTest : public testing::Test {
-    void SetUp() override {}
-    void TearDown() override {}
+    int priorityNum = -1, currentErrno = 0;
+    void SetUp() override
+    {
+        priorityNum = getpriority(PRIO_USER, getuid());
+        if (priorityNum == -1) {
+            currentErrno = errno;
+        }
+        errno = 0;
+    }
+    void TearDown() override
+    {
+        if (currentErrno == 0) {
+            setpriority(PRIO_USER, getuid(), priorityNum);
+        }
+    }
 };
 
-#define MAXPRIORITY 10
-#define MINPRIORITY (-10)
-#define SPECIALMAXPRIORITY 19
-#define SPECIALMINPRIORITY (-20)
+constexpr int PRIORITY = 10;
 
 /**
  * @tc.name: getpriority_001
- * @tc.desc: This test verifies that the getpriority function, which obtains the process priority, can execute
- *           successfully and the returned value meets the expected range, while checking for any errors.
+ * @tc.desc: The testing viewpoint of this test case is to verify that the getpriority function can successfully obtain
+ *           the priority PRIO of the current PRIO_PROCESS and ensure that the return value matches the expected
+ *           priority.
  * @tc.type: FUNC
  */
 HWTEST_F(MiscGetpriorityTest, getpriority_001, TestSize.Level1)
 {
-    errno = 0;
-    int processPriority = getpriority(0, getpid());
-    EXPECT_EQ(0, errno);
-    EXPECT_TRUE(processPriority != MINPRIORITY);
-    EXPECT_TRUE(processPriority <= MAXPRIORITY);
+    int result1 = setpriority(PRIO_PROCESS, getpid(), PRIORITY);
+    EXPECT_EQ(result1, 0);
+    int result2 = getpriority(PRIO_PROCESS, getpid());
+    EXPECT_EQ(result2, PRIORITY);
 }
 
 /**
  * @tc.name: getpriority_002
- * @tc.desc: This testing viewpoint verifies that the getpriority function, which obtains the priority of the process
- *           group, can execute successfully and the returned value meets the expected range, while checking for any
- *           errors.
+ * @tc.desc: The testing viewpoint of this test case is to verify that the getpriority function can successfully obtain
+ *           the priority PRIO of the current PRIO_PGRP and ensure that the return value matches the expected
+ *           priority.
  * @tc.type: FUNC
  */
 HWTEST_F(MiscGetpriorityTest, getpriority_002, TestSize.Level1)
 {
-    errno = 0;
-    int processGroupPriority = getpriority(1, getpgid(getpid()));
-    EXPECT_EQ(0, errno);
-    EXPECT_TRUE(processGroupPriority >= MINPRIORITY);
-    EXPECT_TRUE(processGroupPriority <= MAXPRIORITY);
+    int result1 = setpriority(PRIO_PGRP, getpgid(getpid()), PRIORITY);
+    EXPECT_EQ(result1, 0);
+    int result2 = getpriority(PRIO_PGRP, getpgid(getpid()));
+    EXPECT_EQ(result2, PRIORITY);
 }
 
 /**
  * @tc.name: getpriority_003
- * @tc.desc: This testing viewpoint verifies that the getpriority function, which obtains user priority, can be
- *           successfully executed and the returned value meets the expected range, while checking for any errors.
+ * @tc.desc: The testing viewpoint of this test case is to verify that the getpriority function can successfully obtain
+ *           the priority PRIO of the current PRIO_USER and ensure that the return value matches the expected
+ *           priority.
  * @tc.type: FUNC
  */
 HWTEST_F(MiscGetpriorityTest, getpriority_003, TestSize.Level1)
 {
-    errno = 0;
-    int userPriority = getpriority(2, getuid());
-    EXPECT_EQ(0, errno);
-    EXPECT_TRUE(userPriority >= SPECIALMINPRIORITY);
-    EXPECT_TRUE(userPriority <= SPECIALMAXPRIORITY);
+    int result1 = setpriority(PRIO_USER, getuid(), PRIORITY);
+    EXPECT_EQ(result1, 0);
+    int result2 = getpriority(PRIO_USER, getuid());
+    EXPECT_EQ(result2, PRIORITY);
 }

@@ -13,17 +13,6 @@ class LdsoDlIteratePhdrTest : public testing::Test {
     void TearDown() override {}
 };
 
-struct InfoOfDyc {
-    u_int32_t type;
-    u_int32_t vaddr;
-};
-
-struct InfoOfDlpi {
-    bool hasVal = false;
-    uint64_t dlpiAdds = 0;
-    uint64_t dlpiSubs = 0;
-};
-
 static int CallBack001(struct dl_phdr_info* info, size_t size, void* data)
 {
     int* dataChange = reinterpret_cast<int*>(data);
@@ -62,14 +51,14 @@ void CallBack002(dl_phdr_info* info, size_t size)
     for (ElfW(Half) i = 0; i < info->dlpi_phnum; ++i) {
         const ElfW(Phdr)* phdr = reinterpret_cast<const ElfW(Phdr)*>(&info->dlpi_phdr[i]);
         if (phdr->p_type == PT_DYNAMIC) {
-            InfoOfDyc* ehdr = reinterpret_cast<InfoOfDyc*>(info->dlpi_addr + phdr->p_vaddr);
-            ASSERT_NE(0, ehdr->type);
-            ASSERT_NE(0, ehdr->vaddr);
+            ElfW(Dyn)* dyn = reinterpret_cast<ElfW(Dyn)*>(info->dlpi_addr + phdr->p_vaddr);
+            ASSERT_NE(0, dyn->d_tag);
+            ASSERT_NE(0, dyn->d_un.d_val);
             foundDyc = true;
             break;
         }
     }
-    ASSERT_EQ(true, foundDyc);
+    EXPECT_TRUE(foundDyc);
 }
 
 int TempFunc(dl_phdr_info* info, size_t size, void* data)

@@ -20,7 +20,7 @@ class HookReallocTest : public testing::Test {
 HWTEST_F(HookReallocTest, realloc_001, TestSize.Level1)
 {
     void* ptr = realloc(nullptr, 0);
-    EXPECT_NE(ptr, nullptr);
+    ASSERT_NE(ptr, nullptr);
     free(ptr);
 }
 /**
@@ -32,7 +32,7 @@ HWTEST_F(HookReallocTest, realloc_001, TestSize.Level1)
 HWTEST_F(HookReallocTest, realloc_002, TestSize.Level1)
 {
     void* ptr = realloc(nullptr, SIZE);
-    EXPECT_NE(ptr, nullptr);
+    ASSERT_NE(ptr, nullptr);
     free(ptr);
 }
 /**
@@ -45,7 +45,6 @@ HWTEST_F(HookReallocTest, realloc_003, TestSize.Level1)
 {
     void* ptr = realloc(nullptr, ILLEGAL_SIZE);
     EXPECT_EQ(ptr, nullptr);
-    free(ptr);
 }
 /**
  * @tc.name: realloc_004
@@ -55,10 +54,10 @@ HWTEST_F(HookReallocTest, realloc_003, TestSize.Level1)
  */
 HWTEST_F(HookReallocTest, realloc_004, TestSize.Level1)
 {
-    char* ptr = static_cast<char*>(malloc(SIZE));
-    void* ret = realloc(ptr, SIZE);
-    ASSERT_NE(ret, nullptr);
-    free(ret);
+    void* ptr = malloc(SIZE);
+    ptr = realloc(ptr, SIZE);
+    ASSERT_NE(ptr, nullptr);
+    free(ptr);
 }
 
 /**
@@ -69,10 +68,10 @@ HWTEST_F(HookReallocTest, realloc_004, TestSize.Level1)
  */
 HWTEST_F(HookReallocTest, realloc_005, TestSize.Level1)
 {
-    char* ptr = static_cast<char*>(malloc(SIZE));
-    void* ret = realloc(ptr, SIZE * 2);
-    ASSERT_NE(ret, nullptr);
-    free(ret);
+    void* ptr = malloc(SIZE);
+    ptr = realloc(ptr, SIZE * 2);
+    ASSERT_NE(ptr, nullptr);
+    free(ptr);
 }
 
 /**
@@ -83,8 +82,8 @@ HWTEST_F(HookReallocTest, realloc_005, TestSize.Level1)
  */
 HWTEST_F(HookReallocTest, realloc_006, TestSize.Level1)
 {
-    char* ptr = static_cast<char*>(malloc(SIZE));
-    void* ret = realloc(ptr, SIZE / 2);
-    ASSERT_NE(ret, nullptr);
-    free(ret);
+    void* ptr = malloc(SIZE);
+    ptr = realloc(ptr, SIZE / 2);
+    ASSERT_NE(ptr, nullptr);
+    free(ptr);
 }

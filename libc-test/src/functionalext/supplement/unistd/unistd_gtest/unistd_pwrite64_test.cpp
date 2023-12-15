@@ -7,7 +7,7 @@
 
 using namespace testing::ext;
 
-constexpr size_t N_BITES = 2;
+constexpr size_t BUF_SIZE = 2;
 
 class UnistdPwrite64Test : public testing::Test {
     void SetUp() override {}
@@ -23,9 +23,14 @@ class UnistdPwrite64Test : public testing::Test {
 HWTEST_F(UnistdPwrite64Test, pwrite64_001, TestSize.Level1)
 {
     char buf[1];
-    int fd = open("/dev/null", O_WRONLY);
-    EXPECT_EQ(N_BITES, pwrite64(fd, buf, N_BITES, 0));
-    fd = open("/dev/null", O_RDONLY);
-    EXPECT_EQ(-1, pwrite64(fd, buf, N_BITES, 0));
+    int fd = open("/data/pwrite64.txt", O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    ASSERT_NE(-1, fd);
+    EXPECT_EQ(BUF_SIZE, pwrite64(fd, buf, BUF_SIZE, 0));
     close(fd);
+    fd = open("/data/pwrite64.txt", O_RDONLY);
+    ASSERT_NE(-1, fd);
+    int ret = pwrite64(fd, buf, BUF_SIZE, 0);
+    EXPECT_EQ(-1, ret);
+    close(fd);
+    remove("/data/pwrite64.txt");
 }

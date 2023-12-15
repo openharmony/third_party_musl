@@ -17,14 +17,12 @@ class StatFstatTest : public testing::Test {
  **/
 HWTEST_F(StatFstatTest, fstat_001, TestSize.Level1)
 {
-    const char* dirname = "test_fstat.txt";
-    mode_t mode = S_IRWXU | S_IRWXG | S_IRWXO;
-    EXPECT_NE(-1, mkdir(dirname, mode));
-    int fd = open("test_fstat.txt", O_RDONLY);
-    EXPECT_GT(fd, 0);
+    int fd = open("test_fstat", O_RDWR | O_CREAT, 0755);
+    EXPECT_GE(fd, 0);
     struct stat fileStat;
     EXPECT_EQ(0, fstat(fd, &fileStat));
-    remove("test_fstat.txt");
+    close(fd);
+    remove("test_fstat");
 }
 
 /**

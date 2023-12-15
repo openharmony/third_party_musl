@@ -24,8 +24,11 @@ HWTEST_F(UnistdPread64Test, pread64_001, TestSize.Level1)
 {
     char buf[1];
     int fd = open("/dev/null", O_RDONLY);
+    ASSERT_NE(-1, fd);
     EXPECT_EQ(0, pread64(fd, buf, N_BITES, 0));
+    close(fd);
     fd = open("/dev/null", O_WRONLY);
+    ASSERT_NE(-1, fd);
     EXPECT_EQ(-1, pread64(fd, buf, N_BITES, 0));
     close(fd);
 }
