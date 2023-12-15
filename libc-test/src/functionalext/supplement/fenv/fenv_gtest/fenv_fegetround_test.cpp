@@ -8,8 +8,6 @@ class FenvFegetroundTest : public testing::Test {
     void TearDown() override {}
 };
 
-#define FE_TOWARDZERO 0xc00000
-
 /**
  * @tc.name: fegetround_001
  * @tc.desc: Set the floating-point rounding mode to "nearest mode" using fesetround, retrieves the current rounding
