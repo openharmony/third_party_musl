@@ -19,7 +19,7 @@ class HookMunmapTest : public testing::Test {
 HWTEST_F(HookMunmapTest, munmap_001, TestSize.Level1)
 {
     void* ptr = mmap(nullptr, MMAP_SIZE, PROT_READ | PROT_WRITE, MAP_ANON | MAP_PRIVATE, -1, 0);
-    EXPECT_NE(MAP_FAILED, ptr);
+    ASSERT_NE(MAP_FAILED, ptr);
     EXPECT_TRUE(munmap(ptr, MMAP_SIZE) == 0);
 }
 
@@ -32,6 +32,6 @@ HWTEST_F(HookMunmapTest, munmap_001, TestSize.Level1)
 HWTEST_F(HookMunmapTest, munmap_002, TestSize.Level1)
 {
     void* ptr = mmap64(nullptr, MMAP_SIZE, PROT_READ | PROT_WRITE, MAP_ANON | MAP_PRIVATE, -1, 0);
-    EXPECT_NE(MAP_FAILED, ptr);
+    ASSERT_NE(MAP_FAILED, ptr);
     EXPECT_TRUE(munmap(ptr, MMAP_SIZE) == 0);
 }

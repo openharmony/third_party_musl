@@ -1,5 +1,7 @@
 #include <dirent.h>
+#include <errno.h>
 #include <gtest/gtest.h>
+#include <set>
 
 using namespace testing::ext;
 
@@ -17,7 +19,7 @@ class DirentReaddir64Test : public testing::Test {
 HWTEST_F(DirentReaddir64Test, readdir64_001, TestSize.Level1)
 {
     DIR* dir = opendir("/data");
-    EXPECT_NE(dir, nullptr);
+    ASSERT_NE(dir, nullptr);
     std::set<std::string> fileNames;
     errno = 0;
     dirent64* entry;
@@ -26,6 +28,6 @@ HWTEST_F(DirentReaddir64Test, readdir64_001, TestSize.Level1)
     }
     EXPECT_EQ(0, errno);
     EXPECT_EQ(closedir(dir), 0);
-    EXPECT_NE(fileNames.find("."), fileNames.end());
-    EXPECT_NE(fileNames.find(".."), fileNames.end());
+    ASSERT_NE(fileNames.find("."), fileNames.end());
+    ASSERT_NE(fileNames.find(".."), fileNames.end());
 }

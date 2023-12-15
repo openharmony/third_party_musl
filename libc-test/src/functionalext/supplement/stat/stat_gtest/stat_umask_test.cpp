@@ -11,7 +11,7 @@ class StatUmaskTest : public testing::Test {
 /**
  * @tc.name: stat_001
  * @tc.desc: Verifiy that the umask() function can successfully set and retrieve the file mode creation mask for
- *           the current process,
+ *           the current process
  * @tc.type: FUNC
  **/
 HWTEST_F(StatUmaskTest, umask_001, TestSize.Level1)

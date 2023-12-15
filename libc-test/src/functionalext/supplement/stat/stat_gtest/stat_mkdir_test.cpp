@@ -15,10 +15,10 @@ class StatMkdirTest : public testing::Test {
  **/
 HWTEST_F(StatMkdirTest, mkdir_001, TestSize.Level1)
 {
-    const char* dirname = "test_mkdir.txt";
+    const char* dirname = "test_mkdir";
     mode_t mode = S_IRWXU | S_IRWXG | S_IRWXO;
     EXPECT_NE(-1, mkdir(dirname, mode));
-    remove("test_mkdir.txt");
+    remove("test_mkdir");
 }
 
 /**
@@ -29,9 +29,9 @@ HWTEST_F(StatMkdirTest, mkdir_001, TestSize.Level1)
  **/
 HWTEST_F(StatMkdirTest, mkdir_002, TestSize.Level1)
 {
-    const char* dirname = "test_mkdir.txt";
+    const char* dirname = "test_mkdir";
     mode_t mode = S_IRWXU | S_IRWXG | S_IRWXO;
     mkdir(dirname, mode);
     EXPECT_EQ(-1, mkdir(dirname, mode));
-    remove("test_mkdir.txt");
+    remove("test_mkdir");
 }

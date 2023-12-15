@@ -20,9 +20,10 @@ HWTEST_F(LinuxTimerfdsettimeTest, timerfd_settime_001, TestSize.Level1)
     struct itimerspec its = { { 0, 0 }, { 2, 0 } };
     struct itimerspec val;
     int fd = timerfd_create(CLOCK_REALTIME, 0);
-    EXPECT_EQ(fd >= 0, true);
+    EXPECT_GE(fd, 0);
     int setResult = timerfd_settime(fd, 0, &its, nullptr);
     EXPECT_EQ(setResult, 0);
     int getResult = timerfd_gettime(fd, &val);
     EXPECT_EQ(getResult, 0);
+    close(fd);
 }

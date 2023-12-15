@@ -2,5 +2,6 @@
 
 int LoadOrderTest01()
 {
+    LoadOrderTest12();
     return LoadOrderTest();
 }

@@ -18,7 +18,7 @@ class DirentOpendirTest : public testing::Test {
 HWTEST_F(DirentOpendirTest, opendir_001, TestSize.Level1)
 {
     DIR* dir = opendir("/proc/self");
-    EXPECT_NE(dir, nullptr);
+    ASSERT_NE(dir, nullptr);
     dirent* dir2 = readdir(dir);
     EXPECT_EQ(strcmp(dir2->d_name, "."), 0);
     EXPECT_TRUE(closedir(dir) == 0);

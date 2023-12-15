@@ -56,6 +56,7 @@ group("ldso_libs") {
     ":dlsym_weak_func_undefined",
     ":empty",
     ":ldso_cfi_lib",
+    ":ldso_cfi_lib_exit",
     ":ldso_dlsym_dependent",
     ":ldso_dlsym_dependent_impl",
     ":ldso_norelro_test",
@@ -379,7 +380,7 @@ ohos_shared_library("dlopen_009_2") {
 
 ohos_shared_library("dlopen_010") {
   include_dirs = [ "." ]
-  sources = [ "dlopen_relocation.c" ]
+  sources = [ "dlopen_location.c" ]
   output_name = "dlopen_010"
   output_extension = "so"
   deps = [ ":dlopen_relocation_1" ]
@@ -1120,6 +1121,15 @@ ohos_shared_library("ldso_cfi_lib") {
   include_dirs = [ "." ]
   sources = [ "ldso_cfi_lib.c" ]
   output_name = "ldso_cfi_lib"
+  output_extension = "so"
+  subsystem_name = "musl"
+  part_name = "libc-gtest-lib"
+}
+
+ohos_shared_library("ldso_cfi_lib_exit") {
+  include_dirs = [ "." ]
+  sources = [ "ldso_cfi_lib.c" ]
+  output_name = "ldso_cfi_lib_exit"
   output_extension = "so"
   subsystem_name = "musl"
   part_name = "libc-gtest-lib"

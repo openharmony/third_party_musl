@@ -18,8 +18,11 @@ class NetIfTest : public testing::Test {
  **/
 HWTEST_F(NetIfTest, if_nametoindex_001, TestSize.Level1)
 {
-    unsigned index = if_nametoindex("eth0");
+    struct ifaddrs* ifAddr;
+    ASSERT_NE(-1, getifaddrs(&ifAddr));
+    unsigned index = if_nametoindex(ifAddr->ifa_name);
     EXPECT_NE(index, 0U);
+    freeifaddrs(ifAddr);
 }
 
 /**
@@ -30,12 +33,15 @@ HWTEST_F(NetIfTest, if_nametoindex_001, TestSize.Level1)
  **/
 HWTEST_F(NetIfTest, if_indextoname_001, TestSize.Level1)
 {
-    unsigned index = if_nametoindex("eth0");
+    struct ifaddrs* ifAddr;
+    ASSERT_NE(-1, getifaddrs(&ifAddr));
+    unsigned index = if_nametoindex(ifAddr->ifa_name);
     EXPECT_NE(index, 0U);
     char s[IF_NAMESIZE] = {};
     memset(&s, 0, sizeof(s));
     char* name = if_indextoname(index, s);
-    EXPECT_STREQ("eth0", name);
+    EXPECT_STREQ(ifAddr->ifa_name, name);
+    freeifaddrs(ifAddr);
 }
 
 /**

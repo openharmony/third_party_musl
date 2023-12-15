@@ -88,6 +88,7 @@ HWTEST_F(LdsoDladdrTest, dladdr_003, TestSize.Level1)
     dlclose(handle);
 }
 
+#if defined(__arm__) || defined(__aarch64__)
 /**
  * @tc.name: dladdr_004
  * @tc.desc: Test the ability to correctly parse methods in libc.
@@ -100,13 +101,19 @@ HWTEST_F(LdsoDladdrTest, dladdr_004, TestSize.Level1)
     EXPECT_TRUE(ret);
     // Specify the symbol name closest to the specified address.
     EXPECT_STREQ(dlInfo.dli_sname, "printf");
-    // The library name of the loading library containing address.
+// The library name of the loading library containing address.
+#ifdef __arm__
     const char* fileName = "ld-musl-arm.so";
+#else
+    const char* fileName = "ld-musl-aarch64.so";
+#endif
+
     const char* result = strstr(dlInfo.dli_fname, fileName);
     EXPECT_TRUE(result != nullptr);
     // The actual address closest to the symbol
     EXPECT_EQ(dlInfo.dli_saddr, (void*)(&printf));
 }
+#endif
 
 /**
  * @tc.name: dladdr_005

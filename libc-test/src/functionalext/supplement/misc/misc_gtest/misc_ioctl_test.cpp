@@ -17,7 +17,7 @@ class MiscIoctlTest : public testing::Test {
 HWTEST_F(MiscIoctlTest, ioctl_001, TestSize.Level1)
 {
     int fd = open("/dev/null", O_RDONLY);
-    EXPECT_TRUE(fd != -1);
+    ASSERT_NE(fd, -1);
     int result = ioctl(fd, 0xffff, 0);
     EXPECT_TRUE(result == -1);
     close(fd);

@@ -9,3 +9,5 @@ int LoadOrderTestEmpty02()
 {
     return LoadOrderTest02();
 }
+
+void LoadOrderTest12() {}

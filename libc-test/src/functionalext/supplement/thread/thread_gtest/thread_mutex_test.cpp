@@ -167,6 +167,7 @@ HWTEST_F(ThreadMutexTest, pthread_mutex_001, TestSize.Level1)
         EXPECT_EQ(0, pthread_mutex_unlock(&mutex));
         EXPECT_EQ(0, pthread_mutex_destroy(&mutex));
     }
+    mutexes.clear();
 }
 
 /**

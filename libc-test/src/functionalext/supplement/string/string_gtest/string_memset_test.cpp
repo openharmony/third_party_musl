@@ -12,8 +12,8 @@ class StringMemsetTest : public testing::Test {
 
 /**
  * @tc.name: memset_001
- * @tc.desc: Verify the behavior of the memset interface when the length is zero, ensuring that the original string is
- *           not modified.
+ * @tc.desc: Verify whether the memset function can correctly fill the specified character into the string without
+ *           affecting the values of other characters in the string.
  * @tc.type: FUNC
  */
 HWTEST_F(StringMemsetTest, memset_001, TestSize.Level1)

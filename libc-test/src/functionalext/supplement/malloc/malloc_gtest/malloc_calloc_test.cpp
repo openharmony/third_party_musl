@@ -11,7 +11,7 @@ class MallocCallocTest : public testing::Test {
 };
 
 constexpr size_t LEN = 200;
-constexpr int SIZE = 100;
+constexpr size_t SIZE = 100;
 
 /**
  * @tc.name: calloc_001
@@ -34,9 +34,10 @@ HWTEST_F(MallocCallocTest, calloc_001, TestSize.Level1)
  */
 HWTEST_F(MallocCallocTest, calloc_002, TestSize.Level1)
 {
-    char* block = static_cast<char*>(calloc(1, SIZE));
-    EXPECT_NE(block, nullptr);
-    EXPECT_EQ(100U, static_cast<size_t>(malloc_usable_size(block)));
+    void* block = calloc(1, SIZE);
+    ASSERT_NE(block, nullptr);
+    EXPECT_LE(SIZE, malloc_usable_size(block));
+    free(block);
 }
 
 /**
@@ -48,7 +49,7 @@ HWTEST_F(MallocCallocTest, calloc_002, TestSize.Level1)
 HWTEST_F(MallocCallocTest, calloc_003, TestSize.Level1)
 {
     void* memoryBlock = calloc(0, 0);
-    EXPECT_NE(memoryBlock, nullptr);
+    ASSERT_NE(memoryBlock, nullptr);
     free(memoryBlock);
 }
 
@@ -61,7 +62,7 @@ HWTEST_F(MallocCallocTest, calloc_003, TestSize.Level1)
 HWTEST_F(MallocCallocTest, calloc_004, TestSize.Level1)
 {
     void* memoryBlock = calloc(0, 1);
-    EXPECT_NE(memoryBlock, nullptr);
+    ASSERT_NE(memoryBlock, nullptr);
     free(memoryBlock);
 }
 
@@ -74,6 +75,6 @@ HWTEST_F(MallocCallocTest, calloc_004, TestSize.Level1)
 HWTEST_F(MallocCallocTest, calloc_005, TestSize.Level1)
 {
     void* memoryBlock = calloc(1, 0);
-    EXPECT_NE(memoryBlock, nullptr);
+    ASSERT_NE(memoryBlock, nullptr);
     free(memoryBlock);
 }

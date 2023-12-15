@@ -59,7 +59,7 @@ HWTEST_F(LocaleLocaleconvTest, localeconv_002, TestSize.Level1)
 HWTEST_F(LocaleLocaleconvTest, localeconv_003, TestSize.Level1)
 {
     char* radixChar = nl_langinfo(RADIXCHAR);
-    EXPECT_TRUE(radixChar != nullptr);
+    ASSERT_NE(radixChar, nullptr);
     EXPECT_TRUE(strcmp(localeconv()->decimal_point, radixChar) == 0);
 }
 
@@ -73,6 +73,6 @@ HWTEST_F(LocaleLocaleconvTest, localeconv_003, TestSize.Level1)
 HWTEST_F(LocaleLocaleconvTest, localeconv_004, TestSize.Level1)
 {
     char* thousandsSep = nl_langinfo(THOUSEP);
-    EXPECT_TRUE(thousandsSep != nullptr);
+    ASSERT_NE(thousandsSep, nullptr);
     EXPECT_TRUE(strcmp(localeconv()->thousands_sep, thousandsSep) == 0);
 }
