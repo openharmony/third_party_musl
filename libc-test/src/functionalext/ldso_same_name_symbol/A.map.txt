@@ -1,4 +1,4 @@
 A {
     global:
-        entry_for_ldso_relocation_return_value;
+        EntryForLdsoRelocationReturnValue;
 };
