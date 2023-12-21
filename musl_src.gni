@@ -2399,7 +2399,6 @@ musl_src_porting_file = [
   "src/string/strncasecmp.c",
   "src/string/strncat.c",
   "src/string/stpncpy.c",
-  "src/string/strncpy.c",
   "src/stat/fstat.c",
   "src/string/strcspn.c",
   "src/thread/pthread_once.c",

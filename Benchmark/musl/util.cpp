@@ -29,9 +29,9 @@
 
 void open_tcache() {
 #if not defined __APPLE__
-    mallopt(M_OHOS_CONFIG, M_TACHE_PERFORMANCE_MODE);
-    mallopt(M_OHOS_CONFIG, M_ENABLE_OPT_CACHE);
-    mallopt(M_SET_THREAD_CACHE, M_THREAD_OPT_CACHE);
+    mallopt(M_OHOS_CONFIG, M_TCACHE_PERFORMANCE_MODE);
+    mallopt(M_OHOS_CONFIG, M_ENABLE_OPT_TCACHE);
+    mallopt(M_SET_THREAD_CACHE, M_THREAD_CACHE_ENABLE);
     mallopt(M_DELAYED_FREE, M_DELAYED_FREE_ENABLE);
 #endif
 }

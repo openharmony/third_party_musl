@@ -412,6 +412,7 @@ template("musl_libs") {
       "src/env/__stack_chk_fail.c",
       "src/stdlib/qsort.c",
       "src/stdlib/qsort_nr.c",
+      "src/string/strncpy.c",
     ]
 
     sources += [
@@ -424,6 +425,7 @@ template("musl_libs") {
       "$FREEBSD_DIR/lib/libc/stdlib/strtoul.c",
       "$FREEBSD_DIR/lib/libc/stdlib/strtoumax.c",
       "third_party/openbsd/lib/libc/string/strcasestr.c",
+      "third_party/openbsd/lib/libc/string/strncpy.c",
     ]
 
     if (!is_llvm_build) {
@@ -719,7 +721,6 @@ template("musl_libs") {
     cflags = [
       "-O3",
       "-fPIC",
-      "-ffreestanding",
       "-fstack-protector-strong",
     ]
 
