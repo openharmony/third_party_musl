@@ -16,7 +16,10 @@ struct __clone_args {
 #if defined(__arm__) || defined(__aarch64__)
 #define GET_SP_REG(stack)	__asm__ __volatile__ ("mov %0, sp" : "=r"(stack))
 #elif defined(__x86_64__)
-#define GET_SP_REG(stack)	__asm__ __volatile__ ("mov %%rsp, %0;" : "=r"(stack) :)
+#define GET_SP_REG(stack)	do { \
+	__asm__ __volatile__ ("mov %%rsp, %0;" : "=r"(stack) :); \
+	stack = (void *)((uintptr_t)stack - 16); \
+} while (0)
 #else
 #define GET_SP_REG(stack)
 #endif
