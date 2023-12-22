@@ -16,6 +16,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <dirent.h>
+#include <string>
+
 extern "C" {
     #include "test.h"
 }
@@ -58,7 +60,7 @@ static void CheckCfiLog(char *file, const char *needle)
     if (DEBUG) {
         printf("[cfi checking]:%s\n", file);
     }
-    char buffer[BUFFER_SIZE];
+
     FILE *fp = fopen(file, "r");
     if (!fp) {
         return;
@@ -71,21 +73,26 @@ static void CheckCfiLog(char *file, const char *needle)
         fclose(fp);
         t_error("FAIL %s size is <=0!\n", file);
     }
+    
+    std::string buffer;
+    buffer.resize(size);
+
     if (fseek(fp, 0, SEEK_SET) == -1) {
         fclose(fp);
         return;
     }
-    int rsize = fread(buffer, 1, size, fp);
+    int rsize = fread(&buffer[0], 1, size, fp);
     if (rsize == 0) {
         fclose(fp);
         return;
     }
-
-    if (strstr(buffer, needle) != NULL) {
+    
+    if (buffer.find(needle) != std::string::npos) {
         printf("[cfi checking] %s is ok.\n", needle);
     } else {
         t_error("FAIL %s is failed!\n", needle);
     }
+
     fclose(fp);
 }
 
