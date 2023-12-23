@@ -57,6 +57,9 @@ group("ldso_libs") {
     ":empty",
     ":ldso_cfi_lib",
     ":ldso_cfi_lib_exit",
+    ":ldso_dlclose_test_a",
+    ":ldso_dlclose_test_b",
+    ":ldso_dlclose_test_c",
     ":ldso_dlsym_dependent",
     ":ldso_dlsym_dependent_impl",
     ":ldso_norelro_test",
@@ -611,6 +614,38 @@ ohos_shared_library("dlopen_common_close") {
   include_dirs = [ "." ]
   sources = [ "dlopen_common.c" ]
   output_name = "dlopen_common_close"
+  output_extension = "so"
+  subsystem_name = "musl"
+  part_name = "libc-gtest-lib"
+}
+
+ohos_shared_library("ldso_dlclose_test_a") {
+  include_dirs = [ "." ]
+  sources = [ "ldso_dlclose_test_a.c" ]
+  deps = [
+    ":ldso_dlclose_test_b",
+    ":ldso_dlclose_test_c",
+  ]
+  output_name = "ldso_dlclose_test_a"
+  output_extension = "so"
+  subsystem_name = "musl"
+  part_name = "libc-gtest-lib"
+}
+
+ohos_shared_library("ldso_dlclose_test_b") {
+  include_dirs = [ "." ]
+  sources = [ "ldso_dlclose_test_b.c" ]
+  output_name = "ldso_dlclose_test_b"
+  output_extension = "so"
+  subsystem_name = "musl"
+  part_name = "libc-gtest-lib"
+}
+
+ohos_shared_library("ldso_dlclose_test_c") {
+  include_dirs = [ "." ]
+  sources = [ "ldso_dlclose_test_c.c" ]
+  deps = [ ":ldso_dlclose_test_b" ]
+  output_name = "ldso_dlclose_test_c"
   output_extension = "so"
   subsystem_name = "musl"
   part_name = "libc-gtest-lib"
