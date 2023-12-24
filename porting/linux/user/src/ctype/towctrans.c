@@ -1,5 +1,7 @@
 #include <wctype.h>
 #include <ctype.h>
+#include <dlfcn.h>
+#include <stddef.h>
 
 static const unsigned char tab[];
 
@@ -61,30 +63,36 @@ static int casemap(unsigned c, int dir)
 	return c0;
 }
 
-static char __tolower(char c)
-{
-	if (c >= 'A' && c <= 'Z') {
-		return c | 0x20;
-	}
-	return c;
-}
+static void* g_hmicu_handle = NULL;
+static wint_t (*g_hm_ucase_toupper)(wint_t);
 
-static char __toupper(char c)
-{
-	if (c >= 'a' && c <= 'z') {
-		return c ^ 0x20;
-	}
-	return c;
+static void* find_hmicu_symbol(const char* symbol_name) {
+  if (!g_hmicu_handle) {
+	g_hmicu_handle = dlopen("libhmicuuc.z.so", RTLD_LOCAL);
+  }
+  return g_hmicu_handle ? dlsym(g_hmicu_handle, symbol_name) : NULL;
 }
 
 wint_t towlower(wint_t wc)
 {
-	return wc < 128 ? __tolower(wc) : casemap(wc, 0);
+	if (wc < 0x80) {
+		if (wc >= 'A' && wc <= 'Z') return wc | 0x20;
+		return wc;
+	}
+	return casemap(wc, 0);
 }
 
 wint_t towupper(wint_t wc)
 {
-	return wc < 128 ? __toupper(wc) : casemap(wc, 1);
+	if (wc < 0x80) {
+		if (wc >= 'a' && wc <= 'z') return wc ^ 0x20;
+		return wc;
+	}
+	if (!g_hm_ucase_toupper) {
+		typedef wint_t (*f)(wint_t);
+		g_hm_ucase_toupper = (f)find_hmicu_symbol("ucase_toupper_69");
+	}
+	return g_hm_ucase_toupper ? g_hm_ucase_toupper(wc) : casemap(wc, 1);
 }
 
 wint_t __towupper_l(wint_t c, locale_t l)
