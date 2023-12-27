@@ -14,7 +14,7 @@ volatile int *const __stdio_ofl_lockptr = ofl_lock;
 FILE **__ofl_lock()
 {
 	LOCK(ofl_lock);
-	return &ofl_head;
+	return &FILE_LIST_HEAD(ofl_head);
 }
 
 void __ofl_unlock()
@@ -24,16 +24,14 @@ void __ofl_unlock()
 
 FILE *__ofl_alloc()
 {
-	unsigned char *fsb = NULL;
+	FILE *fsb = NULL;
 	size_t cnt = 0;
 	FILE *f = NULL;
 
 	LOCK(ofl_lock);
-	if (ofl_free) {
-		f = ofl_free;
-		ofl_free = ofl_free->next;
-		f->next = NULL;
-		f->prev = NULL;
+	if (!FILE_LIST_EMPTY(ofl_free)) {
+		f = FILE_LIST_HEAD(ofl_free);
+		FILE_LIST_REMOVE(ofl_free);
 		UNLOCK(ofl_lock);
 
 		return f;
@@ -41,32 +39,20 @@ FILE *__ofl_alloc()
 	UNLOCK(ofl_lock);
 
 	/* alloc new FILEs(8) */
-	fsb = (unsigned char *)malloc(DEFAULT_ALLOC_FILE * sizeof(FILE));
+	fsb = (FILE *)malloc(DEFAULT_ALLOC_FILE * sizeof(FILE));
 	if (!fsb) {
 		return NULL;
 	}
 
 	LOCK(ofl_lock);
-	ofl_free = (FILE*)fsb;
-	ofl_free->prev = NULL;
-	f = ofl_free;
 
-	for (cnt = 1; cnt < DEFAULT_ALLOC_FILE; cnt++) {
-		FILE *tmp = (FILE*)(fsb + cnt * sizeof(FILE));
-		tmp->next = NULL;
-		f->next = tmp;
-		tmp->prev = f;
-		f = f->next;
+	for (cnt = 0; cnt < DEFAULT_ALLOC_FILE; cnt++) {
+		FILE_LIST_INSERT_HEAD(ofl_free, &fsb[cnt]);
 	}
 
-	/* reset and move to next free FILE */
-	f = ofl_free;
-	ofl_free = ofl_free->next;
-	if (ofl_free) {
-		ofl_free->prev = NULL;
-	}
-	f->next = NULL;
-	f->prev = NULL;
+	/* retrieve fist and move to next free FILE */
+	f = FILE_LIST_HEAD(ofl_free);
+	FILE_LIST_REMOVE(ofl_free);
 
 	UNLOCK(ofl_lock);
 	return f;
@@ -76,26 +62,15 @@ void __ofl_free(FILE *f)
 {
 	LOCK(ofl_lock);
 	if (!f) {
+		UNLOCK(ofl_lock);
 		return;
 	}
 
 	/* remove from head list */
-	if (f->prev) {
-		f->prev->next = f->next;
-	}
-	if (f->next) {
-		f->next->prev = f->prev;
-	}
-	if (f == ofl_head) {
-		ofl_head = f->next;
-	}
+	FILE_LIST_REMOVE(f);
 
 	/* push to free list */
-	f->next = ofl_free;
-	if (ofl_free) {
-		ofl_free->prev = f;
-	}
-	ofl_free = f;
+	FILE_LIST_INSERT_HEAD(ofl_free, f);
 
 	UNLOCK(ofl_lock);
 }
