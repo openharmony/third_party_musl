@@ -2419,6 +2419,7 @@ musl_src_porting_file = [
   "src/linux/flock.c",
   "src/ctype/towctrans.c",
   "src/stdio/ofl_add.c",
+  "src/linux/settimeofday.c",
 ]
 
 musl_inc_hook_files = [
