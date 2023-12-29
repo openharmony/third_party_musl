@@ -777,14 +777,7 @@ template("musl_libs") {
 
   source_set("soft_musl_src_strncpy") {
     sources = []
-    sources_orig = []
-
-    sources_orig += [ "third_party/openbsd/lib/libc/string/strncpy.c" ]
-
-    foreach(s, sources_orig) {
-      sources += [ "${target_out_dir}/${musl_ported_dir}/${s}" ]
-    }
-
+    sources += [ "third_party/openbsd/lib/libc/string/strncpy.c" ]
     configs -= musl_inherited_configs
     configs += [ ":soft_musl_config" ]
     cflags = [
