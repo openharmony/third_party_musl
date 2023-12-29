@@ -123,6 +123,9 @@ https://gitee.com/openharmony/third_party_musl/pulls/886
 - setxattr
 - clock_settime
 - chroot
+- quotactl
+- mknod
+- mknodat
 
 ### 应用开发功能限制
 - <shm.h> 共享内存: 在进程退出时不能被回收，有安全风险
@@ -158,6 +161,11 @@ https://gitee.com/openharmony/third_party_musl/pulls/886
     - clock_settime 用于设置指定的系统时钟（clock）的时间值
 - 进程根路径: 当前进程访问到不该访问的文件路径
     - chroot 设置当前进程执行的根路径
+- <quota.h> 管理磁盘配额相关函数
+    - quotactl: 管理磁盘配额（disk quota）的相关操作，包括获取、设置和检查磁盘配额信息
+- <stat.h> 
+    - mknod: 创建一个特殊文件节点（special file node），可以用于创建设备文件、管道文件等
+    - mknodat: 类似于 mknod 的系统调用函数，但相对于指定的文件描述符所在的目录进行操作，可以更灵活地控制文件的创建位置
 
 ### 不同设备形态可能会导致内核特性的使能方式有所不同
 这些接口需要 /dev/shm 路径
@@ -181,3 +189,9 @@ https://gitee.com/openharmony/third_party_musl/pulls/886
 - posix_openpt 函数打开一个伪终端（pty）设备，并返回其文件描述符。
 - unlockpt 函数解锁伪终端（pty）的主设备文件，使其可用于打开。
 
+### 空实现或默认失败的函数
+这些接口通常用于登录日志管理和用户会话跟踪等系统级任务。它们提供了对 utmp 文件的访问和操作。在musl中这些函数功能并未实现，在OpenHarmony中也并未向开发者提供
+- setutent: 将文件指针重置到 utmp 文件的开头，以便重新开始读取 utmp 文件的记录
+- pututline: 将一个 struct utmp 结构体的内容写入 utmp 文件，用于记录用户登录和注销等系统事件
+- getutent: 从 utmp 文件中读取下一个记录，并返回一个指向 struct utmp 结构体的指针，以便获取记录中的信息
+- utmpname: 设置要在其中查找 utmp 文件的路径名。通过调用 utmpname 函数，可以更改默认的 utmp 文件路径
