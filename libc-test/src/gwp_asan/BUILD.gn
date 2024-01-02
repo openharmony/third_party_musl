@@ -114,16 +114,40 @@ if (use_gwp_asan) {
     part_name = "libc-test"
   }
 
+  ohos_executable("gwp_asan_fork_simple_test") {
+    testonly = true
+    sources = [ "fork_simple_test.c" ]
+    configs = [
+      ":gwp_asan_test_config",
+      "//third_party/musl/libc-test/src/common:config_runtest",
+    ]
+    subsystem_name = "musl"
+    part_name = "libc-test"
+  }
+
+  ohos_executable("gwp_asan_thread_fork_test") {
+    testonly = true
+    sources = [ "thread_fork_test.c" ]
+    configs = [
+      ":gwp_asan_test_config",
+      "//third_party/musl/libc-test/src/common:config_runtest",
+    ]
+    subsystem_name = "musl"
+    part_name = "libc-test"
+  }
+
   group("gwp_asan_test") {
     testonly = true
     deps = [
       ":gwp_asan_buffer_overflow_test",
       ":gwp_asan_buffer_underflow_test",
       ":gwp_asan_double_free_test",
+      ":gwp_asan_fork_simple_test",
       ":gwp_asan_invalid_free_left_test",
       ":gwp_asan_invalid_free_right_test",
       ":gwp_asan_random_sample_test",
       ":gwp_asan_smoke_test",
+      ":gwp_asan_thread_fork_test",
       ":gwp_asan_unwind_test",
       ":gwp_asan_use_after_free_test",
     ]
