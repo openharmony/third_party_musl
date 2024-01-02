@@ -16,7 +16,7 @@ static void DoNothing() {}
 static void Bm_function_cxa_finalize(benchmark::State &state)
 {
     uintptr_t dummy;
-    __cxa_atexit(call, (void *)(uintptr_t)DoNothing, (void*)&dummy);
+    __cxa_atexit(call, reinterpret_cast<void *>(reinterpret_cast<uintptr_t>(DoNothing)), reinterpret_cast<void*>(&dummy));
 
     for (auto _ : state) {
         __cxa_finalize((void*)&dummy);
@@ -30,7 +30,7 @@ static void Bm_function_cxa_finalize_dynamic(benchmark::State &state)
     for (auto _ : state) {
         state.PauseTiming();
         for (int i = 0; i < count[state.range(0)]; i++) {
-            __cxa_atexit(call, (void *)(uintptr_t)DoNothing, (void*)&dummy);
+            __cxa_atexit(call, reinterpret_cast<void *>(reinterpret_cast<uintptr_t>(DoNothing)), reinterpret_cast<void*>(&dummy));
         }
         state.ResumeTiming();
         __cxa_finalize((void*)&dummy);

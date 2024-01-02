@@ -412,6 +412,7 @@ template("musl_libs") {
       "src/env/__stack_chk_fail.c",
       "src/stdlib/qsort.c",
       "src/stdlib/qsort_nr.c",
+      "src/string/strncpy.c",
     ]
 
     sources += [
@@ -719,7 +720,6 @@ template("musl_libs") {
     cflags = [
       "-O3",
       "-fPIC",
-      "-ffreestanding",
       "-fstack-protector-strong",
     ]
 
@@ -773,6 +773,20 @@ template("musl_libs") {
       defines += [ "OHOS_ENABLE_PARAMETER" ]
       deps += [ "//base/startup/init/services/param/base:parameterbase" ]
     }
+  }
+
+  source_set("soft_musl_src_strncpy") {
+    sources = []
+    sources += [ "third_party/openbsd/lib/libc/string/strncpy.c" ]
+    configs -= musl_inherited_configs
+    configs += [ ":soft_musl_config" ]
+    cflags = [
+      "-O2",
+      "-fPIC",
+      "-fstack-protector-strong",
+    ]
+
+    deps = porting_deps
   }
 
   source_set("soft_musl_src_optimize") {
@@ -1056,6 +1070,7 @@ template("musl_libs") {
       ":soft_musl_src",
       ":soft_musl_src_nossp",
       ":soft_musl_src_optimize",
+      ":soft_musl_src_strncpy",
     ]
     if (!is_llvm_build) {
       deps += [ ":soft_musl_ldso" ]
@@ -1178,6 +1193,7 @@ template("musl_libs") {
       ":soft_musl_src",
       ":soft_musl_src_nossp",
       ":soft_musl_src_optimize",
+      ":soft_musl_src_strncpy",
     ]
     deps += dfx_deps
     if (!startup_init_with_param_base) {
