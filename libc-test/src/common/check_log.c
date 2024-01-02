@@ -14,6 +14,7 @@
  */
 
 #include <dirent.h>
+#include <malloc.h>
 #include <stdio.h>
 #include <string.h>
 #include <test.h>
@@ -22,7 +23,6 @@
 
 void check_log(const char *file, const char *pattern)
 {
-    char buffer[NAME_BUFFER_SIZE];
     FILE *fp = fopen(file, "r");
     if (!fp) {
         return;
@@ -40,6 +40,12 @@ void check_log(const char *file, const char *pattern)
         fclose(fp);
         return;
     }
+    char *buffer = malloc(size);
+    if (!buffer) {
+        t_error("FAIL %s malloc %d failed!\n", size);
+        return;
+    }
+
     int rsize = fread(buffer, 1, size, fp);
     if (rsize == 0) {
         fclose(fp);

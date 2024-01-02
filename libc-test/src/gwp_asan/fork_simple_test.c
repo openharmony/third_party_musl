@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,37 +13,31 @@
  * limitations under the License.
  */
 
-#include <signal.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include "gwp_asan.h"
 #include "test.h"
 
-void double_free_handler()
-{
-    find_and_check_file(GWP_ASAN_LOG_DIR, GWP_ASAN_LOG_TAG, "Double Free at");
-    clear_log(GWP_ASAN_LOG_DIR, GWP_ASAN_LOG_TAG);
-    _exit(0);
-}
+#include <malloc.h>
+#include <pthread.h>
 
-void install_sigv_handler()
+int process_task()
 {
-    struct sigaction sigv = {
-        .sa_handler = double_free_handler,
-        .sa_flags = 0,
-    };
-    sigaction(SIGSEGV, &sigv, NULL);
-}
-
-int main()
-{
-    clear_log(GWP_ASAN_LOG_DIR, GWP_ASAN_LOG_TAG);
-    install_sigv_handler();
     void *ptr = malloc(20);
     if (!ptr) {
         return 0;
     }
     free(ptr);
-    free(ptr);
+    return 0;
+}
+
+// Test whether it's ok to open gwp_asan in the fork scenario.
+int main()
+{
+    pid_t pid = fork();
+    if (pid < 0) {
+        t_error("FAIL fork failed.");
+    } else if (pid == 0) { // child process
+        return process_task();
+    } else { // parent process
+        return process_task();
+    }
     return 0;
 }

@@ -23,7 +23,7 @@ void use_after_free_handler()
 {
     find_and_check_file(GWP_ASAN_LOG_DIR, GWP_ASAN_LOG_TAG, "Use After Free at");
     clear_log(GWP_ASAN_LOG_DIR, GWP_ASAN_LOG_TAG);
-    exit(0);
+    _exit(0);
 }
 static void install_sigv_handler()
 {
