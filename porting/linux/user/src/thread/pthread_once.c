@@ -36,12 +36,12 @@ hidden int __pthread_once_full(pthread_once_t *control, void (*init)(void))
 	}
 }
 
-#if defined(MUSL_AARCH64_ARCH) || defined(MUSL_ARM_ARCH)
+#if defined(MUSL_AARCH64_ARCH)
 int __pthread_once(pthread_once_t *control, void (*init)(void))
 {
 	/* Return immediately if init finished before, use load aquire to ensure that
 	 * effects of the init routine are visible to the caller. */
-	if (a_ll((volatile int *)control) == 2) {
+	if (a_ldar((volatile int *)control) == 2) {
 		return 0;
 	}
 	return __pthread_once_full(control, init);

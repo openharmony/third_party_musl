@@ -6,6 +6,14 @@ static inline int a_ll(volatile int *p)
 	return v;
 }
 
+#define a_ldar a_ldar
+static inline int a_ldar(volatile int *p)
+{
+	int v;
+	__asm__ __volatile__ ("ldar %w0,%1" : "=r"(v) : "Q"(*p));
+	return v;
+}
+
 #define a_sc a_sc
 static inline int a_sc(volatile int *p, int v)
 {
