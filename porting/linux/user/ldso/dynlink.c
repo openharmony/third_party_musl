@@ -26,6 +26,7 @@
 #include <sys/time.h>
 #include <time.h>
 #include <sys/prctl.h>
+#include <sys/queue.h>
 
 #include "cfi.h"
 #include "dlfcn_ext.h"
@@ -89,6 +90,15 @@ static void error(const char *, ...);
 #else
     #define UT_STATIC static
 #endif
+
+/* Used for dlclose */
+#define UNLOAD_NR_DLOPEN_CHECK 1
+#define UNLOAD_COMMON_CHECK 2
+#define UNLOAD_ALL_CHECK 3
+struct dso_entry {
+	struct dso *dso;
+	TAILQ_ENTRY(dso_entry) entries;
+};
 
 struct debug {
 	int ver;
@@ -3205,12 +3215,22 @@ static void *dlopen_post(struct dso* p, int mode) {
 	if (p == NULL) {
 		return p;
 	}
-
+	bool is_dlclose_debug = false;
+	if (is_dlclose_debug_enable()) {
+		is_dlclose_debug = true;
+	}
 	p->nr_dlopen++;
+	if (is_dlclose_debug) {
+		LD_LOGE("[dlclose]: %{public}s nr_dlopen++ when dlopen %{public}s, nr_dlopen:%{public}d ",
+				p->name, p->name, p->nr_dlopen);
+	}
 	if (p->bfs_built) {
 		for (int i = 0; p->deps[i]; i++) {
 			p->deps[i]->nr_dlopen++;
-
+			if (is_dlclose_debug) {
+				LD_LOGE("[dlclose]: %{public}s nr_dlopen++ when dlopen %{public}s, nr_dlopen:%{public}d",
+						p->deps[i]->name, p->name, p->deps[i]->nr_dlopen);
+			}
 			if (mode & RTLD_NODELETE) {
 				p->deps[i]->flags |= DSO_FLAGS_NODELETE;
 			}
@@ -3811,34 +3831,63 @@ static void *do_dlsym(struct dso *p, const char *s, const char *v, void *ra)
 
 extern int invalidate_exit_funcs(struct dso *p);
 
-static int dlclose_impl(struct dso *p, struct dso **dso_close_list, int *dso_close_list_size)
+static int so_can_unload(struct dso *p, int check_flag)
+{
+	if ((check_flag & UNLOAD_COMMON_CHECK) != 0) {
+		if (__dl_invalid_handle(p)) {
+			LD_LOGE("[dlclose]: invalid handle %{public}p", p);
+			error("[dlclose]: Handle is invalid.");
+			return -1;
+		}
+
+		if (!p->by_dlopen) {
+			LD_LOGD("[dlclose]: skip unload %{public}s because it's not loaded by dlopen", p->name);
+			return 0;
+		}
+
+		/* dso is marked  as RTLD_NODELETE library, do nothing here. */
+		if ((p->flags & DSO_FLAGS_NODELETE) != 0) {
+			LD_LOGD("[dlclose]: skip unload %{public}s because flags is RTLD_NODELETE", p->name);
+			return 0;
+		}
+	}
+
+	if ((check_flag & UNLOAD_NR_DLOPEN_CHECK) != 0) {
+		if (p->nr_dlopen > 0) {
+			LD_LOGD("[dlclose]: skip unload %{public}s because nr_dlopen=%{public}d > 0", p->name, p->nr_dlopen);
+			return 0;
+		}
+	}
+
+	return 1;
+}
+
+static int dlclose_post(struct dso *p)
+{
+	if (p == NULL) {
+		return -1;
+	}
+#ifdef ENABLE_HWASAN
+		if (libc.unload_hook) {
+			libc.unload_hook((unsigned long int)p->base, p->phdr, p->phnum);
+		}
+#endif
+	unmap_library(p);
+	if (p->parents) {
+		free(p->parents);
+	}
+	free_reloc_can_search_dso(p);
+	if (p->tls.size == 0) {
+		free(p);
+	}
+
+	return 0;
+}
+
+static int dlclose_impl(struct dso *p)
 {
 	size_t n;
 	struct dso *d;
-
-	if (__dl_invalid_handle(p))
-		return -1;
-
-	if (!p->by_dlopen) {
-		LD_LOGD("dlclose skip unload %{public}s because so isn't loaded by dlopen", p->name);
-		return -1;
-	}
-
-	/* dso is marked  as RTLD_NODELETE library, do nothing here. */
-	if ((p->flags & DSO_FLAGS_NODELETE) != 0) {
-		LD_LOGD("dlclose skip unload %{public}s because flags is RTLD_NODELETE", p->name);
-		return 0;
-	}
-
-	if (--(p->nr_dlopen) > 0) {
-		LD_LOGD("dlclose skip unload %{public}s because nr_dlopen=%{public}d > 0", p->name, p->nr_dlopen);
-		return 0;
-	}
-
-	if (p->parents_count > 0) {
-		LD_LOGD("dlclose skip unload %{public}s because parents_count=%{public}d > 0", p->name, p->parents_count);
-		return 0;
-	}
 
 	trace_marker_reset();
 	trace_marker_begin(HITRACE_TAG_MUSL, "dlclose", p->name);
@@ -3869,7 +3918,6 @@ static int dlclose_impl(struct dso *p, struct dso **dso_close_list, int *dso_clo
 	}
 
 	/* after destruct, invalidate atexit funcs which belong to this dso */
-
 #if (defined(FEATURE_ATEXIT_CB_PROTECT))
 	invalidate_exit_funcs(p);
 #endif
@@ -3927,84 +3975,125 @@ static int dlclose_impl(struct dso *p, struct dso **dso_close_list, int *dso_clo
 	
 	if (p->lazy != NULL)
 		free(p->lazy);
-	if (p->deps) {
-		for (int i = 0; i < p->ndeps_direct; i++) {
-			remove_dso_parent(p->deps[i], p);
-		}
-	}
 	if (p->deps != no_deps)
 		free(p->deps);
-	LD_LOGD("dlclose unloading %{public}s @%{public}p", p->name, p);
-
-	dso_close_list[*dso_close_list_size] = p;
-	*dso_close_list_size += 1;
 
 	trace_marker_end(HITRACE_TAG_MUSL);
 
 	return 0;
 }
 
-static char* dlclose_deps_black_list[] =
-{
-	"/system/lib/libhidebug.so",
-	"/system/lib64/libhidebug.so",
-	"/vendor/lib64/libhril_hdf.z.so"
-};
-
 static int do_dlclose(struct dso *p)
 {
-	bool ldclose_deps = true;
+	struct dso_entry *ef = NULL;
+	struct dso_entry *ef_tmp = NULL;
+	int unload_check_result;
+	TAILQ_HEAD(unload_queue, dso_entry) unload_queue;
+	TAILQ_HEAD(need_unload_queue, dso_entry) need_unload_queue;
+	unload_check_result = so_can_unload(p, UNLOAD_COMMON_CHECK);
+	if (unload_check_result != 1) {
+		return unload_check_result;
+	}
+	// Unconditionally subtract 1 because unconditionally add 1 at dlopen_post.
+	if (p->nr_dlopen > 0) {
+		--(p->nr_dlopen);
+	} else {
+		LD_LOGE("[dlclose]: number of dlopen and dlclose of %{public}s doesn't match when dlclose %{public}s",
+		        p->name, p->name);
+		return 0;
+	}
+	
+	if (p->bfs_built) {
+		for (int i = 0; p->deps[i]; i++) {
+			if (p->deps[i]->nr_dlopen > 0) {
+				p->deps[i]->nr_dlopen--;
+			} else {
+				LD_LOGE("[dlclose]: number of dlopen and dlclose of %{public}s doesn't match when dlclose %{public}s",
+						p->deps[i]->name, p->name);
+				return 0;
+			}
+		}
+	}
+	unload_check_result = so_can_unload(p, UNLOAD_NR_DLOPEN_CHECK);
+	if (unload_check_result != 1) {
+		return unload_check_result;
+	}
+	TAILQ_INIT(&unload_queue);
+	TAILQ_INIT(&need_unload_queue);
+	struct dso_entry *start_entry = (struct dso_entry *)malloc(sizeof(struct dso_entry));
+	start_entry->dso = p;
+	TAILQ_INSERT_TAIL(&unload_queue, start_entry, entries);
 
-	for (int i = 0; i < sizeof(dlclose_deps_black_list)/sizeof(char*); i++) {
-		if (!strcmp(dlclose_deps_black_list[i], p->name)) {
-			ldclose_deps = false;
-			break;
+	while (!TAILQ_EMPTY(&unload_queue)) {
+		struct dso_entry *ecur = TAILQ_FIRST(&unload_queue);
+		struct dso *cur = ecur->dso;
+		TAILQ_REMOVE(&unload_queue, ecur, entries);
+		bool already_in_need_unload_queue = false;
+		TAILQ_FOREACH(ef, &need_unload_queue, entries) {
+			if (ef->dso == cur) {
+				already_in_need_unload_queue = true;
+				break;
+			}
+		}
+		if (already_in_need_unload_queue) {
+			continue;
+		}
+		TAILQ_INSERT_TAIL(&need_unload_queue, ecur, entries);
+		for (int i = 0; i < cur->ndeps_direct; i++) {
+			remove_dso_parent(cur->deps[i], cur);
+			if ((cur->deps[i]->parents_count == 0) && (so_can_unload(cur->deps[i], UNLOAD_ALL_CHECK) == 1)) {
+				bool already_in_unload_queue = false;
+				TAILQ_FOREACH(ef, &unload_queue, entries) {
+					if (ef->dso == cur->deps[i]) {
+						already_in_unload_queue = true;
+						break;
+					}
+				}
+				if (already_in_unload_queue) {
+					continue;
+				}
+
+				struct dso_entry *edeps = (struct dso_entry *)malloc(sizeof(struct dso_entry));
+				edeps->dso = cur->deps[i];
+				TAILQ_INSERT_TAIL(&unload_queue, edeps, entries);
+			}
+		} /* for */
+	} /* while */
+
+	if (is_dlclose_debug_enable()) {
+		TAILQ_FOREACH(ef, &need_unload_queue, entries) {
+			LD_LOGE("[dlclose]: unload %{public}s succeed when dlclose %{public}s", ef->dso->name, p->name);
+		}
+		for (size_t deps_num = 0; p->deps[deps_num]; deps_num++) {
+			bool ready_to_unload = false;
+			TAILQ_FOREACH(ef, &need_unload_queue, entries) {
+				if (ef->dso == p->deps[deps_num]) {
+					ready_to_unload = true;
+					break;
+				}
+			}
+			if (!ready_to_unload) {
+				LD_LOGE("[dlclose]: unload %{public}s failed when dlclose %{public}s,"
+				        "nr_dlopen:%{public}d, by_dlopen:%{public}d, parents_count:%{public}d",
+						p->deps[deps_num]->name, p->name, p->deps[deps_num]->nr_dlopen,
+						p->deps[deps_num]->by_dlopen, p->deps[deps_num]->parents_count);
+			}
 		}
 	}
 
-	size_t deps_num;
-
-	for (deps_num = 0; p->deps[deps_num]; deps_num++);
-
-	struct dso **deps_bak = malloc(deps_num*sizeof(struct dso*));
-	if (deps_bak != NULL) {
-		memcpy(deps_bak, p->deps, deps_num*sizeof(struct dso*));
+	TAILQ_FOREACH(ef, &need_unload_queue, entries) {
+		dlclose_impl(ef->dso);
 	}
-
-	struct dso **dso_close_list = malloc((deps_num + 1) * sizeof(struct dso*));
-	memset(dso_close_list, 0, deps_num + 1);
-	int dso_close_list_size = 0;
-
-	LD_LOGI("do_dlclose name=%{public}s count=%{public}d by_dlopen=%{public}d", p->name, p->nr_dlopen, p->by_dlopen);
-	dlclose_impl(p, dso_close_list, &dso_close_list_size);
-
-	if (ldclose_deps) {
-		for (size_t i = 0; i < deps_num; i++) {
-			LD_LOGI("do_dlclose name=%{public}s count=%{public}d by_dlopen=%{public}d", deps_bak[i]->name, deps_bak[i]->nr_dlopen, deps_bak[i]->by_dlopen);
-			dlclose_impl(deps_bak[i], dso_close_list, &dso_close_list_size);
+	// Unload all sos at the end because weak symbol may cause later unloaded so to access the previous so's function.
+	TAILQ_FOREACH(ef, &need_unload_queue, entries) {
+		dlclose_post(ef->dso);
+	}
+	// Free dso_entry.
+	TAILQ_FOREACH_SAFE(ef, &need_unload_queue, entries, ef_tmp) {
+		if (ef) {
+			free(ef);
 		}
 	}
-
-	for (size_t i = 0; i < dso_close_list_size; i++) {
-#ifdef ENABLE_HWASAN
-		if (libc.unload_hook) {
-			libc.unload_hook((unsigned long int)dso_close_list[i]->base, dso_close_list[i]->phdr, dso_close_list[i]->phnum);
-		}
-#endif
-		unmap_library(dso_close_list[i]);
-
-		if (dso_close_list[i]->parents) {
-			free(dso_close_list[i]->parents);
-		}
-
-		free_reloc_can_search_dso(dso_close_list[i]);
-		if (dso_close_list[i]->tls.size == 0) {
-			free(dso_close_list[i]);
-		}
-	}
-
-	free(dso_close_list);
-	free(deps_bak);
 
 	return 0;
 }
