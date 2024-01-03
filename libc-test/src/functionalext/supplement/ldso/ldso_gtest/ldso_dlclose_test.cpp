@@ -8,6 +8,7 @@
 using namespace testing::ext;
 
 typedef void (*FuncTypeBool)(bool*);
+typedef void (*FuncTypeVoid)(void);
 
 class LdsoDlcloseTest : public testing::Test {
     void SetUp() override {}
@@ -87,4 +88,46 @@ HWTEST_F(LdsoDlcloseTest, dlclose_003, TestSize.Level1)
 
     handle = dlopen("libldso_thread_test_2.so", RTLD_NOW | RTLD_NOLOAD);
     ASSERT_TRUE(handle == nullptr);
+}
+
+/**
+ * @tc.name: dlclose_004
+ * @tc.desc: If the subsequent so depends on the current so, the current so can also be unloaded at last.
+ * @tc.type: FUNC
+ * libldso_dlclose_test_a.so
+ *     -> libldso_dlclose_test_b.so
+ *     -> libldso_dlclose_test_c.so
+ * libldso_dlclose_test_c.so
+ *     -> libldso_dlclose_test_b.so
+ */
+HWTEST_F(LdsoDlcloseTest, dlclose_004, TestSize.Level1)
+{
+    FuncTypeVoid fn = nullptr;
+    void* handle = dlopen("libldso_dlclose_test_a.so", RTLD_GLOBAL);
+    ASSERT_NE(handle, nullptr);
+
+    fn = reinterpret_cast<FuncTypeVoid>(dlsym(RTLD_DEFAULT, "dlclose_test_a"));
+    ASSERT_NE(fn, nullptr);
+    fn();
+
+    fn = reinterpret_cast<FuncTypeVoid>(dlsym(RTLD_DEFAULT, "dlclose_test_b"));
+    ASSERT_NE(fn, nullptr);
+    fn();
+
+    fn = reinterpret_cast<FuncTypeVoid>(dlsym(RTLD_DEFAULT, "dlclose_test_c"));
+    ASSERT_NE(fn, nullptr);
+    fn();
+
+    dlclose(handle);
+    // test if unload libldso_dlclose_test_a.so succeed.
+    fn = reinterpret_cast<FuncTypeVoid>(dlsym(RTLD_DEFAULT, "dlclose_test_a"));
+    ASSERT_EQ(fn, nullptr);
+
+    // test if unload libldso_dlclose_test_b.so succeed.
+    fn = reinterpret_cast<FuncTypeVoid>(dlsym(RTLD_DEFAULT, "dlclose_test_b"));
+    ASSERT_EQ(fn, nullptr);
+
+    // test if unload libldso_dlclose_test_c.so succeed.
+    fn = reinterpret_cast<FuncTypeVoid>(dlsym(RTLD_DEFAULT, "dlclose_test_c"));
+    ASSERT_EQ(fn, nullptr);
 }
