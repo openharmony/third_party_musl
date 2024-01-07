@@ -3837,7 +3837,7 @@ static int so_can_unload(struct dso *p, int check_flag)
 		if (__dl_invalid_handle(p)) {
 			LD_LOGE("[dlclose]: invalid handle %{public}p", p);
 			error("[dlclose]: Handle is invalid.");
-			return -1;
+			return 0;
 		}
 
 		if (!p->by_dlopen) {
@@ -3892,6 +3892,61 @@ static int dlclose_impl(struct dso *p)
 	trace_marker_reset();
 	trace_marker_begin(HITRACE_TAG_MUSL, "dlclose", p->name);
 
+	/* remove dso symbols from global list */
+	if (p->syms_next) {
+		for (d = head; d->syms_next != p; d = d->syms_next)
+			; /* NOP */
+		d->syms_next = p->syms_next;
+	} else if (p == syms_tail) {
+		for (d = head; d->syms_next != p; d = d->syms_next)
+			; /* NOP */
+		d->syms_next = NULL;
+		syms_tail = d;
+	}
+
+	/* remove dso from lazy list if needed */
+	if (p == lazy_head) {
+		lazy_head = p->lazy_next;
+	} else if (p->lazy_next) {
+		for (d = lazy_head; d->lazy_next != p; d = d->lazy_next)
+			; /* NOP */
+		d->lazy_next = p->lazy_next;
+	}
+
+	pthread_mutex_lock(&init_fini_lock);
+	/* remove dso from fini list */
+	if (p == fini_head) {
+		fini_head = p->fini_next;
+	} else if (p->fini_next) {
+		for (d = fini_head; d->fini_next != p; d = d->fini_next)
+			; /* NOP */
+		d->fini_next = p->fini_next;
+	}
+	pthread_mutex_unlock(&init_fini_lock);
+
+	/* empty tls image */
+	if (p->tls.size != 0) {
+		p->tls.image = NULL;
+	}
+
+	/* remove dso from global dso list */
+	if (p == tail) {
+		tail = p->prev;
+		tail->next = NULL;
+	} else {
+		p->next->prev = p->prev;
+		p->prev->next = p->next;
+	}
+
+	/* remove dso from namespace */
+	dlclose_ns(p);
+
+	/* */
+	void* handle = find_handle_by_dso(p);
+	if (handle) {
+		remove_handle_node(handle);
+	}
+
 	/* call destructors if needed */
 	pthread_mutex_lock(&init_fini_lock);
 	int constructed = p->constructed;
@@ -3922,54 +3977,7 @@ static int dlclose_impl(struct dso *p)
 	invalidate_exit_funcs(p);
 #endif
 
-	/* remove dso symbols from global list */
-	if (p->syms_next) {
-		for (d = head; d->syms_next != p; d = d->syms_next)
-			; /* NOP */
-		d->syms_next = p->syms_next;
-	} else if (p == syms_tail) {
-		for (d = head; d->syms_next != p; d = d->syms_next)
-			; /* NOP */
-		d->syms_next = NULL;
-		syms_tail = d;
-	}
-
-	/* remove dso from lazy list if needed */
-	if (p == lazy_head) {
-		lazy_head = p->lazy_next;
-	} else if (p->lazy_next) {
-		for (d = lazy_head; d->lazy_next != p; d = d->lazy_next)
-			; /* NOP */
-		d->lazy_next = p->lazy_next;
-	}
-
-	/* remove dso from fini list */
-	if (p == fini_head) {
-		fini_head = p->fini_next;
-	} else if (p->fini_next) {
-		for (d = fini_head; d->fini_next != p; d = d->fini_next)
-			; /* NOP */
-		d->fini_next = p->fini_next;
-	}
-
-	/* empty tls image */
-	if (p->tls.size != 0) {
-		p->tls.image = NULL;
-	}
-
-	/* remove dso from global dso list */
-	if (p == tail) {
-		tail = p->prev;
-		tail->next = NULL;
-	} else {
-		p->next->prev = p->prev;
-		p->prev->next = p->next;
-	}
-
 	notify_remove_to_debugger(p);
-
-	/* remove dso from namespace */
-	dlclose_ns(p);
 
 	unmap_dso_from_cfi_shadow(p);
 	
@@ -4112,15 +4120,6 @@ hidden int __dlclose(void *p)
 		return -1;
 	}
 	rc = do_dlclose(dso);
-	if (!rc) {
-		struct dso *t = head;
-		for (; t && t != dso; t = t->next) {
-			;
-		}
-		if (t == NULL) {
-			remove_handle_node(p);
-		}
-	}
 #else
 	rc = do_dlclose(p);
 #endif

@@ -20,13 +20,14 @@ group("functional_test") {
   }
 }
 
+test_sharedlib("dl_multithread_test_dso") {
+}
 test_sharedlib("dlclose_recursive") {
   cpp_file = true
 }
 test_sharedlib("dlclose_recursive_dlopen_so") {
   cpp_file = true
 }
-
 test_sharedlib("dlopen_ns_dso") {
 }
 test_sharedlib("dlopen_so_dep_dlopen_ns_dso") {
