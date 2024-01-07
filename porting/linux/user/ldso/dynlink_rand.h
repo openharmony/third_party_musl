@@ -75,6 +75,7 @@ struct loadtasks {
 
 hidden void *add_handle_node(void *handle, struct dso *dso);
 hidden struct dso *find_dso_by_handle(void *handle);
+hidden void *find_handle_by_dso(struct dso *dso);
 hidden void remove_handle_node(void *handle);
 hidden void *assign_valid_handle(struct dso *p);
 

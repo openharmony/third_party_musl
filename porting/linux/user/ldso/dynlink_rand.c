@@ -60,7 +60,7 @@ struct dso *find_dso_by_handle(void *handle)
     return NULL;
 }
 
-static void *find_handle_by_dso(struct dso *dso)
+void *find_handle_by_dso(struct dso *dso)
 {
     struct handle_node *node = handle_map_list;
     while (node) {
