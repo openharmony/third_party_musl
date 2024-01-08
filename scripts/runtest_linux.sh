@@ -135,7 +135,8 @@ ${CMD} shell cp ${REMOTE}/src/libdlopen_ns_dso.so /system/lib/libdlopen_ns_dso_s
 ${CMD} shell cp ${REMOTE}/src/libdlopen_ns_dso.so /system/lib/ndk/libdlopen_ns_dso_ndk.so
 ${CMD} shell cp ${REMOTE}/src/libdlclose_recursive.so /system/lib64/libdlclose_recursive.so
 ${CMD} shell cp ${REMOTE}/src/libdlclose_recursive_dlopen_so.so /system/lib64/libdlclose_recursive_dlopen_so.so
-
+${CMD} shell cp ${REMOTE}/src/libdl_gnu_hash_so.so ${REMOTE}/src/libdl_gnu_hash_so.so
+${CMD} shell cp ${REMOTE}/src/libdl_sysv_hash_so.so ${REMOTE}/src/libdl_sysv_hash_so.so
 
 ${CMD} shell mv ${REMOTE}/src/zh_CN /tmp/zh_CN
 

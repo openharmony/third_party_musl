@@ -235,6 +235,7 @@ template("musl_libs") {
       "-Wl,--no-undefined",
       "-Wl,--exclude-libs=ALL",
       "-Wl,--dynamic-list=${dynamic_list}",
+      "-Wl,--build-id=md5",
     ]
     if (musl_arch == "mips") {
       ldflags -= [ "-Wl,--hash-style=both" ]

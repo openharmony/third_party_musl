@@ -139,6 +139,10 @@ template("test_unittest") {
         #libs += [ "//${root_out_dir}/${test_lib_dir}/libdlclose_reset_dso.so" ]
       }
 
+      if (target_name == "dl_multithread_test") {
+        ldflags += [ "-Wl,-rpath=./" ]
+      }
+
       if (target_name == "tls_align") {
         ldflags += [ "-Wl,-rpath=./" ]
         libs += [ "//${root_out_dir}/${test_lib_dir}/libtls_align_dso.so" ]
