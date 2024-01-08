@@ -566,8 +566,7 @@ static void __uninstal_malloc_hook()
 		return;
 	}
 	bool expected = true;
-	if (atomic_compare_exchange_strong_explicit(&__hook_enable_hook_flag, &expected,
-												false, memory_order_release, memory_order_relaxed)) {
+	if (atomic_compare_exchange_strong_explicit(&__hook_enable_hook_flag, &expected, false, memory_order_release, memory_order_relaxed)) {
 		bool flag = __set_hook_flag(false);
 		__set_default_malloc();
 		on_end_func_t end_func = (on_end_func_t)(function_of_shared_lib[ON_END_FUNCTION]);
