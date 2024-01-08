@@ -17,6 +17,8 @@
 #include <vector>
 #include "util.h"
 
+static int count[8] = {1, 2, 3, 4, 5, 6, 7, 8};
+
 static const std::vector<int> regCompFlags {
     0,
     REG_EXTENDED,
@@ -62,6 +64,25 @@ static void Bm_function_Regexec(benchmark::State &state)
     regfree(&reg);
 }
 
+static void Bm_function_Regall(benchmark::State &state)
+{
+    const char* pattern = "hello.*world";
+    int flag = state.range(0);
+    regex_t reg;
+
+    open_tcache();
+    regmatch_t pmatch;
+    for (auto _ : state) {
+        if (regcomp(&reg, pattern, flag)) {
+            perror("regcomp");
+        }
+        for (int i = 0; i < count[state.range(0)]; i++) {
+            regexec(&reg, "hello test world", 1, &pmatch, 0);
+        }
+        regfree(&reg);
+    }
+}
+
 MUSL_BENCHMARK_WITH_APPLY(Bm_function_Regcomp, PrepareRegcompArgs);
 MUSL_BENCHMARK_WITH_APPLY(Bm_function_Regexec, PrepareRegcompArgs);
-
+MUSL_BENCHMARK_WITH_ARG(Bm_function_Regall, "BENCHMARK_8");
