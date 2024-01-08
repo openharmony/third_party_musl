@@ -417,7 +417,7 @@ bool finish_install_ohos_malloc_hooks(struct musl_libc_globals* globals, const c
 	}
 	on_start_func_t start_func = (on_start_func_t)(function_of_shared_lib[ON_START_FUNCTION]);
 	if (__get_global_hook_flag()) {
-        if (!start_func(__uninstal_malloc_hook)) {
+		if (!start_func(__uninstal_malloc_hook)) {
 			// __musl_log(__MUSL_LOG_ERROR, "%s: failed to start %s\n", getprogname(), prefix);
 			clear_function_table();
 			return false;
@@ -550,7 +550,7 @@ static void __install_malloc_hook()
 		volatile const struct MallocDispatchType* so_dispatch_value = (volatile const struct MallocDispatchType* )atomic_load_explicit(&__musl_libc_globals.so_dispatch_table, memory_order_acquire);
 		atomic_store_explicit(&__musl_libc_globals.current_dispatch_table, (volatile long long)so_dispatch_value, memory_order_seq_cst);
 		on_start_func_t start_func = (on_start_func_t)(function_of_shared_lib[ON_START_FUNCTION]);
-        if (start_func && !start_func(__uninstal_malloc_hook)) {
+		if (start_func && !start_func(__uninstal_malloc_hook)) {
 			// __musl_log(__MUSL_LOG_ERROR, "%s: failed to enable malloc\n", getprogname());
 		}
 
@@ -562,12 +562,12 @@ static void __uninstal_malloc_hook()
 	if (__get_memleak_hook_flag()) {
 		return;
 	}
-    if (!atomic_load_explicit(&__hook_enable_hook_flag, memory_order_acquire)) {
+	if (!atomic_load_explicit(&__hook_enable_hook_flag, memory_order_acquire)) {
 		return;
 	}
-    bool expected = true;
-    if (atomic_compare_exchange_strong_explicit(&__hook_enable_hook_flag, &expected,
-                                                false, memory_order_release, memory_order_relaxed)) {
+	bool expected = true;
+	if (atomic_compare_exchange_strong_explicit(&__hook_enable_hook_flag, &expected,
+												false, memory_order_release, memory_order_relaxed)) {
 		bool flag = __set_hook_flag(false);
 		__set_default_malloc();
 		on_end_func_t end_func = (on_end_func_t)(function_of_shared_lib[ON_END_FUNCTION]);
