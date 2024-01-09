@@ -198,14 +198,17 @@ static int name_from_dns(struct address buf[static MAXADDRS], char canon[static 
 	static const struct { int af; int rr; } afrr_ipv4_only[1] = {
 		{ .af = AF_INET6, .rr = RR_A },
 	};
-	static struct {int af; int rr;} *afrr = afrr_ipv6_enable;
+	struct {int af; int rr;} *afrr = afrr_ipv6_enable;
 
-	if (!IsIpv6Enable(netid)) {
+	if (!IsIpv6Enable(netid) || (family == AF_INET)) {
 		if (family == AF_INET6) {
 			return EAI_SYSTEM;
 		}
 		queryNum = 1;
 		afrr = afrr_ipv4_only;
+	} else {
+		queryNum = 2;
+		afrr = afrr_ipv6_enable;
 	}
     for (i = 0; i < queryNum; i++) {
 		if (family != afrr[i].af) {
