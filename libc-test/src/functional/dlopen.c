@@ -1,6 +1,7 @@
 #include <dlfcn.h>
 #include <pthread.h>
 #include "test.h"
+#include "global.h"
 
 #define SO_FOR_NO_DELETE "lib_for_no_delete.so"
 #define SO_FOR_DLOPEN "lib_for_dlopen.so"
@@ -126,18 +127,18 @@ void dlopen_dlclose()
 }
 
 #define DLOPEN_WEAK "libdlopen_weak.so"
-typedef int (*FuncPtr_TestNumber)(int input);
+typedef int (*func_ptr)();
 
 void dlopen_dlclose_weak()
 {
 	void* handle = dlopen(DLOPEN_WEAK, RTLD_LAZY | RTLD_GLOBAL);
 	if (!handle)
 		t_error("dlopen(name=%s, mode=%d) failed: %s\n", DLOPEN_WEAK, RTLD_LAZY | RTLD_GLOBAL, dlerror());
-	FuncPtr_TestNumber fn = (FuncPtr_TestNumber)dlsym(handle, "TestNumber");
+	func_ptr fn = (func_ptr)dlsym(handle, "test_number");
 	if (fn) {
-		int ret = fn(12);
-		if (ret != 0)
-			t_error("weak symbol relocation error: so_name: %s, symbol: TestNumber\n", DLOPEN_WEAK);
+		int ret = fn();
+		if (ret != GLOBAL_VALUE)
+			t_error("weak symbol relocation error: so_name: %s, symbol: test_number\n", DLOPEN_WEAK);
 	}
 	dlclose(handle);
 }
@@ -170,6 +171,35 @@ void dlclose_recursive_by_multipthread()
 	for (int i = 0; i < NR_DLCLOSE_THREADS; ++i) {
 		pthread_join(testThreads[i], NULL);
 	}
+}
+
+#define DLOPEN_GLOBAL "libdlopen_global.so"
+#define DLOPEN_LOCAL "libdlopen_local.so"
+
+void dlopen_global_test()
+{
+	int value;
+	void *global_handler = dlopen(DLOPEN_GLOBAL, RTLD_GLOBAL);
+	if (!global_handler)
+		t_error("dlopen(name=%s, mode=%d) failed: %s\n", DLOPEN_GLOBAL, RTLD_GLOBAL, dlerror());
+	func_ptr global_fn = (func_ptr)dlsym(global_handler, "global_caller");
+	if (global_fn) {
+		value = global_fn();
+		if (value != GLOBAL_VALUE)
+			t_error("global caller returned: %d, expected: %d\n", value, GLOBAL_VALUE);
+	}
+
+	void *local_handler = dlopen(DLOPEN_LOCAL, RTLD_LOCAL);
+	if (!local_handler)
+		t_error("dlopen(name=%s, mode=%d) failed: %s\n", DLOPEN_LOCAL, RTLD_LOCAL, dlerror());
+	func_ptr local_fn = (func_ptr)dlsym(local_handler, "local_caller");
+	if (local_fn) {
+		value = local_fn();
+		if (value != GLOBAL_VALUE)
+			t_error("local caller returned: %d, expected: %d\n", value, GLOBAL_VALUE);
+	}
+	dlclose(global_handler);
+	dlclose(local_handler);
 }
 
 int main(int argc, char *argv[])
@@ -233,6 +263,7 @@ int main(int argc, char *argv[])
 	dlopen_dlclose_weak();
         dlclose_recursive();
 	dlclose_recursive_by_multipthread();
+	dlopen_global_test();
 
 	return t_status;
 }

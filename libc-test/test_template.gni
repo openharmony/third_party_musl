@@ -271,6 +271,12 @@ template("test_sharedlib") {
     cpp_file = false
   }
 
+  if (defined(invoker.global)) {
+    global = invoker.global
+  } else {
+    global = false
+  }
+
   target("ohos_shared_library", "${target_name}") {
     include_dirs = [ "//${test_dir}/src/common" ]
 
@@ -315,6 +321,10 @@ template("test_sharedlib") {
       "-shared",
       "-nostdlib",
     ]
+
+    if (global) {
+      ldflags += [ "-Wl,-z,global" ]
+    }
 
     if (defined(invoker.version_script)) {
       _version_script = rebase_path(invoker.version_script, root_build_dir)
