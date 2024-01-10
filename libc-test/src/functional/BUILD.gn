@@ -52,6 +52,11 @@ test_sharedlib("dlopen_weak_deps") {
 test_sharedlib("dlopen_weak") {
   deps = [ ":dlopen_weak_deps" ]
 }
+test_sharedlib("dlopen_global") {
+  global = true
+}
+test_sharedlib("dlopen_local") {
+}
 
 group("dso_shared") {
   testonly = true
@@ -64,6 +69,8 @@ group("dso_shared") {
     ":dlopen_dso",
     ":dlopen_for_load_by_global_dso",
     ":dlopen_for_load_by_local_dso",
+    ":dlopen_global",
+    ":dlopen_local",
     ":dlopen_ns_dso",
     ":dlopen_so_dep_dlopen_ns_dso",
     ":dlopen_weak",
