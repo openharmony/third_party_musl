@@ -1,11 +1,12 @@
 #include "dlopen_weak_deps.h"
+#include "global.h"
 
-__attribute__((weak)) int TestFunction(int input)
+__attribute__((weak)) int test_function()
 {
-	return input % 2;
+	return GLOBAL_VALUE;
 }
 
-int TestNumber(int input)
+int test_number()
 {
-	return TestNumber2(input);
+	return test_number2();
 }

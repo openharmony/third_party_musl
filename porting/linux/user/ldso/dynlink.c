@@ -1768,7 +1768,13 @@ UT_STATIC int fixup_rpath(struct dso *p, char *buf, size_t buf_size)
 static void decode_dyn(struct dso *p)
 {
 	size_t dyn[DYN_CNT];
+	size_t flags1 = 0;
 	decode_vec(p->dynv, dyn, DYN_CNT);
+	search_vec(p->dynv, &flags1, DT_FLAGS_1);
+	if (flags1 & DF_1_GLOBAL) {
+		LD_LOGI("Add DF_1_GLOBAL for %{public}s", p->name);
+		p->is_global = true;
+	}
 	p->syms = laddr(p, dyn[DT_SYMTAB]);
 	p->strings = laddr(p, dyn[DT_STRTAB]);
 	if (dyn[0]&(1<<DT_HASH))
