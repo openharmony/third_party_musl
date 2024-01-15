@@ -417,7 +417,6 @@ template("musl_libs") {
     ]
 
     sources += [
-      "$FREEBSD_DIR/contrib/libexecinfo/backtrace.c",
       "$FREEBSD_DIR/contrib/tcp_wrappers/strcasecmp.c",
       "$FREEBSD_DIR/lib/libc/gen/arc4random.c",
       "$FREEBSD_DIR/lib/libc/gen/arc4random_uniform.c",
@@ -425,6 +424,7 @@ template("musl_libs") {
       "$FREEBSD_DIR/lib/libc/stdlib/strtoimax.c",
       "$FREEBSD_DIR/lib/libc/stdlib/strtoul.c",
       "$FREEBSD_DIR/lib/libc/stdlib/strtoumax.c",
+      "third_party/openbsd/gnu/lib/libexecinfo/backtrace.c",
       "third_party/openbsd/lib/libc/string/strcasestr.c",
     ]
 
