@@ -3393,6 +3393,9 @@ static void *dlopen_impl(
 				free(p->parents);
 			}
 			free_reloc_can_search_dso(p);
+		}
+		for (p=orig_tail->next; p; p=next) {
+			next = p->next;
 			free(p);
 		}
 		free(ctor_queue);
