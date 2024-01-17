@@ -298,6 +298,8 @@ if (is_lite_system && current_os == "ohos") {
     if (uapi_from == "local") {
       if ("${musl_arch}" == "arm") {
         file_name = "asm-arm"
+      } else if ("${musl_arch}" == "riscv64") {
+        file_name = "asm-riscv"
       } else {  # aarch64 and x86_64 use same file
         file_name = "asm-arm64"
       }
