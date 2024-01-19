@@ -15,6 +15,7 @@
 #if UINTPTR_MAX == 0xffffffff
 typedef Elf32_Ehdr Ehdr;
 typedef Elf32_Phdr Phdr;
+typedef Elf32_Shdr Shdr;
 typedef Elf32_Sym Sym;
 typedef Elf32_Verdaux Verdaux;
 typedef Elf32_Verdef Verdef;
@@ -26,6 +27,7 @@ typedef Elf32_Verneed Verneed;
 #else
 typedef Elf64_Ehdr Ehdr;
 typedef Elf64_Phdr Phdr;
+typedef Elf64_Shdr Shdr;
 typedef Elf64_Sym Sym;
 typedef Elf64_Verdaux Verdaux;
 typedef Elf64_Verdef Verdef;
