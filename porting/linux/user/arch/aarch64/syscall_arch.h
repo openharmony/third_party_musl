@@ -1,3 +1,5 @@
+#include "syscall_hooks.h"
+
 #define __SYSCALL_LL_E(x) (x)
 #define __SYSCALL_LL_O(x) (x)
 
@@ -9,6 +11,9 @@
 
 static inline long __syscall0(long n)
 {
+	if (is_syscall_hooked(n)) {
+		return __syscall_hooks_entry0(n);
+	}
 	register long x8 __asm__("x8") = n;
 	register long x0 __asm__("x0");
 	__asm_syscall("r"(x8));
@@ -16,6 +21,9 @@ static inline long __syscall0(long n)
 
 static inline long __syscall1(long n, long a)
 {
+	if (is_syscall_hooked(n)) {
+		return __syscall_hooks_entry1(n, a);
+	}
 	register long x8 __asm__("x8") = n;
 	register long x0 __asm__("x0") = a;
 	__asm_syscall("r"(x8), "0"(x0));
@@ -23,6 +31,9 @@ static inline long __syscall1(long n, long a)
 
 static inline long __syscall2(long n, long a, long b)
 {
+	if (is_syscall_hooked(n)) {
+		return __syscall_hooks_entry2(n, a, b);
+	}
 	register long x8 __asm__("x8") = n;
 	register long x0 __asm__("x0") = a;
 	register long x1 __asm__("x1") = b;
@@ -31,6 +42,9 @@ static inline long __syscall2(long n, long a, long b)
 
 static inline long __syscall3(long n, long a, long b, long c)
 {
+	if (is_syscall_hooked(n)) {
+		return __syscall_hooks_entry3(n, a, b, c);
+	}
 	register long x8 __asm__("x8") = n;
 	register long x0 __asm__("x0") = a;
 	register long x1 __asm__("x1") = b;
@@ -40,6 +54,9 @@ static inline long __syscall3(long n, long a, long b, long c)
 
 static inline long __syscall4(long n, long a, long b, long c, long d)
 {
+	if (is_syscall_hooked(n)) {
+		return __syscall_hooks_entry4(n, a, b, c, d);
+	}
 	register long x8 __asm__("x8") = n;
 	register long x0 __asm__("x0") = a;
 	register long x1 __asm__("x1") = b;
@@ -50,6 +67,9 @@ static inline long __syscall4(long n, long a, long b, long c, long d)
 
 static inline long __syscall5(long n, long a, long b, long c, long d, long e)
 {
+	if (is_syscall_hooked(n)) {
+		return __syscall_hooks_entry5(n, a, b, c, d, e);
+	}
 	register long x8 __asm__("x8") = n;
 	register long x0 __asm__("x0") = a;
 	register long x1 __asm__("x1") = b;
@@ -61,6 +81,9 @@ static inline long __syscall5(long n, long a, long b, long c, long d, long e)
 
 static inline long __syscall6(long n, long a, long b, long c, long d, long e, long f)
 {
+	if (is_syscall_hooked(n)) {
+		return __syscall_hooks_entry6(n, a, b, c, d, e, f);
+	}
 	register long x8 __asm__("x8") = n;
 	register long x0 __asm__("x0") = a;
 	register long x1 __asm__("x1") = b;

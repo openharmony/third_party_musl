@@ -2002,6 +2002,7 @@
     malloc_backtrace;
     tcsetwinsize;
     qsort_r;
+    set_syscall_hooks;
   local:
     *;
 };
