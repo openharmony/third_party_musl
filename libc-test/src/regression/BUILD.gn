@@ -1,6 +1,13 @@
 import("../../test_template.gni")
 import("test_src_regression.gni")
 
+if (!is_opensource) {
+  regression_list -= [
+    "malloc-double-free-check",
+    "malloc-modify-pointer",
+  ]
+}
+
 foreach(s, regression_list) {
   test_unittest(s) {
     target_dir = "regression"
