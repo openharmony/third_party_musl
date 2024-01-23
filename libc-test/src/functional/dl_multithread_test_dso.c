@@ -16,12 +16,12 @@
 
 #include "test.h"
 
-const char* g_libPath = "libdlclose_recursive.so"
+const char* g_libPath = "libdlclose_recursive.so";
 static void* handle = NULL;
 
 __attribute__((constructor)) void ctor_dlopen()
 {
-    handle = dlopen(g_libPath. RTLD_GLOBAL);
+    handle = dlopen(g_libPath, RTLD_GLOBAL);
     if (!handle) {
         t_error("dlopen %s failed: %s\n", g_libPath, dlerror());
     }
