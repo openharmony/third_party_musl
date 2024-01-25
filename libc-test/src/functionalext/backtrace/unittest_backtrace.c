@@ -14,6 +14,7 @@
  */
 #include <execinfo.h>
 #include <stdlib.h>
+#include <string.h>
 #include "functionalext.h"
 
 #define ZERO_LENGTH 0
@@ -21,6 +22,42 @@
 #define VALID_LENGTH 1
 #define ZERO_RESULT 0
 #define BT_BUF_SIZE 100
+#define SUCCESS_RESULT 1
+#define FAILURE_RESULT 0
+
+int checkString(char **bt_strings, int bt_size)
+{
+    for (int i = 0; i < bt_size; ++i) {
+        char *str = bt_strings[i];
+        char *left = strstr(str, "<");
+        char *right = strstr(str, ">");
+        if (left == NULL || right == NULL || left >= right) {
+            continue;
+        }
+        int flag = 0;
+        for (; left < right; left++) {
+            if (*left == '?') {
+                flag = 1;
+                break;
+            }
+        }
+        if (!flag) {
+            continue;
+        }
+        right = strstr(str, "/");
+        char *lastPtr = str + strlen(str);
+        if (right == NULL) {
+            continue;
+        }
+        for (; right != lastPtr; ++right) {
+            if (*right != '?') {
+                continue;
+            }
+        }
+        return FAILURE_RESULT;
+    }
+    return SUCCESS_RESULT;
+}
 
 void backtrace_1001()
 {
@@ -45,6 +82,7 @@ void backtrace_1003()
     int bt_size = backtrace(bt_buffer, BT_BUF_SIZE);
     char **bt_strings = backtrace_symbols(bt_buffer, bt_size);
     EXPECT_PTRNE("backtrace_1003", bt_strings, NULL);
+    EXPECT_TRUE("backtrace_1003_checkString", checkString(bt_strings, bt_size));
     free(bt_strings);
 }
 
