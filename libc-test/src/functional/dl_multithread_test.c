@@ -23,7 +23,7 @@ static bool stop = false;
 static void* dl_test()
 {
 	while (!stop) {
-		void* handle = dlopen(g_libPath	, RTLD_GLOBAL);
+		void* handle = dlopen(g_libPath, RTLD_GLOBAL);
 		if (!handle) {
 			t_error("dlopen(name=%s, mode=%d) failed: %s\n", g_libPath, RTLD_GLOBAL, dlerror());
 		}
