@@ -1,6 +1,7 @@
 .hidden __syscall_ret
 .global syscall
 .type syscall,%function
+.cfi_startproc
 syscall:
 	mov x8,x0
 	mov x0,x1
@@ -11,3 +12,4 @@ syscall:
 	mov x5,x6
 	svc #0
 	b __syscall_ret
+.cfi_endproc
