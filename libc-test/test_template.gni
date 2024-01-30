@@ -143,10 +143,6 @@ template("test_unittest") {
         ldflags += [ "-Wl,-rpath=./" ]
       }
 
-      if (target_name == "dlopen") {
-        ldflags += [ "-Wl,-rpath=./" ]
-      }
-
       if (target_name == "tls_align") {
         ldflags += [ "-Wl,-rpath=./" ]
         libs += [ "//${root_out_dir}/${test_lib_dir}/libtls_align_dso.so" ]

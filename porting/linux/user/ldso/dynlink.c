@@ -4119,11 +4119,6 @@ hidden int __dlclose(void *p)
 {
 	int rc;
 	pthread_rwlock_wrlock(&lock);
-	if (shutting_down) {
-		error("Cannot dlclose while program is exiting.");
-		pthread_rwlock_unlock(&lock);
-		return -1;
-	}
 #ifdef HANDLE_RANDOMIZATION
 	struct dso *dso = find_dso_by_handle(p);
 	if (dso == NULL) {
@@ -5222,7 +5217,6 @@ static bool load_library_header(struct loadtask *task)
 	}
 	if (task->fd < 0) {
 		if (!check_inherited || !namespace->ns_inherits) {
-			LD_LOGE("Error loading header %{public}s, namespace %{public}s has no inherits", task->name, namespace->ns_name);
 			return false;
 		}
 		/* Load lib in inherited namespace. Do not check inherited again.*/
@@ -5237,7 +5231,6 @@ static bool load_library_header(struct loadtask *task)
 				return true;
 			}
 		}
-		LD_LOGE("Error loading header: can't find library %{public}s in namespace: %{public}s", task->name, namespace->ns_name);
 		return false;
 	}
 

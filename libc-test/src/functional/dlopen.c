@@ -1,7 +1,5 @@
 #include <dlfcn.h>
 #include <pthread.h>
-#include <stdlib.h>
-#include <sys/wait.h>
 #include "test.h"
 #include "global.h"
 
@@ -204,36 +202,6 @@ void dlopen_global_test()
 	dlclose(local_handler);
 }
 
-#define DLCLOSE_EXIT_DEAD_LOCK "libdl_multithread_test_dso.so"
-
-void dlclose_exit_test()
-{
-	int status;
-	void* handle;
-	int pid = fork();
-	switch (pid) {
-        case -1:
-            t_error("fork failed: %d\n", __LINE__);
-            break;
-        case 0:
-            handle = dlopen(DLCLOSE_EXIT_DEAD_LOCK, RTLD_GLOBAL);
-			if (!handle) {
-				t_error("dlclose_exit_test dlopen %s failed: %s", DLCLOSE_EXIT_DEAD_LOCK, dlerror());
-				exit(EXIT_FAILURE);
-			}
-            exit(EXIT_SUCCESS);
-        default:
-            waitpid(pid, &status, WUNTRACED);
-			if (WIFEXITED(status)) {
-				if (WEXITSTATUS(status) != EXIT_SUCCESS) {
-					t_error("dlclose_exit_test failed");
-				};
-			}
-            break;
-    }
-    return;
-}
-
 int main(int argc, char *argv[])
 {
 	void *h, *g;
@@ -293,10 +261,9 @@ int main(int argc, char *argv[])
 	dlopen_nodelete_and_noload();
 	dlopen_dlclose();
 	dlopen_dlclose_weak();
-	dlclose_recursive();
+        dlclose_recursive();
 	dlclose_recursive_by_multipthread();
 	dlopen_global_test();
-	dlclose_exit_test();
 
 	return t_status;
 }

@@ -63,7 +63,6 @@ group("dso_shared") {
 
   deps = [
     ":atexit_dlclose_dso",
-    ":dl_multithread_test_dso",
     ":dlclose_recursive",
     ":dlclose_recursive_dlopen_so",
     ":dlclose_reset_dso",
