@@ -42,7 +42,7 @@ void readdir_0100(void)
  */
 void readdir_0200(void)
 {
-    struct __dirstream *dir = (struct __dirstream *)malloc(sizeof(struct __dirstream));
+    struct __dirstream *dir = (struct __dirstream *)calloc(1 ,sizeof(struct __dirstream));
     if (dir == NULL) {
         EXPECT_PTRNE("readdir_0200", dir, NULL);
         return;
