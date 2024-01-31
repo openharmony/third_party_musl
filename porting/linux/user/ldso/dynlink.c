@@ -3895,7 +3895,6 @@ static int dlclose_post(struct dso *p)
 
 static int dlclose_impl(struct dso *p)
 {
-	size_t n;
 	struct dso *d;
 
 	trace_marker_reset();
@@ -3956,31 +3955,6 @@ static int dlclose_impl(struct dso *p)
 		remove_handle_node(handle);
 	}
 
-	/* call destructors if needed */
-	pthread_mutex_lock(&init_fini_lock);
-	int constructed = p->constructed;
-	pthread_mutex_unlock(&init_fini_lock);
-
-	if (constructed) {
-		size_t dyn[DYN_CNT];
-		decode_vec(p->dynv, dyn, DYN_CNT);
-		if (dyn[0] & (1<<DT_FINI_ARRAY)) {
-			n = dyn[DT_FINI_ARRAYSZ] / sizeof(size_t);
-			size_t *fn = (size_t *)laddr(p, dyn[DT_FINI_ARRAY]) + n;
-			trace_marker_begin(HITRACE_TAG_MUSL, "calling destructors:", p->name);
-
-			pthread_rwlock_unlock(&lock);
-			while (n--)
-				((void (*)(void))*--fn)();
-			pthread_rwlock_wrlock(&lock);
-
-			trace_marker_end(HITRACE_TAG_MUSL);
-		}
-		pthread_mutex_lock(&init_fini_lock);
-		p->constructed = 0;
-		pthread_mutex_unlock(&init_fini_lock);
-	}
-
 	/* after destruct, invalidate atexit funcs which belong to this dso */
 #if (defined(FEATURE_ATEXIT_CB_PROTECT))
 	invalidate_exit_funcs(p);
@@ -4004,6 +3978,7 @@ static int do_dlclose(struct dso *p)
 {
 	struct dso_entry *ef = NULL;
 	struct dso_entry *ef_tmp = NULL;
+	size_t n;
 	int unload_check_result;
 	TAILQ_HEAD(unload_queue, dso_entry) unload_queue;
 	TAILQ_HEAD(need_unload_queue, dso_entry) need_unload_queue;
@@ -4100,6 +4075,33 @@ static int do_dlclose(struct dso *p)
 
 	TAILQ_FOREACH(ef, &need_unload_queue, entries) {
 		dlclose_impl(ef->dso);
+	}
+
+	TAILQ_FOREACH(ef, &need_unload_queue, entries) {
+		/* call destructors if needed */
+		pthread_mutex_lock(&init_fini_lock);
+		int constructed = ef->dso->constructed;
+		pthread_mutex_unlock(&init_fini_lock);
+
+		if (constructed) {
+			size_t dyn[DYN_CNT];
+			decode_vec(ef->dso->dynv, dyn, DYN_CNT);
+			if (dyn[0] & (1<<DT_FINI_ARRAY)) {
+				n = dyn[DT_FINI_ARRAYSZ] / sizeof(size_t);
+				size_t *fn = (size_t *)laddr(ef->dso, dyn[DT_FINI_ARRAY]) + n;
+				trace_marker_begin(HITRACE_TAG_MUSL, "calling destructors:", ef->dso->name);
+
+				pthread_rwlock_unlock(&lock);
+				while (n--)
+					((void (*)(void))*--fn)();
+				pthread_rwlock_wrlock(&lock);
+
+				trace_marker_end(HITRACE_TAG_MUSL);
+			}
+			pthread_mutex_lock(&init_fini_lock);
+			ef->dso->constructed = 0;
+			pthread_mutex_unlock(&init_fini_lock);
+		}
 	}
 	// Unload all sos at the end because weak symbol may cause later unloaded so to access the previous so's function.
 	TAILQ_FOREACH(ef, &need_unload_queue, entries) {
