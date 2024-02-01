@@ -2422,6 +2422,9 @@ musl_src_porting_file = [
   "src/ctype/towctrans.c",
   "src/stdio/ofl_add.c",
   "src/linux/settimeofday.c",
+  "src/syscall_hooks/syscall_hooks.c",
+  "src/internal/syscall_hooks.h",
+  "include/syscall_hooks.h",
 ]
 
 musl_inc_hook_files = [
