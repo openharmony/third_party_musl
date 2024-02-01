@@ -516,5 +516,22 @@ static void Bm_function_dlsym_libGLES_mali(benchmark::State &state)
         DoDlsym(handle);
     }
 }
+
+static void Bm_function_dlclose(benchmark::State &state)
+{
+    const char* libace = "libace.z.so";
+    void *handle;
+    for (auto _ : state) {
+        state.PauseTiming();
+        handle = dlopen(libace, RTLD_LAZY);
+        if (handle == nullptr) {
+            printf("dlopen %s failed: %s.n", libace, dlerror());
+            exit(-1);
+        }
+        state.ResumeTiming();
+        dlclose(handle);
+    }
+}
 MUSL_BENCHMARK(Bm_function_dlsym_libGLES_mali);
+MUSL_BENCHMARK(Bm_function_dlclose);
 #endif
