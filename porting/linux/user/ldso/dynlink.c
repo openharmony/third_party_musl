@@ -2896,6 +2896,10 @@ void __dls3(size_t *sp, size_t *auxv, size_t *aux)
 #ifdef OHOS_ENABLE_PARAMETER
 	InitParameterClient();
 #endif
+// we may abort when linking other libs, load signal handler before stage start
+#ifdef DFX_SIGNAL_LIBC
+	DFX_InstallSignalHandler();
+#endif
 	/* If the main program was already loaded by the kernel,
 	 * AT_PHDR will point to some location other than the dynamic
 	 * linker's program headers. */
@@ -3186,9 +3190,6 @@ void __dls3(size_t *sp, size_t *auxv, size_t *aux)
 	init_gwp_asan_by_libc(false);
 #endif
 
-#ifdef DFX_SIGNAL_LIBC
-	DFX_InstallSignalHandler();
-#endif
 	errno = 0;
 
 	CRTJMP((void *)aux[AT_ENTRY], argv-1);
