@@ -104,6 +104,7 @@ void dlns_create_0200(void)
     Dl_namespace dlns;
     dlns_init(&dlns, "ns_no_allowed_libs");
 
+    dlns_create(&dlns, NULL);
     EXPECT_EQ("dlns_create_0200", dlns_create(&dlns, NULL), EEXIST);
 }
 
