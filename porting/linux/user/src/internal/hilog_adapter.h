@@ -50,6 +50,9 @@ typedef enum {
 hidden int HiLogAdapterPrint(LogType type, LogLevel level, unsigned int domain, const char *tag, const char *fmt, ...)
     __attribute__((__format__(os_log, 5, 6)));
 
+hidden int HiLogAdapterPrintArgs(const LogType type, const LogLevel level, const unsigned int domain, const char *tag,
+                                 const char *fmt, va_list ap);
+
 hidden bool HiLogAdapterIsLoggable(unsigned int domain, const char *tag, LogLevel level);
 
 #ifdef OHOS_ENABLE_PARAMETER

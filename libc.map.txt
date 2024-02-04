@@ -1182,6 +1182,7 @@
     munlock;
     munlockall;
     munmap;
+    musl_log;
     name_to_handle_at;
     nan;
     nanf;
