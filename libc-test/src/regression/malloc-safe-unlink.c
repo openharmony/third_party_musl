@@ -118,6 +118,7 @@ int main(int argc, char *argv[])
 	sigaddset(&set, SIGCHLD);
 	sigprocmask(SIG_BLOCK, &set, 0);
 	signal(SIGCHLD, handler);
+	signal(SIGILL, SIG_DFL);
 
 	pid = start_child();
 	if (pid == -1) {

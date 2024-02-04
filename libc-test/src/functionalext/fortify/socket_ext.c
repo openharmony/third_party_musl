@@ -19,6 +19,7 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <sys/wait.h>
+#include <sigchain.h>
 #include "fortify_test.h"
 #include "test.h"
 
@@ -212,6 +213,7 @@ static void recvfrom_0010(void)
 }
 
 int main(int argc, char *argv[]) {
+    remove_all_special_handler(SIGABRT);
     send_and_recv_0010();
     send_0010();
     recv_0010();
