@@ -17,6 +17,7 @@
 #include <signal.h>
 #include <string.h>
 #include <sys/wait.h>
+#include <sigchain.h>
 #include "fortify_test.h"
 #include "functionalext.h"
 #include "test.h"
@@ -418,6 +419,7 @@ static void openat64_0040(void)
 #endif
 
 int main(int argc, char *argv[]) {
+    remove_all_special_handler(SIGABRT);
     open_0010();
     open_0020();
     open_0030();
