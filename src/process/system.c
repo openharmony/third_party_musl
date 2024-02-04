@@ -5,6 +5,7 @@
 #include <spawn.h>
 #include <errno.h>
 #include "pthread_impl.h"
+#include <unsupported_api.h>
 
 extern char **__environ;
 
@@ -16,6 +17,7 @@ int system(const char *cmd)
 	int status = -1, ret;
 	posix_spawnattr_t attr;
 
+	UNSUPPORTED_API_VOID(LITEOS_A);
 	pthread_testcancel();
 
 	if (!cmd) return 1;

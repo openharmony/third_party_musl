@@ -9,6 +9,7 @@
 #include "lock.h"
 #include "pthread_impl.h"
 #include "fdop.h"
+#include <unsupported_api.h>
 
 struct args {
 	int p[2];
@@ -170,7 +171,8 @@ int posix_spawn(pid_t *restrict res, const char *restrict path,
 	char stack[1024+PATH_MAX];
 	int ec=0, cs;
 	struct args args;
-
+	
+	UNSUPPORTED_API_VOID(LITEOS_A);
 	pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &cs);
 
 	args.path = path;

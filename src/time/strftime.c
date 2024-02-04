@@ -104,6 +104,19 @@ const char *__strftime_fmt_1(char (*s)[100], size_t *l, int f, const struct tm *
 		val = tm->tm_yday+1;
 		width = 3;
 		goto number;
+	case 'k':
+		def_pad = '_';
+		val = tm->tm_hour;
+		goto number;
+	case 'l':
+		def_pad = '_';
+		val = tm->tm_hour;
+		if (!val) {
+			val = 12;
+		} else if (val > 12) {
+			val -= 12;
+		}
+		goto number;
 	case 'm':
 		val = tm->tm_mon+1;
 		goto number;
@@ -115,6 +128,9 @@ const char *__strftime_fmt_1(char (*s)[100], size_t *l, int f, const struct tm *
 		return "\n";
 	case 'p':
 		item = tm->tm_hour >= 12 ? PM_STR : AM_STR;
+		goto nl_strcat;
+	case 'P':
+		item = tm->tm_hour >= 12 ? PM_STR_LOWER : AM_STR_LOWER;
 		goto nl_strcat;
 	case 'r':
 		item = T_FMT_AMPM;
@@ -145,6 +161,9 @@ const char *__strftime_fmt_1(char (*s)[100], size_t *l, int f, const struct tm *
 	case 'W':
 		val = (tm->tm_yday + 7U - (tm->tm_wday+6U)%7) / 7;
 		goto number;
+	case 'v':
+		fmt = "%e-%b-%Y";
+		goto recu_strftime;
 	case 'V':
 		val = week_num(tm);
 		goto number;

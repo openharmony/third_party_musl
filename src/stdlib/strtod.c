@@ -14,6 +14,7 @@ static long double strtox(const char *s, char **p, int prec)
 	return y;
 }
 
+#if defined(__LITEOS__) || (!defined(MUSL_AARCH64_ARCH)) && (!defined(MUSL_ARM_ARCH))
 float strtof(const char *restrict s, char **restrict p)
 {
 	return strtox(s, p, 0);
@@ -23,6 +24,7 @@ double strtod(const char *restrict s, char **restrict p)
 {
 	return strtox(s, p, 1);
 }
+#endif
 
 long double strtold(const char *restrict s, char **restrict p)
 {

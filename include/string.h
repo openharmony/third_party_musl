@@ -100,6 +100,9 @@ char *basename();
 #endif
 #endif
 
+#ifndef __LITEOS__
+#include <fortify/string.h>
+#endif
 #ifdef __cplusplus
 }
 #endif

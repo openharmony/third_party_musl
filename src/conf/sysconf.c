@@ -24,6 +24,9 @@
 
 long sysconf(int name)
 {
+#ifdef __LITEOS_A__
+	return syscall(SYS_sysconf, name);
+#else
 	static const short values[] = {
 		[_SC_ARG_MAX] = JT_ARG_MAX,
 		[_SC_CHILD_MAX] = RLIM(NPROC),
@@ -194,13 +197,9 @@ long sysconf(int name)
 	case JT_DELAYTIMER_MAX & 255:
 		return DELAYTIMER_MAX;
 	case JT_NPROCESSORS_CONF & 255:
-	case JT_NPROCESSORS_ONLN & 255: ;
-		unsigned char set[128] = {1};
-		int i, cnt;
-		__syscall(SYS_sched_getaffinity, 0, sizeof set, set);
-		for (i=cnt=0; i<sizeof set; i++)
-			for (; set[i]; set[i]&=set[i]-1, cnt++);
-		return cnt;
+		return get_nprocs_conf();
+	case JT_NPROCESSORS_ONLN & 255:
+		return get_nprocs();
 	case JT_PHYS_PAGES & 255:
 	case JT_AVPHYS_PAGES & 255: ;
 		unsigned long long mem;
@@ -216,4 +215,5 @@ long sysconf(int name)
 		return 0;
 	}
 	return values[name];
+#endif
 }

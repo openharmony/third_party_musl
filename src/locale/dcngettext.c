@@ -93,6 +93,24 @@ char *bindtextdomain(const char *domainname, const char *dirname)
 	return (char *)p->dirname;
 }
 
+#ifndef __LITEOS__
+static const char catnames[][18] = {
+    "LC_CTYPE",
+    "LC_NUMERIC",
+    "LC_TIME",
+    "LC_COLLATE",
+    "LC_MONETARY",
+    "LC_MESSAGES",
+    "LC_PAPER",
+    "LC_NAME",
+    "LC_ADDRESS",
+    "LC_TELEPHONE",
+    "LC_MEASUREMENT",
+    "LC_IDENTIFICATION",
+};
+
+static const char catlens[] = { 8, 10, 7, 10, 11, 11, 8, 7, 10, 12, 14, 17 };
+#else
 static const char catnames[][12] = {
 	"LC_CTYPE",
 	"LC_NUMERIC",
@@ -103,6 +121,7 @@ static const char catnames[][12] = {
 };
 
 static const char catlens[] = { 8, 10, 7, 10, 11, 11 };
+#endif
 
 struct msgcat {
 	struct msgcat *next;

@@ -1,4 +1,8 @@
+#ifndef __LITEOS__
+#define SHMLBA (4*4096)
+#else
 #define SHMLBA 4096
+#endif
 
 struct shmid_ds {
 	struct ipc_perm shm_perm;

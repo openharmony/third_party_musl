@@ -4,6 +4,7 @@
 #include <pty.h>
 #include <stdio.h>
 #include <pthread.h>
+#include <unsupported_api.h>
 
 /* Nonstandard, but vastly superior to the standard functions */
 
@@ -12,6 +13,7 @@ int openpty(int *pm, int *ps, char *name, const struct termios *tio, const struc
 	int m, s, n=0, cs;
 	char buf[20];
 
+	UNSUPPORTED_API_VOID(LITEOS_A);
 	m = open("/dev/ptmx", O_RDWR|O_NOCTTY);
 	if (m < 0) return -1;
 

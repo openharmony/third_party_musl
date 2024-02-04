@@ -1,7 +1,20 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include "libc.h"
+#ifdef __LITEOS_A__
+#include <stdbool.h>
+#include <debug.h>
+#include <signal.h>
+#include <atomic.h>
+#include <pthread.h>
+#include "syscall.h"
+#include <bits/errno.h>
 
+extern bool g_enable_check;
+extern void mem_check_deinit(void);
+extern void clean_recycle_list(bool clean_all);
+pthread_mutex_t __exit_mutex = PTHREAD_MUTEX_INITIALIZER;
+#endif
 static void dummy()
 {
 }
@@ -26,6 +39,23 @@ weak_alias(libc_exit_fini, __libc_exit_fini);
 
 _Noreturn void exit(int code)
 {
+#ifdef __LITEOS_A__
+	sigset_t set;
+
+	__block_app_sigs(&set);
+
+	int ret = pthread_mutex_trylock(&__exit_mutex);
+	if (ret == EBUSY) {
+		pthread_exit(NULL);
+	}
+
+	if (g_enable_check) {
+		check_leak();
+		check_heap_integrity();
+		mem_check_deinit();
+		clean_recycle_list(true);
+	}
+#endif
 	__funcs_on_exit();
 	__libc_exit_fini();
 	__stdio_exit();

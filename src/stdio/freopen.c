@@ -12,7 +12,8 @@
 
 FILE *freopen(const char *restrict filename, const char *restrict mode, FILE *restrict f)
 {
-	int fl = __fmodeflags(mode);
+	int file_flags = 0;
+	int fl = __fmodeflags(mode, &file_flags);
 	FILE *f2;
 
 	FLOCK(f);
@@ -33,6 +34,7 @@ FILE *freopen(const char *restrict filename, const char *restrict mode, FILE *re
 
 		f->flags = (f->flags & F_PERM) | f2->flags;
 		f->read = f2->read;
+		f->readx = f2->readx;
 		f->write = f2->write;
 		f->seek = f2->seek;
 		f->close = f2->close;

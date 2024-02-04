@@ -4,9 +4,11 @@
 #include <fcntl.h>
 #include <errno.h>
 #include "syscall.h"
+#include <unsupported_api.h>
 
 int posix_openpt(int flags)
 {
+	UNSUPPORTED_API_VOID(LITEOS_A);
 	int r = open("/dev/ptmx", flags);
 	if (r < 0 && errno == ENOSPC) errno = EAGAIN;
 	return r;
@@ -14,6 +16,7 @@ int posix_openpt(int flags)
 
 int grantpt(int fd)
 {
+	UNSUPPORTED_API_VOID(LITEOS_A);
 	return 0;
 }
 

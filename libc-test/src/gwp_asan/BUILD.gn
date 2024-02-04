@@ -1,5 +1,6 @@
 import("//build/test.gni")
 import("../../../musl_config.gni")
+import("../../test_template.gni")
 
 if (use_gwp_asan) {
   config("gwp_asan_test_config") {
@@ -10,6 +11,7 @@ if (use_gwp_asan) {
     ]
     include_dirs = [
       "//third_party/musl/porting/linux/user/src/gwp_asan",
+      "${musl_src_base}/src/gwp_asan/linux",
       "//third_party/musl/libc-test/src/common",
     ]
     defines = [ "USE_GWP_ASAN" ]

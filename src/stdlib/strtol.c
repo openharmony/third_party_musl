@@ -28,7 +28,11 @@ long long strtoll(const char *restrict s, char **restrict p, int base)
 	return strtox(s, p, base, LLONG_MIN);
 }
 
+#ifndef __LITEOS__
+unsigned long strtoul_weak(const char *restrict s, char **restrict p, int base)
+#else
 unsigned long strtoul(const char *restrict s, char **restrict p, int base)
+#endif
 {
 	return strtox(s, p, base, ULONG_MAX);
 }
@@ -38,19 +42,34 @@ long strtol(const char *restrict s, char **restrict p, int base)
 	return strtox(s, p, base, 0UL+LONG_MIN);
 }
 
+#ifndef __LITEOS__
+intmax_t strtoimax_weak(const char *restrict s, char **restrict p, int base)
+#else
 intmax_t strtoimax(const char *restrict s, char **restrict p, int base)
+#endif
 {
 	return strtoll(s, p, base);
 }
 
+#ifndef __LITEOS__
+uintmax_t strtoumax_weak(const char *restrict s, char **restrict p, int base)
+#else
 uintmax_t strtoumax(const char *restrict s, char **restrict p, int base)
+#endif
 {
 	return strtoull(s, p, base);
 }
 
 weak_alias(strtol, __strtol_internal);
+#ifndef __LITEOS__
+weak_alias(strtoul_weak, strtoul);
+#endif
 weak_alias(strtoul, __strtoul_internal);
 weak_alias(strtoll, __strtoll_internal);
 weak_alias(strtoull, __strtoull_internal);
+#ifndef __LITEOS__
+weak_alias(strtoimax_weak, strtoimax);
+weak_alias(strtoumax_weak, strtoumax);
+#endif
 weak_alias(strtoimax, __strtoimax_internal);
 weak_alias(strtoumax, __strtoumax_internal);

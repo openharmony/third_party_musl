@@ -1,6 +1,7 @@
 #define _GNU_SOURCE
 #include <stdio.h>
 #include <unistd.h>
+#include <unsupported_api.h>
 
 static const char defshells[] = "/bin/sh\n/bin/csh\n";
 
@@ -10,6 +11,7 @@ static FILE *f;
 
 void endusershell(void)
 {
+	UNSUPPORTED_API_VOID(LITEOS_A);
 	if (f) fclose(f);
 	f = 0;
 }

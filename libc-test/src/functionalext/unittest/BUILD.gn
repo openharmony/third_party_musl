@@ -22,11 +22,13 @@ ohos_executable("unittest_ldso_ns_config") {
 
   include_dirs = [
     "${musl_src_base}/ldso",
+    "${musl_src_base}/ldso/linux",
     "//${test_dir}/src/common",
     "//${test_dir}/src/functionalext/common",
     "${musl_src_base}/src/include",
     "${musl_src_base}/include",
     "${musl_src_base}/src/internal",
+    "${musl_src_base}/src/internal/linux",
   ]
 
   configs = [ "//third_party/musl/libc-test/src/common:config_unittest" ]
@@ -45,7 +47,7 @@ ohos_executable("unittest_ldso_namesapce") {
   part_name = "libc-test"
 
   sources = [
-    "${musl_src_base}/ldso/namespace.c",
+    "${musl_src_base}/ldso/linux/namespace.c",
     "unit_test_ldso_namespace.c",
     "unit_test_mock_molloc.c",
     "unit_test_mock_strops.c",
@@ -53,11 +55,13 @@ ohos_executable("unittest_ldso_namesapce") {
 
   include_dirs = [
     "${musl_src_base}/ldso",
+    "${musl_src_base}/ldso/linux",
     "//${test_dir}/src/common",
     "//${test_dir}/src/functionalext/common",
     "${musl_src_base}/src/include",
     "${musl_src_base}/include",
     "${musl_src_base}/src/internal",
+    "${musl_src_base}/src/internal/linux",
   ]
 
   configs = [ "//third_party/musl/libc-test/src/common:config_unittest" ]
@@ -74,18 +78,20 @@ ohos_executable("unittest_ldso_ld_log") {
   part_name = "libc-test"
 
   sources = [
-    "${musl_src_base}/ldso/ld_log.c",
+    "${musl_src_base}/ldso/linux/ld_log.c",
     "unit_test_ldso_ld_log.c",
     "unit_test_mock_hilog_adapter.c",
   ]
 
   include_dirs = [
     "${musl_src_base}/ldso",
+    "${musl_src_base}/ldso/linux",
     "//${test_dir}/src/common",
     "//${test_dir}/src/functionalext/common",
     "${musl_src_base}/src/include",
     "${musl_src_base}/include",
     "${musl_src_base}/src/internal",
+    "${musl_src_base}/src/internal/linux",
     "//${test_dir}/src/functionalext/unittest",
   ]
 
@@ -109,11 +115,13 @@ ohos_executable("unittest_ldso_dynlink") {
 
   include_dirs = [
     "${musl_src_base}/ldso",
+    "${musl_src_base}/ldso/linux",
     "//${test_dir}/src/common",
     "//${test_dir}/src/functionalext/common",
     "${musl_src_base}/src/include",
     "${musl_src_base}/include",
     "${musl_src_base}/src/internal",
+    "${musl_src_base}/src/internal/linux",
     "${musl_src_base}/arch/${musl_arch}",
   ]
 
@@ -144,6 +152,7 @@ ohos_executable("unittest_hilog_adapter") {
     "//${test_dir}/src/functionalext/common",
     "//${test_dir}/src/common",
     "${musl_src_base}/src/internal",
+    "${musl_src_base}/src/internal/linux",
   ]
 
   configs = [ "//third_party/musl/libc-test/src/common:config_unittest" ]
@@ -158,18 +167,20 @@ ohos_executable("unittest_ldso_strops") {
   part_name = "libc-test"
 
   sources = [
-    "${musl_src_base}/ldso/strops.c",
+    "${musl_src_base}/ldso/linux/strops.c",
     "unit_test_ldso_strops.c",
     "unit_test_mock_molloc.c",
   ]
 
   include_dirs = [
     "${musl_src_base}/ldso",
+    "${musl_src_base}/ldso/linux",
     "//${test_dir}/src/common",
     "//${test_dir}/src/functionalext/common",
     "${musl_src_base}/src/include",
     "${musl_src_base}/include",
     "${musl_src_base}/src/internal",
+    "${musl_src_base}/src/internal/linux",
   ]
 
   configs = [ "//third_party/musl/libc-test/src/common:config_unittest" ]
@@ -186,7 +197,7 @@ ohos_executable("unittest_hilog_vsnprint") {
   include_dirs = [
     "//${test_dir}/src/functionalext/common",
     "//${test_dir}/src/common",
-    "${musl_src_base}/src/hilog",
+    "${musl_src_base}/src/hilog/linux",
   ]
 
   configs = [ "//third_party/musl/libc-test/src/common:config_unittest" ]
@@ -201,18 +212,20 @@ ohos_executable("unittest_fatal_message") {
   part_name = "libc-test"
 
   sources = [
-    "${musl_src_base}/src/info/fatal_message.c",
+    "${musl_src_base}/src/info/linux/fatal_message.c",
     "unit_test_fatal_message.c",
     "unit_test_mock_fatal_message.c",
   ]
 
   include_dirs = [
     "${musl_src_base}/src/info",
+    "${musl_src_base}/src/info/linux",
     "//${test_dir}/src/common",
     "//${test_dir}/src/functionalext/common",
     "${musl_src_base}/src/include",
     "${musl_src_base}/include",
     "${musl_src_base}/src/internal",
+    "${musl_src_base}/src/internal/linux",
   ]
 
   configs = [ "//third_party/musl/libc-test/src/common:config_unittest" ]
@@ -240,7 +253,7 @@ ohos_executable("unittest_fatal_message_assert_fail") {
   subsystem_name = "musl"
   part_name = "libc-test"
   sources = [
-    "${musl_src_base}/src/info/fatal_message.c",
+    "${musl_src_base}/src/info/linux/fatal_message.c",
     "unit_test_assert_fail.c",
   ]
   include_dirs = [ "${musl_src_base}/include" ]
@@ -254,7 +267,7 @@ ohos_executable("unittest_fatal_message_assert_fail_dialog") {
   part_name = "libc-test"
   defines = [ "PC_MUSL_ASSERT" ]
   sources = [
-    "${musl_src_base}/src/info/fatal_message.c",
+    "${musl_src_base}/src/info/linux/fatal_message.c",
     "unit_test_assert_fail_dialog.c",
   ]
   include_dirs = [ "${musl_src_base}/include" ]

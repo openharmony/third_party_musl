@@ -1,25 +1,19 @@
 #include "stdio_impl.h"
 #include <string.h>
 
+// Empty implementation because vfscanf operates rpos directly.
 static size_t string_read(FILE *f, unsigned char *buf, size_t len)
 {
-	char *src = f->cookie;
-	size_t k = len+256;
-	char *end = memchr(src, 0, k);
-	if (end) k = end-src;
-	if (k < len) len = k;
-	memcpy(buf, src, len);
-	f->rpos = (void *)(src+len);
-	f->rend = (void *)(src+k);
-	f->cookie = src+k;
-	return len;
+	return 0;
 }
 
 int vsscanf(const char *restrict s, const char *restrict fmt, va_list ap)
 {
+	size_t s_len = strlen(s);
 	FILE f = {
 		.buf = (void *)s, .cookie = (void *)s,
-		.read = string_read, .lock = -1
+		.read = string_read, .lock = -1,
+		.buf_size = s_len, .rpos = s, .rend = s + s_len,
 	};
 	return vfscanf(&f, fmt, ap);
 }

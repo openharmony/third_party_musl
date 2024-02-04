@@ -33,12 +33,11 @@ if (is_lite_system && current_os == "ohos") {
 
   if (musl_arch != "mips" && musl_arch != "riscv64") {
     ohos_prebuilt_etc("ld-musl-namespace-${musl_arch}-test.ini") {
-      source =
-          "${musl_porting_dir}/config/ld-musl-namespace-${musl_arch}-test.ini"
+      source = "${musl_dir}/config/ld-musl-namespace-${musl_arch}-test.ini"
     }
 
     ohos_prebuilt_etc("ld-musl-namespace-${musl_arch}.ini") {
-      source = "${musl_porting_dir}/config/ld-musl-namespace-${musl_arch}.ini"
+      source = "${musl_dir}/config/ld-musl-namespace-${musl_arch}.ini"
       install_images = [
         "system",
         "updater",
@@ -68,12 +67,12 @@ if (is_lite_system && current_os == "ohos") {
   }
 
   ohos_prebuilt_etc("musl_sysparam") {
-    source = "${musl_porting_dir}/etc/musl.para"
+    source = "${musl_dir}/etc/musl.para"
     relative_install_dir = "param"
   }
 
   ohos_prebuilt_etc("musl_sysparam_dac") {
-    source = "${musl_porting_dir}/etc/musl.para.dac"
+    source = "${musl_dir}/etc/musl.para.dac"
     relative_install_dir = "param"
   }
 
@@ -122,6 +121,8 @@ if (is_lite_system && current_os == "ohos") {
     src_files += musl_inc_sys_files
     src_files += musl_inc_fortify_files
     src_files += musl_inc_root_files
+    src_files += musl_inc_info_files
+    src_files += musl_inc_trace_files
 
     src_files += [
       "crt/Scrt1.c",
@@ -156,7 +157,7 @@ if (is_lite_system && current_os == "ohos") {
     args += [ "-p" ] + [ "${musl_target_os}" ]
 
     foreach(i, src_files) {
-      foreach(s, musl_src_porting_file) {
+      foreach(s, musl_src_files_ext) {
         if (i == s) {
           src_files -= [ "${s}" ]
         }
@@ -168,7 +169,7 @@ if (is_lite_system && current_os == "ohos") {
       outputs += [ "${target_out_dir}/${musl_ported_dir}/${s}" ]
     }
 
-    foreach(s, musl_src_porting_file) {
+    foreach(s, musl_src_files_ext) {
       outputs += [ "${target_out_dir}/${musl_ported_dir}/${s}" ]
     }
 
@@ -177,8 +178,8 @@ if (is_lite_system && current_os == "ohos") {
       inputs += [ "${musl_dir}/${s}" ]
     }
 
-    foreach(s, musl_src_porting_file) {
-      inputs += [ "${musl_porting_dir}/${s}" ]
+    foreach(s, musl_src_files_ext) {
+      inputs += [ "${musl_dir}/${s}" ]
     }
   }
 

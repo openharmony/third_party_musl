@@ -36,9 +36,17 @@ int select(int n, fd_set *restrict rfds, fd_set *restrict wfds, fd_set *restrict
 #endif
 #ifdef SYS_select
 	return syscall_cp(SYS_select, n, rfds, wfds, efds,
+#ifdef __LITEOS_A__
+		tv ? ((long long[]){s, us}) : 0);
+#else
 		tv ? ((long[]){s, us}) : 0);
+#endif
 #else
 	return syscall_cp(SYS_pselect6, n, rfds, wfds, efds,
+#ifdef __LITEOS_A__
+		tv ? ((long long[]){s, ns}) : 0, ((syscall_arg_t[]){ 0, _NSIG/8 }));
+#else
 		tv ? ((long[]){s, ns}) : 0, ((syscall_arg_t[]){ 0, _NSIG/8 }));
+#endif
 #endif
 }

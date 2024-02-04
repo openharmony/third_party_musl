@@ -72,12 +72,27 @@ struct meta *alloc_meta(void);
 __attribute__((__visibility__("hidden")))
 int is_allzero(void *);
 
+static inline void *encode_ptr(void *ptr, uint64_t key)
+{
+#ifdef MALLOC_FREELIST_HARDENED
+	return (void *)((uintptr_t)ptr ^ key);
+#else
+	(void)key;
+	return ptr;
+#endif
+}
+
 static inline void queue(struct meta **phead, struct meta *m)
 {
 	assert(!m->next);
 	assert(!m->prev);
 	if (*phead) {
 		struct meta *head = *phead;
+#ifdef MALLOC_FREELIST_HARDENED
+		if (head->next->prev != head || head->prev->next != head) {
+			a_crash();
+		}
+#endif
 		m->next = head;
 		m->prev = head->prev;
 		m->next->prev = m->prev->next = m;
@@ -137,7 +152,7 @@ static inline struct meta *get_meta(const unsigned char *p)
 		assert(offset > 0xffff);
 	}
 	const struct group *base = (const void *)(p - UNIT*offset - UNIT);
-	const struct meta *meta = base->meta;
+	const struct meta *meta = encode_ptr(base->meta, ctx.secret);
 	assert(meta->mem == base);
 	assert(index <= meta->last_idx);
 	assert(!(meta->avail_mask & (1u<<index)));

@@ -5,26 +5,26 @@
 
 FILE *fopen(const char *restrict filename, const char *restrict mode)
 {
-	FILE *f;
-	int fd;
-	int flags;
-
-	/* Check for valid initial mode character */
-	if (!strchr("rwa", *mode)) {
-		errno = EINVAL;
-		return 0;
-	}
+	FILE *f = NULL;
+	int fd = -1;
+	int file_flags = 0;
+	int mode_flags = 0;
 
 	/* Compute the flags to pass to open() */
-	flags = __fmodeflags(mode);
+	mode_flags = __fmodeflags(mode, &file_flags);
+	if (mode_flags < 0) {
+		return NULL;
+	}
 
-	fd = sys_open(filename, flags, 0666);
+	fd = sys_open(filename, mode_flags, 0666);
 	if (fd < 0) return 0;
-	if (flags & O_CLOEXEC)
+	if (mode_flags & O_CLOEXEC)
 		__syscall(SYS_fcntl, fd, F_SETFD, FD_CLOEXEC);
 
-	f = __fdopen(fd, mode);
-	if (f) return f;
+	f = __fdopenx(fd, file_flags);
+	if (f) {
+		return f;
+	}
 
 	__syscall(SYS_close, fd);
 	return 0;

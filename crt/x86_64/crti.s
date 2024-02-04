@@ -1,3 +1,7 @@
+.ifndef __LITEOS__
+.include "crtbrand.s"
+.endif
+
 .section .init
 .global _init
 _init:

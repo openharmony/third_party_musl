@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include <string.h>
 #include "pthread_impl.h"
+#include <unsupported_api.h>
 
 struct lio_state {
 	struct sigevent *sev;
@@ -68,6 +69,7 @@ static void *wait_thread(void *p)
 
 int lio_listio(int mode, struct aiocb *restrict const *restrict cbs, int cnt, struct sigevent *restrict sev)
 {
+	UNSUPPORTED_API_VOID(LITEOS_A);
 	int i, ret;
 	struct lio_state *st=0;
 

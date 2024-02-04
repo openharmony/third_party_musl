@@ -37,7 +37,11 @@ uint8_t is_allow_internet(void)
 }
 #endif
 
+#ifdef OHOS_SOCKET_HOOK_ENABLE
+int __libc_socket(int domain, int type, int protocol)
+#else
 int socket(int domain, int type, int protocol)
+#endif
 {
 #if OHOS_PERMISSION_INTERNET
 	if ((domain == AF_INET || domain == AF_INET6) && is_allow_internet() == 0) {

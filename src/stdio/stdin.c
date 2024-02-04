@@ -9,6 +9,7 @@ hidden FILE __stdin_FILE = {
 	.fd = 0,
 	.flags = F_PERM | F_NOWR,
 	.read = __stdio_read,
+	.readx = __stdio_readx,
 	.seek = __stdio_seek,
 	.close = __stdio_close,
 	.lock = -1,

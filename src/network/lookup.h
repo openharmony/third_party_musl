@@ -57,13 +57,22 @@ struct resolvconf {
 #define MAXSERVS 2
 
 hidden int __lookup_serv(struct service buf[static MAXSERVS], const char *name, int proto, int socktype, int flags);
+hidden int lookup_name_ext(struct address buf[static MAXADDRS], char canon[static 256], const char *name,
+							 int family, int flags, int netid);
 hidden int __lookup_name(struct address buf[static MAXADDRS], char canon[static 256], const char *name, int family, int flags);
 hidden int __lookup_ipliteral(struct address buf[static 1], const char *name, int family);
 
 hidden int __get_resolv_conf(struct resolvconf *, char *, size_t);
+hidden int get_resolv_conf_ext(struct resolvconf *, char *, size_t, int netid);
 hidden int __res_msend_rc(int, const unsigned char *const *, const int *, unsigned char *const *, int *, int, const struct resolvconf *);
+hidden int res_msend_rc_ext(int, int, const unsigned char *const *, const int *, unsigned char *const *,
+							int *, int, const struct resolvconf *);
 
 hidden int __dns_parse(const unsigned char *, int, int (*)(void *, int, const void *, int, const void *), void *);
+hidden int predefined_host_name_from_hosts(struct address buf[static MAXADDRS],
+	char canon[static 256], const char *name, int family);
+hidden int predefined_host_is_contain_host(const char *host);
+hidden int res_bind_socket(int, int);
 
 #if OHOS_DNS_PROXY_BY_NETSYS
 #define DNS_SO_PATH "libnetsys_client.z.so"
@@ -73,6 +82,8 @@ hidden int __dns_parse(const unsigned char *, int, int (*)(void *, int, const vo
 #define OHOS_GET_CACHE_FUNC_NAME "NetSysGetResolvCache"
 #define OHOS_SET_CACHE_FUNC_NAME "NetSysSetResolvCache"
 #define OHOS_JUDGE_IPV6_FUNC_NAME "NetSysIsIpv6Enable"
+#define OHOS_POST_DNS_RESULT_FUNC_NAME "NetSysPostDnsResult"
+#define OHOS_GET_DEFAULT_NET_FUNC_NAME "NetSysGetDefaultNetwork"
 #define MAX_RESULTS 32
 #define MAX_CANON_NAME 256
 #define MACRO_MIN(a, b) ((a) < (b) ? (a) : (b))
@@ -116,6 +127,11 @@ typedef int32_t (*SetCache)(uint16_t netId, struct param_wrapper param, struct a
 
 typedef int (*JudgeIpv6)(uint16_t netId);
 
+typedef int (*PostDnsResult)(int netid, char* name, int usedtime, int queryfail,
+							 struct addrinfo *res, struct queryparam *param);
+
+typedef int (*GetDefaultNet)(uint16_t netId, int32_t *currentnetid);
+
 /* If the memory holder points to stores NULL value, try to load symbol from the
  * dns lib into holder; otherwise, it does nothing. */
 hidden void resolve_dns_sym(void **holder, const char *symbol);
@@ -125,9 +141,30 @@ dns_set_addr_info_to_netsys_cache(const char *__restrict host, const char *__res
 								  const struct addrinfo *__restrict
 								  hint, struct addrinfo *res);
 
+void dns_set_addr_info_to_netsys_cache2(const int netid, const char *__restrict host, const char *__restrict serv,
+										const struct addrinfo *__restrict hint, struct addrinfo *res);
+
 int dns_get_addr_info_from_netsys_cache(const char *__restrict host, const char *__restrict serv,
 										const struct addrinfo *__restrict hint, struct addrinfo **__restrict res);
 
+int dns_get_addr_info_from_netsys_cache2(const int netid, const char *__restrict host, const char *__restrict serv,
+										 const struct addrinfo *__restrict hint, struct addrinfo **__restrict res);
+
+int dns_post_result_to_netsys_cache(int netid, char* name, int usedtime, int querypass,
+									struct addrinfo *res, struct queryparam *param);
+
+int dns_get_default_network(int *currentnetid);
 #endif
 
+#if OHOS_FWMARK_CLIENT_BY_NETSYS
+#define FWMARKCLIENT_SO_PATH "libfwmark_client.z.so"
+#define OHOS_BIND_SOCKET_FUNC_NAME "BindSocket"
+
+typedef int32_t (*BindSocket)(int32_t fd, uint32_t netId);
+
+#define OHOS_NETSYS_BIND_SOCKET_FUNC_NAME "NetSysBindSocket"
+
+typedef int32_t (*BindSocket_Ext)(int32_t fd, uint32_t netId);
+
+#endif
 #endif

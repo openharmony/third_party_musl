@@ -8,6 +8,7 @@
 #include <errno.h>
 #include "lookup.h"
 #include "stdio_impl.h"
+#include "network_conf_function.h"
 
 int __lookup_serv(struct service buf[static MAXSERVS], const char *name, int proto, int socktype, int flags)
 {
@@ -71,16 +72,8 @@ int __lookup_serv(struct service buf[static MAXSERVS], const char *name, int pro
 
 	unsigned char _buf[1032];
 	FILE _f, *f = __fopen_rb_ca("/etc/services", &_f, _buf, sizeof _buf);
-	if (!f) switch (errno) {
-	case ENOENT:
-	case ENOTDIR:
-	case EACCES:
-		return EAI_SERVICE;
-	default:
-		return EAI_SYSTEM;
-	}
-
-	while (fgets(line, sizeof line, f) && cnt < MAXSERVS) {
+	int indexPtr = 0;
+	while (get_services_str(line, f, &indexPtr)) {
 		if ((p=strchr(line, '#'))) *p++='\n', *p=0;
 
 		/* Find service name */
@@ -109,6 +102,8 @@ int __lookup_serv(struct service buf[static MAXSERVS], const char *name, int pro
 			buf[cnt++].proto = IPPROTO_TCP;
 		}
 	}
-	__fclose_ca(f);
+	if (f) {
+		__fclose_ca(f);
+	}
 	return cnt > 0 ? cnt : EAI_SERVICE;
 }

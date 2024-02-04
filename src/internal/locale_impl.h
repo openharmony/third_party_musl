@@ -7,12 +7,15 @@
 #include "pthread_impl.h"
 
 #define LOCALE_NAME_MAX 23
+#define VALID 2
+#define INVALID 1
 
 struct __locale_map {
 	const void *map;
 	size_t map_size;
 	char name[LOCALE_NAME_MAX+1];
 	const struct __locale_map *next;
+	char flag;
 };
 
 extern hidden volatile int __locale_lock[1];
