@@ -8,7 +8,27 @@
 #include "libc.h"
 #include "atomic.h"
 #include "syscall.h"
+#ifdef __LITEOS_A__
+#include "stdio_impl.h"
+#include "lock.h"
 
+static void *dummy_tsd[1] = { 0 };
+weak_alias(dummy_tsd, __pthread_tsd_main);
+static FILE *volatile dummy_file = 0;
+weak_alias(dummy_file, __stdin_used);
+weak_alias(dummy_file, __stdout_used);
+weak_alias(dummy_file, __stderr_used);
+
+static void dummy_0()
+{
+}
+weak_alias(dummy_0, __membarrier_init);
+
+static void init_file_lock(FILE *f)
+{
+	if (f && f->lock<0) f->lock = 0;
+}
+#endif
 volatile int __thread_list_lock;
 
 int __init_tp(void *p)
@@ -19,16 +39,31 @@ int __init_tp(void *p)
 	if (r < 0) return -1;
 	if (!r) libc.can_do_threads = 1;
 	td->detach_state = DT_JOINABLE;
-	td->tid = __syscall(SYS_set_tid_address, &__thread_list_lock);
+	td->tid = td->pid = __syscall(SYS_set_tid_address, &__thread_list_lock);
+	td->proc_tid = -1;
 	td->locale = &libc.global_locale;
 	td->robust_list.head = &td->robust_list.head;
 	td->sysinfo = __sysinfo;
 	td->next = td->prev = td;
+#ifdef __LITEOS_A__
+	libc.threaded = 0;
+	td->tid = __syscall(SYS_gettid);
+	td->pid = __syscall(SYS_getpid);
+	td->tsd = (void **)__pthread_tsd_main;
+	for (FILE *f = *__ofl_lock(); f; f = f->next)
+		init_file_lock(f);
+	__ofl_unlock();
+	init_file_lock(__stdin_used);
+	init_file_lock(__stdout_used);
+	init_file_lock(__stderr_used);
+	__syscall(SYS_rt_sigprocmask, SIG_UNBLOCK, SIGPT_SET, 0, _NSIG/8);
+	libc.threaded = 1;
+#endif
 	return 0;
 }
 
 static struct builtin_tls {
-	char c;
+	char c[8];
 	struct pthread pt;
 	void *space[16];
 } builtin_tls[1];
@@ -52,7 +87,9 @@ void *__copy_tls(unsigned char *mem)
 
 	for (i=1, p=libc.tls_head; p; i++, p=p->next) {
 		dtv[i] = (uintptr_t)(mem + p->offset) + DTP_OFFSET;
-		memcpy(mem + p->offset, p->image, p->len);
+		if (p->image) {
+			memcpy(mem + p->offset, p->image, p->len);
+		}
 	}
 #else
 	dtv = (uintptr_t *)mem;
@@ -63,7 +100,9 @@ void *__copy_tls(unsigned char *mem)
 
 	for (i=1, p=libc.tls_head; p; i++, p=p->next) {
 		dtv[i] = (uintptr_t)(mem - p->offset) + DTP_OFFSET;
-		memcpy(mem - p->offset, p->image, p->len);
+		if (p->image) {
+			memcpy(mem - p->offset, p->image, p->len);
+		}
 	}
 #endif
 	dtv[0] = libc.tls_cnt;

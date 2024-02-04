@@ -26,6 +26,9 @@ static inline uintptr_t __get_tp()
 
 #endif
 
+#ifdef __LITEOS_A__
+extern pthread_t __pthread_self();
+#endif
 #define TLS_ABOVE_TP
 #define GAP_ABOVE_TP 8
 

@@ -20,6 +20,7 @@ static int __futex4(volatile void *addr, int op, int val, const struct timespec 
 
 static int pthread_mutex_timedlock_pi(pthread_mutex_t *restrict m, const struct timespec *restrict at)
 {
+	int clock = m->_m_clock;
 	int type = m->_m_type;
 	int priv = (type & 128) ^ 128;
 	pthread_t self = __pthread_self();
@@ -42,31 +43,33 @@ static int pthread_mutex_timedlock_pi(pthread_mutex_t *restrict m, const struct 
 		}
 		/* Signal to trylock that we already have the lock. */
 		m->_m_count = -1;
-		return __pthread_mutex_trylock(m);
+		return __pthread_mutex_trylock_owner(m);
 	case ETIMEDOUT:
 		return e;
 	case EDEADLK:
 		if ((type&3) == PTHREAD_MUTEX_ERRORCHECK) return e;
 	}
-	do e = __timedwait(&(int){0}, 0, CLOCK_REALTIME, at, 1);
+	do e = __timedwait(&(int){0}, 0, clock, at, 1);
 	while (e != ETIMEDOUT);
 	return e;
 }
 
-int __pthread_mutex_timedlock(pthread_mutex_t *restrict m, const struct timespec *restrict at)
+int __pthread_mutex_timedlock_inner(pthread_mutex_t *restrict m, const struct timespec *restrict at)
 {
-	if ((m->_m_type&15) == PTHREAD_MUTEX_NORMAL
-	    && !a_cas(&m->_m_lock, 0, EBUSY))
-		return 0;
-
 	int type = m->_m_type;
-	int r, t, priv = (type & 128) ^ 128;
-
+	int r;
+	// PI
+#ifndef __LITEOS_A__
+	if (type & 8) {
+		r = __pthread_mutex_trylock_owner(m);
+		if (r != EBUSY) return r;
+		return pthread_mutex_timedlock_pi(m, at);
+	}
+#endif
 	r = __pthread_mutex_trylock(m);
 	if (r != EBUSY) return r;
-
-	if (type&8) return pthread_mutex_timedlock_pi(m, at);
-	
+	int clock = (m->_m_clock == CLOCK_MONOTONIC) ? CLOCK_MONOTONIC : CLOCK_REALTIME;
+	int t, priv = (type & 128) ^ 128;
 	int spins = 100;
 	while (spins-- && m->_m_lock && !m->_m_waiters) a_spin();
 
@@ -82,11 +85,19 @@ int __pthread_mutex_timedlock(pthread_mutex_t *restrict m, const struct timespec
 		a_inc(&m->_m_waiters);
 		t = r | 0x80000000;
 		a_cas(&m->_m_lock, r, t);
-		r = __timedwait(&m->_m_lock, t, CLOCK_REALTIME, at, priv);
+		r = __timedwait(&m->_m_lock, t, clock, at, priv);
 		a_dec(&m->_m_waiters);
 		if (r && r != EINTR) break;
 	}
 	return r;
+}
+
+int __pthread_mutex_timedlock(pthread_mutex_t *restrict m, const struct timespec *restrict at)
+{
+	if ((m->_m_type&15) == PTHREAD_MUTEX_NORMAL
+		&& !a_cas(&m->_m_lock, 0, EBUSY))
+		return 0;
+	return __pthread_mutex_timedlock_inner(m, at);
 }
 
 weak_alias(__pthread_mutex_timedlock, pthread_mutex_timedlock);

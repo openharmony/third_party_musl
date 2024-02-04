@@ -3,7 +3,10 @@
 #include <sys/stat.h>
 #include <errno.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include "__dirent.h"
+
+extern uint64_t __get_dir_tag(DIR* dir);
 
 DIR *fdopendir(int fd)
 {
@@ -27,5 +30,8 @@ DIR *fdopendir(int fd)
 
 	fcntl(fd, F_SETFD, FD_CLOEXEC);
 	dir->fd = fd;
+#ifndef __LITEOS__
+	fdsan_exchange_owner_tag(fd, 0, __get_dir_tag(dir));
+#endif
 	return dir;
 }

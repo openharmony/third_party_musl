@@ -1,11 +1,14 @@
 #include "pthread_impl.h"
 #include "syscall.h"
+#include <unsupported_api.h>
 
 static volatile int check_pi_result = -1;
 
 int pthread_mutexattr_setprotocol(pthread_mutexattr_t *a, int protocol)
 {
 	int r;
+
+	UNSUPPORTED_API_VOID(LITEOS_A);
 	switch (protocol) {
 	case PTHREAD_PRIO_NONE:
 		a->__attr &= ~8;

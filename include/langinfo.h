@@ -68,6 +68,9 @@ extern "C" {
 #define ERA_D_T_FMT 0x20030
 #define ERA_T_FMT 0x20031
 
+#define AM_STR_LOWER 0x20032
+#define PM_STR_LOWER 0x20033
+
 #define CODESET 14
 
 #define CRNCYSTR 0x4000F

@@ -9,7 +9,7 @@ struct tm *__gmtime_r(const time_t *restrict t, struct tm *restrict tm)
 	}
 	tm->tm_isdst = 0;
 	tm->__tm_gmtoff = 0;
-	tm->__tm_zone = __utc;
+	tm->__tm_zone = __gmt;
 	return tm;
 }
 

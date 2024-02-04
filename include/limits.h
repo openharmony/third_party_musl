@@ -44,9 +44,14 @@
 #ifndef NAME_MAX
 #define NAME_MAX 255
 #endif
+#ifdef __LITEOS_A__
+#define PATH_MAX 256
+#define ARG_MAX 4096
+#else
 #define PATH_MAX 4096
-#define NGROUPS_MAX 32
 #define ARG_MAX 131072
+#endif
+#define NGROUPS_MAX 32
 #define IOV_MAX 1024
 #define SYMLOOP_MAX 40
 #define WORD_BIT 32
@@ -69,7 +74,11 @@
 #define SEM_VALUE_MAX 0x7fffffff
 #define SEM_NSEMS_MAX 256
 #define DELAYTIMER_MAX 0x7fffffff
+#ifdef __LITEOS_A__
+#define MQ_PRIO_MAX 1
+#else
 #define MQ_PRIO_MAX 32768
+#endif
 #define LOGIN_NAME_MAX 256
 
 /* Arbitrary numbers... */

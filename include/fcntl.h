@@ -20,6 +20,9 @@ extern "C" {
 #include <bits/alltypes.h>
 
 #include <bits/fcntl.h>
+#ifndef __LITEOS__
+#include <fortify/fcntl.h>
+#endif
 
 struct flock {
 	short l_type;

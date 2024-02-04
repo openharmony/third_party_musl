@@ -14,15 +14,25 @@ extern "C" {
 #define SEEK_SET 0
 #define SEEK_CUR 1
 #define SEEK_END 2
+#ifndef __LITEOS_A__
 #define SEEK_DATA 3
 #define SEEK_HOLE 4
+#endif
 
+#ifdef __LITEOS_A__
+#ifdef __cplusplus
+#define NULL 0L
+#else
+#define NULL ((void*)0)
+#endif
+#else
 #if __cplusplus >= 201103L
 #define NULL nullptr
 #elif defined(__cplusplus)
 #define NULL 0L
 #else
 #define NULL ((void*)0)
+#endif
 #endif
 
 #define __NEED_size_t
@@ -77,6 +87,31 @@ int ftruncate(int, off_t);
 int access(const char *, int);
 int faccessat(int, const char *, int, int);
 
+#ifdef __LITEOS_A__
+/* Format options */
+#define FMT_FAT      0x01
+#define FMT_FAT32    0x02
+#define FMT_ANY      0x07
+#define FMT_ERASE    0x08
+
+/**
+  * @brief format FAT device (SD card, U disk, and MMC card), this function is OHOS-specific
+  * @param dev device name.
+  * @param sectors sectors per cluster, can be 0 OR power of 2. The sector size for standard FAT volumes is 512 bytes.
+  *    -- sector number is 0 OR >128: automatically choose the appropriate cluster size.
+  *    -- sector number is 1 ~ 128: cluster size = sectors per cluster * 512B.
+  * @param option file system type.
+  *    -- FMT_FAT
+  *    -- FMT_FAT32
+  *    -- FMT_ANY
+  *    -- FMT_ERASE (USB not supported)
+  * @return format result
+  * @retval -1 format error
+  * @retval 0 format successful
+  */
+int format(const char *dev, int sectors, int option);
+#endif
+
 int chdir(const char *);
 int fchdir(int);
 char *getcwd(char *, size_t);
@@ -86,7 +121,9 @@ unsigned sleep(unsigned);
 int pause(void);
 
 pid_t fork(void);
+#ifndef __LITEOS_A__
 pid_t _Fork(void);
+#endif
 int execve(const char *, char *const [], char *const []);
 int execv(const char *, char *const []);
 int execle(const char *, const char *, ...);
@@ -96,6 +133,27 @@ int execlp(const char *, const char *, ...);
 int fexecve(int, char *const [], char *const []);
 _Noreturn void _exit(int);
 
+/**
+ * @brief Get the pid in the system namespace
+ *
+ * get the pid in the system namespace, used to globally mark processes in the pid sandbox.\n
+ *
+ * @param NA
+ * @return pid
+ * @since 4.1
+ */
+pid_t getprocpid(void);
+
+/**
+ * @brief Get the tid in the system namespace
+ *
+ * get the tid in the system namespace, used to globally mark processes in the pid sandbox.\n
+ *
+ * @param NA
+ * @return pid
+ * @since 4.1
+ */
+pid_t getproctid(void);
 pid_t getpid(void);
 pid_t getppid(void);
 pid_t getpgrp(void);
@@ -195,7 +253,9 @@ int syncfs(int);
 int euidaccess(const char *, int);
 int eaccess(const char *, int);
 ssize_t copy_file_range(int, off_t *, int, off_t *, size_t, unsigned);
+#ifndef __LITEOS_A__
 pid_t gettid(void);
+#endif
 #endif
 
 #if defined(_LARGEFILE64_SOURCE) || defined(_GNU_SOURCE)
@@ -468,6 +528,22 @@ pid_t gettid(void);
 #define _CS_V6_ENV	1148
 #define _CS_V7_ENV	1149
 
+#ifdef _GNU_SOURCE
+#ifndef TEMP_FAILURE_RETRY
+#define MUSL_TEMP_FAILURE_RETRY(expression) \
+    (__extension__ \
+        ({ long int __result; \
+            do __result = (long int)(expression); \
+            while(__result == -1L && errno == EINTR); \
+        __result;}))
+
+#define TEMP_FAILURE_RETRY(expression) MUSL_TEMP_FAILURE_RETRY(expression)
+#endif
+#endif
+
+#ifndef __LITEOS__
+#include <fortify/unistd.h>
+#endif
 #ifdef __cplusplus
 }
 #endif

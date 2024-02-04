@@ -31,6 +31,13 @@ int __res_msend_rc(int nqueries, const unsigned char *const *queries,
 	const int *qlens, unsigned char *const *answers, int *alens, int asize,
 	const struct resolvconf *conf)
 {
+	return res_msend_rc_ext(0, nqueries, queries, qlens, answers, alens, asize, conf);
+}
+
+int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *queries,
+	const int *qlens, unsigned char *const *answers, int *alens, int asize,
+	const struct resolvconf *conf)
+{
 	int fd;
 	int timeout, attempts, retry_interval, servfail_retry;
 	union {
@@ -88,6 +95,15 @@ int __res_msend_rc(int nqueries, const unsigned char *const *queries,
 
 	pthread_cleanup_push(cleanup, (void *)(intptr_t)fd);
 	pthread_setcancelstate(cs, 0);
+
+#ifndef __LITEOS__
+	/**
+	 * Todo FwmarkClient::BindSocket
+	*/
+	if (netid > 0) {
+		res_bind_socket(fd, netid);
+	}
+#endif
 
 	/* Convert any IPv4 addresses in a mixed environment to v4-mapped */
 	if (family == AF_INET6) {

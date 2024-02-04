@@ -1,11 +1,9 @@
 #include "stdio_impl.h"
 #include <errno.h>
 
-int fileno(FILE *f)
+int fileno_unlocked(FILE *f)
 {
-	FLOCK(f);
 	int fd = f->fd;
-	FUNLOCK(f);
 	if (fd < 0) {
 		errno = EBADF;
 		return -1;
@@ -13,4 +11,10 @@ int fileno(FILE *f)
 	return fd;
 }
 
-weak_alias(fileno, fileno_unlocked);
+int fileno(FILE *f)
+{
+	FLOCK(f);
+	int fd = fileno_unlocked(f);
+	FUNLOCK(f);
+	return fd;
+}

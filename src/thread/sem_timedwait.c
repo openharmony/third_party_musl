@@ -6,12 +6,8 @@ static void cleanup(void *p)
 	a_dec(p);
 }
 
-int sem_timedwait(sem_t *restrict sem, const struct timespec *restrict at)
+int __sem_timedwait(sem_t *restrict sem, const struct timespec *restrict at)
 {
-	pthread_testcancel();
-
-	if (!sem_trywait(sem)) return 0;
-
 	int spins = 100;
 	while (spins-- && sem->__val[0] <= 0 && !sem->__val[1]) a_spin();
 
@@ -28,4 +24,13 @@ int sem_timedwait(sem_t *restrict sem, const struct timespec *restrict at)
 		}
 	}
 	return 0;
+}
+
+int sem_timedwait(sem_t *restrict sem, const struct timespec *restrict at)
+{
+	pthread_testcancel();
+
+	if (!sem_trywait(sem)) return 0;
+
+	return __sem_timedwait(sem, at);
 }

@@ -2,7 +2,6 @@
 #include <string.h>
 
 #define MIN(a,b) ((a)<(b) ? (a) : (b))
-
 char *fgets(char *restrict s, int n, FILE *restrict f)
 {
 	char *p = s;
@@ -22,7 +21,7 @@ char *fgets(char *restrict s, int n, FILE *restrict f)
 
 	while (n) {
 		if (f->rpos != f->rend) {
-			z = memchr(f->rpos, '\n', f->rend - f->rpos);
+			z = memchr(f->rpos, '\n', MIN(f->rend - f->rpos, n));
 			k = z ? z - f->rpos + 1 : f->rend - f->rpos;
 			k = MIN(k, n);
 			memcpy(p, f->rpos, k);
@@ -44,5 +43,6 @@ char *fgets(char *restrict s, int n, FILE *restrict f)
 
 	return s;
 }
+
 
 weak_alias(fgets, fgets_unlocked);

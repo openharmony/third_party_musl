@@ -29,6 +29,10 @@ int __setxid(int nr, int id, int eid, int sid)
 	/* ret is initially nonzero so that failure of the first thread does not
 	 * trigger the safety kill above. */
 	struct ctx c = { .nr = nr, .id = id, .eid = eid, .sid = sid, .ret = 1 };
+#ifdef __LITEOS_A__
+	do_setxid(&c);
+#else
 	__synccall(do_setxid, &c);
+#endif
 	return __syscall_ret(c.ret);
 }

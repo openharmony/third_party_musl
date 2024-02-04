@@ -72,8 +72,10 @@ struct dso {
 	size_t *lazy, lazy_cnt;
 	unsigned char *map;
 	size_t map_len;
+#ifndef __LITEOS_A__
 	dev_t dev;
 	ino_t ino;
+#endif
 	char relocated;
 	char constructed;
 	char kernel_mapped;
@@ -773,6 +775,22 @@ static void *map_library(int fd, struct dso *dso)
 		prot = (((ph->p_flags&PF_R) ? PROT_READ : 0) |
 			((ph->p_flags&PF_W) ? PROT_WRITE: 0) |
 			((ph->p_flags&PF_X) ? PROT_EXEC : 0));
+#ifdef __LITEOS_A__
+		if ((ph->p_flags & PF_R) && (ph->p_flags & PF_X) && (!(ph->p_flags & PF_W))) {
+			Phdr *next_ph = ph;
+			for (int j = i - 1; j > 0; j--) {
+				next_ph = (void *)((char *)next_ph+eh->e_phentsize);
+				if (next_ph->p_type != PT_LOAD) {
+					continue;
+				}
+				size_t p_vaddr = (next_ph->p_vaddr & -(PAGE_SIZE));
+				if (p_vaddr > this_max) {
+					mprotect(base + this_max, p_vaddr - this_max, PROT_READ);
+				}
+				break;
+			}
+		}
+#endif
 		/* Reuse the existing mapping for the lowest-address LOAD */
 		if ((ph->p_vaddr & -PAGE_SIZE) != addr_min || DL_NOMMU_SUPPORT)
 			if (mmap_fixed(base+this_min, this_max-this_min, prot, MAP_PRIVATE|MAP_FIXED, fd, off_start) == MAP_FAILED)
@@ -991,6 +1009,9 @@ static void makefuncdescs(struct dso *p)
 static struct dso *load_library(const char *name, struct dso *needed_by)
 {
 	char buf[2*NAME_MAX+2];
+#ifdef __LITEOS_A__
+	char fullpath[2*NAME_MAX+2];
+#endif
 	const char *pathname;
 	unsigned char *map;
 	struct dso *p, temp_dso = {0};
@@ -1095,18 +1116,38 @@ static struct dso *load_library(const char *name, struct dso *needed_by)
 					sys_path = "";
 				}
 			}
+#ifdef __LITEOS_A__
+			if (!sys_path || sys_path[0] == 0) {
+				sys_path = "/usr/lib:/lib:/usr/local/lib";
+			}
+#else
 			if (!sys_path) sys_path = "/lib:/usr/local/lib:/usr/lib";
+#endif
 			fd = path_open(name, sys_path, buf, sizeof buf);
 		}
 		pathname = buf;
 	}
 	if (fd < 0) return 0;
+#ifdef __LITEOS_A__
+	if (pathname[0] != '/') {
+		if (!realpath(pathname, fullpath)) {
+			close(fd);
+			return 0;
+		}
+		pathname = fullpath;
+	}
+#else
 	if (fstat(fd, &st) < 0) {
 		close(fd);
 		return 0;
 	}
+#endif
 	for (p=head->next; p; p=p->next) {
+#ifdef __LITEOS_A__
+		if (!strcmp(p->name, pathname)) {
+#else
 		if (p->dev == st.st_dev && p->ino == st.st_ino) {
+#endif
 			/* If this library was previously loaded with a
 			 * pathname but a search found the same inode,
 			 * setup its shortname so it can be found by name. */
@@ -1154,8 +1195,10 @@ static struct dso *load_library(const char *name, struct dso *needed_by)
 		return 0;
 	}
 	memcpy(p, &temp_dso, sizeof temp_dso);
+#ifndef __LITEOS_A__
 	p->dev = st.st_dev;
 	p->ino = st.st_ino;
+#endif
 	p->needed_by = needed_by;
 	p->name = p->buf;
 	p->runtime_loaded = runtime;
@@ -1780,12 +1823,23 @@ void __dls3(size_t *sp, size_t *auxv)
 		}
 		if (DL_FDPIC) app.loadmap = app_loadmap;
 		if (app.tls.size) app.tls.image = laddr(&app, tls_image);
+#ifdef __LITEOS_A__
+		if (interp_off) ldso.name = "/lib/libc.so";
+#else
 		if (interp_off) ldso.name = laddr(&app, interp_off);
+#endif
+#ifdef __LITEOS_A__
+		if (argv[0])
+			app.name = argv[0];
+		else
+			app.name = "none";
+#else
 		if ((aux[0] & (1UL<<AT_EXECFN))
 		    && strncmp((char *)aux[AT_EXECFN], "/proc/", 6))
 			app.name = (char *)aux[AT_EXECFN];
 		else
 			app.name = argv[0];
+#endif
 		kernel_mapped_dso(&app);
 	} else {
 		int fd;
@@ -1907,7 +1961,11 @@ void __dls3(size_t *sp, size_t *auxv)
 				vdso.base = (void *)(vdso_base - phdr->p_vaddr + phdr->p_offset);
 		}
 		vdso.name = "";
+#ifdef __LITEOS_A__
+		vdso.shortname = "OHOS-vdso.so";
+#else
 		vdso.shortname = "linux-gate.so.1";
+#endif
 		vdso.relocated = 1;
 		vdso.deps = (struct dso **)no_deps;
 		decode_dyn(&vdso);
@@ -2031,7 +2089,17 @@ void *dlopen(const char *file, int mode)
 	int cs;
 	jmp_buf jb;
 	struct dso **volatile ctor_queue = 0;
+#ifdef __LITEOS_A__
+	if (mode & ~(RTLD_LAZY | RTLD_NOW | RTLD_NOLOAD | RTLD_GLOBAL | RTLD_LOCAL | RTLD_NODELETE)) {
+		error("invalid mode parameter for dlopen().");
+		return NULL;
+	}
 
+	if ((mode & (RTLD_LAZY | RTLD_NOW)) == 0) {
+		error("invalid mode, one of RTLD_LAZY and RTLD_NOW must be set.");
+		return NULL;
+	}
+#endif
 	if (!file) return head;
 
 	pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &cs);

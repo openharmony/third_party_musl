@@ -1,10 +1,12 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <errno.h>
+#include <unsupported_api.h>
 
 size_t confstr(int name, char *buf, size_t len)
 {
 	const char *s = "";
+	UNSUPPORTED_API_VOID(LITEOS_A);
 	if (!name) {
 		s = "/bin:/usr/bin";
 	} else if ((name&~4U)!=1 && name-_CS_POSIX_V6_ILP32_OFF32_CFLAGS>33U) {

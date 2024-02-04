@@ -9,8 +9,11 @@ unsigned if_nametoindex(const char *name)
 {
 	struct ifreq ifr;
 	int fd, r;
-
+#ifdef __LITEOS_A__
+	if ((fd = socket(AF_INET, SOCK_DGRAM|SOCK_CLOEXEC, 0)) < 0) return 0;
+#else
 	if ((fd = socket(AF_UNIX, SOCK_DGRAM|SOCK_CLOEXEC, 0)) < 0) return 0;
+#endif
 	strncpy(ifr.ifr_name, name, sizeof ifr.ifr_name);
 	r = ioctl(fd, SIOCGIFINDEX, &ifr);
 	__syscall(SYS_close, fd);

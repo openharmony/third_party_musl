@@ -1,7 +1,8 @@
 #include <sys/reboot.h>
 #include "syscall.h"
 
-int reboot(int type)
+int __reboot(int type)
 {
-	return syscall(SYS_reboot, 0xfee1dead, 672274793, type);
+	return syscall(SYS_reboot, RB_MAGIC1, RB_MAGIC2, type);
 }
+weak_alias(__reboot, reboot);

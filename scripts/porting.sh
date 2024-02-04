@@ -28,4 +28,4 @@ if [ ! -d ${DST_DIR} ]; then
     mkdir -p ${DST_DIR}
 fi
 cp -rfp ${SRC_DIR}/* ${DST_DIR}
-cp -rfp ${SRC_DIR}/porting/${PORTING}/user/* ${DST_DIR}
+cp -rfp ${SRC_DIR}/scripts/${PORTING}/* ${DST_DIR}

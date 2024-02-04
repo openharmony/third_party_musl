@@ -9,6 +9,13 @@
 #include "lock.h"
 #include "fork_impl.h"
 
+#include "time_impl.h"
+#ifdef OHOS_ENABLE_PARAMETER
+#include "sys_param.h"
+#define SYSPARAM_LENGTH 40
+#endif
+#define __TZ_VERSION__ '2'
+
 #define malloc __libc_malloc
 #define calloc undef
 #define realloc undef
@@ -25,6 +32,7 @@ weak_alias(__tzname, tzname);
 static char std_name[TZNAME_MAX+1];
 static char dst_name[TZNAME_MAX+1];
 const char __utc[] = "UTC";
+const char __gmt[] = "GMT";
 
 static int dst_off;
 static int r0[5], r1[5];
@@ -129,11 +137,31 @@ static void do_tzset()
 	const char *try, *s, *p;
 	const unsigned char *map = 0;
 	size_t i;
+#ifndef __LITEOS__
+	static const char search[] =
+		"/etc/zoneinfo/\0/usr/share/zoneinfo/\0/share/zoneinfo/\0";
+#else
 	static const char search[] =
 		"/usr/share/zoneinfo/\0/share/zoneinfo/\0/etc/zoneinfo/\0";
+#endif
 
 	s = getenv("TZ");
-	if (!s) s = "/etc/localtime";
+	if (!s) {
+#if defined(OHOS_ENABLE_PARAMETER) && (!defined(__LITEOS__))
+        static CachedHandle tz_param_handle = NULL;
+        if (tz_param_handle == NULL) {
+            tz_param_handle = CachedParameterCreate("persist.time.timezone", "/etc/localtime");
+        }
+        const char *tz_param_value = CachedParameterGet(tz_param_handle);
+        if (tz_param_value != NULL) {
+            s = tz_param_value;
+        } else {
+            s = "/etc/localtime";
+        }
+#else
+        s = "/etc/localtime";
+#endif
+	}
 	if (!*s) s = __utc;
 
 	if (old_tz && !strcmp(s, old_tz)) return;
@@ -169,6 +197,33 @@ static void do_tzset()
 	/* Non-suid can use an absolute tzfile pathname or a relative
 	 * pathame beginning with "."; in secure mode, only the
 	 * standard path will be searched. */
+#ifndef __LITEOS__
+    int flag = 1;
+    if (!posix_form) {
+        if (*s == ':') s++;
+        if (*s == '/' || *s == '.') {
+            /* The path is invalid, use the default value. */
+            flag = 0;
+            if (!libc.secure || !strcmp(s, "/etc/localtime")) {
+                map = __map_file(s, &map_size);
+            }
+        }
+    }
+
+    if (flag) {
+        /* Adapt to time zone names, such as Asia/Shanghai or Shanghai*/
+        size_t l = strlen(s);
+        if (l <= NAME_MAX && !strchr(s, '.')) {
+            memcpy(pathname, s, l+1);
+            pathname[l] = 0;
+            for (try=search; !map && *try; try+=l+1) {
+                l = strlen(try);
+                memcpy(pathname-l, try, l);
+                map = __map_file(pathname-l, &map_size);
+            }
+        }
+    }
+#else
 	if (!posix_form) {
 		if (*s == ':') s++;
 		if (*s == '/' || *s == '.') {
@@ -188,6 +243,8 @@ static void do_tzset()
 		}
 		if (!map) s = __utc;
 	}
+#endif
+
 	if (map && (map_size < 44 || memcmp(map, "TZif", 4))) {
 		__munmap((void *)map, map_size);
 		map = 0;
@@ -197,6 +254,32 @@ static void do_tzset()
 	zi = map;
 	if (map) {
 		int scale = 2;
+		/*
+         * map[0]-map[3]: magic, it is TZif
+         * map[4]:        version, '\0' or '2' or '3' as of 2013
+         * map[5]-map[19]: reserved; must be zero
+         * map[20]-map[23]: The number of UT/local indicators stored in the file.
+         * map[24]-map[27]: The number of standard/wall indicators stored in the file.
+         * map[24]-map[31]: The number of leap seconds for which data entries are stored in the file.
+         * map[32]-map[35]: The number of transition times for which data entries are stored in the file.
+         * map[36]-map[39]: The number of local time types for which data entries are
+         *                  stored in the file (must not be zero).
+         * map[40]-map[43]: The number of bytes of time zone abbreviation strings stored in the file.
+
+         * If map[4] is '2' or greater, the above is followed by a second instance
+         * of tzhead and a second instance of the data in which each coded transition
+         * time uses 8 rather than 4 chars,
+         * then a POSIX-TZ-environment-variable-style string for use in handling
+         * instants after the last transition time stored in the file
+         * (with nothing between the newlines if there is no POSIX representation for
+         * such instants).
+
+         * If map[4] is '3' or greater, the above is extended as follows.
+         * First, the POSIX TZ string's hour offset may range from -167
+         * through 167 as compared to the POSIX-required 0 through 24.
+         * Second, its DST start time may be January 1 at 00:00 and its stop
+         * time December 31 at 24:00 plus the difference between DST and
+         * standard time, indicating DST all year. */
 		if (map[4]!='1') {
 			size_t skip = zi_dotprod(zi+20, VEC(1,1,8,5,6,1), 6);
 			trans = zi+skip+44+44;

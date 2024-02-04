@@ -68,6 +68,10 @@ int   toascii(int);
 #define isascii(a) (0 ? isascii(a) : (unsigned)(a) < 128)
 #endif
 
+#include <stdint.h>
+
+const int32_t **__ctype_tolower_loc(void);
+const int32_t **__ctype_toupper_loc(void);
 #endif
 
 #ifdef __cplusplus

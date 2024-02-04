@@ -3,9 +3,68 @@
 #include <limits.h>
 #include <string.h>
 #include <sys/mman.h>
+#ifndef __LITEOS__
+#include <sys/prctl.h>
+#endif
 #include <errno.h>
 
 #include "meta.h"
+
+#ifdef USE_JEMALLOC
+#ifdef USE_JEMALLOC_DFX_INTF
+extern void je_malloc_disable();
+extern void je_malloc_enable();
+extern int je_iterate(uintptr_t base, size_t size,
+	void (*callback)(uintptr_t ptr, size_t size, void* arg), void* arg);
+extern int je_mallopt(int param, int value);
+#endif
+#endif
+
+#ifdef MALLOC_SECURE_ALL
+#include <fcntl.h>
+#define RANDOM_BUFFER_LEN 512
+static uint8_t buffer[RANDOM_BUFFER_LEN] = { 0 };
+static size_t ri = RANDOM_BUFFER_LEN;
+
+static uint8_t get_random8()
+{
+	uint8_t num;
+	if ((ri >= RANDOM_BUFFER_LEN) || (buffer[0] == 0)) {
+		int fd = open("/dev/urandom", O_RDONLY);
+		if (fd < 0) {
+			num = (uint8_t)get_random_secret();
+			return num;
+		}
+
+		read(fd, buffer, RANDOM_BUFFER_LEN);
+		close(fd);
+		ri = 0;
+	}
+	num = buffer[ri];
+	ri++;
+	return num;
+}
+
+static int get_randomIdx(int avail_mask, int last_idx)
+{
+	uint32_t mask;
+	uint32_t r;
+	uint32_t cmask;
+	int idx;
+
+	mask = avail_mask;
+	r = get_random8() % last_idx;
+	cmask = ~((2u << (last_idx - r)) - 1);
+
+	if (mask & cmask) {
+		idx = 31 - a_clz_32(mask & cmask);
+	} else {
+		idx = a_ctz_32(mask);
+	}
+
+	return idx;
+}
+#endif
 
 LOCK_OBJ_DEF;
 
@@ -69,6 +128,9 @@ struct meta *alloc_meta(void)
 			if (brk(new) != new) {
 				ctx.brk = -1;
 			} else {
+#ifndef __LITEOS__
+				prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, ctx.brk, new - ctx.brk, "native_heap:meta");
+#endif
 				if (need_guard) mmap((void *)ctx.brk, pagesize,
 					PROT_NONE, MAP_ANON|MAP_PRIVATE|MAP_FIXED, -1, 0);
 				ctx.brk = new;
@@ -164,7 +226,12 @@ static uint32_t try_avail(struct meta **pm)
 		assert(mask);
 		decay_bounces(m->sizeclass);
 	}
+#ifdef MALLOC_SECURE_ALL
+	int idx = get_randomIdx(mask, m->last_idx);
+	first = 1 << idx;
+#else
 	first = mask&-mask;
+#endif
 	m->avail_mask = mask-first;
 	return first;
 }
@@ -251,6 +318,9 @@ static struct meta *alloc_group(int sc, size_t req)
 			free_meta(m);
 			return 0;
 		}
+#ifndef __LITEOS__
+		prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, p, needed, "native_heap:brk");
+#endif
 		m->maplen = needed>>12;
 		ctx.mmap_counter++;
 		active_idx = (4096-UNIT)/size-1;
@@ -275,7 +345,7 @@ static struct meta *alloc_group(int sc, size_t req)
 	m->avail_mask = (2u<<active_idx)-1;
 	m->freed_mask = (2u<<(cnt-1))-1 - m->avail_mask;
 	m->mem = (void *)p;
-	m->mem->meta = m;
+	m->mem->meta = encode_ptr(m, ctx.secret);
 	m->mem->active_idx = active_idx;
 	m->last_idx = cnt-1;
 	m->freeable = 1;
@@ -311,6 +381,9 @@ void *malloc(size_t n)
 			MAP_PRIVATE|MAP_ANON, -1, 0);
 		if (p==MAP_FAILED) return 0;
 		wrlock();
+#ifndef __LITEOS__
+		prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, p, needed, "native_heap:mmap");
+#endif
 		step_seq();
 		g = alloc_meta();
 		if (!g) {
@@ -319,7 +392,7 @@ void *malloc(size_t n)
 			return 0;
 		}
 		g->mem = p;
-		g->mem->meta = g;
+		g->mem->meta = encode_ptr(g, ctx.secret);
 		g->last_idx = 0;
 		g->freeable = 1;
 		g->sizeclass = 63;
@@ -355,6 +428,16 @@ void *malloc(size_t n)
 
 	for (;;) {
 		mask = g ? g->avail_mask : 0;
+#ifdef MALLOC_SECURE_ALL
+		if (!mask) break;
+		idx = get_randomIdx(mask, g->last_idx);
+		first = 1u << idx;
+
+		if (RDLOCK_IS_EXCLUSIVE || !MT)
+			g->avail_mask = mask-first;
+		else if (a_cas(&g->avail_mask, mask, mask-first)!=mask)
+			continue;
+#else
 		first = mask&-mask;
 		if (!first) break;
 		if (RDLOCK_IS_EXCLUSIVE || !MT)
@@ -362,6 +445,7 @@ void *malloc(size_t n)
 		else if (a_cas(&g->avail_mask, mask, mask-first)!=mask)
 			continue;
 		idx = a_ctz_32(first);
+#endif
 		goto success;
 	}
 	upgradelock();
@@ -384,4 +468,39 @@ int is_allzero(void *p)
 	struct meta *g = get_meta(p);
 	return g->sizeclass >= 48 ||
 		get_stride(g) < UNIT*size_classes[g->sizeclass];
+}
+
+int mallopt(int param, int value)
+{
+#ifdef USE_JEMALLOC_DFX_INTF
+	return je_mallopt(param, value);
+#endif
+	return 0;
+}
+
+void malloc_disable(void)
+{
+#ifdef USE_JEMALLOC_DFX_INTF
+	je_malloc_disable();
+#endif
+}
+
+void malloc_enable(void)
+{
+#ifdef USE_JEMALLOC_DFX_INTF
+	je_malloc_enable();
+#endif
+}
+
+int malloc_iterate(void* base, size_t size, void (*callback)(void* base, size_t size, void* arg), void* arg)
+{
+#ifdef USE_JEMALLOC_DFX_INTF
+	return je_iterate(base, size, callback, arg);
+#endif
+	return 0;
+}
+
+ssize_t malloc_backtrace(void* pointer, uintptr_t* frames, size_t frame_count)
+{
+	return 0;
 }

@@ -7,10 +7,20 @@
 
 static char buf[LC_ALL*(LOCALE_NAME_MAX+1)];
 
+#ifndef __LITEOS__
+static inline int Fresh(struct __locale_map *lm)
+{
+	if (lm != NULL) {
+		return lm->flag;
+	}
+	return VALID;
+}
+#endif
+
 char *setlocale(int cat, const char *name)
 {
 	const struct __locale_map *lm;
-
+	char flag = VALID;
 	if ((unsigned)cat > LC_ALL) return 0;
 
 	LOCK(__locale_lock);
@@ -38,6 +48,11 @@ char *setlocale(int cat, const char *name)
 					UNLOCK(__locale_lock);
 					return 0;
 				}
+#ifndef __LITEOS__
+				if(Fresh(lm) == INVALID) {
+					flag = INVALID;
+				}
+#endif
 				tmp_locale.cat[i] = lm;
 			}
 			libc.global_locale = tmp_locale;
@@ -57,6 +72,9 @@ char *setlocale(int cat, const char *name)
 		}
 		*--s = 0;
 		UNLOCK(__locale_lock);
+		if (flag == INVALID) {
+			return 0;
+		}
 		return same==LC_ALL ? (char *)part : buf;
 	}
 
@@ -66,6 +84,9 @@ char *setlocale(int cat, const char *name)
 			UNLOCK(__locale_lock);
 			return 0;
 		}
+#ifndef __LITEOS__
+		flag = Fresh(lm);
+#endif
 		libc.global_locale.cat[cat] = lm;
 	} else {
 		lm = libc.global_locale.cat[cat];
@@ -73,6 +94,8 @@ char *setlocale(int cat, const char *name)
 	char *ret = lm ? (char *)lm->name : "C";
 
 	UNLOCK(__locale_lock);
-
+	if (flag == INVALID) {
+		return 0;
+	}
 	return ret;
 }

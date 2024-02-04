@@ -9,7 +9,15 @@ int __toread(FILE *f)
 		f->flags |= F_ERR;
 		return EOF;
 	}
+
+	/* Alloc file buffer if needed */
+	if (__falloc_buf(f) < 0) {
+		f->flags |= F_ERR;
+		return EOF;
+	}
+
 	f->rpos = f->rend = f->buf + f->buf_size;
+
 	return (f->flags & F_EOF) ? EOF : 0;
 }
 

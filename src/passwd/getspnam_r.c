@@ -15,8 +15,16 @@
 static long xatol(char **s)
 {
 	long x;
+	int sign;
 	if (**s == ':' || **s == '\n') return -1;
+	sign = (int)(unsigned char)**s;
+	if (sign == '-' || sign == '+') {
+		++*s;
+	}
 	for (x=0; **s-'0'<10U; ++*s) x=10*x+(**s-'0');
+	if (sign == '-') {
+		return -x;
+	}
 	return x;
 }
 

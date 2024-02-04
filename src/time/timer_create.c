@@ -25,10 +25,12 @@ static void cleanup_fromsig(void *p)
 {
 	pthread_t self = __pthread_self();
 	__pthread_tsd_run_dtors();
+#ifdef FEATURE_PTHREAD_CANCEL
 	self->cancel = 0;
-	self->cancelbuf = 0;
 	self->canceldisable = 0;
 	self->cancelasync = 0;
+#endif
+	self->cancelbuf = 0;
 	__reset_tls();
 	longjmp(p, 1);
 }

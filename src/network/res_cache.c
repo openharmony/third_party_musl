@@ -18,12 +18,14 @@
 #include <netinet/in.h>
 #include <netdb.h>
 #include <string.h>
-#include "lookup.h"
 #include <dlfcn.h>
+#include "lookup.h"
 
 #if OHOS_DNS_PROXY_BY_NETSYS
 
 #include "atomic.h"
+
+#define GETADDRINFO_PRINT_DEBUG(...)
 
 static GetCache load_cache_getter(void)
 {
@@ -39,9 +41,17 @@ static SetCache load_cache_setter(void)
 	return cache_setter;
 }
 
+static PostDnsResult load_result_poster(void)
+{
+	static PostDnsResult result_poster = NULL;
+	resolve_dns_sym((void **) &result_poster, OHOS_POST_DNS_RESULT_FUNC_NAME);
+	return result_poster;
+}
+
 void
-dns_set_addr_info_to_netsys_cache(const char *restrict host, const char *restrict serv, const struct addrinfo *restrict
-hint, struct addrinfo *res) {
+dns_set_addr_info_to_netsys_cache2(const int netid, const char *restrict host, const char *restrict serv,
+								   const struct addrinfo *restrict hint, struct addrinfo *res)
+{
 	SetCache func = load_cache_setter();
 	if (!func) {
 		DNS_CONFIG_PRINT("%s: loading %s failed", __func__, OHOS_SET_CACHE_FUNC_NAME);
@@ -49,17 +59,24 @@ hint, struct addrinfo *res) {
 	}
 
 	struct param_wrapper param = {(char *) host, (char *) serv, (struct addrinfo *) hint};
-	int ret = func(0, param, res);
+	int ret = func(netid, param, res);
 	if (ret < 0) {
-		DNS_CONFIG_PRINT("dns_set_addr_info_to_netsys_cache OHOS_SET_CACHE_FUNC_NAME err %d\n", ret);
+		GETADDRINFO_PRINT_DEBUG("dns_set_addr_info_to_netsys_cache OHOS_SET_CACHE_FUNC_NAME err %d\n", ret);
 		return;
 	}
 
-	DNS_CONFIG_PRINT("set to netsys cache OK\n");
+	GETADDRINFO_PRINT_DEBUG("set to netsys cache OK\n");
 }
 
-int dns_get_addr_info_from_netsys_cache(const char *restrict host, const char *restrict serv,
-										const struct addrinfo *restrict hint, struct addrinfo **restrict res) {
+void dns_set_addr_info_to_netsys_cache(const char *restrict host, const char *restrict serv,
+									   const struct addrinfo *restrict hint, struct addrinfo *res)
+{
+	dns_set_addr_info_to_netsys_cache2(0, host, serv, hint, res);
+}
+
+int dns_get_addr_info_from_netsys_cache2(const int netid, const char *restrict host, const char *restrict serv,
+										 const struct addrinfo *restrict hint, struct addrinfo **restrict res)
+{
 	GetCache func = load_cache_getter();
 	if (!func) {
 		DNS_CONFIG_PRINT("%s: loading %s failed", __func__, OHOS_GET_CACHE_FUNC_NAME);
@@ -69,15 +86,15 @@ int dns_get_addr_info_from_netsys_cache(const char *restrict host, const char *r
 	struct addr_info_wrapper addr_info[MAX_RESULTS] = {0};
 	uint32_t num = 0;
 	struct param_wrapper param = {(char *) host, (char *) serv, (struct addrinfo *) hint};
-	int ret = func(0, param, addr_info, &num);
+	int ret = func(netid, param, addr_info, &num);
 	if (ret < 0) {
-		DNS_CONFIG_PRINT("dns_get_addr_info_from_netsys_cache OHOS_GET_CACHE_FUNC_NAME err %d\n", ret);
+		GETADDRINFO_PRINT_DEBUG("dns_get_addr_info_from_netsys_cache OHOS_GET_CACHE_FUNC_NAME err %d\n", ret);
 		return -1;
 	}
 
 	num = MACRO_MIN(num, MACRO_MIN(MAX_RESULTS, MAXADDRS));
 	if (num == 0) {
-		DNS_CONFIG_PRINT("dns_get_addr_info_from_netsys_cache num is invalid err %u", num);
+		GETADDRINFO_PRINT_DEBUG("dns_get_addr_info_from_netsys_cache num is invalid err %u", num);
 		return -1;
 	}
 
@@ -112,7 +129,59 @@ int dns_get_addr_info_from_netsys_cache(const char *restrict host, const char *r
 	out[0].ref = (short) num;
 	*res = &out->ai;
 
-	DNS_CONFIG_PRINT("dns_get_addr_info_from_netsys_cache end\n");
+	GETADDRINFO_PRINT_DEBUG("dns_get_addr_info_from_netsys_cache end\n");
+	return 0;
+}
+
+int dns_get_addr_info_from_netsys_cache(const char *restrict host, const char *restrict serv,
+										const struct addrinfo *restrict hint, struct addrinfo **restrict res)
+{
+	return dns_get_addr_info_from_netsys_cache2(0, host, serv, hint, res);
+}
+
+int dns_post_result_to_netsys_cache(int netid, char* name, int usedtime, int queryret,
+									struct addrinfo *res, struct queryparam *param)
+{
+	PostDnsResult func = load_result_poster();
+	if (!func) {
+		GETADDRINFO_PRINT_DEBUG("%s: loading %s failed", __func__, OHOS_POST_DNS_RESULT_FUNC_NAME);
+		return -1;
+	}
+
+	int ret = func(netid, name, usedtime, queryret, res, param);
+	if (ret < 0) {
+		GETADDRINFO_PRINT_DEBUG("dns_set_result_to_netsys_cache OHOS_POST_DNS_RESULT_FUNC_NAME err %d\n", ret);
+		return -1;
+	}
+
+	GETADDRINFO_PRINT_DEBUG("dns_post_result_to_netsys_cache OK\n");
+	return 0;
+}
+
+int dns_get_default_network(int *currentnetid)
+{
+	void *handle = dlopen(DNS_SO_PATH, RTLD_LAZY);
+	if (handle == NULL) {
+		GETADDRINFO_PRINT_DEBUG("dns_get_addr_info_from_netsys_cache dlopen err %s\n", dlerror());
+		return -1;
+	}
+
+	GetDefaultNet func = dlsym(handle, OHOS_GET_DEFAULT_NET_FUNC_NAME);
+	if (func == NULL) {
+		GETADDRINFO_PRINT_DEBUG("dns_get_addr_info_from_netsys_cache dlsym err %s\n", dlerror());
+		dlclose(handle);
+		return -1;
+	}
+
+	int ret = func(0, currentnetid);
+	dlclose(handle);
+
+	if (ret < 0) {
+		GETADDRINFO_PRINT_DEBUG("dns_get_addr_info_from_netsys_cache OHOS_GET_DEFAULT_NET_FUNC_NAME err %d\n", ret);
+		return -1;
+	}
+
+	GETADDRINFO_PRINT_DEBUG("dns_post_result_to_netsys_cache OK %d\n", currentnetid);
 	return 0;
 }
 

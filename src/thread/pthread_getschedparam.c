@@ -10,10 +10,25 @@ int pthread_getschedparam(pthread_t t, int *restrict policy, struct sched_param 
 	if (!t->tid) {
 		r = ESRCH;
 	} else {
+#ifdef __LITEOS_A__
+		r = __syscall(SYS_sched_getparam, t->tid, param, MUSL_TYPE_THREAD);
+		if (r >= 0) {
+			r = __syscall(SYS_sched_getscheduler, t->tid, MUSL_TYPE_THREAD);
+			if (r >= 0) {
+				*policy = r;
+				r = 0;
+			}
+		}
+
+		if (r < 0) {
+			r = -r;
+		}
+#else
 		r = -__syscall(SYS_sched_getparam, t->tid, param);
 		if (!r) {
 			*policy = __syscall(SYS_sched_getscheduler, t->tid);
 		}
+#endif
 	}
 	UNLOCK(t->killlock);
 	__restore_sigs(&set);

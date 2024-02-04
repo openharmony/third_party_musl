@@ -18,6 +18,11 @@
 #define SIZE_l   1
 #define SIZE_L   2
 #define SIZE_ll  3
+#define BUF_LEN 513
+
+#if (defined(MUSL_AARCH64_ARCH)) || (defined(MUSL_ARM_ARCH))
+extern int parsefloat(FILE *f, char *buf, char *end);
+#endif
 
 static void store_int(void *dest, int size, unsigned long long i)
 {
@@ -55,6 +60,10 @@ static void *arg_n(va_list ap, unsigned int n)
 
 int vfscanf(FILE *restrict f, const char *restrict fmt, va_list ap)
 {
+#if (defined(MUSL_AARCH64_ARCH)) || (defined(MUSL_ARM_ARCH))
+	char buf[BUF_LEN];
+	char *endptr;
+#endif
 	int width;
 	int size;
 	int alloc = 0;
@@ -302,6 +311,29 @@ int vfscanf(FILE *restrict f, const char *restrict fmt, va_list ap)
 		case 'e': case 'E':
 		case 'f': case 'F':
 		case 'g': case 'G':
+#if (defined(MUSL_AARCH64_ARCH)) || (defined(MUSL_ARM_ARCH))
+			if (width == 0 || width > sizeof(buf) - 1)
+				width = sizeof(buf) - 1;
+			int count = parsefloat(f, buf, buf + width);
+			if (count == 0)
+				goto match_fail;
+			if (dest) switch (size) {
+			case SIZE_def:
+				y = strtof(buf, &endptr);
+				*(float *)dest = y;
+				break;
+			case SIZE_l:
+				y = strtod(buf, &endptr);
+				*(double *)dest = y;
+				break;
+			case SIZE_L:
+				y = strtold(buf, &endptr);
+				*(long double *)dest = y;
+				break;
+			}
+			break;
+		}
+#else
 			y = __floatscan(f, size, 0);
 			if (!shcnt(f)) goto match_fail;
 			if (dest) switch (size) {
@@ -317,7 +349,7 @@ int vfscanf(FILE *restrict f, const char *restrict fmt, va_list ap)
 			}
 			break;
 		}
-
+#endif
 		pos += shcnt(f);
 		if (dest) matches++;
 	}
