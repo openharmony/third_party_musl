@@ -17,6 +17,7 @@
 #include <unistd.h>
 #include <sys/wait.h>
 #include <signal.h>
+#include <sigchain.h>
 #include <errno.h>
 #include <string.h>
 #include "test.h"
@@ -63,6 +64,7 @@ int main(int argc, char *argv[])
 	sigaddset(&set, SIGCHLD);
 	sigprocmask(SIG_BLOCK, &set, 0);
 	signal(SIGCHLD, handler);
+	remove_all_special_handler(SIGSEGV);
 
 	pid = start_child();
 	if (pid == -1) {
