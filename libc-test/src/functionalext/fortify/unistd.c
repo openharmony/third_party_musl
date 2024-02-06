@@ -19,6 +19,7 @@
 #include <signal.h>
 #include <string.h>
 #include <sys/wait.h>
+#include <sigchain.h>
 #include "fortify_test.h"
 #include "test.h"
 
@@ -683,6 +684,7 @@ static void unistd_dynamic_chk_017(void)
 }
 int main(int argc, char *argv[])
 {
+    remove_all_special_handler(SIGABRT);
     unistd_dynamic_chk_001();
     unistd_dynamic_chk_002();
     unistd_dynamic_chk_003();
