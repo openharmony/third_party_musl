@@ -96,7 +96,7 @@ int getaddrinfo_ext(const char *restrict host, const char *restrict serv, const 
 
 #if OHOS_DNS_PROXY_BY_NETSYS
 	GETADDRINFO_PRINT_DEBUG("getaddrinfo_ext netid:%{public}d type:%{public}d \n", netid, type);
-	if (type == QEURY_TYPE_NORMAL) {
+	if (type == QEURY_TYPE_NORMAL && predefined_host_is_contain_host(host) == 0) {
 		if (dns_get_addr_info_from_netsys_cache2(netid, host, serv, hint, res) == 0) {
 			GETADDRINFO_PRINT_DEBUG("getaddrinfo_ext get from netsys cache OK\n");
 			reportdnsresult(netid, host, 0, DNS_QUERY_SUCCESS, *res, &param);
