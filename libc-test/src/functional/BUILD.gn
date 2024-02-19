@@ -36,6 +36,9 @@ test_sharedlib("dlclose_recursive") {
 test_sharedlib("dlclose_recursive_dlopen_so") {
   cpp_file = true
 }
+test_sharedlib("dlclose_tls") {
+  cpp_file = true
+}
 test_sharedlib("dlopen_ns_dso") {
 }
 test_sharedlib("dlopen_so_dep_dlopen_ns_dso") {
@@ -75,6 +78,7 @@ group("dso_shared") {
     ":dlclose_recursive",
     ":dlclose_recursive_dlopen_so",
     ":dlclose_reset_dso",
+    ":dlclose_tls",
     ":dlopen_dso",
     ":dlopen_for_load_by_global_dso",
     ":dlopen_for_load_by_local_dso",
