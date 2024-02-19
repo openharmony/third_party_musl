@@ -1775,6 +1775,9 @@ static void decode_dyn(struct dso *p)
 		LD_LOGI("Add DF_1_GLOBAL for %{public}s", p->name);
 		p->is_global = true;
 	}
+	if (flags1 & DF_1_NODELETE) {
+		p->flags |= DSO_FLAGS_NODELETE;
+	}
 	p->syms = laddr(p, dyn[DT_SYMTAB]);
 	p->strings = laddr(p, dyn[DT_STRTAB]);
 	if (dyn[0]&(1<<DT_HASH))
