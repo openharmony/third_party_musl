@@ -202,6 +202,19 @@ void dlopen_global_test()
 	dlclose(local_handler);
 }
 
+#define DLCLOSE_WITH_TLS "libdlclose_tls.so"
+typedef void *(*functype)(void);
+void dlclose_with_tls_test()
+{
+	void* handle = dlopen(DLCLOSE_WITH_TLS, RTLD_GLOBAL);
+	if (!handle) {
+		t_error("dlopen(name=%s, mode=%d) failed: %s\n", DLCLOSE_WITH_TLS, RTLD_GLOBAL, dlerror());
+	}
+	functype func = (functype)dlsym(handle, "foo_ctor");
+	func();
+	dlclose(handle);
+}
+
 int main(int argc, char *argv[])
 {
 	void *h, *g;
@@ -264,6 +277,7 @@ int main(int argc, char *argv[])
         dlclose_recursive();
 	dlclose_recursive_by_multipthread();
 	dlopen_global_test();
+	dlclose_with_tls_test();
 
 	return t_status;
 }
