@@ -1,7 +1,7 @@
 #include <dlfcn.h>
 #include <iostream>
 
-#define SO_CLOSE_RECURSIVE "libdlclose_recursive.so"
+#define SO_CLOSE_RECURSIVE "libdlclose_recursive"
 
 extern "C" {
 int Add(int a, int b)
