@@ -29,7 +29,7 @@
  */
 void tcdrain_0100(void)
 {
-    char Master[] = "/dev/pts/ptmx";
+    char Master[] = "/dev/ptmx";
     char text[] = "text to be written to tty";
     char data[80];
     int fd_master, fd_slave, result;
