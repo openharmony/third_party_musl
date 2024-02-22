@@ -224,6 +224,7 @@ group("functionalext_unittest_test") {
   testonly = true
   deps = [
     ":unittest_fatal_message",
+    ":unittest_fatal_message_assert_fail",
     ":unittest_hilog_adapter",
     ":unittest_hilog_vsnprint",
     ":unittest_ldso_dynlink",
@@ -232,4 +233,17 @@ group("functionalext_unittest_test") {
     ":unittest_ldso_ns_config",
     ":unittest_ldso_strops",
   ]
+}
+
+ohos_executable("unittest_fatal_message_assert_fail") {
+  subsystem_name = "musl"
+  part_name = "libc-test"
+  sources = [
+    "${musl_src_base}/src/info/fatal_message.c",
+    "unit_test_assert_fail.c",
+  ]
+  include_dirs = [ "${musl_src_base}/include" ]
+  configs = [ "//third_party/musl/libc-test/src/common:config_unittest" ]
+
+  deps = [ "//third_party/musl:create_porting_src" ]
 }
