@@ -129,6 +129,7 @@
     libc_gwp_asan_has_free_mem;
     libc_gwp_asan_ptr_is_mine;
     may_init_gwp_asan;
+    get_platform_gwp_asan_tls_slot;
     __libc_current_sigrtmax;
     __libc_current_sigrtmin;
     __libc_free;

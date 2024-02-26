@@ -149,6 +149,7 @@ bool should_sample_process()
         return true;
     }
 #endif
+
     uint8_t random_value;
     // If getting a random number using a non-blocking fails, the random value is incremented.
     if (getrandom(&random_value, sizeof(random_value), GRND_RANDOM | GRND_NONBLOCK) == -1) {
@@ -184,10 +185,10 @@ void gwp_asan_printf(const char *fmt, ...)
         snprintf(log_path, GWP_ASAN_NAME_LEN, "%s%s.%s.%d.log", GWP_ASAN_LOG_DIR, GWP_ASAN_LOG_TAG, path, getpid());
         FILE *fp = fopen(log_path, "a+");
         if (!fp) {
-            MUSL_LOGE("[gwp_asan]: %{public}s fopen %{public}s succeed.", path, log_path);
+            MUSL_LOGE("[gwp_asan]: %{public}s fopen %{public}s failed!", path, log_path);
             return;
         } else {
-            MUSL_LOGE("[gwp_asan]: %{public}s fopen %{public}s failed!", path, log_path);
+            MUSL_LOGE("[gwp_asan]: %{public}s fopen %{public}s succeed.", path, log_path);
         }
         va_list ap;
         va_start(ap, fmt);
@@ -306,6 +307,8 @@ GWP_ASAN_NO_ADDRESS size_t libc_gwp_asan_unwind_fast(size_t *frame_buf, size_t m
     size_t current_frame_addr = __builtin_frame_address(0);
     size_t stack_end = (size_t)(__pthread_self()->stack);
     size_t num_frames = 0;
+    size_t prev_fp = 0;
+    size_t prev_lr = 0;
     while (true) {
         unwind_info *frame = (unwind_info*)(current_frame_addr);
         GWP_ASAN_LOGD("[gwp_asan] unwind info:%{public}d cur:%{public}p, end:%{public}p fp:%{public}p lr:%{public}p \n",
@@ -315,14 +318,14 @@ GWP_ASAN_NO_ADDRESS size_t libc_gwp_asan_unwind_fast(size_t *frame_buf, size_t m
         }
         if (num_frames < max_record_stack) {
             frame_buf[num_frames] = strip_pac_pc(frame->lr) - 4;
-            GWP_ASAN_LOGD("[gwp_asan]: before strip pc:%{public}p after strip pc:%{public}p\n",
-                          frame->lr, frame_buf[num_frames]);
         }
         ++num_frames;
-        if (frame->fp < current_frame_addr || frame->fp >= stack_end ||
-            frame->fp % sizeof(void*) != 0) {
+        if (frame->fp == prev_fp || frame->lr == prev_lr || frame->fp < current_frame_addr + sizeof(unwind_info) ||
+            frame->fp >= stack_end || frame->fp % sizeof(void*) != 0) {
             break;
         }
+        prev_fp = frame->fp;
+        prev_lr = frame->lr;
         current_frame_addr = frame->fp;
     }
 
@@ -392,6 +395,11 @@ bool init_gwp_asan_by_libc(bool force_init)
     return may_init_gwp_asan(force_init);
 }
 
+void* get_platform_gwp_asan_tls_slot()
+{
+    return (void*)(&(__pthread_self()->gwp_asan_tls));
+}
+
 void* libc_gwp_asan_malloc(size_t bytes)
 {
     if (GWP_ASAN_PREDICT_TRUE(!gwp_asan_initialized)) {
@@ -435,7 +443,12 @@ void* libc_gwp_asan_realloc(void *ptr, size_t size)
     }
 
     if (GWP_ASAN_PREDICT_FALSE(gwp_asan_pointer_is_mine(ptr))) {
-        GWP_ASAN_LOGD("[gwp_asan]: call gwp_asan_malloc  ptr:%{public}p size:%{public}d.\n", ptr, size);
+        GWP_ASAN_LOGD("[gwp_asan]: call gwp_asan_malloc ptr:%{public}p size:%{public}d.\n", ptr, size);
+        if (GWP_ASAN_PREDICT_FALSE(size == 0)) {
+            gwp_asan_free(ptr);
+            return NULL;
+        }
+
         void* new_addr = gwp_asan_malloc(size);
         if (new_addr != NULL) {
             size_t old_size = gwp_asan_get_size(ptr);
@@ -443,7 +456,16 @@ void* libc_gwp_asan_realloc(void *ptr, size_t size)
             gwp_asan_free(ptr);
             return new_addr;
         } else {
-            return 0;
+            // Use the default allocator if gwp malloc failed.
+            void* addr_of_default_allocator = MuslFunc(malloc)(size);
+            if (addr_of_default_allocator != NULL) {
+                size_t old_size = gwp_asan_get_size(ptr);
+                memcpy(addr_of_default_allocator, ptr, (size < old_size) ? size : old_size);
+                gwp_asan_free(ptr);
+                return addr_of_default_allocator;
+            } else {
+                return NULL;
+            }
         }
     }
     return MuslFunc(realloc)(ptr, size);
@@ -519,5 +541,12 @@ bool libc_gwp_asan_ptr_is_mine(void *addr)
 
     return gwp_asan_pointer_is_mine(addr);
 }
+#else
+#include <stdbool.h>
 
+// Used for appspawn.
+bool may_init_gwp_asan(bool force_init)
+{
+    return false;
+}
 #endif
