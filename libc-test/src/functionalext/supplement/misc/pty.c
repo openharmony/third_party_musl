@@ -42,7 +42,7 @@ void grantpt_0100(void)
 void ptsname_r_0100(void)
 {
     char buf[TEST_BUFFER_SIZE];
-    int fd = open("/dev/pts/ptmx", O_RDWR | O_NOCTTY);
+    int fd = open("/dev/ptmx", O_RDWR | O_NOCTTY);
     EXPECT_NE("ptsname_r_0100", fd, -1);
     int ret = grantpt(fd);
     EXPECT_EQ("ptsname_r_0100", ret, 0);
@@ -60,7 +60,7 @@ void ptsname_r_0100(void)
 void ptsname_r_0200(void)
 {
     char *buf = NULL;
-    int fd = open("/dev/pts/ptmx", O_RDWR | O_NOCTTY);
+    int fd = open("/dev/ptmx", O_RDWR | O_NOCTTY);
     EXPECT_NE("ptsname_r_0200", fd, -1);
     int ret = grantpt(fd);
     EXPECT_EQ("ptsname_r_0200", ret, 0);
@@ -90,7 +90,7 @@ void ptsname_r_0300(void)
 void ptsname_r_0400(void)
 {
     char buf[1];
-    int fd = open("/dev/pts/ptmx", O_RDWR | O_NOCTTY);
+    int fd = open("/dev/ptmx", O_RDWR | O_NOCTTY);
     EXPECT_NE("ptsname_r_0400", fd, -1);
     int ret = grantpt(fd);
     EXPECT_EQ("ptsname_r_0400", ret, 0);

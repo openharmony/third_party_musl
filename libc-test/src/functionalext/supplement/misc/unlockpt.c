@@ -29,7 +29,7 @@ void unlockpt_0100(void)
 {
     int result;
 
-    int fdm = open("/dev/pts/ptmx", O_RDWR | O_NOCTTY);
+    int fdm = open("/dev/ptmx", O_RDWR | O_NOCTTY);
     if (fdm < 0) {
         t_error("%s open master failed", __func__);
         return;
