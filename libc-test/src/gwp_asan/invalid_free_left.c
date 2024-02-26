@@ -24,7 +24,7 @@ void invalid_free_left_handler()
     find_and_check_file(GWP_ASAN_LOG_DIR, GWP_ASAN_LOG_TAG, "Invalid (Wild) Free");
     find_and_check_file(GWP_ASAN_LOG_DIR, GWP_ASAN_LOG_TAG, "1 byte to the left");
     clear_log(GWP_ASAN_LOG_DIR, GWP_ASAN_LOG_TAG);
-    exit(0);
+    _exit(0);
 }
 
 static void install_sigv_handler()
