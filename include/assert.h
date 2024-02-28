@@ -1,6 +1,32 @@
 #include <features.h>
 
 #undef assert
+#ifndef MUSL_ASSERT_H
+#define MUSL_ASSERT_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+typedef enum Assert_Status {
+    ASSERT_ABORT,
+    ASSERT_RETRY,
+    ASSERT_IGNORE
+}Assert_Status;
+
+typedef struct AssertFailureInfo {
+    char *expression;
+    char *file;
+    char *function;
+    int line;
+}AssertFailureInfo;
+
+typedef Assert_Status(*assert_call)(AssertFailureInfo assert_fail);
+void set_assert_callback(assert_call cb);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
 
 #ifdef NDEBUG
 #define	assert(x) (void)0
