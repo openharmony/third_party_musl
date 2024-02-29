@@ -2330,6 +2330,7 @@ musl_src_porting_file = [
   "src/ldso/dlerror.c",
   "ldso/dynlink.c",
   "src/exit/atexit.c",
+  "src/exit/assert.c",
   "crt/arm/crti.s",
   "crt/aarch64/crti.s",
   "crt/crtplus.c",
