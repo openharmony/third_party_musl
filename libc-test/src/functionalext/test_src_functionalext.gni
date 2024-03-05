@@ -37,4 +37,5 @@ functionalext_list = [
   "ldso_debug:functionalext_ldso_debug_test",
   "ldso_same_name_symbol:ldso_same_symbol_name_with_different_version",
   "dl_different_hash:dl_different_hash",
+  "hilog:hilog_level",
 ]
