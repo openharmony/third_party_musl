@@ -21,6 +21,7 @@
 #define MUSL_LOG_DOMAIN 0xD003F00
 #define MUSL_LOG_TAG "MUSL"
 #define LOG_ERROR 6
+#define CLOSE_FD_COUNT 1024
 
 #define MUSL_LOGE(...) ((void)HiLogAdapterPrint(MUSL_LOG_TYPE, LOG_ERROR, MUSL_LOG_DOMAIN, MUSL_LOG_TAG, __VA_ARGS__))
 
@@ -38,9 +39,20 @@ static void HiLogAdapterPrint_0010(void)
     EXPECT_EQ("HiLogAdapterPrint_0010", ret, -1);
 }
 
+static void HilogAdapterPrint_0020(void)
+{
+    musl_log_reset();
+    for (int i = 2; i < CLOSE_FD_COUNT; ++i) {
+        close(i);
+    }
+    int ret = HiLogAdapterPrint(MUSL_LOG_TYPE, LOG_ERROR, MUSL_LOG_DOMAIN, MUSL_LOG_TAG, "c");
+    EXPECT_GT("HiLogAdapterPrint_0020", ret, 0);
+}
+
 int main(void)
 {
     HiLogAdapterPrint_0010();
+    HilogAdapterPrint_0020();
 
 	return t_status;
 }

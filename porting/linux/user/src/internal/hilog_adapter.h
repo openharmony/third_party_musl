@@ -44,7 +44,7 @@ typedef enum {
     LOG_WARN = 5,
     LOG_ERROR = 6,
     LOG_FATAL = 7,
-    LOG_LEVEL_MAX,
+    LOG_LEVEL_MAX = 8,
 } LogLevel;
 
 hidden int HiLogAdapterPrint(LogType type, LogLevel level, unsigned int domain, const char *tag, const char *fmt, ...)
