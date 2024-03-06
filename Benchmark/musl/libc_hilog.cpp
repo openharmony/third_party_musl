@@ -41,8 +41,8 @@ const int INVALID_SOCKET = -1;
 const struct sockaddr_un SOCKET_ADDR = {AF_UNIX, SOCKET_FILE_DIR INPUT_SOCKET_NAME};
 
 
-static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
-static volatile int socketFd = INVALID_SOCKET;
+static pthread_mutex_t g_lock = PTHREAD_MUTEX_INITIALIZER;
+static volatile int g_socketFd = INVALID_SOCKET;
 
 /*
  * header of log message from libhilog to hilogd
@@ -62,24 +62,24 @@ typedef struct __attribute__((__packed__)) {
     char tag[]; /* shall be end with '\0' */
 } HilogMsg;
 
-static void cleanup()
+static void Cleanup()
 {
-    if (socketFd >= 0) {
-        close(socketFd);
-        socketFd = INVALID_SOCKET;
+    if (g_socketFd >= 0) {
+        close(g_socketFd);
+        g_socketFd = INVALID_SOCKET;
     }
 }
 
-static int getSocketFdInstance()
+static int GetSocketFdInstance()
 {
-    if (socketFd == INVALID_SOCKET || fcntl(socketFd, F_GETFL) == -1) {
+    if (g_socketFd == INVALID_SOCKET || fcntl(g_socketFd, F_GETFL) == -1) {
         errno = 0;
-        pthread_mutex_lock(&lock);
-        if (socketFd == INVALID_SOCKET || fcntl(socketFd, F_GETFL) == -1) {
+        pthread_mutex_lock(&g_lock);
+        if (g_socketFd == INVALID_SOCKET || fcntl(g_socketFd, F_GETFL) == -1) {
             int tempSocketFd = TEMP_FAILURE_RETRY(socket(AF_UNIX, SOCKET_TYPE, 0));
             if (tempSocketFd < 0) {
                 dprintf(ERROR_FD, "HiLogAdapter: Can't create socket! Errno: %d\n", errno);
-                pthread_mutex_unlock(&lock);
+                pthread_mutex_unlock(&g_lock);
                 return tempSocketFd;
             }
 
@@ -90,30 +90,30 @@ static int getSocketFdInstance()
                 if (tempSocketFd >= 0) {
                     close(tempSocketFd);
                 }
-                pthread_mutex_unlock(&lock);
+                pthread_mutex_unlock(&g_lock);
                 return result;
             }
-            socketFd = tempSocketFd;
-            atexit(cleanup);
+            g_socketFd = tempSocketFd;
+            atexit(Cleanup);
         }
-        pthread_mutex_unlock(&lock);
+        pthread_mutex_unlock(&g_lock);
     }
-    return socketFd;
+    return g_socketFd;
 }
 
 static int SendMessage(HilogMsg *header, const char *tag, uint16_t tagLen, const char *fmt, uint16_t fmtLen)
 {
-    int socketFd = getSocketFdInstance();
+    int socketFd = GetSocketFdInstance();
     if (socketFd < 0) {
         return socketFd;
     }
     struct timespec ts = {0};
     (void)clock_gettime(CLOCK_REALTIME, &ts);
-    struct timespec ts_mono = {0};
-    (void)clock_gettime(CLOCK_MONOTONIC, &ts_mono);
+    struct timespec tsMono = {0};
+    (void)clock_gettime(CLOCK_MONOTONIC, &tsMono);
     header->tv_sec = (uint32_t)(ts.tv_sec);
     header->tv_nsec = (uint32_t)(ts.tv_nsec);
-    header->mono_sec = (uint32_t)(ts_mono.tv_sec);
+    header->mono_sec = (uint32_t)(tsMono.tv_sec);
     header->len = sizeof(HilogMsg) + tagLen + fmtLen;
     header->tag_len = tagLen;
 
