@@ -14,6 +14,7 @@
  */
 
 #include <hilog_adapter.h>
+#include <stdlib.h>
 #include "functionalext.h"
 #include "test.h"
 
@@ -22,6 +23,9 @@
 #define MUSL_LOG_TAG "MUSL"
 #define LOG_ERROR 6
 #define CLOSE_FD_COUNT 1024
+
+#define ENABLE_LOG "param set musl.log.enable true"
+#define LOG_LEVEL_ERROR "param set musl.log.level ERROR"
 
 #define MUSL_LOGE(...) ((void)HiLogAdapterPrint(MUSL_LOG_TYPE, LOG_ERROR, MUSL_LOG_DOMAIN, MUSL_LOG_TAG, __VA_ARGS__))
 
@@ -51,6 +55,8 @@ static void HilogAdapterPrint_0020(void)
 
 int main(void)
 {
+    system(ENABLE_LOG);
+    system(LOG_LEVEL_ERROR);
     HiLogAdapterPrint_0010();
     HilogAdapterPrint_0020();
 
