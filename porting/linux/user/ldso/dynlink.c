@@ -4511,6 +4511,8 @@ static bool map_library_header(struct loadtask *task)
 	off_t off_start;
 	Phdr *ph;
 	size_t i;
+	size_t str_size;
+	off_t str_table;
 
 	ssize_t l = pread(task->fd, task->ehdr_buf, sizeof task->ehdr_buf, task->file_offset);
 	task->eh = task->ehdr_buf;
@@ -4553,6 +4555,7 @@ static bool map_library_header(struct loadtask *task)
 	} else {
 		ph = task->ph0 = (void *)((char *)task->ehdr_buf + task->eh->e_phoff);
 	}
+
 	for (i = task->eh->e_phnum; i; i--, ph = (void *)((char *)ph + task->eh->e_phentsize)) {
 		if (ph->p_type == PT_DYNAMIC) {
 			task->dyn = ph->p_vaddr;
@@ -4580,8 +4583,6 @@ static bool map_library_header(struct loadtask *task)
 		}
 		task->dyn_addr = (size_t *)((unsigned char *)task->dyn_map + (ph->p_offset - off_start));
 		size_t dyn_tmp;
-		off_t str_table;
-		size_t str_size;
 		if (search_vec(task->dyn_addr, &dyn_tmp, DT_STRTAB)) {
 			str_table = dyn_tmp;
 		} else {
@@ -4594,15 +4595,28 @@ static bool map_library_header(struct loadtask *task)
 			LD_LOGE("Error mapping header %{public}s: DT_STRSZ not found", task->name);
 			goto error;
 		}
-		off_start = str_table;
+	}
+
+	task->shsize = task->eh->e_shentsize * task->eh->e_shnum;
+	off_start = task->eh->e_shoff;
+	off_start &= -PAGE_SIZE;
+	task->shsize += task->eh->e_shoff - off_start;
+	task->shdr_allocated_buf = mmap(0, task->shsize, PROT_READ, MAP_PRIVATE, task->fd, off_start + task->file_offset);
+	Shdr *sh = (char *)task->shdr_allocated_buf + task->eh->e_shoff - off_start;
+	for (i = task->eh->e_shnum; i; i--, sh = (void *)((char *)sh + task->eh->e_shentsize)) {
+		if (sh->sh_type != SHT_STRTAB || sh->sh_addr != str_table || sh->sh_size != str_size) {
+			continue;
+		}
+		off_start = sh->sh_offset;
 		off_start &= -PAGE_SIZE;
-		task->str_map_len = str_size + (str_table - off_start);
+		task->str_map_len = sh->sh_size + (sh->sh_offset - off_start);
 		task->str_map = mmap(0, task->str_map_len, PROT_READ, MAP_PRIVATE, task->fd, off_start + task->file_offset);
 		if (task->str_map == MAP_FAILED) {
-			LD_LOGE("Error mapping header %{public}s: failed to map string section", task->name);
+			LD_LOGE("Error mapping section header %{public}s: failed to map string section", task->name);
 			goto error;
 		}
-		task->str_addr = (char *)task->str_map + str_table - off_start;
+		task->str_addr = (char *)task->str_map + sh->sh_offset - off_start;
+		break;
 	}
 	if (!task->dyn) {
 		LD_LOGE("Error mapping header %{public}s: dynamic section not found", task->name);
@@ -4614,6 +4628,8 @@ noexec:
 error:
 	free(task->allocated_buf);
 	task->allocated_buf = NULL;
+	munmap(task->shdr_allocated_buf, task->shsize);
+	task->shdr_allocated_buf = NULL;
 	return false;
 }
 
@@ -4852,6 +4868,8 @@ done_mapping:
 	}
 	free(task->allocated_buf);
 	task->allocated_buf = NULL;
+	munmap(task->shdr_allocated_buf, task->shsize);
+	task->shdr_allocated_buf = NULL;
 	return true;
 noexec:
 	errno = ENOEXEC;
@@ -4861,6 +4879,8 @@ error:
 	}
 	free(task->allocated_buf);
 	task->allocated_buf = NULL;
+	munmap(task->shdr_allocated_buf, task->shsize);
+	task->shdr_allocated_buf = NULL;
 	return false;
 }
 
