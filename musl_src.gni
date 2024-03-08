@@ -2226,6 +2226,7 @@ musl_src_porting_file = [
   "src/thread/sem_timedwait.c",
   "src/stdio/vfscanf.c",
   "src/stdio/fileno.c",
+  "src/stdio/ofl_add.c",
 ]
 
 musl_inc_hook_files = [
