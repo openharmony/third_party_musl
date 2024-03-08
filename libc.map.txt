@@ -1583,6 +1583,7 @@
     sendto;
     set_application_target_sdk_version;
     set_fatal_message;
+    set_assert_callback;
     setbuf;
     setbuffer;
     setdnsresolvehook;
