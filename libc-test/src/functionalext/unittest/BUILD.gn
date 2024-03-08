@@ -225,6 +225,7 @@ group("functionalext_unittest_test") {
   deps = [
     ":unittest_fatal_message",
     ":unittest_fatal_message_assert_fail",
+    ":unittest_fatal_message_assert_fail_dialog",
     ":unittest_hilog_adapter",
     ":unittest_hilog_vsnprint",
     ":unittest_ldso_dynlink",
@@ -241,6 +242,20 @@ ohos_executable("unittest_fatal_message_assert_fail") {
   sources = [
     "${musl_src_base}/src/info/fatal_message.c",
     "unit_test_assert_fail.c",
+  ]
+  include_dirs = [ "${musl_src_base}/include" ]
+  configs = [ "//third_party/musl/libc-test/src/common:config_unittest" ]
+
+  deps = [ "//third_party/musl:create_porting_src" ]
+}
+
+ohos_executable("unittest_fatal_message_assert_fail_dialog") {
+  subsystem_name = "musl"
+  part_name = "libc-test"
+  defines = [ "PC_MUSL_ASSERT" ]
+  sources = [
+    "${musl_src_base}/src/info/fatal_message.c",
+    "unit_test_assert_fail_dialog.c",
   ]
   include_dirs = [ "${musl_src_base}/include" ]
   configs = [ "//third_party/musl/libc-test/src/common:config_unittest" ]
