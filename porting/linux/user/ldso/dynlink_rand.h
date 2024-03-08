@@ -57,6 +57,10 @@ struct loadtask {
     size_t dyn;
     size_t tls_image;
 
+    // variables for segment header
+    void *shdr_allocated_buf;
+    size_t shsize;
+
     void *dyn_map;
     size_t dyn_map_len;
     size_t *dyn_addr;
