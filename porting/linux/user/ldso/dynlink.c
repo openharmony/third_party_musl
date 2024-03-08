@@ -3754,7 +3754,7 @@ static void *do_dlsym(struct dso *p, const char *s, const char *v, void *ra)
 
 extern int invalidate_exit_funcs(struct dso *p);
 
-static int dlclose_impl(struct dso *p)
+static int dlclose_impl(struct dso *p, struct dso **dso_close_list, int *dso_close_list_size)
 {
 	size_t n;
 	struct dso *d;
@@ -3864,16 +3864,10 @@ static int dlclose_impl(struct dso *p)
 	if (p->deps != no_deps)
 		free(p->deps);
 	LD_LOGD("dlclose unloading %{public}s @%{public}p", p->name, p);
-	unmap_library(p);
 
-	if (p->parents) {
-		free(p->parents);
-	}
+	dso_close_list[*dso_close_list_size] = p;
+	*dso_close_list_size += 1;
 
-	free_reloc_can_search_dso(p);
-	if (p->tls.size == 0) {
-		free(p);
-	}
 	trace_marker_end(HITRACE_TAG_MUSL);
 
 	return 0;
@@ -3906,16 +3900,34 @@ static int do_dlclose(struct dso *p)
 		memcpy(deps_bak, p->deps, deps_num*sizeof(struct dso*));
 	}
 
+	struct dso **dso_close_list = malloc((deps_num + 1) * sizeof(struct dso*));
+	memset(dso_close_list, 0, deps_num + 1);
+	int dso_close_list_size = 0;
+
 	LD_LOGI("do_dlclose name=%{public}s count=%{public}d by_dlopen=%{public}d", p->name, p->nr_dlopen, p->by_dlopen);
-	dlclose_impl(p);
+	dlclose_impl(p, dso_close_list, &dso_close_list_size);
 
 	if (ldclose_deps) {
 		for (size_t i = 0; i < deps_num; i++) {
 			LD_LOGI("do_dlclose name=%{public}s count=%{public}d by_dlopen=%{public}d", deps_bak[i]->name, deps_bak[i]->nr_dlopen, deps_bak[i]->by_dlopen);
-			dlclose_impl(deps_bak[i]);
+			dlclose_impl(deps_bak[i], dso_close_list, &dso_close_list_size);
 		}
 	}
 
+	for (size_t i = 0; i < dso_close_list_size; i++) {
+		unmap_library(dso_close_list[i]);
+
+		if (dso_close_list[i]->parents) {
+			free(dso_close_list[i]->parents);
+		}
+
+		free_reloc_can_search_dso(dso_close_list[i]);
+		if (dso_close_list[i]->tls.size == 0) {
+			free(dso_close_list[i]);
+		}
+	}
+
+	free(dso_close_list);
 	free(deps_bak);
 
 	return 0;
