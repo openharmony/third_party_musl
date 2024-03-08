@@ -121,6 +121,23 @@ void dlopen_dlclose()
 	}
 }
 
+#define DLOPEN_WEAK "libdlopen_weak.so"
+typedef int (*FuncPtr_TestNumber)(int input);
+
+void dlopen_dlclose_weak()
+{
+	void* handle = dlopen(DLOPEN_WEAK, RTLD_LAZY | RTLD_GLOBAL);
+	if (!handle)
+		t_error("dlopen(name=%s, mode=%d) failed: %s\n", DLOPEN_WEAK, RTLD_LAZY | RTLD_GLOBAL, dlerror());
+	FuncPtr_TestNumber fn = (FuncPtr_TestNumber)dlsym(handle, "TestNumber");
+	if (fn) {
+		int ret = fn(12);
+		if (ret != 0)
+			t_error("weak symbol relocation error: so_name: %s, symbol: TestNumber\n", DLOPEN_WEAK);
+	}
+	dlclose(handle);
+}
+
 int main(int argc, char *argv[])
 {
 	void *h, *g;
@@ -179,6 +196,7 @@ int main(int argc, char *argv[])
 	dlopen_so_used_by_dlsym();
 	dlopen_nodelete_and_noload();
 	dlopen_dlclose();
+	dlopen_dlclose_weak();
 
 	return t_status;
 }
