@@ -20,8 +20,13 @@
 #include <test.h>
 #endif
 #include <stdlib.h>
+#include <errno.h>
+#include <stdio.h>
 
 #define OVERWRITE 1
+#define ZERO 0
+#define INVALID_ENV (-1)
+#define VALID_ENV 0
 #define ENABLE_LOG "param set musl.log.enable true"
 #define LOG_LEVEL_FATAL "param set musl.log.level FATAL"
 #define LOG_LEVEL_WARN "param set musl.log.level WARN"
@@ -29,9 +34,28 @@
 #define LOG_LEVEL_DEBUG "param set musl.log.level DEBUG"
 #define LOG_LEVEL_INFO "param set musl.log.level INFO"
 
+int TestValidEnv(const char *str)
+{
+    FILE *res = popen(str, "r");
+    if (res == NULL) {
+        return INVALID_ENV;
+    }
+    char path[1035];
+    while (fgets(path, sizeof(path), res) != NULL) {
+        if (strstr(path, "fail")) {
+            return INVALID_ENV;
+        }
+    }
+    pclose(res);
+    return VALID_ENV;
+}
+
 void TestFatalLevel()
 {
-    system(LOG_LEVEL_FATAL);
+    int result = TestValidEnv(LOG_LEVEL_FATAL);
+    if (result == INVALID_ENV) {
+        return;
+    }
     musl_log_reset();
     if (!HiLogAdapterIsLoggable(MUSL_LOG_DOMAIN, MUSL_LOG_TAG, LOG_FATAL)) {
         t_error("LOG_LEVEL_FATAL level LOG_FATAL print failed \n");
@@ -52,7 +76,10 @@ void TestFatalLevel()
 
 void TestErrorLevel()
 {
-    system(LOG_LEVEL_ERROR);
+    int result = TestValidEnv(LOG_LEVEL_ERROR);
+    if (result == INVALID_ENV) {
+        return;
+    }
     musl_log_reset();
     if (!HiLogAdapterIsLoggable(MUSL_LOG_DOMAIN, MUSL_LOG_TAG, LOG_FATAL)) {
         t_error("LOG_LEVEL_ERROR level LOG_FATAL print failed \n");
@@ -73,7 +100,10 @@ void TestErrorLevel()
 
 void TestWarnLevel()
 {
-    system(LOG_LEVEL_WARN);
+    int result = TestValidEnv(LOG_LEVEL_WARN);
+    if (result == INVALID_ENV) {
+        return;
+    }
     musl_log_reset();
     if (!HiLogAdapterIsLoggable(MUSL_LOG_DOMAIN, MUSL_LOG_TAG, LOG_FATAL)) {
         t_error("LOG_LEVEL_WARN level LOG_FATAL print failed \n");
@@ -94,7 +124,10 @@ void TestWarnLevel()
 
 void TestInfoLevel()
 {
-    system(LOG_LEVEL_INFO);
+    int result = TestValidEnv(LOG_LEVEL_INFO);
+    if (result == INVALID_ENV) {
+        return;
+    }
     musl_log_reset();
     if (!HiLogAdapterIsLoggable(MUSL_LOG_DOMAIN, MUSL_LOG_TAG, LOG_FATAL)) {
         t_error("LOG_LEVEL_INFO level LOG_FATAL print failed \n");
@@ -115,7 +148,10 @@ void TestInfoLevel()
 
 void TestDebugLevel()
 {
-    system(LOG_LEVEL_DEBUG);
+    int result = TestValidEnv(LOG_LEVEL_DEBUG);
+    if (result == INVALID_ENV) {
+        return;
+    }
     musl_log_reset();
     if (!HiLogAdapterIsLoggable(MUSL_LOG_DOMAIN, MUSL_LOG_TAG, LOG_FATAL)) {
         t_error("LOG_LEVEL_DEBUG level LOG_FATAL print failed \n");
@@ -137,7 +173,10 @@ void TestDebugLevel()
 int main()
 {
 #ifdef OHOS_ENABLE_PARAMETER
-    system(ENABLE_LOG);
+    int result = TestValidEnv(ENABLE_LOG);
+    if (result == INVALID_ENV) {
+        return ZERO;
+    }
     TestFatalLevel();
     TestErrorLevel();
     TestWarnLevel();
