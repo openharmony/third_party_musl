@@ -16,6 +16,9 @@ import("test_src_functionalext_supplement_stdio.gni")
 
 foreach(s, functionalext_supplement_stdio_test) {
   test_unittest(s) {
+    if (s == "fdsan") {
+      cpp_file = true
+    }
     target_dir = "functionalext/supplement/stdio"
   }
 }

@@ -20,9 +20,12 @@ pid_t vfork(void)
 	pthread_t self = __pthread_self();
 	pid_t parent_pid = self->pid;
 	self->pid = 0;
+	int parent_by_vfork = self->by_vfork;
+	self->by_vfork = 1;
 	pid_t ret = __vfork();
 	if (ret != 0) {
 		self->pid = parent_pid;
+		self->by_vfork = parent_by_vfork;
 	} else {
 		self->proc_tid = -1;
 		__clear_proc_pid();

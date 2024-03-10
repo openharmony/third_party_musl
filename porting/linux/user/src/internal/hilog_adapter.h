@@ -52,6 +52,8 @@ hidden int HiLogAdapterPrint(LogType type, LogLevel level, unsigned int domain, 
 
 hidden int HiLogAdapterPrintArgs(const LogType type, const LogLevel level, const unsigned int domain, const char *tag,
                                  const char *fmt, va_list ap);
+hidden int HiLogAdapterVaList(LogType type, LogLevel level, unsigned int domain, const char *tag, const char *fmt,
+                              va_list ap);
 
 hidden bool HiLogAdapterIsLoggable(unsigned int domain, const char *tag, LogLevel level);
 

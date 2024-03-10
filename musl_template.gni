@@ -121,6 +121,7 @@ template("musl_libs") {
       "${target_out_dir}/${musl_ported_dir}/src/hook",
       "${target_out_dir}/${musl_ported_dir}/include",
       "${target_out_dir}/${musl_inc_out_dir}",
+      "//prebuilts/clang/ohos/linux-x86_64/llvm/lib/clang/15.0.4/include/",
     ]
 
     cflags_basic = [

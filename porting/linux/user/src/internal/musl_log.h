@@ -31,6 +31,7 @@ extern "C" {
 #define MUSL_LOGW(...) ((void)HiLogAdapterPrint(MUSL_LOG_TYPE, LOG_WARN, MUSL_LOG_DOMAIN, MUSL_LOG_TAG, __VA_ARGS__))
 #define MUSL_LOGI(...) ((void)HiLogAdapterPrint(MUSL_LOG_TYPE, LOG_INFO, MUSL_LOG_DOMAIN, MUSL_LOG_TAG, __VA_ARGS__))
 #define MUSL_LOGD(...) ((void)HiLogAdapterPrint(MUSL_LOG_TYPE, LOG_DEBUG, MUSL_LOG_DOMAIN, MUSL_LOG_TAG, __VA_ARGS__))
+
 #else
 #define MUSL_LOGE(...)
 #define MUSL_LOGW(...)

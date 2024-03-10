@@ -172,9 +172,10 @@ endif
 musl_patch_for_linux_user: musl_copy_for_linux_user
 	$(HIDE) cp -rfp $(MUSLDIR)/porting/linux/user/* $</
 
+LIBCXXDIR = $(TOPDIR)/prebuilts/clang/ohos/linux-x86_64/llvm/lib/clang/15.0.4/include
 musl_install_for_linux_user: LDFLAGS = $(shell $(CC) -print-file-name=libunwind.a) -Wl,--no-dependent-libraries
 musl_install_for_linux_user: SED_ARGS += -e 's,$$(AR) rc $$@ $$(AOBJS)$$,cp $$(shell $$(CC) -print-file-name=libunwind.a) $$@ \&\& &,g'
-musl_install_for_linux_user: CFLAGS += -fno-omit-frame-pointer -funwind-tables -fasynchronous-unwind-tables -rdynamic -I $(LINUXHDRDIR)
+musl_install_for_linux_user: CFLAGS += -fno-omit-frame-pointer -funwind-tables -fasynchronous-unwind-tables -rdynamic -I $(LINUXHDRDIR) -I $(LIBCXXDIR)
 ifeq ($(GCC),)
 musl_install_for_linux_user: TARGET = $(ARCH)-linux-ohos
 endif

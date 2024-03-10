@@ -28,6 +28,13 @@ template("test_unittest") {
 
   target_name = invoker.target_name
   target_dir = invoker.target_dir
+
+  if (defined(invoker.cpp_file)) {
+    cpp_file = invoker.cpp_file
+  } else {
+    cpp_file = false
+  }
+
   if (defined(invoker.musl_unit_test_flag)) {
     musl_unit_test_flag = invoker.musl_unit_test_flag
   }
@@ -39,7 +46,15 @@ template("test_unittest") {
       defines = [ "_ARM64_" ]
     }
 
-    sources = [ "${target_name}.c" ]
+    cflags = []
+
+    if (cpp_file) {
+      sources = [ "${target_name}.cpp" ]
+      cflags = [ "-std=c++17" ]
+    } else {
+      sources = [ "${target_name}.c" ]
+    }
+
     include_dirs = [
       "//${test_dir}/src/common",
       "//${musl_include_dir}",
@@ -47,8 +62,6 @@ template("test_unittest") {
       "//${musl_base_dir}/include/arpa",
       "//${musl_base_dir}/src/process",
     ]
-
-    cflags = []
 
     cflags_c = [
       "-pipe",

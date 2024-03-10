@@ -75,6 +75,8 @@ config("config_runtest") {
     "-D_FILE_OFFSET_BITS=64",
   ]
 
+  cflags = [ "-Wno-unused-function" ]
+
   ldflags = [ "-nostdlib" ]
 
   libs = [ "//${target_out_dir}/libtest.a" ]

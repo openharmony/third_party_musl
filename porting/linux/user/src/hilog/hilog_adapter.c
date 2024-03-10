@@ -57,10 +57,12 @@ static int g_logLevel = LOG_ERROR;
 static pthread_mutex_t g_lock = PTHREAD_MUTEX_INITIALIZER;
 static volatile int g_socketFd = INVALID_SOCKET;
 
+extern int __close(int fd);
+
 static void Cleanup()
 {
     if (g_socketFd >= 0) {
-        close(g_socketFd);
+        __close(g_socketFd);
         g_socketFd = INVALID_SOCKET;
     }
 }
@@ -83,7 +85,7 @@ static int GetSocketFdInstance()
             if (result < 0) {
                 dprintf(ERROR_FD, "HiLogAdapter: Can't connect to server. Errno: %d\n", errno);
                 if (tempSocketFd >= 0) {
-                    close(tempSocketFd);
+                    __close(tempSocketFd);
                 }
                 pthread_mutex_unlock(&g_lock);
                 return result;
@@ -158,6 +160,15 @@ int HiLogAdapterPrint(LogType type, LogLevel level, unsigned int domain, const c
     ret = HiLogAdapterPrintArgs(type, level, domain, tag, fmt, ap);
     va_end(ap);
     return ret;
+}
+
+HILOG_LOCAL_API
+int HiLogAdapterVaList(LogType type, LogLevel level, unsigned int domain, const char *tag, const char *fmt, va_list ap)
+{
+    if (!HiLogAdapterIsLoggable(domain, tag, level)) {
+        return -1;
+    }
+    return HiLogAdapterPrintArgs(type, level, domain, tag, fmt, ap);
 }
 
 bool is_musl_log_enable()

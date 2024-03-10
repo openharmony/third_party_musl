@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include "syscall.h"
 
 #define UNGET 8
@@ -177,5 +178,13 @@ hidden void __getopt_msg(const char *, const char *, const char *, size_t);
 /* Caller-allocated FILE * operations */
 hidden FILE *__fopen_rb_ca(const char *, FILE *, unsigned char *, size_t);
 hidden int __fclose_ca(FILE *);
+
+static uint64_t __get_file_tag(FILE* fp)
+{
+	if (fp == stdin || fp == stderr || fp == stdout) {
+		return 0;
+	}
+	return fdsan_create_owner_tag(FDSAN_OWNER_TYPE_FILE, (uint64_t)fp);
+}
 
 #endif
