@@ -6,6 +6,7 @@ extern "C" {
 #endif
 
 #include <features.h>
+#include <stdint.h>
 
 #define __NEED_FILE
 #define __NEED___isoc_va_list
@@ -216,6 +217,49 @@ FILE *fopencookie(void *, const char *, cookie_io_functions_t);
 #define fpos64_t fpos_t
 #define off64_t off_t
 #endif
+
+enum fdsan_owner_type {
+	FDSAN_OWNER_TYPE_GENERIC_00 = 0,
+	FDSAN_OWNER_TYPE_GENERIC_FF = 255,
+
+	/* FILE* */
+	FDSAN_OWNER_TYPE_FILE = 1,
+
+	/* DIR* */
+	FDSAN_OWNER_TYPE_DIR = 2,
+
+	/* unique_fd */
+	FDSAN_OWNER_TYPE_UNIQUE_FD = 3,
+
+	/* ziparchive */
+	FDSAN_OWNER_TYPE_ZIPARCHIVE = 4,
+};
+
+void* fdsan_get_fd_table();
+uint64_t fdsan_create_owner_tag(enum fdsan_owner_type type, uint64_t tag);
+void fdsan_exchange_owner_tag(int fd, uint64_t expected_tag, uint64_t new_tag);
+int fdsan_close_with_tag(int fd, uint64_t tag);
+uint64_t fdsan_get_owner_tag(int fd);
+const char* fdsan_get_tag_type(uint64_t tag);
+uint64_t fdsan_get_tag_value(uint64_t tag);
+
+enum fdsan_error_level {
+	// No errors.
+	FDSAN_ERROR_LEVEL_DISABLED,
+
+	// Warn once(ish) on error, and then downgrade to FDSAN_ERROR_LEVEL_DISABLED.
+	FDSAN_ERROR_LEVEL_WARN_ONCE,
+
+	// Warn always on error.
+	FDSAN_ERROR_LEVEL_WARN_ALWAYS,
+
+	// Abort on error.
+	FDSAN_ERROR_LEVEL_FATAL,
+};
+
+enum fdsan_error_level fdsan_get_error_level();
+enum fdsan_error_level fdsan_set_error_level(enum fdsan_error_level new_level);
+enum fdsan_error_level fdsan_set_error_level_from_param(enum fdsan_error_level default_level);
 
 #include <fortify/stdio.h>
 

@@ -37,6 +37,9 @@
 #ifndef _SYS_CDEFS_H_
 #define _SYS_CDEFS_H_
 
+#define	__predict_true(exp)	__builtin_expect((exp) != 0, 1)
+#define	__predict_false(exp)	__builtin_expect((exp) != 0, 0)
+
 #if defined(__cplusplus)
 #define	__BEGIN_DECLS    extern "C" {
 #define	__END_DECLS		}
