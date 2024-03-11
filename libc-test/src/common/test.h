@@ -1,6 +1,10 @@
 #include <stdint.h>
 #include <unistd.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* TODO: not thread-safe nor fork-safe */
 extern volatile int t_status;
 
@@ -92,3 +96,7 @@ void find_and_check_file(const char *log_dir, const char *file_tag, const char *
 #endif
 
 #define TEST_MODE 0666
+
+#ifdef __cplusplus
+}
+#endif

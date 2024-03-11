@@ -33,6 +33,7 @@
 #include "dynlink_rand.h"
 #include "ld_log.h"
 #include "libc.h"
+#include "musl_fdsan.h"
 #include "namespace.h"
 #include "ns_config.h"
 #include "pthread_impl.h"
@@ -195,6 +196,8 @@ UT_STATIC void load_preload(char *s, ns_t *ns, struct loadtasks *tasks);
 static void open_library_by_path(const char *name, const char *s, struct loadtask *task, struct zip_info *z_info);
 static void handle_asan_path_open_by_task(int fd, const char *name, ns_t *namespace, struct loadtask *task, struct zip_info *z_info);
 #endif
+
+extern int __close(int fd);
 
 /* Sharing relro */
 static void handle_relro_sharing(struct dso *p, const dl_extinfo *extinfo, ssize_t *relro_fd_offset);
@@ -2898,6 +2901,7 @@ void __dls3(size_t *sp, size_t *auxv, size_t *aux)
 #ifdef DFX_SIGNAL_LIBC
 	DFX_InstallSignalHandler();
 #endif
+	__init_fdsan();
 	/* If the main program was already loaded by the kernel,
 	 * AT_PHDR will point to some location other than the dynamic
 	 * linker's program headers. */
@@ -5338,7 +5342,7 @@ static void task_load_library(struct loadtask *task, struct reserved_address_par
 {
 	LD_LOGD("load_library loading ns=%{public}s name=%{public}s by_dlopen=%{public}d", task->namespace->ns_name, task->p->name, runtime);
 	bool map = noload ? 0 : task_map_library(task, reserved_params);
-	close(task->fd);
+	__close(task->fd);
 	task->fd = -1;
 	if (!map) {
 		LD_LOGE("Error loading library %{public}s: failed to map library", task->name);
