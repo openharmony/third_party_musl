@@ -122,6 +122,9 @@ FILE *__fdopenx(int fd, int flags)
 		f->lbf = '\n';
 	}
 
+	/* set file tag in fdtable, FILE type */
+	fdsan_exchange_owner_tag(fd, 0, __get_file_tag(f));
+
 	/* Initialize op ptrs. No problem if some are unneeded. */
 	f->read = __stdio_read;
 	f->write = __stdio_write;

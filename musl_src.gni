@@ -416,6 +416,7 @@ musl_src_file = [
   "src/fcntl/openat.c",
   "src/fcntl/posix_fadvise.c",
   "src/fcntl/posix_fallocate.c",
+  "src/fdsan/fdsan.c",
   "src/fenv/__flt_rounds.c",
   "src/fenv/fegetexceptflag.c",
   "src/fenv/feholdexcept.c",
@@ -2428,6 +2429,12 @@ musl_src_porting_file = [
   "src/syscall_hooks/syscall_hooks.c",
   "src/internal/syscall_hooks.h",
   "include/syscall_hooks.h",
+  "src/fdsan/fdsan.c",
+  "src/unistd/close.c",
+  "src/stdio/__stdio_close.c",
+  "src/dirent/opendir.c",
+  "src/dirent/fdopendir.c",
+  "src/dirent/closedir.c",
 ]
 
 musl_inc_hook_files = [

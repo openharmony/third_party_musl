@@ -52,6 +52,7 @@ struct pthread {
     int pid;
     int proc_tid;
     int errno_val;
+    int by_vfork;
     volatile int detach_state;
 #ifdef FEATURE_PTHREAD_CANCEL
     volatile int cancel;
