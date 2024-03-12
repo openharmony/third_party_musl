@@ -1,5 +1,6 @@
 #include "stdio_impl.h"
 #include <stdlib.h>
+#include <errno.h>
 
 static void dummy(FILE *f) { }
 weak_alias(dummy, __unlist_locked_file);
@@ -9,6 +10,12 @@ int fclose(FILE *f)
 	int r;
 	
 	FLOCK(f);
+    if (!f || f->fd < 0) {
+		errno = EBADF;
+		FUNLOCK(f);
+		return -EBADF;
+	}
+
 	r = fflush(f);
 	r |= f->close(f);
 	FUNLOCK(f);
@@ -29,6 +36,11 @@ int fclose(FILE *f)
 	/* release base instead of buf which may be modified by setvbuf
 	 * or iniitalize by local variable */
 	free(f->base);
+
+    
+	/* set file to invalid descriptor */
+	f->fd = -EBADF;
+
 	__ofl_free(f);
 
 	return r;
