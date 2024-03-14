@@ -19,36 +19,70 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <string.h>
 
 #undef assert
 #define assert(x) ((void)((x) || (__assert_fail(#x, __FILE__, __LINE__, __func__),0)))
 
+#define FILE_ABORT "abort.txt"
+#define FILE_IGNORE "ignore.txt"
+#define FILE_RETRY "retry.txt"
+#define ASSERT_ABORT_INFO "ASSERT_ABORT"
+#define ASSERT_IGNORE_INFO "ASSERT_IGNORE"
+#define ASSERT_RETRY_INFO "ASSERT_RETRY"
+#define MAX_FILE_SIZE 1024
+
+void WriteToFile(const char *filename, const char *content)
+{
+    FILE *file = fopen(filename, "w");
+    if (file != NULL) {
+        fprintf(file, "%s\n", content);
+        fclose(file);
+    } else {
+        perror("fopen");
+    }
+}
+
+char* ReadFile(const char *filename)
+{
+    static char buffer[MAX_FILE_SIZE];
+    FILE *file;
+
+    file = fopen(filename, "r");
+    if (file == NULL) {
+        perror("fopen");
+        return NULL;
+    }
+    if (fgets(buffer, sizeof(buffer), file) == NULL) {
+        perror("fgets");
+        fclose(file);
+        return NULL;
+    }
+
+    fclose(file);
+    return buffer;
+}
+
 Assert_Status CallbackFunctionAbort(AssertFailureInfo assert_fail)
 {
-    printf("\nFatal message: %s\n", assert_fail.expression);
-    printf("Fatal message: %s\n", assert_fail.file);
-    printf("Fatal message: %s\n", assert_fail.function);
-    printf("Fatal message: %d\n", assert_fail.line);
+    char content[MAX_FILE_SIZE] = ASSERT_ABORT_INFO;
+    WriteToFile(FILE_ABORT, content);
     Assert_Status res = ASSERT_ABORT;
     return res;
 }
 
 Assert_Status CallbackFunctionIgnore(AssertFailureInfo assert_fail)
 {
-    printf("\nFatal message: %s\n", assert_fail.expression);
-    printf("Fatal message: %s\n", assert_fail.file);
-    printf("Fatal message: %s\n", assert_fail.function);
-    printf("Fatal message: %d\n", assert_fail.line);
+    char content[MAX_FILE_SIZE] = ASSERT_IGNORE_INFO;
+    WriteToFile(FILE_IGNORE, content);
     Assert_Status res = ASSERT_IGNORE;
     return res;
 }
 
 Assert_Status CallbackFunctionRetry(AssertFailureInfo assert_fail)
 {
-    printf("\nFatal message: %s\n", assert_fail.expression);
-    printf("Fatal message: %s\n", assert_fail.file);
-    printf("Fatal message: %s\n", assert_fail.function);
-    printf("Fatal message: %d\n", assert_fail.line);
+    char content[MAX_FILE_SIZE] = ASSERT_RETRY_INFO;
+    WriteToFile(FILE_RETRY, content);
     Assert_Status res = ASSERT_RETRY;
     return res;
 }
@@ -117,7 +151,13 @@ int main(void)
     waitpid(pid2, &status, 0);
     waitpid(pid3, &status, 0);
 
-    printf("All processes finished.\n");
+    char *BufferAbort = ReadFile(FILE_ABORT);
+    char *BufferIgnore = ReadFile(FILE_IGNORE);
+    char *BufferRetry = ReadFile(FILE_RETRY);
+    if (strcmp(BufferAbort, ASSERT_ABORT_INFO) && strcmp(BufferIgnore, ASSERT_IGNORE_INFO)
+    && strcmp(BufferRetry, ASSERT_RETRY_INFO)) {
+        printf("All processes finished.\n");
+    }
 
     return 0;
 }
