@@ -33,6 +33,8 @@ typedef void (*MemTrace)(void*, size_t, const char*, bool);
 
 typedef bool (*GetHookFlagType)();
 typedef bool (*SetHookFlagType)(bool);
+typedef bool (*SendHookJsStack)(uint64_t, const char*, size_t);
+typedef void* (*GetHookJsConfig)();
 
 struct MallocDispatchType {
 	MallocMmapType mmap;
