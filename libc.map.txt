@@ -1633,6 +1633,7 @@
     setspent;
     setstate;
     SetThreadInfoCallback;
+    SetAsyncStackCallbackFunc;
     settimeofday;
     setuid;
     setusershell;
