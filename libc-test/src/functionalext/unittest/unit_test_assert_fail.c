@@ -16,10 +16,29 @@
 #include <stdio.h>
 #include <assert.h>
 #include <info/fatal_message.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+
+#undef assert
+#define assert(x) ((void)((x) || (__assert_fail(#x, __FILE__, __LINE__, __func__),0)))
 
 int main(void)
 {
-    printf("This is a log message before assert.\n");
-    assert(0);
+    pid_t pid1;
+    int status;
+
+    // Create the first child process
+    pid1 = fork();
+    if (pid1 < 0) {
+        // Failed to create the process
+        fprintf(stderr, "Fork failed for Process One\n");
+        return 1;
+    } else if (pid1 == 0) {
+        // Child process one
+        assert(0);
+        return 0;
+    }
+    waitpid(pid1, &status, 0);
     return 0;
 }
