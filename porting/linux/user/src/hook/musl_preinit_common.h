@@ -21,6 +21,8 @@ enum EnumFunc {
 	SET_HOOK_FLAG_FUNCTION,
 	ON_START_FUNCTION,
 	ON_END_FUNCTION,
+	SEND_HOOK_JS_STACK,
+	GET_HOOK_JS_CONFIG,
 	LAST_FUNCTION,
 };
 
@@ -120,6 +122,46 @@ inline volatile const struct MallocDispatchType* get_current_dispatch_table()
 		}
 	}
 	return ret;
+#else
+	return NULL;
+#endif // HOOK_ENABLE
+}
+
+__attribute__((always_inline))
+inline bool __send_hook_js_rawstack(uint64_t id, const char* jsStackptr, size_t jsStackSize)
+{
+#ifdef HOOK_ENABLE
+	volatile void* impl_handle = (void*)atomic_load_explicit(&ohos_malloc_hook_shared_library, memory_order_acquire);
+	if (impl_handle == NULL) {
+		return false;
+	}
+	else if (impl_handle == (void*)-1) {
+		return false;
+	}
+	else {
+		SendHookJsStack send_hook_func_ptr = (SendHookJsStack)(function_of_shared_lib[SEND_HOOK_JS_STACK]);
+		return send_hook_func_ptr(id, jsStackptr, jsStackSize);
+	}
+#else
+	return false;
+#endif // HOOK_ENABLE
+}
+
+__attribute__((always_inline))
+inline void* __get_hook_js_config()
+{
+#ifdef HOOK_ENABLE
+	volatile void* impl_handle = (void*)atomic_load_explicit(&ohos_malloc_hook_shared_library, memory_order_acquire);
+	if (impl_handle == NULL) {
+		return NULL;
+	}
+	else if (impl_handle == (void*)-1) {
+		return NULL;
+	}
+	else {
+		GetHookJsConfig get_hook_func_ptr = (GetHookJsConfig)(function_of_shared_lib[GET_HOOK_JS_CONFIG]);
+		return get_hook_func_ptr();
+	}
 #else
 	return NULL;
 #endif // HOOK_ENABLE
