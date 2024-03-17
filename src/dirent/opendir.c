@@ -9,7 +9,7 @@
 #ifndef __LITEOS__
 uint64_t __get_dir_tag(DIR* dir)
 {
-	return fdsan_create_owner_tag(FDSAN_OWNER_TYPE_DIR, (uint64_t)dir);
+	return fdsan_create_owner_tag(FDSAN_OWNER_TYPE_DIRECTORY, (uint64_t)dir);
 }
 #endif
 

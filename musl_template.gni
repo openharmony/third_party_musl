@@ -122,7 +122,6 @@ template("musl_libs") {
       "${target_out_dir}/${musl_ported_dir}/src/network",
       "${target_out_dir}/${musl_ported_dir}/include",
       "${target_out_dir}/${musl_inc_out_dir}",
-      "${clang_base_path}/lib/clang/${clang_version}/include",
     ]
 
     cflags_basic = [
