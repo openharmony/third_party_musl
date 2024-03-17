@@ -72,7 +72,6 @@ static struct FdEntry* get_fd_entry(size_t idx)
 		if (idx > max) {
 			return NULL;
 		}
-
 		size_t required_count = max - FdTableSize;
 		size_t required_size = sizeof(struct FdTableOverflow) + required_count * sizeof(struct FdEntry);
 		size_t aligned_size = ALIGN(required_size, PAGE_SIZE);
@@ -171,18 +170,18 @@ const char* fdsan_get_tag_type(uint64_t tag)
 	switch (type) {
 		case FDSAN_OWNER_TYPE_FILE:
 			return "FILE*";
-		case FDSAN_OWNER_TYPE_DIR:
+		case FDSAN_OWNER_TYPE_DIRECTORY:
 			return "DIR*";
 		case FDSAN_OWNER_TYPE_UNIQUE_FD:
 			return "unique_fd";
-		case FDSAN_OWNER_TYPE_ZIPARCHIVE:
+		case FDSAN_OWNER_TYPE_ZIP_ARCHIVE:
 			return "ZipArchive";
-		case FDSAN_OWNER_TYPE_GENERIC_FF:
+		case FDSAN_OWNER_TYPE_MAX:
 			if (high_bits == (1 << 16) - 1) {
 				return "native object of unknown type";
 			}
 			return "object of unknown type";
-		case FDSAN_OWNER_TYPE_GENERIC_00:
+		case FDSAN_OWNER_TYPE_DEFAULT:
 		default:
 			return "native object of unknown type";
 	}

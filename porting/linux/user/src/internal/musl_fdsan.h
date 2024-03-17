@@ -4,7 +4,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -19,23 +19,24 @@
 #include <string.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <stdatomic.h>
+
+#include "stdatomic_impl.h"
 
 #define FdTableSize 128
 
 struct FdEntry {
-  _Atomic(uint64_t) close_tag;
+	_Atomic(uint64_t) close_tag;
 };
 
 struct FdTableOverflow {
-  size_t len;
-  struct FdEntry entries[];
+	size_t len;
+	struct FdEntry entries[];
 };
 
 struct FdTable {
-  _Atomic(enum fdsan_error_level) error_level;
-  struct FdEntry entries[FdTableSize];
-  _Atomic(struct FdTableOverflow*) overflow;
+	_Atomic(enum fdsan_error_level) error_level;
+	struct FdEntry entries[FdTableSize];
+	_Atomic(struct FdTableOverflow*) overflow;
 };
 
 void __init_fdsan();
