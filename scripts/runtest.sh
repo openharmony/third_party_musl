@@ -25,7 +25,7 @@ function FileSuffix() {
 #Test cases that need to be shielded
 ShieldedList=("trace_stresstest" "syslog" "vsyslog" "runtest"
 #Failed when running by shell, need to be run manually
-"tgkill_ext" "exittest02" "stat" "isatty" "ttyname" "a_stack_chk_fail"
+"tgkill_ext" "stat" "isatty" "ttyname" "a_stack_chk_fail"
 "ldso_randomization_manual" "ldso_randomization_test"
 "tcgetattr" "tcgetpgrp" "tcgetsid" "tcsendbreak" "tcsetattr" "tcsetpgrp"
 #These need run with special condiction
@@ -92,12 +92,7 @@ do
 	elif [ -x $file ] && [ -s $file ]
 	then
 		echo $file >> /data/tests/libc-test/FileList.txt
-		if [ "$file" = "tgkill" ]
-		then
-			./runtest -w '' $file 12345 34567 >> /data/tests/libc-test/REPORT
-		else
-			./runtest -w '' -t 30 $file >> /data/tests/libc-test/REPORT
-		fi
+		./runtest -w '' -t 30 $file >> /data/tests/libc-test/REPORT
 	fi
 done
 
