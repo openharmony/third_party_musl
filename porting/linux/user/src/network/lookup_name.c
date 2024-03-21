@@ -62,7 +62,15 @@ static int name_from_numeric(struct address buf[static 1], const char *name, int
 static inline int get_hosts_str(char *line, int length, FILE *f, int *i)
 {
 	if (f) {
-		return fgets(line, length, f);
+		char *ret = fgets(line, length, f);
+		if (ret) {
+			size_t len = strlen(line);
+			if (len > 0 && line[len - 1] != '\n' && len < length - 1) {
+				line[len] = '\n';
+				line[len + 1] = '\0';
+			}
+		}
+		return ret;
 	}
 	if (*i < FIXED_HOSTS_MAX_LENGTH) {
 		memcpy(line, fixed_hosts[*i], strlen(fixed_hosts[*i]));
