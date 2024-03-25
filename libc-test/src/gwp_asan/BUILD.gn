@@ -11,7 +11,7 @@ if (use_gwp_asan) {
     ]
     include_dirs = [
       "//third_party/musl/porting/linux/user/src/gwp_asan",
-      "${musl_src_base}/src/gwp_asan/linux",
+      "${musl_src_base}/src/gwp_asan",
       "//third_party/musl/libc-test/src/common",
     ]
     defines = [ "USE_GWP_ASAN" ]

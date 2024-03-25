@@ -30,7 +30,7 @@ if (musl_arch == "arm") {
     "src/thread/arm/atomics.s",
     "src/thread/arm/clone.s",
     "src/thread/arm/syscall_cp.s",
-    "src/linux/arm/linux/flock.s",
+    "src/linux/arm/flock.s",
     "compat/time32/adjtime32.c",
     "compat/time32/adjtimex_time32.c",
     "compat/time32/aio_suspend_time32.c",
@@ -139,7 +139,7 @@ if (musl_arch == "arm") {
     "src/thread/aarch64/__unmapself.s",
     "src/thread/aarch64/clone.s",
     "src/thread/aarch64/syscall_cp.s",
-    "src/linux/aarch64/linux/flock.s",
+    "src/linux/aarch64/flock.s",
   ]
 } else if (musl_arch == "mips") {
   musl_src_arch_file = [
@@ -234,7 +234,7 @@ if (musl_arch == "arm") {
     "src/thread/x86_64/__unmapself.s",
     "src/thread/x86_64/clone.s",
     "src/thread/x86_64/syscall_cp.s",
-    "src/linux/x86_64/linux/flock.s",
+    "src/linux/x86_64/flock.s",
   ]
 }
 
@@ -243,7 +243,7 @@ musl_src_file = [
   "src/internal/locale_impl.h",
   "src/internal/stdio_impl.h",
   "src/internal/unsupported_api.h",
-  "src/internal/linux/syscall_hooks.h",
+  "src/internal/syscall_hooks.h",
   "src/thread/pthread_rwlock_timedrdlock.c",
   "src/thread/pthread_rwlock_timedwrlock.c",
   "src/aio/aio.c",
@@ -395,9 +395,9 @@ musl_src_file = [
   "src/exit/_Exit.c",
   "src/exit/abort_lock.c",
   "src/exit/abort.c",
-  "src/exit/linux/assert.c",
+  "src/exit/assert.c",
   "src/exit/at_quick_exit.c",
-  "src/exit/linux/atexit.c",
+  "src/exit/atexit.c",
   "src/exit/exit.c",
   "src/exit/quick_exit.c",
   "src/fcntl/creat.c",
@@ -406,7 +406,7 @@ musl_src_file = [
   "src/fcntl/openat.c",
   "src/fcntl/posix_fadvise.c",
   "src/fcntl/posix_fallocate.c",
-  "src/fdsan/linux/fdsan.c",
+  "src/fdsan/fdsan.c",
   "src/fenv/__flt_rounds.c",
   "src/fenv/fegetexceptflag.c",
   "src/fenv/feholdexcept.c",
@@ -414,9 +414,9 @@ musl_src_file = [
   "src/fenv/fesetexceptflag.c",
   "src/fenv/fesetround.c",
   "src/fenv/feupdateenv.c",
-  "src/fortify/linux/fortify.c",
-  "src/gwp_asan/linux/gwp_asan.c",
-  "src/gwp_asan/linux/gwp_asan.h",
+  "src/fortify/fortify.c",
+  "src/gwp_asan/gwp_asan.c",
+  "src/gwp_asan/gwp_asan.h",
   "src/internal/defsysinfo.c",
   "src/internal/floatscan.c",
   "src/internal/intscan.c",
@@ -425,8 +425,8 @@ musl_src_file = [
   "src/internal/shgetc.c",
   "src/internal/syscall_ret.c",
   "src/internal/version.c",
-  "src/hilog/linux/hilog_adapter.c",
-  "src/hilog/linux/vsnprintf_s_p.c",
+  "src/hilog/hilog_adapter.c",
+  "src/hilog/vsnprintf_s_p.c",
   "src/ipc/ftok.c",
   "src/ipc/msgctl.c",
   "src/ipc/msgget.c",
@@ -473,8 +473,8 @@ musl_src_file = [
   "src/linux/cap.c",
   "src/linux/chroot.c",
   "src/linux/clock_adjtime.c",
-  "src/linux/linux/clone.c",
-  "src/linux/linux/getprocpid.c",
+  "src/linux/clone.c",
+  "src/linux/getprocpid.c",
   "src/linux/copy_file_range.c",
   "src/linux/epoll.c",
   "src/linux/eventfd.c",
@@ -898,7 +898,7 @@ musl_src_file = [
   "src/network/ether.c",
   "src/network/freeaddrinfo.c",
   "src/network/gai_strerror.c",
-  "src/network/linux/getaddrinfo.c",
+  "src/network/getaddrinfo.c",
   "src/network/gethostbyaddr.c",
   "src/network/gethostbyaddr_r.c",
   "src/network/gethostbyname.c",
@@ -1035,7 +1035,7 @@ musl_src_file = [
   "src/regex/regerror.c",
   "src/regex/regexec.c",
   "src/regex/tre-mem.c",
-  "src/syscall_hooks/linux/syscall_hooks.c",
+  "src/syscall_hooks/syscall_hooks.c",
   "src/sched/sched_cpualloc.c",
   "src/sched/affinity.c",
   "src/sched/sched_cpucount.c",
@@ -1069,7 +1069,7 @@ musl_src_file = [
   "src/signal/raise.c",
   "src/signal/restore.c",
   "src/signal/setitimer.c",
-  "src/signal/linux/sigaction.c",
+  "src/signal/sigaction.c",
   "src/signal/sigaddset.c",
   "src/signal/sigaltstack.c",
   "src/signal/sigandset.c",
@@ -1401,7 +1401,7 @@ musl_src_file = [
   "src/thread/pthread_condattr_init.c",
   "src/thread/pthread_condattr_setclock.c",
   "src/thread/pthread_condattr_setpshared.c",
-  "src/thread/linux/pthread_create.c",
+  "src/thread/pthread_create.c",
   "src/thread/pthread_detach.c",
   "src/thread/pthread_equal.c",
   "src/thread/pthread_getattr_np.c",
@@ -1595,9 +1595,9 @@ musl_src_file = [
   "src/unistd/write.c",
   "src/unistd/writev.c",
   "src/trace/linux/trace_marker.c",
-  "src/info/linux/application_target_sdk_version.c",
-  "src/info/linux/device_api_version.c",
-  "src/info/linux/fatal_message.c",
+  "src/info/application_target_sdk_version.c",
+  "src/info/device_api_version.c",
+  "src/info/fatal_message.c",
 ]
 
 if (musl_arch == "arm") {
@@ -1762,13 +1762,13 @@ if (musl_arch == "arm") {
 
 musl_src_ldso = [
   "ldso/dlstart.c",
-  "ldso/linux/dynlink.c",
-  "ldso/linux/namespace.c",
-  "ldso/linux/ns_config.c",
-  "ldso/linux/strops.c",
-  "ldso/linux/dynlink_rand.c",
-  "ldso/linux/cfi.c",
-  "ldso/linux/ld_log.c",
+  "ldso/dynlink.c",
+  "ldso/namespace.c",
+  "ldso/ns_config.c",
+  "ldso/strops.c",
+  "ldso/dynlink_rand.c",
+  "ldso/cfi.c",
+  "ldso/ld_log.c",
 ]
 
 if (musl_arch == "arm") {
@@ -1999,7 +1999,7 @@ musl_inc_sys_files = [
   "include/sys/acct.h",
   "include/sys/auxv.h",
   "include/sys/cachectl.h",
-  "include/sys/linux/capability.h",
+  "include/sys/capability.h",
   "include/sys/dir.h",
   "include/sys/epoll.h",
   "include/sys/errno.h",
@@ -2039,7 +2039,7 @@ musl_inc_sys_files = [
   "include/sys/signal.h",
   "include/sys/socket.h",
   "include/sys/soundcard.h",
-  "include/sys/linux/sspret.h",
+  "include/sys/sspret.h",
   "include/sys/statfs.h",
   "include/sys/stat.h",
   "include/sys/statvfs.h",
@@ -2066,27 +2066,27 @@ musl_inc_sys_files = [
   "include/sys/vt.h",
   "include/sys/wait.h",
   "include/sys/xattr.h",
-  "include/sys/linux/cdefs.h",
+  "include/sys/cdefs.h",
 ]
 
-musl_inc_trace_files = [ "include/trace/linux/trace_marker.h" ]
+musl_inc_trace_files = [ "include/trace/trace_marker.h" ]
 
 musl_inc_info_files = [
-  "include/info/linux/application_target_sdk_version.h",
-  "include/info/linux/device_api_version.h",
-  "include/info/linux/fatal_message.h",
+  "include/info/application_target_sdk_version.h",
+  "include/info/device_api_version.h",
+  "include/info/fatal_message.h",
 ]
 
 musl_inc_fortify_files = [
-  "include/fortify/linux/fcntl.h",
-  "include/fortify/linux/fortify.h",
-  "include/fortify/linux/poll.h",
-  "include/fortify/linux/socket.h",
-  "include/fortify/linux/stat.h",
-  "include/fortify/linux/stdlib.h",
-  "include/fortify/linux/string.h",
-  "include/fortify/linux/unistd.h",
-  "include/fortify/linux/stdio.h",
+  "include/fortify/fcntl.h",
+  "include/fortify/fortify.h",
+  "include/fortify/poll.h",
+  "include/fortify/socket.h",
+  "include/fortify/stat.h",
+  "include/fortify/stdlib.h",
+  "include/fortify/string.h",
+  "include/fortify/unistd.h",
+  "include/fortify/stdio.h",
 ]
 
 musl_inc_root_files = [
@@ -2101,7 +2101,7 @@ musl_inc_root_files = [
   "include/ctype.h",
   "include/dirent.h",
   "include/dlfcn.h",
-  "include/linux/dlfcn_ext.h",
+  "include/dlfcn_ext.h",
   "include/elf.h",
   "include/endian.h",
   "include/err.h",
@@ -2148,7 +2148,7 @@ musl_inc_root_files = [
   "include/setjmp.h",
   "include/shadow.h",
   "include/signal.h",
-  "include/linux/sigchain.h",
+  "include/sigchain.h",
   "include/spawn.h",
   "include/stdalign.h",
   "include/stdarg.h",
@@ -2183,32 +2183,32 @@ musl_inc_root_files = [
   "include/wchar.h",
   "include/wctype.h",
   "include/wordexp.h",
-  "include/linux/syscall_hooks.h",
+  "include/syscall_hooks.h",
 ]
 
 musl_src_files_ext = [
   "arch/generic/crtbrand.s",
-  "crt/linux/crtplus.c",
-  "ldso/linux/namespace.h",
-  "ldso/linux/ns_config.h",
-  "ldso/linux/strops.h",
-  "ldso/linux/cfi.h",
-  "ldso/linux/ld_log.h",
-  "ldso/linux/dynlink_rand.h",
-  "src/internal/linux/vdso.c",
-  "src/internal/linux/malloc_config.h",
-  "src/internal/linux/malloc_random.h",
+  "crt/crtplus.c",
+  "ldso/namespace.h",
+  "ldso/ns_config.h",
+  "ldso/strops.h",
+  "ldso/cfi.h",
+  "ldso/ld_log.h",
+  "ldso/dynlink_rand.h",
+  "src/internal/vdso.c",
+  "src/internal/malloc_config.h",
+  "src/internal/malloc_random.h",
   "src/internal/hilog_adapter.h",
-  "src/internal/linux/musl_log.h",
-  "src/internal/linux/musl_log.c",
+  "src/internal/musl_log.h",
+  "src/internal/musl_log.c",
   "src/internal/network_conf_function.c",
   "src/internal/network_conf_function.h",
   "src/internal/services.h",
-  "src/internal/linux/proc_xid_impl.h",
+  "src/internal/proc_xid_impl.h",
   "src/linux/tgkill.c",
-  "src/malloc/linux/calloc.c",
-  "src/malloc/linux/stats.c",
-  "src/sigchain/linux/sigchain.c",
+  "src/malloc/calloc.c",
+  "src/malloc/stats.c",
+  "src/sigchain/sigchain.c",
   "src/thread/pthread_cond_clockwait.c",
   "src/thread/pthread_cond_timedwait_monotonic_np.c",
   "src/thread/pthread_cond_timeout_np.c",
@@ -2224,31 +2224,31 @@ musl_src_files_ext = [
 if (musl_arch == "arm") {
   musl_src_files_ext += [
     "src/process/arm/__vfork.s",
-    "src/ldso/arm/linux/dlvsym.s",
+    "src/ldso/arm/dlvsym.s",
   ]
 } else if (musl_arch == "aarch64") {
   musl_src_files_ext += [
     "arch/aarch64/syscall_arch.h",
-    "src/misc/aarch64/linux/fstat.s",
-    "src/misc/aarch64/linux/syscall.s",
-    "src/ldso/aarch64/linux/dlvsym.s",
+    "src/misc/aarch64/fstat.s",
+    "src/misc/aarch64/syscall.s",
+    "src/ldso/aarch64/dlvsym.s",
   ]
 } else if (musl_arch == "x86_64") {
   musl_src_files_ext += [
     "src/process/x86_64/__vfork.s",
-    "src/ldso/x86_64/linux/dlvsym.s",
+    "src/ldso/x86_64/dlvsym.s",
     "arch/x86_64/bits/float.h",
   ]
 }
 
 musl_inc_hook_files = [
   "src/internal/hilog_adapter.h",
-  "src/internal/linux/musl_log.h",
-  "src/hook/linux/memory_trace.h",
-  "src/hook/linux/musl_malloc_dispatch_table.h",
-  "src/hook/linux/musl_malloc_dispatch.h",
-  "src/hook/linux/musl_preinit_common.h",
-  "src/hook/linux/musl_socket_dispatch.h",
+  "src/internal/musl_log.h",
+  "src/hook/memory_trace.h",
+  "src/hook/musl_malloc_dispatch_table.h",
+  "src/hook/musl_malloc_dispatch.h",
+  "src/hook/musl_preinit_common.h",
+  "src/hook/musl_socket_dispatch.h",
 ]
 
 added_freebsd_files = [

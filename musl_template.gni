@@ -116,11 +116,9 @@ template("musl_libs") {
       "${target_out_dir}/${musl_ported_dir}/arch/${musl_arch}",
       "${target_out_dir}/${musl_ported_dir}/arch/generic",
       "${target_out_dir}/${musl_ported_dir}/src/internal",
-      "${target_out_dir}/${musl_ported_dir}/src/internal/linux",
       "${target_out_dir}/${musl_ported_dir}/src/include",
       "${target_out_dir}/${musl_ported_dir}/src/gwp_asan",
       "${target_out_dir}/${musl_ported_dir}/src/hook",
-      "${target_out_dir}/${musl_ported_dir}/src/hook/linux",
       "${target_out_dir}/${musl_ported_dir}/src/network",
       "${target_out_dir}/${musl_ported_dir}/include",
       "${target_out_dir}/${musl_inc_out_dir}",
@@ -373,7 +371,7 @@ template("musl_libs") {
     sources = [
       "${target_out_dir}/${musl_ported_dir}/crt/Scrt1.c",
       "${target_out_dir}/${musl_ported_dir}/crt/crt1.c",
-      "${target_out_dir}/${musl_ported_dir}/crt/linux/crtplus.c",
+      "${target_out_dir}/${musl_ported_dir}/crt/crtplus.c",
       "${target_out_dir}/${musl_ported_dir}/crt/rcrt1.c",
     ]
     if (musl_arch == "riscv64") {
@@ -942,13 +940,13 @@ template("musl_libs") {
 
   source_set("soft_musl_hook") {
     sources = [
-      "./src/hook/linux/malloc_common.c",
-      "./src/hook/linux/memory_trace.c",
-      "./src/hook/linux/musl_preinit.c",
-      "./src/hook/linux/musl_preinit_common.c",
-      "./src/hook/linux/musl_socket_preinit.c",
-      "./src/hook/linux/musl_socket_preinit_common.c",
-      "./src/hook/linux/socket_common.c",
+      "./src/hook/malloc_common.c",
+      "./src/hook/memory_trace.c",
+      "./src/hook/musl_preinit.c",
+      "./src/hook/musl_preinit_common.c",
+      "./src/hook/musl_socket_preinit.c",
+      "./src/hook/musl_socket_preinit_common.c",
+      "./src/hook/socket_common.c",
     ]
 
     deps = [
@@ -1257,7 +1255,7 @@ template("musl_libs") {
     args += [ "--output" ] + rebase_path(outputs, root_build_dir)
     args += [ "--ldpath" ] + rebase_path(ldpath, root_build_dir)
     args += [ "--crtplus" ] + rebase_path(
-                [ "${redir}/${target_out_dir}/${musl_ported_dir}/crt/linux/soft_musl_crt/crtplus.o" ],
+                [ "${redir}/${target_out_dir}/${musl_ported_dir}/crt/soft_musl_crt/crtplus.o" ],
                 root_build_dir)
 
     deps = [ ":soft_musl_crt" ]
