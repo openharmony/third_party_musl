@@ -554,10 +554,6 @@ template("musl_libs") {
       }
     }
 
-    foreach(s, musl_src_files_ext) {
-      sources_orig += [ "${s}" ]
-    }
-
     defines = []
     if (musl_arch == "arm") {
       defines += [ "MUSL_ARM_ARCH" ]
@@ -939,13 +935,13 @@ template("musl_libs") {
 
   source_set("soft_musl_hook") {
     sources = [
-      "./src/hook/malloc_common.c",
-      "./src/hook/memory_trace.c",
-      "./src/hook/musl_preinit.c",
-      "./src/hook/musl_preinit_common.c",
-      "./src/hook/musl_socket_preinit.c",
-      "./src/hook/musl_socket_preinit_common.c",
-      "./src/hook/socket_common.c",
+      "./src/hook/linux/malloc_common.c",
+      "./src/hook/linux/memory_trace.c",
+      "./src/hook/linux/musl_preinit.c",
+      "./src/hook/linux/musl_preinit_common.c",
+      "./src/hook/linux/musl_socket_preinit.c",
+      "./src/hook/linux/musl_socket_preinit_common.c",
+      "./src/hook/linux/socket_common.c",
     ]
 
     deps = [

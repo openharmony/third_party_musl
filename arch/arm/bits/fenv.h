@@ -9,16 +9,10 @@
 #define FE_INEXACT    16
 #define FE_ALL_EXCEPT 31
 #define FE_TONEAREST  0
-#ifdef __LITEOS__
-#define FE_DOWNWARD   0x800000
-#define FE_UPWARD     0x400000
-#endif
 #define FE_TOWARDZERO 0xc00000
 #endif
-#ifndef __LITEOS__
 #define FE_DOWNWARD   0x800000
 #define FE_UPWARD     0x400000
-#endif
 
 typedef unsigned long fexcept_t;
 
