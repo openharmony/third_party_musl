@@ -92,6 +92,7 @@ echo Mkdir done.
 
 
 ${CMD} file send ${TESTDIR} ${REMOTE}/src
+${CMD} shell mv ${REMOTE}/src/libc-test/* ${REMOTE}/src
 for lib in ${DYNLIB}/*; do
     echo $lib
     ${CMD} file send $lib ${REMOTE}/src
