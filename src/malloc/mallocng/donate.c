@@ -20,7 +20,7 @@ static void donate(unsigned char *base, size_t len)
 		m->avail_mask = 0;
 		m->freed_mask = 1;
 		m->mem = (void *)a;
-		m->mem->meta = m;
+		m->mem->meta = encode_ptr(m, ctx.secret);
 		m->last_idx = 0;
 		m->freeable = 0;
 		m->sizeclass = sc;

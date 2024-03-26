@@ -1,3 +1,7 @@
+#ifndef __LITEOS__
+#include "syscall_hooks.h"
+#endif
+
 #define __SYSCALL_LL_E(x) (x)
 #define __SYSCALL_LL_O(x) (x)
 
@@ -9,6 +13,11 @@
 
 static inline long __syscall0(long n)
 {
+#ifndef __LITEOS__
+	if (is_syscall_hooked(n)) {
+		return __syscall_hooks_entry0(n);
+	}
+#endif
 	register long x8 __asm__("x8") = n;
 	register long x0 __asm__("x0");
 	__asm_syscall("r"(x8));
@@ -16,6 +25,11 @@ static inline long __syscall0(long n)
 
 static inline long __syscall1(long n, long a)
 {
+#ifndef __LITEOS__
+	if (is_syscall_hooked(n)) {
+		return __syscall_hooks_entry1(n, a);
+	}
+#endif
 	register long x8 __asm__("x8") = n;
 	register long x0 __asm__("x0") = a;
 	__asm_syscall("r"(x8), "0"(x0));
@@ -23,6 +37,11 @@ static inline long __syscall1(long n, long a)
 
 static inline long __syscall2(long n, long a, long b)
 {
+#ifndef __LITEOS__
+	if (is_syscall_hooked(n)) {
+		return __syscall_hooks_entry2(n, a, b);
+	}
+#endif
 	register long x8 __asm__("x8") = n;
 	register long x0 __asm__("x0") = a;
 	register long x1 __asm__("x1") = b;
@@ -31,6 +50,11 @@ static inline long __syscall2(long n, long a, long b)
 
 static inline long __syscall3(long n, long a, long b, long c)
 {
+#ifndef __LITEOS__
+	if (is_syscall_hooked(n)) {
+		return __syscall_hooks_entry3(n, a, b, c);
+	}
+#endif
 	register long x8 __asm__("x8") = n;
 	register long x0 __asm__("x0") = a;
 	register long x1 __asm__("x1") = b;
@@ -40,6 +64,11 @@ static inline long __syscall3(long n, long a, long b, long c)
 
 static inline long __syscall4(long n, long a, long b, long c, long d)
 {
+#ifndef __LITEOS__
+	if (is_syscall_hooked(n)) {
+		return __syscall_hooks_entry4(n, a, b, c, d);
+	}
+#endif
 	register long x8 __asm__("x8") = n;
 	register long x0 __asm__("x0") = a;
 	register long x1 __asm__("x1") = b;
@@ -50,6 +79,11 @@ static inline long __syscall4(long n, long a, long b, long c, long d)
 
 static inline long __syscall5(long n, long a, long b, long c, long d, long e)
 {
+#ifndef __LITEOS__
+	if (is_syscall_hooked(n)) {
+		return __syscall_hooks_entry5(n, a, b, c, d, e);
+	}
+#endif
 	register long x8 __asm__("x8") = n;
 	register long x0 __asm__("x0") = a;
 	register long x1 __asm__("x1") = b;
@@ -61,6 +95,11 @@ static inline long __syscall5(long n, long a, long b, long c, long d, long e)
 
 static inline long __syscall6(long n, long a, long b, long c, long d, long e, long f)
 {
+#ifndef __LITEOS__
+	if (is_syscall_hooked(n)) {
+		return __syscall_hooks_entry6(n, a, b, c, d, e, f);
+	}
+#endif
 	register long x8 __asm__("x8") = n;
 	register long x0 __asm__("x0") = a;
 	register long x1 __asm__("x1") = b;
@@ -74,5 +113,11 @@ static inline long __syscall6(long n, long a, long b, long c, long d, long e, lo
 #define VDSO_USEFUL
 #define VDSO_CGT_SYM "__kernel_clock_gettime"
 #define VDSO_CGT_VER "LINUX_2.6.39"
+#ifndef __LITEOS__
+#define VDSO_CGR_SYM "__kernel_clock_getres"
+#define VDSO_CGR_VER "LINUX_2.6.39"
+#define VDSO_GTD_SYM "__kernel_gettimeofday"
+#define VDSO_GTD_VER "LINUX_2.6.39"
+#endif
 
 #define IPC_64 0

@@ -26,6 +26,9 @@ extern hidden uintptr_t __a_barrier_ptr, __a_cas_ptr, __a_gettp_ptr;
 
 int __set_thread_area(void *p)
 {
+#if defined(SYS_set_thread_area) && defined(__LITEOS_A__)
+	return __syscall(SYS_set_thread_area, p);
+#else
 #if !__ARM_ARCH_7A__ && !__ARM_ARCH_7R__ && __ARM_ARCH < 7
 	if (__hwcap & HWCAP_TLS) {
 		size_t *aux;
@@ -49,4 +52,5 @@ int __set_thread_area(void *p)
 	}
 #endif
 	return __syscall(0xf0005, p);
+#endif
 }

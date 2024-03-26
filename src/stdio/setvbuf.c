@@ -12,6 +12,7 @@ int setvbuf(FILE *restrict f, char *restrict buf, int type, size_t size)
 
 	if (type == _IONBF) {
 		f->buf_size = 0;
+		f->flags |= F_NOBUF;
 	} else if (type == _IOLBF || type == _IOFBF) {
 		if (buf && size >= UNGET) {
 			f->buf = (void *)(buf + UNGET);
@@ -19,6 +20,7 @@ int setvbuf(FILE *restrict f, char *restrict buf, int type, size_t size)
 		}
 		if (type == _IOLBF && f->buf_size)
 			f->lbf = '\n';
+		f->flags &= ~F_NOBUF;
 	} else {
 		return -1;
 	}

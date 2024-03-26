@@ -1,6 +1,7 @@
 #include <sys/sem.h>
 #include <limits.h>
 #include <errno.h>
+#include <unsupported_api.h>
 #include "syscall.h"
 #include "ipc.h"
 
@@ -10,6 +11,7 @@ int semget(key_t key, int n, int fl)
 	 * of struct semid_ds, and thus might not check that the
 	 * n fits in the correct (per POSIX) userspace type, so
 	 * we have to check here. */
+	UNSUPPORTED_API_VOID(LITEOS_A);
 	if (n > USHRT_MAX) return __syscall_ret(-EINVAL);
 #ifndef SYS_ipc
 	return syscall(SYS_semget, key, n, fl);

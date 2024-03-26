@@ -117,6 +117,7 @@ FILE *fmemopen(void *restrict buf, size_t size, const char *restrict mode)
 	else if (plus) *f->c.buf = 0;
 
 	f->f.read = mread;
+	f->f.readx = mread;
 	f->f.write = mwrite;
 	f->f.seek = mseek;
 	f->f.close = mclose;

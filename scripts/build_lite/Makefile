@@ -126,11 +126,25 @@ musl_patch_for_liteos_a_user: nuttx_header_install_for_liteos_a_user
 musl_patch_for_liteos_a_user: linux_header_install_for_liteos_a_user
 musl_patch_for_liteos_a_user: optimized_routines_install_for_liteos_a_user
 musl_patch_for_liteos_a_user: musl_copy_for_liteos_a_user
-	$(HIDE) cp -rfp $(MUSLDIR)/porting/liteos_a/user/* $</
+	$(HIDE) cd musl_copy_for_liteos_a_user && \
+	mv -f arch/arm/bits/liteos_a/* arch/arm/bits/ && \
+	mv -f src/linux/liteos_a/* src/linux/ && \
+	mv -f src/misc/liteos_a/* src/misc/ && \
+	mv -f src/signal/liteos_a/* src/signal/ && \
+	mv -f src/signal/arm/liteos_a/* src/signal/arm/ && \
+	mv -f src/stdlib/liteos_a/* src/stdlib/ && \
+	mv -f src/string/arm/liteos_a/* src/string/arm/ && \
+	mv -f src/thread/liteos_a/* src/thread/ && \
+	mv -f src/unistd/liteos_a/* src/unistd/ && \
+	mv -f src/network/liteos_a/* src/network/ && \
+	cd ..
 
 musl_patch_for_liteos_a_user_debug: musl_patch_for_liteos_a_user
 musl_patch_for_liteos_a_user_debug: musl_copy_for_liteos_a_user
-	$(HIDE) cp -rfp $(MUSLDIR)/porting/liteos_a/user_debug/* $</
+	$(HIDE) cd musl_copy_for_liteos_a_user && \
+	mv -f include/liteos_a/user_debug/* include/ && \
+	mv -f src/malloc/liteos_a/user_debug/* src/malloc/ && \
+	cd ..
 
 ifeq ($(BUILD_DEBUG),true)
 ifeq ($(GCC),)
@@ -138,7 +152,7 @@ musl_install_for_liteos_a_user: LDFLAGS = $(shell $(CC) -print-file-name=libunwi
 musl_install_for_liteos_a_user: SED_ARGS += -e 's,$$(AR) rc $$@ $$(AOBJS)$$,cp $$(shell $$(CC) -print-file-name=libunwind.a) $$@ \&\& &,g'
 endif
 musl_install_for_liteos_a_user: SED_ARGS += -e 's,CFLAGS_ALL += -DCRT$$,& -fno-unwind-tables -fno-asynchronous-unwind-tables,g'
-musl_install_for_liteos_a_user: CFLAGS += -funwind-tables -fasynchronous-unwind-tables -rdynamic -I $(shell $(CC) "-print-file-name=include")
+musl_install_for_liteos_a_user: CFLAGS += -funwind-tables -fasynchronous-unwind-tables -rdynamic -D__LITEOS_A__ -DFEATURE_PTHREAD_CANCEL -I $(shell $(CC) "-print-file-name=include")
 musl_install_for_liteos_a_user: musl_patch_for_liteos_a_user_debug
 endif
 
@@ -170,12 +184,45 @@ musl_patch_for_linux_user: linux_header_install_for_linux_user
 endif
 
 musl_patch_for_linux_user: musl_copy_for_linux_user
-	$(HIDE) cp -rfp $(MUSLDIR)/porting/linux/user/* $</
+	$(HIDE) cp -rfp $(MUSLDIR)/scripts/linux/* $</ && \
+	cd musl_copy_for_linux_user && \
+	mv -f crt/linux/* crt/ && \
+	mv -f include/fortify/linux/* include/fortify/ && \
+	mv -f include/info/linux/* include/info/ && \
+	mv -f include/linux/* include/ && \
+	mv -f include/sys/linux/* include/sys/ && \
+	mv -f include/trace/linux/* include/trace/ && \
+	mv -f ldso/linux/* ldso/ && \
+	mv -f src/exit/linux/* src/exit/ && \
+	mv -f src/fortify/linux/* src/fortify/ && \
+	mv -f src/gwp_asan/linux/* src/gwp_asan/ && \
+	mv -f src/hilog/linux/* src/hilog/ && \
+	mv -f src/hook/linux/* src/hook/ && \
+	mv -f src/info/linux/* src/info/ && \
+	mv -f src/internal/linux/* src/internal/ && \
+	mv -f src/ldso/aarch64/linux/* src/ldso/aarch64/ && \
+	mv -f src/ldso/arm/linux/* src/ldso/arm/ && \
+	mv -f src/ldso/riscv64/linux/* src/ldso/riscv64/ && \
+	mv -f src/ldso/x86_64/linux/* src/ldso/x86_64/ && \
+	mv -f src/linux/aarch64/linux/* src/linux/aarch64/ && \
+	mv -f src/linux/arm/linux/* src/linux/arm/ && \
+	mv -f src/linux/linux/* src/linux/ && \
+	mv -f src/linux/x86_64/linux/* src/linux/x86_64/ && \
+	mv -f src/malloc/jemalloc/linux/* src/malloc/jemalloc/ && \
+	mv -f src/malloc/linux/* src/malloc/ && \
+	mv -f src/misc/aarch64/linux/* src/misc/aarch64/ && \
+	mv -f src/sigchain/linux/* src/sigchain/ && \
+	mv -f src/trace/linux/* src/trace/ && \
+	mv -f src/network/linux/* src/network/ && \
+	mv -f src/signal/linux/* src/signal/ && \
+	mv -f src/thread/linux/* src/thread/ && \
+	mv -f src/fdsan/linux/* src/fdsan/ && \
+	cd ..
 
 LIBCXXDIR = $(TOPDIR)/prebuilts/clang/ohos/linux-x86_64/llvm/lib/clang/15.0.4/include
 musl_install_for_linux_user: LDFLAGS = $(shell $(CC) -print-file-name=libunwind.a) -Wl,--no-dependent-libraries
 musl_install_for_linux_user: SED_ARGS += -e 's,$$(AR) rc $$@ $$(AOBJS)$$,cp $$(shell $$(CC) -print-file-name=libunwind.a) $$@ \&\& &,g'
-musl_install_for_linux_user: CFLAGS += -fno-omit-frame-pointer -funwind-tables -fasynchronous-unwind-tables -rdynamic -I $(LINUXHDRDIR) -I $(LIBCXXDIR)
+musl_install_for_linux_user: CFLAGS += -fno-omit-frame-pointer -funwind-tables -fasynchronous-unwind-tables -rdynamic -D__HISPARK_LINUX__ -I $(LINUXHDRDIR) -I $(LIBCXXDIR)
 ifeq ($(GCC),)
 musl_install_for_linux_user: TARGET = $(ARCH)-linux-ohos
 endif

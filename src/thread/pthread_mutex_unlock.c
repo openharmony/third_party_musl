@@ -16,7 +16,11 @@ int __pthread_mutex_unlock(pthread_mutex_t *m)
 		int own = old & 0x3fffffff;
 		if (own != self->tid)
 			return EPERM;
+#ifdef __LITEOS_A__
+		if ((type & PTHREAD_MUTEX_TYPE_MASK) == PTHREAD_MUTEX_RECURSIVE && m->_m_count)
+#else
 		if ((type&3) == PTHREAD_MUTEX_RECURSIVE && m->_m_count)
+#endif
 			return m->_m_count--, 0;
 		if ((type&4) && (old&0x40000000))
 			new = 0x7fffffff;
@@ -30,6 +34,9 @@ int __pthread_mutex_unlock(pthread_mutex_t *m)
 		if (next != &self->robust_list.head) *(volatile void *volatile *)
 			((char *)next - sizeof(void *)) = prev;
 	}
+#ifdef __LITEOS_A__
+	cont = a_swap(&m->_m_lock, new);
+#else
 	if (type&8) {
 		if (old<0 || a_cas(&m->_m_lock, old, new)!=old) {
 			if (new) a_store(&m->_m_waiters, -1);
@@ -40,6 +47,8 @@ int __pthread_mutex_unlock(pthread_mutex_t *m)
 	} else {
 		cont = a_swap(&m->_m_lock, new);
 	}
+#endif
+
 	if (type != PTHREAD_MUTEX_NORMAL && !priv) {
 		self->robust_list.pending = 0;
 		__vm_unlock();

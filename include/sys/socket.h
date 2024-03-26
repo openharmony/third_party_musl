@@ -19,6 +19,10 @@ extern "C" {
 
 #include <bits/socket.h>
 
+#if defined(__MUSL__) && (!defined(__LITEOS__))
+#include <linux/socket.h>
+#endif
+
 struct msghdr {
 	void *msg_name;
 	socklen_t msg_namelen;
@@ -371,11 +375,13 @@ struct sockaddr {
 	char sa_data[14];
 };
 
+#if (!defined(__MUSL__)) || defined(__LITEOS__)
 struct sockaddr_storage {
 	sa_family_t ss_family;
 	char __ss_padding[128-sizeof(long)-sizeof(sa_family_t)];
 	unsigned long __ss_align;
 };
+#endif
 
 int socket (int, int, int);
 int socketpair (int, int, int, int [2]);
@@ -409,6 +415,9 @@ __REDIR(recvmmsg, __recvmmsg_time64);
 #endif
 #endif
 
+#ifndef __LITEOS__
+#include <fortify/socket.h>
+#endif
 #ifdef __cplusplus
 }
 #endif

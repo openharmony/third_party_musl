@@ -6,6 +6,17 @@
 
 int getrlimit(int resource, struct rlimit *rlim)
 {
+#ifdef __LITEOS_A__
+	unsigned long long k_rlim[2];
+
+	if (syscall(SYS_getrlimit, resource, k_rlim) < 0)
+		return -1;
+
+	rlim->rlim_cur = k_rlim[0];
+	rlim->rlim_max = k_rlim[1];
+
+	return 0;
+#else
 	unsigned long k_rlim[2];
 	int ret = syscall(SYS_prlimit64, 0, resource, 0, rlim);
 	if (!ret) {
@@ -21,6 +32,7 @@ int getrlimit(int resource, struct rlimit *rlim)
 	FIX(rlim->rlim_cur);
 	FIX(rlim->rlim_max);
 	return 0;
+#endif
 }
 
 weak_alias(getrlimit, getrlimit64);

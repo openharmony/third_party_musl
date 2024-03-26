@@ -1,3 +1,6 @@
+#ifndef __TIME_IMPL_H__
+#define __TIME_IMPL_H__
+
 #include <time.h>
 
 hidden int __days_in_month(int, int);
@@ -9,3 +12,6 @@ hidden int __secs_to_tm(long long, struct tm *);
 hidden void __secs_to_zone(long long, int, int *, long *, long *, const char **);
 hidden const char *__strftime_fmt_1(char (*)[100], size_t *, int, const struct tm *, locale_t, int);
 extern hidden const char __utc[];
+extern hidden const char __gmt[];
+
+#endif

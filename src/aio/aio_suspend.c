@@ -1,6 +1,7 @@
 #include <aio.h>
 #include <errno.h>
 #include <time.h>
+#include <unsupported_api.h>
 #include "atomic.h"
 #include "pthread_impl.h"
 #include "aio_impl.h"
@@ -13,6 +14,7 @@ int aio_suspend(const struct aiocb *const cbs[], int cnt, const struct timespec 
 	int nzcnt = 0;
 	const struct aiocb *cb = 0;
 
+	UNSUPPORTED_API_VOID(LITEOS_A);
 	pthread_testcancel();
 
 	if (cnt<0) {

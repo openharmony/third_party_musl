@@ -50,6 +50,9 @@ __REDIR(ppoll, __ppoll_time64);
 #endif
 #endif
 
+#ifndef __LITEOS__
+#include <fortify/poll.h>
+#endif
 #ifdef __cplusplus
 }
 #endif

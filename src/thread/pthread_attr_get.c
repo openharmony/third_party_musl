@@ -1,4 +1,5 @@
 #include "pthread_impl.h"
+#include <unsupported_api.h>
 
 int pthread_attr_getdetachstate(const pthread_attr_t *a, int *state)
 {
@@ -31,7 +32,11 @@ int pthread_attr_getschedpolicy(const pthread_attr_t *restrict a, int *restrict 
 
 int pthread_attr_getscope(const pthread_attr_t *restrict a, int *restrict scope)
 {
+#ifdef __LITEOS_A__
+	*scope = PTHREAD_SCOPE_PROCESS;
+#else
 	*scope = PTHREAD_SCOPE_SYSTEM;
+#endif
 	return 0;
 }
 
@@ -70,6 +75,7 @@ int pthread_condattr_getpshared(const pthread_condattr_t *restrict a, int *restr
 
 int pthread_mutexattr_getprotocol(const pthread_mutexattr_t *restrict a, int *restrict protocol)
 {
+	UNSUPPORTED_API_VOID(LITEOS_A);
 	*protocol = a->__attr / 8U % 2;
 	return 0;
 }

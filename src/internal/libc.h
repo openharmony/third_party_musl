@@ -4,11 +4,13 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <limits.h>
+#include <link.h>
+#include <locale.h>
 
 struct __locale_map;
 
 struct __locale_struct {
-	const struct __locale_map *cat[6];
+	const struct __locale_map *cat[LC_ALL];
 };
 
 struct tls_module {
@@ -28,6 +30,13 @@ struct __libc {
 	size_t tls_size, tls_align, tls_cnt;
 	size_t page_size;
 	struct __locale_struct global_locale;
+#ifdef ENABLE_HWASAN
+	void (*load_hook)(unsigned long int base, const Elf64_Phdr* phdr, int phnum);
+	void (*unload_hook)(unsigned long int base, const Elf64_Phdr* phdr, int phnum);
+#endif
+#ifdef __LITEOS_A__
+	int exit;
+#endif
 };
 
 #ifndef PAGE_SIZE
@@ -45,6 +54,10 @@ hidden void __funcs_on_exit(void);
 hidden void __funcs_on_quick_exit(void);
 hidden void __libc_exit_fini(void);
 hidden void __fork_handler(int);
+#ifdef __LITEOS_A__
+hidden void __sig_init(void);
+hidden void arm_do_signal(int);
+#endif
 
 extern hidden size_t __hwcap;
 extern hidden size_t __sysinfo;

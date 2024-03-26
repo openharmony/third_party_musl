@@ -1,9 +1,12 @@
 #include <time.h>
 #include <limits.h>
+#include <unsupported_api.h>
 
 clock_t clock()
 {
 	struct timespec ts;
+
+	UNSUPPORTED_API_VOID(LITEOS_A);
 
 	if (__clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &ts))
 		return -1;

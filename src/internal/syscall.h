@@ -55,8 +55,13 @@ hidden long __syscall_ret(unsigned long),
 #define __syscall_cp5(n,a,b,c,d,e) (__syscall_cp)(n,__scc(a),__scc(b),__scc(c),__scc(d),__scc(e),0)
 #define __syscall_cp6(n,a,b,c,d,e,f) (__syscall_cp)(n,__scc(a),__scc(b),__scc(c),__scc(d),__scc(e),__scc(f))
 
+#ifdef FEATURE_PTHREAD_CANCEL
 #define __syscall_cp(...) __SYSCALL_DISP(__syscall_cp,__VA_ARGS__)
 #define syscall_cp(...) __syscall_ret(__syscall_cp(__VA_ARGS__))
+#else
+#define __syscall_cp(...) __SYSCALL_DISP(__syscall,__VA_ARGS__)
+#define syscall_cp(...) __syscall_ret(__syscall(__VA_ARGS__))
+#endif
 
 static inline long __alt_socketcall(int sys, int sock, int cp, long a, long b, long c, long d, long e, long f)
 {
@@ -286,8 +291,10 @@ static inline long __alt_socketcall(int sys, int sock, int cp, long a, long b, l
 #define SYS_utimensat SYS_utimensat_time64
 #endif
 
+#ifdef __LITEOS__
 #ifndef SYS_pselect6
 #define SYS_pselect6 SYS_pselect6_time64
+#endif
 #endif
 
 #ifndef SYS_ppoll
@@ -395,4 +402,8 @@ hidden void __procfdname(char __buf[static 15+3*sizeof(int)], unsigned);
 
 hidden void *__vdsosym(const char *, const char *);
 
+#ifndef __LITEOS__
+hidden void __get_vdso_info();
+hidden void *__get_vdso_addr(const char *, const char *);
+#endif
 #endif

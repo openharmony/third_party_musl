@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <sys/auxv.h>
+#include <unsupported_api.h>
 #include "syscall.h"
 #include "atomic.h"
 #include "pthread_impl.h"
@@ -197,7 +198,9 @@ static void cleanup(void *ctx)
 		__syscall(SYS_rt_sigqueueinfo, si.si_pid, si.si_signo, &si);
 	}
 	if (sev.sigev_notify == SIGEV_THREAD) {
+#ifdef FEATURE_PTHREAD_CANCEL
 		a_store(&__pthread_self()->cancel, 0);
+#endif
 		sev.sigev_notify_function(sev.sigev_value);
 	}
 }
@@ -323,16 +326,19 @@ static int submit(struct aiocb *cb, int op)
 
 int aio_read(struct aiocb *cb)
 {
+	UNSUPPORTED_API_VOID(LITEOS_A);
 	return submit(cb, LIO_READ);
 }
 
 int aio_write(struct aiocb *cb)
 {
+	UNSUPPORTED_API_VOID(LITEOS_A);
 	return submit(cb, LIO_WRITE);
 }
 
 int aio_fsync(int op, struct aiocb *cb)
 {
+	UNSUPPORTED_API_VOID(LITEOS_A);
 	if (op != O_SYNC && op != O_DSYNC) {
 		errno = EINVAL;
 		return -1;
@@ -342,11 +348,13 @@ int aio_fsync(int op, struct aiocb *cb)
 
 ssize_t aio_return(struct aiocb *cb)
 {
+	UNSUPPORTED_API_VOID(LITEOS_A);
 	return cb->__ret;
 }
 
 int aio_error(const struct aiocb *cb)
 {
+	UNSUPPORTED_API_VOID(LITEOS_A);
 	a_barrier();
 	return cb->__err & 0x7fffffff;
 }
@@ -358,6 +366,7 @@ int aio_cancel(int fd, struct aiocb *cb)
 	struct aio_thread *p;
 	struct aio_queue *q;
 
+	UNSUPPORTED_API_VOID(LITEOS_A);
 	/* Unspecified behavior case. Report an error. */
 	if (cb && fd != cb->aio_fildes) {
 		errno = EINVAL;
@@ -377,7 +386,11 @@ int aio_cancel(int fd, struct aiocb *cb)
 		if (cb && cb != p->cb) continue;
 		/* Transition target from running to running-with-waiters */
 		if (a_cas(&p->running, 1, -1)) {
+#ifdef FEATURE_PTHREAD_CANCEL
 			pthread_cancel(p->td);
+#else
+			__syscall(SYS_tkill, p->td->tid, SIGCANCEL);
+#endif
 			__wait(&p->running, 0, -1, 1);
 			if (p->err == ECANCELED) ret = AIO_CANCELED;
 		}

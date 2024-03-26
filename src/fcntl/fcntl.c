@@ -11,7 +11,9 @@ int fcntl(int fd, int cmd, ...)
 	va_start(ap, cmd);
 	arg = va_arg(ap, unsigned long);
 	va_end(ap);
+#ifndef __LITEOS_A__
 	if (cmd == F_SETFL) arg |= O_LARGEFILE;
+#endif
 	if (cmd == F_SETLKW) return syscall_cp(SYS_fcntl, fd, cmd, (void *)arg);
 	if (cmd == F_GETOWN) {
 		struct f_owner_ex ex;

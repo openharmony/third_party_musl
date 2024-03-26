@@ -1,6 +1,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <unsupported_api.h>
 
 int lockf(int fd, int op, off_t size)
 {
@@ -9,6 +10,8 @@ int lockf(int fd, int op, off_t size)
 		.l_whence = SEEK_CUR,
 		.l_len = size,
 	};
+
+	UNSUPPORTED_API_VOID(LITEOS_A);
 	switch (op) {
 	case F_TEST:
 		l.l_type = F_RDLCK;

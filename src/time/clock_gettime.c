@@ -33,10 +33,19 @@ static int cgt_time32_wrap(clockid_t clk, struct timespec *ts)
 
 static int cgt_init(clockid_t clk, struct timespec *ts)
 {
+#ifndef __LITEOS__
+	__get_vdso_info();
+	void *p = __get_vdso_addr(VDSO_CGT_VER, VDSO_CGT_SYM);
+#else
 	void *p = __vdsosym(VDSO_CGT_VER, VDSO_CGT_SYM);
+#endif
 #ifdef VDSO_CGT32_SYM
 	if (!p) {
+#ifndef __LITEOS__
+		void *q = __get_vdso_addr(VDSO_CGT32_VER, VDSO_CGT32_SYM);
+#else
 		void *q = __vdsosym(VDSO_CGT32_VER, VDSO_CGT32_SYM);
+#endif
 		if (q) {
 			a_cas_p(&vdso_func_32, 0, q);
 			p = cgt_time32_wrap;

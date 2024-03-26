@@ -19,6 +19,22 @@ const char *__lctrans_impl(const char *msg, const struct __locale_map *lm)
 	return trans ? trans : msg;
 }
 
+#ifndef __LITEOS__
+static const char envvars[][18] = {
+	"LC_CTYPE",
+	"LC_NUMERIC",
+	"LC_TIME",
+	"LC_COLLATE",
+	"LC_MONETARY",
+	"LC_MESSAGES",
+	"LC_PAPER",
+	"LC_NAME",
+	"LC_ADDRESS",
+	"LC_TELEPHONE",
+	"LC_MEASUREMENT",
+	"LC_IDENTIFICATION",
+};
+#else
 static const char envvars[][12] = {
 	"LC_CTYPE",
 	"LC_NUMERIC",
@@ -27,6 +43,7 @@ static const char envvars[][12] = {
 	"LC_MONETARY",
 	"LC_MESSAGES",
 };
+#endif
 
 volatile int __locale_lock[1];
 volatile int *const __locale_lockptr = __locale_lock;
@@ -51,8 +68,13 @@ const struct __locale_map *__get_locale(int cat, const char *val)
 	for (n=0; n<LOCALE_NAME_MAX && val[n] && val[n]!='/'; n++);
 	if (val[0]=='.' || val[n]) val = "C.UTF-8";
 	int builtin = (val[0]=='C' && !val[1])
+#ifndef __LITEOS__
+		|| !strcmp(val, "POSIX")
+		|| !strcmp(val, "en_US");
+#else
 		|| !strcmp(val, "C.UTF-8")
 		|| !strcmp(val, "POSIX");
+#endif
 
 	if (builtin) {
 		if (cat == LC_CTYPE && val[1]=='.')
@@ -62,6 +84,22 @@ const struct __locale_map *__get_locale(int cat, const char *val)
 
 	for (p=loc_head; p; p=p->next)
 		if (!strcmp(val, p->name)) return p;
+
+	if (!strcmp(val, "en_US.UTF-8") || !strcmp(val, "C.UTF-8")) {
+		/* If no locale definition was found, make a locale map
+		* object anyway to store the name, which is kept for the
+		* sake of being able to do message translations at the
+		* application level. */
+		if (!new && (new = malloc(sizeof *new))) {
+			new->map = __c_dot_utf8.map;
+			new->map_size = __c_dot_utf8.map_size;
+			memcpy(new->name, val, n);
+			new->name[n] = 0;
+			new->next = loc_head;
+			new->flag = VALID;
+			loc_head = new;
+		}
+	}
 
 	if (!libc.secure) path = getenv("MUSL_LOCPATH");
 	/* FIXME: add a default path? */
@@ -87,6 +125,7 @@ const struct __locale_map *__get_locale(int cat, const char *val)
 			memcpy(new->name, val, n);
 			new->name[n] = 0;
 			new->next = loc_head;
+			new->flag = VALID;
 			loc_head = new;
 			break;
 		}
@@ -102,6 +141,7 @@ const struct __locale_map *__get_locale(int cat, const char *val)
 		memcpy(new->name, val, n);
 		new->name[n] = 0;
 		new->next = loc_head;
+		new->flag = INVALID;
 		loc_head = new;
 	}
 

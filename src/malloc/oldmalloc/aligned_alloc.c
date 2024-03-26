@@ -2,6 +2,9 @@
 #include <stdint.h>
 #include <errno.h>
 #include "malloc_impl.h"
+#ifdef __LITEOS_A__
+#include "dynlink.h"
+#endif
 
 void *aligned_alloc(size_t align, size_t len)
 {

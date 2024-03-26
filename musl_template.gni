@@ -119,9 +119,9 @@ template("musl_libs") {
       "${target_out_dir}/${musl_ported_dir}/src/include",
       "${target_out_dir}/${musl_ported_dir}/src/gwp_asan",
       "${target_out_dir}/${musl_ported_dir}/src/hook",
+      "${target_out_dir}/${musl_ported_dir}/src/network",
       "${target_out_dir}/${musl_ported_dir}/include",
       "${target_out_dir}/${musl_inc_out_dir}",
-      "${clang_base_path}/lib/clang/${clang_version}/include",
     ]
 
     cflags_basic = [
@@ -935,13 +935,13 @@ template("musl_libs") {
 
   source_set("soft_musl_hook") {
     sources = [
-      "./porting/linux/user/src/hook/malloc_common.c",
-      "./porting/linux/user/src/hook/memory_trace.c",
-      "./porting/linux/user/src/hook/musl_preinit.c",
-      "./porting/linux/user/src/hook/musl_preinit_common.c",
-      "./porting/linux/user/src/hook/musl_socket_preinit.c",
-      "./porting/linux/user/src/hook/musl_socket_preinit_common.c",
-      "./porting/linux/user/src/hook/socket_common.c",
+      "./src/hook/linux/malloc_common.c",
+      "./src/hook/linux/memory_trace.c",
+      "./src/hook/linux/musl_preinit.c",
+      "./src/hook/linux/musl_preinit_common.c",
+      "./src/hook/linux/musl_socket_preinit.c",
+      "./src/hook/linux/musl_socket_preinit_common.c",
+      "./src/hook/linux/socket_common.c",
     ]
 
     deps = [
