@@ -209,6 +209,17 @@ int __libc_current_sigrtmax(void);
 
 #define SIGRTMIN  (__libc_current_sigrtmin())
 #define SIGRTMAX  (__libc_current_sigrtmax())
+#define MUSL_SIGNAL_NATIVE_REMOTE (SIGRTMIN + 0)
+#define MUSL_SIGNAL_HOOK (SIGRTMIN + 1)
+#define MUSL_SIGNAL_UNHOOK (SIGRTMIN + 2)
+#define MUSL_SIGNAL_NATIVE_LOCAL (SIGRTMIN + 3)
+#define MUSL_SIGNAL_JSHEAP (SIGRTMIN + 4)
+#define MUSL_SIGNAL_JSHEAP_PRIV (SIGRTMIN + 5)
+#define MUSL_SIGNAL_LEAK_STACK (SIGRTMIN + 7)
+#ifdef USE_JEMALLOC_RECYCLE_FUNC
+#define MUSL_SIGNAL_RECYCLE_JEMALLOC (SIGRTMIN + 8)
+#endif
+#define MUSL_SIGNAL_MEMCHECK (SIGRTMIN + 9)
 
 int kill(pid_t, int);
 

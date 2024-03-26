@@ -1,5 +1,4 @@
 #include <signal.h>
-#include "syscall.h"
 
 void (*signal(int sig, void (*func)(int)))(int)
 {

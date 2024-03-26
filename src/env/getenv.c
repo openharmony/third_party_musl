@@ -4,10 +4,21 @@
 
 char *getenv(const char *name)
 {
-	size_t l = __strchrnul(name, '=') - name;
-	if (l && !name[l] && __environ)
-		for (char **e = __environ; *e; e++)
-			if (!strncmp(name, *e, l) && l[*e] == '=')
-				return *e + l+1;
+	if (name == NULL || __environ == NULL)
+		return 0;
+	size_t i, l = 0;
+	const char *np;
+	char **p, *ep;
+	for (; *(name + l) && *(name + l) != '='; ++l);
+	for (p = __environ; (ep = *p) != NULL; ++p) {
+		for (np = name, i = l; i && *ep; i--) {
+			if (*ep++ != *np++) {
+				break;
+			}
+		}
+		if (i == 0 && *ep++ == '=') {
+			return (ep);
+		}
+	}
 	return 0;
 }

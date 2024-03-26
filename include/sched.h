@@ -15,7 +15,18 @@ extern "C" {
 #endif
 
 #include <bits/alltypes.h>
+#include <stddef.h>
 
+#ifdef __LITEOS_A__
+struct sched_param {
+    union {
+        int sched_priority;
+        int sched_runtime;
+    };
+    int sched_deadline;
+    int sched_period;
+};
+#else
 struct sched_param {
 	int sched_priority;
 	int __reserved1;
@@ -29,6 +40,7 @@ struct sched_param {
 #endif
 	int __reserved3;
 };
+#endif
 
 int    sched_get_priority_max(int);
 int    sched_get_priority_min(int);
@@ -85,6 +97,7 @@ void *calloc(size_t, size_t);
 void free(void *);
 
 typedef struct cpu_set_t { unsigned long __bits[128/sizeof(long)]; } cpu_set_t;
+cpu_set_t* __sched_cpualloc(size_t __count);
 int __sched_cpucount(size_t, const cpu_set_t *);
 int sched_getcpu(void);
 int sched_getaffinity(pid_t, size_t, cpu_set_t *);

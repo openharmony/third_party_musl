@@ -75,6 +75,10 @@ int wctomb (char *, wchar_t);
 size_t mbstowcs (wchar_t *__restrict, const char *__restrict, size_t);
 size_t wcstombs (char *__restrict, const wchar_t *__restrict, size_t);
 
+unsigned int arc4random(void);
+unsigned int arc4random_uniform(unsigned int);
+void arc4random_buf(void *, size_t);
+
 #define EXIT_FAILURE 1
 #define EXIT_SUCCESS 0
 
@@ -172,6 +176,9 @@ long double strtold_l(const char *__restrict, char **__restrict, struct __locale
 #endif
 #endif
 
+#ifndef __LITEOS__
+#include <fortify/stdlib.h>
+#endif
 #ifdef __cplusplus
 }
 #endif

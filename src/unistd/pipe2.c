@@ -2,10 +2,13 @@
 #include <errno.h>
 #include <fcntl.h>
 #include "syscall.h"
+#include <unsupported_api.h>
 
 int pipe2(int fd[2], int flag)
 {
 	if (!flag) return pipe(fd);
+
+	UNSUPPORTED_API_VOID(LITEOS_A);
 	int ret = __syscall(SYS_pipe2, fd, flag);
 	if (ret != -ENOSYS) return __syscall_ret(ret);
 	ret = pipe(fd);

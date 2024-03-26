@@ -92,7 +92,9 @@ sem_t *sem_open(const char *name, int flags, ...)
 					close(fd);
 					goto fail;
 				}
+#ifndef __LITEOS_A__
 				close(fd);
+#endif
 				break;
 			}
 			if (errno != ENOENT)
@@ -127,7 +129,9 @@ sem_t *sem_open(const char *name, int flags, ...)
 			unlink(tmp);
 			goto fail;
 		}
+#ifndef __LITEOS_A__
 		close(fd);
+#endif
 		e = link(tmp, name) ? errno : 0;
 		unlink(tmp);
 		if (!e) break;
@@ -170,7 +174,11 @@ int sem_close(sem_t *sem)
 	int i;
 	LOCK(lock);
 	for (i=0; i<SEM_NSEMS_MAX && semtab[i].sem != sem; i++);
+#ifdef __LITEOS_A__
+	if (!--semtab[i].refcnt) {
+#else
 	if (--semtab[i].refcnt) {
+#endif
 		UNLOCK(lock);
 		return 0;
 	}

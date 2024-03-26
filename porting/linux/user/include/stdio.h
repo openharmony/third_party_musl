@@ -219,20 +219,20 @@ FILE *fopencookie(void *, const char *, cookie_io_functions_t);
 #endif
 
 enum fdsan_owner_type {
-	FDSAN_OWNER_TYPE_GENERIC_00 = 0,
-	FDSAN_OWNER_TYPE_GENERIC_FF = 255,
+	FDSAN_OWNER_TYPE_DEFAULT = 0,
+	FDSAN_OWNER_TYPE_MAX = 255,
 
 	/* FILE* */
 	FDSAN_OWNER_TYPE_FILE = 1,
 
 	/* DIR* */
-	FDSAN_OWNER_TYPE_DIR = 2,
+	FDSAN_OWNER_TYPE_DIRECTORY = 2,
 
 	/* unique_fd */
 	FDSAN_OWNER_TYPE_UNIQUE_FD = 3,
 
 	/* ziparchive */
-	FDSAN_OWNER_TYPE_ZIPARCHIVE = 4,
+	FDSAN_OWNER_TYPE_ZIP_ARCHIVE = 4,
 };
 
 void* fdsan_get_fd_table();

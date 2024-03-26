@@ -6,6 +6,7 @@
 
 int setitimer(int which, const struct itimerval *restrict new, struct itimerval *restrict old)
 {
+#ifndef __LITEOS_A__
 	if (sizeof(time_t) > sizeof(long)) {
 		time_t is = new->it_interval.tv_sec, vs = new->it_value.tv_sec;
 		long ius = new->it_interval.tv_usec, vus = new->it_value.tv_usec;
@@ -22,5 +23,6 @@ int setitimer(int which, const struct itimerval *restrict new, struct itimerval 
 		}
 		return __syscall_ret(r);
 	}
+#endif
 	return syscall(SYS_setitimer, which, new, old);
 }

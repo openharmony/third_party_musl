@@ -23,7 +23,7 @@
 #include "fortify_test.h"
 #include "functionalext.h"
 #include "test.h"
-#include "../../../../porting/linux/user/include/fortify/fortify.h"
+#include "../../../../include/fortify/linux/fortify.h"
 
 #define SIZE_1 1
 #define SIZE_5 5

@@ -21,7 +21,8 @@ static const char c_time[] =
 	"%m/%d/%y\0"
 	"0123456789\0"
 	"%a %b %e %T %Y\0"
-	"%H:%M:%S";
+	"%H:%M:%S\0"
+	"am\0" "pm";
 
 static const char c_messages[] = "^[yY]\0" "^[nN]\0" "yes\0" "no";
 static const char c_numeric[] = ".\0" "";
@@ -44,7 +45,9 @@ char *__nl_langinfo_l(nl_item item, locale_t loc)
 		str = c_numeric;
 		break;
 	case LC_TIME:
-		if (idx > 0x31) return "";
+		if (idx > 0x33) {
+			return "";
+		}
 		str = c_time;
 		break;
 	case LC_MONETARY:

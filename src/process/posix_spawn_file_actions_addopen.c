@@ -3,10 +3,12 @@
 #include <string.h>
 #include <errno.h>
 #include "fdop.h"
+#include <unsupported_api.h>
 
 int posix_spawn_file_actions_addopen(posix_spawn_file_actions_t *restrict fa, int fd, const char *restrict path, int flags, mode_t mode)
 {
 	if (fd < 0) return EBADF;
+	UNSUPPORTED_API_VOID(LITEOS_A);
 	struct fdop *op = malloc(sizeof *op + strlen(path) + 1);
 	if (!op) return ENOMEM;
 	op->cmd = FDOP_OPEN;

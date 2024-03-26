@@ -8,6 +8,10 @@
 #include "syscall.h"
 #include "fork_impl.h"
 
+#ifdef USE_JEMALLOC
+extern void* je_malloc(size_t size);
+#endif
+
 #define ALIGN 16
 
 /* This function returns true if the interval [old,new]
@@ -112,6 +116,9 @@ void *__libc_malloc(size_t n)
 
 static void *default_malloc(size_t n)
 {
+#ifdef USE_JEMALLOC
+	return je_malloc(n);
+#endif
 	return __libc_malloc_impl(n);
 }
 

@@ -48,7 +48,11 @@ hidden void __dl_vseterr(const char *fmt, va_list ap)
 
 	while (q) {
 		void **p = *q;
+#ifndef __LITEOS__
+		__libc_free(q);
+#else
 		free(q);
+#endif
 		q = p;
 	}
 
@@ -56,11 +60,19 @@ hidden void __dl_vseterr(const char *fmt, va_list ap)
 	va_copy(ap2, ap);
 	pthread_t self = __pthread_self();
 	if (self->dlerror_buf != (void *)-1)
+#ifndef __LITEOS__
+		__libc_free(self->dlerror_buf);
+#else
 		free(self->dlerror_buf);
+#endif
 	size_t len = vsnprintf(0, 0, fmt, ap2);
 	if (len < sizeof(void *)) len = sizeof(void *);
 	va_end(ap2);
+#ifndef __LITEOS__
+	char *buf = __libc_malloc(len+1);
+#else
 	char *buf = malloc(len+1);
+#endif
 	if (buf) {
 		vsnprintf(buf, len+1, fmt, ap);
 	} else {

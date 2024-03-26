@@ -11,9 +11,16 @@
 #include <resolv.h>
 #include "lookup.h"
 #include "stdio_impl.h"
+#include "network_conf_function.h"
 
 #define PTR_MAX (64 + sizeof ".in-addr.arpa")
 #define RR_PTR 12
+#define BREAK 0
+#define CONTINUE 1
+#define FIXED_HOSTS_MAX_LENGTH 2
+#define FIXED_HOSTS_STR_MAX_LENGTH 23
+
+extern char fixed_hosts[FIXED_HOSTS_MAX_LENGTH][FIXED_HOSTS_STR_MAX_LENGTH];
 
 static char *itoa(char *p, unsigned x) {
 	p += 3*sizeof(int);
@@ -42,19 +49,32 @@ static void mkptr6(char *s, const unsigned char *ip)
 	strcpy(s, "ip6.arpa");
 }
 
+static inline int get_hosts_str(char *line, int length, FILE *f, int *i)
+{
+	if (f) {
+		return fgets(line, length, f);
+	}
+	if (*i < FIXED_HOSTS_MAX_LENGTH) {
+		memcpy(line, fixed_hosts[*i], strlen(fixed_hosts[*i]));
+		(*i)++;
+		return 1;
+	}
+	return NULL;
+}
+
 static void reverse_hosts(char *buf, const unsigned char *a, unsigned scopeid, int family)
 {
 	char line[512], *p, *z;
 	unsigned char _buf[1032], atmp[16];
 	struct address iplit;
 	FILE _f, *f = __fopen_rb_ca("/etc/hosts", &_f, _buf, sizeof _buf);
-	if (!f) return;
 	if (family == AF_INET) {
 		memcpy(atmp+12, a, 4);
 		memcpy(atmp, "\0\0\0\0\0\0\0\0\0\0\xff\xff", 12);
 		a = atmp;
 	}
-	while (fgets(line, sizeof line, f)) {
+	int i = 0;
+	while (i < FIXED_HOSTS_MAX_LENGTH && get_hosts_str(line, sizeof line, f, &i)) {
 		if ((p=strchr(line, '#'))) *p++='\n', *p=0;
 
 		for (p=line; *p && !isspace(*p); p++);
@@ -79,7 +99,9 @@ static void reverse_hosts(char *buf, const unsigned char *a, unsigned scopeid, i
 			break;
 		}
 	}
-	__fclose_ca(f);
+	if (f) {
+		__fclose_ca(f);
+	}
 }
 
 static void reverse_services(char *buf, int port, int dgram)
@@ -88,8 +110,8 @@ static void reverse_services(char *buf, int port, int dgram)
 	char line[128], *p, *z;
 	unsigned char _buf[1032];
 	FILE _f, *f = __fopen_rb_ca("/etc/services", &_f, _buf, sizeof _buf);
-	if (!f) return;
-	while (fgets(line, sizeof line, f)) {
+	int indexPtr = 0;
+	while (get_services_str(line, f, &indexPtr)) {
 		if ((p=strchr(line, '#'))) *p++='\n', *p=0;
 
 		for (p=line; *p && !isspace(*p); p++);
@@ -105,7 +127,9 @@ static void reverse_services(char *buf, int port, int dgram)
 		memcpy(buf, line, p-line);
 		break;
 	}
-	__fclose_ca(f);
+	if (f) {
+		__fclose_ca(f);
+	}
 }
 
 static int dns_parse_callback(void *c, int rr, const void *data, int len, const void *packet)

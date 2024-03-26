@@ -3,9 +3,11 @@
 #include <unistd.h>
 #include "syscall.h"
 #include "pthread_impl.h"
+#include <unsupported_api.h>
 
 int sigqueue(pid_t pid, int sig, const union sigval value)
 {
+	UNSUPPORTED_API_VOID(LITEOS_A);
 	siginfo_t si;
 	sigset_t set;
 	int r;

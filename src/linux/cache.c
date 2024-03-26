@@ -27,7 +27,12 @@ static void *volatile vdso_func;
 
 static int flush_icache_init(void *start, void *end, unsigned long int flags)
 {
+#ifndef __LITEOS__
+	__get_vdso_info();
+	void *p = __get_vdso_addr(VDSO_FLUSH_ICACHE_VER, VDSO_FLUSH_ICACHE_SYM);
+#else
 	void *p = __vdsosym(VDSO_FLUSH_ICACHE_VER, VDSO_FLUSH_ICACHE_SYM);
+#endif
 	int (*f)(void *, void *, unsigned long int) =
 		(int (*)(void *, void *, unsigned long int))p;
 	a_cas_p(&vdso_func, (void *)flush_icache_init, p);

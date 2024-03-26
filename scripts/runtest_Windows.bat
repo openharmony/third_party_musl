@@ -81,7 +81,7 @@ hdc shell chmod +x %REMOTE%/src/*
 hdc shell mount -o rw,remount /
 hdc shell chmod 777 /etc
 hdc shell cp /etc/ld-musl-namespace-%ARCH%.ini /etc/ld-musl-namespace-%ARCH%.ini.bak
-hdc file send %LOCAL%\third_party\musl\porting\linux\user\config\ld-musl-namespace-%ARCH%-test.ini ^
+hdc file send %LOCAL%\third_party\musl\config\ld-musl-namespace-%ARCH%-test.ini ^
                 /etc/ld-musl-namespace-%ARCH%.ini
 hdc shell mkdir %REMOTE%/src/A
 hdc shell mkdir %REMOTE%/src/B

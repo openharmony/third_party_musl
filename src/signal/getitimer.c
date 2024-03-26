@@ -3,6 +3,7 @@
 
 int getitimer(int which, struct itimerval *old)
 {
+#ifndef __LITEOS_A__
 	if (sizeof(time_t) > sizeof(long)) {
 		long old32[4];
 		int r = __syscall(SYS_getitimer, which, old32);
@@ -14,5 +15,6 @@ int getitimer(int which, struct itimerval *old)
 		}
 		return __syscall_ret(r);
 	}
+#endif
 	return syscall(SYS_getitimer, which, old);
 }

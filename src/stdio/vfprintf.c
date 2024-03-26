@@ -132,15 +132,24 @@ static void pop_arg(union arg *arg, int type, va_list *ap)
 
 static void out(FILE *f, const char *s, size_t l)
 {
-	if (!(f->flags & F_ERR)) __fwritex((void *)s, l, f);
+	if (!l) return;
+
+	/* write to file buffer if flag F_PBUF is available */
+	if (!(f->flags & F_ERR) && !(f->flags & F_PBUF)) {
+		__fwritex((void *)s, l, f);
+		return;
+	}
+
+	/* otherwise, copy to buffer directly */
+	f->write(f, (void *)s, l);
 }
 
 static void pad(FILE *f, char c, int w, int l, int fl)
 {
-	char pad[256];
+	char pad[16];
 	if (fl & (LEFT_ADJ | ZERO_PAD) || l >= w) return;
 	l = w - l;
-	memset(pad, c, l>sizeof pad ? sizeof pad : l);
+	__builtin_memset(pad, c, sizeof pad);
 	for (; l >= sizeof pad; l -= sizeof pad)
 		out(f, pad, sizeof pad);
 	out(f, pad, l);
@@ -427,7 +436,7 @@ static int getint(char **s) {
 	return i;
 }
 
-static int printf_core(FILE *f, const char *fmt, va_list *ap, union arg *nl_arg, int *nl_type)
+static int printf_core(FILE *f, const char *fmt, va_list *ap, union arg *nl_arg, int *nl_type, char nl_arg_filled)
 {
 	char *a, *z, *s=(char *)fmt;
 	unsigned l10n=0, fl;
@@ -437,7 +446,6 @@ static int printf_core(FILE *f, const char *fmt, va_list *ap, union arg *nl_arg,
 	unsigned st, ps;
 	int cnt=0, l=0;
 	size_t i;
-	char buf[sizeof(uintmax_t)*3+3+LDBL_MANT_DIG/4];
 	const char *prefix;
 	int t, pl;
 	wchar_t wc[2], *ws;
@@ -462,6 +470,14 @@ static int printf_core(FILE *f, const char *fmt, va_list *ap, union arg *nl_arg,
 		if (l) continue;
 
 		if (isdigit(s[1]) && s[2]=='$') {
+			if (!nl_arg_filled) {
+				va_list ap_copy;
+				va_copy(ap_copy, *ap);
+				if (printf_core(0, fmt, &ap_copy, nl_arg, nl_type, 1) < 0) {
+					return -1;
+				}
+				va_end(ap_copy);
+			}
 			l10n=1;
 			argpos = s[1]-'0';
 			s+=3;
@@ -528,6 +544,7 @@ static int printf_core(FILE *f, const char *fmt, va_list *ap, union arg *nl_arg,
 
 		if (!f) continue;
 
+		char buf[sizeof(uintmax_t)*3+3+LDBL_MANT_DIG/4];
 		z = buf + sizeof(buf);
 		prefix = "-+   0X0x";
 		pl = 0;
@@ -665,28 +682,35 @@ int vfprintf(FILE *restrict f, const char *restrict fmt, va_list ap)
 
 	/* the copy allows passing va_list* even if va_list is an array */
 	va_copy(ap2, ap);
-	if (printf_core(0, fmt, &ap2, nl_arg, nl_type) < 0) {
-		va_end(ap2);
-		return -1;
-	}
 
 	FLOCK(f);
 	olderr = f->flags & F_ERR;
 	if (f->mode < 1) f->flags &= ~F_ERR;
-	if (!f->buf_size) {
+
+	if (!f->buf_size && f->buf != NULL) {
 		saved_buf = f->buf;
 		f->buf = internal_buf;
 		f->buf_size = sizeof internal_buf;
 		f->wpos = f->wbase = f->wend = 0;
 	}
 	if (!f->wend && __towrite(f)) ret = -1;
-	else ret = printf_core(f, fmt, &ap2, nl_arg, nl_type);
+	else {
+		ret = printf_core(f, fmt, &ap2, nl_arg, nl_type, 0);
+	}
 	if (saved_buf) {
-		f->write(f, 0, 0);
+		if (!(f->flags & F_PBUF)) {
+			f->write(f, 0, 0);
+		} else {
+			*saved_buf = '\0';
+		}
 		if (!f->wpos) ret = -1;
 		f->buf = saved_buf;
 		f->buf_size = 0;
 		f->wpos = f->wbase = f->wend = 0;
+	} else {
+		if (f->flags & F_PBUF) {
+			*f->wpos = '\0';
+		}
 	}
 	if (f->flags & F_ERR) ret = -1;
 	f->flags |= olderr;

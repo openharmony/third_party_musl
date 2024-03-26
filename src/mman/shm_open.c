@@ -5,6 +5,7 @@
 #include <string.h>
 #include <limits.h>
 #include <pthread.h>
+#include <unsupported_api.h>
 
 char *__shm_mapname(const char *name, char *buf)
 {
@@ -26,6 +27,7 @@ char *__shm_mapname(const char *name, char *buf)
 
 int shm_open(const char *name, int flag, mode_t mode)
 {
+	UNSUPPORTED_API_VOID(LITEOS_A);
 	int cs;
 	char buf[NAME_MAX+10];
 	if (!(name = __shm_mapname(name, buf))) return -1;
@@ -37,6 +39,7 @@ int shm_open(const char *name, int flag, mode_t mode)
 
 int shm_unlink(const char *name)
 {
+	UNSUPPORTED_API_VOID(LITEOS_A);
 	char buf[NAME_MAX+10];
 	if (!(name = __shm_mapname(name, buf))) return -1;
 	return unlink(name);

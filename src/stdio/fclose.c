@@ -1,5 +1,8 @@
 #include "stdio_impl.h"
 #include <stdlib.h>
+#ifndef __LITEOS__
+#include <errno.h>
+#endif
 
 static void dummy(FILE *f) { }
 weak_alias(dummy, __unlist_locked_file);
@@ -9,6 +12,14 @@ int fclose(FILE *f)
 	int r;
 	
 	FLOCK(f);
+#ifndef __LITEOS__
+	if (!f || f->fd < 0) {
+		errno = EBADF;
+		FUNLOCK(f);
+		return -EBADF;
+	}
+#endif
+
 	r = fflush(f);
 	r |= f->close(f);
 	FUNLOCK(f);
@@ -25,14 +36,17 @@ int fclose(FILE *f)
 
 	__unlist_locked_file(f);
 
-	FILE **head = __ofl_lock();
-	if (f->prev) f->prev->next = f->next;
-	if (f->next) f->next->prev = f->prev;
-	if (*head == f) *head = f->next;
-	__ofl_unlock();
-
 	free(f->getln_buf);
-	free(f);
+	/* release base instead of buf which may be modified by setvbuf
+	 * or iniitalize by local variable */
+	free(f->base);
+
+#ifndef __LITEOS__
+	/* set file to invalid descriptor */
+	f->fd = -EBADF;
+#endif
+
+	__ofl_free(f);
 
 	return r;
 }

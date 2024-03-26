@@ -4,6 +4,7 @@
 #include <sys/stat.h>
 #include <string.h>
 #include <stdlib.h>
+#include <unsupported_api.h>
 #include "syscall.h"
 #include "kstat.h"
 
@@ -15,6 +16,7 @@ char *tmpnam(char *buf)
 	char s[] = "/tmp/tmpnam_XXXXXX";
 	int try;
 	int r;
+	UNSUPPORTED_API_VOID(LITEOS_A);
 	for (try=0; try<MAXTRIES; try++) {
 		__randname(s+12);
 #ifdef SYS_lstat

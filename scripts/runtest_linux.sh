@@ -92,6 +92,7 @@ echo Mkdir done.
 
 
 ${CMD} file send ${TESTDIR} ${REMOTE}/src
+${CMD} shell mv ${REMOTE}/src/libc-test/* ${REMOTE}/src
 for lib in ${DYNLIB}/*; do
     echo $lib
     ${CMD} file send $lib ${REMOTE}/src
@@ -101,7 +102,7 @@ ${CMD} shell chmod +x ${REMOTE}/src/*
 ${CMD} shell mount -o rw,remount /
 ${CMD} shell chmod 777 /etc
 ${CMD} shell cp /etc/ld-musl-namespace-${ARCH}.ini /etc/ld-musl-namespace-${ARCH}.ini.bak
-${CMD} file send ${LOCAL}/third_party/musl/porting/linux/user/config/ld-musl-namespace-${ARCH}-test.ini /etc/ld-musl-namespace-${ARCH}.ini
+${CMD} file send ${LOCAL}/third_party/musl/config/ld-musl-namespace-${ARCH}-test.ini /etc/ld-musl-namespace-${ARCH}.ini
 ${CMD} shell mkdir ${REMOTE}/src/A
 ${CMD} shell mkdir ${REMOTE}/src/B
 ${CMD} shell mkdir ${REMOTE}/src/C

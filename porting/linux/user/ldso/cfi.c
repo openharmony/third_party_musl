@@ -230,14 +230,20 @@ static inline void cfi_slowpath_common(uint64_t call_site_type_id, void *func_pt
 
         dso = (struct dso *)addr2dso((size_t)__builtin_return_address(0));
         if (dso == NULL) {
-            LD_LOGE("[CFI] [%{public}s] can not find the dso!\n", __FUNCTION__);
+            LD_LOGE("[CFI] [%{public}s] can not find the dso from address:%{public}p  func_ptr:0x%{public}p shadow value:%{public}d  call_site_type_id[%{public}p!\n", 
+		__FUNCTION__,
+		(size_t)__builtin_return_address(0),
+		func_ptr, value, call_site_type_id);
             __builtin_trap();
         }
         LD_LOGD("[CFI] [%{public}s] dso name[%{public}s]!\n", __FUNCTION__, dso->name);
 
         struct symdef cfi_check_sym = find_cfi_check_sym(dso);
         if (!cfi_check_sym.sym) {
-            LD_LOGE("[CFI] [%{public}s] can not find the __cfi_check in the dso!\n", __FUNCTION__);
+            LD_LOGE("[CFI] [%{public}s] can not find the __cfi_check in the dso: %{public}s func_ptr:0x%{public}p shadow value:%{public}d  call_site_type_id[%{public}p!\n", 
+		__FUNCTION__,
+		((struct dso *)addr2dso((size_t)__builtin_return_address(0)))->name,
+		func_ptr, value, call_site_type_id);
             __builtin_trap();
         }
         LD_LOGD("[CFI] [%{public}s] cfi_check addr[%{public}p]!\n", __FUNCTION__,

@@ -3,6 +3,7 @@
 #include "pthread_impl.h"
 #include "syscall.h"
 
+#ifdef FEATURE_PTHREAD_CANCEL
 hidden long __cancel(), __syscall_cp_asm(), __syscall_cp_c();
 
 long __cancel()
@@ -48,12 +49,19 @@ extern hidden const char __cp_begin[1], __cp_end[1], __cp_cancel[1];
 static void cancel_handler(int sig, siginfo_t *si, void *ctx)
 {
 	pthread_t self = __pthread_self();
+#ifndef __LITEOS_A__
 	ucontext_t *uc = ctx;
 	uintptr_t pc = uc->uc_mcontext.MC_PC;
+#endif
 
 	a_barrier();
 	if (!self->cancel || self->canceldisable == PTHREAD_CANCEL_DISABLE) return;
 
+#ifdef __LITEOS_A__
+	if (self->cancelasync) {
+		pthread_exit(PTHREAD_CANCELED);
+	}
+#else
 	_sigaddset(&uc->uc_sigmask, SIGCANCEL);
 
 	if (self->cancelasync || pc >= (uintptr_t)__cp_begin && pc < (uintptr_t)__cp_end) {
@@ -63,8 +71,8 @@ static void cancel_handler(int sig, siginfo_t *si, void *ctx)
 #endif
 		return;
 	}
-
 	__syscall(SYS_tkill, self->tid, SIGCANCEL);
+#endif
 }
 
 void __testcancel()
@@ -99,3 +107,12 @@ int pthread_cancel(pthread_t t)
 	}
 	return pthread_kill(t, SIGCANCEL);
 }
+#else
+hidden long __cancel()
+{
+}
+
+int pthread_cancel(pthread_t t)
+{
+}
+#endif

@@ -1,6 +1,8 @@
 #include <ftw.h>
 #include <dirent.h>
+#ifndef __LITEOS_A__
 #include <fcntl.h>
+#endif
 #include <sys/stat.h>
 #include <errno.h>
 #include <unistd.h>
@@ -27,8 +29,10 @@ static int do_nftw(char *path, int (*fn)(const char *, const struct stat *, int,
 	struct history new;
 	int type;
 	int r;
+#ifndef __LITEOS_A__
 	int dfd;
 	int err;
+#endif
 	struct FTW lev;
 
 	if ((flags & FTW_PHYS) ? lstat(path, &st) : stat(path, &st) < 0) {
@@ -37,7 +41,15 @@ static int do_nftw(char *path, int (*fn)(const char *, const struct stat *, int,
 		else if (errno != EACCES) return -1;
 		else type = FTW_NS;
 	} else if (S_ISDIR(st.st_mode)) {
+#ifdef __LITEOS_A__
+		if (access(path, R_OK) < 0) {
+			type = FTW_DNR;
+		} else if (flags & FTW_DEPTH) {
+			type = FTW_DP;
+		}
+#else
 		if (flags & FTW_DEPTH) type = FTW_DP;
+#endif
 		else type = FTW_D;
 	} else if (S_ISLNK(st.st_mode)) {
 		if (flags & FTW_PHYS) type = FTW_SL;
@@ -65,12 +77,14 @@ static int do_nftw(char *path, int (*fn)(const char *, const struct stat *, int,
 		lev.base = k;
 	}
 
+#ifndef __LITEOS_A__
 	if (type == FTW_D || type == FTW_DP) {
 		dfd = open(path, O_RDONLY);
 		err = errno;
 		if (dfd < 0 && err == EACCES) type = FTW_DNR;
 		if (!fd_limit) close(dfd);
 	}
+#endif
 
 	if (!(flags & FTW_DEPTH) && (r=fn(path, &st, type, &lev)))
 		return r;
@@ -80,11 +94,15 @@ static int do_nftw(char *path, int (*fn)(const char *, const struct stat *, int,
 			return 0;
 
 	if ((type == FTW_D || type == FTW_DP) && fd_limit) {
+#ifdef __LITEOS_A__
+		DIR *d = opendir(path);
+#else
 		if (dfd < 0) {
 			errno = err;
 			return -1;
 		}
 		DIR *d = fdopendir(dfd);
+#endif
 		if (d) {
 			struct dirent *de;
 			while ((de = readdir(d))) {
@@ -105,10 +123,16 @@ static int do_nftw(char *path, int (*fn)(const char *, const struct stat *, int,
 				}
 			}
 			closedir(d);
+#ifdef __LITEOS_A__
+		} else if (errno != EACCES) {
+			return -1;
+		}
+#else
 		} else {
 			close(dfd);
 			return -1;
 		}
+#endif
 	}
 
 	path[l] = 0;

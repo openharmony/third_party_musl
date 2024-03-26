@@ -5,7 +5,11 @@
 #include <signal.h>
 #include <unistd.h>
 #include "syscall.h"
+#ifndef __LITEOS__
+#include "pthread_impl.h"
+#endif
 
+#ifndef __LITEOS_A__
 struct args {
 	pthread_barrier_t barrier;
 	int sock;
@@ -28,9 +32,18 @@ static void *start(void *p)
 		func(val);
 	return 0;
 }
+#endif
 
 int mq_notify(mqd_t mqd, const struct sigevent *sev)
 {
+#ifdef __LITEOS_A__
+	if (!sev || sev->sigev_notify != SIGEV_THREAD) {
+		return syscall(SYS_mq_notify, mqd, sev);
+	}
+
+	errno = ENOTSUP;
+	return -1;
+#else
 	struct args args = { .sev = sev };
 	pthread_attr_t attr;
 	pthread_t td;
@@ -64,10 +77,15 @@ int mq_notify(mqd_t mqd, const struct sigevent *sev)
 	sev2.sigev_value.sival_ptr = (void *)&zeros;
 
 	if (syscall(SYS_mq_notify, mqd, &sev2) < 0) {
+#ifdef FEATURE_PTHREAD_CANCEL
 		pthread_cancel(td);
+#else
+		__syscall(SYS_tkill, td->tid, SIGCANCEL);
+#endif
 		__syscall(SYS_close, s);
 		return -1;
 	}
 
 	return 0;
+#endif
 }

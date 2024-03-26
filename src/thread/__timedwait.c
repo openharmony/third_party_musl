@@ -11,6 +11,19 @@
 static int __futex4_cp(volatile void *addr, int op, int val, const struct timespec *to)
 {
 	int r;
+#ifdef __LITEOS_A__
+	unsigned int useconds = 0xffffffffU;
+	if (to) {
+		useconds = (to->tv_sec * 1000000 + to->tv_nsec / 1000);
+		if ((useconds == 0) && (to->tv_nsec != 0)) {
+			useconds = 1;
+		}
+	}
+
+	r = __syscall_cp(SYS_futex, addr, op, val, useconds);
+	if (r != -ENOSYS) return r;
+	return __syscall_cp(SYS_futex, addr, op & ~FUTEX_PRIVATE, val, useconds);
+#else
 #ifdef SYS_futex_time64
 	time_t s = to ? to->tv_sec : 0;
 	long ns = to ? to->tv_nsec : 0;
@@ -24,6 +37,7 @@ static int __futex4_cp(volatile void *addr, int op, int val, const struct timesp
 	r = __syscall_cp(SYS_futex, addr, op, val, to);
 	if (r != -ENOSYS) return r;
 	return __syscall_cp(SYS_futex, addr, op & ~FUTEX_PRIVATE, val, to);
+#endif
 }
 
 static volatile int dummy = 0;

@@ -1,8 +1,15 @@
 #include <sys/prctl.h>
 #include <stdarg.h>
 #include "syscall.h"
+#ifdef HOOK_ENABLE
+int __libc_prctl(int op,  ...);
+#endif
 
+#ifdef HOOK_ENABLE
+int __libc_prctl(int op,  ...)
+#else
 int prctl(int op, ...)
+#endif
 {
 	unsigned long x[4];
 	int i;
