@@ -2418,7 +2418,6 @@ if (musl_arch == "arm") {
   musl_src_file += [
     "src/process/x86_64/__vfork.s",
     "src/ldso/x86_64/dlvsym.s",
-    "arch/x86_64/bits/float.h",
   ]
 }
 
