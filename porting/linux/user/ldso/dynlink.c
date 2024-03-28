@@ -3830,7 +3830,7 @@ static void *do_dlsym(struct dso *p, const char *s, const char *v, void *ra)
 		find_sym2(p, &verinfo, 0, use_deps, ns);
 	trace_marker_end(HITRACE_TAG_MUSL);
 	if (!def.sym) {
-		LD_LOGE("do_dlsym failed: symbol not found. so=%{public}s s=%{public}s v=%{public}s", p->name, s, v);
+		LD_LOGE("do_dlsym failed: symbol not found. so=%{public}s s=%{public}s v=%{public}s", (p == NULL ? "NULL" : p->name), s, v);
 		error("Symbol not found: %s, version: %s", s, strlen(v) > 0 ? v : "null");
 		return 0;
 	}
