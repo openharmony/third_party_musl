@@ -222,6 +222,7 @@ int __libc_current_sigrtmax(void);
 #define MUSL_SIGNAL_RECYCLE_JEMALLOC (SIGRTMIN + 8)
 #endif
 #define MUSL_SIGNAL_MEMCHECK (SIGRTMIN + 9)
+#define MUSL_SIGNAL_FDTRACK (SIGRTMIN + 10)
 
 int kill(pid_t, int);
 int sigemptyset(sigset_t *);

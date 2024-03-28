@@ -2016,6 +2016,8 @@
     tcsetwinsize;
     qsort_r;
     set_syscall_hooks;
+    set_fdtrack_enabled;
+    fdtrack_cas_hook;
   local:
     *;
 };
