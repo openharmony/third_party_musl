@@ -2,17 +2,19 @@
 #include <stdint.h>
 #include "libc.h"
 #ifdef __LITEOS_A__
-#include <stdbool.h>
-#include <debug.h>
 #include <signal.h>
 #include <atomic.h>
 #include <pthread.h>
 #include "syscall.h"
 #include <bits/errno.h>
-
+#ifdef __LITEOS_DEBUG__
+#include <stdbool.h>
+#include <debug.h>
 extern bool g_enable_check;
 extern void mem_check_deinit(void);
 extern void clean_recycle_list(bool clean_all);
+#endif
+
 pthread_mutex_t __exit_mutex = PTHREAD_MUTEX_INITIALIZER;
 #endif
 static void dummy()
@@ -49,12 +51,14 @@ _Noreturn void exit(int code)
 		pthread_exit(NULL);
 	}
 
+#ifdef __LITEOS_DEBUG__
 	if (g_enable_check) {
 		check_leak();
 		check_heap_integrity();
 		mem_check_deinit();
 		clean_recycle_list(true);
 	}
+#endif
 #endif
 	__funcs_on_exit();
 	__libc_exit_fini();
