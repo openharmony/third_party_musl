@@ -3,7 +3,6 @@
 // REQUIRES: has_sancovcc,stable-runtime
 // UNSUPPORTED: ubsan
 // XFAIL: tsan,darwin,powerpc64,s390x,mips
-// XFAIL: android && asan
 
 // RUN: DIR=%t_workdir
 // RUN: CLANG_ARGS="-O0 -fsanitize-coverage=trace-pc-guard"
