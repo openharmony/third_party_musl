@@ -714,13 +714,13 @@ static int _predefined_host_hook(const char* host, lookup_result lookup, void *u
 		char ipstr[INET6_ADDRSTRLEN];
 		if (p->ai_family == AF_INET) {
 		    struct sockaddr_in *ipv4 = (struct sockaddr_in *)p->ai_addr;
-			if (!inet_ntop(AF_INET, &ipv4->sin_addr, ipstr, sizeof(ipstr))) {
+			if (inet_ntop(AF_INET, &ipv4->sin_addr, ipstr, sizeof(ipstr))) {
 				lookup(ipstr, usrp);
 				++num;
 			}
 		} else if (p->ai_family == AF_INET6) {
 			struct sockaddr_in6 *ipv6 = (struct sockaddr_in6 *)p->ai_addr;
-			if (!inet_ntop(AF_INET6, &ipv6->sin6_addr, ipstr, sizeof(ipstr))) {
+			if (inet_ntop(AF_INET6, &ipv6->sin6_addr, ipstr, sizeof(ipstr))) {
 				lookup(ipstr, usrp);
 				++num;
 			}
