@@ -2,7 +2,7 @@
 #define MALLOC_IMPL_H
 
 #include <sys/mman.h>
-#ifdef __LITEOS_A__
+#ifdef __LITEOS_DEBUG__
 #include <stdbool.h>
 
 #define BACKTRACE_DEPTH_MAX      5          /* The max depth of backtrace */
@@ -28,7 +28,7 @@ hidden void *__memalign(size_t, size_t);
 #endif
 
 struct chunk {
-#ifdef __LITEOS_A__
+#ifdef __LITEOS_DEBUG__
 	unsigned int checksum;
 #endif
 	size_t psize, csize;
@@ -36,7 +36,7 @@ struct chunk {
 };
 
 struct bin {
-#ifdef __LITEOS_A__
+#ifdef __LITEOS_DEBUG__
 	unsigned int checksum;
 #endif
 	volatile int lock[2];
@@ -44,7 +44,7 @@ struct bin {
 	struct chunk *tail;
 };
 
-#ifdef __LITEOS_A__
+#ifdef __LITEOS_DEBUG__
 struct heap_block {
 	struct heap_block *next;
 	struct heap_block *prev;
@@ -94,7 +94,7 @@ struct stat_bin {
 #define NEXT_CHUNK(c) ((struct chunk *)((char *)(c) + CHUNK_SIZE(c)))
 #define MEM_TO_CHUNK(p) (struct chunk *)((char *)(p) - OVERHEAD)
 #define CHUNK_TO_MEM(c) (void *)((char *)(c) + OVERHEAD)
-#ifdef __LITEOS_A__
+#ifdef __LITEOS_DEBUG__
 #define BIN_TO_CHUNK(i) (&mal.bins[i].checksum)
 #else
 #define BIN_TO_CHUNK(i) (MEM_TO_CHUNK(&mal.bins[i].head))
@@ -106,7 +106,7 @@ struct stat_bin {
 
 hidden void __bin_chunk(struct chunk *);
 
-#ifdef __LITEOS_A__
+#ifdef __LITEOS_DEBUG__
 hidden extern int __malloc_replaced;
 
 hidden extern bool g_enable_check;
