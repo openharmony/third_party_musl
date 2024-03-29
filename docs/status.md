@@ -22,6 +22,7 @@ https://gitee.com/openharmony/interface_sdk_c/blob/master/third_party/musl/ndk_s
 - `predefined_host_remove_host`: 移除指定的预定义主机设置
 - `predefined_host_set_host`: 设置指定主机的预定义主机设置
 - `predefined_host_set_hosts`: 设置多个主机的预定义主机设置
+- `predefined_host_lookup_ip`: 查询指定主机的预定义主机设置
 - `removednsresolvehook`: 移除 DNS 解析钩子(hook)
 - `setdnsresolvehook`: 设置 DNS 解析钩子(hook)，允许在网络解析过程中插入自定义逻辑来拦截和修改 DNS 解析请求
 

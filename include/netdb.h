@@ -27,6 +27,7 @@ struct addrinfo {
 typedef int (*net_dnsquery_hook)(int, int, int);
 typedef int (*custom_dns_resolver)(const char *host, const char *serv,
 	const struct addrinfo *hint, struct addrinfo **res);
+typedef void (*lookup_result)(const char *ip, void *usrp);
 
 enum {
 	QEURY_TYPE_NORMAL = 0,
@@ -81,6 +82,7 @@ int predefined_host_set_host(const char* host, const char* ip);
 int predefined_host_set_hosts(const char* host_ips);
 int predefined_host_clear_all_hosts(void);
 int predefined_host_remove_host(const char *host);
+int predefined_host_lookup_ip(const char* host, lookup_result lookup, void *usrp);
 
 /* Legacy functions follow (marked OBsolete in SUS) */
 
