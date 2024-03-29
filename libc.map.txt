@@ -541,6 +541,8 @@
     dlns_set_namespace_permitted_paths;
     dlns_set_namespace_separated;
     dlopen;
+    # Sanitizer requires this symbol to be exposed.
+    dlopen_impl;
     dlopen_ext;
     dlopen_ns;
     dlsym;
