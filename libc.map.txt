@@ -1330,6 +1330,7 @@
     predefined_host_remove_host;
     predefined_host_set_host;
     predefined_host_set_hosts;
+    predefined_host_lookup_ip;
     printf;
     prlimit;
     prlimit64;
