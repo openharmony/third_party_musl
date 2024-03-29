@@ -701,9 +701,14 @@ static int _predefined_host_hook(const char* host, lookup_result lookup, void *u
 	if (lookup == NULL) {
 		return 0;
 	}
+#ifndef __LITEOS_A__
 	if (gethookaddrinfo(host, &hints, &res) < 0) {
 		return 0;
 	}
+#else
+    /* Not Support on liteOS */
+	return 0;
+#endif
 	int num = 0;
 	for (p = res; p != NULL; p = p->ai_next) {
 		char ipstr[INET6_ADDRSTRLEN];
