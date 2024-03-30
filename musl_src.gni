@@ -2425,6 +2425,8 @@ musl_inc_hook_files = [
   "src/internal/hilog_adapter.h",
   "src/internal/linux/musl_log.h",
   "src/hook/linux/memory_trace.h",
+  "src/hook/linux/musl_fdtrack.h",
+  "src/hook/linux/musl_fdtrack_hook.h",
   "src/hook/linux/musl_malloc_dispatch_table.h",
   "src/hook/linux/musl_malloc_dispatch.h",
   "src/hook/linux/musl_preinit_common.h",

@@ -169,6 +169,7 @@ template("musl_libs") {
     if (!is_asan && musl_arch != "mips") {
       cflags_auto += [
         "-DHOOK_ENABLE",
+        "-DOHOS_FDTRACK_HOOK_ENABLE",
         "-DOHOS_SOCKET_HOOK_ENABLE",
       ]
     }
@@ -268,6 +269,7 @@ template("musl_libs") {
     if (!is_asan && musl_arch != "mips") {
       defines += [
         "HOOK_ENABLE",
+        "OHOS_FDTRACK_HOOK_ENABLE",
         "OHOS_SOCKET_HOOK_ENABLE",
       ]
     }
@@ -937,6 +939,8 @@ template("musl_libs") {
     sources = [
       "./src/hook/linux/malloc_common.c",
       "./src/hook/linux/memory_trace.c",
+      "./src/hook/linux/musl_fdtrack.c",
+      "./src/hook/linux/musl_fdtrack_load.c",
       "./src/hook/linux/musl_preinit.c",
       "./src/hook/linux/musl_preinit_common.c",
       "./src/hook/linux/musl_socket_preinit.c",

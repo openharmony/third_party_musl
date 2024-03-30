@@ -1,5 +1,6 @@
 #include <fcntl.h>
 #include <stdarg.h>
+#include "musl_fdtrack_hook.h"
 #include "syscall.h"
 
 int open(const char *filename, int flags, ...)
@@ -14,7 +15,7 @@ int open(const char *filename, int flags, ...)
 	}
 
 	int fd = __sys_open_cp(filename, flags, mode);
-	return __syscall_ret(fd);
+	return FDTRACK_START_HOOK(__syscall_ret(fd));
 }
 
 weak_alias(open, open64);
