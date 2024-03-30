@@ -1,5 +1,8 @@
 #include "stdio_impl.h"
 #include <string.h>
+#ifndef __LITEOS__
+#include "param_check.h"
+#endif
 
 #define MIN(a,b) ((a)<(b) ? (a) : (b))
 
@@ -27,6 +30,9 @@ size_t fread(void *restrict destv, size_t size, size_t nmemb, FILE *restrict f)
 {
 	unsigned char *dest = destv;
 	size_t len = size * nmemb, l = len, k;
+#ifndef __LITEOS__
+	PARAM_CHECK(f);
+#endif
 	if (!size) {
 		nmemb = 0;
 	}

@@ -1,5 +1,6 @@
 #include "stdio_impl.h"
 #include <string.h>
+#include "param_check.h"
 
 #define MIN(a,b) ((a)<(b) ? (a) : (b))
 
@@ -27,6 +28,7 @@ size_t fread(void *restrict destv, size_t size, size_t nmemb, FILE *restrict f)
 {
 	unsigned char *dest = destv;
 	size_t len = size * nmemb, l = len, k;
+	PARAM_CHECK(f);
 	if (!size) {
 		nmemb = 0;
 	}
