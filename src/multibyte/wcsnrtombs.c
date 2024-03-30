@@ -1,9 +1,15 @@
 #include <wchar.h>
 #include <limits.h>
 #include <string.h>
+#ifndef __LITEOS__
+#include "param_check.h"
+#endif
 
 size_t wcsnrtombs(char *restrict dst, const wchar_t **restrict wcs, size_t wn, size_t n, mbstate_t *restrict st)
 {
+#ifndef __LITEOS__
+	PARAM_CHECK(wcs);
+#endif
 	const wchar_t *ws = *wcs;
 	size_t cnt = 0;
 	if (!dst) n=0;

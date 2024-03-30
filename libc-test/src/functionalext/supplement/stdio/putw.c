@@ -21,6 +21,8 @@
 #include <fcntl.h>
 #include <wchar.h>
 #include "test.h"
+#include <sys/wait.h>
+#include "functionalext.h"
 
 void deal_aberrant(int code)
 {
@@ -59,9 +61,20 @@ void putw_0100(void)
  */
 void putw_0200(void)
 {
-    FILE *fp = NULL;
-    signal(SIGSEGV, deal_aberrant);
-    int result = putw(10, fp);
+    pid_t pid = fork();
+    if (pid == -1) {
+        t_error("putw_0200: Error forking process");
+    } else if (pid == 0) {
+        FILE *fp = NULL;
+        putw(10, fp);
+    } else {
+        int status;
+        waitpid(pid, &status, 0);
+        if (WIFSIGNALED(status)) {
+            int sig = WTERMSIG(status);
+            EXPECT_EQ("putw_0200", SIGABRT, sig);
+        }
+    }
 }
 
 int main(int argc, char *argv[])

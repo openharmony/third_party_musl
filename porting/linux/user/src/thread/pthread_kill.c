@@ -1,11 +1,13 @@
 #include <unistd.h>
 #include "pthread_impl.h"
 #include "lock.h"
+#include "param_check.h"
 
 int pthread_kill(pthread_t t, int sig)
 {
 	int r;
 	sigset_t set;
+	PARAM_CHECK(t);
 	/* Block not just app signals, but internal ones too, since
 	 * pthread_kill is used to implement pthread_cancel, which
 	 * must be async-cancel-safe. */

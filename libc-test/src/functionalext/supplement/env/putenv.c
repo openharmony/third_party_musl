@@ -14,6 +14,7 @@
  */
 
 #include <stdlib.h>
+#include <sys/wait.h>
 #include "functionalext.h"
 
 /**
@@ -61,9 +62,19 @@ void putenv_0200(void)
     if (!test) {
         EXPECT_PTREQ("putenv_0200", test, NULL);
     }
-
-    ret = putenv("");
-    EXPECT_EQ("putenv_0200", ret, ERREXPECT);
+    pid_t pid = fork();
+    if (pid == -1) {
+        t_error("unsetenv_0100: Error forking process");
+    } else if (pid == 0) {
+        putenv("");
+    } else {
+        int status;
+        waitpid(pid, &status, 0);
+        if (WIFSIGNALED(status)) {
+            int sig = WTERMSIG(status);
+            EXPECT_EQ("putenv_0200", SIGABRT, sig);
+        }
+    }
     unsetenv("test");
 }
 

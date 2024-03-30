@@ -3,12 +3,18 @@
 #include <stddef.h>
 #include "__dirent.h"
 #include "syscall.h"
+#ifndef __LITEOS__
+#include "param_check.h"
+#endif
 
 typedef char dirstream_buf_alignment_check[1-2*(int)(
 	offsetof(struct __dirstream, buf) % sizeof(off_t))];
 
 struct dirent *readdir(DIR *dir)
 {
+#ifndef __LITEOS__
+	PARAM_CHECK(dir);
+#endif
 	struct dirent *de;
 	
 	if (dir->buf_pos >= dir->buf_end) {

@@ -16,8 +16,10 @@
 #include <dirent.h>
 #include <signal.h>
 #include <stdlib.h>
+#include <sys/wait.h>
 
 #include "filepath_util.h"
+#include "functionalext.h"
 
 void handler(int sig)
 {
@@ -55,12 +57,22 @@ void readdir_r_0100(void)
  */
 void readdir_r_0200(void)
 {
-    signal(SIGSEGV, handler);
-
-    DIR *dir = NULL;
-    struct dirent buf;
-    struct dirent *res;
-    readdir_r(dir, &buf, &res);
+    pid_t pid = fork();
+    if (pid == -1) {
+        t_error("readdir_0100: Error forking process");
+    } else if (pid == 0) {
+        DIR *dir = NULL;
+        struct dirent buf;
+        struct dirent *res;
+        readdir_r(dir, &buf, &res);
+    } else {
+        int status;
+        waitpid(pid, &status, 0);
+        if (WIFSIGNALED(status)) {
+            int sig = WTERMSIG(status);
+            EXPECT_EQ("readdir_0100", SIGABRT, sig);
+        }
+    }
 }
 
 int main(int argc, char *argv[])
