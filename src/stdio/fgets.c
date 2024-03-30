@@ -1,5 +1,8 @@
 #include "stdio_impl.h"
 #include <string.h>
+#ifndef __LITEOS__
+#include "param_check.h"
+#endif
 
 #define MIN(a,b) ((a)<(b) ? (a) : (b))
 char *fgets(char *restrict s, int n, FILE *restrict f)
@@ -8,7 +11,9 @@ char *fgets(char *restrict s, int n, FILE *restrict f)
 	unsigned char *z;
 	size_t k;
 	int c;
-
+#ifndef __LITEOS__
+	PARAM_CHECK(f);
+#endif
 	FLOCK(f);
 
 	if (n--<=1) {

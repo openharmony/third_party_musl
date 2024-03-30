@@ -1,4 +1,7 @@
 #include "stdio_impl.h"
+#ifndef __LITEOS__
+#include "param_check.h"
+#endif
 
 /* The behavior of this function is undefined except when it is the first
  * operation on the stream, so the presence or absence of locking is not
@@ -8,6 +11,9 @@
 
 int setvbuf(FILE *restrict f, char *restrict buf, int type, size_t size)
 {
+#ifndef __LITEOS__
+	PARAM_CHECK(f);
+#endif
 	f->lbf = EOF;
 
 	if (type == _IONBF) {

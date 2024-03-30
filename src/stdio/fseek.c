@@ -1,5 +1,8 @@
 #include "stdio_impl.h"
 #include <errno.h>
+#ifndef __LITEOS__
+#include "param_check.h"
+#endif
 
 int __fseeko_unlocked(FILE *f, off_t off, int whence)
 {
@@ -33,6 +36,9 @@ int __fseeko_unlocked(FILE *f, off_t off, int whence)
 
 int __fseeko(FILE *f, off_t off, int whence)
 {
+#ifndef __LITEOS__
+	PARAM_CHECK(f);
+#endif
 	int result;
 	FLOCK(f);
 	result = __fseeko_unlocked(f, off, whence);

@@ -2,12 +2,18 @@
 #include <string.h>
 #include <errno.h>
 #include <unistd.h>
+#ifndef __LITEOS__
+#include "param_check.h"
+#endif
 
 static void dummy(char *old, char *new) {}
 weak_alias(dummy, __env_rm_add);
 
 int unsetenv(const char *name)
 {
+#ifndef __LITEOS__
+	PARAM_CHECK(name);
+#endif
 	size_t l = __strchrnul(name, '=') - name;
 	if (!l || name[l]) {
 		errno = EINVAL;

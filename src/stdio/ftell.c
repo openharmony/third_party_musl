@@ -1,6 +1,9 @@
 #include "stdio_impl.h"
 #include <limits.h>
 #include <errno.h>
+#ifndef __LITEOS__
+#include "param_check.h"
+#endif
 
 off_t __ftello_unlocked(FILE *f)
 {
@@ -19,6 +22,9 @@ off_t __ftello_unlocked(FILE *f)
 
 off_t __ftello(FILE *f)
 {
+#ifndef __LITEOS__
+	PARAM_CHECK(f);
+#endif
 	off_t pos;
 	FLOCK(f);
 	pos = __ftello_unlocked(f);
