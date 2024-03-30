@@ -152,9 +152,11 @@ musl_install_for_liteos_a_user: LDFLAGS = $(shell $(CC) -print-file-name=libunwi
 musl_install_for_liteos_a_user: SED_ARGS += -e 's,$$(AR) rc $$@ $$(AOBJS)$$,cp $$(shell $$(CC) -print-file-name=libunwind.a) $$@ \&\& &,g'
 endif
 musl_install_for_liteos_a_user: SED_ARGS += -e 's,CFLAGS_ALL += -DCRT$$,& -fno-unwind-tables -fno-asynchronous-unwind-tables,g'
-musl_install_for_liteos_a_user: CFLAGS += -funwind-tables -fasynchronous-unwind-tables -rdynamic -D__LITEOS_A__ -DFEATURE_PTHREAD_CANCEL -I $(shell $(CC) "-print-file-name=include")
+musl_install_for_liteos_a_user: CFLAGS += -funwind-tables -fasynchronous-unwind-tables -rdynamic -D__LITEOS_DEBUG__ -I $(shell $(CC) "-print-file-name=include")
 musl_install_for_liteos_a_user: musl_patch_for_liteos_a_user_debug
 endif
+
+musl_install_for_liteos_a_user: CFLAGS += -D__LITEOS_A__ -DFEATURE_PTHREAD_CANCEL
 
 musl_header_install_for_liteos_a_user: musl_patch_for_liteos_a_user
 		$(HIDE) cd musl_copy_for_liteos_a_user && mkdir -p $(MUSLBUILDDIR) && cd $(MUSLBUILDDIR) && \

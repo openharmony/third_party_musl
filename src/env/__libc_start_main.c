@@ -12,7 +12,7 @@ static void dummy(void) {}
 weak_alias(dummy, _init);
 
 extern weak hidden void (*const __init_array_start)(void), (*const __init_array_end)(void);
-#ifdef __LITEOS_A__
+#ifdef __LITEOS_DEBUG__
 extern void parse_argv(int, char **);
 #endif
 static void dummy1(void *p) {}
@@ -111,7 +111,9 @@ static int libc_start_main_stage2(int (*main)(int,char **,char **), int argc, ch
 
 #ifdef __LITEOS_A__
 	__sig_init();
+#endif
 
+#ifdef __LITEOS_DEBUG__
 	parse_argv(argc, argv);
 #endif
 

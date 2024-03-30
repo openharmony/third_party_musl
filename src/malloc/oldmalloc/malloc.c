@@ -4,7 +4,7 @@
 #include <limits.h>
 #include <stdint.h>
 #include <errno.h>
-#ifdef __LITEOS_A__
+#ifdef __LITEOS_DEBUG__
 #include <unistd.h>
 #include <debug.h>
 #endif
@@ -163,7 +163,7 @@ static int traverses_stack_p(uintptr_t old, uintptr_t new)
  * and mmap minimum size rules. The caller is responsible for locking
  * to prevent concurrent calls. */
 
-#ifdef __LITEOS_A__
+#ifdef __LITEOS_DEBUG__
 void *__expand_heap(size_t *pn)
 #else
 static void *__expand_heap(size_t *pn)
@@ -215,7 +215,7 @@ static struct chunk *expand_heap(size_t n)
 	p = __expand_heap(&n);
 	if (!p) return 0;
 
-#ifdef __LITEOS_A__
+#ifdef __LITEOS_DEBUG__
 	lock(g_mem_lock);
 #endif
 	/* If not just expanding existing space, we need to make a
@@ -226,7 +226,7 @@ static struct chunk *expand_heap(size_t n)
 		p = (char *)p + SIZE_ALIGN;
 		w = MEM_TO_CHUNK(p);
 		w->psize = 0 | C_INUSE;
-#ifdef __LITEOS_A__
+#ifdef __LITEOS_DEBUG__
 		insert_block_list(w);
 #endif
 	}
@@ -241,7 +241,7 @@ static struct chunk *expand_heap(size_t n)
 	 * zero-size sentinel header at the old end-of-heap. */
 	w = MEM_TO_CHUNK(p);
 	w->csize = n | C_INUSE;
-#ifdef __LITEOS_A__
+#ifdef __LITEOS_DEBUG__
 	calculate_checksum(w, MEM_TO_CHUNK(end));
 
 	unlock(g_mem_lock);
@@ -295,17 +295,17 @@ static void trim(struct chunk *self, size_t n)
 
 	next = NEXT_CHUNK(self);
 	split = (void *)((char *)self + n);
-#ifdef __LITEOS_A__
+#ifdef __LITEOS_DEBUG__
 	lock(g_mem_lock);
 #endif
 	split->psize = n | C_INUSE;
 	split->csize = n1-n;
 	next->psize = n1-n;
-#ifdef __LITEOS_A__
+#ifdef __LITEOS_DEBUG__
 	calculate_checksum(split, next);
 #endif
 	self->csize = n | C_INUSE;
-#ifdef __LITEOS_A__
+#ifdef __LITEOS_DEBUG__
 	calculate_checksum(self, NULL);
 	unlock(g_mem_lock);
 #endif
@@ -328,7 +328,7 @@ void *malloc(size_t n)
 
 	if (n > MMAP_THRESHOLD) {
 		size_t len = n + OVERHEAD + PAGE_SIZE - 1 & -PAGE_SIZE;
-#ifdef __LITEOS_A__
+#ifdef __LITEOS_DEBUG__
 		if (g_enable_check) {
 			/* Allocate two more pages for protection, loacted at the head and tail of user memory respectively */
 			len += PAGE_SIZE << 1;
@@ -337,7 +337,7 @@ void *malloc(size_t n)
 		char *base = __mmap(0, len, PROT_READ|PROT_WRITE,
 			MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
 		if (base == (void *)-1) return 0;
-#ifdef __LITEOS_A__
+#ifdef __LITEOS_DEBUG__
 		if (g_enable_check) {
 			if (mprotect(base, PAGE_SIZE, PROT_NONE) ||
 				mprotect(base + len - PAGE_SIZE, PAGE_SIZE, PROT_NONE)) {
@@ -349,7 +349,7 @@ void *malloc(size_t n)
 		c = (void *)(base + SIZE_ALIGN - OVERHEAD);
 		c->csize = len - (SIZE_ALIGN - OVERHEAD);
 		c->psize = SIZE_ALIGN - OVERHEAD;
-#ifdef __LITEOS_A__
+#ifdef __LITEOS_DEBUG__
 		if (g_enable_check) {
 			c->csize -= PAGE_SIZE << 1;
 			insert_node(CHUNK_TO_MEM(c), CHUNK_SIZE(c));
@@ -389,7 +389,7 @@ void *malloc(size_t n)
 		}
 	}
 	trim(c, n);
-#ifdef __LITEOS_A__
+#ifdef __LITEOS_DEBUG__
 	if (g_enable_check) {
 		insert_node(CHUNK_TO_MEM(c), CHUNK_SIZE(c));
 	}
@@ -424,7 +424,7 @@ void *realloc(void *p, size_t n)
 		size_t oldlen = n0 + extra;
 		size_t newlen = n + extra;
 		/* Crash on realloc of freed chunk */
-#ifdef __LITEOS_A__
+#ifdef __LITEOS_DEBUG__
 		if (extra & 1) {
 			if (g_enable_check) {
 				get_free_trace(CHUNK_TO_MEM(self));
@@ -442,7 +442,7 @@ void *realloc(void *p, size_t n)
 		}
 		newlen = (newlen + PAGE_SIZE-1) & -PAGE_SIZE;
 		if (oldlen == newlen) return p;
-#ifdef __LITEOS_A__
+#ifdef __LITEOS_DEBUG__
 		if (g_enable_check) {
 			goto copy_realloc;
 		}
@@ -466,12 +466,12 @@ void *realloc(void *p, size_t n)
 		if (i<j && (mal.binmap & (1ULL << i)))
 			goto copy_realloc;
 		struct chunk *split = (void *)((char *)self + n);
-#ifdef __LITEOS_A__
+#ifdef __LITEOS_DEBUG__
 		lock(g_mem_lock);
 #endif
 		self->csize = split->psize = n | C_INUSE;
 		split->csize = next->psize = n0-n | C_INUSE;
-#ifdef __LITEOS_A__
+#ifdef __LITEOS_DEBUG__
 		calculate_checksum(self, next);
 		unlock(g_mem_lock);
 #endif
@@ -491,7 +491,7 @@ void *realloc(void *p, size_t n)
 			next = NEXT_CHUNK(next);
 			self->csize = next->psize = n0+nsize | C_INUSE;
 			trim(self, n);
-#ifdef __LITEOS_A__
+#ifdef __LITEOS_DEBUG__
 			if (g_enable_check) {
 				int status = delete_node(p);
 				if (status != 0) {
@@ -531,12 +531,12 @@ void __bin_chunk(struct chunk *self)
 
 	/* Since we hold split_merge_lock, only transition from free to
 	 * in-use can race; in-use to free is impossible */
-#ifdef __LITEOS_A__
+#ifdef __LITEOS_DEBUG__
 	lock(g_mem_lock);
 #endif
 	size_t psize = self->psize & C_INUSE ? 0 : CHUNK_PSIZE(self);
 	size_t nsize = next->csize & C_INUSE ? 0 : CHUNK_SIZE(next);
-#ifdef __LITEOS_A__
+#ifdef __LITEOS_DEBUG__
 	calculate_checksum(self, next);
 	unlock(g_mem_lock);
 #endif
@@ -565,12 +565,12 @@ void __bin_chunk(struct chunk *self)
 
 	int i = bin_index(size);
 	lock_bin(i);
-#ifdef __LITEOS_A__
+#ifdef __LITEOS_DEBUG__
 	lock(g_mem_lock);
 #endif
 	self->csize = size;
 	next->psize = size;
-#ifdef __LITEOS_A__
+#ifdef __LITEOS_DEBUG__
 	calculate_checksum(self, next);
 	unlock(g_mem_lock);
 #endif
@@ -600,7 +600,7 @@ static void unmap_chunk(struct chunk *self)
 	char *base = (char *)self - extra;
 	size_t len = CHUNK_SIZE(self) + extra;
 	/* Crash on double free */
-#ifdef __LITEOS_A__
+#ifdef __LITEOS_DEBUG__
 	if (extra & 1) {
 		if (g_enable_check) {
 			get_free_trace(CHUNK_TO_MEM(self));
@@ -626,7 +626,7 @@ void free(void *p)
 	if (!p) return;
 
 	struct chunk *self = MEM_TO_CHUNK(p);
-#ifdef __LITEOS_A__
+#ifdef __LITEOS_DEBUG__
 	if (g_enable_check) {
 		if (!IS_MMAPPED(self)) {
 			check_chunk_integrity(self);
@@ -642,7 +642,7 @@ void free(void *p)
 	if (IS_MMAPPED(self))
 		unmap_chunk(self);
 	else {
-#ifdef __LITEOS_A__
+#ifdef __LITEOS_DEBUG__
 		if (g_enable_check) {
 			insert_free_tail(self);
 			if (g_recycle_size >= RECYCLE_SIZE_MAX) {
@@ -661,7 +661,7 @@ void free(void *p)
 
 void __malloc_donate(char *start, char *end)
 {
-#ifdef __LITEOS_A__
+#ifdef __LITEOS_DEBUG__
 	size_t align_start_up = (SIZE_ALIGN-1) & (-(uintptr_t)start - BLOCK_HEAD);
 #else
 	size_t align_start_up = (SIZE_ALIGN-1) & (-(uintptr_t)start - OVERHEAD);
@@ -671,7 +671,7 @@ void __malloc_donate(char *start, char *end)
 	/* Getting past this condition ensures that the padding for alignment
 	 * and header overhead will not overflow and will leave a nonzero
 	 * multiple of SIZE_ALIGN bytes between start and end. */
-#ifdef __LITEOS_A__
+#ifdef __LITEOS_DEBUG__
 	if (end - start <= BLOCK_HEAD + align_start_up + align_end_down)
 		return;
 	start += align_start_up + BLOCK_HEAD;
@@ -682,13 +682,13 @@ void __malloc_donate(char *start, char *end)
 #endif
 	end   -= align_end_down;
 
-#ifdef __LITEOS_A__
+#ifdef __LITEOS_DEBUG__
 	lock(g_mem_lock);
 #endif
 	struct chunk *c = MEM_TO_CHUNK(start), *n = MEM_TO_CHUNK(end);
 	c->psize = n->csize = C_INUSE;
 	c->csize = n->psize = C_INUSE | (end-start);
-#ifdef __LITEOS_A__
+#ifdef __LITEOS_DEBUG__
 	calculate_checksum(c, n);
 	insert_block_list(c);
 	unlock(g_mem_lock);
