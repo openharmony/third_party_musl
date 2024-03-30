@@ -1,4 +1,4 @@
-#ifdef __LITEOS_A__
+#ifdef __LITEOS_DEBUG__
 #include <stdlib.h>
 #include <stdint.h>
 #include <errno.h>
