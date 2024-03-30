@@ -169,9 +169,12 @@ template("musl_libs") {
     if (!is_asan && musl_arch != "mips") {
       cflags_auto += [
         "-DHOOK_ENABLE",
-        "-DOHOS_FDTRACK_HOOK_ENABLE",
         "-DOHOS_SOCKET_HOOK_ENABLE",
       ]
+    }
+
+    if (!is_llvm_build) {
+      cflags_auto += [ "-DOHOS_FDTRACK_HOOK_ENABLE" ]
     }
 
     if (musl_arch == "mips" && is_legacy) {
@@ -269,10 +272,14 @@ template("musl_libs") {
     if (!is_asan && musl_arch != "mips") {
       defines += [
         "HOOK_ENABLE",
-        "OHOS_FDTRACK_HOOK_ENABLE",
         "OHOS_SOCKET_HOOK_ENABLE",
       ]
     }
+
+    if (!is_llvm_build) {
+      defines += [ "OHOS_FDTRACK_HOOK_ENABLE" ]
+    }
+
     ldflags = [ "-nostdlib" ]
 
     libs = []
