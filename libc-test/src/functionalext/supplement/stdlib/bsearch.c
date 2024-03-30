@@ -14,6 +14,9 @@
  */
 
 #include <stdlib.h>
+#include <signal.h>
+#include <pthread.h>
+#include <sys/wait.h>
 #include "functionalext.h"
 
 #define NUM 8
@@ -44,12 +47,23 @@ void bsearch_0100(void)
  */
 void bsearch_0200(void)
 {
-    int array[NUM] = {9, 2, 7, 11, 3, 87, 34, 6};
-    int key = 3;
-    int *p;
-    qsort(array, NUM, sizeof(int), compare);
-    p = (int *)bsearch(&key, array, 0, sizeof(int), compare);
-    EXPECT_TRUE("bsearch_0200", p == NULL);
+    pid_t pid = fork();
+    if (pid == -1) {
+        t_error("bsearch_0100: Error forking process");
+    } else if (pid == 0) {
+        int array[NUM] = {9, 2, 7, 11, 3, 87, 34, 6};
+        int key = 3;
+        int *p;
+        qsort(array, NUM, sizeof(int), compare);
+        bsearch(&key, array, 0, sizeof(int), compare);
+    } else {
+        int status;
+        waitpid(pid, &status, 0);
+        if (WIFSIGNALED(status)) {
+            int sig = WTERMSIG(status);
+            EXPECT_EQ("bsearch_0200", SIGABRT, sig);
+        }
+    }
 }
 
 int main(int argc, char *argv[])

@@ -1,6 +1,9 @@
 #define _GNU_SOURCE
 #include "pthread_impl.h"
 #include <sys/mman.h>
+#ifndef __LITEOS__
+#include "param_check.h"
+#endif
 
 static void dummy1(pthread_t t)
 {
@@ -58,6 +61,9 @@ out:
 
 int __pthread_join(pthread_t t, void **res)
 {
+#ifndef __LITEOS__
+	PARAM_CHECK(t);
+#endif
 	return __pthread_timedjoin_np(t, res, 0);
 }
 

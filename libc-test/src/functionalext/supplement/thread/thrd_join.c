@@ -17,6 +17,9 @@
 #include <stdlib.h>
 #include <threads.h>
 #include "test.h"
+#include <sys/wait.h>
+#include <pthread.h>
+#include "functionalext.h"
 
 static int count = 0;
 
@@ -103,9 +106,19 @@ void thrd_join_0200(void)
  */
 void thrd_join_0300(void)
 {
-    signal(SIGSEGV, exception_handler);
-
-    thrd_join(NULL, NULL);
+    pid_t pid = fork();
+    if (pid == -1) {
+        t_error("thrd_join_0300: Error forking process");
+    } else if (pid == 0) {
+        thrd_join(NULL, NULL);
+    } else {
+        int status;
+        waitpid(pid, &status, 0);
+        if (WIFSIGNALED(status)) {
+            int sig = WTERMSIG(status);
+            EXPECT_EQ("thrd_join_0300", SIGABRT, sig);
+        }
+    }
 }
 
 int main(int argc, char *argv[])
