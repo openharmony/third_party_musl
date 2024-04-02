@@ -4794,6 +4794,10 @@ static bool map_library_header(struct loadtask *task)
 	off_start &= -PAGE_SIZE;
 	task->shsize += task->eh->e_shoff - off_start;
 	task->shdr_allocated_buf = mmap(0, task->shsize, PROT_READ, MAP_PRIVATE, task->fd, off_start + task->file_offset);
+	if (task->shdr_allocated_buf == MAP_FAILED) {
+		LD_LOGE("Error mapping section header %{public}s: failed to map shdr_allocated_buf", task->name);
+		goto error;
+	}
 	Shdr *sh = (char *)task->shdr_allocated_buf + task->eh->e_shoff - off_start;
 	for (i = task->eh->e_shnum; i; i--, sh = (void *)((char *)sh + task->eh->e_shentsize)) {
 		if (sh->sh_type != SHT_STRTAB || sh->sh_addr != str_table || sh->sh_size != str_size) {
@@ -4820,8 +4824,10 @@ noexec:
 error:
 	free(task->allocated_buf);
 	task->allocated_buf = NULL;
-	munmap(task->shdr_allocated_buf, task->shsize);
-	task->shdr_allocated_buf = NULL;
+	if (task->shdr_allocated_buf != MAP_FAILED) {
+		munmap(task->shdr_allocated_buf, task->shsize);
+		task->shdr_allocated_buf = MAP_FAILED;
+	}
 	return false;
 }
 
@@ -5061,8 +5067,10 @@ done_mapping:
 	}
 	free(task->allocated_buf);
 	task->allocated_buf = NULL;
-	munmap(task->shdr_allocated_buf, task->shsize);
-	task->shdr_allocated_buf = NULL;
+	if (task->shdr_allocated_buf != MAP_FAILED) {
+		munmap(task->shdr_allocated_buf, task->shsize);
+		task->shdr_allocated_buf = MAP_FAILED;
+	}
 	return true;
 noexec:
 	errno = ENOEXEC;
@@ -5072,8 +5080,10 @@ error:
 	}
 	free(task->allocated_buf);
 	task->allocated_buf = NULL;
-	munmap(task->shdr_allocated_buf, task->shsize);
-	task->shdr_allocated_buf = NULL;
+	if (task->shdr_allocated_buf != MAP_FAILED) {
+		munmap(task->shdr_allocated_buf, task->shsize);
+		task->shdr_allocated_buf = MAP_FAILED;
+	}
 	return false;
 }
 
