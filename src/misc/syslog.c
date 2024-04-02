@@ -12,6 +12,7 @@
 #include "lock.h"
 #include "fork_impl.h"
 #include <unsupported_api.h>
+#include "locale_impl.h"
 
 static volatile int lock[1];
 static char log_ident[32];
@@ -103,7 +104,7 @@ static void _vsyslog(int priority, const char *message, va_list ap)
 
 	now = time(NULL);
 	gmtime_r(&now, &tm);
-	strftime(timebuf, sizeof timebuf, "%b %e %T", &tm);
+	strftime_l(timebuf, sizeof timebuf, "%b %e %T", &tm, C_LOCALE);
 
 	pid = (log_opt & LOG_PID) ? getpid() : 0;
 	l = snprintf(buf, sizeof buf, "<%d>%s %n%s%s%.0d%s: ",

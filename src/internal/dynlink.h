@@ -209,6 +209,10 @@ struct fdpic_dummy_loadmap {
 #define DL_NOMMU_SUPPORT 0
 #endif
 
+#ifndef TLSDESC_BACKWARDS
+#define TLSDESC_BACKWARDS 0
+#endif
+
 #if !DL_FDPIC
 #define IS_RELATIVE(x,s) ( \
 	(R_TYPE(x) == REL_RELATIVE) || \
@@ -226,6 +230,10 @@ struct fdpic_dummy_loadmap {
 
 #ifndef DT_DEBUG_INDIRECT
 #define DT_DEBUG_INDIRECT 0
+#endif
+
+#ifndef DT_DEBUG_INDIRECT_REL
+#define DT_DEBUG_INDIRECT_REL 0
 #endif
 
 #define AUX_CNT 32
@@ -267,7 +275,7 @@ hidden void *__dlsym(void *restrict, const char *restrict, void *restrict);
 hidden void *__dlvsym(void *restrict, const char *restrict, const char *restrict, void *restrict);
 hidden int __dlclose(void *p);
 #else
-#define DYN_CNT 32
+#define DYN_CNT 37
 
 typedef void (*stage2_func)(unsigned char *, size_t *);
 

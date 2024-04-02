@@ -34,5 +34,5 @@ int __setxid(int nr, int id, int eid, int sid)
 #else
 	__synccall(do_setxid, &c);
 #endif
-	return __syscall_ret(c.ret);
+	return __syscall_ret(c.ret > 0 ? -EAGAIN : c.ret);
 }

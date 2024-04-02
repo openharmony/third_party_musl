@@ -29,5 +29,3 @@ FILE *tmpfile(void)
 	}
 	return 0;
 }
-
-weak_alias(tmpfile, tmpfile64);

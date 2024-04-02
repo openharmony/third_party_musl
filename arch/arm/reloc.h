@@ -26,7 +26,7 @@
 #define REL_TPOFF       R_ARM_TLS_TPOFF32
 #define REL_TLSDESC     R_ARM_TLS_DESC
 
-#define TLSDESC_BACKWARDS
+#define TLSDESC_BACKWARDS 1
 #ifdef __LITEOS_A__
 #define CRTJMP(pc,sp) __asm__ __volatile__(\
 	"mov r0,%1 ; bx %0" : : "r"(pc), "r"(sp) : "memory", "r0")
