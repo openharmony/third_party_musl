@@ -20,3 +20,5 @@ int open(const char *filename, int flags, ...)
 #endif
 	return __syscall_ret(fd);
 }
+
+weak_alias(open, open64);
