@@ -434,7 +434,6 @@ static void do_relocs(struct dso *dso, size_t *rel, size_t rel_size, size_t stri
 			def = (sym->st_info>>4) == STB_LOCAL
 				? (struct symdef){ .dso = dso, .sym = sym }
 				: find_sym(ctx, name, type==REL_PLT);
-			if (!def.sym) def = get_lfs64(name);
 			if (!def.sym && (sym->st_shndx != SHN_UNDEF
 			    || sym->st_info>>4 != STB_WEAK)) {
 				if (dso->lazy && (type==REL_PLT || type==REL_GOT)) {

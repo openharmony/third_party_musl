@@ -38,3 +38,5 @@ int getrlimit(int resource, struct rlimit *rlim)
 #endif
 #endif
 }
+
+weak_alias(getrlimit, getrlimit64);

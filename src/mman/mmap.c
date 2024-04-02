@@ -58,3 +58,5 @@ Test: Build and boot devices.
 void *__lldb_mmap(void *start, size_t len, int prot, int flags, int fd, intptr_t off) {
 	return mmap(start, len, prot, flags, fd, off);
 }
+
+weak_alias(mmap, mmap64);
