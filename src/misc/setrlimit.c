@@ -68,7 +68,6 @@ int setrlimit(int resource, const struct rlimit *rlim)
 		.lim[1] = MIN(rlim->rlim_max, MIN(-1UL, SYSCALL_RLIM_INFINITY)),
 		.res = resource, .err = -1
 	};
-#endif
 	__synccall(do_setrlimit, &c);
 	if (c.err) {
 		if (c.err>0) errno = c.err;
@@ -77,6 +76,7 @@ int setrlimit(int resource, const struct rlimit *rlim)
 	return 0;
 #else
 	return __syscall_ret(ret);
+#endif
 #endif
 }
 

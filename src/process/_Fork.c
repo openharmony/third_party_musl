@@ -17,11 +17,12 @@ void __post_Fork(int ret)
 {
 	if (!ret) {
 		pthread_t self = __pthread_self();
-		self->tid = __syscall(SYS_set_tid_address, &__thread_list_lock);
 #ifdef __LITEOS_A__
+		self->tid = __syscall(SYS_gettid);
 		self->pid = __syscall(SYS_getpid);
 #else
-		self->pid = self->tid;
+		self->tid = __syscall(SYS_set_tid_address, &__thread_list_lock);
+		self->pid = __syscall(SYS_gettid);
 #endif
 		self->proc_tid = -1;
 		self->robust_list.off = 0;

@@ -1,4 +1,5 @@
 #define _GNU_SOURCE
+#define USE_STATX
 #include <sys/stat.h>
 #include <string.h>
 #include <syscall.h>

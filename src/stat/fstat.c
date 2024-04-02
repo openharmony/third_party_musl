@@ -11,6 +11,7 @@ int __fstat(int fd, struct stat *st)
 }
 
 weak_alias(__fstat, fstat);
+
 #if !_REDIR_TIME64
 weak_alias(__fstat, fstat64);
 #endif

@@ -110,6 +110,7 @@ int getaddrinfo_ext(const char *restrict host, const char *restrict serv, const 
 	char canon[256], *outcanon;
 	int nservs, naddrs, nais, canon_len, i, j, k;
 	int family = AF_UNSPEC, flags = 0, proto = 0, socktype = 0;
+	int no_family = 0;
 	struct aibuf *out;
 
 	if (hint) {
@@ -158,9 +159,11 @@ int getaddrinfo_ext(const char *restrict host, const char *restrict serv, const 
 				pthread_setcancelstate(
 					PTHREAD_CANCEL_DISABLE, &cs);
 				int r = connect(s, ta[i], tl[i]);
+				int saved_errno = errno;
 				pthread_setcancelstate(cs, 0);
 				close(s);
 				if (!r) continue;
+				errno = saved_errno;
 			}
 			switch (errno) {
 			case EADDRNOTAVAIL:
@@ -172,7 +175,7 @@ int getaddrinfo_ext(const char *restrict host, const char *restrict serv, const 
 			default:
 				return EAI_SYSTEM;
 			}
-			if (family == tf[i]) return EAI_NONAME;
+			if (family == tf[i]) no_family = 1;
 			family = tf[1 - i];
 		}
 	}
@@ -187,6 +190,7 @@ int getaddrinfo_ext(const char *restrict host, const char *restrict serv, const 
 		reportdnsresult(netid, host, difftime(t_end, t_start), DNS_QUERY_COMMOM_FAIL, NULL, &param);
 		return naddrs;
 	}
+	if (no_family) return EAI_NODATA;
 
 	nais = nservs * naddrs;
 	canon_len = strlen(canon);

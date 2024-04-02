@@ -10,6 +10,7 @@ static int __pthread_detach(pthread_t t)
 		__pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &cs);
 		__pthread_join(t, 0);
 		__pthread_setcancelstate(cs, 0);
+	}
 #ifdef __LITEOS_A__
 	int ret = __syscall(SYS_pthread_set_detach, t->tid);
 	if (ret) {
@@ -20,7 +21,6 @@ static int __pthread_detach(pthread_t t)
 	}
 	return ret;
 #else
-	}
 	return 0;
 #endif
 }
