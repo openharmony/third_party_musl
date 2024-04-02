@@ -34,6 +34,7 @@ struct ctx {
 	int err;
 };
 
+#ifdef SYS_setrlimit
 static void do_setrlimit(void *p)
 {
 	struct ctx *c = p;
@@ -44,6 +45,7 @@ static void do_setrlimit(void *p)
 	c->err = -__syscall(SYS_setrlimit, c->res, c->lim);
 #endif
 }
+#endif
 
 int setrlimit(int resource, const struct rlimit *rlim)
 {
@@ -58,6 +60,7 @@ int setrlimit(int resource, const struct rlimit *rlim)
 		rlim = &tmp;
 	}
 	int ret = __syscall(SYS_prlimit64, 0, resource, rlim, 0);
+#ifdef SYS_setrlimit
 	if (ret != -ENOSYS) return __syscall_ret(ret);
 
 	struct ctx c = {
@@ -72,6 +75,7 @@ int setrlimit(int resource, const struct rlimit *rlim)
 		return -1;
 	}
 	return 0;
+#else
+	return __syscall_ret(ret);
+#endif
 }
-
-weak_alias(setrlimit, setrlimit64);

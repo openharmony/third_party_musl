@@ -38,10 +38,5 @@ int vsnprintf(char *restrict s, size_t n, const char *restrict fmt, va_list ap)
 		.write = sn_write,
 	};
 
-	if (n > INT_MAX) {
-		errno = EOVERFLOW;
-		return -1;
-	}
-
 	return vfprintf(&f, fmt, ap);
 }

@@ -17,12 +17,13 @@ int getrlimit(int resource, struct rlimit *rlim)
 
 	return 0;
 #else
-	unsigned long k_rlim[2];
 	int ret = syscall(SYS_prlimit64, 0, resource, 0, rlim);
 	if (!ret) {
 		FIX(rlim->rlim_cur);
 		FIX(rlim->rlim_max);
 	}
+#ifdef SYS_getrlimit
+	unsigned long k_rlim[2];
 	if (!ret || errno != ENOSYS)
 		return ret;
 	if (syscall(SYS_getrlimit, resource, k_rlim) < 0)
@@ -32,7 +33,8 @@ int getrlimit(int resource, struct rlimit *rlim)
 	FIX(rlim->rlim_cur);
 	FIX(rlim->rlim_max);
 	return 0;
+#else
+	return ret;
+#endif
 #endif
 }
-
-weak_alias(getrlimit, getrlimit64);
