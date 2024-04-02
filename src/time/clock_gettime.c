@@ -52,7 +52,11 @@ static int cgt_init(clockid_t clk, struct timespec *ts)
 		}
 	}
 #ifdef VDSO_CGT_WORKAROUND
+#ifndef __LITEOS__
+	if (!__get_vdso_addr(VDSO_CGT32_VER, VDSO_CGT32_SYM)) p = 0;
+#else
 	if (!__vdsosym(VDSO_CGT32_VER, VDSO_CGT32_SYM)) p = 0;
+#endif
 #endif
 #endif
 	int (*f)(clockid_t, struct timespec *) =

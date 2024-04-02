@@ -98,7 +98,9 @@ int mq_notify(mqd_t mqd, const struct sigevent *sev)
 		__syscall(SYS_tkill, td->tid, SIGCANCEL);
 #endif
 		__syscall(SYS_close, s);
+#ifndef __LITEOS__
 		pthread_join(td, 0);
+#endif
 		pthread_setcancelstate(cs, 0);
 		errno = args.err;
 		return -1;

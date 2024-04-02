@@ -105,6 +105,7 @@ int lchmod(const char *, mode_t);
 #define S_IEXEC S_IXUSR
 #endif
 
+#ifdef USE_STATX
 #if defined(_GNU_SOURCE)
 #define STATX_TYPE 1U
 #define STATX_MODE 2U
@@ -151,6 +152,7 @@ struct statx {
 };
 
 int statx(int, const char *__restrict, int, unsigned, struct statx *__restrict);
+#endif
 #endif
 
 #if defined(_LARGEFILE64_SOURCE) || defined(_GNU_SOURCE)
