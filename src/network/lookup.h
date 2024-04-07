@@ -72,10 +72,9 @@ hidden int __dns_parse(const unsigned char *, int, int (*)(void *, int, const vo
 hidden int predefined_host_name_from_hosts(struct address buf[static MAXADDRS],
 	char canon[static 256], const char *name, int family);
 hidden int predefined_host_is_contain_host(const char *host);
+hidden int predefined_host_lookup_ip(const char* host, const char* serv,
+    const struct addrinfo* hint, struct addrinfo** res);
 hidden int res_bind_socket(int, int);
-#ifndef __LITEOS_A__
-hidden int gethookaddrinfo(const char *restrict host, const struct addrinfo *restrict hints, struct addrinfo **restrict res);
-#endif
 
 #if OHOS_DNS_PROXY_BY_NETSYS
 #define DNS_SO_PATH "libnetsys_client.z.so"
