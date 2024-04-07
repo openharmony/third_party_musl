@@ -668,77 +668,25 @@ static int _predefined_host_parse_host_ips(char* params)
 	return cnt > 0 ? 0 : -1;
 }
 
-static int _predefined_host_lookup_ip(const char* host, lookup_result lookup, void *usrp)
+int predefined_host_lookup_ip(const char* host, const char* serv,
+    const struct addrinfo* hint, struct addrinfo** res)
 {
-    int num = 0;
-    if (host_ips_list_ != NULL) {
-        linknode *pnode = host_ips_list_->_phead;
-
-
-        while (pnode != NULL) {
-            host_ip_pair *pinfo = (host_ip_pair*)pnode->_data;
-            if (strcmp(pinfo->host, host) == 0) {
-                if (lookup) {
-                    ++num;
-                    lookup(pinfo->ip, usrp);
-                }
+	int status = -1;
+    if (host_ips_list_ == NULL) {
+		return -1;
+	}
+    linknode *pnode = host_ips_list_->_phead;
+    while (pnode != NULL) {
+        host_ip_pair *pinfo = (host_ip_pair*)pnode->_data;
+        if (strcmp(pinfo->host, host) == 0) {
+            status = getaddrinfo(pinfo->ip, NULL, hint, res);
+            if (status == 0) {
+                return status;
             }
-            pnode = pnode->_next;
         }
+        pnode = pnode->_next;
     }
-    return num;
-}
-
-static int _predefined_host_hook(const char* host, lookup_result lookup, void *usrp)
-{
-    struct addrinfo hints;
-    struct addrinfo *res = NULL, *p = NULL;
-    memset(&hints, 0, sizeof(hints));  
-    hints.ai_family = AF_UNSPEC;
-    hints.ai_socktype = SOCK_STREAM;
-    hints.ai_flags = AI_ADDRCONFIG;
-
-    if (lookup == NULL) {
-        return 0;
-    }
-#ifndef __LITEOS_A__
-    if (gethookaddrinfo(host, &hints, &res) < 0) {
-        return 0;
-    }
-#else
-    /* Not Support on liteOS */
-    return 0;
-#endif
-    int num = 0;
-    for (p = res; p != NULL; p = p->ai_next) {
-        char ipstr[INET6_ADDRSTRLEN];
-        if (p->ai_family == AF_INET) {
-            struct sockaddr_in *ipv4 = (struct sockaddr_in *)p->ai_addr;
-            if (inet_ntop(AF_INET, &ipv4->sin_addr, ipstr, sizeof(ipstr))) {
-                lookup(ipstr, usrp);
-                ++num;
-            }
-        } else if (p->ai_family == AF_INET6) {
-            struct sockaddr_in6 *ipv6 = (struct sockaddr_in6 *)p->ai_addr;
-            if (inet_ntop(AF_INET6, &ipv6->sin6_addr, ipstr, sizeof(ipstr))) {
-                lookup(ipstr, usrp);
-                ++num;
-            }
-        } 
-    }
-    if (res) {
-        freeaddrinfo(res);
-    }
-    return num;
-}
-
-int predefined_host_lookup_ip(const char* host, lookup_result lookup, void *usrp)
-{
-    int m = 0;
-    if ((m = _predefined_host_lookup_ip(host, lookup, usrp)) > 0) {
-        return m;
-    }
-    return _predefined_host_hook(host, lookup, usrp);
+    return status;
 }
 
 int predefined_host_set_hosts(const char* host_ips)

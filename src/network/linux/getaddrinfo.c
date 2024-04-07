@@ -55,25 +55,16 @@ int removednsresolvehook()
 	return 0;
 }
 
-int gethookaddrinfo(const char *restrict host, const struct addrinfo *restrict hints, struct addrinfo **restrict res)
+int getaddrinfo_hook(const char* host, const char* serv, const struct addrinfo* hints,
+    struct addrinfo** res)
 {
-    if (!g_customdnsresolvehook) {
-        return -1;
+    if (g_customdnsresolvehook) {
+        int ret = g_customdnsresolvehook(host, serv, hints, res);
+        if (ret == 0) {
+            return ret;
+        }
     }
-    g_recursive = pthread_getspecific(g_recursiveKey);
-       if (g_recursive == NULL) {
-        int *newRecursive = malloc(sizeof(int));
-        *newRecursive = 0;
-        pthread_setspecific(g_recursiveKey, newRecursive);
-        g_recursive = newRecursive;
-    }
-    if (*g_recursive == 0) {
-        ++(*g_recursive);
-        int ret = g_customdnsresolvehook(host, NULL, hints, res);
-        --(*g_recursive);
-        return ret;
-    }
-    return -1;
+    return predefined_host_lookup_ip(host, serv, hints, res);
 }
 
 int getaddrinfo(const char *restrict host, const char *restrict serv, const struct addrinfo *restrict hint, struct addrinfo **restrict res)
