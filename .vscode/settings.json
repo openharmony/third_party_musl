@@ -1,0 +1,23 @@
+{
+    "files.associations": {
+        "dlfcn.h": "c",
+        "locale.h": "c",
+        "stdlib.h": "c",
+        "regex": "c",
+        "typeinfo": "c",
+        "__locale_t.h": "c",
+        "locale_impl.h": "c",
+        "libc.h": "c",
+        "pthread_impl.h": "c",
+        "limits.h": "c",
+        "functionalext.h": "c",
+        "random": "c",
+        "stdio.h": "c",
+        "wchar.h": "c",
+        "test.h": "c",
+        "float.h": "c",
+        "math.h": "c",
+        "atomic.h": "c",
+        "musl_log.h": "c"
+    }
+}

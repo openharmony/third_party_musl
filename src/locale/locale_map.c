@@ -6,6 +6,7 @@
 #include "libc.h"
 #include "lock.h"
 #include "fork_impl.h"
+#include <musl_log.h>
 
 #define malloc __libc_malloc
 #define calloc undef
@@ -47,6 +48,21 @@ static const char envvars[][12] = {
 
 volatile int __locale_lock[1];
 volatile int *const __locale_lockptr = __locale_lock;
+
+static const char *valid_locale_table[] = {"zh_CN", "zh_CN.UTF-8"};
+static int tableSize = sizeof(valid_locale_table) / sizeof(valid_locale_table[0]);
+
+#define VALID_ICU_NAME_LEN 5
+static char valid_icu_locale_name[VALID_ICU_NAME_LEN+1];
+char *get_valid_icu_locale_name(const char *name) {
+	char *res = strncpy(valid_icu_locale_name, name, VALID_ICU_NAME_LEN);
+	valid_icu_locale_name[VALID_ICU_NAME_LEN] = '\0';
+	return valid_icu_locale_name;
+}
+
+extern void *find_hmicuuc_symbol(const char *symbol_name);
+static void (*g_icuuc_set_icu_directory)(void);
+
 
 const struct __locale_map *__get_locale(int cat, const char *val)
 {
@@ -143,6 +159,28 @@ const struct __locale_map *__get_locale(int cat, const char *val)
 		new->next = loc_head;
 		new->flag = INVALID;
 		loc_head = new;
+	}
+
+	if (new->flag == INVALID) {
+		MUSL_LOGE("[wzxcheck] start check invalid locale");
+		for (int i = 0; i < tableSize; i++) {
+			if (strcmp(valid_locale_table[i], val) == 0) {
+				new->flag = ICU_VALID;
+				MUSL_LOGE("[wzxcheck] set new->flag as %{public}d", new->flag);
+				break;
+			}
+		}
+
+		if (new->flag == ICU_VALID) {
+			if (!g_icuuc_set_icu_directory) {
+				typedef void (*f_set_icu_directory)(void);
+				g_icuuc_set_icu_directory = (f_set_icu_directory)find_hmicuuc_symbol("_Z17SetHwIcuDirectoryv");
+				if (g_icuuc_set_icu_directory) {
+					g_icuuc_set_icu_directory();
+					MUSL_LOGE("[wzxcheck] SetHwIcuDirectory success");
+				}
+			}
+		}
 	}
 
 	/* For LC_CTYPE, never return a null pointer unless the

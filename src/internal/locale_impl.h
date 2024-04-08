@@ -9,6 +9,7 @@
 #define LOCALE_NAME_MAX 23
 #define VALID 2
 #define INVALID 1
+#define ICU_VALID 3
 
 struct __locale_map {
 	const void *map;
