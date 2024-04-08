@@ -22,7 +22,7 @@ void __post_Fork(int ret)
 		self->pid = __syscall(SYS_getpid);
 #else
 		self->tid = __syscall(SYS_set_tid_address, &__thread_list_lock);
-		self->pid = __syscall(SYS_gettid);
+		self->pid = self->tid;
 #endif
 		self->proc_tid = -1;
 		self->robust_list.off = 0;
