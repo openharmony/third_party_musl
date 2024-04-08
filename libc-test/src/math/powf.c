@@ -27,7 +27,7 @@ int main(void)
 		y = powf(p->x, p->x2);
 		e = fetestexcept(INEXACT|INVALID|DIVBYZERO|UNDERFLOW|OVERFLOW);
 
-#ifndef __aarch64__
+#if !defined(__aarch64__) && !(defined(__riscv) && __riscv_xlen == 64)
 		if (!checkexcept(e, p->e, p->r)) {
 			if (fabsf(y) < 0x1p-126f && (e|INEXACT) == (INEXACT|UNDERFLOW))
 				printf("X ");
