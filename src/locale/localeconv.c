@@ -1,5 +1,9 @@
 #include <locale.h>
 #include <limits.h>
+#include "libc.h"
+// #include <musl_log.h>
+// #include <stdio.h>
+#include "locale_impl.h"
 
 static const struct lconv posix_lconv = {
 	.decimal_point = ".",
@@ -30,5 +34,9 @@ static const struct lconv posix_lconv = {
 
 struct lconv *localeconv(void)
 {
+	// printf("[wzx_locale_conv] libc.global_locale.cat[0]->name %s\n", libc.global_locale.cat[0]->name);
+	// printf("[wzx_locale_conv] libc.global_locale.cat[1]->name %s\n", libc.global_locale.cat[1]->name);
+	// printf("[wzx_locale_conv] libc.global_locale.cat[LC_NUMERIC]->name %s\n", libc.global_locale.cat[LC_NUMERIC]->name);
+
 	return (void *)&posix_lconv;
 }

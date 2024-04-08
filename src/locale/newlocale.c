@@ -3,6 +3,9 @@
 #include <pthread.h>
 #include "locale_impl.h"
 #include "lock.h"
+#include <dlfcn.h>
+// #include "musl_log.h"
+
 
 #define malloc __libc_malloc
 #define calloc undef
@@ -25,8 +28,15 @@ static locale_t do_newlocale(int mask, const char *name, locale_t loc)
 	for (int i=0; i<LC_ALL; i++) {
 		tmp.cat[i] = (!(mask & (1<<i)) && loc) ? loc->cat[i] :
 			__get_locale(i, (mask & (1<<i)) ? name : "");
-		if (tmp.cat[i] == LOC_MAP_FAILED || tmp.cat[i] && tmp.cat[i]->flag == INVALID)
+		if (tmp.cat[i] == LOC_MAP_FAILED || tmp.cat[i] && tmp.cat[i]->flag == INVALID) {
+			if (tmp.cat[i]->flag == INVALID) {
+				// MUSL_LOGE("[wzxcheck] INVALID");
+			} else {
+				// MUSL_LOGE("[wzxcheck] LOC_MAP_FAILED");
+			}
 			return 0;
+		}
+			
 	}
 
 	/* For locales with allocated storage, modify in-place. */
@@ -59,9 +69,30 @@ static locale_t do_newlocale(int mask, const char *name, locale_t loc)
 	return loc;
 }
 
+static void *g_hmicuuc_handle = NULL;
+static void *g_hmicui18n_handle = NULL;
+
+void *find_hmicuuc_symbol(const char *symbol_name) {
+  if (!g_hmicuuc_handle) {
+	g_hmicuuc_handle = dlopen("libhmicuuc.z.so", RTLD_LOCAL);
+	// MUSL_LOGE("[wzxcheck] dlopen libhmicuuc.z.so success");
+  }
+  return g_hmicuuc_handle ? dlsym(g_hmicuuc_handle, symbol_name) : NULL;
+}
+
+void *find_hmicui18n_symbol(const char *symbol_name) {
+  if (!g_hmicui18n_handle) {
+	g_hmicui18n_handle = dlopen("libhmicui18n.z.so", RTLD_LOCAL);
+	// MUSL_LOGE("[wzxcheck] dlopen libhmicui18n.z.so success");
+  }
+  return g_hmicui18n_handle ? dlsym(g_hmicui18n_handle, symbol_name) : NULL;
+}
+
+
 locale_t __newlocale(int mask, const char *name, locale_t loc)
-{
+{	
 	LOCK(__locale_lock);
+	// MUSL_LOGE("[wzxcheck] start __newlocale !!!! %{public}d, %{public}s", mask, name);
 	loc = do_newlocale(mask, name, loc);
 	UNLOCK(__locale_lock);
 	return loc;

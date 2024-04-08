@@ -5,6 +5,8 @@
 #include "libc.h"
 #include "lock.h"
 
+// #include<musl_log.h>
+
 static char buf[LC_ALL*(LOCALE_NAME_MAX+1)];
 
 #ifndef __LITEOS__
@@ -19,6 +21,7 @@ static inline int Fresh(struct __locale_map *lm)
 
 char *setlocale(int cat, const char *name)
 {
+	// MUSL_LOGE("[wzxcheck] start setlocale !!!! %{public}d, %{public}s", cat, name);
 	const struct __locale_map *lm;
 	char flag = VALID;
 	if ((unsigned)cat > LC_ALL) return 0;
@@ -44,6 +47,7 @@ char *setlocale(int cat, const char *name)
 					if (*z) p = z+1;
 				}
 				lm = __get_locale(i, part);
+				// printf("setlocale name %s, flag num %d \n", lm->name, lm->flag);
 				if (lm == LOC_MAP_FAILED) {
 					UNLOCK(__locale_lock);
 					return 0;

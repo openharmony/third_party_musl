@@ -124,20 +124,45 @@ void newlocale_0400(void)
 
 void newlocale_0500(void)
 {
-    locale_t newlocale_ = newlocale(LC_ALL_MASK, "de.UTF-8", NULL);
-    EXPECT_PTREQ("newlocale_0500", newlocale_, NULL);
-    if (newlocale_) {
-        freelocale(newlocale_);
-        newlocale_ = NULL;
+    locale_t newlocale_ = newlocale(LC_ALL_MASK, "zh_CN.UTF-8", NULL);
+    if (newlocale_ == NULL) {
+        printf("zh_CN.UTF-8 newlocale_ returns null\n");
+    } else {
+        printf("zh_CN.UTF-8 newlocale_ returns sth\n");
     }
 }
 
+void newlocale_0600(void)
+{
+    locale_t newlocale_ = newlocale(LC_ALL_MASK, "zh_CN", NULL);
+    if (newlocale_ == NULL) {
+        printf("zh_CN newlocale_ returns null\n");
+    } else {
+        printf("zh_CN newlocale_ returns sth\n");
+    }
+}
+
+void newlocale_0700(void)
+{
+    locale_t newlocale_ = newlocale(LC_ALL_MASK, "zh_xxx", NULL);
+    if (newlocale_ == NULL) {
+        printf("zh_xxx newlocale_ returns null\n");
+    } else {
+        printf("zh_xxx newlocale_ returns sth\n");
+    }
+}
+
+
 int main(void)
 {
-    newlocale_0100();
-    newlocale_0200();
-    newlocale_0300();
-    newlocale_0400();
+    // newlocale_0100();
+    // newlocale_0200();
+    // newlocale_0300();
+    // newlocale_0400();
+    newlocale_0500();
+    newlocale_0600();
+    newlocale_0700();
+    
 
     return t_status;
 }

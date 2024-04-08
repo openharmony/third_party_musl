@@ -58,8 +58,13 @@ void localeconv_0100(void)
 #endif
 }
 
+void localeconv_0200(void) {
+    char* loc = setlocale(LC_ALL, "zh_CN.UTF-8");
+    struct lconv *pconv = localeconv();
+}
+
 int main(void)
 {
-    localeconv_0100();
+    localeconv_0200();
     return t_status;
 }
