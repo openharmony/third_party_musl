@@ -240,5 +240,6 @@ struct loadtask *create_loadtask(const char *name, struct dso *needed_by, ns_t *
     task->needed_by = needed_by;
     task->namespace = ns;
     task->check_inherited = check_inherited;
+    task->shdr_allocated_buf = MAP_FAILED;
     return task;
 }
