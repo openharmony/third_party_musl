@@ -792,6 +792,7 @@
     get_phys_pages;
     getaddrinfo;
     getaddrinfo_ext;
+    getaddrinfo_hook;
     getauxval;
     getc;
     getc_unlocked;

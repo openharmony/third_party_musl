@@ -668,6 +668,27 @@ static int _predefined_host_parse_host_ips(char* params)
 	return cnt > 0 ? 0 : -1;
 }
 
+int predefined_host_lookup_ip(const char* host, const char* serv,
+    const struct addrinfo* hint, struct addrinfo** res)
+{
+	int status = -1;
+    if (host_ips_list_ == NULL) {
+		return -1;
+	}
+    linknode *pnode = host_ips_list_->_phead;
+    while (pnode != NULL) {
+        host_ip_pair *pinfo = (host_ip_pair*)pnode->_data;
+        if (strcmp(pinfo->host, host) == 0) {
+            status = getaddrinfo(pinfo->ip, NULL, hint, res);
+            if (status == 0) {
+                return status;
+            }
+        }
+        pnode = pnode->_next;
+    }
+    return status;
+}
+
 int predefined_host_set_hosts(const char* host_ips)
 {
 	if (host_ips == NULL) {

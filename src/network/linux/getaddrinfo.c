@@ -55,6 +55,18 @@ int removednsresolvehook()
 	return 0;
 }
 
+int getaddrinfo_hook(const char* host, const char* serv, const struct addrinfo* hints,
+    struct addrinfo** res)
+{
+    if (g_customdnsresolvehook) {
+        int ret = g_customdnsresolvehook(host, serv, hints, res);
+        if (ret == 0) {
+            return ret;
+        }
+    }
+    return predefined_host_lookup_ip(host, serv, hints, res);
+}
+
 int getaddrinfo(const char *restrict host, const char *restrict serv, const struct addrinfo *restrict hint, struct addrinfo **restrict res)
 {
 	struct queryparam param = {0, 0, 0, 0, NULL};
