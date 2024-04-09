@@ -11,6 +11,8 @@ if (current_cpu == "arm") {
   musl_arch = "aarch64"
 } else if (current_cpu == "x86_64") {
   musl_arch = "x86_64"
+} else if (current_cpu == "riscv64") {
+  musl_arch = "riscv64"
 }
 
 musl_include_dir =
@@ -33,6 +35,8 @@ template("test_unittest") {
 
     if (target_cpu == "arm64") {
       defines = [ "_ARM64_" ]
+    } else if (target_cpu == "riscv64") {
+      defines = [ "_RISCV64_" ]
     }
 
     sources = [ "${target_name}.c" ]
