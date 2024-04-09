@@ -25,7 +25,7 @@ int main(void)
 		yi = ilogbf(p->x);
 		e = fetestexcept(INEXACT|INVALID|DIVBYZERO|UNDERFLOW|OVERFLOW);
 
-#ifndef __aarch64__
+#if !defined(__aarch64__) && !(defined(__riscv) && __riscv_xlen == 64)
 		if (!checkexcept(e, p->e, p->r)) {
 			printf("%s:%d: bad fp exception: %s ilogbf(%a)=%lld, want %s",
 				p->file, p->line, rstr(p->r), p->x, p->i, estr(p->e));

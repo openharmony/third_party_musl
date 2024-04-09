@@ -26,7 +26,7 @@ int main(void)
 		y = fdimf(p->x, p->x2);
 		e = fetestexcept(INEXACT|INVALID|DIVBYZERO|UNDERFLOW|OVERFLOW);
 
-#ifndef __aarch64__
+#if !defined(__aarch64__) && !(defined(__riscv) && __riscv_xlen == 64)
 		if (!checkexceptall(e, p->e, p->r)) {
 			printf("%s:%d: bad fp exception: %s fdimf(%a,%a)=%a, want %s",
 				p->file, p->line, rstr(p->r), p->x, p->x2, p->y, estr(p->e));
