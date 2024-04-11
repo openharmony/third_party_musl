@@ -31,8 +31,6 @@ ohos_executable("unittest_backtrace") {
     "../common",
     "//third_party/musl/porting/linux/user/include",
     "//third_party/musl/libc-test/src/common",
-    "//third_party/FreeBSD/contrib/libexecinfo",
-    "//third_party/FreeBSD/sys",
   ]
   configs = [ "//third_party/musl/libc-test/src/common:config_runtest" ]
 }
