@@ -21,9 +21,19 @@
         "adapted_system_type": ["mini", "small", "standard"],
         "rom": "",
         "ram": "",
+        "deps": {
+            "components": [
+                "init"
+            ],
+            "third_party": []
+        },
         "build": {
             "sub_component": [],
-            "inner_kits": [],
+            "inner_kits": [
+                {
+                    "name": "//third_party/musl:soft_libc_musl_static"
+                }
+            ],
             "test": [
                 "//third_party/musl/fuzztest:fuzztest"
             ]

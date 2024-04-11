@@ -2,8 +2,8 @@ import("../../../../musl_template.gni")
 import("../../../test_template.gni")
 
 ohos_executable("hilog_level") {
-  subsystem_name = "musl"
-  part_name = "libc-test"
+  subsystem_name = "thirdparty"
+  part_name = "musl"
 
   sources = [ "hilog_level.c" ]
   include_dirs = [
@@ -14,7 +14,8 @@ ohos_executable("hilog_level") {
   ]
   configs = [ "//third_party/musl/libc-test/src/common:config_runtest" ]
 
-  if (!startup_init_with_param_base) {
+  if (use_musl) {
     defines = [ "OHOS_ENABLE_PARAMETER" ]
+    external_deps = [ "init:parameterbase" ]
   }
 }

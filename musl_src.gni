@@ -1,6 +1,7 @@
-import("//third_party/FreeBSD/FreeBSD.gni")
 import("musl_config.gni")
 
+FREEBSD_DIR = "//third_party/FreeBSD/"
+OPTRTDIR = "//third_party/optimized-routines/"
 if (musl_arch == "arm") {
   musl_src_arch_file = [
     "src/exit/arm/__aeabi_atexit.c",
@@ -2449,23 +2450,6 @@ musl_inc_hook_files = [
   "src/hook/linux/musl_malloc_dispatch.h",
   "src/hook/linux/musl_preinit_common.h",
   "src/hook/linux/musl_socket_dispatch.h",
-]
-
-added_freebsd_files = [
-  "$FREEBSD_DIR/contrib/gdtoa/strtod.c",
-  "$FREEBSD_DIR/contrib/gdtoa/gethex.c",
-  "$FREEBSD_DIR/contrib/gdtoa/smisc.c",
-  "$FREEBSD_DIR/contrib/gdtoa/misc.c",
-  "$FREEBSD_DIR/contrib/gdtoa/strtord.c",
-  "$FREEBSD_DIR/contrib/gdtoa/hexnan.c",
-  "$FREEBSD_DIR/contrib/gdtoa/gmisc.c",
-  "$FREEBSD_DIR/contrib/gdtoa/hd_init.c",
-  "$FREEBSD_DIR/contrib/gdtoa/strtodg.c",
-  "$FREEBSD_DIR/contrib/gdtoa/ulp.c",
-  "$FREEBSD_DIR/contrib/gdtoa/strtof.c",
-  "$FREEBSD_DIR/contrib/gdtoa/sum.c",
-  "$FREEBSD_DIR/lib/libc/gdtoa/glue.c",
-  "$FREEBSD_DIR/lib/libc/stdio/parsefloat.c",
 ]
 
 freebsd_headers = [ "$FREEBSD_DIR/contrib/libexecinfo/execinfo.h" ]
