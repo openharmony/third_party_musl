@@ -1,4 +1,4 @@
-#ifndef __LITEOS__
+#if !defined(__LITEOS__) && !defined(__HISPARK_LINUX__)
 #include "syscall_hooks.h"
 #endif
 
@@ -13,7 +13,7 @@
 
 static inline long __syscall0(long n)
 {
-#ifndef __LITEOS__
+#if !defined(__LITEOS__) && !defined(__HISPARK_LINUX__)
 	if (is_syscall_hooked(n)) {
 		return __syscall_hooks_entry0(n);
 	}
@@ -25,7 +25,7 @@ static inline long __syscall0(long n)
 
 static inline long __syscall1(long n, long a)
 {
-#ifndef __LITEOS__
+#if !defined(__LITEOS__) && !defined(__HISPARK_LINUX__)
 	if (is_syscall_hooked(n)) {
 		return __syscall_hooks_entry1(n, a);
 	}
@@ -37,7 +37,7 @@ static inline long __syscall1(long n, long a)
 
 static inline long __syscall2(long n, long a, long b)
 {
-#ifndef __LITEOS__
+#if !defined(__LITEOS__) && !defined(__HISPARK_LINUX__)
 	if (is_syscall_hooked(n)) {
 		return __syscall_hooks_entry2(n, a, b);
 	}
@@ -50,7 +50,7 @@ static inline long __syscall2(long n, long a, long b)
 
 static inline long __syscall3(long n, long a, long b, long c)
 {
-#ifndef __LITEOS__
+#if !defined(__LITEOS__) && !defined(__HISPARK_LINUX__)
 	if (is_syscall_hooked(n)) {
 		return __syscall_hooks_entry3(n, a, b, c);
 	}
@@ -64,7 +64,7 @@ static inline long __syscall3(long n, long a, long b, long c)
 
 static inline long __syscall4(long n, long a, long b, long c, long d)
 {
-#ifndef __LITEOS__
+#if !defined(__LITEOS__) && !defined(__HISPARK_LINUX__)
 	if (is_syscall_hooked(n)) {
 		return __syscall_hooks_entry4(n, a, b, c, d);
 	}
@@ -79,7 +79,7 @@ static inline long __syscall4(long n, long a, long b, long c, long d)
 
 static inline long __syscall5(long n, long a, long b, long c, long d, long e)
 {
-#ifndef __LITEOS__
+#if !defined(__LITEOS__) && !defined(__HISPARK_LINUX__)
 	if (is_syscall_hooked(n)) {
 		return __syscall_hooks_entry5(n, a, b, c, d, e);
 	}
@@ -95,7 +95,7 @@ static inline long __syscall5(long n, long a, long b, long c, long d, long e)
 
 static inline long __syscall6(long n, long a, long b, long c, long d, long e, long f)
 {
-#ifndef __LITEOS__
+#if !defined(__LITEOS__) && !defined(__HISPARK_LINUX__)
 	if (is_syscall_hooked(n)) {
 		return __syscall_hooks_entry6(n, a, b, c, d, e, f);
 	}
@@ -113,7 +113,7 @@ static inline long __syscall6(long n, long a, long b, long c, long d, long e, lo
 #define VDSO_USEFUL
 #define VDSO_CGT_SYM "__kernel_clock_gettime"
 #define VDSO_CGT_VER "LINUX_2.6.39"
-#ifndef __LITEOS__
+#if !defined(__LITEOS__) && !defined(__HISPARK_LINUX__)
 #define VDSO_CGR_SYM "__kernel_clock_getres"
 #define VDSO_CGR_VER "LINUX_2.6.39"
 #define VDSO_GTD_SYM "__kernel_gettimeofday"
