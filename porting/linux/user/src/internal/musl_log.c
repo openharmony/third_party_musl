@@ -14,7 +14,21 @@
  */
 
 #include <hilog_adapter.h>
+#include <fcntl.h>
+#include <dlfcn.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <string.h>
+#include <pthread.h>
+
 #include "musl_log.h"
+
+#define PATH_MAX 256
+#define DFX_LOG_LIB "libasan_logger.z.so"
+#define DFX_LOG_INTERFACE "WriteGwpAsanLog"
+static void (*g_dfxLogPtr)(char*, size_t);
+static void* g_dfxLibHandler = NULL;
+static pthread_mutex_t g_muslLogMutex = PTHREAD_MUTEX_INITIALIZER;
 
 int musl_log(const char *fmt, ...)
 {
@@ -22,6 +36,45 @@ int musl_log(const char *fmt, ...)
     va_list ap;
     va_start(ap, fmt);
     ret = HiLogAdapterPrintArgs(MUSL_LOG_TYPE, LOG_INFO, MUSL_LOG_DOMAIN, MUSL_LOG_TAG, fmt, ap);
+
+    // Call dfx interface to write log
+    char buffer[PATH_MAX + 1];
+    int result = vsnprintf(buffer, PATH_MAX, fmt, ap);
     va_end(ap);
+    if (result < 0) {
+        return result;
+    }
+    // The dfx interface requires actively adding line breaks
+    buffer[result] = '\n';
+    buffer[result + 1] = '\0';
+    if (g_dfxLogPtr != NULL) {
+        g_dfxLogPtr(buffer, strlen(buffer));
+        return 0;
+    }
+
+    pthread_mutex_lock(&g_muslLogMutex);
+    if (g_dfxLogPtr != NULL) {
+        g_dfxLogPtr(buffer, strlen(buffer));
+        pthread_mutex_unlock(&g_muslLogMutex);
+        return 0;
+    }
+    if (g_dfxLibHandler == NULL) {
+        g_dfxLibHandler = dlopen(DFX_LOG_LIB, RTLD_LAZY);
+        if (g_dfxLibHandler == NULL) {
+            MUSL_LOGE("[musl_log] dlopen %{public}s failed!\n", DFX_LOG_LIB);
+            pthread_mutex_unlock(&g_muslLogMutex);
+            return 0;
+        }
+    }
+    if (g_dfxLogPtr == NULL) {
+        *(void **)(&g_dfxLogPtr) = dlsym(g_dfxLibHandler, DFX_LOG_INTERFACE);
+        if (g_dfxLogPtr != NULL) {
+            g_dfxLogPtr(buffer, strlen(buffer));
+        } else {
+            MUSL_LOGE("[musl_log] dlsym %{public}s, failed!\n", DFX_LOG_INTERFACE);
+        }
+    }
+    pthread_mutex_unlock(&g_muslLogMutex);
+
     return ret;
 }
