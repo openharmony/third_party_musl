@@ -139,7 +139,7 @@ struct dso {
 	uint16_t reloc_can_search_dso_capacity;
 	/* mark the dso status */
 	uint32_t flags;
-	uint8_t nr_dlopen;
+	uint32_t nr_dlopen;
 	bool is_global;
 	bool is_reloc_head_so_dep;
 	char relocated;
