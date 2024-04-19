@@ -10,7 +10,9 @@
 #include "syscall.h"
 #include "atomic.h"
 #include "futex.h"
-
+#ifndef __LITEOS__
+#include "musl_log.h"
+#endif
 #include "pthread_arch.h"
 
 #define pthread __pthread
@@ -246,6 +248,18 @@ static inline void __absolute_timespec_from_timespec(struct timespec *abs_ts,
         abs_ts->tv_nsec -= NS_PER_S;
         abs_ts->tv_sec++;
     }
+}
+
+static inline int __is_mutex_destroyed(int mutex_type)
+{
+	return mutex_type == PTHREAD_MUTEX_DESTROYED;
+}
+
+static inline void __handle_using_destroyed_mutex(pthread_mutex_t *mutex, const char *function_name)
+{
+#ifndef __LITEOS__
+	MUSL_LOGE("Fortify Error: %s called on a destroyed mutex (%p)", function_name, mutex);
+#endif
 }
 
 #ifdef RESERVE_SIGNAL_STACK

@@ -42,6 +42,7 @@
     __environ;
     __errno_location;
     __fbufsize;
+    __fd_chk;
     __fgets_chk;
     __fgetwc_unlocked;
     __flbf;

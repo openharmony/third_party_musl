@@ -20,4 +20,6 @@ functionalext_fortify_list = [
   "stdio",
   "string_ext",
   "invalid_param",
+  "select_test",
+  "pthread_fortify_test",
 ]
