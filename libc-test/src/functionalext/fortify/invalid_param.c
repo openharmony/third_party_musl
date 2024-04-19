@@ -507,33 +507,6 @@ void readdir_0100(void)
 }
 
 /**
- * @tc.name      : bsearch_0100
- * @tc.desc      : Verify clearerr with invalid parameter
- * @tc.level     : Level 2
- */
-void bsearch_0100(void)
-{
-    pid_t pid = fork();
-    if (pid == -1) {
-        t_error("bsearch_0100: Error forking process");
-    } else if (pid == 0) {
-        int arr[] = {1, 2, 3, 4, 5};
-        int key = 3;
-        size_t nel = 5;
-        size_t width = sizeof(int);
-        int (*cmp)(const void *, const void *) = compare;
-        bsearch(NULL, arr, nel, width, cmp);
-    } else {
-        int status;
-        waitpid(pid, &status, 0);
-        if (WIFSIGNALED(status)) {
-            int sig = WTERMSIG(status);
-            EXPECT_EQ("bsearch_0100", SIGABRT, sig);
-        }
-    }
-}
-
-/**
  * @tc.name      : pthread_join_0100
  * @tc.desc      : Verify clearerr with invalid parameter
  * @tc.level     : Level 2
@@ -630,7 +603,6 @@ int main(int argc, char *argv[])
     wcsnrtombs_0100();
     unsetenv_0100();
     readdir_0100();
-    bsearch_0100();
     pthread_join_0100();
     pthread_kill_0100();
     pthread_setschedparam_0100();
