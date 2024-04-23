@@ -155,6 +155,7 @@ int fputws_unlocked (const wchar_t *__restrict, FILE *__restrict);
 
 #if defined(_GNU_SOURCE) || defined(_BSD_SOURCE)
 size_t wcsftime_l (wchar_t *__restrict, size_t, const wchar_t *__restrict, const struct tm *__restrict, locale_t);
+double wcstod_l (const wchar_t *__restrict, wchar_t **__restrict, locale_t);
 #endif
 
 #if defined(_POSIX_SOURCE) || defined(_POSIX_C_SOURCE) \
