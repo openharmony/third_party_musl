@@ -15,6 +15,7 @@
 
 #include <ctype.h>
 #include "strops.h"
+#include "ld_log.h"
 
 /* string to lower */
 void strlwc(char *str)
@@ -95,7 +96,10 @@ strlist *strlist_alloc(size_t size)
 
 static void strlist_realloc(strlist *strs)
 {
-    if (!strs) return;
+    if(!strs) {
+        LD_LOGE("strlist_realloc: strlist is null.");
+        return;
+    }
     size_t size = 2 * strs->size;
     if (size) {
         char **ss = (char **)__libc_realloc(strs->strs, size * (sizeof *strs->strs));
@@ -109,7 +113,10 @@ static void strlist_realloc(strlist *strs)
 
 void strlist_free(strlist *strs)
 {
-    if (!strs) return;
+    if (!strs) {
+        LD_LOGE("strlist_free: strlist is null.");
+        return;
+    }
     for (size_t i = 0; i < strs->num; i++) {
         __libc_free(strs->strs[i]);
     }
@@ -119,7 +126,10 @@ void strlist_free(strlist *strs)
 
 void strlist_set(strlist *strs, const char *str)
 {
-    if (!strs || !str) return;
+    if (!strs || !str) {
+        LD_LOGE("strlist_set: invailed argument!");
+        return;
+    }
     if (strs->num == strs->size) {
        strlist_realloc(strs);
     }
@@ -133,6 +143,9 @@ char *ld_strdup(const char *s)
 {
     size_t l = strlen(s);
     char *d = __libc_malloc(l + 1);
-    if (!d) return NULL;
+    if (!d) {
+        LD_LOGE("ld_strdup: __libc_malloc failed!");
+        return NULL;
+    }
     return memcpy(d, s, l + 1);
 }

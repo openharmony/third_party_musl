@@ -254,6 +254,7 @@ static void init_default_namespace(struct dso *app)
 UT_STATIC void set_ns_attrs(ns_t *ns, ns_configor *conf)
 {
 	if (!ns || !conf) {
+		LD_LOGE("set_ns_attrs: ns or conf is null.");
 		return;
 	}
 
@@ -291,6 +292,7 @@ UT_STATIC void set_ns_attrs(ns_t *ns, ns_configor *conf)
 UT_STATIC void set_ns_inherits(ns_t *ns, ns_configor *conf)
 {
 	if (!ns || !conf) {
+		LD_LOGE("set_ns_attrs: ns or conf is null.");
 		return;
 	}
 
@@ -667,6 +669,7 @@ static void add_dso_parent(struct dso *p, struct dso *parent)
 		if (p->parents_capacity == 0) {
 			p->parents = (struct dso **)malloc(sizeof(struct dso *) * PARENTS_BASE_CAPACITY);
 			if (!p->parents) {
+				LD_LOGE("add_dso_parent: malloc failed! errno: %{public}d", errno);
 				return;
 			}
 			p->parents_capacity = PARENTS_BASE_CAPACITY;
@@ -674,6 +677,7 @@ static void add_dso_parent(struct dso *p, struct dso *parent)
 			struct dso ** realloced = (struct dso **)realloc(
 				p->parents, sizeof(struct dso *) * (p->parents_capacity + PARENTS_BASE_CAPACITY));
 			if (!realloced) {
+				LD_LOGE("add_dso_parent: realloc failed! errno: %{public}d", errno);
 				return;
 			}
 			p->parents = realloced;
@@ -688,6 +692,7 @@ static void remove_dso_parent(struct dso *p, struct dso *parent)
 {
 	int index = find_dso_parent(p, parent);
 	if (index == -1) {
+		LD_LOGD("remove_dso_parent: find dso parent failed!");
 		return;
 	}
 	int i;
@@ -707,6 +712,7 @@ static void add_reloc_can_search_dso(struct dso *p, struct dso *can_search_so)
 			p->reloc_can_search_dso_list =
 				(struct dso **)malloc(sizeof(struct dso *) * RELOC_CAN_SEARCH_DSO_BASE_CAPACITY);
 			if (!p->reloc_can_search_dso_list) {
+				LD_LOGE("add_reloc_can_search_dso: malloc failed! errno: %{public}d", errno);
 				return;
 			}
 			p->reloc_can_search_dso_capacity = RELOC_CAN_SEARCH_DSO_BASE_CAPACITY;
@@ -715,6 +721,7 @@ static void add_reloc_can_search_dso(struct dso *p, struct dso *can_search_so)
 				p->reloc_can_search_dso_list,
 				sizeof(struct dso *) * (p->reloc_can_search_dso_capacity + RELOC_CAN_SEARCH_DSO_BASE_CAPACITY));
 			if (!realloced) {
+				LD_LOGE("add_reloc_can_search_dso: realloc failed! errno: %{public}d", errno);
 				return;
 			}
 			p->reloc_can_search_dso_list = realloced;
@@ -1295,10 +1302,16 @@ UT_STATIC void *mmap_fixed(void *p, size_t n, int prot, int flags, int fd, off_t
 		return p;
 	}
 	ssize_t r;
-	if (lseek(fd, off, SEEK_SET) < 0) return MAP_FAILED;
+	if (lseek(fd, off, SEEK_SET) < 0) {
+		LD_LOGE("mmap_fixed: lseek failed! errno: %{public}d", errno);
+		return MAP_FAILED;
+	}
 	for (q=p; n; q+=r, off+=r, n-=r) {
 		r = read(fd, q, n);
-		if (r < 0 && errno != EINTR) return MAP_FAILED;
+		if (r < 0 && errno != EINTR) {
+			LD_LOGE("mmap_fixed: read failed! errno: %{public}d", errno);
+			return MAP_FAILED;
+		}
 		if (!r) {
 			memset(q, 0, n);
 			break;
@@ -1337,11 +1350,13 @@ UT_STATIC bool get_random(void *buf, size_t buflen)
 	int ret;
 	int fd = open("/dev/urandom", O_RDONLY);
 	if (fd < 0) {
+		LD_LOGE("get_random: open /dev/urandom failed! errno: %{public}d", errno);
 		return false;
 	}
 
 	ret = read(fd, buf, buflen);
 	if (ret < 0) {
+		LD_LOGE("get_random: read failed! errno: %{public}d", errno);
 		close(fd);
 		return false;
 	}
@@ -1381,8 +1396,10 @@ static bool get_transparent_hugepages_supported(void)
 		goto done;
 
 	read_size = read(fd, buf, HUGEPAGES_SUPPORTED_STR_SIZE - 1);
-	if (read_size < 0)
+	if (read_size < 0) {
+		LD_LOGE("get_transparent_hugepages_supported: read failed! errno: %{public}d", errno);
 		goto close_fd;
+	}
 
 	buf[HUGEPAGES_SUPPORTED_STR_SIZE - 1] = '\0';
 	if (strstr(buf, "[never]") == NULL)
@@ -1440,13 +1457,19 @@ UT_STATIC void *map_library(int fd, struct dso *dso, struct reserved_address_par
 
 	ssize_t l = read(fd, buf, sizeof buf);
 	eh = buf;
-	if (l<0) return 0;
+	if (l<0) {
+		LD_LOGE("map_library: read failed! errno: %{public}d", errno);
+		return 0;
+	}
 	if (l<sizeof *eh || (eh->e_type != ET_DYN && eh->e_type != ET_EXEC))
 		goto noexec;
 	phsize = eh->e_phentsize * eh->e_phnum;
 	if (phsize > sizeof buf - sizeof *eh) {
 		allocated_buf = malloc(phsize);
-		if (!allocated_buf) return 0;
+		if (!allocated_buf) {
+			LD_LOGE("map_library: malloc failed! errno: %{public}d", errno);
+			return 0;
+		}
 		l = pread(fd, allocated_buf, phsize, eh->e_phoff);
 		if (l < 0) goto error;
 		if (l != phsize) goto noexec;
@@ -1494,7 +1517,10 @@ UT_STATIC void *map_library(int fd, struct dso *dso, struct reserved_address_par
 	if (DL_FDPIC && !(eh->e_flags & FDPIC_CONSTDISP_FLAG)) {
 		dso->loadmap = calloc(1, sizeof *dso->loadmap
 			+ nsegs * sizeof *dso->loadmap->segs);
-		if (!dso->loadmap) goto error;
+		if (!dso->loadmap) {
+			LD_LOGE("map_library: calloc failed! errno: %{public}d", errno);
+			goto error;
+		}
 		dso->loadmap->nsegs = nsegs;
 		for (ph=ph0, i=0; i<nsegs; ph=(void *)((char *)ph+eh->e_phentsize)) {
 			if (ph->p_type != PT_LOAD) continue;
@@ -1568,6 +1594,7 @@ UT_STATIC void *map_library(int fd, struct dso *dso, struct reserved_address_par
 			? mmap((void *)start_addr, map_len, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0)
 			: mmap((void *)start_addr, map_len, prot, map_flags, fd, off_start);
 		if (map == MAP_FAILED) {
+			LD_LOGE("map_library: reserved_params exist, map failed! errno: %{public}d", errno);
 			goto error;
 		}
 		if (reserved_params && map_len < reserved_params->reserved_size) {
@@ -1579,6 +1606,7 @@ UT_STATIC void *map_library(int fd, struct dso *dso, struct reserved_address_par
 		/* use tmp_map_len to mmap enough space for the dso with anonymous mapping */
 		unsigned char *temp_map = mmap((void *)NULL, tmp_map_len, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
 		if (temp_map == MAP_FAILED) {
+			LD_LOGE("map_library: reserved_params does not exist, map failed! errno: %{public}d", errno);
 			goto error;
 		}
 
@@ -1593,6 +1621,7 @@ UT_STATIC void *map_library(int fd, struct dso *dso, struct reserved_address_par
 			/* use map_len to mmap correct space for the dso with file mapping */
 			: mmap(real_map, map_len, prot, map_flags, fd, off_start);
 		if (map == MAP_FAILED) {
+			LD_LOGE("map_library: use map_len to mmap correct space, map failed! errno: %{public}d", errno);
 			goto error;
 		}
 	}
@@ -1602,6 +1631,7 @@ UT_STATIC void *map_library(int fd, struct dso *dso, struct reserved_address_par
 	 * not available, then the load operation must fail. */
 	if (eh->e_type != ET_DYN && addr_min && map!=(void *)addr_min) {
 		errno = EBUSY;
+		LD_LOGE("map_library: load operation failed!");
 		goto error;
 	}
 	base = map - addr_min;
@@ -1751,7 +1781,10 @@ UT_STATIC int fixup_rpath(struct dso *p, char *buf, size_t buf_size)
 	if (libc.secure && *origin != '/')
 		return 0;
 	p->rpath = malloc(strlen(p->rpath_orig) + n*l + 1);
-	if (!p->rpath) return -1;
+	if (!p->rpath) {
+		LD_LOGE("fixup_rpath: malloc failed! errno: %{public}d", errno);
+		return -1;
+	}
 
 	d = p->rpath;
 	s = p->rpath_orig;
@@ -1980,6 +2013,7 @@ struct dso *load_library(
 
 	if (!*name) {
 		errno = EINVAL;
+		LD_LOGE("load_library: name is null.");
 		return 0;
 	}
 
@@ -2101,7 +2135,10 @@ struct dso *load_library(
 	}
 	map = noload ? 0 : map_library(fd, &temp_dso, reserved_params);
 	close(fd);
-	if (!map) return 0;
+	if (!map) {
+		LD_LOGE("load_library: map is null.");
+		return 0;
+	}
 
 	/* Avoid the danger of getting two versions of libc mapped into the
 	 * same process when an absolute pathname was used. The symbols
@@ -2134,6 +2171,7 @@ struct dso *load_library(
 	p = calloc(1, alloc_size);
 	if (!p) {
 		unmap_library(&temp_dso);
+		LD_LOGE("load_library: calloc failed! errno: %{public}d", errno);
 		return 0;
 	}
 	memcpy(p, &temp_dso, sizeof temp_dso);
@@ -2604,6 +2642,7 @@ static struct dso **queue_ctors(struct dso *dso)
 		queue = calloc(cnt, sizeof *queue);
 
 	if (!queue) {
+		LD_LOGE("queue_ctors: calloc failed! errno: %{public}d", errno);
 		error("Error allocating constructor queue: %m\n");
 		if (runtime) longjmp(*rtld_fail, 1);
 		return 0;
@@ -2974,11 +3013,13 @@ void __dls3(size_t *sp, size_t *auxv, size_t *aux)
 		}
 		fd = open(argv[0], O_RDONLY);
 		if (fd < 0) {
+			LD_LOGE("__dls3: open failed! errno: %{public}d", errno);
 			dprintf(2, "%s: cannot load %s: %s\n", ldname, argv[0], strerror(errno));
 			_exit(1);
 		}
 		Ehdr *ehdr = map_library(fd, &app, NULL);
 		if (!ehdr) {
+			LD_LOGE("__dls3: map_library failed!");
 			dprintf(2, "%s: %s: Not a valid dynamic program\n", ldname, argv[0]);
 			_exit(1);
 		}
@@ -3052,6 +3093,7 @@ void __dls3(size_t *sp, size_t *auxv, size_t *aux)
 #ifdef LOAD_ORDER_RANDOMIZATION
 	struct loadtasks *tasks = create_loadtasks();
 	if (!tasks) {
+		LD_LOGE("__dls3: create_loadtasks failed!");
 		_exit(1);
 	}
 	if (env_preload) {
@@ -3129,6 +3171,7 @@ void __dls3(size_t *sp, size_t *auxv, size_t *aux)
 	if (libc.tls_size > sizeof builtin_tls || tls_align > MIN_TLS_ALIGN) {
 		initial_tls = calloc(libc.tls_size, 1);
 		if (!initial_tls) {
+			LD_LOGE("__dls3: calloc failed! errno: %{public}d", errno);
 			dprintf(2, "%s: Error getting %zu bytes thread-local storage: %m\n",
 				argv[0], libc.tls_size);
 			_exit(127);
@@ -3214,6 +3257,7 @@ static void prepare_lazy(struct dso *p)
 	p->lazy = calloc(n, 3*sizeof(size_t));
 	if (!p->lazy) {
 		error("Error preparing lazy relocation for %s: %m", p->name);
+		LD_LOGE("prepare_lazy: calloc failed! errno: %{public}d", errno);
 		longjmp(*rtld_fail, 1);
 	}
 	p->lazy_next = lazy_head;
@@ -3222,6 +3266,7 @@ static void prepare_lazy(struct dso *p)
 
 static void *dlopen_post(struct dso* p, int mode) {
 	if (p == NULL) {
+		LD_LOGE("dlopen_post: so is null.");
 		return p;
 	}
 	bool is_dlclose_debug = false;
@@ -3580,15 +3625,18 @@ void *dlopen(const char *file, int mode)
 void dlns_init(Dl_namespace *dlns, const char *name)
 {
 	if (!dlns) {
+		LD_LOGE("dlns_init: namespace is null.");
 		return;
 	}
 	if (!name) {
 		dlns->name[0] = 0;
+		LD_LOGE("dlns_init: name is null.");
 		return;
 	}
 
 	const void *caller_addr = __builtin_return_address(0);
 	if (is_permitted(caller_addr, name) == false) {
+		LD_LOGE("dlns_init: no permission!");
 		return;
 	}
 
@@ -3630,6 +3678,7 @@ void *dlopen_ns(Dl_namespace *dlns, const char *file, int mode)
 {
 	const void *caller_addr = __builtin_return_address(0);
 	if (is_permitted(caller_addr, dlns->name) == false) {
+		LD_LOGE("dlopen_ns: no permission!");
 		return NULL;
 	}
 
@@ -3647,6 +3696,7 @@ void *dlopen_ns_ext(Dl_namespace *dlns, const char *file, int mode, const dl_ext
 {
 	const void *caller_addr = __builtin_return_address(0);
 	if (is_permitted(caller_addr, dlns->name) == false) {
+		LD_LOGE("dlopen_ns_ext: no permission!");
 		return NULL;
 	}
 
@@ -3673,6 +3723,7 @@ int dlns_create2(Dl_namespace *dlns, const char *lib_path, int flags)
 	pthread_rwlock_wrlock(&lock);
 	const void *caller_addr = __builtin_return_address(0);
 	if (is_permitted(caller_addr, dlns->name) == false) {
+		LD_LOGE("dlns_create2: no permission!");
 		pthread_rwlock_unlock(&lock);
 		return EPERM;
 	}
@@ -3734,6 +3785,7 @@ int dlns_inherit(Dl_namespace *dlns, Dl_namespace *inherited, const char *shared
 	pthread_rwlock_wrlock(&lock);
 	const void *caller_addr = __builtin_return_address(0);
 	if (is_permitted(caller_addr, dlns->name) == false) {
+		LD_LOGE("dlns_inherit: no permission!");
 		pthread_rwlock_unlock(&lock);
 		return EPERM;
 	}
@@ -3830,7 +3882,7 @@ static void *do_dlsym(struct dso *p, const char *s, const char *v, void *ra)
 		find_sym2(p, &verinfo, 0, use_deps, ns);
 	trace_marker_end(HITRACE_TAG_MUSL);
 	if (!def.sym) {
-		LD_LOGE("do_dlsym failed: symbol not found. so=%{public}s s=%{public}s v=%{public}s", (p == NULL ? "NULL" : p->name), s, v);
+		LD_LOGW("do_dlsym failed: symbol not found. so=%{public}s s=%{public}s v=%{public}s", (p == NULL ? "NULL" : p->name), s, v);
 		error("Symbol not found: %s, version: %s", s, strlen(v) > 0 ? v : "null");
 		return 0;
 	}
@@ -3995,6 +4047,8 @@ static int do_dlclose(struct dso *p)
 	} else {
 		LD_LOGE("[dlclose]: number of dlopen and dlclose of %{public}s doesn't match when dlclose %{public}s",
 		        p->name, p->name);
+		error("dlclose: number of dlopen and dlclose of %{public}s doesn't match when dlclose %{public}s",
+				p->name, p->name);
 		return 0;
 	}
 	
@@ -4005,6 +4059,8 @@ static int do_dlclose(struct dso *p)
 			} else {
 				LD_LOGE("[dlclose]: number of dlopen and dlclose of %{public}s doesn't match when dlclose %{public}s",
 						p->deps[i]->name, p->name);
+				error("dlclose: number of dlopen and dlclose of %{public}s doesn't match when dlclose %{public}s",
+				p->deps[i]->name, p->name);
 				return 0;
 			}
 		}
@@ -4216,7 +4272,10 @@ int dladdr(const void *addr_arg, Dl_info *info)
 	p = addr2dso(addr);
 	pthread_rwlock_unlock(&lock);
 
-	if (!p) return 0;
+	if (!p) {
+		LD_LOGE("dladdr: no matched dso found!");
+		return 0;
+	}
 
 	strings = p->strings;
 	size_t addr_offset_so = addr - (size_t)p->base;
@@ -4249,6 +4308,7 @@ hidden void *__dlsym(void *restrict p, const char *restrict s, void *restrict ra
 	if ((p != RTLD_DEFAULT) && (p != RTLD_NEXT)) {
 		struct dso *dso = find_dso_by_handle(p);
 		if (dso == NULL) {
+			LD_LOGE("__dlsym: dso not found!");
 			pthread_rwlock_unlock(&lock);
 			return 0;
 		}
@@ -4271,6 +4331,7 @@ hidden void *__dlvsym(void *restrict p, const char *restrict s, const char *rest
 	if ((p != RTLD_DEFAULT) && (p != RTLD_NEXT)) {
 		struct dso *dso = find_dso_by_handle(p);
 		if (dso == NULL) {
+			LD_LOGE("__dlvsym: dso not found!");
 			pthread_rwlock_unlock(&lock);
 			return 0;
 		}
@@ -4365,6 +4426,7 @@ int dlns_set_namespace_lib_path(const char * name, const char * lib_path)
 	const void *caller_addr = __builtin_return_address(0);
 	if (is_permitted(caller_addr, name) == false) {
 		pthread_rwlock_unlock(&lock);
+		LD_LOGE("dlns_set_namespace_lib_path: no permission!");
 		return EPERM;
 	}
 
@@ -4391,6 +4453,7 @@ int dlns_set_namespace_separated(const char * name, const bool separated)
 	const void *caller_addr = __builtin_return_address(0);
 	if (is_permitted(caller_addr, name) == false) {
 		pthread_rwlock_unlock(&lock);
+		LD_LOGE("dlns_set_namespace_separated: no permission!");
 		return EPERM;
 	}
 
@@ -4417,6 +4480,7 @@ int dlns_set_namespace_permitted_paths(const char * name, const char * permitted
 	const void *caller_addr = __builtin_return_address(0);
 	if (is_permitted(caller_addr, name) == false) {
 		pthread_rwlock_unlock(&lock);
+		LD_LOGE("dlns_set_namespace_permitted_paths: no permission!");
 		return EPERM;
 	}
 
@@ -4443,6 +4507,7 @@ int dlns_set_namespace_allowed_libs(const char * name, const char * allowed_libs
 	const void *caller_addr = __builtin_return_address(0);
 	if (is_permitted(caller_addr, name) == false) {
 		pthread_rwlock_unlock(&lock);
+		LD_LOGE("dlns_set_namespace_allowed_libs: no permission!");
 		return EPERM;
 	}
 
@@ -4879,6 +4944,7 @@ static bool task_map_library(struct loadtask *task, struct reserved_address_para
 	if (DL_FDPIC && !(task->eh->e_flags & FDPIC_CONSTDISP_FLAG)) {
 		task->p->loadmap = calloc(1, sizeof(struct fdpic_loadmap) + nsegs * sizeof(struct fdpic_loadseg));
 		if (!task->p->loadmap) {
+			LD_LOGE("task_map_library: calloc failed! errno: %{public}d", errno);
 			goto error;
 		}
 		task->p->loadmap->nsegs = nsegs;
@@ -4893,6 +4959,7 @@ static bool task_map_library(struct loadtask *task, struct reserved_address_para
 				prot, MAP_PRIVATE,
 				task->fd, ph->p_offset & -PAGE_SIZE + task->file_offset);
 			if (map == MAP_FAILED) {
+				LD_LOGE("task_map_library: mmap failed! errno: %{public}d", errno);
 				unmap_library(task->p);
 				goto error;
 			}
@@ -4958,6 +5025,7 @@ static bool task_map_library(struct loadtask *task, struct reserved_address_para
 			? mmap((void *)start_addr, map_len, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0)
 			: mmap((void *)start_addr, map_len, prot, map_flags, task->fd, off_start + task->file_offset);
 		if (map == MAP_FAILED) {
+			LD_LOGE("task_map_library: reserved_params exists, mmap failed! errno: %{public}d", errno);
 			goto error;
 		}
 		if (reserved_params && map_len < reserved_params->reserved_size) {
@@ -4969,6 +5037,7 @@ static bool task_map_library(struct loadtask *task, struct reserved_address_para
 		/* use tmp_map_len to mmap enough space for the dso with anonymous mapping */
 		unsigned char *temp_map = mmap((void *)NULL, tmp_map_len, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
 		if (temp_map == MAP_FAILED) {
+			LD_LOGE("task_map_library: reserved_params does not exist, mmap failed! errno: %{public}d", errno);
 			goto error;
 		}
 
@@ -4983,6 +5052,7 @@ static bool task_map_library(struct loadtask *task, struct reserved_address_para
 			/* use map_len to mmap correct space for the dso with file mapping */
 			: mmap(real_map, map_len, prot, map_flags, task->fd, off_start + task->file_offset);
 		if (map == MAP_FAILED) {
+			LD_LOGE("task_map_library: use map_len to mmap correct space, mmap failed! errno: %{public}d", errno);
 			goto error;
 		}
 	}
@@ -5094,10 +5164,12 @@ static bool resolve_fd_to_realpath(struct loadtask *task)
 
 	int ret = snprintf(proc_self_fd, sizeof(proc_self_fd), "/proc/self/fd/%d", task->fd);
 	if (ret < 0 || ret >= sizeof(proc_self_fd)) {
+		LD_LOGE("resolve_fd_to_realpath: snprintf failed! errno: %{public}d", errno);
 		return false;
 	}
 	ssize_t len = readlink(proc_self_fd, resolved_path, sizeof(resolved_path) - 1);
 	if (len < 0) {
+		LD_LOGE("resolve_fd_to_realpath: readlink failed! errno: %{public}d", errno);
 		return false;
 	}
 	resolved_path[len] = '\0';
@@ -5238,7 +5310,7 @@ static bool load_library_header(struct loadtask *task)
 	}
 	if (task->fd < 0) {
 		if (!check_inherited || !namespace->ns_inherits) {
-			LD_LOGE("Error loading header %{public}s, namespace %{public}s has no inherits", task->name, namespace->ns_name);
+			LD_LOGW("Error loading header %{public}s, namespace %{public}s has no inherits", task->name, namespace->ns_name);
 			return false;
 		}
 		/* Load lib in inherited namespace. Do not check inherited again.*/
@@ -5254,6 +5326,7 @@ static bool load_library_header(struct loadtask *task)
 			}
 		}
 		LD_LOGE("Error loading header: can't find library %{public}s in namespace: %{public}s", task->name, namespace->ns_name);
+		error("Error loading header: can't find library %{public}s in namespace: %{public}s", task->name, namespace->ns_name);
 		return false;
 	}
 
