@@ -18,5 +18,5 @@ struct kstat {
 	long st_mtime_nsec;
 	long st_ctime_sec;
 	long st_ctime_nsec;
-	long __unused[3];
+	long __unused1[3];
 };
