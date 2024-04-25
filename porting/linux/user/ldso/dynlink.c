@@ -3300,8 +3300,12 @@ static bool is_permitted(const void *caller_addr, char *target)
 	return true;
 }
 
-/* add namespace function */
-static void *dlopen_impl(
+/* Add namespace function.
+ * Some limitations come from sanitizer:
+ *  Sanitizer requires this interface to be exposed.
+ *  Pay attention to call __builtin_return_address in this interface because sanitizer can hook and call this interface.
+ */
+void *dlopen_impl(
 	const char *file, int mode, const char *namespace, const void *caller_addr, const dl_extinfo *extinfo)
 {
 	struct dso *volatile p, *orig_tail, *orig_syms_tail, *orig_lazy_head, *next;
