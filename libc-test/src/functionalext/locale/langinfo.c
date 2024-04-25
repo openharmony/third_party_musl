@@ -199,6 +199,10 @@ void nl_langinfo_0900()
 
 int main(void)
 {
+    if (unsetenv("LANG") != 0) {
+        perror("unsetenv failed");
+        return t_status;
+    }
     langinfo_0100();
     nl_langinfo_0200();
     nl_langinfo_0300();
