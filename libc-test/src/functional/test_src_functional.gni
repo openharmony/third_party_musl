@@ -82,6 +82,8 @@ functional_list = [
   "dlclose_reset",
   "atexit_dlclose",
   "exit_constructor",
+  "renameat2_test",
+  "fopencookie_test",
 ]
 
 if (use_pthread_cancel) {
