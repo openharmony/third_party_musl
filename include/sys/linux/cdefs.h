@@ -41,11 +41,23 @@
 #define	__predict_false(exp)	__builtin_expect((exp) != 0, 0)
 
 #if defined(__cplusplus)
-#define	__BEGIN_DECLS    extern "C" {
+#define	__BEGIN_EXTERN_C    extern "C" {
+#define	__END_EXTERN_C		}
+#ifndef __BEGIN_DECLS
+#define __BEGIN_DECLS   extern "C" {
+#endif
+#ifndef __END_DECLS
 #define	__END_DECLS		}
+#endif
 #else
-#define	__BEGIN_DECLS
+#define	__BEGIN_EXTERN_C
+#define	__END_EXTERN_C
+#ifndef __BEGIN_DECLS
+#define __BEGIN_DECLS
+#endif
+#ifndef __END_DECLS
 #define	__END_DECLS
+#endif
 #endif
 
 #if defined(__cplusplus)
