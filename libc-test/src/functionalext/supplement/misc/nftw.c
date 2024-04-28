@@ -41,7 +41,7 @@ static int nftw_callback(const char *pathname, const struct stat *sb, int flag, 
             EXPECT_EQ("nftw_callback", flag, FTW_DNR);
         }
     } else if (S_ISLNK(sb->st_mode)) {
-        EXPECT_EQ("nftw_callback", flag, flag == FTW_SL || flag == FTW_SLN);
+        EXPECT_TRUE("nftw_callback", flag == FTW_SL || flag == FTW_SLN);
     } else {
         EXPECT_EQ("nftw_callback", flag, FTW_F);
     }
