@@ -1,4 +1,5 @@
 #include "pthread_impl.h"
+#include "pthread_ffrt.h"
 
 int pthread_setspecific(pthread_key_t k, const void *x)
 {

@@ -1,4 +1,5 @@
 #include "pthread_impl.h"
+#include "pthread_ffrt.h"
 #include <threads.h>
 
 static void *__pthread_getspecific(pthread_key_t k)
