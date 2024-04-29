@@ -2216,6 +2216,7 @@ musl_inc_root_files = [
   "include/wctype.h",
   "include/wordexp.h",
   "include/syscall_hooks.h",
+  "include/pthread_ffrt.h",
 ]
 
 musl_src_files_ext = [
