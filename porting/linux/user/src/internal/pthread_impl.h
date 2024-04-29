@@ -25,7 +25,6 @@
 #include "syscall.h"
 #include "atomic.h"
 #include "futex.h"
-#include "pthread_ffrt.h"
 
 #include "pthread_arch.h"
 
