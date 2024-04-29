@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-#ifndef  _PHTREAD_FFRT_H
+#ifndef _PHTREAD_FFRT_H
 #define _PHTREAD_FFRT_H
 #ifdef _cplusplus
 extern "C" {
