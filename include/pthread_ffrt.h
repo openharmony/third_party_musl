@@ -15,7 +15,7 @@
 
 #ifndef _PHTREAD_FFRT_H
 #define _PHTREAD_FFRT_H
-#ifdef _cplusplus
+#ifdef __cplusplus
 extern "C" {
 #endif
 
