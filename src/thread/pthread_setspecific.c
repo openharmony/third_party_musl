@@ -10,3 +10,9 @@ int pthread_setspecific(pthread_key_t k, const void *x)
 	}
 	return 0;
 }
+
+void pthread_settsd(void** tsd)
+{
+	struct pthread *self = __pthread_self();
+	self->tsd = tsd;
+}

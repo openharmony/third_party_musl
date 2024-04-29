@@ -89,3 +89,4 @@ void __pthread_tsd_run_dtors()
 
 weak_alias(__pthread_key_create, pthread_key_create);
 weak_alias(__pthread_key_delete, pthread_key_delete);
+weak_alias(__pthread_tsd_run_dtors, pthread_tsd_run_dtors);
