@@ -19,4 +19,6 @@ functionalext_locale_test = [
   "newlocale",
   "setlocale",
   "uselocale",
+  "strtod_l",
+  "wcstod_l",
 ]

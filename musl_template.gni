@@ -564,6 +564,7 @@ template("musl_libs") {
     }
 
     defines = []
+    defines += [ "FEATURE_ICU_LOCALE" ]
     if (musl_arch == "arm") {
       defines += [ "MUSL_ARM_ARCH" ]
     }
