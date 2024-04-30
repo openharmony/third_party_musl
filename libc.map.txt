@@ -1403,9 +1403,6 @@
     pthread_key_create;
     pthread_key_delete;
     pthread_kill;
-    pthread_tsd_run_dtors;
-    pthread_gettsd;
-    pthread_settsd;
     pthread_mutex_clocklock;
     # pthread_mutex_consistent;
     pthread_mutex_destroy;
