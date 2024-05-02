@@ -3884,6 +3884,7 @@ static int dlclose_post(struct dso *p)
 			libc.unload_hook((unsigned long int)p->base, p->phdr, p->phnum);
 		}
 #endif
+	unmap_dso_from_cfi_shadow(p);
 	unmap_library(p);
 	if (p->parents) {
 		free(p->parents);
@@ -3965,8 +3966,6 @@ static int dlclose_impl(struct dso *p)
 
 	notify_remove_to_debugger(p);
 
-	unmap_dso_from_cfi_shadow(p);
-	
 	if (p->lazy != NULL)
 		free(p->lazy);
 	if (p->deps != no_deps)
