@@ -5186,6 +5186,7 @@ static bool load_library_header(struct loadtask *task)
 				return false;
 			}
 		} else {
+			LD_LOGE("Dlopen absolute pathname: %{public}s", name);
 			task->pathname = name;
 			if (!is_accessible(namespace, task->pathname, g_is_asan, check_inherited)) {
 				task->fd = -1;
