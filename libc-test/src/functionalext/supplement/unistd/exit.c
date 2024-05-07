@@ -14,6 +14,11 @@
  */
 
 #include <stdlib.h>
+#include <spawn.h>
+#include <sys/wait.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
 #include "functionalext.h"
 #include "filepath_util.h"
 
@@ -25,14 +30,24 @@
  */
 void exit_0100(void)
 {
-    char path[PATH_MAX] = {0};
-    FILE_ABSOLUTE_DIR(path);
-    char cmd[PATH_MAX] = {0};
-    snprintf(cmd, sizeof(cmd), "cd %s; ./exittest01", path);
-    system(cmd);
-
     char str[100] = {0};
     const char *ptr = "/data/Exittest01.txt";
+    pid_t pid;
+    pid = fork();  
+    if (pid < 0) {  
+        fprintf(stderr, "Fork Failed");  
+        exit(1);  
+    }  
+    else if (pid == 0) {   
+        FILE *fptr = fopen(ptr, "w+");
+        fprintf(fptr, "%s", "exit before");
+        exit(0);
+        fprintf(fptr, "%s", "exit after");
+    }  
+    else {    
+        wait(NULL);
+    } 
+
     FILE *fp = fopen(ptr, "r");
     if (!fp) {
         t_error("%s fopen failed\n", __func__);
@@ -59,14 +74,26 @@ void exit_0100(void)
  */
 void exit_0200(void)
 {
-    char path[PATH_MAX] = {0};
-    FILE_ABSOLUTE_DIR(path);
-    char cmd[PATH_MAX] = {0};
-    snprintf(cmd, sizeof(cmd), "cd %s; ./exittest02", path);
-    system(cmd);
-
     char abc[100] = {0};
     const char *ptr = "/data/Exittest02.txt";
+    pid_t pid;
+    pid = fork();  
+  
+    if (pid < 0) {  
+        fprintf(stderr, "Fork Failed");  
+        exit(1);  
+    }  
+    else if (pid == 0) {   
+        FILE *fptr = fopen(ptr, "w+");
+        fprintf(fptr, "%s", "exit before");
+        exit(1);
+        fprintf(fptr, "%s", "exit after");
+    }  
+    else {    
+        wait(NULL);
+    } 
+
+    
     FILE *fp = fopen(ptr, "r");
     if (!fp) {
         t_error("%s fopen failed\n", __func__);
