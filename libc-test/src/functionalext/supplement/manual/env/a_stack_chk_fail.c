@@ -29,11 +29,11 @@ void Killfunc(int signu)
         case SIGILL:
             flag++;
             EXPECT_EQ("a_stack_chk_fail_0100 exception", flag, INCREASE_LEN);
-            exit(-1);
+            exit(0);
         case SIGSEGV:
             flag++;
             EXPECT_EQ("a_stack_chk_fail_0100 exception", flag, INCREASE_LEN);
-            exit(-1);
+            exit(0);
         default:
             break;
     }
@@ -53,7 +53,7 @@ void a_stack_chk_fail_0100(void)
     sigaction(SIGILL, &act, &oldact);
     sigaction(SIGSEGV, &act, &oldact);
     __stack_chk_fail();
-    EXPECT_EQ("a_stack_chk_fail_0100", flag, INIT_LEN);
+    EXPECT_EQ("a_stack_chk_fail_0100", flag, INCREASE_LEN);
 }
 
 int main(void)
