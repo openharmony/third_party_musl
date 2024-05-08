@@ -21,7 +21,7 @@
 
 
 #define EXPECT_DOUBLE_EQ(a, b)                                             \
-    do {                                                                  \
+    do {                                                                   \
         if (!(a == b || (fabs(a - b) < DBL_EPSILON)))                      \
             t_error("%s failed: %f is not equal to %f\n", __func__, a, b); \
     } while (0)
