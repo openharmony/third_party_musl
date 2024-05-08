@@ -25,6 +25,9 @@ int __lookup_serv(struct service buf[static MAXSERVS], const char *name, int pro
 		case IPPROTO_TCP:
 			break;
 		default:
+#ifndef __LITEOS__
+			MUSL_LOGE("%{public}s: %{public}d: socktype mismatch IPPROTO_TCP: %{public}d", __func__, __LINE__, proto);
+#endif
 			return EAI_SERVICE;
 		}
 		break;
@@ -35,12 +38,20 @@ int __lookup_serv(struct service buf[static MAXSERVS], const char *name, int pro
 		case IPPROTO_UDP:
 			break;
 		default:
+#ifndef __LITEOS__
+			MUSL_LOGE("%{public}s: %{public}d: socktype mismatch IPPROTO_UDP: %{public}d", __func__, __LINE__, proto);
+#endif
 			return EAI_SERVICE;
 		}
 	case 0:
 		break;
 	default:
-		if (name) return EAI_SERVICE;
+		if (name) {
+#ifndef __LITEOS__
+			MUSL_LOGE("%{public}s: %{public}d: socktype mismatch name: %{public}d", __func__, __LINE__, EAI_SERVICE);
+#endif
+            return EAI_SERVICE;
+		}
 		buf[0].port = 0;
 		buf[0].proto = proto;
 		buf[0].socktype = socktype;
@@ -52,7 +63,12 @@ int __lookup_serv(struct service buf[static MAXSERVS], const char *name, int pro
 		port = strtoul(name, &z, 10);
 	}
 	if (!*z) {
-		if (port > 65535) return EAI_SERVICE;
+		if (port > 65535) {
+#ifndef __LITEOS__
+			MUSL_LOGE("%{public}s: %{public}d: port is larger than 65535: %{public}d", __func__, __LINE__, EAI_SERVICE);
+#endif
+		    return EAI_SERVICE;
+		}
 		if (proto != IPPROTO_UDP) {
 			buf[cnt].port = port;
 			buf[cnt].socktype = SOCK_STREAM;
@@ -66,7 +82,12 @@ int __lookup_serv(struct service buf[static MAXSERVS], const char *name, int pro
 		return cnt;
 	}
 
-	if (flags & AI_NUMERICSERV) return EAI_NONAME;
+	if (flags & AI_NUMERICSERV) {
+#ifndef __LITEOS__
+		MUSL_LOGE("%{public}s: %{public}d: flags is AI_NUMERICSERV: %{public}d", __func__, __LINE__, EAI_NONAME);
+#endif
+        return EAI_NONAME;
+	}
 
 	size_t l = strlen(name);
 
@@ -105,5 +126,12 @@ int __lookup_serv(struct service buf[static MAXSERVS], const char *name, int pro
 	if (f) {
 		__fclose_ca(f);
 	}
-	return cnt > 0 ? cnt : EAI_SERVICE;
+	if (cnt > 0) {
+		return cnt;
+	} else {
+#ifndef __LITEOS__
+		MUSL_LOGE("%{public}s: %{public}d: wrong server count: %{public}d", __func__, __LINE__, cnt);
+#endif
+		return EAI_SERVICE;
+	}
 }

@@ -202,6 +202,9 @@ static int name_from_dns(struct address buf[static MAXADDRS], char canon[static 
 
 	if (!IsIpv6Enable(netid) || (family == AF_INET)) {
 		if (family == AF_INET6) {
+#ifndef __LITEOS__
+			MUSL_LOGE("%{public}s: %{public}d: Network scenario mismatch: %{public}d", __func__, __LINE__, EAI_SYSTEM);
+#endif
 			return EAI_SYSTEM;
 		}
 		queryNum = 1;
@@ -219,8 +222,12 @@ static int name_from_dns(struct address buf[static MAXADDRS], char canon[static 
 			if (family != afrr[i].af) {
 				qlens[nq] = __res_mkquery(0, queryName, 1, afrr[i].rr,
 					0, 0, 0, qbuf[nq], sizeof *qbuf);
-				if (qlens[nq] == -1)
+				if (qlens[nq] == -1) {
+#ifndef __LITEOS__
+					MUSL_LOGE("%{public}s: %{public}d: Illegal querys: %{public}d", __func__, __LINE__, EAI_NONAME);
+#endif
 					return EAI_NONAME;
+				}
 				qbuf[nq][3] = 0; /* don't need AD flag */
 				nq++;
 			}
@@ -230,9 +237,19 @@ static int name_from_dns(struct address buf[static MAXADDRS], char canon[static 
 			return EAI_SYSTEM;
 
 		for (i=0; i<nq; i++) {
-			if (alens[i] < 4 || (abuf[i][3] & 15) == 2) return EAI_AGAIN;
+			if (alens[i] < 4 || (abuf[i][3] & 15) == 2) {
+#ifndef __LITEOS__
+				MUSL_LOGE("%{public}s: %{public}d: Illegal answers, index: %{public}d, length: %{public}d", __func__, __LINE__, i, alens[i]);
+#endif
+				return EAI_AGAIN;
+			}
 			if ((abuf[i][3] & 15) == 3) return 0;
-			if ((abuf[i][3] & 15) != 0) return EAI_FAIL;
+			if ((abuf[i][3] & 15) != 0) {
+#ifndef __LITEOS__
+				MUSL_LOGE("%{public}s: %{public}d: answers not noerror : %{public}d", __func__, __LINE__, EAI_FAIL);
+#endif
+				return EAI_FAIL;
+			}
 		}
 
 		for (i=0; i<nq; i++)
@@ -242,7 +259,9 @@ static int name_from_dns(struct address buf[static MAXADDRS], char canon[static 
 		queryName = ctx.canon;
 		cname_count++;
 	}
-
+#ifndef __LITEOS__
+	MUSL_LOGE("%{public}s: %{public}d: failed to parse dns : %{public}d", __func__, __LINE__, cname_count);
+#endif
 	return EAI_NONAME;
 }
 
@@ -270,7 +289,12 @@ static int name_from_dns_search(struct address buf[static MAXADDRS], char canon[
 
 	/* Strip final dot for canon, fail if multiple trailing dots. */
 	if (name[l-1]=='.') l--;
-	if (!l || name[l-1]=='.') return EAI_NONAME;
+	if (!l || name[l-1]=='.') {
+#ifndef __LITEOS__
+		MUSL_LOGE("%{public}s: %{public}d: fail when multiple trailing dots: %{public}d", __func__, __LINE__, EAI_NONAME);
+#endif
+		return EAI_NONAME;
+	}
 
 	/* This can never happen; the caller already checked length. */
 	if (l >= 256) return EAI_NONAME;
@@ -385,8 +409,12 @@ int lookup_name_ext(struct address buf[static MAXADDRS], char canon[static 256],
 	if (name) {
 		/* reject empty name and check len so it fits into temp bufs */
 		size_t l = strnlen(name, 255);
-		if (l-1 >= 254)
+		if (l-1 >= 254) {
+#ifndef __LITEOS__
+			MUSL_LOGE("%{public}s: %{public}d: Illegal name length: %{public}zu", __func__, __LINE__, l);
+#endif
 			return EAI_NONAME;
+		}
 		memcpy(canon, name, l+1);
 	}
 
