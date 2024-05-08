@@ -14,8 +14,13 @@ int __lookup_ipliteral(struct address buf[static 1], const char *name, int famil
 	struct in_addr a4;
 	struct in6_addr a6;
 	if (__inet_aton(name, &a4) > 0) {
-		if (family == AF_INET6) /* wrong family */
+		 /* wrong family */
+		if (family == AF_INET6) {
+#ifndef __LITEOS__
+			MUSL_LOGE("%{public}s: %{public}d: wrong family AF_INET6: %{public}d", __func__, __LINE__, EAI_NONAME);
+#endif
 			return EAI_NONAME;
+		}
 		memcpy(&buf[0].addr, &a4, sizeof a4);
 		buf[0].family = AF_INET;
 		buf[0].scopeid = 0;
@@ -33,8 +38,12 @@ int __lookup_ipliteral(struct address buf[static 1], const char *name, int famil
 
 	if (inet_pton(AF_INET6, name, &a6) <= 0)
 		return 0;
-	if (family == AF_INET) /* wrong family */
+	if (family == AF_INET) /* wrong family */ {
+#ifndef __LITEOS__
+		MUSL_LOGE("%{public}s: %{public}d: wrong family AF_INET: %{public}d", __func__, __LINE__, EAI_NONAME);
+#endif
 		return EAI_NONAME;
+	}
 
 	memcpy(&buf[0].addr, &a6, sizeof a6);
 	buf[0].family = AF_INET6;
@@ -46,9 +55,19 @@ int __lookup_ipliteral(struct address buf[static 1], const char *name, int famil
 			    !IN6_IS_ADDR_MC_LINKLOCAL(&a6))
 				return EAI_NONAME;
 			scopeid = if_nametoindex(p);
-			if (!scopeid) return EAI_NONAME;
+			if (!scopeid) {
+#ifndef __LITEOS__
+				MUSL_LOGE("%{public}s: %{public}d: scopeid is zero: %{public}d", __func__, __LINE__, EAI_NONAME);
+#endif
+				return EAI_NONAME;
+			}
 		}
-		if (scopeid > UINT_MAX) return EAI_NONAME;
+		if (scopeid > UINT_MAX) {
+#ifndef __LITEOS__
+			MUSL_LOGE("%{public}s: %{public}d: scopeid is over than UINT_MAX: %{public}d", __func__, __LINE__, EAI_NONAME);
+#endif
+			return EAI_NONAME;
+		}
 	}
 	buf[0].scopeid = scopeid;
 	return 1;
