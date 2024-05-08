@@ -51,9 +51,6 @@ volatile int *const __locale_lockptr = __locale_lock;
 #ifdef FEATURE_ICU_LOCALE
 static const char *g_valid_locale_table[] = {"zh_CN", "zh_CN.UTF-8"};
 static int g_locale_table_size = sizeof(g_valid_locale_table) / sizeof(g_valid_locale_table[0]);
-
-typedef void (*f_set_icu_directory)(void);
-static f_set_icu_directory g_icuuc_set_icu_directory;
 #endif
 
 const struct __locale_map *__get_locale(int cat, const char *val)
@@ -166,13 +163,8 @@ const struct __locale_map *__get_locale(int cat, const char *val)
 		}
 		/* Use ICU_VALID flag to indicate that other icu-related functions can use icu methods */
 		if (new->flag == ICU_VALID) {
-			if (!g_icuuc_set_icu_directory) {
-				/* Load ICU data to memory */
-				g_icuuc_set_icu_directory = (f_set_icu_directory)get_icu_handle(ICU_UC, "_Z17SetHwIcuDirectoryv");
-			}
-			if (g_icuuc_set_icu_directory) {
-				g_icuuc_set_icu_directory();
-			}
+			/* ICU function: u_setDataDirectory, Load ICU data to memory */
+			set_icu_directory();
 		}
 	}
 #endif

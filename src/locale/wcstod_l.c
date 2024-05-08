@@ -25,14 +25,14 @@
 
 static int icu_wchar_trans(wchar_t *src, u_char *des, int des_size)
 {
-	get_icu_symbol(ICU_I18N, &(g_icu_opt_func.u_strFrom_utf32), ICU_SYMBOL(u_strFromUTF32));
+	get_icu_symbol(ICU_I18N, &(g_icu_opt_func.u_str_from_utf32), ICU_STR_FROM_UTF32_SYMBOL);
 
-	if (!g_icu_opt_func.u_strFrom_utf32) {
+	if (!g_icu_opt_func.u_str_from_utf32) {
 		return DLSYM_ICU_FAIL;
 	}
 
 	int icu_status = 0;
-	void *res_tmp = g_icu_opt_func.u_strFrom_utf32(des, des_size, NULL, src, -1, &icu_status);
+	void *res_tmp = g_icu_opt_func.u_str_from_utf32(des, des_size, NULL, src, -1, &icu_status);
 	if (icu_status > 0) {
 		return ICU_ERROR;
 	}
@@ -41,10 +41,10 @@ static int icu_wchar_trans(wchar_t *src, u_char *des, int des_size)
 
 static double icu_wcstod_l(char *loc_name, wchar_t *s, int *cur_status, int *parse_pos)
 {
-	char *icu_locale_name = NULL;
-	icu_locale_name = get_valid_icu_locale_name(loc_name);
-
+	char *icu_locale_name = calloc(1, MAX_VALID_ICU_NAME_LEN);
+	get_valid_icu_locale_name(loc_name, icu_locale_name, MAX_VALID_ICU_NAME_LEN);
 	void *fmt = icu_unum_open(icu_locale_name, cur_status);
+	free(icu_locale_name);
 	if (*cur_status == DLSYM_ICU_FAIL || *cur_status == ICU_ERROR) {
 		icu_unum_close(fmt);
 		return 0;

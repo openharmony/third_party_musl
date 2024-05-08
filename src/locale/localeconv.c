@@ -49,9 +49,11 @@ static const struct lconv posix_lconv = {
 #ifdef FEATURE_ICU_LOCALE
 #define ICU_BUFFER_SIZE 16
 #define CHAR_BUFFER_SIZE 8
-#define INITIALIZE_ICURES_PTR(posix_lconv_ptr, lconv_icures_ptr, buffsize)                               \
-	memset(lconv_icures_ptr, 0, buffsize);                                                               \
-	strncpy(lconv_icures_ptr, posix_lconv_ptr, strlen(posix_lconv_ptr));
+#define INITIALIZE_ICURES_PTR(posix_lconv_ptr, lconv_icures_ptr, buffsize)             \
+	do {                                                                               \
+		memset(lconv_icures_ptr, 0, buffsize);                                         \
+		strncpy(lconv_icures_ptr, posix_lconv_ptr, strlen(posix_lconv_ptr));           \
+	} while (0)
 
 static struct lconv g_lconv_icures;
 static int g_localeconv_initialize = 1;
@@ -65,9 +67,9 @@ typedef enum {
 	ICU_INT_CURR_SYMBOL = 9,
 	ICU_MON_DECIMAL_POINT = 10,
 	ICU_MON_THOUSANDS_SEP = 17,
-} ICU_GETSYMBOL_TYPE;
+} icu_getsymbol_type;
 
-static void update_lconv_member(u_char* icu_symbol, void *fmt, char *lconv_member, ICU_GETSYMBOL_TYPE type)
+static void update_lconv_member(u_char *icu_symbol, void *fmt, char *lconv_member, icu_getsymbol_type type)
 {
 	int icu_status = 0;
 	if (!g_icu_opt_func.unum_get_symbol) {
@@ -86,14 +88,14 @@ static void refresh_lconv_icures(void)
 {
 	if (g_localeconv_initialize == 1) {
 		memcpy(&g_lconv_icures, &posix_lconv, sizeof(struct lconv));
-		g_lconv_icures.decimal_point = (char*)malloc(ICU_BUFFER_SIZE);
-		g_lconv_icures.thousands_sep = (char*)malloc(ICU_BUFFER_SIZE);
-		g_lconv_icures.int_curr_symbol = (char*)malloc(ICU_BUFFER_SIZE);
-		g_lconv_icures.currency_symbol = (char*)malloc(ICU_BUFFER_SIZE);
-		g_lconv_icures.mon_decimal_point = (char*)malloc(ICU_BUFFER_SIZE);
-		g_lconv_icures.mon_thousands_sep = (char*)malloc(ICU_BUFFER_SIZE);
-		g_lconv_icures.positive_sign = (char*)malloc(ICU_BUFFER_SIZE);
-		g_lconv_icures.negative_sign = (char*)malloc(ICU_BUFFER_SIZE);
+		g_lconv_icures.decimal_point = (char *)malloc(ICU_BUFFER_SIZE);
+		g_lconv_icures.thousands_sep = (char *)malloc(ICU_BUFFER_SIZE);
+		g_lconv_icures.int_curr_symbol = (char *)malloc(ICU_BUFFER_SIZE);
+		g_lconv_icures.currency_symbol = (char *)malloc(ICU_BUFFER_SIZE);
+		g_lconv_icures.mon_decimal_point = (char *)malloc(ICU_BUFFER_SIZE);
+		g_lconv_icures.mon_thousands_sep = (char *)malloc(ICU_BUFFER_SIZE);
+		g_lconv_icures.positive_sign = (char *)malloc(ICU_BUFFER_SIZE);
+		g_lconv_icures.negative_sign = (char *)malloc(ICU_BUFFER_SIZE);
 		g_localeconv_initialize = 0;
 	}
 
@@ -117,9 +119,9 @@ struct lconv *localeconv(void)
 		refresh_lconv_icures();
 
 		/* ICU function: unum_getSymbol, return specific information, e.g. currency symbol */
-		get_icu_symbol(ICU_I18N, &(g_icu_opt_func.unum_get_symbol), ICU_SYMBOL(unum_getSymbol));
+		get_icu_symbol(ICU_I18N, &(g_icu_opt_func.unum_get_symbol), ICU_UNUM_GET_SYMBOL_SYMBOL);
 		/* ICU function: u_austrncpy, transfer result from unum_getSymbol to utf-8 string */
-		get_icu_symbol(ICU_UC, &(g_icu_opt_func.u_austrncpy), ICU_SYMBOL(u_austrncpy));
+		get_icu_symbol(ICU_UC, &(g_icu_opt_func.u_austrncpy), ICU_AUSTRNCPY_SYMBOL);
 
 		if (!(g_icu_opt_func.unum_get_symbol) || !(g_icu_opt_func.u_austrncpy)) {
 			return (void *)&g_lconv_icures;
@@ -129,8 +131,11 @@ struct lconv *localeconv(void)
 		void *fmt = NULL;
 
 		if (libc.global_locale.cat[LC_NUMERIC]) {
-			char *icu_locale_name_num = get_valid_icu_locale_name(libc.global_locale.cat[LC_NUMERIC]->name);
+			char *icu_locale_name_num = calloc(1, MAX_VALID_ICU_NAME_LEN);
+			get_valid_icu_locale_name(libc.global_locale.cat[LC_NUMERIC]->name, icu_locale_name_num,
+				MAX_VALID_ICU_NAME_LEN);
 			fmt = icu_unum_open(icu_locale_name_num, &cur_status);
+			free(icu_locale_name_num);
 			if (cur_status == 0) {
 				memset(icu_symbol, 0, ICU_BUFFER_SIZE);
 				update_lconv_member(icu_symbol, fmt, g_lconv_icures.decimal_point, ICU_DECIMAL_POINT);
@@ -141,8 +146,11 @@ struct lconv *localeconv(void)
 		}
 		
 		if (libc.global_locale.cat[LC_MONETARY]) {
-			char *icu_locale_name_mon = get_valid_icu_locale_name(libc.global_locale.cat[LC_MONETARY]->name);
+			char *icu_locale_name_mon = calloc(1, MAX_VALID_ICU_NAME_LEN);
+			get_valid_icu_locale_name(libc.global_locale.cat[LC_MONETARY]->name, icu_locale_name_mon,
+				MAX_VALID_ICU_NAME_LEN);
 			fmt = icu_unum_open(icu_locale_name_mon, &cur_status);
+			free(icu_locale_name_mon);
 			if (cur_status == 0) {
 				memset(icu_symbol, 0, ICU_BUFFER_SIZE);
 				update_lconv_member(icu_symbol, fmt, g_lconv_icures.int_curr_symbol, ICU_INT_CURR_SYMBOL);
