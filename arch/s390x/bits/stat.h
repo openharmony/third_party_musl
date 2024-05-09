@@ -12,5 +12,5 @@ struct stat {
 	struct timespec st_ctim;
 	blksize_t st_blksize;
 	blkcnt_t st_blocks;
-	unsigned long __unused[3];
+	unsigned long __unused1[3];
 };

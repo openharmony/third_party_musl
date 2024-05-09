@@ -128,6 +128,7 @@ struct dpc_ctx {
 #define RR_A 1
 #define RR_CNAME 5
 #define RR_AAAA 28
+#define MAX_QUERY_SIZE 5
 
 static int dns_parse_callback(void *c, int rr, const void *data, int len, const void *packet)
 {
@@ -188,7 +189,6 @@ static int name_from_dns(struct address buf[static MAXADDRS], char canon[static 
 	const unsigned char *qp[2] = { qbuf[0], qbuf[1] };
 	unsigned char *ap[2] = { abuf[0], abuf[1] };
 	int qlens[2], alens[2];
-	int i, nq = 0;
 	int queryNum = 2;
 	struct dpc_ctx ctx = { .addrs = buf, .canon = canon };
 	static const struct { int af; int rr; } afrr_ipv6_enable[2] = {
@@ -210,30 +210,39 @@ static int name_from_dns(struct address buf[static MAXADDRS], char canon[static 
 		queryNum = 2;
 		afrr = afrr_ipv6_enable;
 	}
-    for (i = 0; i < queryNum; i++) {
-		if (family != afrr[i].af) {
-			qlens[nq] = __res_mkquery(0, name, 1, afrr[i].rr,
-				0, 0, 0, qbuf[nq], sizeof *qbuf);
-			if (qlens[nq] == -1)
-				return EAI_NONAME;
-			qbuf[nq][3] = 0; /* don't need AD flag */
-			nq++;
+
+	int cname_count = 0;
+	const char *queryName = name;
+	while (strnlen(queryName, 256) != 0 && cname_count < MAX_QUERY_SIZE) {
+		int i, nq = 0;
+		for (i = 0; i < queryNum; i++) {
+			if (family != afrr[i].af) {
+				qlens[nq] = __res_mkquery(0, queryName, 1, afrr[i].rr,
+					0, 0, 0, qbuf[nq], sizeof *qbuf);
+				if (qlens[nq] == -1)
+					return EAI_NONAME;
+				qbuf[nq][3] = 0; /* don't need AD flag */
+				nq++;
+			}
 		}
+
+		if (res_msend_rc_ext(netid, nq, qp, qlens, ap, alens, sizeof *abuf, conf) < 0)
+			return EAI_SYSTEM;
+
+		for (i=0; i<nq; i++) {
+			if (alens[i] < 4 || (abuf[i][3] & 15) == 2) return EAI_AGAIN;
+			if ((abuf[i][3] & 15) == 3) return 0;
+			if ((abuf[i][3] & 15) != 0) return EAI_FAIL;
+		}
+
+		for (i=0; i<nq; i++)
+			__dns_parse(abuf[i], alens[i], dns_parse_callback, &ctx);
+
+		if (ctx.cnt) return ctx.cnt;
+		queryName = ctx.canon;
+		cname_count++;
 	}
 
-	if (res_msend_rc_ext(netid, nq, qp, qlens, ap, alens, sizeof *abuf, conf) < 0)
-		return EAI_SYSTEM;
-
-	for (i=0; i<nq; i++) {
-		if (alens[i] < 4 || (abuf[i][3] & 15) == 2) return EAI_AGAIN;
-		if ((abuf[i][3] & 15) == 3) return 0;
-		if ((abuf[i][3] & 15) != 0) return EAI_FAIL;
-	}
-
-	for (i=0; i<nq; i++)
-		__dns_parse(abuf[i], alens[i], dns_parse_callback, &ctx);
-
-	if (ctx.cnt) return ctx.cnt;
 	return EAI_NONAME;
 }
 

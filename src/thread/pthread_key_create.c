@@ -1,4 +1,5 @@
 #include "pthread_impl.h"
+#include "pthread_ffrt.h"
 
 volatile size_t __pthread_tsd_size = sizeof(void *) * PTHREAD_KEYS_MAX;
 void *__pthread_tsd_main[PTHREAD_KEYS_MAX] = { 0 };
@@ -89,3 +90,4 @@ void __pthread_tsd_run_dtors()
 
 weak_alias(__pthread_key_create, pthread_key_create);
 weak_alias(__pthread_key_delete, pthread_key_delete);
+weak_alias(__pthread_tsd_run_dtors, pthread_tsd_run_dtors);

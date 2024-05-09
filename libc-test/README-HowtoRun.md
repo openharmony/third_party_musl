@@ -41,7 +41,6 @@
    trace_stresstest
    fatal_message
    tgkill_ext
-   exittest01
    ...
    ```
 
