@@ -15,5 +15,5 @@ struct kstat {
 	long st_ctime_nsec;
 	blksize_t st_blksize;
 	blkcnt_t st_blocks;
-	unsigned long __unused[3];
+	unsigned long __unused1[3];
 };

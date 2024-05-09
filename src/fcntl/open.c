@@ -1,6 +1,9 @@
 #include <fcntl.h>
 #include <stdarg.h>
 #include "syscall.h"
+#ifdef OHOS_FDTRACK_HOOK_ENABLE
+#include "musl_fdtrack_hook.h"
+#endif
 
 int open(const char *filename, int flags, ...)
 {
@@ -17,6 +20,10 @@ int open(const char *filename, int flags, ...)
 #ifdef __LITEOS__
 	if (fd>=0 && (flags & O_CLOEXEC))
 		__syscall(SYS_fcntl, fd, F_SETFD, FD_CLOEXEC);
+#endif
+
+#ifdef OHOS_FDTRACK_HOOK_ENABLE
+	return FDTRACK_START_HOOK(__syscall_ret(fd));
 #endif
 	return __syscall_ret(fd);
 }

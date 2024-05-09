@@ -129,6 +129,7 @@ struct dpc_ctx {
 #define RR_A 1
 #define RR_CNAME 5
 #define RR_AAAA 28
+#define MAX_QUERY_SIZE 5
 
 #define ABUF_SIZE 4800
 
@@ -193,7 +194,6 @@ static int name_from_dns(struct address buf[static MAXADDRS], char canon[static 
 	const unsigned char *qp[2] = { qbuf[0], qbuf[1] };
 	unsigned char *ap[2] = { abuf[0], abuf[1] };
 	int qlens[2], alens[2], qtypes[2];
-	int i, nq = 0;
 	int queryNum = 2;
 	struct dpc_ctx ctx = { .addrs = buf, .canon = canon };
 	static const struct { int af; int rr; } afrr_ipv6_enable[2] = {
@@ -215,38 +215,46 @@ static int name_from_dns(struct address buf[static MAXADDRS], char canon[static 
 		queryNum = 2;
 		afrr = afrr_ipv6_enable;
 	}
-    for (i = 0; i < queryNum; i++) {
-		if (family != afrr[i].af) {
-			qlens[nq] = __res_mkquery(0, name, 1, afrr[i].rr,
-				0, 0, 0, qbuf[nq], sizeof *qbuf);
-			if (qlens[nq] == -1)
-				return 0;
-			qtypes[nq] = afrr[i].rr;
-			qbuf[nq][3] = 0; /* don't need AD flag */
-			/* Ensure query IDs are distinct. */
-			if (nq && qbuf[nq][0] == qbuf[0][0])
-				qbuf[nq][0]++;
-			nq++;
+
+	int cname_count = 0;
+	const char *queryName = name;
+	while (strnlen(queryName, 256) != 0 && cname_count < MAX_QUERY_SIZE) {
+		int i, nq = 0;
+		for (i = 0; i < queryNum; i++) {
+			if (family != afrr[i].af) {
+				qlens[nq] = __res_mkquery(0, queryName, 1, afrr[i].rr,
+					0, 0, 0, qbuf[nq], sizeof *qbuf);
+				if (qlens[nq] == -1)
+					return 0;
+				qtypes[nq] = afrr[i].rr;
+				qbuf[nq][3] = 0; /* don't need AD flag */
+				/* Ensure query IDs are distinct. */
+				if (nq && qbuf[nq][0] == qbuf[0][0])
+					qbuf[nq][0]++;
+				nq++;
+			}
 		}
+
+		if (res_msend_rc_ext(netid, nq, qp, qlens, ap, alens, sizeof *abuf, conf) < 0)
+			return EAI_SYSTEM;
+
+		for (i=0; i<nq; i++) {
+			if (alens[i] < 4 || (abuf[i][3] & 15) == 2) return EAI_AGAIN;
+			if ((abuf[i][3] & 15) == 3) return 0;
+			if ((abuf[i][3] & 15) != 0) return EAI_FAIL;
+		}
+
+		for (i=nq-1; i>=0; i--) {
+			ctx.rrtype = qtypes[i];
+			if (alens[i] > sizeof(abuf[i])) alens[i] = sizeof abuf[i];
+			__dns_parse(abuf[i], alens[i], dns_parse_callback, &ctx);
+		}
+		if (ctx.cnt) return ctx.cnt;
+		queryName = ctx.canon;
+		cname_count++;
 	}
 
-	if (res_msend_rc_ext(netid, nq, qp, qlens, ap, alens, sizeof *abuf, conf) < 0)
-		return EAI_SYSTEM;
-
-	for (i=0; i<nq; i++) {
-		if (alens[i] < 4 || (abuf[i][3] & 15) == 2) return EAI_AGAIN;
-		if ((abuf[i][3] & 15) == 3) return 0;
-		if ((abuf[i][3] & 15) != 0) return EAI_FAIL;
-	}
-
-	for (i=nq-1; i>=0; i--) {
-		ctx.rrtype = qtypes[i];
-		if (alens[i] > sizeof(abuf[i])) alens[i] = sizeof abuf[i];
-		__dns_parse(abuf[i], alens[i], dns_parse_callback, &ctx);
-	}
-
-	if (ctx.cnt) return ctx.cnt;
-	return EAI_NODATA;
+	return EAI_NONAME;
 }
 
 static int name_from_dns_search(struct address buf[static MAXADDRS], char canon[static 256], const char *name, int family, int netid)
@@ -678,6 +686,27 @@ static int _predefined_host_parse_host_ips(char* params)
 	}
 
 	return cnt > 0 ? 0 : -1;
+}
+
+int predefined_host_lookup_ip(const char* host, const char* serv,
+    const struct addrinfo* hint, struct addrinfo** res)
+{
+	int status = -1;
+    if (host_ips_list_ == NULL) {
+		return -1;
+	}
+    linknode *pnode = host_ips_list_->_phead;
+    while (pnode != NULL) {
+        host_ip_pair *pinfo = (host_ip_pair*)pnode->_data;
+        if (strcmp(pinfo->host, host) == 0) {
+            status = getaddrinfo(pinfo->ip, NULL, hint, res);
+            if (status == 0) {
+                return status;
+            }
+        }
+        pnode = pnode->_next;
+    }
+    return status;
 }
 
 int predefined_host_set_hosts(const char* host_ips)

@@ -48,6 +48,14 @@ static const char envvars[][12] = {
 volatile int __locale_lock[1];
 volatile int *const __locale_lockptr = __locale_lock;
 
+#ifdef FEATURE_ICU_LOCALE
+static const char *g_valid_locale_table[] = {"zh_CN", "zh_CN.UTF-8"};
+static int g_locale_table_size = sizeof(g_valid_locale_table) / sizeof(g_valid_locale_table[0]);
+
+typedef void (*f_set_icu_directory)(void);
+static f_set_icu_directory g_icuuc_set_icu_directory;
+#endif
+
 const struct __locale_map *__get_locale(int cat, const char *val)
 {
 	static void *volatile loc_head;
@@ -144,6 +152,30 @@ const struct __locale_map *__get_locale(int cat, const char *val)
 		new->flag = INVALID;
 		loc_head = new;
 	}
+
+#ifdef FEATURE_ICU_LOCALE
+	/* For locales with no definition, checks whether this locale setting
+	 * is valid for icu. We use a table to record all the valid icu locale
+	 * settings. */
+	if (new->flag == INVALID) {
+		for (int i = 0; i < g_locale_table_size; i++) {
+			if (strcmp(g_valid_locale_table[i], val) == 0) {
+				new->flag = ICU_VALID;
+				break;
+			}
+		}
+		/* Use ICU_VALID flag to indicate that other icu-related functions can use icu methods */
+		if (new->flag == ICU_VALID) {
+			if (!g_icuuc_set_icu_directory) {
+				/* Load ICU data to memory */
+				g_icuuc_set_icu_directory = (f_set_icu_directory)get_icu_handle(ICU_UC, "_Z17SetHwIcuDirectoryv");
+			}
+			if (g_icuuc_set_icu_directory) {
+				g_icuuc_set_icu_directory();
+			}
+		}
+	}
+#endif
 
 	/* For LC_CTYPE, never return a null pointer unless the
 	 * requested name was "C" or "POSIX". */

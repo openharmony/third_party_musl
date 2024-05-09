@@ -23,6 +23,7 @@ extern int __pthread_cond_timedwait_time64(pthread_cond_t *__restrict,
 static pthread_mutex_t c_mtx1 = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t c_cond1 = PTHREAD_COND_INITIALIZER;
 static pthread_mutex_t c_mtx2 = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t c_mtx10 = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t c_cond2 = PTHREAD_COND_INITIALIZER;
 static pthread_mutex_t c_mtx3 = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t c_cond3 = PTHREAD_COND_INITIALIZER;
@@ -281,7 +282,7 @@ static void *ClockWaitTimeOut(void *arg)
 
     clockid_t clock_id = CLOCK_REALTIME;
     GetDelayedTimeByClockid(&ts, SLEEP_100_MS, clock_id);
-    EXPECT_EQ(pthread_cond_clockwait(&c_cond2, &c_mtx1, clock_id, &ts), ETIMEDOUT);
+    EXPECT_EQ(pthread_cond_clockwait(&c_cond2, &c_mtx2, clock_id, &ts), ETIMEDOUT);
     clock_gettime(CLOCK_REALTIME, &tsNow);
 
     int timeDiff = GetTimeDiff(tsNow, ts);
@@ -355,18 +356,18 @@ static void *ClockWaitTimeOut2(void *arg)
 {
     struct timespec ts = {0};
     struct timespec tsNow = {0};
-    EXPECT_EQ(pthread_mutex_lock(&c_mtx2), 0);
+    EXPECT_EQ(pthread_mutex_lock(&c_mtx10), 0);
 
     clockid_t clock_id = CLOCK_MONOTONIC;
     GetDelayedTimeByClockid(&ts, SLEEP_100_MS, clock_id);
-    EXPECT_EQ(pthread_cond_clockwait(&c_cond2, &c_mtx1, clock_id, &ts), ETIMEDOUT);
+    EXPECT_EQ(pthread_cond_clockwait(&c_cond2, &c_mtx10, clock_id, &ts), ETIMEDOUT);
     clock_gettime(CLOCK_MONOTONIC, &tsNow);
 
     int timeDiff = GetTimeDiff(tsNow, ts);
     EXPECT_GE(timeDiff, 0);
     EXPECT_LE(timeDiff, SLEEP_20_MS);
 
-    EXPECT_EQ(pthread_mutex_unlock(&c_mtx2), 0);
+    EXPECT_EQ(pthread_mutex_unlock(&c_mtx10), 0);
     return arg;
 }
 
@@ -382,7 +383,7 @@ void clockwait_timedwait_0040(void)
     Msleep(SLEEP_200_MS);
     pthread_join(tid, NULL);
     EXPECT_EQ(pthread_cond_destroy(&c_cond2), 0);
-    EXPECT_EQ(pthread_mutex_destroy(&c_mtx2), 0);
+    EXPECT_EQ(pthread_mutex_destroy(&c_mtx10), 0);
 }
 
 static void *ClockWaitTimeMismatch(void *arg)

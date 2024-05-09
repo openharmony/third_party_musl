@@ -20,6 +20,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <string.h>
+#include <stdlib.h>
 
 #undef assert
 #define assert(x) ((void)((x) || (__assert_fail(#x, __FILE__, __LINE__, __func__),0)))
@@ -107,6 +108,7 @@ void ProcessRetry()
 
 int main(void)
 {
+    signal(SIGUSR1, SIG_DFL);
     pid_t pid1, pid2, pid3;
     int status;
 
@@ -151,13 +153,18 @@ int main(void)
     waitpid(pid2, &status, 0);
     waitpid(pid3, &status, 0);
 
-    char *BufferAbort = ReadFile(FILE_ABORT);
-    char *BufferIgnore = ReadFile(FILE_IGNORE);
-    char *BufferRetry = ReadFile(FILE_RETRY);
-    if (strcmp(BufferAbort, ASSERT_ABORT_INFO) && strcmp(BufferIgnore, ASSERT_IGNORE_INFO)
-    && strcmp(BufferRetry, ASSERT_RETRY_INFO)) {
+    char *BufferAbort = strdup(ReadFile(FILE_ABORT));
+    char *BufferIgnore = strdup(ReadFile(FILE_IGNORE));
+    char *BufferRetry = strdup(ReadFile(FILE_RETRY));
+
+    if (strcmp(BufferAbort, ASSERT_ABORT_INFO) == 0 && strcmp(BufferIgnore, ASSERT_IGNORE_INFO) == 0
+    && strcmp(BufferRetry, ASSERT_RETRY_INFO) == 0) {
         printf("All processes finished.\n");
     }
+
+    free(BufferAbort);
+    free(BufferIgnore);
+    free(BufferRetry);
 
     return 0;
 }

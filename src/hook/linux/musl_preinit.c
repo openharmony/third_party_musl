@@ -362,8 +362,8 @@ bool init_malloc_hook_shared_library(void* shared_library_handle, const char* sh
 		"set_hook_flag",
 		"on_start",
 		"on_end",
-		"send_hook_js_rawstack",
-		"get_hook_js_config",
+		"send_hook_misc_data",
+		"get_hook_config",
 	};
 
 	for (int i = 0; i < LAST_FUNCTION; i++) {

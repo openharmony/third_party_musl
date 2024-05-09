@@ -21,6 +21,7 @@ group("ldso_cfi_test") {
     ":cfi_cross_dso_test_lib",
     ":ldso_cfi_check",
     ":ldso_cfi_test_lib",
+    ":ldso_cfi_typeconversion",
   ]
 }
 
@@ -104,5 +105,25 @@ ohos_executable("cfi_avaiable_schemes_test") {
   use_rtti = true
 
   sources = [ "cfi_avaiable_schemes_test.cpp" ]
+  configs = [ "//third_party/musl/libc-test/src/common:config_runtest" ]
+}
+
+ohos_executable("ldso_cfi_typeconversion") {
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = true
+  }
+  subsystem_name = "musl"
+  part_name = "libc-test"
+  include_dirs = [
+    "../common",
+    "//third_party/musl/porting/linux/user/include",
+    "//third_party/musl/porting/linux/user/ldso",
+    "//third_party/musl/libc-test/src/common",
+  ]
+  use_rtti = true
+
+  sources = [ "ldso_cfi_typeconversion.cpp" ]
   configs = [ "//third_party/musl/libc-test/src/common:config_runtest" ]
 }

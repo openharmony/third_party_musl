@@ -14,88 +14,50 @@
  */
 
 #ifdef OHOS_FDTRACK_HOOK_ENABLE
-#include <unistd.h>
-#include <signal.h>
 #include <stdlib.h>
-#include <limits.h>
 #include <dlfcn.h>
 #include <errno.h>
-#include <ctype.h>
-#include <assert.h>
-#include <string.h>
 #include <stdio.h>
+#include "sys_param.h"
 #include "musl_log.h"
+#include "musl_fdtrack_hook.h"
 
-static bool g_needCheck = true;
-static bool g_isCheckedBeta = false;
-bool __fdtrack_hook_init_flag = false;
 static char *__is_beta_version = "beta";
-static char *__fdtrack_hook_shared_lib = "libfdleak_tracker.so";
 static char *__key_version_type = "const.logsystem.versiontype";
-long long __ohos_fdtrack_hook_shared_library;
+static char *__is_develop_mode = "enable";
+static char *__key_develop_mode = "persist.hiview.leak_detector";
+static char *__fdtrack_hook_shared_lib = "libfdleak_tracker.so";
 
-static void* load_fdtrack_hook_shared_library()
+int FDTRACK_START_HOOK(int fd_value)
 {
-	void* shared_library_handle = NULL;
-
-	shared_library_handle = dlopen(__fdtrack_hook_shared_lib, RTLD_NOW | RTLD_LOCAL);
-
-	if (shared_library_handle == NULL) {
-		MUSL_LOGI("FdTrack, Unable to open shared library %s: %s.\n", __fdtrack_hook_shared_lib, dlerror());
-		return NULL;
+	int fd = fd_value;
+	if (fd != -1 && __predict_false(__fdtrack_enabled) && __predict_false(__fdtrack_hook)) {
+		struct fdtrack_event event;
+		event.type = FDTRACK_EVENT_TYPE_CREATE;
+		atomic_load(&__fdtrack_hook)(&event);
 	}
-	return shared_library_handle;
+	return fd;
 }
 
-static void init_ohos_fdtrack_hook()
+inline bool check_open_func(const char *expected, const char *key)
 {
-	void* shared_library_handle = (void *)__ohos_fdtrack_hook_shared_library;
-	if (shared_library_handle != NULL && shared_library_handle != (void*)-1) {
-		MUSL_LOGI("FdTrack, ohos_fdtrack_hook_shared_library has had.");
-		return;
-	}
-
-	shared_library_handle = load_fdtrack_hook_shared_library();
-	if (shared_library_handle == NULL) {
-		MUSL_LOGI("FdTrack, load_fdtrack_hook_shared_library failed.");
-		return;
-	}
-	MUSL_LOGI("FdTrack, load_fdtrack_hook_shared_library success.");
-}
-
-static bool is_beta_version()
-{
-	CachedHandle handle = CachedParameterCreate(__key_version_type, "unknown");
+	CachedHandle handle = CachedParameterCreate(key, "unknown");
 	const char *value = CachedParameterGet(handle);
-	return (value != NULL && strncmp(value, __is_beta_version, strlen(__is_beta_version)) == 0);
-}
-
-static bool check_load_fdtrack()
-{
-	if (!g_needCheck) {
-		return false;
-	}
-	if (!g_isCheckedBeta) {
-		bool isBetaVersion = is_beta_version();
-		g_isCheckedBeta = true;
-		if (!isBetaVersion) {
-			g_needCheck = false;
-			return false;
-		}
-	}
-	return true;
+	return (value != NULL && strncmp(value, expected, strlen(expected)) == 0);
 }
 
 __attribute__((constructor())) static void __musl_fdtrack_initialize()
 {
-	if (!check_load_fdtrack()) {
+	if (!check_open_func(__is_beta_version, __key_version_type) && !check_open_func(__is_develop_mode, __key_develop_mode)) {
 		return;
 	}
-	MUSL_LOGI("FdTrack, %d begin musl_fdtrack_initialize, flag %d.\n", getpid(), __fdtrack_hook_init_flag);
-	if (!__fdtrack_hook_init_flag) {
-		__fdtrack_hook_init_flag = true;
-		init_ohos_fdtrack_hook();
+	void* shared_library_handle = NULL;
+	shared_library_handle = dlopen(__fdtrack_hook_shared_lib, RTLD_NOW | RTLD_LOCAL);
+	if (shared_library_handle == NULL) {
+		MUSL_LOGE("FdTrack, Unable to open shared library %s: %s.\n", __fdtrack_hook_shared_lib, dlerror());
+		return;
 	}
+	MUSL_LOGI("FdTrack, load_fdtrack_hook_shared_library success.");
 }
 
 #endif

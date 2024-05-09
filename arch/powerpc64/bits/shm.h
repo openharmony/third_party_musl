@@ -9,11 +9,11 @@ struct shmid_ds {
 	pid_t shm_cpid;
 	pid_t shm_lpid;
 	unsigned long shm_nattch;
-	unsigned long __unused[2];
+	unsigned long __unused1[2];
 };
 
 struct shminfo {
-	unsigned long shmmax, shmmin, shmmni, shmseg, shmall, __unused[4];
+	unsigned long shmmax, shmmin, shmmni, shmseg, shmall, __unused1[4];
 };
 
 struct shm_info {
