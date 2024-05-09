@@ -239,6 +239,9 @@ musl_install_for_linux_user: musl_patch_for_linux_user
 	sed $(SED_ARGS) Makefile | make -f- -sj install
 	$(HIDE) cp -rfp $(LINUXHDRDIR)/* $(SYSROOTDIR)/usr/include/$(TARGET)
 	$(HIDE) if [ -d $(LINUXHDRDIR)/asm-$(ARCH)/asm ]; then ln -snf asm-$(ARCH)/asm $(SYSROOTDIR)/usr/include/$(TARGET)/; fi
+ifeq ($(ARCH),aarch64)
+	$(HIDE) if [ -d $(LINUXHDRDIR)/asm-arm64/asm ]; then ln -snf asm-arm64/asm $(SYSROOTDIR)/usr/include/$(TARGET)/; fi
+endif
 
 clean:
 	$(HIDE) rm -rf musl_copy_for_* linux_header_install_for_*

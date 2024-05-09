@@ -5,6 +5,9 @@
 #include <stdint.h>
 #include <stddef.h>
 #include "syscall.h"
+#ifdef OHOS_FDTRACK_HOOK_ENABLE
+#include "musl_fdtrack_hook.h"
+#endif
 
 #if OHOS_PERMISSION_INTERNET
 typedef uint8_t (*AllowFunc)(void);
@@ -62,5 +65,8 @@ int socket(int domain, int type, int protocol)
 		if (type & SOCK_NONBLOCK)
 			__syscall(SYS_fcntl, s, F_SETFL, O_NONBLOCK);
 	}
+#ifdef OHOS_FDTRACK_HOOK_ENABLE
+	return FDTRACK_START_HOOK(__syscall_ret(s));
+#endif
 	return __syscall_ret(s);
 }

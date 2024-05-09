@@ -34,23 +34,62 @@
  *	@(#)cdefs.h	8.8 (Berkeley) 1/9/95
  */
 
-#ifndef _SYS_CDEFS_H_
-#define _SYS_CDEFS_H_
+#ifndef CDEFS_H
+#define CDEFS_H
 
 #define	__predict_true(exp)	__builtin_expect((exp) != 0, 1)
 #define	__predict_false(exp)	__builtin_expect((exp) != 0, 0)
 
 #if defined(__cplusplus)
-#define	__BEGIN_DECLS    extern "C" {
+#define	__BEGIN_EXTERN_C    extern "C" {
+#define	__END_EXTERN_C		}
+#ifndef __BEGIN_DECLS
+#define __BEGIN_DECLS   extern "C" {
+#endif
+#ifndef __END_DECLS
 #define	__END_DECLS		}
+#endif
 #else
-#define	__BEGIN_DECLS
+#define	__BEGIN_EXTERN_C
+#define	__END_EXTERN_C
+#ifndef __BEGIN_DECLS
+#define __BEGIN_DECLS
+#endif
+#ifndef __END_DECLS
 #define	__END_DECLS
+#endif
+#endif
+
+#if defined(__cplusplus)
+#define	__BEGIN_EXTERN_C    extern "C" {
+#define	__END_EXTERN_C		}
+#else
+#define	__BEGIN_EXTERN_C
+#define	__END_EXTERN_C
 #endif
 
 #define	__P(protos)	protos		/* full-blown ANSI C */
 #define	__CONCAT(x,y)	x ## y
 #define	__STRING(x)	#x
+
+#define __aligned(x) __attribute__((__aligned__(x)))
+#define __section(x) __attribute__((__section__(x)))
+
+#define __always_inline __attribute__((__always_inline__))
+#define __attribute_const__ __attribute__((__const__))
+#define __attribute_pure__ __attribute__((__pure__))
+#define __dead __attribute__((__noreturn__))
+#define __noreturn __attribute__((__noreturn__))
+#define __mallocfunc  __attribute__((__malloc__))
+#define __packed __attribute__((__packed__))
+#define __returns_twice __attribute__((__returns_twice__))
+#define __unused __attribute__((__unused__))
+#define __used __attribute__((__used__))
+
+#define __printflike(x, y) __attribute__((__format__(printf, x, y)))
+#define __scanflike(x, y) __attribute__((__format__(scanf, x, y)))
+#define __strftimelike(x) __attribute__((__format__(strftime, x, 0)))
+
 
 #if defined(__cplusplus)
 #define __CAST(_k,_t,_v) (_k<_t>(_v))
@@ -63,9 +102,4 @@
 #define __GLOBL(sym) __asm__(".globl " __STRING(sym))
 #define __WEAK(sym) __asm__(".weak " __STRING(sym))
 
-#if defined(__GNUC__) && !defined(__INTEL_COMPILER)
-#define	__GNUC_PREREQ__(ma, mi)	(__GNUC__ > (ma) || __GNUC__ == (ma) && __GNUC_MINOR__ >= (mi))
-#else
-#define	__GNUC_PREREQ__(ma, mi)	0
-#endif
 #endif

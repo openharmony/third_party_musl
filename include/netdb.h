@@ -78,6 +78,7 @@ const char *gai_strerror(int);
 
 int setdnsresolvehook(custom_dns_resolver hookfunc);
 int removednsresolvehook();
+int getaddrinfo_hook(const char* host, const char* serv, const struct addrinfo* hint, struct addrinfo** res);
 int predefined_host_set_host(const char* host, const char* ip);
 int predefined_host_set_hosts(const char* host_ips);
 int predefined_host_clear_all_hosts(void);

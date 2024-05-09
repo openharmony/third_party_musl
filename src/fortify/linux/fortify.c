@@ -26,6 +26,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/select.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -55,6 +56,16 @@ static inline int __force_O_LARGEFILE(int flags)
 static inline bool __needs_mode(int flags)
 {
     return ((flags & O_CREAT) == O_CREAT) || ((flags & O_TMPFILE) == O_TMPFILE);
+}
+
+void __fd_chk(int fd)
+{
+	if (fd < 0) {
+		__fortify_error("file descriptor %d < 0", fd);
+	}
+	if (fd >= FD_SETSIZE) {
+		__fortify_error("file descriptor %d >= FD_SETSIZE %d", fd, FD_SETSIZE);
+	}
 }
 
 int __open_chk(const char* pathname, int flags)

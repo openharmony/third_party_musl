@@ -42,6 +42,7 @@
     __environ;
     __errno_location;
     __fbufsize;
+    __fd_chk;
     __fgets_chk;
     __fgetwc_unlocked;
     __flbf;
@@ -541,6 +542,8 @@
     dlns_set_namespace_permitted_paths;
     dlns_set_namespace_separated;
     dlopen;
+    # Sanitizer requires this symbol to be exposed.
+    dlopen_impl;
     dlopen_ext;
     dlopen_ns;
     dlsym;
@@ -792,6 +795,7 @@
     get_phys_pages;
     getaddrinfo;
     getaddrinfo_ext;
+    getaddrinfo_hook;
     getauxval;
     getc;
     getc_unlocked;
@@ -1400,6 +1404,9 @@
     pthread_key_create;
     pthread_key_delete;
     pthread_kill;
+    pthread_tsd_run_dtors;
+    pthread_gettsd;
+    pthread_settsd;
     pthread_mutex_clocklock;
     # pthread_mutex_consistent;
     pthread_mutex_destroy;
@@ -1954,6 +1961,7 @@
     wcsspn;
     wcsstr;
     wcstod;
+    wcstod_l;
     wcstof;
     wcstoimax;
     wcstok;
@@ -2021,6 +2029,7 @@
     set_syscall_hooks;
     set_fdtrack_enabled;
     fdtrack_cas_hook;
+    DFX_SetAppRunningUniqueId;
   local:
     *;
 };
