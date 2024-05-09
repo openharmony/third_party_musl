@@ -98,7 +98,7 @@ static int name_from_hosts(struct address buf[static MAXADDRS], char canon[stati
 		case 0:
 			continue;
 		default:
-			badfam = EAI_NODATA;
+			badfam = EAI_NONAME;
 			break;
 		}
 
