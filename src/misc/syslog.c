@@ -2,7 +2,6 @@
 #include <sys/socket.h>
 #include <stdio.h>
 #include <unistd.h>
-#include <syslog.h>
 #include <time.h>
 #include <signal.h>
 #include <string.h>
@@ -13,6 +12,7 @@
 #include "fork_impl.h"
 #include <unsupported_api.h>
 #include "locale_impl.h"
+#include <syslog.h>
 
 static volatile int lock[1];
 static char log_ident[32];
