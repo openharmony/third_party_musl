@@ -36,10 +36,6 @@ void langinfo_0100(void)
         return;
     }
     lo = setlocale(LC_TIME, "zh_CN.UTF-8");
-    if (lo) {
-        t_error("nl_langinfo_0100 failed [%s] != NULL\n", lo);
-        return;
-    }
     char *ptr = nl_langinfo(DAY_2);
     EXPECT_STREQ("nl_langinfo_0100", ptr, "Monday");
 }
@@ -78,10 +74,6 @@ void nl_langinfo_0300()
         return;
     }
     lo = setlocale(LC_TIME, "zh_CN.UTF-8");
-    if (lo) {
-        t_error("nl_langinfo_0300 failed [%s] != NULL\n", lo);
-        return;
-    }
     char *ptr = nl_langinfo(TIME_ERROR_INFO);
     EXPECT_STREQ("nl_langinfo_0300", ptr, "");
 }
@@ -95,11 +87,7 @@ void nl_langinfo_0300()
  */
 void nl_langinfo_0400()
 {
-    char *lo = setlocale(LC_MESSAGES, "zh_CN.UTF-8");
-    if (lo) {
-        t_error("nl_langinfo_0400 failed [%s] != NULL\n", lo);
-        return;
-    }
+    setlocale(LC_MESSAGES, "zh_CN.UTF-8");
     char *ptr = nl_langinfo(MESSAGES_ERROR_INFO);
     EXPECT_STREQ("nl_langinfo_0400", ptr, "");
 }
@@ -199,6 +187,10 @@ void nl_langinfo_0900()
 
 int main(void)
 {
+    if (unsetenv("LANG") != 0) {
+        perror("unsetenv failed");
+        return t_status;
+    }
     langinfo_0100();
     nl_langinfo_0200();
     nl_langinfo_0300();

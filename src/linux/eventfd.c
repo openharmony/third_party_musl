@@ -2,6 +2,9 @@
 #include <unistd.h>
 #include <errno.h>
 #include "syscall.h"
+#ifdef OHOS_FDTRACK_HOOK_ENABLE
+#include "musl_fdtrack_hook.h"
+#endif
 
 int eventfd(unsigned int count, int flags)
 {

@@ -2,6 +2,9 @@
 #include <fcntl.h>
 #include <errno.h>
 #include "syscall.h"
+#ifdef OHOS_FDTRACK_HOOK_ENABLE
+#include "musl_fdtrack_hook.h"
+#endif
 
 int socketpair(int domain, int type, int protocol, int fd[2])
 {
@@ -21,5 +24,11 @@ int socketpair(int domain, int type, int protocol, int fd[2])
 			__syscall(SYS_fcntl, fd[1], F_SETFL, O_NONBLOCK);
 		}
 	}
+#ifdef OHOS_FDTRACK_HOOK_ENABLE
+	if (!r) {
+		FDTRACK_START_HOOK(fd[0]);
+		FDTRACK_START_HOOK(fd[1]);
+	}
+#endif
 	return r;
 }

@@ -23,6 +23,7 @@ extern "C" {
 }
 
 #define UBSAN_LOG_DIR "/data/log/sanitizer/ubsan/"
+#define FAULTLOG_DIR "/data/log/faultlog/faultlogger/"
 #define UBSAN_LOG_TAG "ubsan"
 #define DEBUG 0
 #define BUFFER_SIZE 4096
@@ -96,11 +97,9 @@ static void CheckCfiLog(char *file, const char *needle)
     fclose(fp);
 }
 
-static void FindAndCheck(const char *pattern)
+static void FindDirAndCheck(DIR *dir, const char *pattern)
 {
-    DIR *dir;
     struct dirent *ptr;
-    dir = opendir(UBSAN_LOG_DIR);
     while ((ptr = readdir(dir)) != NULL) {
         if (strstr(ptr->d_name, UBSAN_LOG_TAG) != NULL) {
             char tmp[BUFFER_SIZE] = UBSAN_LOG_DIR;
@@ -108,5 +107,14 @@ static void FindAndCheck(const char *pattern)
             CheckCfiLog(tmp, pattern);
         }
     }
-    closedir(dir);
+}
+
+static void FindAndCheck(const char *pattern)
+{
+    DIR *ubsanDir = opendir(UBSAN_LOG_DIR);
+    DIR *faultlogDir = opendir(FAULTLOG_DIR);
+    FindDirAndCheck(ubsanDir, pattern);
+    FindDirAndCheck(faultlogDir, pattern);
+    closedir(ubsanDir);
+    closedir(faultlogDir);
 }

@@ -55,6 +55,18 @@ int removednsresolvehook()
 	return 0;
 }
 
+int getaddrinfo_hook(const char* host, const char* serv, const struct addrinfo* hints,
+    struct addrinfo** res)
+{
+    if (g_customdnsresolvehook) {
+        int ret = g_customdnsresolvehook(host, serv, hints, res);
+        if (ret == 0) {
+            return ret;
+        }
+    }
+    return predefined_host_lookup_ip(host, serv, hints, res);
+}
+
 int getaddrinfo(const char *restrict host, const char *restrict serv, const struct addrinfo *restrict hint, struct addrinfo **restrict res)
 {
 	struct queryparam param = {0, 0, 0, 0, NULL};
@@ -99,7 +111,7 @@ int getaddrinfo_ext(const char *restrict host, const char *restrict serv, const 
 	if (type == QEURY_TYPE_NORMAL && predefined_host_is_contain_host(host) == 0) {
 		if (dns_get_addr_info_from_netsys_cache2(netid, host, serv, hint, res) == 0) {
 			GETADDRINFO_PRINT_DEBUG("getaddrinfo_ext get from netsys cache OK\n");
-			reportdnsresult(netid, host, 0, DNS_QUERY_SUCCESS, *res, &param);
+			reportdnsresult(netid, host, 0, DNS_QUERY_SUCCESS, *res, param);
 			return 0;
 		}
 	}
@@ -187,7 +199,7 @@ int getaddrinfo_ext(const char *restrict host, const char *restrict serv, const 
 	naddrs = lookup_name_ext(addrs, canon, host, family, flags, netid);
 	t_end = time(NULL);
 	if (naddrs < 0) {
-		reportdnsresult(netid, host, difftime(t_end, t_start), DNS_QUERY_COMMOM_FAIL, NULL, &param);
+		reportdnsresult(netid, host, difftime(t_end, t_start), DNS_QUERY_COMMOM_FAIL, NULL, param);
 		return naddrs;
 	}
 	if (no_family) return EAI_NODATA;
@@ -233,7 +245,7 @@ int getaddrinfo_ext(const char *restrict host, const char *restrict serv, const 
 	out[0].ref = nais;
 	*res = &out->ai;
 
-	reportdnsresult(netid, host, difftime(t_end, t_start), DNS_QUERY_SUCCESS, *res, &param);
+	reportdnsresult(netid, host, difftime(t_end, t_start), DNS_QUERY_SUCCESS, *res, param);
 	int cnt = predefined_host_is_contain_host(host);
 #if OHOS_DNS_PROXY_BY_NETSYS
 	if (type == QEURY_TYPE_NORMAL && cnt == 0) {
