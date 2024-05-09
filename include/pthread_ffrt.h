@@ -1,10 +1,10 @@
-/**
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2020-2023. All rights reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *   http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,20 +13,17 @@
  * limitations under the License.
  */
 
-#include <stdlib.h>
-#include <unistd.h>
-#include "functionalext.h"
+#ifndef _PHTREAD_FFRT_H
+#define _PHTREAD_FFRT_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-void exitsecondtest()
-{
-    FILE *fptr = fopen("/data/Exittest02.txt", "w+");
-    fprintf(fptr, "%s", "exit before");
-    exit(1);
-    fprintf(fptr, "%s", "exit after");
-}
+void pthread_tsd_run_dtors();
+void** pthread_gettsd();
+void pthread_settsd(void** tsd);
 
-int main(int argc, char *argv[])
-{
-    exitsecondtest();
-    return t_status;
+#ifdef __cplusplus
 }
+#endif
+#endif

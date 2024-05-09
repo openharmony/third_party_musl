@@ -241,6 +241,7 @@ if (musl_arch == "arm") {
 musl_src_file = [
   "src/internal/pthread_impl.h",
   "src/internal/locale_impl.h",
+  "src/internal/locale_impl.c",
   "src/internal/stdio_impl.h",
   "src/internal/unsupported_api.h",
   "src/internal/syscall_hooks.h",
@@ -550,6 +551,7 @@ musl_src_file = [
   "src/locale/setlocale.c",
   "src/locale/strcoll.c",
   "src/locale/strtod_l.c",
+  "src/locale/wcstod_l.c",
   "src/locale/strfmon.c",
   "src/locale/strxfrm.c",
   "src/locale/textdomain.c",
@@ -2216,6 +2218,7 @@ musl_inc_root_files = [
   "include/wctype.h",
   "include/wordexp.h",
   "include/syscall_hooks.h",
+  "include/pthread_ffrt.h",
 ]
 
 musl_src_files_ext = [

@@ -39,12 +39,12 @@ void newlocale_0100(void)
         EXPECT_PTRNE("newlocale_0100", lo, NULL);
         return;
     }
-    locale_t newlocale_ = newlocale(LC_ALL_MASK, "en_US", NULL);
-    EXPECT_PTRNE("newlocale_0100", newlocale_, NULL);
+    locale_t newloc = newlocale(LC_ALL_MASK, "en_US", NULL);
+    EXPECT_PTRNE("newlocale_0100", newloc, NULL);
 
-    if (newlocale_) {
-        freelocale(newlocale_);
-        newlocale_ = NULL;
+    if (newloc) {
+        freelocale(newloc);
+        newloc = NULL;
     }
 }
 
@@ -60,12 +60,12 @@ void newlocale_0200(void)
         EXPECT_PTRNE("newlocale_0200", lo, NULL);
         return;
     }
-    locale_t newlocale_ = newlocale(LC_ALL_MASK, "C", NULL);
-    EXPECT_PTRNE("newlocale_0200", newlocale_, NULL);
+    locale_t newloc = newlocale(LC_ALL_MASK, "C", NULL);
+    EXPECT_PTRNE("newlocale_0200", newloc, NULL);
 
-    if (newlocale_) {
-        freelocale(newlocale_);
-        newlocale_ = NULL;
+    if (newloc) {
+        freelocale(newloc);
+        newloc = NULL;
     }
 }
 
@@ -84,12 +84,12 @@ void newlocale_0300(void)
         return;
     }
     for (int i = 0; i < sizeof(lcMarkArry) / sizeof(lcMarkArry[0]); i++) {
-        locale_t newlocale_ = newlocale(lcMarkArry[i], "en_US", NULL);
-        EXPECT_PTRNE("newlocale_0300", newlocale_, NULL);
+        locale_t newloc = newlocale(lcMarkArry[i], "en_US", NULL);
+        EXPECT_PTRNE("newlocale_0300", newloc, NULL);
 
-        if (newlocale_) {
-            freelocale(newlocale_);
-            newlocale_ = NULL;
+        if (newloc) {
+            freelocale(newloc);
+            newloc = NULL;
         }
     }
 }
@@ -104,33 +104,68 @@ void newlocale_0300(void)
 void newlocale_0400(void)
 {
     for (int i = 0; i < sizeof(lcMarkArry) / sizeof(lcMarkArry[0]); i++) {
-        locale_t newlocale_ = newlocale(lcMarkArry[i], "C", NULL);
-        EXPECT_PTRNE("newlocale_0400", newlocale_, NULL);
+        locale_t newloc = newlocale(lcMarkArry[i], "C", NULL);
+        EXPECT_PTRNE("newlocale_0400", newloc, NULL);
 
-        if (newlocale_) {
-            freelocale(newlocale_);
-            newlocale_ = NULL;
+        if (newloc) {
+            freelocale(newloc);
+            newloc = NULL;
         }
 
-        newlocale_ = newlocale(lcMarkArry[i], "C.UTF-8", NULL);
-        EXPECT_PTRNE("newlocale_0400", newlocale_, NULL);
+        newloc = newlocale(lcMarkArry[i], "C.UTF-8", NULL);
+        EXPECT_PTRNE("newlocale_0400", newloc, NULL);
 
-        if (newlocale_) {
-            freelocale(newlocale_);
-            newlocale_ = NULL;
+        if (newloc) {
+            freelocale(newloc);
+            newloc = NULL;
         }
     }
 }
 
+/**
+ * @tc.name      : newlocale_0500
+ * @tc.desc      : Determines whether the custom locale environment is created successfully
+ * by passing different LC data types to newlocale zh_CN and zh_CN.UTF-8
+ * @tc.level     : Level 0
+ */
 void newlocale_0500(void)
 {
-    locale_t newlocale_ = newlocale(LC_ALL_MASK, "de.UTF-8", NULL);
-    EXPECT_PTREQ("newlocale_0500", newlocale_, NULL);
-    if (newlocale_) {
-        freelocale(newlocale_);
-        newlocale_ = NULL;
+    for (int i = 0; i < sizeof(lcMarkArry) / sizeof(lcMarkArry[0]); i++) {
+        locale_t newloc = newlocale(lcMarkArry[i], "zh_CN", NULL);
+        EXPECT_PTRNE("newlocale_0500", newloc, NULL);
+
+        if (newloc) {
+            freelocale(newloc);
+            newloc = NULL;
+        }
+
+        newloc = newlocale(lcMarkArry[i], "zh_CN.UTF-8", NULL);
+        EXPECT_PTRNE("newlocale_0500", newloc, NULL);
+
+        if (newloc) {
+            freelocale(newloc);
+            newloc = NULL;
+        }
     }
 }
+
+
+/**
+ * @tc.name      : newlocale_0600
+ * @tc.desc      : Set de_DE to newlocale, which is not supported and should return NULL
+ * @tc.level     : Level 0
+ */
+void newlocale_0600(void)
+{
+    locale_t newloc = newlocale(LC_ALL_MASK, "de_DE", NULL);
+    EXPECT_PTREQ("newlocale_0600", newloc, NULL);
+
+    if (newloc) {
+        freelocale(newloc);
+        newloc = NULL;
+    }
+}
+
 
 int main(void)
 {
@@ -138,6 +173,8 @@ int main(void)
     newlocale_0200();
     newlocale_0300();
     newlocale_0400();
-
+    newlocale_0500();
+    newlocale_0600();
+    
     return t_status;
 }

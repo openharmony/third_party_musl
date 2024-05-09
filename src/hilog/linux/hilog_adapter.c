@@ -70,7 +70,6 @@ static void Cleanup()
 static int GetSocketFdInstance()
 {
     if (g_socketFd == INVALID_SOCKET || fcntl(g_socketFd, F_GETFL) == -1) {
-        errno = 0;
         pthread_mutex_lock(&g_lock);
         if (g_socketFd == INVALID_SOCKET || fcntl(g_socketFd, F_GETFL) == -1) {
             int tempSocketFd = TEMP_FAILURE_RETRY(socket(AF_UNIX, SOCKET_TYPE, 0));
