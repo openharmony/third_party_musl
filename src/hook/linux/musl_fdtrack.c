@@ -14,8 +14,8 @@
  */
 
 #ifdef OHOS_FDTRACK_HOOK_ENABLE
-#include <stdatomic.h>
 #include "musl_fdtrack.h"
+#include "stdatomic_impl.h"
 
 _Atomic(fdtrack_hook) __fdtrack_hook;
 bool __fdtrack_enabled = false;

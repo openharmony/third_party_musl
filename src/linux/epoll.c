@@ -2,6 +2,9 @@
 #include <signal.h>
 #include <errno.h>
 #include "syscall.h"
+#ifdef OHOS_FDTRACK_HOOK_ENABLE
+#include "musl_fdtrack_hook.h"
+#endif
 
 int epoll_create(int size)
 {
@@ -14,6 +17,10 @@ int epoll_create1(int flags)
 	int r = __syscall(SYS_epoll_create1, flags);
 #ifdef SYS_epoll_create
 	if (r==-ENOSYS && !flags) r = __syscall(SYS_epoll_create, 1);
+#endif
+
+#ifdef OHOS_FDTRACK_HOOK_ENABLE
+	return FDTRACK_START_HOOK(__syscall_ret(r));
 #endif
 	return __syscall_ret(r);
 }

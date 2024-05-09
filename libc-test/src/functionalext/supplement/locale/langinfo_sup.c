@@ -85,11 +85,7 @@ void nl_langinfo_0300()
  */
 void nl_langinfo_0400()
 {
-    char *lo = setlocale(LC_MESSAGES, "zh_CN.UTF-8");
-    if (lo) {
-        t_error("nl_langinfo_0400 %s != NULL\n", lo);
-        return;
-    }
+    setlocale(LC_MESSAGES, "zh_CN.UTF-8");
     char *ptr = nl_langinfo(MESSAGES_ERROR_INFO);
     EXPECT_STREQ("nl_langinfo_0400", ptr, "");
 }

@@ -563,6 +563,7 @@ template("musl_libs") {
     }
 
     defines = []
+    defines += [ "FEATURE_ICU_LOCALE" ]
     if (musl_arch == "arm") {
       defines += [ "MUSL_ARM_ARCH" ]
     }
@@ -942,6 +943,7 @@ template("musl_libs") {
   }
 
   source_set("soft_musl_hook") {
+    include_dirs = []
     sources = [
       "./src/hook/linux/malloc_common.c",
       "./src/hook/linux/memory_trace.c",
@@ -980,10 +982,12 @@ template("musl_libs") {
       if (use_jemalloc_recycle_func) {
         defines += [ "USE_JEMALLOC_RECYCLE_FUNC" ]
       }
-      include_dirs = [ "${musl_malloc_plugin}/include/jemalloc" ]
+      include_dirs += [ "${musl_malloc_plugin}/include/jemalloc" ]
     }
 
     configs -= musl_inherited_configs
+
+    include_dirs += [ "${target_out_dir}/${musl_ported_dir}/src/internal" ]
 
     configs += [
       "//build/config/compiler:compiler",
