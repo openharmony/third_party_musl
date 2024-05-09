@@ -23,9 +23,6 @@ int gethostbyname2_r(const char *name, int af,
 	case EAI_NONAME:
 		*err = HOST_NOT_FOUND;
 		return 0;
-	case EAI_NODATA:
-		*err = NO_DATA;
-		return 0;
 	case EAI_AGAIN:
 		*err = TRY_AGAIN;
 		return EAGAIN;
