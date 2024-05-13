@@ -39,6 +39,8 @@ static void libc_exit_fini(void)
 
 weak_alias(libc_exit_fini, __libc_exit_fini);
 
+extern void __cxa_thread_finalize();
+
 _Noreturn void exit(int code)
 {
 #ifdef __LITEOS_A__
@@ -59,6 +61,11 @@ _Noreturn void exit(int code)
 		clean_recycle_list(true);
 	}
 #endif
+#endif
+
+#if !defined(__LITEOS__) && !defined(__HISPARK_LINUX__)
+	// Call thread_local dtors.
+	__cxa_thread_finalize();
 #endif
 	__funcs_on_exit();
 	__libc_exit_fini();

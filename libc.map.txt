@@ -33,6 +33,7 @@
     __ctype_toupper_loc;
     __cxa_atexit;
     __cxa_finalize;
+    __cxa_thread_atexit_impl;
     __daylight;
     __difftime64;
     __dls2b;

@@ -57,6 +57,10 @@ group("ldso_libs") {
     ":empty",
     ":ldso_cfi_lib",
     ":ldso_cfi_lib_exit",
+    ":ldso_cxa_thread_atexit_test",
+    ":ldso_cxa_thread_atexit_test_A",
+    ":ldso_cxa_thread_atexit_test_B",
+    ":ldso_cxa_thread_atexit_test_C",
     ":ldso_dlclose_test_a",
     ":ldso_dlclose_test_b",
     ":ldso_dlclose_test_c",
@@ -1165,6 +1169,48 @@ ohos_shared_library("ldso_cfi_lib_exit") {
   include_dirs = [ "." ]
   sources = [ "ldso_cfi_lib.c" ]
   output_name = "ldso_cfi_lib_exit"
+  output_extension = "so"
+  subsystem_name = "musl"
+  part_name = "libc-gtest-lib"
+}
+
+ohos_shared_library("ldso_cxa_thread_atexit_test") {
+  include_dirs = [ "." ]
+  sources = [ "ldso_cxa_thread_atexit_test_B.cpp" ]
+  output_name = "ldso_cxa_thread_atexit_test"
+  output_extension = "so"
+  subsystem_name = "musl"
+  part_name = "libc-gtest-lib"
+}
+
+ohos_shared_library("ldso_cxa_thread_atexit_test_A") {
+  include_dirs = [ "." ]
+  sources = [ "ldso_cxa_thread_atexit_test_A.cpp" ]
+  output_name = "ldso_cxa_thread_atexit_test_A"
+  output_extension = "so"
+  deps = [
+    ":ldso_cxa_thread_atexit_test_B",
+    ":ldso_cxa_thread_atexit_test_C",
+  ]
+  subsystem_name = "musl"
+  part_name = "libc-gtest-lib"
+}
+
+ohos_shared_library("ldso_cxa_thread_atexit_test_B") {
+  include_dirs = [ "." ]
+  sources = [ "ldso_cxa_thread_atexit_test_B.cpp" ]
+  output_name = "ldso_cxa_thread_atexit_test_B"
+  output_extension = "so"
+  deps = [ ":ldso_cxa_thread_atexit_test_C" ]
+  defines = [ "TEST_FOR_DLCLOSE" ]
+  subsystem_name = "musl"
+  part_name = "libc-gtest-lib"
+}
+
+ohos_shared_library("ldso_cxa_thread_atexit_test_C") {
+  include_dirs = [ "." ]
+  sources = [ "ldso_cxa_thread_atexit_test_C.cpp" ]
+  output_name = "ldso_cxa_thread_atexit_test_C"
   output_extension = "so"
   subsystem_name = "musl"
   part_name = "libc-gtest-lib"
