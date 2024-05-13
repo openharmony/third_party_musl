@@ -110,6 +110,7 @@ ohos_executable("musl_unittest") {
     "locale/locale_gtest/locale_duplocale_test.cpp",
 
     # ldso unittest
+    "ldso/ldso_gtest/cxa_thread_atexit_test.cpp",
     "ldso/ldso_gtest/ldso_cfi_test.cpp",
     "ldso/ldso_gtest/ldso_dl_iterate_phdr_test.cpp",
     "ldso/ldso_gtest/ldso_dladdr_test.cpp",

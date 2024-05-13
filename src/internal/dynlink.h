@@ -139,6 +139,8 @@ struct dso {
 	} *funcdescs;
 	size_t *got;
 	struct dso **deps, *needed_by;
+	/* only assigned when a thread local destructor is added */
+	struct dso **deps_all;
 	uint16_t ndeps_direct;
 	uint16_t next_dep;
 	uint16_t parents_count;
@@ -157,6 +159,7 @@ struct dso {
 	char kernel_mapped;
 	char mark;
 	char bfs_built;
+	char deps_all_built;
 	char runtime_loaded;
 	char by_dlopen;
 	bool is_mapped_to_shadow;

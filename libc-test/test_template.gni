@@ -352,10 +352,6 @@ template("test_sharedlib") {
       deps = invoker.deps
     }
 
-    if (target_name == "dlclose_tls") {
-      ldflags += [ "-Wl,-z,nodelete" ]
-    }
-
     libs = [ "//${out_test_dir}/src/common/libtest.a" ]
 
     output_name = "${target_name}"

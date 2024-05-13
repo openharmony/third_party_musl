@@ -135,6 +135,8 @@ void __tl_sync(pthread_t td)
 	if (tl_lock_waiters) __wake(&__thread_list_lock, 1, 0);
 }
 
+extern void __cxa_thread_finalize();
+
 #ifdef ENABLE_HWASAN
 weak void __hwasan_thread_enter();
 weak void __hwasan_thread_exit();
@@ -143,6 +145,8 @@ __attribute__((no_sanitize("hwaddress")))
 #endif
 _Noreturn void __pthread_exit(void *result)
 {
+	// Call thread_local dtors.
+	__cxa_thread_finalize();
 	pthread_t self = __pthread_self();
 	sigset_t set;
 
