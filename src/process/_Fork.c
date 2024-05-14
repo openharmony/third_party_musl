@@ -19,11 +19,21 @@ pid_t _Fork(void)
 	__block_all_sigs(&set);
 	__aio_atfork(-1);
 	LOCK(__abort_lock);
+
+#ifdef __LITEOS__
+	MUSL_LOGI("_Fork __syscall Begin");
+#endif
+
 #ifdef SYS_fork
 	ret = __syscall(SYS_fork);
 #else
 	ret = __syscall(SYS_clone, SIGCHLD, 0);
 #endif
+
+#ifdef __LITEOS__
+	MUSL_LOGI("_Fork __syscall End ret = %{public}d .",ret);
+#endif
+
 	if (!ret) {
 		pthread_t self = __pthread_self();
 		self->tid = __syscall(SYS_gettid);
