@@ -20,7 +20,7 @@ pid_t _Fork(void)
 	__aio_atfork(-1);
 	LOCK(__abort_lock);
 
-#ifdef __LITEOS__
+#ifndef __LITEOS__
 	MUSL_LOGI("_Fork __syscall Begin");
 #endif
 
@@ -30,7 +30,7 @@ pid_t _Fork(void)
 	ret = __syscall(SYS_clone, SIGCHLD, 0);
 #endif
 
-#ifdef __LITEOS__
+#ifndef __LITEOS__
 	MUSL_LOGI("_Fork __syscall End ret = %{public}d .",ret);
 #endif
 
