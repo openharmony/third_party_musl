@@ -72,6 +72,7 @@ static void nsinherits_free(ns_inherit_list *nsinl)
 UT_STATIC void nsinherits_realloc(ns_inherit_list *nsinl)
 {
     if (!nsinl) {
+        LD_LOGE("nsinherits_realloc: ns inherit list is null.");
         return;
     }
     size_t size = 2 * nsinl->size;
@@ -108,6 +109,7 @@ static dsolist *dsolist_alloc()
 static void dsolist_realloc(dsolist *dsol)
 {
     if (!dsol) {
+        LD_LOGE("dsolist_realloc: dso list is null.");
         return;
     }
     size_t size = 2 * dsol->size;
@@ -171,12 +173,14 @@ void ns_free(ns_t *ns)
 void ns_add_dso(ns_t *ns, struct dso *dso)
 {
     if (!ns || !dso) {
+        LD_LOGE("ns_add_dso: namespace or dso is null.");
         return;
     }
     if (!ns->ns_dsos) {
         ns->ns_dsos = dsolist_alloc();
     }
     if (!ns->ns_dsos) {
+        LD_LOGE("ns_add_dso: dsolist_alloc failed!");
         return;
     }
     if (ns->ns_dsos->num == ns->ns_dsos->size) {
@@ -222,6 +226,7 @@ static void nslist_realloc()
 void nslist_add_ns(ns_t *ns)
 {
     if (!ns) {
+        LD_LOGE("nslist_add_ns: namespace is null.");
         return;
     }
 
@@ -246,6 +251,7 @@ ns_t *get_default_ns()
 void ns_set_name(ns_t *ns, const char *name)
 {
     if (!ns || !name) {
+        LD_LOGE("ns_set_name: namespace or name is null.");
         return;
     }
     if (ns->ns_name) __libc_free(ns->ns_name);
@@ -257,6 +263,7 @@ void ns_set_name(ns_t *ns, const char *name)
 void ns_set_env_paths(ns_t *ns, const char *env_paths)
 {
     if (!ns) {
+        LD_LOGE("ns_set_env_paths: namespace is null.");
         return;
     }
     if (ns->env_paths) __libc_free(ns->env_paths);
@@ -272,6 +279,7 @@ void ns_set_env_paths(ns_t *ns, const char *env_paths)
 void ns_set_lib_paths(ns_t *ns, const char *lib_paths)
 {
     if (!ns) {
+        LD_LOGE("ns_set_lib_paths: namespace is null.");
         return;
     }
     if (ns->lib_paths) __libc_free(ns->lib_paths);
@@ -287,6 +295,7 @@ void ns_set_lib_paths(ns_t *ns, const char *lib_paths)
 void ns_set_asan_lib_paths(ns_t *ns, const char *asan_lib_paths)
 {
     if (!ns) {
+        LD_LOGE("ns_set_asan_lib_paths: namespace is null.");
         return;
     }
     if (ns->asan_lib_paths) {
@@ -304,6 +313,7 @@ void ns_set_asan_lib_paths(ns_t *ns, const char *asan_lib_paths)
 void ns_set_permitted_paths(ns_t *ns, const char *permitted_paths)
 {
     if (!ns) {
+        LD_LOGE("ns_set_permitted_paths: namespace is null.");
         return;
     }
     if (ns->permitted_paths) strlist_free(ns->permitted_paths);
@@ -314,6 +324,7 @@ void ns_set_permitted_paths(ns_t *ns, const char *permitted_paths)
 void ns_set_asan_permitted_paths(ns_t *ns, const char *asan_permitted_paths)
 {
     if (!ns) {
+        LD_LOGE("ns_set_asan_permitted_paths: namespace is null.");
         return;
     }
     if (ns->asan_permitted_paths) {
@@ -328,6 +339,7 @@ void ns_set_asan_permitted_paths(ns_t *ns, const char *asan_permitted_paths)
 void ns_set_separated(ns_t *ns, bool separated)
 {
     if (!ns) {
+        LD_LOGE("ns_set_separated: namespace is null.");
         return;
     }
     ns->separated = separated;
@@ -337,6 +349,7 @@ void ns_set_separated(ns_t *ns, bool separated)
 void ns_set_allowed_libs(ns_t *ns, const char *allowed_libs)
 {
     if (!ns) {
+        LD_LOGE("ns_set_allowed_libs: namespace is null.");
         return;
     }
 
@@ -372,6 +385,7 @@ ns_t *find_ns_by_name(const char *ns_name)
 static ns_inherit *find_ns_inherit(ns_t *ns, ns_t *inherited)
 {
     if (!ns || !inherited) {
+        LD_LOGE("find_ns_inherit: namespace or inherited is null.");
         return NULL;
     }
     if (ns->ns_inherits) {
@@ -388,6 +402,7 @@ void ns_add_inherit(ns_t *ns, ns_t *ns_inherited, const char *shared_libs)
 {
     bool need_add = false;
     if (!ns || !ns_inherited) {
+        LD_LOGE("ns_add_inherit: namespace or ns_inherited is null.");
         return;
     }
 
@@ -606,6 +621,7 @@ bool is_sharable(ns_inherit *inherit, const char *lib_name)
 void ns_set_flag(ns_t *ns, int flag)
 {
     if (!ns) {
+        LD_LOGE("ns_set_flag: namespace is null.");
         return;
     }
     ns->flag = flag;
