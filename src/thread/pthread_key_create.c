@@ -1,6 +1,7 @@
 #include "pthread_impl.h"
 #include "fork_impl.h"
 #include "pthread_ffrt.h"
+#include <stdbool.h>
 
 volatile size_t __pthread_tsd_size = sizeof(void *) * PTHREAD_KEYS_MAX;
 void *__pthread_tsd_main[PTHREAD_KEYS_MAX] = { 0 };
@@ -96,6 +97,28 @@ void __pthread_tsd_run_dtors()
 	}
 }
 
+void __pthread_tsd_run_dtors_ex1()
+{
+	pthread_t self = __pthread_self();
+	int i, j;
+	bool tsd_used = true;
+	for (j=0; tsd_used && j<PTHREAD_DESTRUCTOR_ITERATIONS; j++) {
+		__pthread_rwlock_rdlock(&key_lock);
+		tsd_used = false;
+		for (i=0; i<PTHREAD_KEYS_MAX; i++) {
+			void *val = self->tsd[i];
+			void (*dtor)(void *) = keys[i];
+			self->tsd[i] = 0;
+			if (val && dtor && dtor != nodtor) {
+				__pthread_rwlock_unlock(&key_lock);
+				dtor(val);
+				__pthread_rwlock_rdlock(&key_lock);
+			}
+		}
+		__pthread_rwlock_unlock(&key_lock);
+	}
+}
+
 weak_alias(__pthread_key_create, pthread_key_create);
 weak_alias(__pthread_key_delete, pthread_key_delete);
-weak_alias(__pthread_tsd_run_dtors, pthread_tsd_run_dtors);
+weak_alias(__pthread_tsd_run_dtors_ex1, pthread_tsd_run_dtors);
