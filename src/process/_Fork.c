@@ -31,7 +31,7 @@ pid_t _Fork(void)
 #endif
 
 #ifndef __LITEOS__
-	MUSL_LOGI("_Fork __syscall End ret = %{public}d .",ret);
+	MUSL_LOGI("_Fork __syscall End");
 #endif
 
 	if (!ret) {
