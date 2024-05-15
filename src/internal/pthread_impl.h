@@ -258,7 +258,7 @@ static inline int __is_mutex_destroyed(int mutex_type)
 static inline void __handle_using_destroyed_mutex(pthread_mutex_t *mutex, const char *function_name)
 {
 #ifndef __LITEOS__
-	MUSL_LOGE("Fortify Error: %s called on a destroyed mutex (%p)", function_name, mutex);
+	MUSL_LOGE("Fortify Error: %{public}s called on a destroyed mutex (%{public}p)", function_name, mutex);
 #endif
 }
 
