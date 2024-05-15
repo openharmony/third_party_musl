@@ -170,11 +170,11 @@ static void signal_chain_handler(int signo, siginfo_t* siginfo, void* ucontext_r
             if (!noreturn) {
                 set_handling_signal(true);
             }
-            SIGCHAIN_PRINT_ERROR("%{public}s call %{public}d rd sigchain action for signal: %{public}d", __func__, i, signo);
+            SIGCHAIN_PRINT_INFO("%{public}s call %{public}d rd sigchain action for signal: %{public}d", __func__, i, signo);
             if (sig_chains[signo - 1].sca_special_actions[i].sca_sigaction(signo,
                                                             siginfo, ucontext_raw)) {
                 set_handling_signal(previous_value);
-                SIGCHAIN_PRINT_ERROR("%{public}s call %{public}d rd sigchain action for signal: %{public}d directly return", __func__, i, signo);
+                SIGCHAIN_PRINT_INFO("%{public}s call %{public}d rd sigchain action for signal: %{public}d directly return", __func__, i, signo);
                 return;
             }
 
@@ -196,22 +196,22 @@ static void signal_chain_handler(int signo, siginfo_t* siginfo, void* ucontext_r
     sigchain_sigmask(SIG_SETMASK, &mask, NULL);
 
     if ((sa_flags & SA_SIGINFO)) {
-        SIGCHAIN_PRINT_ERROR("%{public}s call usr sigaction for signal: %{public}d", __func__, signo);
+        SIGCHAIN_PRINT_INFO("%{public}s call usr sigaction for signal: %{public}d sig_action.sa_sigaction=%{public}p", __func__, signo, sig_chains[signo - 1].sig_action.sa_sigaction);
         sig_chains[signo - 1].sig_action.sa_sigaction(signo, siginfo, ucontext_raw);
     } else {
         if (sig_chains[signo - 1].sig_action.sa_handler == SIG_IGN) {
-            SIGCHAIN_PRINT_ERROR("%{public}s SIG_IGN handler for signal: %{public}d", __func__, signo);
+            SIGCHAIN_PRINT_INFO("%{public}s SIG_IGN handler for signal: %{public}d", __func__, signo);
             return;
         } else if (sig_chains[signo - 1].sig_action.sa_handler == SIG_DFL) {
-            SIGCHAIN_PRINT_ERROR("%{public}s SIG_DFL handler for signal: %{public}d", __func__, signo);
+            SIGCHAIN_PRINT_INFO("%{public}s SIG_DFL handler for signal: %{public}d", __func__, signo);
             remove_all_special_handler(signo);
             if (__syscall(SYS_rt_tgsigqueueinfo, __syscall(SYS_getpid), __syscall(SYS_gettid), signo, siginfo) != 0) {
-                SIGCHAIN_PRINT_ERROR("Failed to rethrow sig(%{public}d), errno(%{public}d).", signo, errno);
+                SIGCHAIN_PRINT_INFO("Failed to rethrow sig(%{public}d), errno(%{public}d).", signo, errno);
             } else {
-                SIGCHAIN_PRINT_ERROR("pid(%{public}d) rethrow sig(%{public}d) success.", __syscall(SYS_getpid), signo);
+                SIGCHAIN_PRINT_INFO("pid(%{public}d) rethrow sig(%{public}d) success.", __syscall(SYS_getpid), signo);
             }
         } else {
-            SIGCHAIN_PRINT_ERROR("%{public}s call usr sa_handler: %{public}p for signal: %{public}d", __func__, signo);
+            SIGCHAIN_PRINT_INFO("%{public}s call usr sa_handler: %{public}p for signal: %{public}d sig_action.sa_handler=%{public}p", __func__, signo, sig_chains[signo - 1].sig_action.sa_handler);
             sig_chains[signo - 1].sig_action.sa_handler(signo);
         }
     }
@@ -431,7 +431,7 @@ bool intercept_sigaction(int signo, const struct sigaction *restrict sa,
 {
     SIGCHAIN_PRINT_DEBUG("%{public}s signo: %{public}d", __func__, signo);
     if (signo <= 0 || signo >= _NSIG) {
-        SIGCHAIN_PRINT_ERROR("%{public}s Invalid signal %{public}d", __func__, signo);
+        SIGCHAIN_PRINT_INFO("%{public}s Invalid signal %{public}d", __func__, signo);
         return false;
     }
 

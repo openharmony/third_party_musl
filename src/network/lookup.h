@@ -6,6 +6,9 @@
 #include <features.h>
 #include <netinet/in.h>
 #include <netdb.h>
+#ifndef __LITEOS__
+#include <musl_log.h>
+#endif
 
 #if OHOS_DNS_PROXY_BY_NETSYS
 

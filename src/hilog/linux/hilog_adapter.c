@@ -53,7 +53,7 @@ static bool musl_log_enable = false;
 static const char *param_name = "musl.log.enable";
 static const char *g_logLevelParam = "musl.log.level";
 #endif
-static int g_logLevel = LOG_ERROR;
+static int g_logLevel = LOG_INFO;
 static pthread_mutex_t g_lock = PTHREAD_MUTEX_INITIALIZER;
 static volatile int g_socketFd = INVALID_SOCKET;
 
@@ -70,7 +70,6 @@ static void Cleanup()
 static int GetSocketFdInstance()
 {
     if (g_socketFd == INVALID_SOCKET || fcntl(g_socketFd, F_GETFL) == -1) {
-        errno = 0;
         pthread_mutex_lock(&g_lock);
         if (g_socketFd == INVALID_SOCKET || fcntl(g_socketFd, F_GETFL) == -1) {
             int tempSocketFd = TEMP_FAILURE_RETRY(socket(AF_UNIX, SOCKET_TYPE, 0));
@@ -208,7 +207,7 @@ void resetLogLevel()
 {
     static CachedHandle muslLogLevelHandle = NULL;
     if (muslLogLevelHandle == NULL) {
-        muslLogLevelHandle = CachedParameterCreate(g_logLevelParam, "ERROR");
+        muslLogLevelHandle = CachedParameterCreate(g_logLevelParam, "INFO");
     }
     const char *value = CachedParameterGet(muslLogLevelHandle);
     if (value != NULL) {

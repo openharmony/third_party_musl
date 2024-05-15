@@ -141,6 +141,9 @@ int getaddrinfo_ext(const char *restrict host, const char *restrict serv, const 
 		case AF_UNSPEC:
 			break;
 		default:
+#ifndef __LITEOS__
+			MUSL_LOGE("%{public}s: %{public}d: wrong family in hint: %{public}d", __func__, __LINE__, family);
+#endif
 			return EAI_FAMILY;
 		}
 	}
@@ -186,7 +189,12 @@ int getaddrinfo_ext(const char *restrict host, const char *restrict serv, const 
 			default:
 				return EAI_SYSTEM;
 			}
-			if (family == tf[i]) return EAI_NONAME;
+			if (family == tf[i]) {
+#ifndef __LITEOS__
+				MUSL_LOGE("%{public}s: %{public}d: family mismatch: %{public}d", __func__, __LINE__, EAI_NONAME);
+#endif
+                return EAI_NONAME;
+			}
 			family = tf[1 - i];
 		}
 	}
@@ -199,6 +207,9 @@ int getaddrinfo_ext(const char *restrict host, const char *restrict serv, const 
 	t_end = time(NULL);
 	if (naddrs < 0) {
 		reportdnsresult(netid, host, difftime(t_end, t_start), DNS_QUERY_COMMOM_FAIL, NULL, param);
+#ifndef __LITEOS__
+		MUSL_LOGE("%{public}s: %{public}d: reportdnsresult: %{public}d in process %{public}d", __func__, __LINE__, naddrs, getpid());
+#endif
 		return naddrs;
 	}
 

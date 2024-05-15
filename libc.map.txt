@@ -1535,6 +1535,7 @@
     remquol;
     rename;
     renameat;
+    renameat2;
     res_init;
     res_mkquery;
     res_query;
