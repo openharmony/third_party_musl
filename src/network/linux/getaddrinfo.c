@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <sys/socket.h>
+#include <sys/time.h>
 #include <netinet/in.h>
 #include <netdb.h>
 #include <string.h>
@@ -79,7 +80,7 @@ int getaddrinfo_ext(const char *restrict host, const char *restrict serv, const 
 	int netid = 0;
 	int type = 0;
 	int usedtime = 0;
-	time_t t_start, t_end;
+	struct timeval timeStart, timeEnd;
 
 	if (!host && !serv) return EAI_NONAME;
 	if (!param) {
@@ -197,14 +198,18 @@ int getaddrinfo_ext(const char *restrict host, const char *restrict serv, const 
 		}
 	}
 
-	t_start = time(NULL);
+	int timeStartRet = gettimeofday(&timeStart, NULL);
+	if (timeStartRet != 0) return EAI_SYSTEM;
 	nservs = __lookup_serv(ports, serv, proto, socktype, flags);
 	if (nservs < 0) return nservs;
 
 	naddrs = lookup_name_ext(addrs, canon, host, family, flags, netid);
-	t_end = time(NULL);
+	int timeEndRet = gettimeofday(&timeEnd, NULL);
+	if (timeEndRet != 0) return EAI_SYSTEM;
+	int t_cost = 1000000 * (timeEnd.tv_sec - timeStart.tv_sec) + (timeEnd.tv_usec - timeStart.tv_usec);
+	t_cost /= 1000;
 	if (naddrs < 0) {
-		reportdnsresult(netid, host, difftime(t_end, t_start), DNS_QUERY_COMMOM_FAIL, NULL, param);
+		reportdnsresult(netid, host, t_cost, DNS_QUERY_COMMOM_FAIL, NULL, param);
 #ifndef __LITEOS__
 		MUSL_LOGE("%{public}s: %{public}d: reportdnsresult: %{public}d in process %{public}d", __func__, __LINE__, naddrs, getpid());
 #endif
@@ -252,7 +257,7 @@ int getaddrinfo_ext(const char *restrict host, const char *restrict serv, const 
 	out[0].ref = nais;
 	*res = &out->ai;
 
-	reportdnsresult(netid, host, difftime(t_end, t_start), DNS_QUERY_SUCCESS, *res, param);
+	reportdnsresult(netid, host, t_cost, DNS_QUERY_SUCCESS, *res, param);
 	int cnt = predefined_host_is_contain_host(host);
 #if OHOS_DNS_PROXY_BY_NETSYS
 	if (type == QEURY_TYPE_NORMAL && cnt == 0) {
