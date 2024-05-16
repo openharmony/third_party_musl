@@ -49,11 +49,21 @@ pid_t _Fork(void)
 	sigset_t set;
 	__block_all_sigs(&set);
 	LOCK(__abort_lock);
+
+#ifndef __LITEOS__
+	MUSL_LOGI("_Fork __syscall Begin");
+#endif
+
 #ifdef SYS_fork
 	ret = __syscall(SYS_fork);
 #else
 	ret = __syscall(SYS_clone, SIGCHLD, 0);
 #endif
+
+#ifndef __LITEOS__
+	MUSL_LOGI("_Fork __syscall End");
+#endif
+
 	__post_Fork(ret);
 	__restore_sigs(&set);
 	return __syscall_ret(ret);
