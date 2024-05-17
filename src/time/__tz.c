@@ -37,8 +37,8 @@ const char __gmt[] = "GMT";
 static int dst_off;
 static int r0[5], r1[5];
 
-static const unsigned char *zi, *trans, *index, *types, *abbrevs, *abbrevs_end;
-static size_t map_size;
+static const unsigned char *zi, *trans, *index, *types, *abbrevs, *abbrevs_end, *distro_map;
+static size_t map_size, distro_map_size;
 
 static char old_tz_buf[32];
 static char *old_tz = old_tz_buf;
@@ -168,7 +168,11 @@ static void do_tzset()
 
 	for (i=0; i<5; i++) r0[i] = r1[i] = 0;
 
-	if (zi) __munmap((void *)zi, map_size);
+	if (distro_map) {
+		__munmap((void *)distro_map, distro_map_size);
+	} else {
+		if (zi) __munmap((void *)zi, map_size);
+	}
 
 	/* Cache the old value of TZ to check if it has changed. Avoid
 	 * free so as not to pull it into static programs. Growth
@@ -216,11 +220,18 @@ static void do_tzset()
         if (l <= NAME_MAX && !strchr(s, '.')) {
             memcpy(pathname, s, l+1);
             pathname[l] = 0;
-            for (try=search; !map && *try; try+=l+1) {
-                l = strlen(try);
-                memcpy(pathname-l, try, l);
-                map = __map_file(pathname-l, &map_size);
-            }
+			/* Try to load distro timezone data first*/
+			size_t offset;
+			distro_map = __map_distro_tzdata_file(pathname, &distro_map_size, &offset, &map_size);
+			if (distro_map) {
+				map = distro_map + offset;
+			} else {
+				for (try=search; !map && *try; try+=l+1) {
+					l = strlen(try);
+					memcpy(pathname-l, try, l);
+					map = __map_file(pathname-l, &map_size);
+				}
+			}
         }
     }
 #else
