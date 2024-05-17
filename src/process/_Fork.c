@@ -8,38 +8,20 @@
 #ifndef __LITEOS__
 #include "proc_xid_impl.h"
 #endif
+#include "fork_impl.h"
 
 static void dummy(int x) { }
 weak_alias(dummy, __aio_atfork);
 
-pid_t _Fork(void)
+void __post_Fork(int ret)
 {
-	pid_t ret;
-	sigset_t set;
-	__block_all_sigs(&set);
-	__aio_atfork(-1);
-	LOCK(__abort_lock);
-
-#ifndef __LITEOS__
-	MUSL_LOGI("_Fork __syscall Begin");
-#endif
-
-#ifdef SYS_fork
-	ret = __syscall(SYS_fork);
-#else
-	ret = __syscall(SYS_clone, SIGCHLD, 0);
-#endif
-
-#ifndef __LITEOS__
-	MUSL_LOGI("_Fork __syscall End");
-#endif
-
 	if (!ret) {
 		pthread_t self = __pthread_self();
-		self->tid = __syscall(SYS_gettid);
 #ifdef __LITEOS_A__
+		self->tid = __syscall(SYS_gettid);
 		self->pid = __syscall(SYS_getpid);
 #else
+		self->tid = __syscall(SYS_set_tid_address, &__thread_list_lock);
 		self->pid = self->tid;
 #endif
 		self->proc_tid = -1;
@@ -58,7 +40,31 @@ pid_t _Fork(void)
 #endif
 	}
 	UNLOCK(__abort_lock);
-	__aio_atfork(!ret);
+	if (!ret) __aio_atfork(1);
+}
+
+pid_t _Fork(void)
+{
+	pid_t ret;
+	sigset_t set;
+	__block_all_sigs(&set);
+	LOCK(__abort_lock);
+
+#ifndef __LITEOS__
+	MUSL_LOGI("_Fork __syscall Begin");
+#endif
+
+#ifdef SYS_fork
+	ret = __syscall(SYS_fork);
+#else
+	ret = __syscall(SYS_clone, SIGCHLD, 0);
+#endif
+
+#ifndef __LITEOS__
+	MUSL_LOGI("_Fork __syscall End");
+#endif
+
+	__post_Fork(ret);
 	__restore_sigs(&set);
 	return __syscall_ret(ret);
 }

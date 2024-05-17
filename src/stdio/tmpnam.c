@@ -6,7 +6,6 @@
 #include <stdlib.h>
 #include <unsupported_api.h>
 #include "syscall.h"
-#include "kstat.h"
 
 #define MAXTRIES 100
 
@@ -19,11 +18,10 @@ char *tmpnam(char *buf)
 	UNSUPPORTED_API_VOID(LITEOS_A);
 	for (try=0; try<MAXTRIES; try++) {
 		__randname(s+12);
-#ifdef SYS_lstat
-		r = __syscall(SYS_lstat, s, &(struct kstat){0});
+#ifdef SYS_readlink
+		r = __syscall(SYS_readlink, s, (char[1]){0}, 1);
 #else
-		r = __syscall(SYS_fstatat, AT_FDCWD, s,
-			&(struct kstat){0}, AT_SYMLINK_NOFOLLOW);
+		r = __syscall(SYS_readlinkat, AT_FDCWD, s, (char[1]){0}, 1);
 #endif
 		if (r == -ENOENT) return strcpy(buf ? buf : internal, s);
 	}

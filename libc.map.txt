@@ -1330,6 +1330,7 @@
     pread;
     pread64;
     preadv;
+    preadv2;
     preadv64;
     predefined_host_clear_all_hosts;
     predefined_host_remove_host;
@@ -1488,6 +1489,7 @@
     pwrite;
     pwrite64;
     pwritev;
+    pwritev2;
     pwritev64;
     qsort;
     quick_exit;
@@ -1719,6 +1721,7 @@
     statfs64;
     statvfs;
     statvfs64;
+    statx;
     stderr;
     stdin;
     stdout;

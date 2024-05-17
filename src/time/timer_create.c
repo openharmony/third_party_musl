@@ -45,6 +45,10 @@ static void *start(void *arg)
 	union sigval val = args->sev->sigev_value;
 
 	pthread_barrier_wait(&args->b);
+#ifdef FEATURE_PTHREAD_CANCEL
+	if (self->cancel)
+		return 0;
+#endif
 	for (;;) {
 		siginfo_t si;
 		while (sigwaitinfo(SIGTIMER_SET, &si) < 0);
@@ -61,7 +65,7 @@ static void *start(void *arg)
 
 int timer_create(clockid_t clk, struct sigevent *restrict evp, timer_t *restrict res)
 {
-	volatile static int init = 0;
+	static volatile int init = 0;
 	pthread_t td;
 	pthread_attr_t attr;
 	int r;
@@ -115,8 +119,12 @@ int timer_create(clockid_t clk, struct sigevent *restrict evp, timer_t *restrict
 		ksev.sigev_signo = SIGTIMER;
 		ksev.sigev_notify = SIGEV_THREAD_ID;
 		ksev.sigev_tid = td->tid;
-		if (syscall(SYS_timer_create, clk, &ksev, &timerid) < 0)
+		if (syscall(SYS_timer_create, clk, &ksev, &timerid) < 0) {
 			timerid = -1;
+#ifdef FEATURE_PTHREAD_CANCEL
+			td->cancel = 1;
+#endif
+		}
 		td->timer_id = timerid;
 		pthread_barrier_wait(&args.b);
 		if (timerid < 0) return -1;

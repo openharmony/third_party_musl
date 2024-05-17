@@ -48,12 +48,19 @@
 #include "zip_archive.h"
 #endif
 
+static size_t ldso_page_size;
+#ifndef PAGE_SIZE
+#define PAGE_SIZE ldso_page_size
+#endif
+
 #define malloc __libc_malloc
 #define calloc __libc_calloc
 #define realloc __libc_realloc
 #define free __libc_free
 
-static void error(const char *, ...);
+static void error_impl(const char *, ...);
+static void error_noop(const char *, ...);
+static void (*error)(const char *, ...) = error_noop;
 
 #define MAXP2(a,b) (-(-(a)&-(b)))
 #define ALIGN(x,y) ((x)+(y)-1 & -(y))
@@ -157,6 +164,8 @@ static struct fdpic_loadmap *app_loadmap;
 static struct fdpic_dummy_loadmap app_dummy_loadmap;
 
 struct debug *_dl_debug_addr = &debug;
+
+extern weak hidden char __ehdr_start[];
 
 extern hidden int __malloc_replaced;
 
@@ -1181,7 +1190,7 @@ static void do_relocs(struct dso *dso, size_t *rel, size_t rel_size, size_t stri
 			break;
 #endif
 		case REL_TLSDESC:
-			if (stride<3) addend = reloc_addr[1];
+			if (stride<3) addend = reloc_addr[!TLSDESC_BACKWARDS];
 			if (def.dso->tls_id > static_tls_cnt) {
 				struct td_index *new = malloc(sizeof *new);
 				if (!new) {
@@ -1206,13 +1215,13 @@ static void do_relocs(struct dso *dso, size_t *rel, size_t rel_size, size_t stri
 					+ addend;
 #endif
 			}
-#ifdef TLSDESC_BACKWARDS
 			/* Some archs (32-bit ARM at least) invert the order of
 			 * the descriptor members. Fix them up here. */
-			size_t tmp = reloc_addr[0];
-			reloc_addr[0] = reloc_addr[1];
-			reloc_addr[1] = tmp;
-#endif
+			if (TLSDESC_BACKWARDS) {
+				size_t tmp = reloc_addr[0];
+				reloc_addr[0] = reloc_addr[1];
+				reloc_addr[1] = tmp;
+			}
 			break;
 		default:
 			error("Error relocating %s: unsupported relocation type %d",
@@ -1755,7 +1764,7 @@ UT_STATIC int fixup_rpath(struct dso *p, char *buf, size_t buf_size)
 		case ENOENT:
 		case ENOTDIR:
 		case EACCES:
-			break;
+			return 0;
 		default:
 			return -1;
 		}
@@ -2533,6 +2542,7 @@ static void do_android_relocs(struct dso *p, size_t dt_name, size_t dt_size)
 
 static void do_relr_relocs(struct dso *dso, size_t *relr, size_t relr_size)
 {
+	if (dso == &ldso) return; /* self-relocation was done in _dlstart */
 	unsigned char *base = dso->base;
 	size_t *reloc_addr;
 	for (; relr_size; relr++, relr_size -= sizeof(size_t))
@@ -2879,12 +2889,13 @@ hidden void __dls2(unsigned char *base, size_t *sp)
 	size_t aux[AUX_CNT];
 	decode_vec(auxv, aux, AUX_CNT);
 	libc.page_size = aux[AT_PAGESZ];
-	Ehdr *ehdr = (void *)ldso.base;
+	Ehdr *ehdr = __ehdr_start ? (void *)__ehdr_start : (void *)ldso.base;
 	ldso.name = ldso.shortname = "libc.so";
 	ldso.phnum = ehdr->e_phnum;
 	ldso.phdr = laddr(&ldso, ehdr->e_phoff);
 	ldso.phentsize = ehdr->e_phentsize;
 	ldso.is_global = true;
+	search_vec(auxv, &ldso_page_size, AT_PAGESZ);
 	kernel_mapped_dso(&ldso);
 	decode_dyn(&ldso);
 
@@ -2973,6 +2984,10 @@ void __dls3(size_t *sp, size_t *auxv, size_t *aux)
 		env_path = getenv("LD_LIBRARY_PATH");
 		env_preload = getenv("LD_PRELOAD");
 	}
+
+	/* Activate error handler function */
+	error = error_impl;
+
 #ifdef OHOS_ENABLE_PARAMETER
 	InitParameterClient();
 #endif
@@ -3192,6 +3207,10 @@ void __dls3(size_t *sp, size_t *auxv, size_t *aux)
 			app.dynv[i+1] = (size_t)&debug;
 		if (DT_DEBUG_INDIRECT && app.dynv[i]==DT_DEBUG_INDIRECT) {
 			size_t *ptr = (size_t *) app.dynv[i+1];
+			*ptr = (size_t)&debug;
+		}
+		if (app.dynv[i]==DT_DEBUG_INDIRECT_REL) {
+			size_t *ptr = (size_t *)((size_t)&app.dynv[i] + app.dynv[i+1]);
 			*ptr = (size_t)&debug;
 		}
 	}
@@ -4461,7 +4480,7 @@ int dl_iterate_phdr(int(*callback)(struct dl_phdr_info *info, size_t size, void 
 	return ret;
 }
 
-static void error(const char *fmt, ...)
+static void error_impl(const char *fmt, ...)
 {
 	va_list ap;
 	va_start(ap, fmt);
@@ -4474,6 +4493,10 @@ static void error(const char *fmt, ...)
 	}
 	__dl_vseterr(fmt, ap);
 	va_end(ap);
+}
+
+static void error_noop(const char *fmt, ...)
+{
 }
 
 int dlns_set_namespace_lib_path(const char * name, const char * lib_path)

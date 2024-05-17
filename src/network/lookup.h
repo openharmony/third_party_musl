@@ -71,7 +71,7 @@ hidden int __res_msend_rc(int, const unsigned char *const *, const int *, unsign
 hidden int res_msend_rc_ext(int, int, const unsigned char *const *, const int *, unsigned char *const *,
 							int *, int, const struct resolvconf *);
 
-hidden int __dns_parse(const unsigned char *, int, int (*)(void *, int, const void *, int, const void *), void *);
+hidden int __dns_parse(const unsigned char *, int, int (*)(void *, int, const void *, int, const void *, int), void *);
 hidden int predefined_host_name_from_hosts(struct address buf[static MAXADDRS],
 	char canon[static 256], const char *name, int family);
 hidden int predefined_host_is_contain_host(const char *host);

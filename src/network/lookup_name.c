@@ -123,6 +123,7 @@ struct dpc_ctx {
 	struct address *addrs;
 	char *canon;
 	int cnt;
+	int rrtype;
 };
 
 #define RR_A 1
@@ -130,30 +131,34 @@ struct dpc_ctx {
 #define RR_AAAA 28
 #define MAX_QUERY_SIZE 5
 
-static int dns_parse_callback(void *c, int rr, const void *data, int len, const void *packet)
+#define ABUF_SIZE 4800
+
+static int dns_parse_callback(void *c, int rr, const void *data, int len, const void *packet, int plen)
 {
 	char tmp[256];
+	int family;
 	struct dpc_ctx *ctx = c;
-	if (ctx->cnt >= MAXADDRS) return -1;
+	if (rr == RR_CNAME) {
+		if (__dn_expand(packet, (const unsigned char *)packet + plen,
+		    data, tmp, sizeof tmp) > 0 && is_valid_hostname(tmp))
+			strcpy(ctx->canon, tmp);
+		return 0;
+	}
+	if (ctx->cnt >= MAXADDRS) return 0;
+	if (rr != ctx->rrtype) return 0;
 	switch (rr) {
 	case RR_A:
 		if (len != 4) return -1;
-		ctx->addrs[ctx->cnt].family = AF_INET;
-		ctx->addrs[ctx->cnt].scopeid = 0;
-		memcpy(ctx->addrs[ctx->cnt++].addr, data, 4);
+		family = AF_INET;
 		break;
 	case RR_AAAA:
 		if (len != 16) return -1;
-		ctx->addrs[ctx->cnt].family = AF_INET6;
-		ctx->addrs[ctx->cnt].scopeid = 0;
-		memcpy(ctx->addrs[ctx->cnt++].addr, data, 16);
-		break;
-	case RR_CNAME:
-		if (__dn_expand(packet, (const unsigned char *)packet + 512,
-		    data, tmp, sizeof tmp) > 0 && is_valid_hostname(tmp))
-			strcpy(ctx->canon, tmp);
+		family = AF_INET6;
 		break;
 	}
+	ctx->addrs[ctx->cnt].family = family;
+	ctx->addrs[ctx->cnt].scopeid = 0;
+	memcpy(ctx->addrs[ctx->cnt++].addr, data, len);
 	return 0;
 }
 
@@ -185,10 +190,10 @@ static int IsIpv6Enable(int netid)
 
 static int name_from_dns(struct address buf[static MAXADDRS], char canon[static 256], const char *name, int family, const struct resolvconf *conf, int netid)
 {
-	unsigned char qbuf[2][280], abuf[2][512];
+	unsigned char qbuf[2][280], abuf[2][ABUF_SIZE];
 	const unsigned char *qp[2] = { qbuf[0], qbuf[1] };
 	unsigned char *ap[2] = { abuf[0], abuf[1] };
-	int qlens[2], alens[2];
+	int qlens[2], alens[2], qtypes[2];
 	int queryNum = 2;
 	struct dpc_ctx ctx = { .addrs = buf, .canon = canon };
 	static const struct { int af; int rr; } afrr_ipv6_enable[2] = {
@@ -226,9 +231,13 @@ static int name_from_dns(struct address buf[static MAXADDRS], char canon[static 
 #ifndef __LITEOS__
 					MUSL_LOGE("%{public}s: %{public}d: Illegal querys: %{public}d", __func__, __LINE__, EAI_NONAME);
 #endif
-					return EAI_NONAME;
+					return 0;
 				}
+				qtypes[nq] = afrr[i].rr;
 				qbuf[nq][3] = 0; /* don't need AD flag */
+				/* Ensure query IDs are distinct. */
+				if (nq && qbuf[nq][0] == qbuf[0][0])
+					qbuf[nq][0]++;
 				nq++;
 			}
 		}
@@ -252,9 +261,11 @@ static int name_from_dns(struct address buf[static MAXADDRS], char canon[static 
 			}
 		}
 
-		for (i=0; i<nq; i++)
+		for (i=nq-1; i>=0; i--) {
+			ctx.rrtype = qtypes[i];
+			if (alens[i] > sizeof(abuf[i])) alens[i] = sizeof abuf[i];
 			__dns_parse(abuf[i], alens[i], dns_parse_callback, &ctx);
-
+		}
 		if (ctx.cnt) return ctx.cnt;
 		queryName = ctx.canon;
 		cname_count++;
