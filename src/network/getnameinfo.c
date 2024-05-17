@@ -78,6 +78,7 @@ static void reverse_hosts(char *buf, const unsigned char *a, unsigned scopeid, i
 		if ((p=strchr(line, '#'))) *p++='\n', *p=0;
 
 		for (p=line; *p && !isspace(*p); p++);
+		if (!*p) continue;
 		*p++ = 0;
 		if (__lookup_ipliteral(&iplit, line, AF_UNSPEC)<=0)
 			continue;
@@ -132,10 +133,10 @@ static void reverse_services(char *buf, int port, int dgram)
 	}
 }
 
-static int dns_parse_callback(void *c, int rr, const void *data, int len, const void *packet)
+static int dns_parse_callback(void *c, int rr, const void *data, int len, const void *packet, int plen)
 {
 	if (rr != RR_PTR) return 0;
-	if (__dn_expand(packet, (const unsigned char *)packet + 512,
+	if (__dn_expand(packet, (const unsigned char *)packet + plen,
 	    data, c, 256) <= 0)
 		*(char *)c = 0;
 	return 0;
@@ -185,8 +186,10 @@ int getnameinfo(const struct sockaddr *restrict sa, socklen_t sl,
 			query[3] = 0; /* don't need AD flag */
 			int rlen = __res_send(query, qlen, reply, sizeof reply);
 			buf[0] = 0;
-			if (rlen > 0)
+			if (rlen > 0) {
+				if (rlen > sizeof reply) rlen = sizeof reply;
 				__dns_parse(reply, rlen, dns_parse_callback, buf);
+			}
 		}
 		if (!*buf) {
 			if (flags & NI_NAMEREQD) return EAI_NONAME;
