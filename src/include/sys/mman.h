@@ -14,6 +14,7 @@ hidden int __madvise(void *, size_t, int);
 hidden int __mprotect(void *, size_t, int);
 
 hidden const unsigned char *__map_file(const char *, size_t *);
+hidden const unsigned char *__map_distro_tzdata_file(const char *, size_t *, size_t *, size_t *);
 
 hidden char *__shm_mapname(const char *, char *);
 
