@@ -178,7 +178,7 @@ weak_alias(__InstallSignalHandler, DFX_InstallSignalHandler);
 #endif
 
 #ifdef HANDLE_RANDOMIZATION
-static int do_dlclose(struct dso *p);
+static int do_dlclose(struct dso *p, bool check_deps_all);
 #endif
 
 #ifdef LOAD_ORDER_RANDOMIZATION
@@ -2270,7 +2270,7 @@ static void load_deps(struct dso *p, struct reserved_address_params *reserved_pa
 }
 #endif
 
-static void extend_bfs_deps(struct dso *p)
+static void extend_bfs_deps(struct dso *p, bool to_deps_all)
 {
 	size_t i, j, cnt, ndeps_all;
 	struct dso **tmp;
@@ -2282,41 +2282,81 @@ static void extend_bfs_deps(struct dso *p)
 		|| p->deps == builtin_deps;
 
 	if (p->bfs_built) return;
+	if (to_deps_all && p->deps_all_built) {
+		return;
+	}
+
 	ndeps_all = p->ndeps_direct;
+	if (to_deps_all) {
+		// Use one more because the last one of the deps is NULL.
+		p->deps_all = calloc(ndeps_all + 1, sizeof *p->deps);
+	}
 
 	/* Mark existing (direct) deps so they won't be duplicated. */
-	for (i=0; p->deps[i]; i++)
+	for (i=0; p->deps[i]; i++) {
+		if (to_deps_all) {
+			p->deps_all[i] = p->deps[i];
+		}
 		p->deps[i]->mark = 1;
+	}
 
 	/* For each dependency already in the list, copy its list of direct
 	 * dependencies to the list, excluding any items already in the
 	 * list. Note that the list this loop iterates over will grow during
 	 * the loop, but since duplicates are excluded, growth is bounded. */
-	for (i=0; p->deps[i]; i++) {
-		struct dso *dep = p->deps[i];
-		for (j=cnt=0; j<dep->ndeps_direct; j++)
-			if (!dep->deps[j]->mark) cnt++;
-		tmp = no_realloc ? 
-			malloc(sizeof(*tmp) * (ndeps_all+cnt+1)) :
-			realloc(p->deps, sizeof(*tmp) * (ndeps_all+cnt+1));
-		if (!tmp) {
-			error("Error recording dependencies for %s", p->name);
-			if (runtime) longjmp(*rtld_fail, 1);
-			continue;
+	if (to_deps_all) {
+		for (i=0; p->deps_all[i]; i++) {
+			struct dso *dep = p->deps_all[i];
+			for (j=cnt=0; j<dep->ndeps_direct; j++)
+				if (!dep->deps[j]->mark) cnt++;
+			tmp = no_realloc ?
+				malloc(sizeof(*tmp) * (ndeps_all+cnt+1)) :
+				realloc(p->deps_all, sizeof(*tmp) * (ndeps_all+cnt+1));
+			if (!tmp) {
+				error("Error recording dependencies for %s", p->name);
+				if (runtime) longjmp(*rtld_fail, 1);
+				continue;
+			}
+			if (no_realloc) {
+				memcpy(tmp, p->deps_all, sizeof(*tmp) * (ndeps_all+1));
+				no_realloc = 0;
+			}
+			p->deps_all = tmp;
+			for (j=0; j<dep->ndeps_direct; j++) {
+				if (dep->deps[j]->mark) continue;
+				dep->deps[j]->mark = 1;
+				p->deps_all[ndeps_all++] = dep->deps[j];
+			}
+			p->deps_all[ndeps_all] = 0;
 		}
-		if (no_realloc) {
-			memcpy(tmp, p->deps, sizeof(*tmp) * (ndeps_all+1));
-			no_realloc = 0;
+		p->deps_all_built = 1;
+	} else {
+		for (i=0; p->deps[i]; i++) {
+			struct dso *dep = p->deps[i];
+			for (j=cnt=0; j<dep->ndeps_direct; j++)
+				if (!dep->deps[j]->mark) cnt++;
+			tmp = no_realloc ?
+				malloc(sizeof(*tmp) * (ndeps_all+cnt+1)) :
+				realloc(p->deps, sizeof(*tmp) * (ndeps_all+cnt+1));
+			if (!tmp) {
+				error("Error recording dependencies for %s", p->name);
+				if (runtime) longjmp(*rtld_fail, 1);
+				continue;
+			}
+			if (no_realloc) {
+				memcpy(tmp, p->deps, sizeof(*tmp) * (ndeps_all+1));
+				no_realloc = 0;
+			}
+			p->deps = tmp;
+			for (j=0; j<dep->ndeps_direct; j++) {
+				if (dep->deps[j]->mark) continue;
+				dep->deps[j]->mark = 1;
+				p->deps[ndeps_all++] = dep->deps[j];
+			}
+			p->deps[ndeps_all] = 0;
 		}
-		p->deps = tmp;
-		for (j=0; j<dep->ndeps_direct; j++) {
-			if (dep->deps[j]->mark) continue;
-			dep->deps[j]->mark = 1;
-			p->deps[ndeps_all++] = dep->deps[j];
-		}
-		p->deps[ndeps_all] = 0;
+		p->bfs_built = 1;
 	}
-	p->bfs_built = 1;
 	for (p=head; p; p=p->next)
 		p->mark = 0;
 }
@@ -3295,7 +3335,7 @@ static void *dlopen_post(struct dso* p, int mode) {
 	void *handle = assign_valid_handle(p);
 	if (handle == NULL) {
 		LD_LOGE("dlopen_post: generate random handle failed");
-		do_dlclose(p);
+		do_dlclose(p, 0);
 	}
 
 	return handle;
@@ -3530,7 +3570,7 @@ static void *dlopen_impl(
 	load_deps(p, reserved_address && reserved_address_recursive ? &reserved_params : NULL);
 #endif
 	trace_marker_end(HITRACE_TAG_MUSL); // "loading: entry so" trace end.
-	extend_bfs_deps(p);
+	extend_bfs_deps(p, 0);
 	pthread_mutex_lock(&init_fini_lock);
 	int constructed = p->constructed;
 	pthread_mutex_unlock(&init_fini_lock);
@@ -4024,12 +4064,16 @@ static int dlclose_impl(struct dso *p)
 	if (p->deps != no_deps)
 		free(p->deps);
 
+	if (p->deps_all_built) {
+		free(p->deps_all);
+	}
+
 	trace_marker_end(HITRACE_TAG_MUSL);
 
 	return 0;
 }
 
-static int do_dlclose(struct dso *p)
+static int do_dlclose(struct dso *p, bool check_deps_all)
 {
 	struct dso_entry *ef = NULL;
 	struct dso_entry *ef_tmp = NULL;
@@ -4064,7 +4108,24 @@ static int do_dlclose(struct dso *p)
 				return 0;
 			}
 		}
+	} else {
+		/* This part is used for thread local object destructors:
+		 * - nr_dlopen increases for all deps(include self) when a thread local object destructor is added.
+		 * - nr_dlopen decreases for all deps(include self) when a thread local object destructor is called.
+		 */
+		if (check_deps_all && p->deps_all_built) {
+			for (int i = 0; p->deps_all[i]; i++) {
+				if (p->deps_all[i]->nr_dlopen > 0) {
+					p->deps_all[i]->nr_dlopen--;
+				} else {
+					LD_LOGE("[dlclose]: number of dlopen and dlclose of %{public}s doesn't match when dlclose %{public}s",
+							p->deps_all[i]->name, p->name);
+					return 0;
+				}
+			}
+		}
 	}
+
 	unload_check_result = so_can_unload(p, UNLOAD_NR_DLOPEN_CHECK);
 	if (unload_check_result != 1) {
 		return unload_check_result;
@@ -4194,9 +4255,9 @@ hidden int __dlclose(void *p)
 		pthread_rwlock_unlock(&lock);
 		return -1;
 	}
-	rc = do_dlclose(dso);
+	rc = do_dlclose(dso, 0);
 #else
-	rc = do_dlclose(p);
+	rc = do_dlclose(p, 0);
 #endif
 	pthread_rwlock_unlock(&lock);
 	return rc;
@@ -5449,7 +5510,7 @@ static void task_load_library(struct loadtask *task, struct reserved_address_par
 	decode_dyn(task->p);
 	if (find_sym(task->p, "__libc_start_main", 1).sym &&
 		find_sym(task->p, "stdin", 1).sym) {
-		do_dlclose(task->p);
+		do_dlclose(task->p, 0);
 		task->p = NULL;
 		free((void*)task->name);
 		task->name = ld_strdup("libc.so");
@@ -5903,4 +5964,117 @@ static void remove_dso_info_from_debug_map(struct dso *p)
 		debug_info->prev->next = debug_info->next;
 	}
 	free(debug_info);
+}
+
+typedef struct dso_handle_node {
+	void *dso_handle; // Used to located dso.
+	uint32_t count;
+	struct dso* dso;
+	struct dso_handle_node* next;
+} dso_handle_node;
+
+static dso_handle_node* dso_handle_list = NULL;
+
+dso_handle_node* find_dso_handle_node(void *dso_handle)
+{
+	dso_handle_node *cur = dso_handle_list;
+	while(cur) {
+		if (cur->dso_handle == dso_handle) {
+			return cur;
+		}
+		cur =cur->next;
+	}
+	return NULL;
+}
+
+void add_dso_handle_node(void *dso_handle)
+{
+	pthread_rwlock_wrlock(&lock);
+	if (!dso_handle) {
+		LD_LOGW("[cxa_thread] add_dso_handle_node return because dso_handle is null.\n");
+		pthread_rwlock_unlock(&lock);
+		return;
+	}
+
+	dso_handle_node *node = find_dso_handle_node(dso_handle);
+	if (node) {
+		node->count++;
+		LD_LOGD("[cxa_thread] increase dso node count of %{public}s, count:%{public}d ", node->dso->name, node->count);
+		pthread_rwlock_unlock(&lock);
+		return;
+	}
+	dso_handle_node *cur = __libc_malloc(sizeof(*cur));
+	if (!cur) {
+		pthread_rwlock_unlock(&lock);
+		LD_LOGE("[cxa_thread] alloc dso_handle_node failed.");
+		error("[cxa_thread]: alloc dso_handle_node failed.");
+		return;
+	}
+
+	struct dso* p = addr2dso(dso_handle);
+	if (!p) {
+		pthread_rwlock_unlock(&lock);
+		LD_LOGE("[cxa_thread] can't find dso by dso_handle(%{public}p)", dso_handle);
+		error("[cxa_thread] can't find dso by dso_handle(%p)", dso_handle);
+		return;
+	}
+
+	// We don't need to care about the so which by_dlopen is false because it will never be unload.
+	if (p->by_dlopen) {
+		p->nr_dlopen++;
+		LD_LOGD("[cxa_thread] %{public}s nr_dlopen++ when add dso_handle for %{public}s, nr_dlopen:%{public}d",
+				p->name, p->name, p->nr_dlopen);
+		if (p->bfs_built) {
+			for (size_t i = 0; p->deps[i]; i++) {
+				p->deps[i]->nr_dlopen++;
+				LD_LOGD("[cxa_thread] %{public}s nr_dlopen++ when add dso_handle for %{public}s, nr_dlopen:%{public}d",
+						p->deps[i]->name, p->name, p->deps[i]->nr_dlopen);
+			}
+		} else {
+			// Get all the direct and indirect deps.
+			extend_bfs_deps(p, 1);
+			for (size_t i = 0; p->deps_all[i]; i++) {
+				p->deps_all[i]->nr_dlopen++;
+				LD_LOGD("[cxa_thread] %{public}s nr_dlopen++ when add dso_handle for %{public}s, nr_dlopen:%{public}d",
+						p->deps_all[i]->name, p->name, p->deps_all[i]->nr_dlopen);
+			}
+		}
+	}
+	cur->dso = p;
+	cur->dso_handle = dso_handle;
+	cur->count = 1;
+	cur->next = dso_handle_list;
+	dso_handle_list = cur;
+	pthread_rwlock_unlock(&lock);
+
+	return;
+}
+
+void remove_dso_handle_node(void *dso_handle)
+{
+	pthread_rwlock_wrlock(&lock);
+	if (dso_handle == NULL) {
+		LD_LOGW("[cxa_thread] remove_dso_handle_node return because dso_handle is null.\n");
+		pthread_rwlock_unlock(&lock);
+		return;
+	}
+
+	dso_handle_node *node = find_dso_handle_node(dso_handle);
+	if (node && node->count) {
+		LD_LOGD("[cxa_thread] decrease dso node count of %{public}s, count:%{public}d ", node->dso->name, node->count - 1);
+		if ((--node->count) == 0) {
+			LD_LOGD("[cxa_thread] call do_dlclose(%{public}s) when count is 0", node->dso->name);
+			do_dlclose(node->dso, 1);
+			// Invalidate current node.
+			node->dso_handle = NULL;
+		}
+		pthread_rwlock_unlock(&lock);
+		return;
+	} else {
+		LD_LOGE("[cxa_thread] can't find matched dso handle node by %{public}p, count:%{public}d", dso_handle, node->count);
+		error("[cxa_thread] can't find matched dso handle node by %p, count:%d", dso_handle, node->count);
+	}
+	pthread_rwlock_unlock(&lock);
+
+	return;
 }

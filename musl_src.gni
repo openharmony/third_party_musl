@@ -1801,6 +1801,7 @@ musl_src_ldso = [
   "ldso/ns_config.c",
   "ldso/strops.c",
   "ldso/dynlink_rand.c",
+  "ldso/linux/cxa_thread_atexit_impl.c",
   "ldso/cfi.c",
   "ldso/ld_log.c",
 ]
@@ -2269,6 +2270,7 @@ musl_src_files_ext = [
   "ldso/linux/zip_archive.h",
   "ldso/linux/cfi.h",
   "ldso/linux/dynlink_rand.c",
+  "ldso/linux/cxa_thread_atexit_impl.c",
   "ldso/linux/ld_log.c",
   "ldso/linux/namespace.c",
   "ldso/linux/ns_config.c",
@@ -2381,6 +2383,7 @@ musl_src_linux_files = [
   "ldso/zip_archive.h",
   "ldso/cfi.h",
   "ldso/dynlink_rand.c",
+  "ldso/linux/cxa_thread_atexit_impl.c",
   "ldso/ld_log.c",
   "ldso/namespace.c",
   "ldso/ns_config.c",
