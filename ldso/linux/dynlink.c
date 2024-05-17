@@ -3882,8 +3882,10 @@ static void *do_dlsym(struct dso *p, const char *s, const char *v, void *ra)
 		find_sym2(p, &verinfo, 0, use_deps, ns);
 	trace_marker_end(HITRACE_TAG_MUSL);
 	if (!def.sym) {
-		LD_LOGW("do_dlsym failed: symbol not found. so=%{public}s s=%{public}s v=%{public}s", (p == NULL ? "NULL" : p->name), s, v);
-		error("do_dlsym failed: Symbol not found: %s, version: %s so=%s", s, strlen(v) > 0 ? v : "null", (p == NULL ? "NULL" : p->name));
+		LD_LOGW("do_dlsym failed: symbol not found. so=%{public}s s=%{public}s v=%{public}s",
+			(p == NULL ? "NULL" : p->name), s, v);
+		error("do_dlsym failed: Symbol not found: %s, version: %s so=%s",
+			s, strlen(v) > 0 ? v : "null", (p == NULL ? "NULL" : p->name));
 		return 0;
 	}
 	if ((def.sym->st_info&0xf) == STT_TLS)
@@ -4860,7 +4862,8 @@ static bool map_library_header(struct loadtask *task)
 	task->shsize += task->eh->e_shoff - off_start;
 	task->shdr_allocated_buf = mmap(0, task->shsize, PROT_READ, MAP_PRIVATE, task->fd, off_start + task->file_offset);
 	if (task->shdr_allocated_buf == MAP_FAILED) {
-		LD_LOGE("Error mapping section header %{public}s: failed to map shdr_allocated_buf errno: %{public}d", task->name, errno);
+		LD_LOGE("Error mapping section header %{public}s: failed to map shdr_allocated_buf errno: %{public}d",
+			task->name, errno);
 		goto error;
 	}
 	Shdr *sh = (char *)task->shdr_allocated_buf + task->eh->e_shoff - off_start;
@@ -4873,7 +4876,8 @@ static bool map_library_header(struct loadtask *task)
 		task->str_map_len = sh->sh_size + (sh->sh_offset - off_start);
 		task->str_map = mmap(0, task->str_map_len, PROT_READ, MAP_PRIVATE, task->fd, off_start + task->file_offset);
 		if (task->str_map == MAP_FAILED) {
-			LD_LOGE("Error mapping section header %{public}s: failed to map string section errno: %{public}d", task->name, errno);
+			LD_LOGE("Error mapping section header %{public}s: failed to map string section errno: %{public}d",
+				task->name, errno);
 			goto error;
 		}
 		task->str_addr = (char *)task->str_map + sh->sh_offset - off_start;
@@ -4960,7 +4964,8 @@ static bool task_map_library(struct loadtask *task, struct reserved_address_para
 				task->fd, ph->p_offset & -PAGE_SIZE + task->file_offset);
 			if (map == MAP_FAILED) {
 				unmap_library(task->p);
-				LD_LOGE("Error mapping library: PT_LOAD mmap failed task->name=%{public}s errno=%{public}d map_len=%{public}d", task->name, errno, ph->p_memsz + (ph->p_vaddr & PAGE_SIZE - 1));
+				LD_LOGE("Error mapping library: PT_LOAD mmap failed task->name=%{public}s errno=%{public}d map_len=%{public}d",
+					task->name, errno, ph->p_memsz + (ph->p_vaddr & PAGE_SIZE - 1));
 				goto error;
 			}
 			task->p->loadmap->segs[i].addr = (size_t)map +
@@ -5026,7 +5031,9 @@ static bool task_map_library(struct loadtask *task, struct reserved_address_para
 			? mmap((void *)start_addr, map_len, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0)
 			: mmap((void *)start_addr, map_len, prot, map_flags, task->fd, off_start + task->file_offset);
 		if (map == MAP_FAILED) {
-			LD_LOGE("Error mapping library: reserved_params mmap failed errno=%{public}d DL_NOMMU_SUPPORT=%{public}d task->fd=%{public}d task->name=%{public}s map_len=%{public}d", errno, DL_NOMMU_SUPPORT, task->fd, task->name, map_len);
+			LD_LOGE("Error mapping library: reserved_params mmap failed errno=%{public}d DL_NOMMU_SUPPORT=%{public}d"
+				" task->fd=%{public}d task->name=%{public}s map_len=%{public}d",
+				errno, DL_NOMMU_SUPPORT, task->fd, task->name, map_len);
 			goto error;
 		}
 		if (reserved_params && map_len < reserved_params->reserved_size) {
@@ -5038,7 +5045,8 @@ static bool task_map_library(struct loadtask *task, struct reserved_address_para
 		/* use tmp_map_len to mmap enough space for the dso with anonymous mapping */
 		unsigned char *temp_map = mmap((void *)NULL, tmp_map_len, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
 		if (temp_map == MAP_FAILED) {
-			LD_LOGE("Error mapping library: !reserved_params mmap failed errno=%{public}d tmp_map_len=%{public}d", errno, tmp_map_len);
+			LD_LOGE("Error mapping library: !reserved_params mmap failed errno=%{public}d tmp_map_len=%{public}d",
+				errno, tmp_map_len);
 			goto error;
 		}
 
@@ -5053,7 +5061,9 @@ static bool task_map_library(struct loadtask *task, struct reserved_address_para
 			/* use map_len to mmap correct space for the dso with file mapping */
 			: mmap(real_map, map_len, prot, map_flags, task->fd, off_start + task->file_offset);
 		if (map == MAP_FAILED) {
-			LD_LOGE("Error mapping library: !reserved_params mmap failed errno=%{public}d DL_NOMMU_SUPPORT=%{public}d task->fd=%{public}d task->name=%{public}s map_len=%{public}d", errno, DL_NOMMU_SUPPORT, task->fd, task->name, map_len);
+			LD_LOGE("Error mapping library: !reserved_params mmap failed errno=%{public}d DL_NOMMU_SUPPORT=%{public}d"
+				"task->fd=%{public}d task->name=%{public}s map_len=%{public}d",
+				errno, DL_NOMMU_SUPPORT, task->fd, task->name, map_len);
 			goto error;
 		}
 	}
@@ -5115,7 +5125,8 @@ static bool task_map_library(struct loadtask *task, struct reserved_address_para
 				MAP_PRIVATE | MAP_FIXED | MAP_ANONYMOUS,
 				-1,
 				0) == MAP_FAILED) {
-				LD_LOGE("Error mapping library: PF_W mmap fix failed errno=%{public}d task->name=%{public}s zeromap_size=%{public}d", errno, task->name, zeromap_size);
+				LD_LOGE("Error mapping library: PF_W mmap fix failed errno=%{public}d task->name=%{public}s zeromap_size=%{public}d",
+					errno, task->name, zeromap_size);
 				goto error;
 			}
 			set_bss_vma_name(task->p->name, (void *)pgbrk, zeromap_size);
@@ -5316,7 +5327,8 @@ static bool load_library_header(struct loadtask *task)
 	}
 	if (task->fd < 0) {
 		if (!check_inherited || !namespace->ns_inherits) {
-			LD_LOGW("Error loading header %{public}s, namespace %{public}s has no inherits, errno=%{public}d", task->name, namespace->ns_name, errno);
+			LD_LOGW("Error loading header %{public}s, namespace %{public}s has no inherits, errno=%{public}d",
+				task->name, namespace->ns_name, errno);
 			return false;
 		}
 		/* Load lib in inherited namespace. Do not check inherited again.*/
@@ -5331,7 +5343,8 @@ static bool load_library_header(struct loadtask *task)
 				return true;
 			}
 		}
-		LD_LOGE("Error loading header: can't find library %{public}s in namespace: %{public}s", task->name, namespace->ns_name);
+		LD_LOGE("Error loading header: can't find library %{public}s in namespace: %{public}s",
+			task->name, namespace->ns_name);
 		error("Error loading header: can't find library %{public}s in namespace: %{public}s", task->name, namespace->ns_name);
 		return false;
 	}
@@ -5434,7 +5447,8 @@ static void task_load_library(struct loadtask *task, struct reserved_address_par
 	__close(task->fd);
 	task->fd = -1;
 	if (!map) {
-		LD_LOGE("Error loading library %{public}s: failed to map library noload=%{public}d errno=%{public}d", task->name, noload, errno);
+		LD_LOGE("Error loading library %{public}s: failed to map library noload=%{public}d errno=%{public}d",
+			task->name, noload, errno);
 		error("Error loading library %s: failed to map library noload=%d errno=%d", task->name, noload, errno);
 		if (runtime) {
 			longjmp(*rtld_fail, 1);
