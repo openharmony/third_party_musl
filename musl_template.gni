@@ -1086,9 +1086,6 @@ template("musl_libs") {
       ":soft_musl_src_optimize",
       ":soft_musl_src_strncpy",
     ]
-    if (!is_llvm_build) {
-      deps += [ ":soft_musl_ldso" ]
-    }
     deps += dfx_deps
     if (!startup_init_with_param_base) {
       deps += [ "//base/startup/init/services/param/base:parameterbase" ]
@@ -1100,6 +1097,16 @@ template("musl_libs") {
     if (musl_ld128_flag) {
       deps += [ ":soft_musl_src_ld128" ]
     }
+  }
+
+  static_library("soft_musl_ldso_static") {
+    output_name = "libc_ldso"
+    complete_static_lib = true
+
+    configs -= musl_inherited_configs
+
+    output_dir = "${target_out_dir}/${_libs_out_dir}"
+    deps += [ ":soft_musl_ldso" ]
   }
 
   static_library("soft_libm") {
