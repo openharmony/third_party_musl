@@ -338,6 +338,7 @@ void dlns_inherit_1100(void)
 
     EXPECT_EQ("dlns_inherit_1100", dlns_set_namespace_allowed_libs("dlns_inherit_1100_B", dllName_inh_011), EOK);
     EXPECT_EQ("dlns_inherit_1100", dlns_set_namespace_permitted_paths("dlns_inherit_1100_B", dllNamePath), EOK);
+    EXPECT_EQ("dlns_inherit_1100", dlns_set_namespace_lib_path("dlns_inherit_1100_B", path), EOK);
 
     // AGIN
     EXPECT_EQ("dlns_inherit_1100", dlns_inherit(&dlnsA, &dlnsB, NULL), EOK);
