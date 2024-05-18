@@ -35,6 +35,7 @@ ohos_executable("unittest_ldso_ns_config") {
 
   if (!musl_unit_test_flag) {
     libs = [ "${musl_lib_dir}/libc.a" ]
+    libs += [ "${musl_lib_dir}/libc_ldso.a" ]
   } else {
     defines = [ "UNIT_TEST_STATIC" ]
   }
@@ -126,6 +127,7 @@ ohos_executable("unittest_ldso_dynlink") {
 
   if (!musl_unit_test_flag) {
     libs = [ "${musl_lib_dir}/libc.a" ]
+    libs += [ "${musl_lib_dir}/libc_ldso.a" ]
   } else {
     defines = [
       "UNIT_TEST_STATIC",
