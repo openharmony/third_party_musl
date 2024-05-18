@@ -1106,7 +1106,7 @@ template("musl_libs") {
     configs -= musl_inherited_configs
 
     output_dir = "${target_out_dir}/${_libs_out_dir}"
-    deps += [ ":soft_musl_ldso" ]
+    deps = [ ":soft_musl_ldso" ]
   }
 
   static_library("soft_libm") {
