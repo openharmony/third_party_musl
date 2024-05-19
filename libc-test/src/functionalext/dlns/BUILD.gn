@@ -59,6 +59,7 @@ ohos_executable("dlns_set_fun_test") {
   configs = [ "//third_party/musl/libc-test/src/common:config_runtest" ]
   if (!musl_unit_test_flag) {
     libs = [ "${musl_lib_dir}/libc.a" ]
+    libs += [ "${musl_lib_dir}/libc_ldso.a" ]
   }
 }
 
@@ -75,6 +76,7 @@ ohos_executable("dlns_inherit_test") {
   configs = [ "//third_party/musl/libc-test/src/common:config_runtest" ]
   if (!musl_unit_test_flag) {
     libs = [ "${musl_lib_dir}/libc.a" ]
+    libs += [ "${musl_lib_dir}/libc_ldso.a" ]
   }
 }
 
@@ -91,6 +93,7 @@ ohos_executable("dlns_separated_test") {
   configs = [ "//third_party/musl/libc-test/src/common:config_runtest" ]
   if (!musl_unit_test_flag) {
     libs = [ "${musl_lib_dir}/libc.a" ]
+    libs += [ "${musl_lib_dir}/libc_ldso.a" ]
   }
 }
 
