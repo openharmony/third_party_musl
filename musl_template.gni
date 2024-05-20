@@ -384,6 +384,11 @@ template("musl_libs") {
         "${target_out_dir}/${musl_ported_dir}/crt/crti.c",
         "${target_out_dir}/${musl_ported_dir}/crt/crtn.c",
       ]
+    } else if (musl_arch == "loongarch64") {
+      sources += [
+        "${target_out_dir}/${musl_ported_dir}/crt/crti.c",
+        "${target_out_dir}/${musl_ported_dir}/crt/crtn.c",
+      ]
     } else {
       sources += [
         "${target_out_dir}/${musl_ported_dir}/crt/${musl_arch}/crti.s",
@@ -516,6 +521,8 @@ template("musl_libs") {
         "src/math/copysign.c",
         "src/math/copysignf.c",
       ]
+    } else if (musl_arch == "loongarch64") {
+      sources_orig -= [ "src/thread/${musl_arch}/__set_thread_area.s" ]
     }
     if (musl_ld128_flag) {
       if (musl_arch == "x86_64") {
@@ -874,6 +881,11 @@ template("musl_libs") {
     } else if (musl_arch == "mips") {
       sources_orig += [ "src/string/memset.c" ]
     } else if (musl_arch == "riscv64") {
+      sources_orig += [
+        "src/thread/${musl_arch}/__set_thread_area.s",
+        "src/string/memset.c",
+      ]
+    } else if (musl_arch == "loongarch64") {
       sources_orig += [
         "src/thread/${musl_arch}/__set_thread_area.s",
         "src/string/memset.c",
@@ -1242,6 +1254,11 @@ template("musl_libs") {
     ]
 
     if (musl_arch == "riscv64") {
+      sources += [
+        "${redir}/${target_out_dir}/${musl_ported_dir}/crt/soft_musl_crt/crti.o",
+        "${redir}/${target_out_dir}/${musl_ported_dir}/crt/soft_musl_crt/crtn.o",
+      ]
+    } else if (musl_arch == "loongarch64") {
       sources += [
         "${redir}/${target_out_dir}/${musl_ported_dir}/crt/soft_musl_crt/crti.o",
         "${redir}/${target_out_dir}/${musl_ported_dir}/crt/soft_musl_crt/crtn.o",
