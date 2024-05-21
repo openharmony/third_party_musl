@@ -13,19 +13,16 @@
  * limitations under the License.
  */
 
-#include "dynlink.h"
-#include "musl_log.h"
 #include "pthread_impl.h"
 
-extern void add_dso_handle_node(void *dso_handle);
-extern void remove_dso_handle_node(void *dso_handle);
+__attribute__((__weak__)) extern void add_dso_handle_node(void *dso_handle) ;
+__attribute__((__weak__)) extern void remove_dso_handle_node(void *dso_handle);
 
 int __cxa_thread_atexit_impl(void (*func)(void*), void *arg, void *dso_handle)
 {
     struct thread_local_dtor* dtor = __libc_malloc(sizeof(*dtor));
     if (!dtor) {
-        MUSL_LOGE("[cxa_thread] Alloc thread_local_dtor failed.\n");
-        return 0;
+        return -1;
     }
     dtor->func = func;
     dtor->arg = arg;
@@ -33,7 +30,9 @@ int __cxa_thread_atexit_impl(void (*func)(void*), void *arg, void *dso_handle)
     pthread_t thr = __pthread_self();
     dtor->next = thr->thread_local_dtors;
     thr->thread_local_dtors = dtor;
-    add_dso_handle_node(dso_handle);
+    if (add_dso_handle_node != NULL) {
+        add_dso_handle_node(dso_handle);
+    }
     return 0;
 }
 
@@ -44,7 +43,9 @@ void __cxa_thread_finalize()
         struct thread_local_dtor* cur = thr->thread_local_dtors;
         thr->thread_local_dtors= cur->next;
         cur->func(cur->arg);
-        remove_dso_handle_node(cur->dso_handle);
+        if (remove_dso_handle_node) {
+            remove_dso_handle_node(cur->dso_handle);
+        }
     }
     return;
 }
