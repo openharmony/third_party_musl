@@ -182,6 +182,16 @@ struct symdef {
 	Sym *sym;
 	struct dso *dso;
 };
+
+struct dlopen_time_info {
+	int entry_header_time;
+	int deps_header_time;
+	int map_so_time;
+	int reloc_time;
+	int map_cfi_time;
+	int init_time;
+	int total_time;
+};
 #endif
 
 struct fdpic_loadseg {
@@ -255,6 +265,10 @@ struct fdpic_dummy_loadmap {
 #define RELOCATION_GROUPED_BY_OFFSET_DELTA_FLAG 2
 #define RELOCATION_GROUPED_BY_ADDEND_FLAG 4
 #define RELOCATION_GROUP_HAS_ADDEND_FLAG 8
+
+#define CLOCK_NANO_TO_MILLI 1000000
+#define CLOCK_SECOND_TO_MILLI 1000
+#define DLOPEN_TIME_THRESHOLD 1000
 
 typedef void (*stage2_func)(unsigned char *, size_t *);
 
