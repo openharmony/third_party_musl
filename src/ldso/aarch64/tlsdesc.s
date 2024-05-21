@@ -18,8 +18,12 @@ __tlsdesc_static:
 .global __tlsdesc_dynamic
 .hidden __tlsdesc_dynamic
 .type __tlsdesc_dynamic,@function
+.cfi_startproc
 __tlsdesc_dynamic:
 	stp x1,x2,[sp,#-16]!
+	.cfi_def_cfa_offset 16
+	.cfi_rel_offset x1, 0
+	.cfi_rel_offset x2, 8
 	mrs x1,tpidr_el0      // tp
 	ldr x0,[x0,#8]        // p
 	ldp x0,x2,[x0]        // p->modidx, p->off
@@ -28,4 +32,6 @@ __tlsdesc_dynamic:
 	ldr x1,[x1,x0,lsl #3] // dtv[p->modidx]
 	add x0,x1,x2          // dtv[p->modidx] + p->off - tp
 	ldp x1,x2,[sp],#16
+	.cfi_def_cfa_offset 0
 	ret
+.cfi_endproc
