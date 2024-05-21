@@ -3420,6 +3420,10 @@ static void *dlopen_impl(
 	bool reserved_address = false;
 	bool reserved_address_recursive = false;
 	struct reserved_address_params reserved_params = {0};
+	struct dlopen_time_info dlopen_cost = {0};
+	struct timespec time_start, time_end, total_start, total_end;
+	struct dso *current_so = NULL;
+	clock_gettime(CLOCK_MONOTONIC, &total_start);
 #ifdef LOAD_ORDER_RANDOMIZATION
 	struct loadtasks *tasks = NULL;
 	struct loadtask *task = NULL;
@@ -3531,6 +3535,7 @@ static void *dlopen_impl(
 			goto end;
 		}
 		trace_marker_begin(HITRACE_TAG_MUSL, "loading: entry so", file);
+		clock_gettime(CLOCK_MONOTONIC, &time_start);
 		if (!load_library_header(task)) {
 			error(noload ?
 				"Library %s is not already loaded" :
@@ -3553,15 +3558,26 @@ static void *dlopen_impl(
 		trace_marker_end(HITRACE_TAG_MUSL); // "loading: entry so" trace end.
 		goto end;
 	}
+	clock_gettime(CLOCK_MONOTONIC, &time_end);
+	dlopen_cost.entry_header_time = (time_end.tv_sec - time_start.tv_sec) * CLOCK_SECOND_TO_MILLI
+		+ (time_end.tv_nsec - time_start.tv_nsec) / CLOCK_NANO_TO_MILLI;
 	if (!task->isloaded) {
 		is_task_appended = append_loadtasks(tasks, task);
 	}
+	clock_gettime(CLOCK_MONOTONIC, &time_start);
 	preload_deps(task->p, tasks);
+	clock_gettime(CLOCK_MONOTONIC, &time_end);
+	dlopen_cost.deps_header_time = (time_end.tv_sec - time_start.tv_sec) * CLOCK_SECOND_TO_MILLI
+		+ (time_end.tv_nsec - time_start.tv_nsec) / CLOCK_NANO_TO_MILLI;
 	unmap_preloaded_sections(tasks);
 	if (!reserved_address_recursive) {
 		shuffle_loadtasks(tasks);
 	}
+	clock_gettime(CLOCK_MONOTONIC, &time_start);
 	run_loadtasks(tasks, reserved_address ? &reserved_params : NULL);
+	clock_gettime(CLOCK_MONOTONIC, &time_end);
+	dlopen_cost.map_so_time = (time_end.tv_sec - time_start.tv_sec) * CLOCK_SECOND_TO_MILLI
+		+ (time_end.tv_nsec - time_start.tv_nsec) / CLOCK_NANO_TO_MILLI;
 	p = task->p;
 	if (!task->isloaded) {
 		assign_tls(p);
@@ -3613,9 +3629,13 @@ static void *dlopen_impl(
 	}
 	struct dso *reloc_head_so = p;
 	trace_marker_begin(HITRACE_TAG_MUSL, "linking: entry so", p->name);
+	clock_gettime(CLOCK_MONOTONIC, &time_start);
 	if (!p->relocated) {
 		reloc_all(p, extinfo);
 	}
+	clock_gettime(CLOCK_MONOTONIC, &time_end);
+	dlopen_cost.reloc_time = (time_end.tv_sec - time_start.tv_sec) * CLOCK_SECOND_TO_MILLI
+		+ (time_end.tv_nsec - time_start.tv_nsec) / CLOCK_NANO_TO_MILLI;
 	trace_marker_end(HITRACE_TAG_MUSL);
 	reloc_head_so->is_reloc_head_so_dep = false;
 	for (size_t i = 0; reloc_head_so->deps[i]; i++) {
@@ -3632,11 +3652,14 @@ static void *dlopen_impl(
 	 * the new libraries are committed; otherwise we could end up with
 	 * relocations resolved to symbol definitions that get removed. */
 	redo_lazy_relocs();
-
+	clock_gettime(CLOCK_MONOTONIC, &time_start);
 	if (map_dso_to_cfi_shadow(p) == CFI_FAILED) {
 		error("[%s] map_dso_to_cfi_shadow failed: %m", __FUNCTION__);
 		longjmp(*rtld_fail, 1);
 	}
+	clock_gettime(CLOCK_MONOTONIC, &time_end);
+	dlopen_cost.map_cfi_time = (time_end.tv_sec - time_start.tv_sec) * CLOCK_SECOND_TO_MILLI
+		+ (time_end.tv_nsec - time_start.tv_nsec) / CLOCK_NANO_TO_MILLI;
 
 	if (mode & RTLD_NODELETE) {
 		p->flags |= DSO_FLAGS_NODELETE;
@@ -3651,7 +3674,7 @@ static void *dlopen_impl(
 	}
 
 	orig_tail = tail;
-
+	current_so = p;
 	p = dlopen_post(p, mode);
 end:
 #ifdef LOAD_ORDER_RANDOMIZATION
@@ -3662,13 +3685,38 @@ end:
 #endif
 	__release_ptc();
 	if (p) gencnt++;
+	clock_gettime(CLOCK_MONOTONIC, &time_start);
 	pthread_rwlock_unlock(&lock);
 	if (ctor_queue) {
 		do_init_fini(ctor_queue);
 		free(ctor_queue);
 	}
+	clock_gettime(CLOCK_MONOTONIC, &time_end);
+	dlopen_cost.init_time = (time_end.tv_sec - time_start.tv_sec) * CLOCK_SECOND_TO_MILLI
+		+ (time_end.tv_nsec - time_start.tv_nsec) / CLOCK_NANO_TO_MILLI;
 	pthread_setcancelstate(cs, 0);
 	trace_marker_end(HITRACE_TAG_MUSL); // "dlopen: " trace end.
+	clock_gettime(CLOCK_MONOTONIC, &total_end);
+	dlopen_cost.total_time = (total_end.tv_sec - total_start.tv_sec) * CLOCK_SECOND_TO_MILLI
+		+ (total_end.tv_nsec - total_start.tv_nsec) / CLOCK_NANO_TO_MILLI;
+	if (dlopen_cost.total_time > DLOPEN_TIME_THRESHOLD && current_so) {
+		LD_LOGE("dlopen so: %{public}s time cost: "
+				"total_time: %{public}d ms, "
+				"entry_header_time: %{public}d ms, "
+				"deps_header_time: %{public}d ms, "
+				"map_so_time: %{public}d ms, "
+				"reloc_time: %{public}d ms, "
+				"map_cfi_time: %{public}d ms, "
+				"init_time: %{public}d ms",
+				current_so->name,
+				dlopen_cost.total_time,
+				dlopen_cost.entry_header_time,
+				dlopen_cost.deps_header_time,
+				dlopen_cost.map_so_time,
+				dlopen_cost.reloc_time,
+				dlopen_cost.map_cfi_time,
+				dlopen_cost.init_time);
+	}
 	return p;
 }
 
