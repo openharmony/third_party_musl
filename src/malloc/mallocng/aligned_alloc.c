@@ -6,7 +6,11 @@
 extern void* je_memalign(size_t align, size_t len);
 #endif
 
+#ifdef HOOK_ENABLE
+void *__libc_aligned_alloc(size_t align, size_t len)
+#else
 void *aligned_alloc(size_t align, size_t len)
+#endif
 {
 #ifdef USE_JEMALLOC
 	return je_memalign(align, len);

@@ -17,6 +17,7 @@ typedef void* (*MallocCallocType)(size_t, size_t);
 typedef void* (*MallocVallocType)(size_t);
 typedef void (*MallocFreeType)(void*);
 typedef void* (*MallocMemalignType)(size_t, size_t);
+typedef void* (*MallocAlignedAllocType)(size_t, size_t);
 typedef size_t (*MallocMallocUsableSizeType)(void*);
 typedef int (*MallocPrctlType)(int, ...);
 
@@ -45,6 +46,7 @@ struct MallocDispatchType {
 	MallocVallocType valloc;
 	MallocFreeType free;
 	MallocMemalignType memalign;
+	MallocAlignedAllocType aligned_alloc;
 	MallocMallocUsableSizeType malloc_usable_size;
 	MallinfoType mallinfo;
 	Mallinfo2Type mallinfo2;
