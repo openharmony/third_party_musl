@@ -39,6 +39,7 @@ struct MallocDispatchType __libc_malloc_default_dispatch = {
 	.realloc = libc_gwp_asan_realloc,
 	.malloc_usable_size = libc_gwp_asan_malloc_usable_size,
 	.prctl = MuslMalloc(prctl),
+	.aligned_alloc = MuslMalloc(aligned_alloc),
 };
 #else
 struct MallocDispatchType __libc_malloc_default_dispatch = {
@@ -50,6 +51,7 @@ struct MallocDispatchType __libc_malloc_default_dispatch = {
 	.realloc = MuslFunc(realloc),
 	.malloc_usable_size = MuslMalloc(malloc_usable_size),
 	.prctl = MuslMalloc(prctl),
+	.aligned_alloc = MuslMalloc(aligned_alloc),
 };
 #endif
 
