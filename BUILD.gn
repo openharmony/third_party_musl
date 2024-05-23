@@ -145,6 +145,11 @@ if (is_lite_system && current_os == "ohos") {
         "crt/crti.c",
         "crt/crtn.c",
       ]
+    } else if (musl_arch == "loongarch64") {
+      src_files += [
+        "crt/crti.c",
+        "crt/crtn.c",
+      ]
     } else {
       src_files += [
         "crt/${musl_arch}/crti.s",
