@@ -164,6 +164,7 @@ if (musl_arch == "arm") {
     "src/fenv/riscv64/fenv-sf.c",
     "src/fenv/riscv64/fenv.S",
     "src/ldso/riscv64/dlsym.s",
+    "src/ldso/riscv64/tlsdesc.s",
     "src/math/riscv64/copysign.c",
     "src/math/riscv64/copysignf.c",
     "src/math/riscv64/fabs.c",
