@@ -1,8 +1,5 @@
-import("//base/startup/init/begetd.gni")
 import("//build/config/clang/clang.gni")
 import("//build/ohos.gni")
-import("//third_party/FreeBSD/FreeBSD.gni")
-import("//third_party/optimized-routines/optimized-routines.gni")
 import("musl_src.gni")
 template("musl_libs") {
   no_default_deps = true
@@ -13,9 +10,9 @@ template("musl_libs") {
   _libs_out_dir = "usr/lib/${musl_target_triple}/${musl_target_multilib}"
 
   if (is_llvm_build) {
-    dfx_deps = []
+    dfx_external_deps = []
   } else {
-    dfx_deps = [ "//base/hiviewdfx/faultloggerd/interfaces/innerkits/signal_handler:dfxsignalhandler" ]
+    dfx_external_deps = [ "faultloggerd:dfxsignalhandler" ]
   }
   porting_deps = [
     "//third_party/musl:create_alltypes_h",
@@ -105,145 +102,6 @@ template("musl_libs") {
     "//build/config/compiler:thin_archive",
     "//build/config/sanitizers:default_sanitizer_flags",
   ]
-
-  config("soft_musl_config") {
-    configs = [
-      "//build/config/compiler:compiler_cpu_abi",
-      "//build/config/coverage:default_coverage",
-    ]
-
-    include_dirs = [
-      "${target_out_dir}/${musl_ported_dir}/arch/${musl_arch}",
-      "${target_out_dir}/${musl_ported_dir}/arch/generic",
-      "${target_out_dir}/${musl_ported_dir}/src/internal",
-      "${target_out_dir}/${musl_ported_dir}/src/include",
-      "${target_out_dir}/${musl_ported_dir}/src/gwp_asan",
-      "${target_out_dir}/${musl_ported_dir}/src/hook",
-      "${target_out_dir}/${musl_ported_dir}/src/network",
-      "${target_out_dir}/${musl_ported_dir}/include",
-      "${target_out_dir}/${musl_inc_out_dir}",
-    ]
-
-    cflags_basic = [
-      "--target=${musl_target_triple}",
-      "-Wall",
-      "-Wl,-z,relro,-z,now,-z,noexecstack",
-    ]
-
-    if (musl_arch == "arm") {
-      cflags_basic += [ "-mtp=cp15" ]
-    } else if (musl_arch == "aarch64") {
-    }
-
-    cflags_auto = [
-      "-D_XOPEN_SOURCE=700",
-      "-g",
-      "-pipe",
-      "-fno-omit-frame-pointer",
-      "-ffunction-sections",
-      "-fdata-sections",
-      "-Werror=implicit-function-declaration",
-      "-Werror=implicit-int",
-      "-Werror=pointer-sign",
-      "-Werror=pointer-arith",
-      "-Qunused-arguments",
-      "-Wno-int-conversion",
-    ]
-
-    if (is_llvm_build) {
-      cflags_auto += [
-        "-fno-unwind-tables",
-        "-fno-asynchronous-unwind-tables",
-      ]
-    } else {
-      cflags_auto += [
-        "-funwind-tables",
-        "-fasynchronous-unwind-tables",
-      ]
-    }
-
-    if (is_asan && use_hwasan) {
-      cflags_auto += [ "-DENABLE_HWASAN" ]
-    }
-
-    if (!is_asan && musl_arch != "mips") {
-      cflags_auto += [
-        "-DHOOK_ENABLE",
-        "-DOHOS_SOCKET_HOOK_ENABLE",
-      ]
-    }
-
-    if (!is_llvm_build && !is_asan && musl_arch != "mips") {
-      cflags_auto += [ "-DOHOS_FDTRACK_HOOK_ENABLE" ]
-    }
-
-    if (musl_arch == "mips" && is_legacy) {
-      cflags_auto += [ "-mnan=legacy" ]
-    }
-
-    if (use_pthread_cancel) {
-      cflags_auto += [ "-DFEATURE_PTHREAD_CANCEL" ]
-    }
-
-    cflags_auto += [ "-DRESERVE_SIGNAL_STACK" ]
-    cflags_auto += [ "-DDFX_SIGNAL_LIBC" ]
-
-    cflags_c99fse = [
-      "-std=c99",
-      "-nostdinc",
-      "-Wa,--noexecstack",
-    ]
-
-    cflags_all = cflags_basic + cflags_c99fse + cflags_auto
-
-    cflags = cflags_all
-
-    defines = [ "BROKEN_VFP_ASM" ]
-    if (is_standard_system) {
-      defines += [
-        "OHOS_DNS_PROXY_BY_NETSYS=1",
-        "OHOS_FWMARK_CLIENT_BY_NETSYS=1",
-        "OHOS_PERMISSION_INTERNET=1",
-        "OHOS_DISABLE_IPV6=0",
-      ]
-    }
-
-    if (!is_standard_system && defined(enable_musl_log)) {
-      if (enable_musl_log) {
-        defines += [ "ENABLE_MUSL_LOG" ]
-      }
-    }
-
-    if (use_gwp_asan) {
-      defines += [ "USE_GWP_ASAN" ]
-      if (!defined(libs)) {
-        libs = [ rebase_path(libgwp_asan_file) ]
-      } else {
-        libs += [ rebase_path(libgwp_asan_file) ]
-      }
-    }
-
-    dynamic_list =
-        rebase_path("${target_out_dir}/${musl_ported_dir}/dynamic.list")
-
-    ldflags = cflags_all
-    ldflags += [
-      "--target=${musl_target_triple}",
-      "-fuse-ld=lld",
-      "-Wl,--sort-section,alignment",
-      "-Wl,--sort-common",
-      "-Wl,--gc-sections",
-      "-Wl,--hash-style=both",
-      "-Wl,--no-undefined",
-      "-Wl,--exclude-libs=ALL",
-      "-Wl,--dynamic-list=${dynamic_list}",
-      "-Wl,--build-id=md5",
-    ]
-    if (musl_arch == "mips") {
-      ldflags -= [ "-Wl,--hash-style=both" ]
-    }
-    asmflags = cflags
-  }
 
   config("soft_hook") {
     defines = []
@@ -364,7 +222,6 @@ template("musl_libs") {
     }
 
     include_dirs += [
-      "//third_party",
       "//third_party/musl/src/include/",
       "${musl_malloc_plugin}/include/",
       "${musl_malloc_plugin}/include/jemalloc/internal",
@@ -399,7 +256,7 @@ template("musl_libs") {
     defines = [ "CRT" ]
 
     configs -= musl_inherited_configs
-    configs += [ ":soft_musl_config" ]
+    configs += [ "//build/config/components/musl:soft_musl_config" ]
     cflags = [
       "-fPIC",
       "-ffreestanding",
@@ -429,20 +286,9 @@ template("musl_libs") {
     ]
 
     sources += [
-      "$FREEBSD_DIR/contrib/tcp_wrappers/strcasecmp.c",
-      "$FREEBSD_DIR/lib/libc/gen/arc4random.c",
-      "$FREEBSD_DIR/lib/libc/gen/arc4random_uniform.c",
-      "$FREEBSD_DIR/lib/libc/stdlib/qsort.c",
-      "$FREEBSD_DIR/lib/libc/stdlib/strtoimax.c",
-      "$FREEBSD_DIR/lib/libc/stdlib/strtoul.c",
-      "$FREEBSD_DIR/lib/libc/stdlib/strtoumax.c",
       "third_party/openbsd/gnu/lib/libexecinfo/backtrace.c",
       "third_party/openbsd/lib/libc/string/strcasestr.c",
     ]
-
-    if (!is_llvm_build) {
-      sources += [ "$FREEBSD_DIR/contrib/libexecinfo/unwind.c" ]
-    }
 
     if (musl_arch == "arm") {
       sources_orig -= [
@@ -624,7 +470,6 @@ template("musl_libs") {
         "$OPTRTDIR/string/arm/strlen-armv6t2.S",
       ]
 
-      sources += added_freebsd_files
       asmflags = [
         "-D__memcpy_arm = memcpy",
         "-D__memchr_arm = memchr",
@@ -633,7 +478,6 @@ template("musl_libs") {
         "-D__strlen_armv6t2 = strlen",
       ]
     } else if (musl_arch == "aarch64") {
-      sources += [ "$FREEBSD_DIR/lib/msun/src/s_frexpl.c" ]
       if (defined(ARM_FEATURE_SVE)) {
         sources += [
           "$OPTRTDIR/string/aarch64/memchr-sve.S",
@@ -712,7 +556,6 @@ template("musl_libs") {
           "$OPTRTDIR/string/aarch64/strnlen.S",
           "$OPTRTDIR/string/aarch64/strrchr.S",
         ]
-        sources += added_freebsd_files
         asmflags = [
           "-D__memmove_aarch64 = memmove",
           "-D__memcpy_aarch64 = memcpy",
@@ -753,20 +596,8 @@ template("musl_libs") {
       include_dirs = [ "${musl_malloc_plugin}/include/jemalloc" ]
     }
 
-    if (!defined(include_dirs)) {
-      include_dirs = []
-    }
-    if (musl_arch == "aarch64") {
-      include_dirs += [ "//third_party/FreeBSD/lib/libc/aarch64" ]
-    } else if (musl_arch == "arm") {
-      include_dirs += [ "//third_party/FreeBSD/lib/libc/arm" ]
-    }
-    include_dirs += [ "//third_party/FreeBSD/lib/libc/include" ]
-    include_dirs += [ "//third_party/FreeBSD/contrib/libexecinfo" ]
-    include_dirs += [ "//third_party/FreeBSD/crypto/openssh/openbsd-compat" ]
-
     configs -= musl_inherited_configs
-    configs += [ ":soft_musl_config" ]
+    configs += [ "//build/config/components/musl:soft_musl_config" ]
 
     if (!defined(defines)) {
       defines = []
@@ -784,9 +615,10 @@ template("musl_libs") {
 
     deps = porting_deps
 
-    if (!startup_init_with_param_base) {
+    external_deps = [ "FreeBSD:libc_static" ]
+    if (use_musl) {
       defines += [ "OHOS_ENABLE_PARAMETER" ]
-      deps += [ "//base/startup/init/services/param/base:parameterbase" ]
+      external_deps += [ "init:parameterbase" ]
     }
   }
 
@@ -794,7 +626,7 @@ template("musl_libs") {
     sources = []
     sources += [ "third_party/openbsd/lib/libc/string/strncpy.c" ]
     configs -= musl_inherited_configs
-    configs += [ ":soft_musl_config" ]
+    configs += [ "//build/config/components/musl:soft_musl_config" ]
     cflags = [
       "-O2",
       "-fPIC",
@@ -842,7 +674,7 @@ template("musl_libs") {
     }
 
     configs -= musl_inherited_configs
-    configs += [ ":soft_musl_config" ]
+    configs += [ "//build/config/components/musl:soft_musl_config" ]
     cflags = [
       "-mllvm",
       "-instcombine-max-iterations=0",
@@ -897,7 +729,7 @@ template("musl_libs") {
     }
 
     configs -= musl_inherited_configs
-    configs += [ ":soft_musl_config" ]
+    configs += [ "//build/config/components/musl:soft_musl_config" ]
     cflags = [
       "-O3",
       "-fPIC",
@@ -917,7 +749,7 @@ template("musl_libs") {
     }
 
     configs -= musl_inherited_configs
-    configs += [ ":soft_musl_config" ]
+    configs += [ "//build/config/components/musl:soft_musl_config" ]
     cflags = [
       "-fPIC",
       "-ffreestanding",
@@ -938,9 +770,9 @@ template("musl_libs") {
     }
 
     deps = porting_deps
-    if (!startup_init_with_param_base) {
+    if (use_musl) {
       defines += [ "OHOS_ENABLE_PARAMETER" ]
-      deps += [ "//base/startup/init/services/param/base:parameterbase" ]
+      external_deps = [ "init:parameterbase" ]
     }
 
     if (musl_unit_test_flag) {
@@ -975,9 +807,9 @@ template("musl_libs") {
       "//third_party/musl:musl_copy_inc_root",
       "//third_party/musl:musl_copy_inc_sys",
     ]
-    if (!startup_init_with_param_base) {
+    if (use_musl) {
       defines = [ "OHOS_ENABLE_PARAMETER" ]
-      deps += [ "//base/startup/init/services/param/base:parameterbase" ]
+      external_deps = [ "init:parameterbase" ]
     }
 
     if (musl_unit_test_flag) {
@@ -1025,9 +857,9 @@ template("musl_libs") {
       "//third_party/musl:musl_copy_inc_sys",
     ]
 
-    if (!startup_init_with_param_base) {
+    if (use_musl) {
       defines = [ "OHOS_ENABLE_PARAMETER" ]
-      deps += [ "//base/startup/init/services/param/base:parameterbase" ]
+      external_deps = [ "init:parameterbase" ]
     }
 
     configs -= musl_inherited_configs
@@ -1045,32 +877,9 @@ template("musl_libs") {
         "src/math/sqrtl.c",
       ]
     }
-    sources += [
-      "$FREEBSD_DIR/lib/msun/ld128/e_lgammal_r.c",
-      "$FREEBSD_DIR/lib/msun/ld128/e_powl.c",
-      "$FREEBSD_DIR/lib/msun/ld128/k_cosl.c",
-      "$FREEBSD_DIR/lib/msun/ld128/k_sinl.c",
-      "$FREEBSD_DIR/lib/msun/ld128/s_erfl.c",
-      "$FREEBSD_DIR/lib/msun/ld128/s_expl.c",
-      "$FREEBSD_DIR/lib/msun/ld128/s_logl.c",
-      "$FREEBSD_DIR/lib/msun/src/e_acoshl.c",
-      "$FREEBSD_DIR/lib/msun/src/e_coshl.c",
-      "$FREEBSD_DIR/lib/msun/src/e_lgammal.c",
-      "$FREEBSD_DIR/lib/msun/src/e_sinhl.c",
-      "$FREEBSD_DIR/lib/msun/src/s_asinhl.c",
-      "$FREEBSD_DIR/lib/msun/src/s_tanhl.c",
-    ]
-
-    defines = [ "LD128_ENABLE" ]
-    include_dirs = [
-      "//third_party/FreeBSD/lib/msun/ld128",
-      "//third_party/FreeBSD/lib/msun/src",
-      "//third_party/FreeBSD/lib/libc/include",
-      "//third_party/FreeBSD/sys",
-    ]
 
     configs -= musl_inherited_configs
-    configs += [ ":soft_musl_config" ]
+    configs += [ "//build/config/components/musl:soft_musl_config" ]
     cflags = [
       "-mllvm",
       "-instcombine-max-iterations=0",
@@ -1081,6 +890,7 @@ template("musl_libs") {
     ]
 
     deps = porting_deps
+    external_deps = [ "FreeBSD:ld128_static" ]
   }
 
   static_library("soft_libc_musl_static") {
@@ -1097,9 +907,9 @@ template("musl_libs") {
       ":soft_musl_src_optimize",
       ":soft_musl_src_strncpy",
     ]
-    deps += dfx_deps
-    if (!startup_init_with_param_base) {
-      deps += [ "//base/startup/init/services/param/base:parameterbase" ]
+    external_deps = dfx_external_deps
+    if (use_musl) {
+      external_deps += [ "init:parameterbase" ]
     }
     if (use_jemalloc) {
       deps += [ ":soft_musl_jemalloc" ]
@@ -1217,7 +1027,7 @@ template("musl_libs") {
 
     configs -= musl_inherited_configs
     configs -= [ "//build/config:default_libs" ]
-    configs += [ ":soft_musl_config" ]
+    configs += [ "//build/config/components/musl:soft_musl_config" ]
 
     deps = [
       ":soft_libdl",
@@ -1230,9 +1040,9 @@ template("musl_libs") {
       ":soft_musl_src_optimize",
       ":soft_musl_src_strncpy",
     ]
-    deps += dfx_deps
-    if (!startup_init_with_param_base) {
-      deps += [ "//base/startup/init/services/param/base:parameterbase" ]
+    external_deps = dfx_external_deps
+    if (use_musl) {
+      external_deps += [ "init:parameterbase" ]
     }
 
     if (use_jemalloc) {

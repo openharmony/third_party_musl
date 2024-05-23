@@ -111,3 +111,7 @@ declare_args() {
   # whether clang select the legacy encoding
   is_legacy = false
 }
+
+declare_args() {
+  dynamic_list = rebase_path("./dynamic.list")
+}
