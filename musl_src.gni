@@ -235,6 +235,19 @@ if (musl_arch == "arm") {
     "src/thread/x86_64/syscall_cp.s",
     "src/linux/x86_64/flock.s",
   ]
+} else if (musl_arch == "loongarch64") {
+  musl_src_arch_file = [
+    "src/fenv/loongarch64/fenv.S",
+    "src/ldso/loongarch64/dlsym.s",
+    "src/setjmp/loongarch64/longjmp.S",
+    "src/setjmp/loongarch64/setjmp.S",
+    "src/signal/loongarch64/restore.s",
+    "src/signal/loongarch64/sigsetjmp.s",
+    "src/thread/loongarch64/__set_thread_area.s",
+    "src/thread/loongarch64/__unmapself.s",
+    "src/thread/loongarch64/clone.s",
+    "src/thread/loongarch64/syscall_cp.s",
+  ]
 }
 
 musl_src_file = [
@@ -1796,6 +1809,19 @@ if (musl_arch == "arm") {
     "src/thread/clone.c",
     "src/thread/syscall_cp.c",
   ]
+} else if (musl_arch == "loongarch64") {
+  musl_src_filterout = [
+    "src/fenv/fenv.c",
+    "src/ldso/dlsym.c",
+    "src/setjmp/longjmp.c",
+    "src/setjmp/setjmp.c",
+    "src/signal/restore.c",
+    "src/signal/sigsetjmp.c",
+    "src/thread/__set_thread_area.c",
+    "src/thread/__unmapself.c",
+    "src/thread/clone.c",
+    "src/thread/syscall_cp.c",
+  ]
 }
 
 musl_src_ldso = [
@@ -1992,6 +2018,43 @@ if (musl_arch == "arm") {
     "arch/generic/bits/statfs.h",
     "arch/generic/bits/termios.h",
     "arch/generic/bits/vt.h",
+  ]
+} else if (musl_arch == "loongarch64") {
+  musl_inc_bits_files = [
+    "arch/loongarch64/bits/fenv.h",
+    "arch/loongarch64/bits/float.h",
+    "arch/loongarch64/bits/posix.h",
+    "arch/loongarch64/bits/reg.h",
+    "arch/loongarch64/bits/setjmp.h",
+    "arch/loongarch64/bits/signal.h",
+    "arch/loongarch64/bits/stat.h",
+    "arch/loongarch64/bits/stdint.h",
+    "arch/loongarch64/bits/user.h",
+    "arch/loongarch64/bits/limits.h",
+
+    "arch/generic/bits/dirent.h",
+    "arch/generic/bits/errno.h",
+    "arch/generic/bits/hwcap.h",
+    "arch/generic/bits/ioctl_fix.h",
+    "arch/generic/bits/ioctl.h",
+    "arch/generic/bits/io.h",
+    "arch/generic/bits/ipc.h",
+    "arch/generic/bits/ipcstat.h",
+    "arch/generic/bits/kd.h",
+    "arch/generic/bits/link.h",
+    "arch/generic/bits/mman.h",
+    "arch/generic/bits/msg.h",
+    "arch/generic/bits/poll.h",
+    "arch/generic/bits/sem.h",
+    "arch/generic/bits/shm.h",
+    "arch/generic/bits/socket.h",
+    "arch/generic/bits/soundcard.h",
+    "arch/generic/bits/termios.h",
+    "arch/generic/bits/vt.h",
+    "arch/generic/bits/statfs.h",
+    "arch/generic/bits/ptrace.h",
+    "arch/generic/bits/resource.h",
+    "arch/generic/bits/fcntl.h",
   ]
 }
 
