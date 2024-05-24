@@ -212,7 +212,7 @@ int getaddrinfo_ext(const char *restrict host, const char *restrict serv, const 
 		t_cost /= 1000;
 	}
 	if (naddrs < 0) {
-		reportdnsresult(netid, host, t_cost, DNS_QUERY_COMMOM_FAIL, NULL, param);
+		reportdnsresult(netid, host, t_cost, naddrs, NULL, param);
 #ifndef __LITEOS__
 		MUSL_LOGE("%{public}s: %{public}d: reportdnsresult: %{public}d in process %{public}d", __func__, __LINE__, naddrs, getpid());
 #endif
