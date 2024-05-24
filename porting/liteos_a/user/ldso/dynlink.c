@@ -2357,7 +2357,6 @@ int dl_iterate_phdr(int(*callback)(struct dl_phdr_info *info, size_t size, void 
 	struct dso *current;
 	struct dl_phdr_info info;
 	int ret = 0;
-    pthread_rwlock_rdlock(&lock);
 	for(current = head; current;) {
 		info.dlpi_addr      = (uintptr_t)current->base;
 		info.dlpi_name      = current->name;
@@ -2373,9 +2372,10 @@ int dl_iterate_phdr(int(*callback)(struct dl_phdr_info *info, size_t size, void 
 
 		if (ret != 0) break;
 
+		pthread_rwlock_rdlock(&lock);
 		current = current->next;
+		pthread_rwlock_unlock(&lock);
 	}
-    pthread_rwlock_unlock(&lock);
 	return ret;
 }
 
