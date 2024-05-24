@@ -143,6 +143,7 @@ static struct dso *head, *tail, *fini_head, *syms_tail, *lazy_head;
 static struct dso_debug_info *debug_tail = NULL;
 static char *env_path, *sys_path;
 static unsigned long long gencnt;
+static unsigned long long subcnt;
 static int runtime;
 static int ldd_mode;
 static int ldso_fail;
@@ -3684,7 +3685,6 @@ end:
 	free_loadtasks(tasks);
 #endif
 	__release_ptc();
-	if (p) gencnt++;
 	clock_gettime(CLOCK_MONOTONIC, &time_start);
 	pthread_rwlock_unlock(&lock);
 	if (ctor_queue) {
@@ -4052,6 +4052,7 @@ static int dlclose_post(struct dso *p)
 		free(p);
 	}
 
+    ++subcnt;
 	return 0;
 }
 
@@ -4513,7 +4514,7 @@ int dl_iterate_phdr(int(*callback)(struct dl_phdr_info *info, size_t size, void 
 		info.dlpi_phdr      = current->phdr;
 		info.dlpi_phnum     = current->phnum;
 		info.dlpi_adds      = gencnt;
-		info.dlpi_subs      = 0;
+		info.dlpi_subs      = subcnt;
 		info.dlpi_tls_modid = current->tls_id;
 		info.dlpi_tls_data = !current->tls_id ? 0 :
 			__tls_get_addr((tls_mod_off_t[]){current->tls_id,0});
@@ -5602,8 +5603,10 @@ static void task_load_library(struct loadtask *task, struct reserved_address_par
 		reclaim_gaps(task->p);
 	}
 	task->p->runtime_loaded = runtime;
-	if (runtime)
-		task->p->by_dlopen = 1;
+	if (runtime) {
+        task->p->by_dlopen = 1;
+        ++gencnt;
+    }
 
 	if (DL_FDPIC) {
 		makefuncdescs(task->p);
