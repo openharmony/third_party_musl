@@ -39,7 +39,9 @@ static void libc_exit_fini(void)
 
 weak_alias(libc_exit_fini, __libc_exit_fini);
 
+#if !defined(__LITEOS__) && !defined(__HISPARK_LINUX__)
 extern void __cxa_thread_finalize();
+#endif
 
 _Noreturn void exit(int code)
 {

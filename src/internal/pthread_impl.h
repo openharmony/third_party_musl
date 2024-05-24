@@ -80,12 +80,14 @@ struct pthread {
 
 	#endif
 
+	#ifdef CXA_THREAD_USE_TLS
 	struct thread_local_dtor {
 		void (*func) (void *);
 		void *arg;
 		void *dso_handle; // Used to located dso.
 		struct thread_local_dtor* next;
 	} *thread_local_dtors;
+	#endif
 
 	/* Part 3 -- the positions of these fields relative to
 	 * the end of the structure is external and internal ABI. */

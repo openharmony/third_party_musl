@@ -414,6 +414,12 @@ template("musl_libs") {
 
     defines = []
     defines += [ "FEATURE_ICU_LOCALE" ]
+
+    # There are two ways to implement cxa_thread_atexit_impl:
+    # - CXA_THREAD_USE_TSD(default): use pthread_key_xxx to implement cxa_thread_atexit_impl.
+    # - CXA_THREAD_USE_TLS: put dtors in pthread to implement cxa_thread_atexit_impl.
+    defines += [ "CXA_THREAD_USE_TSD" ]
+
     if (musl_arch == "arm") {
       defines += [ "MUSL_ARM_ARCH" ]
     }
