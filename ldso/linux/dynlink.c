@@ -4052,7 +4052,7 @@ static int dlclose_post(struct dso *p)
 		free(p);
 	}
 
-    ++subcnt;
+	++subcnt;
 	return 0;
 }
 
@@ -4507,7 +4507,7 @@ int dl_iterate_phdr(int(*callback)(struct dl_phdr_info *info, size_t size, void 
 	struct dso *current;
 	struct dl_phdr_info info;
 	int ret = 0;
-    pthread_rwlock_rdlock(&lock);
+	pthread_rwlock_rdlock(&lock);
 	for(current = head; current;) {
 		info.dlpi_addr      = (uintptr_t)current->base;
 		info.dlpi_name      = current->name;
@@ -4525,7 +4525,7 @@ int dl_iterate_phdr(int(*callback)(struct dl_phdr_info *info, size_t size, void 
 
 		current = current->next;
 	}
-    pthread_rwlock_unlock(&lock);
+	pthread_rwlock_unlock(&lock);
 	return ret;
 }
 
@@ -5604,9 +5604,9 @@ static void task_load_library(struct loadtask *task, struct reserved_address_par
 	}
 	task->p->runtime_loaded = runtime;
 	if (runtime) {
-        task->p->by_dlopen = 1;
-        ++gencnt;
-    }
+		task->p->by_dlopen = 1;
+		++gencnt;
+	}
 
 	if (DL_FDPIC) {
 		makefuncdescs(task->p);
