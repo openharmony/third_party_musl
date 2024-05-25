@@ -488,4 +488,12 @@ if (is_lite_system && current_os == "ohos") {
     testonly = true
     deps = [ "Benchmark/musl:benchmark_musl_group" ]
   }
+
+  soft_musl_src("soft_musl_src_static") {
+    use_flto = false
+  }
+
+  soft_musl_src("soft_musl_src_shared") {
+    use_flto = true
+  }
 }
