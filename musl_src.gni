@@ -2031,7 +2031,6 @@ if (musl_arch == "arm") {
     "arch/loongarch64/bits/stat.h",
     "arch/loongarch64/bits/stdint.h",
     "arch/loongarch64/bits/user.h",
-    "arch/loongarch64/bits/limits.h",
 
     "arch/generic/bits/dirent.h",
     "arch/generic/bits/errno.h",
@@ -2056,6 +2055,7 @@ if (musl_arch == "arm") {
     "arch/generic/bits/ptrace.h",
     "arch/generic/bits/resource.h",
     "arch/generic/bits/fcntl.h",
+    "arch/generic/bits/limits.h",
   ]
 }
 
