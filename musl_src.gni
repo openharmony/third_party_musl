@@ -2494,6 +2494,8 @@ if (musl_arch == "arm") {
     "src/misc/aarch64/syscall.s",
     "src/ldso/aarch64/dlvsym.s",
   ]
+} else if (musl_arch == "loongarch64") {
+  musl_src_file += [ "arch/loongarch64/syscall_arch.h" ]
 } else if (musl_arch == "x86_64") {
   musl_src_file += [
     "src/process/x86_64/__vfork.s",
