@@ -5603,10 +5603,10 @@ static void task_load_library(struct loadtask *task, struct reserved_address_par
 		reclaim_gaps(task->p);
 	}
 	task->p->runtime_loaded = runtime;
-	if (runtime) {
+	if (runtime)
 		task->p->by_dlopen = 1;
-		++gencnt;
-	}
+
+	++gencnt;		
 
 	if (DL_FDPIC) {
 		makefuncdescs(task->p);
