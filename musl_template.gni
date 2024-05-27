@@ -359,7 +359,7 @@ template("soft_musl_src") {
     deps = porting_deps
 
     external_deps = [ "FreeBSD:libc_static" ]
-    if (use_musl) {
+    if (use_musl && !is_llvm_build) {
       defines += [ "OHOS_ENABLE_PARAMETER" ]
       external_deps += [ "init:parameterbase" ]
     }
@@ -755,7 +755,7 @@ template("musl_libs") {
     }
 
     deps = porting_deps
-    if (use_musl) {
+    if (use_musl && !is_llvm_build) {
       defines += [ "OHOS_ENABLE_PARAMETER" ]
       external_deps = [ "init:parameterbase" ]
     }
@@ -792,7 +792,7 @@ template("musl_libs") {
       "//third_party/musl:musl_copy_inc_root",
       "//third_party/musl:musl_copy_inc_sys",
     ]
-    if (use_musl) {
+    if (use_musl && !is_llvm_build) {
       defines = [ "OHOS_ENABLE_PARAMETER" ]
       external_deps = [ "init:parameterbase" ]
     }
@@ -842,7 +842,7 @@ template("musl_libs") {
       "//third_party/musl:musl_copy_inc_sys",
     ]
 
-    if (use_musl) {
+    if (use_musl && !is_llvm_build) {
       defines = [ "OHOS_ENABLE_PARAMETER" ]
       external_deps = [ "init:parameterbase" ]
     }
@@ -893,7 +893,7 @@ template("musl_libs") {
       ":soft_musl_src_strncpy",
     ]
     external_deps = dfx_external_deps
-    if (use_musl) {
+    if (use_musl && !is_llvm_build) {
       external_deps += [ "init:parameterbase" ]
     }
     if (use_jemalloc) {
@@ -1026,7 +1026,7 @@ template("musl_libs") {
       ":soft_musl_src_strncpy",
     ]
     external_deps = dfx_external_deps
-    if (use_musl) {
+    if (use_musl && !is_llvm_build) {
       external_deps += [ "init:parameterbase" ]
     }
 
