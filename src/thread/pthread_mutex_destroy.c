@@ -9,5 +9,6 @@ int pthread_mutex_destroy(pthread_mutex_t *mutex)
 	if (type > 128) __vm_wait();
 	if (__is_mutex_destroyed(type))
 		__handle_using_destroyed_mutex(mutex, __FUNCTION__);
+	a_store(&mutex->_m_type, PTHREAD_MUTEX_DESTROYED);
 	return 0;
 }
