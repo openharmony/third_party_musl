@@ -97,14 +97,15 @@ static void CheckCfiLog(char *file, const char *needle)
     fclose(fp);
 }
 
-static void FindDirAndCheck(DIR *dir, const char *pattern)
+template<typename CallbackT>
+static void FindDirAndCheck(DIR *dir, CallbackT &&callback)
 {
     struct dirent *ptr;
     while ((ptr = readdir(dir)) != NULL) {
         if (strstr(ptr->d_name, UBSAN_LOG_TAG) != NULL) {
             char tmp[BUFFER_SIZE] = UBSAN_LOG_DIR;
             strcat(tmp, ptr->d_name);
-            CheckCfiLog(tmp, pattern);
+            callback(tmp);
         }
     }
 }
@@ -113,8 +114,20 @@ static void FindAndCheck(const char *pattern)
 {
     DIR *ubsanDir = opendir(UBSAN_LOG_DIR);
     DIR *faultlogDir = opendir(FAULTLOG_DIR);
-    FindDirAndCheck(ubsanDir, pattern);
-    FindDirAndCheck(faultlogDir, pattern);
+    auto callback = [=](char *file) { CheckCfiLog(file, pattern); };
+    FindDirAndCheck(ubsanDir, callback);
+    FindDirAndCheck(faultlogDir, callback);
+    closedir(ubsanDir);
+    closedir(faultlogDir);
+}
+
+static void ExpectCfiOk()
+{
+    DIR *ubsanDir = opendir(UBSAN_LOG_DIR);
+    DIR *faultlogDir = opendir(FAULTLOG_DIR);
+    auto callback = [](char *file) { t_error("FAIL CFI check failed!\n"); };
+    FindDirAndCheck(ubsanDir, callback);
+    FindDirAndCheck(faultlogDir, callback);
     closedir(ubsanDir);
     closedir(faultlogDir);
 }
