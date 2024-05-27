@@ -158,17 +158,20 @@ void __cxa_finalize(void *dso)
 static void call(void *p);
 
 int __cxa_atexit(void (*func)(void *), void *arg, void *dso)
+__attribute__ ((__weak__)) extern void *addr2dso(size_t a);
 {
 	struct dso *p = NULL;
 	LOCK(lock);
 
 #if (defined(FEATURE_ATEXIT_CB_PROTECT))
 	if ((func == (void *)call) && (dso == NULL)) {
-		p = addr2dso((size_t)arg);
-		if (p == NULL) {
-			UNLOCK(lock);
-			MUSL_LOGE("call atexit with invalid callback ptr=%{public}p", arg);
-			return -1;
+		if (addr2dso != NULL) {
+			p = addr2dso((size_t)arg);
+			if (p == NULL) {
+				UNLOCK(lock);
+				MUSL_LOGE("call atexit with invalid callback ptr=%{public}p", arg);
+				return -1;
+			}
 		}
 	}
 #endif
