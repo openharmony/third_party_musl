@@ -156,9 +156,9 @@ void __cxa_finalize(void *dso)
 }
 
 static void call(void *p);
+__attribute__ ((__weak__)) extern void *addr2dso(size_t a);
 
 int __cxa_atexit(void (*func)(void *), void *arg, void *dso)
-__attribute__ ((__weak__)) extern void *addr2dso(size_t a);
 {
 	struct dso *p = NULL;
 	LOCK(lock);
