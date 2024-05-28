@@ -19,6 +19,7 @@
     __aeabi_read_tp;
     __aio_suspend_time64;
     __assert_fail;
+    __cfi_fail_report;
     __clock_adjtime64;
     __clock_getres_time64;
     __clock_gettime64;
