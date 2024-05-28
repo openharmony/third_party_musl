@@ -96,7 +96,7 @@ strlist *strlist_alloc(size_t size)
 
 static void strlist_realloc(strlist *strs)
 {
-    if(!strs) {
+    if (!strs) {
         LD_LOGE("strlist_realloc: strlist is null.");
         return;
     }
