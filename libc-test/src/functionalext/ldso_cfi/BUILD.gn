@@ -25,6 +25,12 @@ group("ldso_cfi_test") {
     ":ldso_cfi_test_lib",
     ":ldso_cfi_typeconversion",
   ]
+  if (target_cpu == "arm64") {
+    deps += [
+      ":cfi_icall_report_test",
+      ":cfi_report_test",
+    ]
+  }
 }
 
 ohos_executable("ldso_cfi_check") {
@@ -188,5 +194,26 @@ ohos_executable("ldso_cfi_typeconversion") {
   use_rtti = true
 
   sources = [ "ldso_cfi_typeconversion.cpp" ]
+  configs = [ "//third_party/musl/libc-test/src/common:config_runtest" ]
+}
+
+ohos_executable("cfi_icall_report_test") {
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
+  subsystem_name = "musl"
+  part_name = "libc-test"
+
+  sources = [ "./cfi_report_test/cfi_icall_report_test.cpp" ]
+  configs = [ "//third_party/musl/libc-test/src/common:config_runtest" ]
+}
+
+ohos_executable("cfi_report_test") {
+  subsystem_name = "musl"
+  part_name = "libc-test"
+
+  sources = [ "./cfi_report_test/cfi_report_test.cpp" ]
   configs = [ "//third_party/musl/libc-test/src/common:config_runtest" ]
 }
