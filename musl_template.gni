@@ -1,9 +1,136 @@
 import("//build/config/clang/clang.gni")
 import("//build/ohos.gni")
 import("musl_src.gni")
-template("soft_musl_src") {
-  forward_variables_from(invoker, [ "*" ])
-  source_set(target_name) {
+template("static_and_shared_libs_template") {
+  if (defined(invoker.use_gwp_asan)) {
+    __use_gwp_asan = invoker.use_gwp_asan
+  } else {
+    __use_gwp_asan = use_gwp_asan
+  }
+  __use_flto = invoker.use_flto
+
+  config("gwp_asan_config_${target_name}") {
+    if (__use_gwp_asan) {
+      defines = [ "USE_GWP_ASAN" ]
+      if (!defined(libs)) {
+        libs = [ rebase_path(libgwp_asan_file) ]
+      } else {
+        libs += [ rebase_path(libgwp_asan_file) ]
+      }
+    }
+  }
+
+  config("soft_hook_config_${target_name}") {
+    defines = []
+    configs = [ "//build/config/coverage:default_coverage" ]
+
+    if (is_posix) {
+      configs += [ "//build/config/posix:runtime_library" ]
+    }
+
+    cflags_cc = []
+
+    defines = [
+      "__GNU_SOURCE=1",  # Necessary for clone().
+      "CHROMIUM_CXX_TWEAK_INLINES",  # Saves binary size.
+    ]
+
+    defines += [
+      "__MUSL__",
+      "_LIBCPP_HAS_MUSL_LIBC",
+      "__BUILD_LINUX_WITH_CLANG",
+    ]
+
+    if (!is_asan && musl_arch != "mips") {
+      defines += [
+        "HOOK_ENABLE",
+        "OHOS_SOCKET_HOOK_ENABLE",
+      ]
+    }
+
+    if (!is_llvm_build && !is_asan && musl_arch != "mips") {
+      defines += [ "OHOS_FDTRACK_HOOK_ENABLE" ]
+    }
+
+    ldflags = [ "-nostdlib" ]
+
+    libs = []
+
+    if (__use_gwp_asan) {
+      defines += [ "USE_GWP_ASAN" ]
+      libs += [ rebase_path(libgwp_asan_file) ]
+    }
+
+    if (is_component_build) {
+      defines += [ "COMPONENT_BUILD" ]
+    }
+  }
+
+  cur_gwp_asan_config = "gwp_asan_config_${target_name}"
+  cur_soft_hook_config = "soft_hook_config_${target_name}"
+
+  source_set("soft_musl_hook_${target_name}") {
+    include_dirs = []
+    sources = [
+      "./src/hook/linux/malloc_common.c",
+      "./src/hook/linux/memory_trace.c",
+      "./src/hook/linux/musl_fdtrack.c",
+      "./src/hook/linux/musl_fdtrack_load.c",
+      "./src/hook/linux/musl_preinit.c",
+      "./src/hook/linux/musl_preinit_common.c",
+      "./src/hook/linux/musl_socket_preinit.c",
+      "./src/hook/linux/musl_socket_preinit_common.c",
+      "./src/hook/linux/socket_common.c",
+    ]
+
+    deps = [
+      "//third_party/musl:create_alltypes_h",
+      "//third_party/musl:create_porting_src",
+      "//third_party/musl:create_syscall_h",
+      "//third_party/musl:create_version_h",
+      "//third_party/musl:musl_copy_inc_bits",
+      "//third_party/musl:musl_copy_inc_fortify",
+      "//third_party/musl:musl_copy_inc_root",
+      "//third_party/musl:musl_copy_inc_sys",
+    ]
+    if (use_musl && !is_llvm_build) {
+      defines = [ "OHOS_ENABLE_PARAMETER" ]
+      external_deps = [ "init:parameterbase" ]
+    }
+
+    if (musl_unit_test_flag) {
+      defines += [ "UNIT_TEST_STATIC" ]
+    }
+    if (use_jemalloc) {
+      defines += [ "USE_JEMALLOC" ]
+      if (use_jemalloc_dfx_intf) {
+        defines += [ "USE_JEMALLOC_DFX_INTF" ]
+      }
+      if (use_jemalloc_recycle_func) {
+        defines += [ "USE_JEMALLOC_RECYCLE_FUNC" ]
+      }
+      include_dirs += [ "${musl_malloc_plugin}/include/jemalloc" ]
+    }
+
+    configs -= musl_inherited_configs
+
+    include_dirs += [ "${target_out_dir}/${musl_ported_dir}/src/internal" ]
+
+    configs += [
+      "//build/config/compiler:compiler",
+      ":$cur_soft_hook_config",
+    ]
+
+    cflags = [
+      "-mllvm",
+      "--instcombine-max-iterations=0",
+      "-ffp-contract=fast",
+      "-O3",
+      "-Wno-int-conversion",
+    ]
+  }
+
+  source_set("soft_musl_src_${target_name}") {
     forward_variables_from(invoker, [ "*" ])
     sources_orig = []
     sources = []
@@ -324,8 +451,10 @@ template("soft_musl_src") {
     ]
 
     if (!(use_libfuzzer || is_mac || is_asan || use_clang_coverage) &&
-        invoker.use_flto) {
+        __use_flto) {
       cflags += [ "-flto" ]
+    } else {
+      not_needed([ "__use_flto" ])
     }
 
     if (use_jemalloc) {
@@ -340,7 +469,10 @@ template("soft_musl_src") {
     }
 
     configs -= musl_inherited_configs
-    configs += [ "//build/config/components/musl:soft_musl_config" ]
+    configs += [
+      "//build/config/components/musl:soft_musl_config",
+      ":$cur_gwp_asan_config",
+    ]
 
     if (!defined(defines)) {
       defines = []
@@ -362,6 +494,52 @@ template("soft_musl_src") {
     if (use_musl && !is_llvm_build) {
       defines += [ "OHOS_ENABLE_PARAMETER" ]
       external_deps += [ "init:parameterbase" ]
+    }
+  }
+
+  source_set("soft_musl_ldso_${target_name}") {
+    sources = []
+    sources_orig = musl_src_ldso
+
+    foreach(s, sources_orig) {
+      sources += [ "${target_out_dir}/${musl_ported_dir}/${s}" ]
+    }
+
+    configs -= musl_inherited_configs
+    configs += [
+      "//build/config/components/musl:soft_musl_config",
+      ":$cur_gwp_asan_config",
+    ]
+    cflags = [
+      "-fPIC",
+      "-ffreestanding",
+      "-fno-stack-protector",
+      "-O3",
+    ]
+    if (is_asan) {
+      defines = [
+        "NSLIST_DEFAULT_SIZE=1600",
+        "DSOLIST_DEFAULT_SIZE=1600",
+        "INHERIT_DEFAULT_SIZE=1600",
+      ]
+    } else {
+      defines = [
+        "HANDLE_RANDOMIZATION",
+        "LOAD_ORDER_RANDOMIZATION",
+      ]
+    }
+
+    deps = porting_deps
+    if (use_musl && !is_llvm_build) {
+      defines += [ "OHOS_ENABLE_PARAMETER" ]
+      external_deps = [ "init:parameterbase" ]
+    }
+
+    if (musl_unit_test_flag) {
+      defines += [
+        "UNIT_TEST_STATIC",
+        "DL_NOMMU_SUPPORT=1",
+      ]
     }
   }
 }
@@ -440,52 +618,6 @@ template("musl_libs") {
 
   group("soft_musl_crt_libs") {
     deps = [ ":soft_musl_crt_install_action" ]
-  }
-
-  config("soft_hook") {
-    defines = []
-    configs = [ "//build/config/coverage:default_coverage" ]
-
-    if (is_posix) {
-      configs += [ "//build/config/posix:runtime_library" ]
-    }
-
-    cflags_cc = []
-
-    defines = [
-      "__GNU_SOURCE=1",  # Necessary for clone().
-      "CHROMIUM_CXX_TWEAK_INLINES",  # Saves binary size.
-    ]
-
-    defines += [
-      "__MUSL__",
-      "_LIBCPP_HAS_MUSL_LIBC",
-      "__BUILD_LINUX_WITH_CLANG",
-    ]
-
-    if (!is_asan && musl_arch != "mips") {
-      defines += [
-        "HOOK_ENABLE",
-        "OHOS_SOCKET_HOOK_ENABLE",
-      ]
-    }
-
-    if (!is_llvm_build && !is_asan && musl_arch != "mips") {
-      defines += [ "OHOS_FDTRACK_HOOK_ENABLE" ]
-    }
-
-    ldflags = [ "-nostdlib" ]
-
-    libs = []
-
-    if (use_gwp_asan) {
-      defines += [ "USE_GWP_ASAN" ]
-      libs += [ rebase_path(libgwp_asan_file) ]
-    }
-
-    if (is_component_build) {
-      defines += [ "COMPONENT_BUILD" ]
-    }
   }
 
   config("soft_jemalloc") {
@@ -595,7 +727,10 @@ template("musl_libs") {
     defines = [ "CRT" ]
 
     configs -= musl_inherited_configs
-    configs += [ "//build/config/components/musl:soft_musl_config" ]
+    configs += [
+      "//build/config/components/musl:soft_musl_config",
+      ":gwp_asan_config_shared",
+    ]
     cflags = [
       "-fPIC",
       "-ffreestanding",
@@ -611,7 +746,10 @@ template("musl_libs") {
     sources = []
     sources += [ "third_party/openbsd/lib/libc/string/strncpy.c" ]
     configs -= musl_inherited_configs
-    configs += [ "//build/config/components/musl:soft_musl_config" ]
+    configs += [
+      "//build/config/components/musl:soft_musl_config",
+      ":gwp_asan_config_shared",
+    ]
     cflags = [
       "-O2",
       "-fPIC",
@@ -659,7 +797,10 @@ template("musl_libs") {
     }
 
     configs -= musl_inherited_configs
-    configs += [ "//build/config/components/musl:soft_musl_config" ]
+    configs += [
+      "//build/config/components/musl:soft_musl_config",
+      ":gwp_asan_config_shared",
+    ]
     cflags = [
       "-mllvm",
       "-instcombine-max-iterations=0",
@@ -714,119 +855,18 @@ template("musl_libs") {
     }
 
     configs -= musl_inherited_configs
-    configs += [ "//build/config/components/musl:soft_musl_config" ]
-    cflags = [
-      "-O3",
-      "-fPIC",
-      "-ffreestanding",
-      "-fno-stack-protector",
-    ]
-
-    deps = porting_deps
-  }
-
-  source_set("soft_musl_ldso") {
-    sources = []
-    sources_orig = musl_src_ldso
-
-    foreach(s, sources_orig) {
-      sources += [ "${target_out_dir}/${musl_ported_dir}/${s}" ]
-    }
-
-    configs -= musl_inherited_configs
-    configs += [ "//build/config/components/musl:soft_musl_config" ]
-    cflags = [
-      "-fPIC",
-      "-ffreestanding",
-      "-fno-stack-protector",
-      "-O3",
-    ]
-    if (is_asan) {
-      defines = [
-        "NSLIST_DEFAULT_SIZE=1600",
-        "DSOLIST_DEFAULT_SIZE=1600",
-        "INHERIT_DEFAULT_SIZE=1600",
-      ]
-    } else {
-      defines = [
-        "HANDLE_RANDOMIZATION",
-        "LOAD_ORDER_RANDOMIZATION",
-      ]
-    }
-
-    deps = porting_deps
-    if (use_musl && !is_llvm_build) {
-      defines += [ "OHOS_ENABLE_PARAMETER" ]
-      external_deps = [ "init:parameterbase" ]
-    }
-
-    if (musl_unit_test_flag) {
-      defines += [
-        "UNIT_TEST_STATIC",
-        "DL_NOMMU_SUPPORT=1",
-      ]
-    }
-  }
-
-  source_set("soft_musl_hook") {
-    include_dirs = []
-    sources = [
-      "./src/hook/linux/malloc_common.c",
-      "./src/hook/linux/memory_trace.c",
-      "./src/hook/linux/musl_fdtrack.c",
-      "./src/hook/linux/musl_fdtrack_load.c",
-      "./src/hook/linux/musl_preinit.c",
-      "./src/hook/linux/musl_preinit_common.c",
-      "./src/hook/linux/musl_socket_preinit.c",
-      "./src/hook/linux/musl_socket_preinit_common.c",
-      "./src/hook/linux/socket_common.c",
-    ]
-
-    deps = [
-      "//third_party/musl:create_alltypes_h",
-      "//third_party/musl:create_porting_src",
-      "//third_party/musl:create_syscall_h",
-      "//third_party/musl:create_version_h",
-      "//third_party/musl:musl_copy_inc_bits",
-      "//third_party/musl:musl_copy_inc_fortify",
-      "//third_party/musl:musl_copy_inc_root",
-      "//third_party/musl:musl_copy_inc_sys",
-    ]
-    if (use_musl && !is_llvm_build) {
-      defines = [ "OHOS_ENABLE_PARAMETER" ]
-      external_deps = [ "init:parameterbase" ]
-    }
-
-    if (musl_unit_test_flag) {
-      defines += [ "UNIT_TEST_STATIC" ]
-    }
-    if (use_jemalloc) {
-      defines += [ "USE_JEMALLOC" ]
-      if (use_jemalloc_dfx_intf) {
-        defines += [ "USE_JEMALLOC_DFX_INTF" ]
-      }
-      if (use_jemalloc_recycle_func) {
-        defines += [ "USE_JEMALLOC_RECYCLE_FUNC" ]
-      }
-      include_dirs += [ "${musl_malloc_plugin}/include/jemalloc" ]
-    }
-
-    configs -= musl_inherited_configs
-
-    include_dirs += [ "${target_out_dir}/${musl_ported_dir}/src/internal" ]
-
     configs += [
-      "//build/config/compiler:compiler",
-      ":soft_hook",
+      "//build/config/components/musl:soft_musl_config",
+      ":gwp_asan_config_shared",
+    ]
+    cflags = [
+      "-O3",
+      "-fPIC",
+      "-ffreestanding",
+      "-fno-stack-protector",
     ]
 
-    cflags = [
-      "-mllvm",
-      "--instcombine-max-iterations=0",
-      "-ffp-contract=fast",
-      "-O3",
-      "-Wno-int-conversion",
-    ]
+    deps = porting_deps
   }
 
   source_set("soft_musl_jemalloc") {
@@ -864,7 +904,10 @@ template("musl_libs") {
     }
 
     configs -= musl_inherited_configs
-    configs += [ "//build/config/components/musl:soft_musl_config" ]
+    configs += [
+      "//build/config/components/musl:soft_musl_config",
+      ":gwp_asan_config_shared",
+    ]
     cflags = [
       "-mllvm",
       "-instcombine-max-iterations=0",
@@ -886,7 +929,7 @@ template("musl_libs") {
 
     output_dir = "${target_out_dir}/${_libs_out_dir}"
     deps = [
-      ":soft_musl_hook",
+      ":soft_musl_hook_static",
       ":soft_musl_src_nossp",
       ":soft_musl_src_optimize",
       ":soft_musl_src_static",
@@ -905,14 +948,14 @@ template("musl_libs") {
     }
   }
 
-  static_library("soft_musl_ldso_static") {
+  static_library("soft_musl_ldso_static_library") {
     output_name = "libc_ldso"
     complete_static_lib = true
 
     configs -= musl_inherited_configs
 
     output_dir = "${target_out_dir}/${_libs_out_dir}"
-    deps = [ ":soft_musl_ldso" ]
+    deps = [ ":soft_musl_ldso_static" ]
   }
 
   static_library("soft_libm") {
@@ -1012,14 +1055,17 @@ template("musl_libs") {
 
     configs -= musl_inherited_configs
     configs -= [ "//build/config:default_libs" ]
-    configs += [ "//build/config/components/musl:soft_musl_config" ]
+    configs += [
+      "//build/config/components/musl:soft_musl_config",
+      ":gwp_asan_config_shared",
+    ]
 
     deps = [
       ":soft_libdl",
       ":soft_libpthread",
       ":soft_musl_crt_install_action",
-      ":soft_musl_hook",
-      ":soft_musl_ldso",
+      ":soft_musl_hook_shared",
+      ":soft_musl_ldso_shared",
       ":soft_musl_src_nossp",
       ":soft_musl_src_optimize",
       ":soft_musl_src_shared",
