@@ -241,6 +241,7 @@ if (musl_arch == "arm") {
   musl_src_arch_file = [
     "src/fenv/loongarch64/fenv.S",
     "src/ldso/loongarch64/dlsym.s",
+    "src/ldso/loongarch64/tlsdesc.s",
     "src/setjmp/loongarch64/longjmp.S",
     "src/setjmp/loongarch64/setjmp.S",
     "src/signal/loongarch64/restore.s",
@@ -1815,6 +1816,7 @@ if (musl_arch == "arm") {
   musl_src_filterout = [
     "src/fenv/fenv.c",
     "src/ldso/dlsym.c",
+    "src/ldso/tlsdesc.c",
     "src/setjmp/longjmp.c",
     "src/setjmp/setjmp.c",
     "src/signal/restore.c",
