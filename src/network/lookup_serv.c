@@ -59,7 +59,12 @@ int __lookup_serv(struct service buf[static MAXSERVS], const char *name, int pro
 	}
 
 	if (name) {
-		if (!*name) return EAI_SERVICE;
+		if (!*name) {
+#ifndef __LITEOS__
+			MUSL_LOGE("%{public}s: %{public}d: invaild server name: %{public}d", __func__, __LINE__, EAI_SERVICE);
+#endif
+			return EAI_SERVICE;
+		}
 		port = strtoul(name, &z, 10);
 	}
 	if (!*z) {
