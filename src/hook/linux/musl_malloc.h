@@ -49,7 +49,7 @@ int __libc_munmap(void*, size_t);
 void *__libc_calloc(size_t, size_t);
 void *__libc_realloc(void *, size_t);
 void *__libc_valloc(size_t);
-void *__libc_memalign(size_t, size_t);
+void *__libc_aligned_alloc(size_t, size_t);
 size_t __libc_malloc_usable_size(void *);
 int __libc_prctl(int, ...);
 

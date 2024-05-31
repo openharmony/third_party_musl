@@ -48,6 +48,7 @@ static struct MallocDispatchType __ohos_malloc_hook_init_dispatch = {
 	.prctl = MuslMalloc(prctl),
 	.malloc_usable_size = MuslMalloc(malloc_usable_size),
 	.memtrace = default_memtrace,
+	.aligned_alloc = MuslMalloc(aligned_alloc),
 };
 #define MAX_SYM_NAME_SIZE 1000
 #define MAX_PROC_NAME_SIZE 256
@@ -272,6 +273,17 @@ static bool init_prctl_function(void* malloc_shared_library_handler, MallocPrctl
 	return true;
 }
 
+static bool init_aligned_alloc_function(void* malloc_shared_library_handler, MallocAlignedAllocType* func, const char* prefix)
+{
+	char symbol[MAX_SYM_NAME_SIZE];
+	snprintf(symbol, sizeof(symbol), "%s_%s", prefix, "aligned_alloc");
+	*func = (MallocAlignedAllocType)(dlsym(malloc_shared_library_handler, symbol));
+	if (*func == NULL) {
+		return false;
+	}
+	return true;
+}
+
 #ifdef USE_JEMALLOC_RECYCLE_FUNC
 extern int je_reclaim_cache();
 static void handle_recycle_cache()
@@ -321,6 +333,9 @@ static bool init_hook_functions(void* shared_library_handler, struct MallocDispa
 		return false;
 	}
 	if (!init_prctl_function(shared_library_handler, &table->prctl, prefix)) {
+		return false;
+	}
+	if (!init_aligned_alloc_function(shared_library_handler, &table->aligned_alloc, prefix)) {
 		return false;
 	}
 	return true;
