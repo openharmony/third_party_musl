@@ -3699,7 +3699,7 @@ end:
 	clock_gettime(CLOCK_MONOTONIC, &total_end);
 	dlopen_cost.total_time = (total_end.tv_sec - total_start.tv_sec) * CLOCK_SECOND_TO_MILLI
 		+ (total_end.tv_nsec - total_start.tv_nsec) / CLOCK_NANO_TO_MILLI;
-	if (dlopen_cost.total_time > DLOPEN_TIME_THRESHOLD && current_so) {
+	if ((dlopen_cost.total_time > DLOPEN_TIME_THRESHOLD || is_dlopen_debug_enable()) && current_so) {
 		LD_LOGE("dlopen so: %{public}s time cost: "
 				"total_time: %{public}d ms, "
 				"entry_header_time: %{public}d ms, "
