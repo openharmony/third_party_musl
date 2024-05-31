@@ -64,6 +64,25 @@ void* malloc(size_t bytes)
 	return  MuslFunc(malloc)(bytes);
 }
 
+void* aligned_alloc(size_t align, size_t len)
+{
+	volatile const struct MallocDispatchType* dispatch_table = (struct MallocDispatchType *)atomic_load_explicit(
+		&__musl_libc_globals.current_dispatch_table, memory_order_acquire);
+	if (__predict_false(dispatch_table != NULL)) {
+		if (__get_memleak_hook_flag()) {
+			return dispatch_table->aligned_alloc(align, len);
+		}
+		if (!__get_global_hook_flag()) {
+			return MuslMalloc(aligned_alloc)(align, len);
+		}
+		else if (!__get_hook_flag()) {
+			return MuslMalloc(aligned_alloc)(align, len);
+		}
+		return dispatch_table->aligned_alloc(align, len);
+	}
+	return  MuslMalloc(aligned_alloc)(align, len);
+}
+
 void free(void* mem)
 {
 	volatile const struct MallocDispatchType* dispatch_table = (struct MallocDispatchType *)atomic_load_explicit(
