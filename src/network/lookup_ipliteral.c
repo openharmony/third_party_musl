@@ -52,8 +52,12 @@ int __lookup_ipliteral(struct address buf[static 1], const char *name, int famil
 		else z = p-1;
 		if (*z) {
 			if (!IN6_IS_ADDR_LINKLOCAL(&a6) &&
-			    !IN6_IS_ADDR_MC_LINKLOCAL(&a6))
+			    !IN6_IS_ADDR_MC_LINKLOCAL(&a6)) {
+#ifndef __LITEOS__
+				MUSL_LOGE("%{public}s: %{public}d: illegal ipv6 address: %{public}d", __func__, __LINE__, EAI_NONAME);
+#endif
 				return EAI_NONAME;
+			}
 			scopeid = if_nametoindex(p);
 			if (!scopeid) {
 #ifndef __LITEOS__
