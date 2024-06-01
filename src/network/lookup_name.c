@@ -281,6 +281,9 @@ static int name_from_dns_search(struct address buf[static MAXADDRS], char canon[
 #if OHOS_PERMISSION_INTERNET
 	if (is_allow_internet() == 0) {
 		errno = EPERM;
+#ifndef __LITEOS__
+		MUSL_LOGE("%{public}s: %{public}d: internet is not allowed", __func__, __LINE__);
+#endif
 		return -1;
 	}
 #endif

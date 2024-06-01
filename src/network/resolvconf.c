@@ -130,6 +130,9 @@ int get_resolv_conf_ext(struct resolvconf *conf, char *search, size_t search_sz,
 	int ret = func(netid, &config);
 	if (ret < 0) {
 		DNS_CONFIG_PRINT("__get_resolv_conf OHOS_GET_CONFIG_FUNC_NAME err %d\n", ret);
+#ifndef __LITEOS__
+		MUSL_LOGE("%{public}s: %{public}d: resolv_config return: %{public}d for netid %{public}d", __func__, __LINE__, ret, netid);
+#endif
 		return EAI_NONAME;
 	}
 	int32_t timeout_second = config.timeout_ms / 1000;
@@ -171,6 +174,9 @@ etc_resolv_conf:
 	case EACCES:
 		goto no_resolv_conf;
 	default:
+#ifndef __LITEOS__
+		MUSL_LOGE("%{public}s: %{public}d: open resolv.conf failed with Unexpected errno: %{public}d", __func__, __LINE__, errno);
+#endif
 		return -1;
 	}
 

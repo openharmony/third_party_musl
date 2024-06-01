@@ -133,8 +133,12 @@ int getaddrinfo_ext(const char *restrict host, const char *restrict serv, const 
 
 		const int mask = AI_PASSIVE | AI_CANONNAME | AI_NUMERICHOST |
 			AI_V4MAPPED | AI_ALL | AI_ADDRCONFIG | AI_NUMERICSERV;
-		if ((flags & mask) != flags)
+		if ((flags & mask) != flags) {
+#ifndef __LITEOS__
+			MUSL_LOGE("%{public}s: %{public}d: bad hint ai_flag: %{public}d", __func__, __LINE__, flags);
+#endif
 			return EAI_BADFLAGS;
+		}
 
 		switch (family) {
 		case AF_INET:
