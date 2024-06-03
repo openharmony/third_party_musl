@@ -490,6 +490,10 @@ template("static_and_shared_libs_template") {
 
     deps = porting_deps
 
+    if (use_encaps) {
+      defines += [ "USE_ENCAPS" ]
+    }
+
     external_deps = [ "FreeBSD:libc_static" ]
     if (use_musl && !is_llvm_build) {
       defines += [ "OHOS_ENABLE_PARAMETER" ]
@@ -527,6 +531,10 @@ template("static_and_shared_libs_template") {
         "HANDLE_RANDOMIZATION",
         "LOAD_ORDER_RANDOMIZATION",
       ]
+    }
+
+    if (use_encaps) {
+      defines += [ "USE_ENCAPS" ]
     }
 
     deps = porting_deps
