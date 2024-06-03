@@ -52,6 +52,7 @@ declare_args() {
   }
   user_custom_libc = true
   use_jemalloc = false
+  use_encaps = false
   musl_malloc_plugin = ""
   use_jemalloc_dfx_intf = false
   use_jemalloc_recycle_func = false
