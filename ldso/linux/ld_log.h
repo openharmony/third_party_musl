@@ -35,6 +35,7 @@ hidden bool get_ld_log_enable();
 hidden void ld_log_reset();
 
 hidden bool is_dlclose_debug_enable();
+hidden bool is_dlopen_debug_enable();
 
 #if ((LD_LOG_LEVEL & LD_LOG_ERROR) && (defined(OHOS_ENABLE_PARAMETER) || defined(ENABLE_MUSL_LOG)))
 #define LD_LOGE(...) (void)HiLogAdapterPrint(MUSL_LOG_TYPE, LOG_ERROR, MUSL_LOG_DOMAIN, LD_LOG_TAG, __VA_ARGS__);
