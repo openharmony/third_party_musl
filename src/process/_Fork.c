@@ -12,7 +12,7 @@
 #include "fork_impl.h"
 
 
-#define UNUSUAL_FORK_COST_TIME 100
+#define UNUSUAL_FORK_COST_TIME_MILLI 100
 #define CLOCK_SECOND_TO_MILLI 1000
 #define CLOCK_NANO_TO_MILLI 1000000
 
@@ -72,7 +72,7 @@ pid_t _Fork(void)
 	clock_gettime(CLOCK_MONOTONIC, &time_end);
 	int cost_time = (time_end.tv_sec - time_start.tv_sec) * CLOCK_SECOND_TO_MILLI
 		+ (time_end.tv_nsec - time_start.tv_nsec) / CLOCK_NANO_TO_MILLI;
-	if(cost_time > UNUSUAL_FORK_COST_TIME)
+	if(cost_time > UNUSUAL_FORK_COST_TIME_MILLI)
 		MUSL_LOGE("_Fork __syscall costTime : %{public}d ms",cost_time);
 #endif
 
