@@ -32,7 +32,7 @@ float strtof_l(const char *restrict s, char **restrict p, locale_t l)
 void *icu_unum_open(char *icu_locale_name, int *cur_status)
 {
 	/* ICU function: unum_open, returns a format related to specific locale */
-	get_icu_symbol(ICU_I18N, &(g_icu_opt_func.unum_open), ICU_SYMBOL(unum_open));
+	get_icu_symbol(ICU_I18N, &(g_icu_opt_func.unum_open), ICU_UNUM_OPEN_SYMBOL);
 
 	/* dlopen/dlsym fail */
 	if (!g_icu_opt_func.unum_open) {
@@ -55,7 +55,7 @@ void *icu_unum_open(char *icu_locale_name, int *cur_status)
 void icu_unum_close(void *fmt)
 {
 	/* ICU function: unum_close, close the formate returned from unum_open */
-	get_icu_symbol(ICU_I18N, &(g_icu_opt_func.unum_close), ICU_SYMBOL(unum_close));
+	get_icu_symbol(ICU_I18N, &(g_icu_opt_func.unum_close), ICU_UNUM_CLOSE_SYMBOL);
 	if (g_icu_opt_func.unum_close) {
 		g_icu_opt_func.unum_close(fmt);
 	}
@@ -66,7 +66,7 @@ static int icu_char_trans(char *src, u_char *des, int des_size)
 	/* ICU function: u_strFromUTF8, transfer utf-8 string to Uchar* string which is
 	 * the input format of icu parse methods
 	 */
-	get_icu_symbol(ICU_I18N, &(g_icu_opt_func.u_str_from_utf8), ICU_SYMBOL(u_strFromUTF8));
+	get_icu_symbol(ICU_I18N, &(g_icu_opt_func.u_str_from_utf8), ICU_STR_FROM_UTF8_SYMBOL);
 	if (!g_icu_opt_func.u_str_from_utf8) {
 		return DLSYM_ICU_FAIL;
 	}
@@ -82,7 +82,7 @@ static int icu_char_trans(char *src, u_char *des, int des_size)
 double icu_parse_double(void *fmt, u_char *ustr, int32_t *parse_pos, int *cur_status)
 {
 	/* ICU function: unum_parseDouble, parse the given Uchar* string to double */
-	get_icu_symbol(ICU_I18N, &(g_icu_opt_func.unum_parse_double), ICU_SYMBOL(unum_parseDouble));
+	get_icu_symbol(ICU_I18N, &(g_icu_opt_func.unum_parse_double), ICU_UNUM_PARSE_DOUBLE_SYMBOL);
 	if (!g_icu_opt_func.unum_parse_double) {
 		*cur_status = DLSYM_ICU_FAIL;
 		return 0;
@@ -100,10 +100,10 @@ double icu_parse_double(void *fmt, u_char *ustr, int32_t *parse_pos, int *cur_st
 
 static double icu_strtod_l(char *loc_name, char *s, int *cur_status, int *parse_pos)
 {
-	char *icu_locale_name = NULL;
-	icu_locale_name = get_valid_icu_locale_name(loc_name);
-
+	char *icu_locale_name = calloc(1, MAX_VALID_ICU_NAME_LEN);
+	get_valid_icu_locale_name(loc_name, icu_locale_name, MAX_VALID_ICU_NAME_LEN);
 	void *fmt = icu_unum_open(icu_locale_name, cur_status);
+	free(icu_locale_name);
 	if (*cur_status == DLSYM_ICU_FAIL || *cur_status == ICU_ERROR) {
 		return 0;
 	}
