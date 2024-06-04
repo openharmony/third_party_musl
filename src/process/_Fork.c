@@ -1,5 +1,6 @@
 #include <unistd.h>
 #include <signal.h>
+#include <sys/time.h>
 #include "syscall.h"
 #include "libc.h"
 #include "lock.h"
@@ -9,6 +10,11 @@
 #include "proc_xid_impl.h"
 #endif
 #include "fork_impl.h"
+
+
+#define UNUSUAL_FORK_COST_TIME 100
+#define CLOCK_SECOND_TO_MILLI 1000
+#define CLOCK_NANO_TO_MILLI 1000000
 
 static void dummy(int x) { }
 weak_alias(dummy, __aio_atfork);
@@ -47,11 +53,13 @@ pid_t _Fork(void)
 {
 	pid_t ret;
 	sigset_t set;
+
 	__block_all_sigs(&set);
 	LOCK(__abort_lock);
 
 #ifndef __LITEOS__
-	MUSL_LOGI("_Fork __syscall Begin");
+	struct timespec time_start, time_end;
+	clock_gettime(CLOCK_MONOTONIC, &time_start);
 #endif
 
 #ifdef SYS_fork
@@ -59,9 +67,13 @@ pid_t _Fork(void)
 #else
 	ret = __syscall(SYS_clone, SIGCHLD, 0);
 #endif
-
+	
 #ifndef __LITEOS__
-	MUSL_LOGI("_Fork __syscall End");
+	clock_gettime(CLOCK_MONOTONIC, &time_end);
+	int cost_time = (time_end.tv_sec - time_start.tv_sec) * CLOCK_SECOND_TO_MILLI
+		+ (time_end.tv_nsec - time_start.tv_nsec) / CLOCK_NANO_TO_MILLI;
+	if(cost_time > UNUSUAL_FORK_COST_TIME)
+		MUSL_LOGE("_Fork __syscall costTime : %{public}d ms",cost_time);
 #endif
 
 	__post_Fork(ret);
