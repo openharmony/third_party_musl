@@ -34,21 +34,33 @@ hidden int __loc_is_allocated(locale_t);
 hidden char *__gettextdomain(void);
 
 #ifdef FEATURE_ICU_LOCALE
+#define ICU_GET_VERSION_NUM_SYMBOL "GetIcuVersion"
+#define ICU_SET_DATA_DIRECTORY_SYMBOL "SetOhosIcuDirectory"
+#define ICU_UNUM_OPEN_SYMBOL "unum_open"
+#define ICU_UNUM_CLOSE_SYMBOL "unum_close"
+#define ICU_STR_FROM_UTF8_SYMBOL "u_strFromUTF8"
+#define ICU_STR_FROM_UTF32_SYMBOL "u_strFromUTF32"
+#define ICU_UNUM_PARSE_DOUBLE_SYMBOL "unum_parseDouble"
+#define ICU_UNUM_GET_SYMBOL_SYMBOL "unum_getSymbol"
+#define ICU_AUSTRNCPY_SYMBOL "u_austrncpy"
+
 typedef enum {
 	ICU_UC = 0,
 	ICU_I18N,
-} ICU_SO_TYPE;
+} icu_so_type;
 
+#define MAX_VALID_ICU_NAME_LEN 8
 typedef uint16_t u_char;
 
-hidden void *get_icu_handle(ICU_SO_TYPE type, const char *symbol_name);
-hidden void get_icu_symbol(ICU_SO_TYPE type, void **icu_symbol_handle, const char *symbol_name);
-hidden char *get_valid_icu_locale_name(const char *name);
+hidden void set_icu_directory();
+hidden void get_icu_symbol(icu_so_type type, void **icu_symbol_handle, const char *symbol_name);
+hidden void get_valid_icu_locale_name(const char *name, const char *icu_name, int icu_name_len);
 hidden void *icu_unum_open(char *icu_locale_name, int *cur_status);
 hidden void icu_unum_close(void *fmt);
 hidden double icu_parse_double(void *fmt, u_char *ustr, int32_t *parse_pos, int *cur_status);
 
-#define ICU_SYMBOL(name) #name"_72"
+typedef char *(*f_icuuc_get_icu_version)(void);
+typedef void (*f_icuuc_u_set_data_directory)(void);
 typedef void *(*f_icu18n_unum_open)(int, void *, int32_t, const char *, void *, void *);
 typedef void (*f_icu18n_unum_close)(void *);
 typedef void *(*f_icu18n_u_str_from_utf8)(u_char *, int32_t, int32_t *, const char *, int32_t, int *);
@@ -58,11 +70,13 @@ typedef int32_t(*f_icu18n_unum_get_symbol)(const void *, int, u_char *, int32_t,
 typedef char *(*f_icuuc_u_austrncpy)(char *, const u_char *, int32_t);
 
 struct icu_opt_func {
+	f_icuuc_get_icu_version get_icu_version;
+	f_icuuc_u_set_data_directory set_data_directory;
 	f_icu18n_unum_open unum_open;
 	f_icu18n_unum_close unum_close;
 	f_icu18n_u_str_from_utf8 u_str_from_utf8;
+	f_icu18n_u_str_from_utf32 u_str_from_utf32;
 	f_icu18n_unum_parse_double unum_parse_double;
-	f_icu18n_u_str_from_utf32 u_strFrom_utf32;
 	f_icu18n_unum_get_symbol unum_get_symbol;
 	f_icuuc_u_austrncpy u_austrncpy;
 };
