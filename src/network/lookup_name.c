@@ -130,6 +130,9 @@ struct dpc_ctx {
 #define RR_CNAME 5
 #define RR_AAAA 28
 #define MAX_QUERY_SIZE 5
+#define VALID_ANSWER 1
+#define MIN_ANSWER_TYPE 1
+#define MAX_ANSWER_TYPE 2
 
 #define ABUF_SIZE 4800
 
@@ -188,6 +191,16 @@ static int IsIpv6Enable(int netid)
     return ret;
 }
 
+static int IsAnswerValid(const unsigned char *answer, int alen)
+{
+	if (alen < 4 || (answer[3] & 15) == 2)
+		return EAI_AGAIN;
+	if ((answer[3] & 15) == 3) return 0;
+	if ((answer[3] & 15) != 0)
+		return EAI_FAIL;
+	return VALID_ANSWER;
+}
+
 static int name_from_dns(struct address buf[static MAXADDRS], char canon[static 256], const char *name, int family, const struct resolvconf *conf, int netid)
 {
 	unsigned char qbuf[2][280], abuf[2][ABUF_SIZE];
@@ -221,6 +234,7 @@ static int name_from_dns(struct address buf[static MAXADDRS], char canon[static 
 
 	int cname_count = 0;
 	const char *queryName = name;
+	int checkBuf[MAX_ANSWER_TYPE] = {VALID_ANSWER, VALID_ANSWER};
 	while (strnlen(queryName, 256) != 0 && cname_count < MAX_QUERY_SIZE) {
 		int i, nq = 0;
 		for (i = 0; i < queryNum; i++) {
@@ -246,19 +260,15 @@ static int name_from_dns(struct address buf[static MAXADDRS], char canon[static 
 			return EAI_SYSTEM;
 
 		for (i=0; i<nq; i++) {
-			if (alens[i] < 4 || (abuf[i][3] & 15) == 2) {
+			checkBuf[i] = IsAnswerValid(abuf[i], alens[i]);
+		}
+		if (checkBuf[MIN_ANSWER_TYPE - 1] != VALID_ANSWER &&
+		   (nq < MAX_ANSWER_TYPE || checkBuf[MAX_ANSWER_TYPE - 1] != VALID_ANSWER)) {
 #ifndef __LITEOS__
-				MUSL_LOGE("%{public}s: %{public}d: Illegal answers, index: %{public}d, length: %{public}d", __func__, __LINE__, i, alens[i]);
+			MUSL_LOGE("%{public}s: %{public}d: Illegal answers, errno id: %{public}d",
+				__func__, __LINE__, checkBuf[MIN_ANSWER_TYPE - 1]);
 #endif
-				return EAI_AGAIN;
-			}
-			if ((abuf[i][3] & 15) == 3) return 0;
-			if ((abuf[i][3] & 15) != 0) {
-#ifndef __LITEOS__
-				MUSL_LOGE("%{public}s: %{public}d: answers not noerror : %{public}d", __func__, __LINE__, EAI_FAIL);
-#endif
-				return EAI_FAIL;
-			}
+			return checkBuf[MIN_ANSWER_TYPE - 1];
 		}
 
 		for (i=nq-1; i>=0; i--) {
