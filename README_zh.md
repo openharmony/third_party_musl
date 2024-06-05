@@ -32,6 +32,68 @@ musl编译框架时编译，使用BUILD.gn进行配置编译。
 
 等。在新增特性基础上，也进行了对于musl接口功能的完善与错误的修复。
 
+## ICONV支持的字符集编码格式
+
+musl支持的字符集编码格式，以及受支持的别名。
+> **注意**
+>
+> 在进行字符集编码格式转换时，请使用正确的源字符集编码格式，且目标字符集编码格式必须支持这些受转换的字符，否则转换失败。
+> 在musl里不支持将源字符集编码格式转换成这五种目标字符集编码格式：gb18030，gbk，gb2312，big5和euckr。
+
+| 编码格式 | 别名                   | musl支持情况|
+|:--      |    :--                   |  :--:  |
+|utf8     |                          |  支持   |
+|wchart   |                          |  支持   |
+|ucs2be   |                          |  支持   |
+|ucs2le   |                          |  支持   |
+|utf16be  |                          |  支持   |
+|utf16le  |                          |  支持   |
+|ucs4be   |utf32be                   |  支持   |
+|ucs4le   |utf32le                   |  支持   |
+|ascii    |usascii, iso646, iso646us |  支持   |
+|utf16    |                          |  支持   |
+|ucs4     |utf32                     |  支持   |
+|ucs2     |                          |  支持   |
+|eucjp    |                          |  支持   |
+|shiftjis |sjis, cp932               |  支持   |
+|iso2022jp|                          |  支持   |
+|gb18030  |                          |  支持   |
+|gbk      |                          |  支持   |
+|gb2312   |                          |  支持   |
+|big5     |bigfive, cp950, big5hkscs |  支持   |
+|euckr    |ksc5601, ksx1001, cp949   |  支持   |
+|iso88591 |latin1                    |  支持   |
+|iso88592 |                          |  支持   |
+|iso88593 |                          |  支持   |
+|iso88594 |                          |  支持   |
+|iso88595 |                          |  支持   |
+|iso88596 |                          |  支持   |
+|iso88597 |                          |  支持   |
+|iso88598 |                          |  支持   |
+|iso88599 |                          |  支持   |
+|iso885910|                          |  支持   |
+|iso885911|tis620                    |  支持   |
+|iso885913|                          |  支持   |
+|iso885914|                          |  支持   |
+|iso885915|latin9                    |  支持   |
+|iso885916|                          |  支持   |
+|cp1250   |windows1250               |  支持   |
+|cp1251   |windows1251               |  支持   |
+|cp1252   |windows1252               |  支持   |
+|cp1253   |windows1253               |  支持   |
+|cp1254   |windows1254               |  支持   |
+|cp1255   |windows1255               |  支持   |
+|cp1256   |windows1256               |  支持   |
+|cp1257   |windows1257               |  支持   |
+|cp1258   |windows1258               |  支持   |
+|koi8r    |                          |  支持   |
+|koi8u    |                          |  支持   |
+|cp437    |                          |  支持   |
+|cp850    |                          |  支持   |
+|cp866    |                          |  支持   |
+|cp1047   |ibm1047                   |  支持   |
+
+
 ## Musl使用文档
 
 有关完整musl目标编译器工具链、系统的信息bootstrapping和基于musl构建的Linux发行版可以在官方网站上找到：http://www.musl-libc.org/
