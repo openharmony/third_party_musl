@@ -16,10 +16,47 @@
 #include <signal.h>
 #include <stdlib.h>
 #include <threads.h>
+#include <pthread.h>
+#include <stdio.h>
+#include <time.h>
+#include <errno.h>
 #include "test.h"
+
+#define LOCK_SUCCESS 0
+#define LOCK_TIMEOUT -1
+#define LOCK_WAIT_MAX_TIME_COUNT 50
+#define NSEC_TO_MS 1000000
+#define TRYLOCK_FAIL -2
 
 static thrd_t thr;
 static int count = 0;
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+
+int trylock_with_timeout(pthread_mutex_t *mutex)
+{
+    int rc;
+
+    int sleepCount = 0;
+
+    do {
+        rc = pthread_mutex_trylock(mutex);
+        if (rc == 0) {
+            return LOCK_SUCCESS;
+        } else if (rc != EBUSY) {
+            perror("pthread_mutex_trylock");
+            return TRYLOCK_FAIL;
+        }
+
+        struct timespec req = { .tv_sec = 0, .tv_nsec = NSEC_TO_MS*10 }; //等待10毫秒
+        nanosleep(&req, NULL);
+        
+        sleepCount ++;
+        if(sleepCount >= LOCK_WAIT_MAX_TIME_COUNT) 
+        {
+            return LOCK_TIMEOUT;
+        }
+    } while (1); 
+}
 
 int threadfuncA(void *arg)
 {
@@ -35,7 +72,15 @@ int threadfuncA(void *arg)
 
 int threadfuncB(void *arg)
 {
-    count++;
+    int result = trylock_with_timeout(&mutex);
+    if (result == LOCK_SUCCESS) {
+        count++;
+        pthread_mutex_unlock(&mutex);
+    } else if (result == LOCK_TIMEOUT) {
+        t_error("Lock acquisition timed out.\n");
+    } else {
+        t_error("Error pthread_mutex_trylock.\n");
+    }
 
     thrd_exit(thrd_success);
 }
