@@ -348,7 +348,7 @@ static int create_cfi_shadow(void)
      * value is uint16_t. The size passed to mmap() should be aligned with 4096, so shadow_size should be aligned. */
     shadow_size = ALIGN_UP(((max_target_addr >> shadow_granularity) << 1), PAGE_SIZE);
 
-    uintptr_t *mmap_addr = mmap(NULL, shadow_size, PROT_READ, MAP_PRIVATE | MAP_ANONYMOUS | MAP_NORESERVE, -1, 0);
+    uintptr_t *mmap_addr = mmap(NULL, shadow_size, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_NORESERVE, -1, 0);
 
     if (mmap_addr == MAP_FAILED) {
         LD_LOGE("[CFI] [%{public}s] mmap failed!\n", __FUNCTION__);
@@ -435,6 +435,10 @@ static int fill_shadow_value_to_shadow(uintptr_t begin, uintptr_t end, uintptr_t
 
     LD_LOGD("[CFI] [%{public}s] tmp_shadow_start is %{public}p\t tmp_shadow_size is 0x%{public}x!\n",
         __FUNCTION__, tmp_shadow_start, tmp_shadow_size);
+    if (mprotect(aligned_shadow_begin, tmp_shadow_size, PROT_READ) == -1) {
+        LD_LOGE("[CFI] [%{public}s] mprotect failed!\n", __FUNCTION__);
+        return CFI_FAILED;
+    }
     memcpy(tmp_shadow_start, aligned_shadow_begin, offset_begin);
     memcpy(tmp_shadow_start + offset_end, shadow_end, aligned_shadow_end - shadow_end);
 
