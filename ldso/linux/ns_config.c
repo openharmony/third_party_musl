@@ -139,16 +139,10 @@ UT_STATIC void kvlist_realloc(kvlist *kvs)
     if (size) {
         char **keys, **vals;
         keys = (char **)__libc_realloc(kvs->key, size * (sizeof *kvs->key));
-        if (!keys) {
-            LD_LOGE("kvlist_realloc: __libc_realloc keys failed!");
-            return;
-        }
+        if (!keys) return;
         kvs->key = keys;
         vals = (char **)__libc_realloc(kvs->val, size * (sizeof *kvs->val));
-        if (!vals) {
-            LD_LOGD("kvlist_realloc: __libc_realloc vals failed!");
-            return;
-        }
+        if (!vals) return;
         kvs->val = vals;
         kvs->size = size;
     }
@@ -159,10 +153,7 @@ UT_STATIC void kvlist_realloc(kvlist *kvs)
 static void kvlist_free(kvlist *kvs)
 {
     size_t i;
-    if (!kvs) {
-        LD_LOGD("kvlist_free: kv list is null.");
-        return;
-    }
+    if (!kvs) return;
     for (i = 0; i < kvs->num; i++) {
         __libc_free(kvs->key[i]);
         __libc_free(kvs->val[i]);
@@ -196,25 +187,16 @@ static section_list *sections_alloc(size_t size)
 
 UT_STATIC void sections_realloc(section_list *sections)
 {
-    if (!sections) {
-        LD_LOGE("sections_realloc: section list is null");
-        return;
-    }
+    if (!sections) return;
     size_t size = 2 * sections->size;
     if (size) {
         char **names;
         kvlist **kvs;
         names = (char **)__libc_realloc(sections->names, size * (sizeof *sections->names));
-        if (!names) {
-            LD_LOGE("sections_realloc: __libc_realloc names failed!");
-            return;
-        }
+        if (!names) return;
         sections->names = names;
         kvs = (kvlist **)__libc_realloc(sections->kvs, size * (sizeof *sections->kvs));
-        if (!kvs) {
-            LD_LOGE("sections_realloc: __libc_realloc kvs failed!");
-            return;
-        }
+        if (!kvs) return;
         sections->kvs = kvs;
         sections->size = size;
     }
@@ -236,10 +218,7 @@ static void sections_free(section_list *sections)
 static void kvlist_set(kvlist *kvs, const char *key, const char *val)
 {
     size_t i;
-    if (!kvs || !key || !val) {
-        LD_LOGE("kvlist_set: invailed argument!");
-        return;
-    }
+    if (!kvs || !key || !val) return;
 
     for (i = 0; i < kvs->num; i++) {
         if (!strcmp(kvs->key[i], key)) {
@@ -274,10 +253,7 @@ static void kvlist_set(kvlist *kvs, const char *key, const char *val)
 static void sections_set(section_list *sections, const char *name, const char *key, const char *val)
 {
     kvlist* kvs = NULL;
-    if (!sections || !name || !key || !val) {
-		LD_LOGE("sections_set sections: invailed argument!");
-		return;
-	}
+    if (!sections || !name || !key || !val) return;
 
     for(size_t i = 0; i < sections->num; i++) {
         if (!strcmp(sections->names[i], name)) {
@@ -329,7 +305,6 @@ static section_list *config_load(const char *filepath)
     sections = sections_alloc(0);
     if (!sections) {
         fclose(file);
-        LD_LOGE("config_load: sections_alloc failed!");
         return NULL;
     }
 
@@ -414,7 +389,6 @@ static kvlist *config_get_kvs(const char *sname)
 static char *config_get_value_by_acquiescence(kvlist *acquiescence_kvs, const char *key)
 {
     if (!acquiescence_kvs) {
-        LD_LOGE("config_get_value_by_acquiescence: kv list is null.");
         return NULL;
     }
     size_t i;
@@ -430,7 +404,6 @@ static char *config_get_value_by_acquiescence(kvlist *acquiescence_kvs, const ch
 static char *config_get_acquiescence_lib_path(kvlist *acquiescence_kvs)
 {
     if (!acquiescence_kvs) {
-        LD_LOGE("config_get_acquiescence_lib_path: kv list is null.");
         return NULL;
     }
     config_key_join(ATTR_NS_PREFIX, true);
@@ -445,7 +418,6 @@ static char *config_get_acquiescence_lib_path(kvlist *acquiescence_kvs)
 static char *config_get_acquiescence_asan_lib_path(kvlist *acquiescence_kvs)
 {
     if (!acquiescence_kvs) {
-        LD_LOGE("config_get_acquiescence_asan_lib_path: kv list is null.");
         return NULL;
     }
     config_key_join(ATTR_NS_PREFIX, true);

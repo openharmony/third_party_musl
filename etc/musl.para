@@ -28,4 +28,4 @@ musl.log.enable=true
 # musl.log.ld.app.your_app_name=false
 # ================================
 
-musl.log.ld.all=false
+musl.log.ld.all=true
