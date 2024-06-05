@@ -112,6 +112,7 @@ void __pthread_tsd_run_dtors_ex1()
 			if (val && dtor && dtor != nodtor) {
 				__pthread_rwlock_unlock(&key_lock);
 				dtor(val);
+				tsd_used = true;
 				__pthread_rwlock_rdlock(&key_lock);
 			}
 		}
