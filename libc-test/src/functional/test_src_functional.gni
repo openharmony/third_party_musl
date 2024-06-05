@@ -84,6 +84,7 @@ functional_list = [
   "exit_constructor",
   "renameat2_test",
   "fopencookie_test",
+  "iconv_test",
 ]
 
 if (use_pthread_cancel) {
