@@ -73,7 +73,7 @@ pid_t _Fork(void)
 	int cost_time = (time_end.tv_sec - time_start.tv_sec) * CLOCK_SECOND_TO_MILLI
 		+ (time_end.tv_nsec - time_start.tv_nsec) / CLOCK_NANO_TO_MILLI;
 	if(cost_time > UNUSUAL_FORK_COST_TIME_MILLI)
-		MUSL_LOGE("_Fork __syscall costTime : %{public}d ms",cost_time);
+		MUSL_LOGE("_Fork pid : %{public}d ,__syscall costTime : %{public}d ms",__syscall(SYS_getpid),cost_time);
 #endif
 
 	__post_Fork(ret);
