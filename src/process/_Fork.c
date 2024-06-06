@@ -53,12 +53,16 @@ pid_t _Fork(void)
 {
 	pid_t ret;
 	sigset_t set;
+#ifndef __LITEOS__
+	struct timespec time_start, time_end,total_start,total_end;
+	int cost_time,total_time;
+	clock_gettime(CLOCK_MONOTONIC, &total_start);
+#endif
 
 	__block_all_sigs(&set);
 	LOCK(__abort_lock);
 
 #ifndef __LITEOS__
-	struct timespec time_start, time_end;
 	clock_gettime(CLOCK_MONOTONIC, &time_start);
 #endif
 
@@ -70,13 +74,21 @@ pid_t _Fork(void)
 	
 #ifndef __LITEOS__
 	clock_gettime(CLOCK_MONOTONIC, &time_end);
-	int cost_time = (time_end.tv_sec - time_start.tv_sec) * CLOCK_SECOND_TO_MILLI
-		+ (time_end.tv_nsec - time_start.tv_nsec) / CLOCK_NANO_TO_MILLI;
-	if(cost_time > UNUSUAL_FORK_COST_TIME_MILLI)
-		MUSL_LOGE("_Fork pid : %{public}d ,__syscall costTime : %{public}d ms",__syscall(SYS_getpid),cost_time);
 #endif
 
 	__post_Fork(ret);
 	__restore_sigs(&set);
+
+#ifndef __LITEOS__
+
+	clock_gettime(CLOCK_MONOTONIC, &total_end);
+	cost_time = (time_end.tv_sec - time_start.tv_sec) * CLOCK_SECOND_TO_MILLI
+		+ (time_end.tv_nsec - time_start.tv_nsec) / CLOCK_NANO_TO_MILLI;
+	total_time = (total_end.tv_sec - total_start.tv_sec) * CLOCK_SECOND_TO_MILLI
+		+ (total_end.tv_nsec - total_start.tv_nsec) / CLOCK_NANO_TO_MILLI;
+	if(total_time > UNUSUAL_FORK_COST_TIME_MILLI)
+		MUSL_LOGE("_Fork pid : %{public}d ,__syscall costTime : %{public}d ms , total_time : %{public}d ms",__syscall(SYS_getpid),cost_time,total_time);
+#endif
+
 	return __syscall_ret(ret);
 }
