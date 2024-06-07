@@ -42,7 +42,7 @@ int TrylockWithTimeout(pthread_mutex_t *mutex)
     int sleepCount = 0;
 
     do {
-        rc = pthread_mutex_trylock(g_mutex);
+        rc = pthread_mutex_trylock(mutex);
         if (rc == 0) {
             return LOCK_SUCCESS;
         } else if (rc != EBUSY) {
