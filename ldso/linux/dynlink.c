@@ -48,6 +48,16 @@
 #include "zip_archive.h"
 #endif
 
+#ifdef USE_ENCAPS
+#include <sys/ioctl.h>
+
+#define OH_ENCAPS_MAGIC 'E'
+#define OH_ENCAPS_SYNC_BASE 0x19
+#define SYNC_ENCAPS_CMD _IO(OH_ENCAPS_MAGIC, OH_ENCAPS_SYNC_BASE)
+static int encpas_cost_time = 0;
+struct timespec encaps_time_start, encaps_time_end;
+#endif
+
 static size_t ldso_page_size;
 #ifndef PAGE_SIZE
 #define PAGE_SIZE ldso_page_size
@@ -1427,6 +1437,112 @@ static size_t phdr_table_get_maxinum_alignment(Phdr *phdr_table, size_t phdr_cou
 #endif
 }
 
+#ifdef USE_ENCAPS
+static int do_sync_to_other()
+{
+	int fd;
+	int ret;
+
+	fd = open("/dev/encaps", O_RDONLY);
+	if (fd < 0) {
+		LD_LOGE("open encaps failed, %{public}s", strerror(errno));
+		return -1;
+	}
+
+	ret = ioctl(fd, SYNC_ENCAPS_CMD);
+	if (ret != 0) {
+		LD_LOGE("ioctl encaps failed, %{public}s", strerror(errno));
+		close(fd);
+		return -1;
+	}
+
+	close(fd);
+	return 0;
+}
+
+static void sync_to_other()
+{
+	__synccall(do_sync_to_other, NULL);
+}
+
+static bool is_section_exist(Ehdr *eh_buf, uint32_t en_size, int fd, char *section_name) 
+{
+	char *shstrtab_content = NULL;
+	size_t i, len;
+	size_t shsize;
+	uint16_t index;
+	void *sh_buf = NULL;
+	Shdr *sh, *sh0, shstrtab;
+
+	if (eh_buf == NULL)
+		return false;
+	
+	if (eh_buf->e_type != ET_DYN) {
+		goto error_without_free;
+	}
+
+	shsize = eh_buf->e_shentsize * eh_buf->e_shnum;
+	index = eh_buf->e_shstrndx;
+	if (index >= eh_buf->e_shnum) {
+		goto error_without_free;
+	}
+
+	if (shsize > en_size - sizeof(Ehdr)) {
+		sh_buf = malloc(shsize);
+		if (!sh_buf)
+			goto error_without_free;
+		len = pread(fd, sh_buf, shsize, eh_buf->e_shoff);
+		if (len != shsize) {
+			free(sh_buf);
+			goto error_without_free;
+		}
+		sh = sh0 = sh_buf;
+	} else if (eh_buf->e_shoff + shsize > len) {
+		len = pread(fd, eh_buf + 1, shsize, eh_buf->e_shoff);
+		if (len != shsize) {
+			goto error_without_free;
+		}
+		sh = sh0 = (void *)(eh_buf + 1);
+	} else {
+		sh = sh0 = (void *)((char *)eh_buf + eh_buf->e_shoff);
+	}
+
+	shstrtab = sh[index];
+	shstrtab_content = (char *)malloc(shstrtab.sh_size);
+	if (!shstrtab_content) {
+		free(sh_buf);
+		goto error_without_free;
+	}
+
+	len = pread(fd, shstrtab_content, shstrtab.sh_size, shstrtab.sh_offset);
+	if (len != shstrtab.sh_size)
+		goto error;
+	for (i = eh_buf->e_shnum; i != 0; i--) {
+		char * shname = shstrtab_content + sh0[i - 1].sh_name; // this name is offset in shstrtab
+		if ((shname == NULL) || (sh0[i - 1].sh_name > shstrtab.sh_size)) {
+			continue;
+		}
+		if (strcmp(shname, section_name) == 0) {
+			goto done_search;
+		}
+	}
+
+error:
+	free(shstrtab_content);
+	if (sh_buf != NULL)
+		free(sh_buf);
+error_without_free:
+	errno = ENOEXEC;
+	return false;
+done_search:
+	free(shstrtab_content);
+	if (sh_buf != NULL)
+		free(sh_buf);
+	sync_to_other();
+	return true;
+}
+#endif
+
 UT_STATIC void *map_library(int fd, struct dso *dso, struct reserved_address_params *reserved_params)
 {
 	Ehdr buf[(896+sizeof(Ehdr))/sizeof(Ehdr)];
@@ -1662,6 +1778,13 @@ UT_STATIC void *map_library(int fd, struct dso *dso, struct reserved_address_par
 			break;
 		}
 done_mapping:
+#ifdef USE_ENCAPS
+    clock_gettime(CLOCK_MONOTONIC, &time_start);
+    (void)is_section_exist(buf, sizeof(buf), fd, ".kernelpermission");
+    clock_gettime(CLOCK_MONOTONIC, &time_end);
+    encpas_cost_time = (time_end.tv_sec - time_start.tv_sec) * CLOCK_SECOND_TO_MILLI
+		+ (time_end.tv_nsec - time_start.tv_nsec) / CLOCK_NANO_TO_MILLI;
+#endif
 	dso->base = base;
 	dso->dynv = laddr(dso, dyn);
 	if (dso->tls.size) dso->tls.image = laddr(dso, tls_image);
@@ -3652,6 +3775,11 @@ end:
 	pthread_setcancelstate(cs, 0);
 	trace_marker_end(HITRACE_TAG_MUSL); // "dlopen: " trace end.
 	clock_gettime(CLOCK_MONOTONIC, &total_end);
+#ifdef USE_ENCAPS
+	dlopen_cost.encaps_time = encpas_cost_time;
+#else
+	dlopen_cost.encaps_time = 0;
+#endif
 	dlopen_cost.total_time = (total_end.tv_sec - total_start.tv_sec) * CLOCK_SECOND_TO_MILLI
 		+ (total_end.tv_nsec - total_start.tv_nsec) / CLOCK_NANO_TO_MILLI;
 	if ((dlopen_cost.total_time > DLOPEN_TIME_THRESHOLD || is_dlopen_debug_enable()) && current_so) {
@@ -3662,7 +3790,8 @@ end:
 				"map_so_time: %{public}d ms, "
 				"reloc_time: %{public}d ms, "
 				"map_cfi_time: %{public}d ms, "
-				"init_time: %{public}d ms",
+				"init_time: %{public}d ms "
+				"encaps_time: %{public}d ms",
 				current_so->name,
 				dlopen_cost.total_time,
 				dlopen_cost.entry_header_time,
@@ -3670,8 +3799,12 @@ end:
 				dlopen_cost.map_so_time,
 				dlopen_cost.reloc_time,
 				dlopen_cost.map_cfi_time,
-				dlopen_cost.init_time);
+				dlopen_cost.init_time,
+				dlopen_cost.encaps_time);
 	}
+#ifdef USE_ENCAPS
+	encpas_cost_time = 0;
+#endif
 	return p;
 }
 
@@ -5209,6 +5342,13 @@ static bool task_map_library(struct loadtask *task, struct reserved_address_para
 		}
 	}
 done_mapping:
+#ifdef USE_ENCAPS
+    clock_gettime(CLOCK_MONOTONIC, &time_start);
+    (void)is_section_exist(task->eh, sizeof(Ehdr), task->fd, ".kernelpermission");
+    clock_gettime(CLOCK_MONOTONIC, &time_end);
+    encpas_cost_time = (time_end.tv_sec - time_start.tv_sec) * CLOCK_SECOND_TO_MILLI
+		+ (time_end.tv_nsec - time_start.tv_nsec) / CLOCK_NANO_TO_MILLI;
+#endif
 	task->p->base = base;
 	task->p->dynv = laddr(task->p, task->dyn);
 	if (task->p->tls.size) {
