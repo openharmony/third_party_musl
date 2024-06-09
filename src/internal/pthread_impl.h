@@ -70,15 +70,13 @@ struct pthread {
 	void *signal_stack;
 #endif
 
-	#ifdef USE_GWP_ASAN
-	    /* musl doesn't support libc using tls, so we reserve some slots here for gwp_asan to use. */
-	    struct {
-	        uint32_t random_state;
-	        uint32_t next_sample_counter : 31;
-	        char recursive_guard : 1;
-	    } gwp_asan_tls;
+	/* musl doesn't support libc using tls, so we reserve some slots here for gwp_asan to use. */
+	struct {
+	    uint32_t random_state;
+	    uint32_t next_sample_counter : 31;
+	    char recursive_guard : 1;
+	} gwp_asan_tls;
 
-	#endif
 
 	/* Part 3 -- the positions of these fields relative to
 	 * the end of the structure is external and internal ABI. */
