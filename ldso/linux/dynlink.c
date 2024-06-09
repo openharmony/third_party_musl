@@ -1779,11 +1779,11 @@ UT_STATIC void *map_library(int fd, struct dso *dso, struct reserved_address_par
 		}
 done_mapping:
 #ifdef USE_ENCAPS
-    clock_gettime(CLOCK_MONOTONIC, &time_start);
+    clock_gettime(CLOCK_MONOTONIC, &encaps_time_start);
     (void)is_section_exist(buf, sizeof(buf), fd, ".kernelpermission");
-    clock_gettime(CLOCK_MONOTONIC, &time_end);
-    encpas_cost_time = (time_end.tv_sec - time_start.tv_sec) * CLOCK_SECOND_TO_MILLI
-		+ (time_end.tv_nsec - time_start.tv_nsec) / CLOCK_NANO_TO_MILLI;
+    clock_gettime(CLOCK_MONOTONIC, &encaps_time_end);
+    encpas_cost_time = (encaps_time_end.tv_sec - encaps_time_start.tv_sec) * CLOCK_SECOND_TO_MILLI
+		+ (encaps_time_end.tv_nsec - encaps_time_start.tv_nsec) / CLOCK_NANO_TO_MILLI;
 #endif
 	dso->base = base;
 	dso->dynv = laddr(dso, dyn);
@@ -5343,11 +5343,11 @@ static bool task_map_library(struct loadtask *task, struct reserved_address_para
 	}
 done_mapping:
 #ifdef USE_ENCAPS
-    clock_gettime(CLOCK_MONOTONIC, &time_start);
+    clock_gettime(CLOCK_MONOTONIC, &encaps_time_start);
     (void)is_section_exist(task->eh, sizeof(Ehdr), task->fd, ".kernelpermission");
-    clock_gettime(CLOCK_MONOTONIC, &time_end);
-    encpas_cost_time = (time_end.tv_sec - time_start.tv_sec) * CLOCK_SECOND_TO_MILLI
-		+ (time_end.tv_nsec - time_start.tv_nsec) / CLOCK_NANO_TO_MILLI;
+    clock_gettime(CLOCK_MONOTONIC, &encaps_time_end);
+    encpas_cost_time = (encaps_time_end.tv_sec - encaps_time_start.tv_sec) * CLOCK_SECOND_TO_MILLI
+		+ (encaps_time_end.tv_nsec - encaps_time_start.tv_nsec) / CLOCK_NANO_TO_MILLI;
 #endif
 	task->p->base = base;
 	task->p->dynv = laddr(task->p, task->dyn);
