@@ -934,6 +934,7 @@ template("musl_libs") {
       ":soft_musl_src_optimize",
       ":soft_musl_src_static",
       ":soft_musl_src_strncpy",
+      ":soft_musl_crt_install_action",
     ]
     external_deps = dfx_external_deps
     if (use_musl && !is_llvm_build) {
