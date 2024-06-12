@@ -937,6 +937,7 @@ template("musl_libs") {
 
     output_dir = "${target_out_dir}/${_libs_out_dir}"
     deps = [
+      ":soft_musl_crt_install_action",
       ":soft_musl_hook_static",
       ":soft_musl_src_nossp",
       ":soft_musl_src_optimize",
