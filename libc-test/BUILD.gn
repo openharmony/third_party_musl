@@ -13,6 +13,7 @@ group("musl_libc_test") {
     "src/musl:pleval",
     "src/nativehook:nativehook_test",
     "src/regression:regression_test",
+    "src/static_link:static_link_test",
   ]
 
   if (use_gwp_asan) {
