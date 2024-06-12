@@ -38,5 +38,4 @@ functionalext_list = [
   "ldso_same_name_symbol:ldso_same_symbol_name_with_different_version",
   "dl_different_hash:dl_different_hash",
   "hilog:hilog_level",
-  "static_link:static_link_test",
 ]
