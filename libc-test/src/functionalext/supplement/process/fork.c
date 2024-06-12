@@ -16,6 +16,7 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <sys/wait.h>
 #include "functionalext.h"
 
 /**
@@ -27,35 +28,50 @@ void fork_0100()
 {
     pid_t fpid;
     int count = 0;
-    fpid = fork();
-    char *sign_r = "1";
-    char *sign_f = "0";
+    int options = 0;
+    const char *sign_r = "1";
+    const char *sign_f = "0";
     char list1[2];
     char list2[2];
-    FILE *fp;
+
+    fpid = fork();
     if (fpid < 0) {
         t_error("%s error in fork!", __func__);
     } else if (fpid == 0) {
-        fp = fopen("test1.txt", "w+");
+        FILE* fp = fopen("test1.txt", "w+");
+        if (!fp) {
+            t_error("failed to open test1.txt for writing");
+        }
         fwrite(sign_r, sizeof(char), strlen(sign_r), fp);
         fclose(fp);
+        _exit(EXIT_SUCCESS);
     } else {
-        fp = fopen("test2.txt", "w+");
+        FILE* fp = fopen("test2.txt", "w+");
+        if (!fp) {
+            t_error("failed to open test2.txt for writing");
+        }
         fwrite(sign_r, sizeof(char), strlen(sign_r), fp);
         fclose(fp);
-    }
-    sleep(1);
-    FILE *fp1 = fopen("test1.txt", "r");
-    FILE *fp2 = fopen("test2.txt", "r");
-    fread(list1, sizeof(list1), 1, fp1);
-    fread(list2, sizeof(list2), 1, fp2);
-    EXPECT_EQ("fork_0100", list1[0], '1');
-    EXPECT_EQ("fork_0100", list2[0], '1');
+        waitpid(fpid, NULL, options);
+	
+        FILE *fp1 = fopen("test1.txt", "r");
+        if (!fp1) {
+            t_error("failed to open test1.txt for reading");
+        }
+        FILE *fp2 = fopen("test2.txt", "r");
+        if (!fp2) {
+            t_error("failed to open test2.txt for reading");
+        }
+        fread(list1, sizeof(list1), 1, fp1);
+        fread(list2, sizeof(list2), 1, fp2);
+        EXPECT_EQ("fork_0100", list1[0], '1');
+        EXPECT_EQ("fork_0100", list2[0], '1');
 
-    fclose(fp1);
-    fclose(fp2);
-    remove("test1.txt");
-    remove("test2.txt");
+        fclose(fp1);
+        fclose(fp2);
+        remove("test1.txt");
+        remove("test2.txt");
+    }
 }
 
 int main(int argc, char *argv[])
