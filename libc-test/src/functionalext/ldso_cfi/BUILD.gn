@@ -146,6 +146,8 @@ ohos_executable("cfi_cross_dso_dtor_test_exe") {
   ]
   use_rtti = true
 
+  ldflags = [ "-Wl,-rpath=./" ]
+
   sources = [ "./crossdso_dtor/cfi_dtor_test.cpp" ]
   configs = [ "//third_party/musl/libc-test/src/common:config_runtest" ]
   deps = [ ":cfi_cross_dso_dtor_test_base" ]
