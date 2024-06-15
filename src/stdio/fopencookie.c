@@ -126,6 +126,7 @@ FILE *fopencookie(void *cookie, const char *mode, cookie_io_functions_t iofuncs)
 
 	/* Initialize op ptrs. No problem if some are unneeded. */
 	f->f.read = cookieread;
+    f->f.readx = cookieread;
 	f->f.write = cookiewrite;
 	f->f.seek = cookieseek;
 	f->f.close = cookieclose;

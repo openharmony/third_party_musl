@@ -9,3 +9,8 @@ int renameat(int oldfd, const char *old, int newfd, const char *new)
 	return syscall(SYS_renameat2, oldfd, old, newfd, new, 0);
 #endif
 }
+
+int renameat2(int oldfd, const char *old, int newfd, const char *new, unsigned int flags)
+{
+    return syscall(SYS_renameat2, oldfd, old, newfd, new, flags);
+}
