@@ -69,7 +69,7 @@ void pwritev_0200(void)
         return;
     }
     int count = sizeof(iov) / sizeof(struct iovec);
-    int ret = pwritev(fd, iov, count + 1, 0);
+    int ret = pwritev(fd, iov, count + 100, 0);
     EXPECT_EQ("pwritev_0200", ret, EOF);
 
     close(fd);
