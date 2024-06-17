@@ -22,7 +22,9 @@
 #include "common_def.h"
 #include "musl_preinit_common.h"
 #include "signal.h"
+#ifdef OHOS_FDTRACK_HOOK_ENABLE
 #include "musl_fdtrack.h"
+#endif
 
 #define MALLOC_REPORT_LIMIT (300 * 1024 * 1024)
 
@@ -34,16 +36,20 @@ extern void* libc_gwp_asan_realloc(void *ptr, size_t size);
 extern void* libc_gwp_asan_calloc(size_t nmemb, size_t size);
 #endif
 
+#ifdef OHOS_FDTRACK_HOOK_ENABLE
 struct timeval prevTime = {0,0};
 static int KICK_ALLOCATE_MEMORY = 60;
+#endif
 
 void* malloc(size_t bytes)
 {
 	if (bytes >= MALLOC_REPORT_LIMIT) {
+#ifdef OHOS_FDTRACK_HOOK_ENABLE
 		if (check_before_memory_allocate(prevTime, KICK_ALLOCATE_MEMORY)) {
 			gettimeofday(&prevTime, NULL);
 			raise(MUSL_SIGNAL_LEAK_STACK);
 		}
+#endif
 	}
 	volatile const struct MallocDispatchType* dispatch_table = (struct MallocDispatchType *)atomic_load_explicit(
 		&__musl_libc_globals.current_dispatch_table, memory_order_acquire);
@@ -145,10 +151,12 @@ int munmap(void* addr, size_t length)
 void* calloc(size_t m, size_t n)
 {
 	if ((m <= (UINT32_MAX / n)) && ((m * n) >= MALLOC_REPORT_LIMIT)) {
+#ifdef OHOS_FDTRACK_HOOK_ENABLE
 		if (check_before_memory_allocate(prevTime, KICK_ALLOCATE_MEMORY)) {
 			gettimeofday(&prevTime, NULL);
 			raise(MUSL_SIGNAL_LEAK_STACK);
 		}
+#endif
 	}
 	volatile const struct MallocDispatchType* dispatch_table = get_current_dispatch_table();
 	if (__predict_false(dispatch_table != NULL)) {
@@ -164,10 +172,12 @@ void* calloc(size_t m, size_t n)
 void* realloc(void *p, size_t n)
 {
 	if (n >= MALLOC_REPORT_LIMIT) {
+#ifdef OHOS_FDTRACK_HOOK_ENABLE
 		if (check_before_memory_allocate(prevTime, KICK_ALLOCATE_MEMORY)) {
 			gettimeofday(&prevTime, NULL);
 			raise(MUSL_SIGNAL_LEAK_STACK);
 		}
+#endif
 	}
 	volatile const struct MallocDispatchType* dispatch_table = get_current_dispatch_table();
 	if (__predict_false(dispatch_table != NULL)) {
