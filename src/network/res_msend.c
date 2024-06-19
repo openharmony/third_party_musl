@@ -199,12 +199,18 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 
 		if (t2-t1 >= retry_interval) {
 			/* Query all configured namservers in parallel */
-			for (i=0; i<nqueries; i++)
-				if (!alens[i])
-					for (j=0; j<nns; j++)
-						sendto(fd, queries[i],
-							qlens[i], MSG_NOSIGNAL,
-							(void *)&ns[j], sl);
+			for (i=0; i<nqueries; i++) {
+				if (!alens[i]) {
+					for (j=0; j<nns; j++) {
+						if (sendto(fd, queries[i], qlens[i], MSG_NOSIGNAL, (void *)&ns[j], sl) == -1) {
+#ifndef __LITEOS__
+							MUSL_LOGE("%{public}s: %{public}d: sendto failed, errno id: %{public}d",
+								__func__, __LINE__, errno);
+#endif
+						}
+					}
+				}
+			}
 			t1 = t2;
 			servfail_retry = 2 * nqueries;
 		}
