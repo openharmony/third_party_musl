@@ -31,16 +31,18 @@ extern int __gettimeofday_time64(struct timeval *__restrict, void *__restrict);
 void gettimeofday_0100(void)
 {
     struct timeval tv;
-    char str[10];
+    char str[11];
     system("date +%s > ./time.txt");
     FILE *fptr = fopen("time.txt", "r");
     fflush(fptr);
     fread(str, sizeof(str), 1, fptr);
+    str[10] = '\0';
+    
     int sec = atoi(str);
     int returnflag = gettimeofday(&tv, NULL);
-    EXPECT_EQ("gettimeofday_0100", returnflag, SUCCESS);
-    EXPECT_EQ("gettimeofday_0100", (long)sec, (long)tv.tv_sec);
     remove("time.txt");
+    EXPECT_EQ("gettimeofday_0100", returnflag, SUCCESS);
+    EXPECT_EQ("gettimeofday_0100",(sec == tv.tv_sec || (sec+1) == tv.tv_sec),true);
 }
 
 /**
@@ -62,16 +64,18 @@ void gettimeofday_0200(void)
 void gettimeofday_time64_0100(void)
 {
     struct timeval tv;
-    char str[10];
+    char str[11];
     system("date +%s > ./time.txt");
     FILE *fptr = fopen("time.txt", "r");
     fflush(fptr);
     fread(str, sizeof(str), 1, fptr);
+    str[10] = '\0';
+    
     int sec = atoi(str);
     int returnflag = __gettimeofday_time64(&tv, NULL);
-    EXPECT_EQ("gettimeofday_time64_0100", returnflag, SUCCESS);
-    EXPECT_EQ("gettimeofday_time64_0100", (long)sec, (long)tv.tv_sec);
     remove("time.txt");
+    EXPECT_EQ("gettimeofday_time64_0100", returnflag, SUCCESS);
+    EXPECT_EQ("gettimeofday_time64_0100", (sec == tv.tv_sec || (sec+1) == tv.tv_sec),true);
 }
 
 int main(int argc, char *argv[])
