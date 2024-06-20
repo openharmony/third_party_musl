@@ -1831,7 +1831,7 @@ UT_STATIC int fixup_rpath(struct dso *p, char *buf, size_t buf_size)
 	char *d;
 	if (p->rpath || !p->rpath_orig) return 0;
 	if (!strchr(p->rpath_orig, '$')) {
-		p->rpath = p->rpath_orig;
+		p->rpath = strdup(p->rpath_orig);
 		return 0;
 	}
 	n = 0;
@@ -3573,8 +3573,7 @@ void *dlopen_impl(
 				p->td_index = tmp;
 			}
 			free(p->funcdescs);
-			if (p->rpath != p->rpath_orig)
-				free(p->rpath);
+			free(p->rpath);
 			if (p->deps) {
 				for (int i = 0; i < p->ndeps_direct; i++) {
 					remove_dso_parent(p->deps[i], p);
