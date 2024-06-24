@@ -33,11 +33,7 @@
         },
         "build": {
             "sub_component": [],
-            "inner_kits": [
-                {
-                    "name": "//third_party/musl:soft_libc_musl_static"
-                }
-            ],
+            "inner_kits": [],
             "test": [
                 "//third_party/musl/fuzztest:fuzztest"
             ]
