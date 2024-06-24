@@ -155,31 +155,39 @@ static void signal_chain_handler(int signo, siginfo_t* siginfo, void* ucontext_r
     /* First call special handler. */
     /* If a process crashes, the sigchain'll call the corresponding  handler */
     if (!get_handling_signal()) {
-        for (int i = 0; i < SIGNAL_CHAIN_SPECIAL_ACTION_MAX; i++) {
-            if (sig_chains[signo - 1].sca_special_actions[i].sca_sigaction == NULL) {
+        int idx, validSigaction = 0;
+        for (idx = 0; idx < SIGNAL_CHAIN_SPECIAL_ACTION_MAX; idx++) {
+            if (sig_chains[signo - 1].sca_special_actions[idx].sca_sigaction == NULL) {
                 continue;
             }
+            validSigaction = 1;
             /* The special handler might not return. */
-            bool noreturn = (sig_chains[signo - 1].sca_special_actions[i].sca_flags &
+            bool noreturn = (sig_chains[signo - 1].sca_special_actions[idx].sca_flags &
                              SIGCHAIN_ALLOW_NORETURN);
             sigset_t previous_mask;
-            sigchain_sigmask(SIG_SETMASK, &sig_chains[signo - 1].sca_special_actions[i].sca_mask,
+            sigchain_sigmask(SIG_SETMASK, &sig_chains[signo - 1].sca_special_actions[idx].sca_mask,
                             &previous_mask);
 
             bool previous_value = get_handling_signal();
             if (!noreturn) {
                 set_handling_signal(true);
             }
-            SIGCHAIN_PRINT_ERROR("%{public}s call %{public}d rd sigchain action for signal: %{public}d", __func__, i, signo);
-            if (sig_chains[signo - 1].sca_special_actions[i].sca_sigaction(signo,
+            SIGCHAIN_PRINT_ERROR("%{public}s call %{public}d rd sigchain action for signal: %{public}d"
+                " sca_sigaction=%{public}llx noreturn=%{public}d",
+                __func__, idx, signo, (unsigned long long)sig_chains[signo - 1].sca_special_actions[idx].sca_sigaction,
+                noreturn);
+            if (sig_chains[signo - 1].sca_special_actions[idx].sca_sigaction(signo,
                                                             siginfo, ucontext_raw)) {
                 set_handling_signal(previous_value);
-                SIGCHAIN_PRINT_ERROR("%{public}s call %{public}d rd sigchain action for signal: %{public}d directly return", __func__, i, signo);
+                SIGCHAIN_PRINT_ERROR("%{public}s call %{public}d rd sigchain action for signal: %{public}d directly return", __func__, idx, signo);
                 return;
             }
 
             sigchain_sigmask(SIG_SETMASK, &previous_mask, NULL);
             set_handling_signal(previous_value);
+        }
+        if (idx == SIGNAL_CHAIN_SPECIAL_ACTION_MAX && !validSigaction) {
+            SIGCHAIN_PRINT_ERROR("signal_chain_handler sca_sigaction all null for signal: %{public}d", signo);
         }
     }
     /* Then Call the user's signal handler */
