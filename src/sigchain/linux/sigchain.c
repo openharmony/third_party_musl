@@ -205,6 +205,7 @@ static void signal_chain_handler(int signo, siginfo_t* siginfo, void* ucontext_r
 
     if ((sa_flags & SA_SIGINFO)) {
         SIGCHAIN_PRINT_ERROR("%{public}s call usr sigaction for signal: %{public}d sig_action.sa_sigaction=%{public}p", __func__, signo, sig_chains[signo - 1].sig_action.sa_sigaction);
+        sig_chains[signo - 1].sig_action.sa_sigaction(signo, siginfo, ucontext_raw);
     } else {
         if (sig_chains[signo - 1].sig_action.sa_handler == SIG_IGN) {
             SIGCHAIN_PRINT_ERROR("%{public}s SIG_IGN handler for signal: %{public}d", __func__, signo);
