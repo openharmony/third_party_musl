@@ -677,7 +677,12 @@ static void BM_function_Getdelim(benchmark::State& state)
         errx(1, "ERROR: fp is nullptr\n");
     }
     const char* buf = "123 4567 78901 ";
-    fwrite(buf, strlen(buf), 1, fp);
+    const int bufLen = strlen(buf);
+    //增大测试文件，确保在进行benchmark循环测试时，不会读到文件尾而进入fseek函数影响数据准确性
+    for (int i = 0; i < 1024 * 1024; ++i) {
+        fwrite(buf, bufLen, 1, fp);
+    }
+
     fflush(fp);
     fseek(fp, 0, SEEK_SET);
 
