@@ -16,13 +16,18 @@
 #include <errno.h>
 #include <ftw.h>
 #include <limits.h>
+#include <fcntl.h>
+#include <unistd.h>
 #include <stdlib.h>
+#include <dirent.h>
 #include <sys/stat.h>
 #include "functionalext.h"
 
 #define TEST_FD_LIMIT 128
 #define TEST_FLAG_SIZE 4
 #define TEST_DIGIT_TWO 2
+#define TEST_PATH_DEPTH 5
+#define TEST_NFTW_PATH "/data/local/tmp/nftwPath"
 
 static int nftw_callback(const char *pathname, const struct stat *sb, int flag, struct FTW *ftw)
 {
@@ -48,6 +53,95 @@ static int nftw_callback(const char *pathname, const struct stat *sb, int flag, 
     return 0;
 }
 
+void remove_directory(const char *path)
+{
+    DIR *dir;
+    struct dirent *entry;
+    char filepath[PATH_MAX];
+  
+    if (!(dir = opendir(path))) {
+        return;
+    }
+  
+    while ((entry = readdir(dir)) != NULL) {
+        if (entry->d_type == DT_DIR) {
+            if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) {
+                continue;
+            }
+  
+            sprintf(filepath, "%s/%s", path, entry->d_name);
+            remove_directory(filepath);
+        } else {
+            sprintf(filepath, "%s/%s", path, entry->d_name);
+            if (remove(filepath) == -1) {
+                t_error("%s error in remove test nftw filepath! \n", __func__);
+            }
+        }
+    }
+  
+    closedir(dir);
+  
+    // Now we can remove the empty directory
+    if (rmdir(path) == -1) {
+        t_error("%s error in rmdir test nftw path! \n", __func__);
+    }
+}
+
+void nftw_build_testfile(const char *path)
+{
+    // 创建目录
+    if (mkdir(path, 0755) == -1) {
+        t_error("%s error in mkdir test nftw path! %s \n", __func__, path);
+        return;
+    }
+    
+    char file[PATH_MAX];
+    sprintf(file, "%s/normal_file.txt", path);
+    // 在目录中创建普通文件
+    int fd = open(file, O_WRONLY | O_CREAT, 0644);
+    if (fd == -1) {
+        t_error("%s error in open normal_file.txt! \n", __func__);
+        return;
+    }
+    close(fd);
+
+    sprintf(file, "%s/.hidden_file.txt", path);
+    // 在目录中创建隐藏文件
+    fd = open(file, O_WRONLY | O_CREAT, 0644);
+    if (fd == -1) {
+        t_error("%s error in open hidden_file.txt! \n", __func__);
+        return;
+    }
+    close(fd);
+  
+    sprintf(file, "%s/read_only_file.txt", path);
+    // 在目录中创建只读文件
+    fd = open(file, O_WRONLY | O_CREAT, 0444);
+    if (fd == -1) {
+        t_error("%s error in open read_only_file.txt! \n", __func__);
+        return;
+    }
+    close(fd);
+  
+    sprintf(file, "%s/symlink_to_normal_file", path);
+    // 创建一个符号链接指向普通文件
+    if (symlink("normal_file.txt", file) == -1) {
+        t_error("%s error in open symlink_to_normal_file.txt! \n", __func__);
+        return;
+    }
+}
+
+void nftw_build_testDir()
+{
+    nftw_build_testfile(TEST_NFTW_PATH);
+    char path[PATH_MAX];
+    sprintf(path, "%s", TEST_NFTW_PATH);
+    for (int i = 0 ; i < TEST_PATH_DEPTH ; i++) {
+        sprintf(path, "%s/data", path);
+        nftw_build_testfile(path);
+    }
+}
+
 /**
  * @tc.name      : nftw_0100
  * @tc.desc      : Traverse directory /data
@@ -56,10 +150,9 @@ static int nftw_callback(const char *pathname, const struct stat *sb, int flag, 
 void nftw_0100(void)
 {
     int flag[TEST_FLAG_SIZE] = {FTW_PHYS, FTW_MOUNT, FTW_CHDIR, FTW_DEPTH};
-    const char *path = "/data";
     int i;
     for (i = 0; i < TEST_FLAG_SIZE; i++) {
-        int ret = nftw(path, nftw_callback, TEST_FD_LIMIT, flag[i]);
+        int ret = nftw(TEST_NFTW_PATH, nftw_callback, TEST_FD_LIMIT, flag[i]);
         EXPECT_EQ("nftw_0100", ret, 0);
     }
 }
@@ -71,8 +164,7 @@ void nftw_0100(void)
  */
 void nftw_0200(void)
 {
-    const char *path = "/data";
-    int ret = nftw(path, nftw_callback, 0, FTW_PHYS);
+    int ret = nftw(TEST_NFTW_PATH, nftw_callback, 0, FTW_PHYS);
     EXPECT_EQ("nftw_0200", ret, 0);
 }
 
@@ -93,8 +185,10 @@ void nftw_0300(void)
 
 int main(void)
 {
+    nftw_build_testDir();
     nftw_0100();
     nftw_0200();
     nftw_0300();
+    remove_directory(TEST_NFTW_PATH);
     return t_status;
 }
