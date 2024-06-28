@@ -31,7 +31,8 @@ static unsigned long mtime()
 		+ ts.tv_nsec / 1000000;
 }
 
-static int start_tcp(struct pollfd *pfd, int family, const void *sa, socklen_t sl, const unsigned char *q, int ql)
+static int start_tcp(struct pollfd *pfd, int family, const void *sa,
+	socklen_t sl, const unsigned char *q, int ql, int netid)
 {
 	struct msghdr mh = {
 		.msg_name = (void *)sa,
@@ -43,6 +44,18 @@ static int start_tcp(struct pollfd *pfd, int family, const void *sa, socklen_t s
 	};
 	int r;
 	int fd = socket(family, SOCK_STREAM|SOCK_CLOEXEC|SOCK_NONBLOCK, 0);
+#ifndef __LITEOS__
+	if (fd < 0) {
+		MUSL_LOGE("%{public}s: %{public}d: create TCP socket failed, errno id: %{public}d",
+			__func__, __LINE__, errno);
+	}
+	/**
+	 * Todo FwmarkClient::BindSocket
+	*/
+	if (netid > 0) {
+		res_bind_socket(fd, netid);
+	}
+#endif
 	pfd->fd = fd;
 	pfd->events = POLLOUT;
 	if (!setsockopt(fd, IPPROTO_TCP, TCP_FASTOPEN_CONNECT,
@@ -128,6 +141,12 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 
 	/* Get local address and open/bind a socket */
 	fd = socket(family, SOCK_DGRAM|SOCK_CLOEXEC|SOCK_NONBLOCK, 0);
+#ifndef __LITEOS__
+	if (fd < 0) {
+		MUSL_LOGE("%{public}s: %{public}d: create UDP socket failed, errno id: %{public}d",
+			__func__, __LINE__, errno);
+	}
+#endif
 
 	/* Handle case where system lacks IPv6 support */
 	if (fd < 0 && family == AF_INET6 && errno == EAFNOSUPPORT) {
@@ -229,7 +248,13 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 				}
 			};
 			rlen = recvmsg(fd, &mh, 0);
-			if (rlen < 0) break;
+			if (rlen < 0) {
+#ifndef __LITEOS__
+				MUSL_LOGE("%{public}s: %{public}d: recvmsg failed, errno id: %{public}d",
+					__func__, __LINE__, errno);
+#endif
+				break;
+			}
 
 			/* Ignore non-identifiable packets */
 			if (rlen < 4) continue;
@@ -274,9 +299,13 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 
 			/* If answer is truncated (TC bit), fallback to TCP */
 			if ((answers[i][2] & 2) || (mh.msg_flags & MSG_TRUNC)) {
+#ifndef __LITEOS__
+				MUSL_LOGE("%{public}s: %{public}d: fallback to TCP, msg_flags: %{public}d",
+					__func__, __LINE__, mh.msg_flags);
+#endif
 				alens[i] = -1;
 				pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, 0);
-				r = start_tcp(pfd+i, family, ns+j, sl, queries[i], qlens[i]);
+				r = start_tcp(pfd+i, family, ns+j, sl, queries[i], qlens[i], netid);
 				pthread_setcancelstate(cs, 0);
 				if (r >= 0) {
 					qpos[i] = r;
