@@ -241,6 +241,7 @@ if (musl_arch == "arm") {
   musl_src_arch_file = [
     "src/fenv/loongarch64/fenv.S",
     "src/ldso/loongarch64/dlsym.s",
+    "src/ldso/loongarch64/tlsdesc.s",
     "src/setjmp/loongarch64/longjmp.S",
     "src/setjmp/loongarch64/setjmp.S",
     "src/signal/loongarch64/restore.s",
@@ -1815,6 +1816,7 @@ if (musl_arch == "arm") {
   musl_src_filterout = [
     "src/fenv/fenv.c",
     "src/ldso/dlsym.c",
+    "src/ldso/tlsdesc.c",
     "src/setjmp/longjmp.c",
     "src/setjmp/setjmp.c",
     "src/signal/restore.c",
@@ -2494,6 +2496,8 @@ if (musl_arch == "arm") {
     "src/misc/aarch64/syscall.s",
     "src/ldso/aarch64/dlvsym.s",
   ]
+} else if (musl_arch == "loongarch64") {
+  musl_src_file += [ "arch/loongarch64/syscall_arch.h" ]
 } else if (musl_arch == "x86_64") {
   musl_src_file += [
     "src/process/x86_64/__vfork.s",
