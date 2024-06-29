@@ -23,7 +23,7 @@
  */
 void mkstemps_0100(void)
 {
-    char tmpfile[] = "/tmp/mkstemps_0100_XXXXXX.dat";
+    char tmpfile[] = "/data/local/tmp/mkstemps_0100_XXXXXX.dat";
     int fd = mkstemps(tmpfile, strlen(".dat"));
     EXPECT_TRUE("mkstemps_0100", fd != -1);
     if (fd != -1) {
@@ -45,7 +45,7 @@ void mkstemps_0100(void)
  */
 void mkstemps_0200(void)
 {
-    char tmpfile[] = "/tmp/mkstemps_0200_XXXXXX";
+    char tmpfile[] = "/data/local/tmp/mkstemps_0200_XXXXXX";
     int fd = mkstemps(tmpfile, 0);
     EXPECT_TRUE("mkstemps_0200", fd != -1);
     if (fd != -1) {
@@ -67,7 +67,7 @@ void mkstemps_0200(void)
  */
 void mkstemps_0300(void)
 {
-    char tmpfile[] = "/tmp/mkstemps_0300.dat";
+    char tmpfile[] = "/data/local/tmp/mkstemps_0300.dat";
     int fd = mkstemps(tmpfile, strlen(".dat"));
     EXPECT_TRUE("mkstemps_0300", fd == -1);
     if (fd != -1) {
