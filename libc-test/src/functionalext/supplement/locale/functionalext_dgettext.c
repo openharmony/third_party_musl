@@ -31,7 +31,7 @@ void dgettext_0100()
 {
     char *msgid = "hello";
     setlocale(LC_ALL, "zh_CN");
-    bindtextdomain(PACKAGE, "/tmp");
+    bindtextdomain(PACKAGE, "/data/local/tmp/");
     char* result = dgettext(PACKAGE, msgid);
     if (!result) {
         EXPECT_PTRNE("dgettext_0200", result, NULL);
