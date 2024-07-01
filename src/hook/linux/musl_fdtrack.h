@@ -31,6 +31,7 @@ enum fdtrack_type {
 
 struct fdtrack_event {
 	uint32_t type;
+	int fd;
 };
 
 typedef void (*fdtrack_hook)(struct fdtrack_event*);
