@@ -29,6 +29,7 @@ int FDTRACK_START_HOOK(int fd_value)
 	if (fd != -1 && __predict_false(__fdtrack_enabled) && __predict_false(__fdtrack_hook)) {
 		struct fdtrack_event event;
 		event.type = FDTRACK_EVENT_TYPE_CREATE;
+		event.fd = fd;
 		atomic_load(&__fdtrack_hook)(&event);
 	}
 	return fd;
