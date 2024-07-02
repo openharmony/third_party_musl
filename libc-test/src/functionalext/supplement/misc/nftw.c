@@ -20,6 +20,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <dirent.h>
+#include <pthread.h>
 #include <sys/stat.h>
 #include "functionalext.h"
 
@@ -28,6 +29,8 @@
 #define TEST_DIGIT_TWO 2
 #define TEST_PATH_DEPTH 5
 #define TEST_NFTW_PATH "/data/local/tmp/nftwPath"
+
+pthread_mutex_t g_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 static int nftw_callback(const char *pathname, const struct stat *sb, int flag, struct FTW *ftw)
 {
@@ -89,7 +92,7 @@ void remove_directory(const char *path)
 
 void nftw_build_testfile(const char *path)
 {
-    // 创建目录
+    // Create directory
     if (mkdir(path, 0755) == -1) {
         t_error("%s error in mkdir test nftw path! %s \n", __func__, path);
         return;
@@ -97,7 +100,7 @@ void nftw_build_testfile(const char *path)
     
     char file[PATH_MAX];
     sprintf(file, "%s/normal_file.txt", path);
-    // 在目录中创建普通文件
+    // Create plain file
     int fd = open(file, O_WRONLY | O_CREAT, 0644);
     if (fd == -1) {
         t_error("%s error in open normal_file.txt! \n", __func__);
@@ -106,7 +109,7 @@ void nftw_build_testfile(const char *path)
     close(fd);
 
     sprintf(file, "%s/.hidden_file.txt", path);
-    // 在目录中创建隐藏文件
+    // Create Hidden Files
     fd = open(file, O_WRONLY | O_CREAT, 0644);
     if (fd == -1) {
         t_error("%s error in open hidden_file.txt! \n", __func__);
@@ -115,7 +118,7 @@ void nftw_build_testfile(const char *path)
     close(fd);
   
     sprintf(file, "%s/read_only_file.txt", path);
-    // 在目录中创建只读文件
+    //Create Read-only files
     fd = open(file, O_WRONLY | O_CREAT, 0444);
     if (fd == -1) {
         t_error("%s error in open read_only_file.txt! \n", __func__);
@@ -124,7 +127,7 @@ void nftw_build_testfile(const char *path)
     close(fd);
   
     sprintf(file, "%s/symlink_to_normal_file", path);
-    // 创建一个符号链接指向普通文件
+    // Create Symbolic links
     if (symlink("normal_file.txt", file) == -1) {
         t_error("%s error in open symlink_to_normal_file.txt! \n", __func__);
         return;
@@ -185,10 +188,12 @@ void nftw_0300(void)
 
 int main(void)
 {
+    pthread_mutex_lock(&g_mutex);
     nftw_build_testDir();
     nftw_0100();
     nftw_0200();
     nftw_0300();
     remove_directory(TEST_NFTW_PATH);
+    pthread_mutex_unlock(&g_mutex);
     return t_status;
 }
