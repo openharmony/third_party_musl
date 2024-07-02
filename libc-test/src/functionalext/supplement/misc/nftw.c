@@ -108,6 +108,24 @@ void nftw_build_testfile(const char *path)
     }
     close(fd);
 
+    sprintf(file, "%s/non-executable_file.txt", path);
+    // Create non-executable file
+    fd = open(file, O_WRONLY | O_CREAT, 0666);
+    if (fd == -1) {
+        t_error("%s error in open normal_file.txt! \n", __func__);
+        return;
+    }
+    close(fd);
+
+    sprintf(file, "%s/unauthorized_file.txt", path);
+    // Create unauthorized file
+    fd = open(file, O_WRONLY | O_CREAT, 0000);
+    if (fd == -1) {
+        t_error("%s error in open normal_file.txt! \n", __func__);
+        return;
+    }
+    close(fd);
+
     sprintf(file, "%s/.hidden_file.txt", path);
     // Create Hidden Files
     fd = open(file, O_WRONLY | O_CREAT, 0644);
