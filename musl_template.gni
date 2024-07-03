@@ -41,15 +41,12 @@ template("static_and_shared_libs_template") {
       "__BUILD_LINUX_WITH_CLANG",
     ]
 
-    if (!is_asan && musl_arch != "mips") {
+    if (!is_llvm_build && !is_asan && musl_arch != "mips") {
       defines += [
         "HOOK_ENABLE",
         "OHOS_SOCKET_HOOK_ENABLE",
+        "OHOS_FDTRACK_HOOK_ENABLE",
       ]
-    }
-
-    if (!is_llvm_build && !is_asan && musl_arch != "mips") {
-      defines += [ "OHOS_FDTRACK_HOOK_ENABLE" ]
     }
 
     ldflags = [ "-nostdlib" ]
@@ -450,8 +447,7 @@ template("static_and_shared_libs_template") {
       "-fstack-protector-strong",
     ]
 
-    if (!(use_libfuzzer || is_mac || is_asan || use_clang_coverage) &&
-        __use_flto) {
+    if (!(use_libfuzzer || is_mac || is_asan || is_tsan || use_clang_coverage) && __use_flto) {
       cflags += [ "-flto" ]
     } else {
       not_needed([ "__use_flto" ])
@@ -520,7 +516,7 @@ template("static_and_shared_libs_template") {
       "-fno-stack-protector",
       "-O3",
     ]
-    if (is_asan) {
+    if (is_asan || is_tsan) {
       defines = [
         "NSLIST_DEFAULT_SIZE=1600",
         "DSOLIST_DEFAULT_SIZE=1600",
@@ -1146,8 +1142,11 @@ template("musl_libs") {
 
     # _libc_shared_outputs = get_target_outputs(":soft_libc_musl_shared")
     _libc_shared_so = "${target_out_dir}/${_libs_out_dir}/libc.so"
+
+    # Note that build framework puts the "tsan" lib in the "asan" directory(like /system/asan/lib64).
+    # We need to take advantage of the ability of the asan version of libc to find the lib from the asan directory.
     sources = [ _libc_shared_so ]
-    if (is_asan) {
+    if (is_asan || is_tsan) {
       asan = "-asan"
     } else {
       asan = ""
