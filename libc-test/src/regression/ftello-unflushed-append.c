@@ -16,7 +16,7 @@
 
 int main(void)
 {
-	char tmp[] = "/tmp/testsuite-XXXXXX";
+	char tmp[] = "/data/local/tmp/testsuite-XXXXXX";
 	int fd;
 	FILE *f;
 	off_t off;

@@ -32,7 +32,7 @@ void gettext_0100()
 {
     char *msgid = "hello";
     setlocale(LC_ALL, "zh_CN");
-    bindtextdomain(PACKAGE, "/tmp");
+    bindtextdomain(PACKAGE, "/data/local/tmp/");
     textdomain(PACKAGE);  
     char* result = gettext(msgid);
     if (!result) {

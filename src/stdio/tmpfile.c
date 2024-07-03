@@ -8,7 +8,7 @@
 
 FILE *tmpfile(void)
 {
-	char s[] = "/tmp/tmpfile_XXXXXX";
+	char s[] = "/data/local/tmp/tmpfile_XXXXXX";
 	int fd;
 	FILE *f;
 	int try;
