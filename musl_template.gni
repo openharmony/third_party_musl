@@ -41,12 +41,15 @@ template("static_and_shared_libs_template") {
       "__BUILD_LINUX_WITH_CLANG",
     ]
 
-    if (!is_llvm_build && !is_asan && musl_arch != "mips") {
+    if (!is_asan && musl_arch != "mips") {
       defines += [
         "HOOK_ENABLE",
         "OHOS_SOCKET_HOOK_ENABLE",
-        "OHOS_FDTRACK_HOOK_ENABLE",
       ]
+    }
+
+    if (!is_llvm_build && !is_asan && musl_arch != "mips") {
+      defines += [ "OHOS_FDTRACK_HOOK_ENABLE" ]
     }
 
     ldflags = [ "-nostdlib" ]
