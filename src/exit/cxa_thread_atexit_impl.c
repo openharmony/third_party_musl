@@ -53,20 +53,8 @@ void run_cur_thread_dtors(void *)
     return; 
 } 
 
-__attribute__((optnone)) void thread_local_init()
-{
-    if (!thread_local_dtors) {
-        thread_local_dtors = NULL;
-    }
-
-    if (!thread_local_dtors_alive) {
-        thread_local_dtors_alive = NULL;
-    }
-}
-
 __attribute__((constructor())) void cxa_thread_init()
 {
-    thread_local_init();
     if (pthread_key_create(&dtors_key, run_cur_thread_dtors) != 0) {
         abort();
     }
