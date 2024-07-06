@@ -1,6 +1,7 @@
 // commit: 59666802fba592a59f2f4ea4dcb053287fd55826 2011-02-15
 // pthread_create should return EAGAIN on failure
 #include <pthread.h>
+#include <stdlib.h>
 #include <errno.h>
 #include <string.h>
 #include "test.h"
@@ -23,5 +24,6 @@ int main(void)
 	else if (r != EAGAIN)
 		t_error("pthread_create should fail with EAGAIN but failed with %d (%s)\n", r, strerror(r));
 
+	_Exit(t_status);
 	return t_status;
 }

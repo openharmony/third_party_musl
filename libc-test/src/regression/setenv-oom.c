@@ -22,5 +22,6 @@ int main(void)
 	if (errno != ENOMEM)
 		t_error("expected ENOMEM, got %s\n", strerror(errno));
 
+	_Exit(t_status);
 	return t_status;
 }
