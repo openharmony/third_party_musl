@@ -12,8 +12,24 @@ struct ksigevent {
 };
 
 struct start_args {
-	pthread_barrier_t b;
+	volatile int b;
 	struct sigevent *sev;
+};
+
+/*
+* barrier val:
+* 0: init state
+* 2: child thread arrive: when child thread is the first thread to arrive, will wait, otherwise, will wake
+* 3: parent thread arrive: when parent thread is the first thread to arrive, will wait, otherwise, will wake
+* 4: parent thread should wait for the child to finish synchronizing (state: CHILD_DONE)
+* 5: child thread done
+*/
+enum ThreadState {
+	INIT_STATE = 0,
+	CHILD_ARRIVE = 2,
+	PARENT_ARRIVE,
+	PARENT_WAIT,
+	CHILD_DONE,
 };
 
 static void dummy_0()
@@ -35,6 +51,31 @@ static void cleanup_fromsig(void *p)
 	longjmp(p, 1);
 }
 
+static void __child_sync(volatile int *barrier)
+{
+	if (a_swap(barrier, CHILD_ARRIVE) == INIT_STATE) {
+		__wait(barrier, 0, CHILD_ARRIVE, 0);
+	} else {
+		__wake(barrier, 1, 0);
+	}
+
+	a_swap(barrier, CHILD_DONE);
+	__wake(barrier, 1, 0);
+}
+
+static void __parent_sync(volatile int *barrier)
+{
+	if (a_swap(barrier, PARENT_ARRIVE) == CHILD_ARRIVE) {
+		__wake(barrier, 1, 0);
+	} else {
+		__wait(barrier, 0, PARENT_ARRIVE, 0);
+	}
+
+	if (a_swap(barrier, PARENT_WAIT) != CHILD_DONE) {
+		__wait(barrier, 0, PARENT_WAIT, 0);
+	}
+}
+
 static void *start(void *arg)
 {
 	pthread_t self = __pthread_self();
@@ -44,7 +85,7 @@ static void *start(void *arg)
 	void (*notify)(union sigval) = args->sev->sigev_notify_function;
 	union sigval val = args->sev->sigev_value;
 
-	pthread_barrier_wait(&args->b);
+	__child_sync(&args->b);
 #ifdef FEATURE_PTHREAD_CANCEL
 	if (self->cancel)
 		return 0;
@@ -103,7 +144,7 @@ int timer_create(clockid_t clk, struct sigevent *restrict evp, timer_t *restrict
 		else
 			pthread_attr_init(&attr);
 		pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
-		pthread_barrier_init(&args.b, 0, 2);
+		a_store(&args.b, 0);
 		args.sev = evp;
 
 		__block_app_sigs(&set);
@@ -126,7 +167,7 @@ int timer_create(clockid_t clk, struct sigevent *restrict evp, timer_t *restrict
 #endif
 		}
 		td->timer_id = timerid;
-		pthread_barrier_wait(&args.b);
+		__parent_sync(&args.b);
 		if (timerid < 0) return -1;
 		*res = (void *)(INTPTR_MIN | (uintptr_t)td>>1);
 		break;
