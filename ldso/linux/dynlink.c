@@ -1831,7 +1831,7 @@ UT_STATIC int fixup_rpath(struct dso *p, char *buf, size_t buf_size)
 	char *d;
 	if (p->rpath || !p->rpath_orig) return 0;
 	if (!strchr(p->rpath_orig, '$')) {
-		p->rpath = strdup(p->rpath_orig);
+		p->rpath = ld_strdup(p->rpath_orig);
 		return 0;
 	}
 	n = 0;
