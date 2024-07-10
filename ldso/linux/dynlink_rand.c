@@ -213,7 +213,8 @@ void shuffle_loadtasks(struct loadtasks *tasks)
     size_t index = 0;
     struct loadtask *task = NULL;
     for (size_t i = 0; i < tasks->length; i++) {
-        if (getrandom(&index, sizeof index, GRND_RANDOM | GRND_NONBLOCK) == -1) {
+        // Use flag GRND_RANDOM should "block" or "nonblock with retry". This will result in performance loss.
+        if (getrandom(&index, sizeof index, GRND_NONBLOCK) == -1) {
             return;
         } else {
             index %= tasks->length;
