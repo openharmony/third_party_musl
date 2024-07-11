@@ -128,6 +128,10 @@ template("static_and_shared_libs_template") {
       "-O3",
       "-Wno-int-conversion",
     ]
+
+    if (!__use_flto) {
+      cflags_c = [ "-fno-lto" ]
+    }
   }
 
   source_set("soft_musl_src_${target_name}") {
