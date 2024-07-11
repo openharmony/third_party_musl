@@ -4,7 +4,7 @@
         "License"               : "MIT License",
         "License File"          : "COPYRIGHT",
         "Version Number"        : "1.2.5",
-        "Owner"                 : "jianghan2@huawei.com",
+        "Owner"                 : "zhaoxinyuan9@huawei.com",
         "Upstream URL"          : "https://musl.libc.org",
         "Description"           : "musl is an MIT-licensed implementation of the standard C library"
     },
