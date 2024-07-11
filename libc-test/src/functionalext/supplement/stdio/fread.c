@@ -154,12 +154,238 @@ void fread_0500(void)
     fclose(fStatus);
 }
 
+#define ARRAY_SIZE_1026 (1026)
+#define BUFFER_SIZE_1026 (1026)
+#define READ_LENGTH (20)
+#define SEEK_OFFSET (1006)
+#define BUFFER_SIZE_1024 (1024)
+#define ZERO (0)
+
+void fread_0600()
+{
+    char myArray[ARRAY_SIZE_1026] = {};
+    memset(myArray, '3', ARRAY_SIZE_1026);
+    myArray[ARRAY_SIZE_1026 - 2] = '1';
+    myArray[ARRAY_SIZE_1026 - 1] = '2';
+
+    // 使用fmemopen获取FILE*指针
+    FILE *fp = fmemopen(myArray, sizeof(myArray), "r");
+    if (fp == NULL) {
+        t_error("fmemopen failed");
+    }
+
+    // 使用fread读取FILE*指针
+    char *buffer = (char *)malloc((BUFFER_SIZE_1026 + 1) * sizeof(char));
+    memset(buffer, ZERO, BUFFER_SIZE_1026 * sizeof(char));
+    char result1[READ_LENGTH + 1] = {};
+    memset(result1, '3', READ_LENGTH);
+    result1[READ_LENGTH] = '\0';
+
+    char result2[READ_LENGTH + 1] = {};
+    memset(result2, '3', READ_LENGTH);
+    result2[READ_LENGTH - 2] = '1';
+    result2[READ_LENGTH - 1] = '2';
+    result2[READ_LENGTH] = '\0';
+
+    char result3[BUFFER_SIZE_1024 + 1] = {};
+    memset(result3, '3', BUFFER_SIZE_1024 * sizeof(char));
+    result3[BUFFER_SIZE_1024] = '\0';
+
+    // read 20 bytes from fp
+    fseek(fp, ZERO, SEEK_SET);
+    size_t bytesRead = fread(buffer, 1, READ_LENGTH, fp);
+    buffer[bytesRead] = '\0';
+    EXPECT_STREQ("fread_0600 point 1", buffer, result1);
+
+    // read 20 bytes from fp
+    fseek(fp, ZERO, SEEK_SET);
+    memset(buffer, ZERO, BUFFER_SIZE_1026 * sizeof(char));
+    bytesRead = fread(buffer, READ_LENGTH, 1, fp);
+    buffer[READ_LENGTH] = '\0';
+    EXPECT_STREQ("fread_0600 point 2", buffer, result1);
+
+    // read 20 bytes from fp, start from 1006
+    fseek(fp, SEEK_OFFSET, SEEK_SET);
+    memset(buffer, ZERO, BUFFER_SIZE_1026 * sizeof(char));
+    bytesRead = fread(buffer, 1, READ_LENGTH, fp);
+    buffer[bytesRead] = '\0';
+    EXPECT_STREQ("fread_0600 point 3 from 1006", buffer, result2);
+
+    // read 1024 bytes from fp
+    fseek(fp, ZERO, SEEK_SET);
+    memset(buffer, ZERO, BUFFER_SIZE_1026 * sizeof(char));
+    bytesRead = fread(buffer, 1, BUFFER_SIZE_1024, fp);
+    buffer[bytesRead] = '\0';
+    EXPECT_STREQ("fread_0600 point 4 read 1024", buffer, result3);
+
+    // read 1026 bytes from fp
+    fseek(fp, ZERO, SEEK_SET);
+    memset(buffer, ZERO, BUFFER_SIZE_1026 * sizeof(char));
+    bytesRead = fread(buffer, 1, BUFFER_SIZE_1026, fp);
+    buffer[bytesRead] = '\0';
+    EXPECT_STREQ("fread_0600 point 5 read 1026", buffer, myArray);
+
+    free(buffer);
+    fclose(fp);
+}
+
+void fread_0700()
+{
+    char myArray[ARRAY_SIZE_1026] = {};
+    memset(myArray, '3', ARRAY_SIZE_1026);
+    myArray[ARRAY_SIZE_1026 - 2] = '1';
+    myArray[ARRAY_SIZE_1026 - 1] = '2';
+
+    // 使用fmemopen获取FILE*指针
+    FILE *fp = fmemopen(myArray, sizeof(myArray), "r");
+    if (fp == NULL) {
+        t_error("fmemopen failed");
+    }
+
+    char *fpBuffer = (char *)malloc((BUFFER_SIZE_1026 + 1) * sizeof(char));
+    int result = setvbuf(fp, fpBuffer, _IOFBF, BUFFER_SIZE_1026);
+    if (result != ZERO) {
+        t_error("fread_0700 servbuf failed errno=", errno);
+    }
+
+    // 使用fread读取FILE*指针
+    char *buffer = (char *)malloc((BUFFER_SIZE_1026 + 1) * sizeof(char));
+    memset(buffer, ZERO, BUFFER_SIZE_1026 * sizeof(char));
+    char result1[READ_LENGTH + 1] = {};
+    memset(result1, '3', READ_LENGTH);
+    result1[READ_LENGTH] = '\0';
+
+    char result2[READ_LENGTH + 1] = {};
+    memset(result2, '3', READ_LENGTH);
+    result2[READ_LENGTH - 2] = '1';
+    result2[READ_LENGTH - 1] = '2';
+    result2[READ_LENGTH] = '\0';
+
+    char result3[BUFFER_SIZE_1024 + 1] = {};
+    memset(result3, '3', BUFFER_SIZE_1024 * sizeof(char));
+    result3[BUFFER_SIZE_1024] = '\0';
+
+    // read 20 bytes from fp
+    fseek(fp, ZERO, SEEK_SET);
+    size_t bytesRead = fread(buffer, 1, READ_LENGTH, fp);
+    buffer[bytesRead] = '\0';
+    EXPECT_STREQ("fread_0700 point 1", buffer, result1);
+
+    // read 20 bytes from fp
+    fseek(fp, ZERO, SEEK_SET);
+    memset(buffer, ZERO, BUFFER_SIZE_1026 * sizeof(char));
+    bytesRead = fread(buffer, READ_LENGTH, 1, fp);
+    buffer[READ_LENGTH] = '\0';
+    EXPECT_STREQ("fread_0700 point 2", buffer, result1);
+
+    // read 20 bytes from fp, start from 1006
+    fseek(fp, SEEK_OFFSET, SEEK_SET);
+    memset(buffer, ZERO, BUFFER_SIZE_1026 * sizeof(char));
+    bytesRead = fread(buffer, 1, READ_LENGTH, fp);
+    buffer[bytesRead] = '\0';
+    EXPECT_STREQ("fread_0700 point 3 from 1006", buffer, result2);
+
+    // read 1024 bytes from fp
+    fseek(fp, ZERO, SEEK_SET);
+    memset(buffer, ZERO, BUFFER_SIZE_1026 * sizeof(char));
+    bytesRead = fread(buffer, 1, BUFFER_SIZE_1024, fp);
+    buffer[bytesRead] = '\0';
+    EXPECT_STREQ("fread_0700 point 4 read 1024", buffer, result3);
+
+    // read 1026 bytes from fp
+    fseek(fp, ZERO, SEEK_SET);
+    memset(buffer, ZERO, BUFFER_SIZE_1026 * sizeof(char));
+    bytesRead = fread(buffer, 1, BUFFER_SIZE_1026, fp);
+    buffer[bytesRead] = '\0';
+    EXPECT_STREQ("fread_0700 point 5 read 1026", buffer, myArray);
+
+    free(buffer);
+    fclose(fp);
+    free(fpBuffer);
+}
+
+void fread_0800()
+{
+    char myArray[ARRAY_SIZE_1026] = {};
+    memset(myArray, '3', ARRAY_SIZE_1026);
+    myArray[ARRAY_SIZE_1026 - 2] = '1';
+    myArray[ARRAY_SIZE_1026 - 1] = '2';
+
+    // 使用fmemopen获取FILE*指针
+    FILE *fp = fmemopen(myArray, sizeof(myArray), "r");
+    if (fp == NULL) {
+        t_error("fmemopen failed");
+    }
+
+    int result = setvbuf(fp, NULL, _IONBF, 0);
+    if (result != ZERO) {
+        t_error("fread_0700 servbuf failed errno=", errno);
+    }
+
+    // 使用fread读取FILE*指针
+    char *buffer = (char *)malloc((BUFFER_SIZE_1026 + 1) * sizeof(char));
+    memset(buffer, ZERO, BUFFER_SIZE_1026 * sizeof(char));
+    char result1[READ_LENGTH + 1] = {};
+    memset(result1, '3', READ_LENGTH);
+    result1[READ_LENGTH] = '\0';
+
+    char result2[READ_LENGTH + 1] = {};
+    memset(result2, '3', READ_LENGTH);
+    result2[READ_LENGTH - 2] = '1';
+    result2[READ_LENGTH - 1] = '2';
+    result2[READ_LENGTH] = '\0';
+
+    char result3[BUFFER_SIZE_1024 + 1] = {};
+    memset(result3, '3', BUFFER_SIZE_1024 * sizeof(char));
+    result3[BUFFER_SIZE_1024] = '\0';
+
+    // read 20 bytes from fp
+    fseek(fp, ZERO, SEEK_SET);
+    size_t bytesRead = fread(buffer, 1, READ_LENGTH, fp);
+    buffer[bytesRead] = '\0';
+    EXPECT_STREQ("fread_0700 point 1", buffer, result1);
+
+    // read 20 bytes from fp
+    fseek(fp, ZERO, SEEK_SET);
+    memset(buffer, ZERO, BUFFER_SIZE_1026 * sizeof(char));
+    bytesRead = fread(buffer, READ_LENGTH, 1, fp);
+    buffer[READ_LENGTH] = '\0';
+    EXPECT_STREQ("fread_0700 point 2", buffer, result1);
+
+    // read 20 bytes from fp, start from 1006
+    fseek(fp, SEEK_OFFSET, SEEK_SET);
+    memset(buffer, ZERO, BUFFER_SIZE_1026 * sizeof(char));
+    bytesRead = fread(buffer, 1, READ_LENGTH, fp);
+    buffer[bytesRead] = '\0';
+    EXPECT_STREQ("fread_0700 point 3 from 1006", buffer, result2);
+
+    // read 1024 bytes from fp
+    fseek(fp, ZERO, SEEK_SET);
+    memset(buffer, ZERO, BUFFER_SIZE_1026 * sizeof(char));
+    bytesRead = fread(buffer, 1, BUFFER_SIZE_1024, fp);
+    buffer[bytesRead] = '\0';
+    EXPECT_STREQ("fread_0700 point 4 read 1024", buffer, result3);
+
+    // read 1026 bytes from fp
+    fseek(fp, ZERO, SEEK_SET);
+    memset(buffer, ZERO, BUFFER_SIZE_1026 * sizeof(char));
+    bytesRead = fread(buffer, 1, BUFFER_SIZE_1026, fp);
+    buffer[bytesRead] = '\0';
+    EXPECT_STREQ("fread_0700 point 5 read 1026", buffer, myArray);
+
+    free(buffer);
+    fclose(fp);
+}
+
 TEST_FUN G_Fun_Array[] = {
     fread_0100,
     fread_0200,
     fread_0300,
     fread_0400,
     fread_0500,
+    fread_0600,
+    fread_0700,
+    fread_0800,
 };
 
 int main(int argc, char *argv[])
