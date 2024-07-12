@@ -321,16 +321,19 @@ static void Bm_function_Uname(benchmark::State &state)
 
 static void Bm_function_Lseek(benchmark::State &state)
 {
-    int fd = open("/etc/passwd", O_RDONLY, OPEN_MODE);
+    const char *filepath = "/data/local/tmp/lseel_test.txt";
+    int fd = open(filepath, O_CREAT | O_RDONLY,OPEN_MODE);
     if (fd == -1) {
         perror("open lseek");
     }
-
+    int testNumber = 10;
+    write(fd,"lseek_test",testNumber);
     for (auto _ : state) {
         lseek(fd, 0, SEEK_END);
         lseek(fd, 0, SEEK_SET);
     }
     close(fd);
+    remove(filepath);
     state.SetItemsProcessed(state.iterations());
 }
 
