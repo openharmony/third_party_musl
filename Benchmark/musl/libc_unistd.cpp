@@ -327,7 +327,8 @@ static void Bm_function_Lseek(benchmark::State &state)
         perror("open lseek");
     }
     int testNumber = 10;
-    write(fd,"lseek_test",testNumber);
+    const char *bufStr = "lseek_test";
+    write(fd, bufStr, testNumber);
     for (auto _ : state) {
         lseek(fd, 0, SEEK_END);
         lseek(fd, 0, SEEK_SET);
