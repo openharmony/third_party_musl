@@ -52,6 +52,21 @@ static size_t mread(FILE *f, unsigned char *buf, size_t len)
 	return len;
 }
 
+// We should not double fill f->buf when fread is filling buffer
+static size_t mreadx(FILE *f, unsigned char *buf, size_t len)
+{
+	struct cookie *c = f->cookie;
+	size_t rem = c->len - c->pos;
+	if (c->pos > c->len) rem = 0;
+	if (len > rem) {
+		len = rem;
+		f->flags |= F_EOF;
+	}
+	memcpy(buf, c->buf+c->pos, len);
+	c->pos += len;
+	return len;
+}
+
 static size_t mwrite(FILE *f, const unsigned char *buf, size_t len)
 {
 	struct cookie *c = f->cookie;
@@ -117,7 +132,7 @@ FILE *fmemopen(void *restrict buf, size_t size, const char *restrict mode)
 	else if (plus) *f->c.buf = 0;
 
 	f->f.read = mread;
-	f->f.readx = mread;
+	f->f.readx = mreadx;
 	f->f.write = mwrite;
 	f->f.seek = mseek;
 	f->f.close = mclose;
