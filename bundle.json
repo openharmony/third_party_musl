@@ -18,6 +18,7 @@
         "subsystem": "thirdparty",
         "syscap": [],
         "features": [
+          "musl_use_encaps",
           "musl_ld128_flag",
           "musl_iterate_and_stats_api",
           "musl_unit_test_flag"
