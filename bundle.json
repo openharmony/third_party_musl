@@ -27,7 +27,11 @@
         "ram": "",
         "deps": {
             "components": [
-                "init"
+                "init",
+                "FreeBSD",
+                "faultloggerd",
+                "benchmark",
+                "cJSON"
             ],
             "third_party": []
         },
