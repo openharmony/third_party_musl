@@ -119,6 +119,7 @@ void __funcs_on_exit()
 	LOCK(lock);
 	for (; tail; tail = tail->prev) {
 		func = tail->func;
+		tail->func = NULL; // Avoid repeated invocation.
 		if (func != NULL) {
 			arg = tail->arg;
 			UNLOCK(lock);
