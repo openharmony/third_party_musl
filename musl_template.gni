@@ -493,7 +493,7 @@ template("static_and_shared_libs_template") {
 
     deps = porting_deps
 
-    if (use_encaps) {
+    if (musl_use_encaps) {
       defines += [ "USE_ENCAPS" ]
     }
 
@@ -536,7 +536,7 @@ template("static_and_shared_libs_template") {
       ]
     }
 
-    if (use_encaps) {
+    if (musl_use_encaps) {
       defines += [ "USE_ENCAPS" ]
     }
 
