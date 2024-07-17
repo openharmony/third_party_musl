@@ -83,7 +83,7 @@ FILE *fmemopen(void *restrict buf, size_t size, const char *restrict mode)
 {
 	struct mem_FILE *f;
 	int plus = !!strchr(mode, '+');
-	
+
 	if (!strchr("rwa", *mode)) {
 		errno = EINVAL;
 		return 0;
@@ -110,7 +110,7 @@ FILE *fmemopen(void *restrict buf, size_t size, const char *restrict mode)
 	f->c.buf = buf;
 	f->c.size = size;
 	f->c.mode = *mode;
-	
+
 	if (!plus) f->f.flags = (*mode == 'r') ? F_NOWR : F_NORD;
 	if (*mode == 'r') f->c.len = size;
 	else if (*mode == 'a') f->c.len = f->c.pos = strnlen(buf, size);

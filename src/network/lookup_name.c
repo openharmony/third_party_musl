@@ -133,6 +133,7 @@ struct dpc_ctx {
 #define VALID_ANSWER 1
 #define MIN_ANSWER_TYPE 1
 #define MAX_ANSWER_TYPE 2
+#define MAX_NAME_LENGTH 256
 
 #define ABUF_SIZE 4800
 
@@ -193,11 +194,13 @@ static int IsIpv6Enable(int netid)
 
 static int IsAnswerValid(const unsigned char *answer, int alen)
 {
-	if (alen < 4 || (answer[3] & 15) == 2)
+	if (alen < 4 || (answer[3] & 15) == 2) {
 		return EAI_AGAIN;
+	}
 	if ((answer[3] & 15) == 3) return 0;
-	if ((answer[3] & 15) != 0)
+	if ((answer[3] & 15) != 0) {
 		return EAI_FAIL;
+	}
 	return VALID_ANSWER;
 }
 
@@ -235,7 +238,7 @@ static int name_from_dns(struct address buf[static MAXADDRS], char canon[static 
 	int cname_count = 0;
 	const char *queryName = name;
 	int checkBuf[MAX_ANSWER_TYPE] = {VALID_ANSWER, VALID_ANSWER};
-	while (strnlen(queryName, 256) != 0 && cname_count < MAX_QUERY_SIZE) {
+	while (strnlen(queryName, MAX_NAME_LENGTH) != 0 && cname_count < MAX_QUERY_SIZE) {
 		int i, nq = 0;
 		for (i = 0; i < queryNum; i++) {
 			if (family != afrr[i].af) {

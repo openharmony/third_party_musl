@@ -10,6 +10,8 @@
 #include <errno.h>
 #include "lookup.h"
 
+#define COST_FOR_MS 1000
+#define COST_FOR_NANOSEC 1000000
 #define DNS_QUERY_SUCCESS 0
 #define DNS_QUERY_COMMOM_FAIL (-1)
 #define GETADDRINFO_PRINT_DEBUG(...)
@@ -212,13 +214,14 @@ int getaddrinfo_ext(const char *restrict host, const char *restrict serv, const 
 	int timeEndRet = gettimeofday(&timeEnd, NULL);
 	int t_cost = 0;
 	if (timeStartRet == 0 && timeEndRet == 0) {
-		t_cost = 1000000 * (timeEnd.tv_sec - timeStart.tv_sec) + (timeEnd.tv_usec - timeStart.tv_usec);
-		t_cost /= 1000;
+		t_cost = COST_FOR_NANOSEC * (timeEnd.tv_sec - timeStart.tv_sec) + (timeEnd.tv_usec - timeStart.tv_usec);
+		t_cost /= COST_FOR_MS;
 	}
 	if (naddrs < 0) {
 		reportdnsresult(netid, host, t_cost, naddrs, NULL, param);
 #ifndef __LITEOS__
-		MUSL_LOGE("%{public}s: %{public}d: reportdnsresult: %{public}d in process %{public}d", __func__, __LINE__, naddrs, getpid());
+		MUSL_LOGE("%{public}s: %{public}d: reportdnsresult: %{public}d in process %{public}d",
+			__func__, __LINE__, naddrs, getpid());
 #endif
 		return naddrs;
 	}

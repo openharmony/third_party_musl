@@ -24,8 +24,7 @@ __attribute__((__weak__)) extern void remove_dso_handle_node(void *dso_handle);
  * - CXA_THREAD_USE_TLS: put dtors in pthread to implement cxa_thread_atexit_impl.
  */
 #ifdef CXA_THREAD_USE_TSD
-struct dtor_list
-{
+struct dtor_list {
     void (*dtor) (void*);
     void *arg;
     void *dso_handle;
@@ -50,7 +49,7 @@ void run_cur_thread_dtors(void *)
         __libc_free(cur);
     }
     thread_local_dtors_alive = false;
-    return; 
+    return;
 } 
 
 __attribute__((constructor())) void cxa_thread_init()
@@ -64,7 +63,7 @@ __attribute__((constructor())) void cxa_thread_init()
 /*
  * Used for the thread calls exit(include main thread).
  * We can't register a destructor of libc for run_cur_thread_dtors because of deadlock problem:
- *   exit -> __libc_exit_fini[acquire init_fini_lock] -> run_cur_thread_dtors -> 
+ *   exit -> __libc_exit_fini[acquire init_fini_lock] -> run_cur_thread_dtors ->
  *   remove_dso_handle_node-> do_dlclose ->dlclose_impl[try to get init_fini_lock] -> deadlock.
  * So we call __cxa_thread_finalize actively at exit. 
  */
