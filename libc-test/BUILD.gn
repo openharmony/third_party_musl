@@ -16,7 +16,7 @@ group("musl_libc_test") {
     "src/static_link:static_link_test",
   ]
 
-  if (use_gwp_asan) {
+  if (musl_use_gwp_asan) {
     deps += [ "src/gwp_asan:gwp_asan_test" ]
   }
 

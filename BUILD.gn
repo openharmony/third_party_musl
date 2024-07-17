@@ -492,11 +492,11 @@ if (is_lite_system && current_os == "ohos") {
   }
 
   static_and_shared_libs_template("static") {
-    use_flto = false
-    use_gwp_asan = false
+    musl_use_flto = false
+    musl_use_gwp_asan = false
   }
 
   static_and_shared_libs_template("shared") {
-    use_flto = true
+    musl_use_flto = true
   }
 }
