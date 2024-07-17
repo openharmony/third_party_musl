@@ -78,7 +78,7 @@ regression_list = [
   "wcsstr-false-negative",
 ]
 
-if (use_pthread_cancel) {
+if (musl_use_pthread_cancel) {
   regression_list += [ "pthread_cancel-sem_wait" ]
 }
 
