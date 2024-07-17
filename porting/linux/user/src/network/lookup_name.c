@@ -23,7 +23,7 @@ uint8_t is_allow_internet(void);
 #define FIXED_HOSTS_MAX_LENGTH 2
 #define FIXED_HOSTS_STR_MAX_LENGTH 23
 
-char fixed_hosts[][FIXED_HOSTS_STR_MAX_LENGTH] = {
+char fixed_hosts[FIXED_HOSTS_MAX_LENGTH][FIXED_HOSTS_STR_MAX_LENGTH] = {
 	"127.0.0.1  localhost\r\n\0",
 	"::1  ip6-localhost\r\n\0"
 };

@@ -132,7 +132,9 @@ static void pop_arg(union arg *arg, int type, va_list *ap)
 
 static void out(FILE *f, const char *s, size_t l)
 {
-	if (!l) return;
+	if (!l) {
+		return;
+	}
 
 	/* write to file buffer if flag F_PBUF is available */
 	if (!(f->flags & F_ERR) && !(f->flags & F_PBUF)) {
@@ -350,7 +352,7 @@ static int fmt_fp(FILE *f, long double y, int w, int p, int fl, int t)
 		if (z>d+1) z=d+1;
 	}
 	for (; z>a && !z[-1]; z--);
-	
+
 	if ((t|32)=='g') {
 		if (!p) p++;
 		if (p>e && e>=-4) {
@@ -705,9 +707,7 @@ int vfprintf(FILE *restrict f, const char *restrict fmt, va_list ap)
 		f->buf = saved_buf;
 		f->buf_size = 0;
 		f->wpos = f->wbase = f->wend = 0;
-	}
-	else
-	{
+	} else {
 		if (f->flags & F_PBUF) {
 			*f->wpos = '\0';
 		}

@@ -209,15 +209,15 @@ void gwp_asan_printf(const char *fmt, ...)
         if (result < 0) {
             MUSL_LOGE("[gwp_asan] write log failed!\n");
         }
-        if(WriteGwpAsanLog != NULL) {
+        if (WriteGwpAsanLog != NULL) {
             WriteGwpAsanLog(log_buffer, strlen(log_buffer));
             return;
-	}
-        if(try_load_asan_logger) {
+        }
+        if (try_load_asan_logger) {
             return;
         }
         pthread_mutex_lock(&gwpasan_mutex);
-        if(WriteGwpAsanLog != NULL) {
+        if (WriteGwpAsanLog != NULL) {
             WriteGwpAsanLog(log_buffer, strlen(log_buffer));
             pthread_mutex_unlock(&gwpasan_mutex);
             return;
@@ -225,7 +225,7 @@ void gwp_asan_printf(const char *fmt, ...)
         if (!try_load_asan_logger && handle == NULL) {
             try_load_asan_logger = true;
             handle = dlopen(ASAN_LOG_LIB, RTLD_LAZY);
-	    if (handle == NULL) {
+            if (handle == NULL) {
                 pthread_mutex_unlock(&gwpasan_mutex);
                 return;
             }
