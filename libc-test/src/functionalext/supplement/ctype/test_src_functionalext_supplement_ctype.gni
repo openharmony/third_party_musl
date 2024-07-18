@@ -10,16 +10,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import("../../../../../musl_config.gni")
 
 functionalext_supplement_ctype_test = [
-  "isalnum_l",
-  "isalpha_l",
-  "isblank_l",
-  "iscntrl_l",
-  "isgraph_l",
-  "isprint_l",
-  "ispunct_l",
-  "isspace_l",
   "wcwidth",
   "tolower",
   "toupper",
@@ -37,7 +30,6 @@ functionalext_supplement_ctype_test = [
   "iswxdigit",
   "wctrans",
   "towctrans",
-  "wctrans_l",
   "wctype",
   "isspace",
   "__ctype_get_mb_cur_max",
@@ -58,3 +50,17 @@ functionalext_supplement_ctype_test = [
   "iswalpha",
   "iswblank",
 ]
+
+if (use_icu_locale == true) {
+  functionalext_supplement_ctype_test += [
+    "isalnum_l",
+    "isalpha_l",
+    "isblank_l",
+    "iscntrl_l",
+    "isgraph_l",
+    "isprint_l",
+    "ispunct_l",
+    "isspace_l",
+    "wctrans_l",
+  ]
+}
