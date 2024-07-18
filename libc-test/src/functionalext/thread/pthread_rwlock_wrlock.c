@@ -85,12 +85,14 @@ static void *RwlockClockMonotonicTimeOut2(void *arg)
 {
     struct timespec ts = {0};
     struct timespec tsNow = {0};
+
     struct sched_param param;
     param.sched_priority = sched_get_priority_max(SCHED_FIFO); // 获取最高优先级
     if (pthread_setschedparam(pthread_self(), SCHED_FIFO, &param) != 0) {
-        t_printf("pthread_setschedparam fail \n");
+        t_printf("pthread_setschedparam fail\n");
         return arg;
     }
+
     Msleep(SLEEP_20_MS);
     GetDelayedTimeByClockid(&ts, SLEEP_100_MS, CLOCK_MONOTONIC);
     EXPECT_EQ(pthread_rwlock_clockwrlock(&w_rwlock5, CLOCK_MONOTONIC, &ts), ETIMEDOUT);
@@ -136,7 +138,7 @@ static void *RwlockMonotonicTime2(void *arg)
     struct sched_param param;
     param.sched_priority = sched_get_priority_max(SCHED_FIFO); // 获取最高优先级
     if (pthread_setschedparam(pthread_self(), SCHED_FIFO, &param) != 0) {
-        t_printf("pthread_setschedparam fail \n");
+        t_printf("pthread_setschedparam fail\n");
         return arg;
     }
 
