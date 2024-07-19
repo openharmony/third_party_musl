@@ -5,10 +5,9 @@
 #include <sys/stat.h>
 #include "syscall.h"
 
-static const char __distro_tzdata_path[] = "/system/etc/tzdata_distro/tzdata";
 static const size_t index_offset_offset = 12;
 static const size_t data_offset_offset = 16;
-static const size_t per_index_size = 52;
+static const size_t per_index_size = 48;
 
 const char unsigned *__map_file(const char *pathname, size_t *size)
 {
@@ -37,11 +36,12 @@ size_t convert_byte_to_size_t(const unsigned char *map)
 	return ((size_t)map[0] << 24) + ((size_t)map[1] << 16) + ((size_t)map[2] << 8) + (size_t)map[3];
 }
 
-const char unsigned *__map_distro_tzdata_file(const char *tz_id, size_t *tzdata_size, size_t *offset, size_t *size)
+const char unsigned *__map_tzdata_file(const char * tzdata_path, const char *tz_id, size_t *tzdata_size,
+	size_t *offset, size_t *size)
 {
 	struct stat st;
 	const unsigned char *map = MAP_FAILED;
-	int fd = sys_open(__distro_tzdata_path, O_RDONLY|O_CLOEXEC|O_NONBLOCK);
+	int fd = sys_open(tzdata_path, O_RDONLY|O_CLOEXEC|O_NONBLOCK);
 	if (fd < 0) return 0;
 	if (!__fstat(fd, &st)) {
 		map = __mmap(0, st.st_size, PROT_READ, MAP_SHARED, fd, 0);
