@@ -139,7 +139,7 @@ static void do_tzset()
 	size_t i;
 #ifndef __LITEOS__
 	static const char search[] =
-		"/system/etc/tzdata_distro/tzdata\0/system/etc/zoneinfo/tzdata\0/usr/share/zoneinfo/tzdata\0/share/zoneinfo/tzdata\0";
+		"/etc/tzdata_distro/tzdata\0/etc/zoneinfo/tzdata\0/usr/share/zoneinfo/tzdata\0/share/zoneinfo/tzdata\0";
 #else
 	static const char search[] =
 		"/usr/share/zoneinfo/tzdata\0/share/zoneinfo/tzdata\0/etc/zoneinfo/tzdata\0";
