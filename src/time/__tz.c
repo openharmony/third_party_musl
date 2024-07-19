@@ -139,10 +139,10 @@ static void do_tzset()
 	size_t i;
 #ifndef __LITEOS__
 	static const char search[] =
-		"/system/etc/tzdata_distro/tzdata\0/system/etc/zoneinfo/tzdata\0/usr/share/zoneinfo/\0/share/zoneinfo/\0";
+		"/system/etc/tzdata_distro/tzdata\0/system/etc/zoneinfo/tzdata\0/usr/share/zoneinfo/tzdata\0/share/zoneinfo/tzdata\0";
 #else
 	static const char search[] =
-		"/usr/share/zoneinfo/\0/share/zoneinfo/\0/etc/zoneinfo/\0";
+		"/usr/share/zoneinfo/tzdata\0/share/zoneinfo/tzdata\0/etc/zoneinfo/tzdata\0";
 #endif
 
 	s = getenv("TZ");
@@ -170,7 +170,6 @@ static void do_tzset()
 
 	if (tzdata_map) {
 		__munmap((void *)tzdata_map, tzdata_map_size);
-		tzdata_map = NULL;
 	}
 
 	/* Cache the old value of TZ to check if it has changed. Avoid
