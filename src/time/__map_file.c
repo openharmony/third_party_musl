@@ -7,7 +7,7 @@
 
 static const size_t index_offset_offset = 12;
 static const size_t data_offset_offset = 16;
-static const size_t per_index_size = 52;
+static const size_t per_index_size = 48;
 
 const char unsigned *__map_file(const char *pathname, size_t *size)
 {

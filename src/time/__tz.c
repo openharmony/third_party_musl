@@ -139,7 +139,7 @@ static void do_tzset()
 	size_t i;
 #ifndef __LITEOS__
 	static const char search[] =
-		"/etc/tzdata_distro/\0/etc/zoneinfo/\0/usr/share/zoneinfo/\0/share/zoneinfo/\0";
+		"/system/etc/tzdata_distro/tzdata\0/system/etc/zoneinfo/tzdata\0/usr/share/zoneinfo/\0/share/zoneinfo/\0";
 #else
 	static const char search[] =
 		"/usr/share/zoneinfo/\0/share/zoneinfo/\0/etc/zoneinfo/\0";
@@ -219,15 +219,16 @@ static void do_tzset()
         if (l <= NAME_MAX && !strchr(s, '.')) {
             memcpy(pathname, s, l+1);
             pathname[l] = 0;
-			/* Try to load distro timezone data first*/
-			size_t offset;
-			for (try=search; !map && *try; try+=l+1) {
-				tzdata_map = __map_tzdata_file(try, pathname, &tzdata_map_size, &offset, &map_size);
-				if (tzdata_map != NULL) {
-					map = tzdata_map + offset;
-					break;
-				}
-			}
+            /* Try to load distro timezone data first*/
+            size_t offset;
+            for (try=search; !map && *try; try+=l+1) {
+                l = strlen(try);
+                tzdata_map = __map_tzdata_file(try, pathname, &tzdata_map_size, &offset, &map_size);
+                if (tzdata_map != NULL) {
+                    map = tzdata_map + offset;
+                    break;
+                }
+            }
         }
     }
 #else
