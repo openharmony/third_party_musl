@@ -390,6 +390,20 @@ void strtod_l_1700(void)
     }
 }
 
+/**
+ * @tc.name      : strtod_l_1800
+ * @tc.desc      : set locale as zh_CN.UTF-8, set endptr as NULL
+ * @tc.level     : Level 0
+ */
+void strtod_l_1800(void)
+{
+    locale_t loc = newlocale(LC_ALL_MASK, "zh_CN.UTF-8", NULL);
+    char* str = "123.45";
+    const double target = 123.45;
+    double num = strtod_l(str, NULL, loc);
+    EXPECT_DOUBLE_EQ(num, target);
+}
+
 int main(void)
 {
     strtod_l_0100();
@@ -409,6 +423,7 @@ int main(void)
     strtod_l_1500();
     strtod_l_1600();
     strtod_l_1700();
+    strtod_l_1800();
 
     return t_status;
 }
