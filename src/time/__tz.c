@@ -148,18 +148,18 @@ static void do_tzset()
 	s = getenv("TZ");
 	if (!s) {
 #if defined(OHOS_ENABLE_PARAMETER) && (!defined(__LITEOS__))
-        static CachedHandle tz_param_handle = NULL;
-        if (tz_param_handle == NULL) {
-            tz_param_handle = CachedParameterCreate("persist.time.timezone", "/etc/localtime");
-        }
-        const char *tz_param_value = CachedParameterGet(tz_param_handle);
-        if (tz_param_value != NULL) {
-            s = tz_param_value;
-        } else {
-            s = "/etc/localtime";
-        }
+		static CachedHandle tz_param_handle = NULL;
+		if (tz_param_handle == NULL) {
+			tz_param_handle = CachedParameterCreate("persist.time.timezone", "/etc/localtime");
+		}
+		const char *tz_param_value = CachedParameterGet(tz_param_handle);
+		if (tz_param_value != NULL) {
+			s = tz_param_value;
+		} else {
+			s = "/etc/localtime";
+		}
 #else
-        s = "/etc/localtime";
+		s = "/etc/localtime";
 #endif
 	}
 	if (!*s) s = __utc;
@@ -191,8 +191,8 @@ static void do_tzset()
 		char dummy_name[TZNAME_MAX+1];
 		getname(dummy_name, &p);
 		if (p!=s && (*p == '+' || *p == '-' || isdigit(*p)
-		             || !strcmp(dummy_name, "UTC")
-		             || !strcmp(dummy_name, "GMT")))
+					|| !strcmp(dummy_name, "UTC")
+					|| !strcmp(dummy_name, "GMT")))
 			posix_form = 1;
 	}	
 
@@ -200,36 +200,35 @@ static void do_tzset()
 	 * pathame beginning with "."; in secure mode, only the
 	 * standard path will be searched. */
 #ifndef __LITEOS__
-    int flag = 1;
-    if (!posix_form) {
-        if (*s == ':') s++;
-        if (*s == '/' || *s == '.') {
-            /* The path is invalid, use the default value. */
-            flag = 0;
-            if (!libc.secure || !strcmp(s, "/etc/localtime")) {
-                map = __map_file(s, &map_size);
-            }
-        }
-    }
+	int flag = 1;
+	if (!posix_form) {
+		if (*s == ':') s++;
+		if (*s == '/' || *s == '.') {
+			/* The path is invalid, use the default value. */
+			flag = 0;
+			if (!libc.secure || !strcmp(s, "/etc/localtime")) {
+				map = __map_file(s, &map_size);
+			}
+		}
+	}
 
-    if (flag) {
-        /* Adapt to time zone names, such as Asia/Shanghai or Shanghai*/
-        size_t l = strlen(s);
-        if (l <= NAME_MAX && !strchr(s, '.')) {
-            memcpy(pathname, s, l+1);
-            pathname[l] = 0;
-            /* Try to load distro timezone data first*/
-            size_t offset;
-            for (try=search; !map && *try; try+=l+1) {
-                l = strlen(try);
-                tzdata_map = __map_tzdata_file(try, pathname, &tzdata_map_size, &offset, &map_size);
-                if (tzdata_map != NULL) {
-                    map = tzdata_map + offset;
-                    break;
-                }
-            }
-        }
-    }
+	if (flag) {
+		/* Adapt to time zone names, such as Asia/Shanghai or Shanghai*/
+		size_t l = strlen(s);
+		if (l <= NAME_MAX && !strchr(s, '.')) {
+			memcpy(pathname, s, l+1);
+			pathname[l] = 0;
+			/* Try to load distro timezone data first*/
+			size_t offset;
+			for (try=search; !map && *try; try+=l+1) {
+				l = strlen(try);
+				tzdata_map = __map_tzdata_file(try, pathname, &tzdata_map_size, &offset, &map_size);
+				if (tzdata_map != NULL) {
+					map = tzdata_map + offset;
+				}
+			}
+		}
+	}
 #else
 	if (!posix_form) {
 		if (*s == ':') s++;
