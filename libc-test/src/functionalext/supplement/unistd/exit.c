@@ -33,21 +33,18 @@ void exit_0100(void)
     char str[100] = {0};
     const char *ptr = "/data/Exittest01.txt";
     pid_t pid;
-    pid = fork();  
-    if (pid < 0) {  
-        fprintf(stderr, "Fork Failed");  
-        exit(1);  
-    }  
-    else if (pid == 0) {   
+    pid = fork();
+    if (pid < 0) {
+        fprintf(stderr, "Fork Failed");
+        exit(1);
+    } else if (pid == 0) {
         FILE *fptr = fopen(ptr, "w+");
         fprintf(fptr, "%s", "exit before");
         exit(0);
         fprintf(fptr, "%s", "exit after");
-    }  
-    else {    
+    } else {
         wait(NULL);
-    } 
-
+    }
     FILE *fp = fopen(ptr, "r");
     if (!fp) {
         t_error("%s fopen failed\n", __func__);
@@ -56,12 +53,10 @@ void exit_0100(void)
     if (ret != 0) {
         t_error("%s fseek failed\n", __func__);
     }
-
     size_t rsize = fread(str, sizeof(str), 1, fp);
     if (strcmp(str, "exit before")) {
         t_error("%s exit failed\n", __func__);
     }
-
     fclose(fp);
     remove(ptr);
 }
@@ -77,23 +72,18 @@ void exit_0200(void)
     char abc[100] = {0};
     const char *ptr = "/data/Exittest02.txt";
     pid_t pid;
-    pid = fork();  
-  
-    if (pid < 0) {  
-        fprintf(stderr, "Fork Failed");  
-        exit(1);  
-    }  
-    else if (pid == 0) {   
+    pid = fork();
+    if (pid < 0) {
+        fprintf(stderr, "Fork Failed");
+        exit(1);
+    } else if (pid == 0) {
         FILE *fptr = fopen(ptr, "w+");
         fprintf(fptr, "%s", "exit before");
         exit(1);
         fprintf(fptr, "%s", "exit after");
-    }  
-    else {    
+    } else {
         wait(NULL);
-    } 
-
-    
+    }
     FILE *fp = fopen(ptr, "r");
     if (!fp) {
         t_error("%s fopen failed\n", __func__);
@@ -106,7 +96,6 @@ void exit_0200(void)
     if (strcmp(content, "exit before")) {
         t_error("%s exit failed\n", __func__);
     }
-
     fclose(fp);
     remove(ptr);
 }

@@ -35,7 +35,7 @@ unsigned long strtoul_weak(const char *restrict s, char **restrict p, int base)
 
 long strtol(const char *restrict s, char **restrict p, int base)
 {
-	return strtox(s, p, base, 0UL+LONG_MIN);
+	return strtox(s, p, base, 0UL + LONG_MIN);
 }
 
 intmax_t strtoimax_weak(const char *restrict s, char **restrict p, int base)

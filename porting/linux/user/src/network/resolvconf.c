@@ -15,13 +15,12 @@
 
 #include "lookup.h"
 #include "stdio_impl.h"
+#include "hilog_adapter.h"
 #include <ctype.h>
 #include <errno.h>
 #include <string.h>
 #include <stdlib.h>
 #include <netinet/in.h>
-
-#include "hilog_adapter.h"
 
 #if 1
 #define SIGCHAIN_LOG_DOMAIN 0xD003F00

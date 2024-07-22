@@ -289,8 +289,9 @@ extern int je_reclaim_cache();
 static void handle_recycle_cache()
 {
 	int ret;
+	MUSL_LOGD("je_reclaim_cache begin.");
 	ret = je_reclaim_cache();
-	MUSL_LOGD("je_reclaim_cache result=%{public}d", ret);
+	MUSL_LOGD("je_reclaim_cache result=%{public}d.", ret);
 }
 
 static void init_jemalloc_recycle_handler()

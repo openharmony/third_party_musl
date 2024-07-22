@@ -34,7 +34,7 @@ void write_content()
 {
 	FILE *fp;
 	fp = fopen(TMP_FILE, "w");
-	if (fp == NULL) {  
+	if (fp == NULL) {
 		t_error("FAIL %s create failed!\n", TMP_FILE);
 	}
 	for (size_t i = 0; i < TOTAL; i++) {
@@ -49,7 +49,7 @@ void check_content()
 	int res;
 	double value = 0;
 	fp = fopen(TMP_FILE, "r");
-	if (fp == NULL) {  
+	if (fp == NULL) {
 		t_error("FAIL %s open failed!\n", TMP_FILE);
 	}
 	for (size_t i = 0; i < TOTAL; i++) {
