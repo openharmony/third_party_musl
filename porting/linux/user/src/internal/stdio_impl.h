@@ -23,30 +23,30 @@
 #define F_PBUF 512
 
 
-#define FILE_LIST_NEXT(fl) (fl->next)
+#define FILE_LIST_NEXT(fl) ((fl)->next)
 #define FILE_LIST_HEAD(head) (head)
 #define FILE_LIST_EMPTY(head) ((head) == NULL)
-#define	FILE_SAVELINK(name, link)	void **name = (void *)&(link)
+#define	FILE_SAVELINK(name, link)	void **(name) = (void *)&(link)
 #define	INVALID_LINK(x)	do {(x) = (void *)-1;} while (0)
 
 #define FILE_LIST_CHECK_NEXT(fl) do { \
-	if (FILE_LIST_NEXT(fl) != NULL && FILE_LIST_NEXT(fl)->prev != &fl->next) { \
+	if (FILE_LIST_NEXT(fl) != NULL && FILE_LIST_NEXT(fl)->prev != &(fl)->next) { \
 		abort(); \
 	} \
-} while(0)
+} while (0) \
 
 #define FILE_LIST_CHECK_PREV(fl) do { \
-	if (*fl->prev != fl) { \
-		abort();\
+	if (*(fl)->prev != (fl)) { \
+		abort(); \
 	} \
-} while(0)
+} while (0) \
 
 #define FILE_LIST_CHECK_HEAD(head) do { \
 	if (FILE_LIST_HEAD(head) != NULL && \
-		FILE_LIST_HEAD(head)->prev != &FILE_LIST_HEAD(head)) {\
-		abort();\
+		FILE_LIST_HEAD(head)->prev != &FILE_LIST_HEAD(head)) { \
+		abort(); \
 	} \
-} while(0)
+} while (0) \
 
 
 #define FILE_LIST_INSERT_HEAD(head, fl) do { \
@@ -56,7 +56,7 @@
 	} \
 	FILE_LIST_HEAD(head) = (fl); \
 	(fl)->prev = &FILE_LIST_HEAD((head)); \
-} while(0)
+} while (0) \
 
 #define FILE_LIST_REMOVE(fl) do { \
 	FILE_SAVELINK(oldnext, (fl)->next); \
@@ -64,12 +64,12 @@
 	FILE_LIST_CHECK_NEXT(fl); \
 	FILE_LIST_CHECK_PREV(fl); \
 	if (FILE_LIST_NEXT(fl) != NULL) { \
-		FILE_LIST_NEXT(fl)->prev = fl->prev; \
+		FILE_LIST_NEXT(fl)->prev = (fl)->prev; \
 	} \
-	*fl->prev = FILE_LIST_NEXT(fl); \
+	*(fl)->prev = FILE_LIST_NEXT(fl); \
 	INVALID_LINK(*oldnext); \
 	INVALID_LINK(*oldprev); \
-} while(0)
+} while (0) \
 
 struct _IO_FILE {
 	unsigned flags;

@@ -1465,7 +1465,7 @@ static void sync_to_other()
 	__synccall(do_sync_to_other, NULL);
 }
 
-static bool is_section_exist(Ehdr *eh_buf, uint32_t en_size, int fd, char *section_name) 
+static bool is_section_exist(Ehdr *eh_buf, uint32_t en_size, int fd, char *section_name)
 {
 	char *shstrtab_content = NULL;
 	size_t i, len;
@@ -1474,8 +1474,9 @@ static bool is_section_exist(Ehdr *eh_buf, uint32_t en_size, int fd, char *secti
 	void *sh_buf = NULL;
 	Shdr *sh, *sh0, shstrtab;
 
-	if (eh_buf == NULL)
+	if (eh_buf == NULL) {
 		return false;
+	}
 	
 	if (eh_buf->e_type != ET_DYN) {
 		goto error_without_free;
@@ -1489,8 +1490,9 @@ static bool is_section_exist(Ehdr *eh_buf, uint32_t en_size, int fd, char *secti
 
 	if (shsize > en_size - sizeof(Ehdr)) {
 		sh_buf = malloc(shsize);
-		if (!sh_buf)
+		if (!sh_buf) {
 			goto error_without_free;
+		}
 		len = pread(fd, sh_buf, shsize, eh_buf->e_shoff);
 		if (len != shsize) {
 			free(sh_buf);
@@ -1515,10 +1517,11 @@ static bool is_section_exist(Ehdr *eh_buf, uint32_t en_size, int fd, char *secti
 	}
 
 	len = pread(fd, shstrtab_content, shstrtab.sh_size, shstrtab.sh_offset);
-	if (len != shstrtab.sh_size)
+	if (len != shstrtab.sh_size) {
 		goto error;
+	}
 	for (i = eh_buf->e_shnum; i != 0; i--) {
-		char * shname = shstrtab_content + sh0[i - 1].sh_name; // this name is offset in shstrtab
+		char *shname = shstrtab_content + sh0[i - 1].sh_name; // this name is offset in shstrtab
 		if ((shname == NULL) || (sh0[i - 1].sh_name > shstrtab.sh_size)) {
 			continue;
 		}
@@ -1529,15 +1532,17 @@ static bool is_section_exist(Ehdr *eh_buf, uint32_t en_size, int fd, char *secti
 
 error:
 	free(shstrtab_content);
-	if (sh_buf != NULL)
+	if (sh_buf != NULL) {
 		free(sh_buf);
+	}
 error_without_free:
 	errno = ENOEXEC;
 	return false;
 done_search:
 	free(shstrtab_content);
-	if (sh_buf != NULL)
+	if (sh_buf != NULL) {
 		free(sh_buf);
+	}
 	sync_to_other();
 	return true;
 }
@@ -3793,7 +3798,7 @@ end:
 				"map_so_time: %{public}d ms, "
 				"reloc_time: %{public}d ms, "
 				"map_cfi_time: %{public}d ms, "
-				"init_time: %{public}d ms "
+				"init_time: %{public}d ms, "
 				"encaps_time: %{public}d ms",
 				current_so->name,
 				dlopen_cost.total_time,

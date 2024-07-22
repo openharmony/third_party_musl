@@ -66,7 +66,8 @@ static int casemap(unsigned c, int dir)
 static void* g_hmicu_handle = NULL;
 static wint_t (*g_hm_ucase_toupper)(wint_t);
 
-static void* find_hmicu_symbol(const char* symbol_name) {
+static void* find_hmicu_symbol(const char* symbol_name)
+{
   if (!g_hmicu_handle) {
 	g_hmicu_handle = dlopen("libhmicuuc.z.so", RTLD_LOCAL);
   }
@@ -76,7 +77,9 @@ static void* find_hmicu_symbol(const char* symbol_name) {
 wint_t towlower(wint_t wc)
 {
 	if (wc < 0x80) {
-		if (wc >= 'A' && wc <= 'Z') return wc | 0x20;
+		if (wc >= 'A' && wc <= 'Z') {
+			return wc | 0x20;
+		}
 		return wc;
 	}
 	return casemap(wc, 0);
@@ -85,7 +88,9 @@ wint_t towlower(wint_t wc)
 wint_t towupper(wint_t wc)
 {
 	if (wc < 0x80) {
-		if (wc >= 'a' && wc <= 'z') return wc ^ 0x20;
+		if (wc >= 'a' && wc <= 'z') {
+			return wc ^ 0x20;
+		}
 		return wc;
 	}
 	if (!g_hm_ucase_toupper) {

@@ -35,7 +35,14 @@ static char *g_encodeArray[] = {
 static int g_excludeToEncodeNum = 11;
 static char *g_excludeToEncodeArray[] = {"gb18030",   "gbk",   "gb2312",  "big5",    "bigfive", "cp950",
                                          "big5hkscs", "euckr", "ksc5601", "ksx1001", "cp949"};
-
+struct IconvParam {
+    char *to;
+    char *from;
+    char *input;
+    size_t inputLen;
+    char *output;
+    size_t outputLen;
+};
 void CloseIconv(iconv_t cd)
 {
     if (iconv_close(cd)) {
@@ -43,19 +50,24 @@ void CloseIconv(iconv_t cd)
     }
 }
 
-int IconvTest(char *to, char *from, char *input, size_t inputLen, char *output, size_t *outputLen)
+int IconvTest(struct IconvParam *param)
 {
-    iconv_t cd = iconv_open(to, from);
+    iconv_t cd = iconv_open(param->to, param->from);
     if (cd == (iconv_t)-1) {
-        t_error("iconv opened failed, from: %s, to: %s, error: %s \n", from, to, strerror(errno));
+        t_error("iconv opened failed, from: %s, to: %s, error: %s \n", param->from, param->to, strerror(errno));
         CloseIconv(cd);
         return 1;
     }
-    if (iconv(cd, &input, &inputLen, &output, outputLen)) {
-        t_error("iconv converted failed, from: %s, to: %s, error: %s \n", from, to, strerror(errno));
+    char *input = param->input;
+    size_t inputLen = param->inputLen;
+    char *output = param->output;
+    size_t outputLen = param->outputLen;
+    if (iconv(cd, &input, &inputLen, &output, &outputLen)) {
+        t_error("iconv converted failed, from: %s, to: %s, error: %s \n", param->from, param->to, strerror(errno));
         CloseIconv(cd);
         return 1;
     }
+    param->outputLen = outputLen;
     CloseIconv(cd);
     return 0;
 }
@@ -75,35 +87,42 @@ void CompareIconvResult(char *to, char *from, char *src, size_t srcLen)
     if (IsExcludeToEncode(to) == 0) {
         return;
     }
-    char *input = src;
-    size_t inputLen = srcLen;
+    struct IconvParam param;
+    param.input = src;
+    param.inputLen = srcLen;
     char output[BUFFER_SIZE];
-    size_t outputLen = BUFFER_SIZE;
-    if (IconvTest(to, from, input, inputLen, output, &outputLen)) {
+    param.output = output;
+    param.outputLen = BUFFER_SIZE;
+    param.to = to;
+    param.from = from;
+    if (IconvTest(&param)) {
         return;
     }
 
     if (IsExcludeToEncode(from) == 0) {
         return;
     }
-    char *newInput = output;
-    size_t newInputLen = BUFFER_SIZE - outputLen;
+    param.input = param.output;
+    param.inputLen = BUFFER_SIZE - param.outputLen;
     char newOutput[BUFFER_SIZE];
-    size_t newOutputLen = BUFFER_SIZE;
-    if (IconvTest(from, to, newInput, newInputLen, newOutput, &newOutputLen)) {
+    param.output = newOutput;
+    param.outputLen = BUFFER_SIZE;
+    param.to = from;
+    param.from = to;
+    if (IconvTest(&param)) {
         return;
     }
 
-    if (srcLen != BUFFER_SIZE - newOutputLen) {
-        t_error("compare error,from: %s, to: %s, newOutput: %s,\n", from, to, newOutput);
+    if (srcLen != BUFFER_SIZE - param.outputLen) {
+        t_error("compare error,from: %s, to: %s, newOutput: %s,\n", from, to, param.output);
         return;
     }
     char *l = src;
-    char *r = newOutput;
+    char *r = param.output;
     size_t step = sizeof(char);
     for (size_t i = 0; i < srcLen; i += step) {
         if (*l != *r) {
-            t_error("compare error,from: %s, to: %s, newOutput: %s,\n", from, to, newOutput);
+            t_error("compare error,from: %s, to: %s, newOutput: %s,\n", from, to, param.output);
             return;
         }
         l++;
@@ -113,6 +132,7 @@ void CompareIconvResult(char *to, char *from, char *src, size_t srcLen)
 
 int main(void)
 {
+    struct IconvParam param;
     char *str = "Hello world";
     for (int i = 0; i < g_encodeNum; i++) {
         char *from = g_encodeArray[i];
@@ -120,13 +140,18 @@ int main(void)
         size_t inputLen = strlen(input);
 
         if (IsExcludeToEncode(from) != 0) {
+            param.input = input;
+            param.inputLen = inputLen;
             char output[BUFFER_SIZE];
-            size_t outputLen = BUFFER_SIZE;
-            if (IconvTest(from, "utf8", input, inputLen, output, &outputLen)) {
+            param.output = output;
+            param.outputLen = BUFFER_SIZE;
+            param.to = from;
+            param.from = "utf8";
+            if (IconvTest(&param)) {
                 continue;
             }
-            input = output;
-            inputLen = BUFFER_SIZE - outputLen;
+            input = param.output;
+            inputLen = BUFFER_SIZE - param.outputLen;
         }
 
         for (int j = 0; j < g_encodeNum; j++) {
