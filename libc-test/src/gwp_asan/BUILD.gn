@@ -2,7 +2,7 @@ import("//build/test.gni")
 import("../../../musl_config.gni")
 import("../../test_template.gni")
 
-if (use_gwp_asan) {
+if (musl_use_gwp_asan) {
   config("gwp_asan_test_config") {
     cflags = [
       "-fno-omit-frame-pointer",

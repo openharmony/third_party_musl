@@ -2,12 +2,12 @@ import("//build/config/clang/clang.gni")
 import("//build/ohos.gni")
 import("musl_src.gni")
 template("static_and_shared_libs_template") {
-  if (defined(invoker.use_gwp_asan)) {
-    __use_gwp_asan = invoker.use_gwp_asan
+  if (defined(invoker.musl_use_gwp_asan)) {
+    __use_gwp_asan = invoker.musl_use_gwp_asan
   } else {
-    __use_gwp_asan = use_gwp_asan
+    __use_gwp_asan = musl_use_gwp_asan
   }
-  __use_flto = invoker.use_flto
+  __use_flto = invoker.musl_use_flto
 
   config("gwp_asan_config_${target_name}") {
     if (__use_gwp_asan) {
@@ -1034,7 +1034,7 @@ template("musl_libs") {
     output_name = "libc"
     output_extension = "so"
 
-    if (is_legacy) {
+    if (musl_is_legacy) {
       libclang_rt_path = rebase_path(
               "${runtime_lib_path}/${musl_target_triple}/nanlegacy/${_libs_path_prefix}")
     } else {
