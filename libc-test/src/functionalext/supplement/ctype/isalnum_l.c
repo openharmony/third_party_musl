@@ -20,7 +20,7 @@
 
 const int COUNT = 62;
 const int SIZE = 128;
-
+const int PHONETIC_SYMBOL_SIZE = 43;
 /**
  * @tc.name      : isalnum_l_0100
  * @tc.desc      : Verify isalnum_l process success when using the en-US.UTF-8 character set.
@@ -473,7 +473,6 @@ void isalnum_l_1400(void)
 void isalnum_l_1500(void)
 {
     locale_t m_locale = newlocale(LC_ALL_MASK, "zh_CN.UTF-8", NULL);
-
     if (!m_locale) {
         t_printf("Test case isalnum_l_1500 failed to call function newlocale\n");
         EXPECT_NE("isalnum_l_1500", 0, 0);
@@ -523,7 +522,6 @@ void isalnum_l_1500(void)
 void isalnum_l_1600(void)
 {
     locale_t m_locale = newlocale(LC_ALL_MASK, "zh_CN.UTF-8", NULL);
-
     if (!m_locale) {
         t_printf("Test case isalnum_l_1600 failed to call function newlocale\n");
         EXPECT_EQ("isalnum_l_1600", 1, 0);
@@ -585,7 +583,7 @@ void isalnum_l_1700(void)
         }
     }
 
-    EXPECT_EQ("isalnum_l_1700", total, 43);
+    EXPECT_EQ("isalnum_l_1700", total, PHONETIC_SYMBOL_SIZE);
     freelocale(m_locale);
     m_locale = NULL;
 }
