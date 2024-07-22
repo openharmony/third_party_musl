@@ -72,10 +72,16 @@ void remove_directory(const char *path)
                 continue;
             }
   
-            sprintf(filepath, "%s/%s", path, entry->d_name);
+            int result = snprintf(filepath, sizeof(filepath), "%s/%s", path, entry->d_name);
+            if (result >= sizeof(filepath)) {
+                t_error("%s error in snprintf! \n", __func__);
+            }
             remove_directory(filepath);
         } else {
-            sprintf(filepath, "%s/%s", path, entry->d_name);
+            int result = snprintf(filepath, sizeof(filepath), "%s/%s", path, entry->d_name);
+            if (result >= sizeof(filepath)) {
+                t_error("%s error in snprintf! \n", __func__);
+            }
             if (remove(filepath) == -1) {
                 t_error("%s error in remove test nftw filepath! \n", __func__);
             }
@@ -99,7 +105,10 @@ void nftw_build_testfile(const char *path)
     }
     
     char file[PATH_MAX];
-    sprintf(file, "%s/normal_file.txt", path);
+    int result = snprintf(file, sizeof(file), "%s/normal_file.txt", path);
+    if (result >= sizeof(file)) {
+        t_error("%s error in snprintf! \n", __func__);
+    }
     // Create plain file
     int fd = open(file, O_WRONLY | O_CREAT, 0644);
     if (fd == -1) {
@@ -108,7 +117,10 @@ void nftw_build_testfile(const char *path)
     }
     close(fd);
 
-    sprintf(file, "%s/non-executable_file.txt", path);
+    result = snprintf(file, sizeof(file), "%s/non-executable_file.txt", path);
+    if (result >= sizeof(file)) {
+        t_error("%s error in snprintf! \n", __func__);
+    }
     // Create non-executable file
     fd = open(file, O_WRONLY | O_CREAT, 0666);
     if (fd == -1) {
@@ -117,7 +129,10 @@ void nftw_build_testfile(const char *path)
     }
     close(fd);
 
-    sprintf(file, "%s/unauthorized_file.txt", path);
+    result = snprintf(file, sizeof(file), "%s/unauthorized_file.txt", path);
+    if (result >= sizeof(file)) {
+        t_error("%s error in snprintf! \n", __func__);
+    }
     // Create unauthorized file
     fd = open(file, O_WRONLY | O_CREAT, 0000);
     if (fd == -1) {
@@ -126,7 +141,10 @@ void nftw_build_testfile(const char *path)
     }
     close(fd);
 
-    sprintf(file, "%s/.hidden_file.txt", path);
+    result = snprintf(file, sizeof(file), "%s/.hidden_file.txt", path);
+    if (result >= sizeof(file)) {
+        t_error("%s error in snprintf! \n", __func__);
+    }
     // Create Hidden Files
     fd = open(file, O_WRONLY | O_CREAT, 0644);
     if (fd == -1) {
@@ -135,7 +153,10 @@ void nftw_build_testfile(const char *path)
     }
     close(fd);
   
-    sprintf(file, "%s/read_only_file.txt", path);
+    result = snprintf(file, sizeof(file), "%s/read_only_file.txt", path);
+    if (result >= sizeof(file)) {
+        t_error("%s error in snprintf! \n", __func__);
+    }
     //Create Read-only files
     fd = open(file, O_WRONLY | O_CREAT, 0444);
     if (fd == -1) {
@@ -144,7 +165,10 @@ void nftw_build_testfile(const char *path)
     }
     close(fd);
   
-    sprintf(file, "%s/symlink_to_normal_file", path);
+    result = snprintf(file, sizeof(file), "%s/symlink_to_normal_file", path);
+    if (result >= sizeof(file)) {
+        t_error("%s error in snprintf! \n", __func__);
+    }
     // Create Symbolic links
     if (symlink("normal_file.txt", file) == -1) {
         t_error("%s error in open symlink_to_normal_file.txt! \n", __func__);
@@ -156,9 +180,15 @@ void nftw_build_testDir()
 {
     nftw_build_testfile(TEST_NFTW_PATH);
     char path[PATH_MAX];
-    sprintf(path, "%s", TEST_NFTW_PATH);
+    int result = snprintf(path, sizeof(path), "%s", TEST_NFTW_PATH);
+    if (result >= sizeof(path)) {
+        t_error("%s error in snprintf! \n", __func__);
+    }
     for (int i = 0 ; i < TEST_PATH_DEPTH ; i++) {
-        sprintf(path, "%s/data", path);
+        result = snprintf(path, sizeof(path), "%s/data", path);
+        if (result >= sizeof(path)) {
+            t_error("%s error in snprintf! \n", __func__);
+        }
         nftw_build_testfile(path);
     }
 }
