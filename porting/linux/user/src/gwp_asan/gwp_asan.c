@@ -171,7 +171,7 @@ void gwp_asan_printf(const char *fmt, ...)
     char para_name[GWP_ASAN_NAME_LEN] = "gwp_asan.log.path";
     static CachedHandle para_handler = NULL;
     if (para_handler == NULL) {
-        para_handler = CachedParameterCreate(para_name, "file");
+        para_handler = CachedParameterCreate(para_name, "default");
     }
     char *para_value = CachedParameterGet(para_handler);
     if (strcmp(para_value, "file") == 0) {
@@ -209,26 +209,26 @@ void gwp_asan_printf(const char *fmt, ...)
         if (result < 0) {
             MUSL_LOGE("[gwp_asan] write log failed!\n");
         }
-        if(WriteGwpAsanLog != NULL) {
+        if (WriteGwpAsanLog != NULL) {
             WriteGwpAsanLog(log_buffer, strlen(log_buffer));
             return;
-	}
-        if(try_load_asan_logger) {
+        }
+        if (try_load_asan_logger) {
             return;
         }
         pthread_mutex_lock(&gwpasan_mutex);
-        if(WriteGwpAsanLog != NULL) {
+        if (WriteGwpAsanLog != NULL) {
             WriteGwpAsanLog(log_buffer, strlen(log_buffer));
             pthread_mutex_unlock(&gwpasan_mutex);
             return;
         }
         if (!try_load_asan_logger && handle == NULL) {
-            try_load_asan_logger = true;
             handle = dlopen(ASAN_LOG_LIB, RTLD_LAZY);
-	    if (handle == NULL) {
+            if (handle == NULL) {
                 pthread_mutex_unlock(&gwpasan_mutex);
                 return;
             }
+            try_load_asan_logger = true;
             *(void**)(&WriteGwpAsanLog) = dlsym(handle, "WriteGwpAsanLog");
             if (WriteGwpAsanLog != NULL) {
                 WriteGwpAsanLog(log_buffer, strlen(log_buffer));
