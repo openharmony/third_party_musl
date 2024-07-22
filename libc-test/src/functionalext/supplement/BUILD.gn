@@ -363,7 +363,7 @@ ohos_executable("musl_unittest") {
   include_dirs = [ "//third_party/musl" ]
   configs = [ ":module_private_config" ]
 
-  if (use_pthread_cancel) {
+  if (musl_use_pthread_cancel) {
     cflags += [ "-DFEATURE_PTHREAD_CANCEL" ]
   }
   deps = [ "//third_party/googletest:gtest_main" ]

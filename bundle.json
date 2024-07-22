@@ -21,7 +21,13 @@
           "musl_use_encaps",
           "musl_ld128_flag",
           "musl_iterate_and_stats_api",
-          "musl_unit_test_flag"
+          "musl_is_legacy",
+          "musl_enable_musl_log",
+          "musl_unit_test_flag",
+          "musl_user_custom_libc",
+          "musl_use_flto",
+          "musl_use_gwp_asan",
+          "musl_use_pthread_cancel"
         ],
         "adapted_system_type": ["mini", "small", "standard"],
         "rom": "",
