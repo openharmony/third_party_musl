@@ -408,6 +408,20 @@ void wcstod_l_1800(void)
     }
 }
 
+/**
+ * @tc.name      : wcstod_l_1900
+ * @tc.desc      : set locale as zh_CN.UTF-8, set endptr as NULL
+ * @tc.level     : Level 0
+ */
+void wcstod_l_1900(void)
+{
+    locale_t loc = newlocale(LC_ALL_MASK, "zh_CN.UTF-8", NULL);
+    wchar_t* str = L"123.45";
+    const double target = 123.45;
+    double num = wcstod_l(str, NULL, loc);
+    EXPECT_DOUBLE_EQ(num, target);
+}
+
 int main(void)
 {
     wcstod_l_0100();
@@ -428,6 +442,7 @@ int main(void)
     wcstod_l_1600();
     wcstod_l_1700();
     wcstod_l_1800();
+    wcstod_l_1900();
 
     return t_status;
 }
