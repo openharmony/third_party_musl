@@ -910,10 +910,12 @@ template("musl_libs") {
     sources = []
     if (musl_arch == "x86_64") {
       sources += [
+        "src/math/ceill.c",
         "src/math/exp2l.c",
         "src/math/fabsl.c",
         "src/math/floorl.c",
         "src/math/sqrtl.c",
+        "src/math/truncl.c",
       ]
     }
 
