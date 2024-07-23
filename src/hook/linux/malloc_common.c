@@ -37,7 +37,7 @@ extern void* libc_gwp_asan_calloc(size_t nmemb, size_t size);
 #endif
 
 #ifdef OHOS_FDTRACK_HOOK_ENABLE
-struct timeval prevTime = {0,0};
+struct timeval prevTime = {0, 0};
 static int KICK_ALLOCATE_MEMORY = 60;
 #endif
 

@@ -13,17 +13,7 @@ extern bool __fdtrack_enabled;
 extern "C" {
 #endif
 
-int FDTRACK_START_HOOK(int fd_value)
-{
-	int fd = fd_value;
-	if (fd != -1 && __predict_false(__fdtrack_enabled) && __predict_false(__fdtrack_hook)) {
-		struct fdtrack_event event;
-		event.fd = fd;
-		event.type = FDTRACK_EVENT_TYPE_CREATE;
-		atomic_load(&__fdtrack_hook)(&event);
-	}
-	return fd;
-}
+int FDTRACK_START_HOOK(int fd_value);
 
 #ifdef __cplusplus
 }

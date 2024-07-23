@@ -166,6 +166,7 @@ static struct tls_module *tls_tail;
 static size_t tls_cnt, tls_offset, tls_align = MIN_TLS_ALIGN;
 static size_t static_tls_cnt;
 static pthread_mutex_t init_fini_lock;
+static pthread_mutex_t dl_phdr_lock;
 static pthread_cond_t ctor_cond;
 static struct dso *builtin_deps[2];
 static struct dso *const no_deps[1];
@@ -1477,7 +1478,7 @@ static bool is_section_exist(Ehdr *eh_buf, uint32_t en_size, int fd, char *secti
 	if (eh_buf == NULL) {
 		return false;
 	}
-	
+
 	if (eh_buf->e_type != ET_DYN) {
 		goto error_without_free;
 	}
@@ -4588,7 +4589,6 @@ int dl_iterate_phdr(int(*callback)(struct dl_phdr_info *info, size_t size, void 
 	struct dso *current;
 	struct dl_phdr_info info;
 	int ret = 0;
-	pthread_rwlock_wrlock(&lock);
 	for(current = head; current;) {
 		info.dlpi_addr      = (uintptr_t)current->base;
 		info.dlpi_name      = current->name;
@@ -4600,13 +4600,16 @@ int dl_iterate_phdr(int(*callback)(struct dl_phdr_info *info, size_t size, void 
 		info.dlpi_tls_data = !current->tls_id ? 0 :
 			__tls_get_addr((tls_mod_off_t[]){current->tls_id,0});
 
+		// FIXME: add dl_phdr_lock for unwind callback
+		pthread_mutex_lock(&dl_phdr_lock);
 		ret = (callback)(&info, sizeof (info), data);
+		pthread_mutex_unlock(&dl_phdr_lock);
 
 		if (ret != 0) break;
-
+		pthread_rwlock_rdlock(&lock);
 		current = current->next;
+		pthread_rwlock_unlock(&lock);
 	}
-	pthread_rwlock_unlock(&lock);
 	return ret;
 }
 
