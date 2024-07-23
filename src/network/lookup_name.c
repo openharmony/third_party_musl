@@ -899,7 +899,10 @@ static linknode *get_linknode(linkList *plist, int index)
 
 	int i = 0;
 	linknode *pnode = plist->_phead;
-	while ((i++) < index) {
+	if (NULL == pnode) {
+		return NULL;
+	}
+	while ((i++) < index && NULL != pnode) {
 		pnode = pnode->_next;
 	}
 
@@ -922,6 +925,9 @@ static int linklist_append_last(linkList *plist, void *pdata)
 		plist->_count++;
 	} else {
 		linknode *plastnode = get_linknode(plist, plist->_count - 1);
+		if (NULL == plastnode) {
+			return -1;
+		}
 		plastnode->_next = pnode;
 		plist->_count++;
 	}
