@@ -24,7 +24,7 @@ struct sigcontext {
 	unsigned long sc_pc;
 	unsigned long sc_regs[32];
 	unsigned sc_flags;
-	unsigned long sc_extcontext[] __attribute__((__aligned__(16)));
+	unsigned long sc_extcontext[0] __attribute__((__aligned__(16)));
 };
 #endif
 
@@ -32,7 +32,7 @@ typedef struct {
 	unsigned long __pc;
 	unsigned long __gregs[32];
 	unsigned __flags;
-	unsigned long __extcontext[] __attribute__((__aligned__(16)));
+	unsigned long __extcontext[0] __attribute__((__aligned__(16)));
 } mcontext_t;
 
 struct sigaltstack {
