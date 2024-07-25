@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2020-2023. All rights reserved.
+ * Copyright (c) 2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -82,7 +82,8 @@ constexpr auto K = 1024;
 constexpr auto M = 1024 * 1024;
 constexpr auto G = 1024 * 1024 * 1024;
 
-typedef struct bench_opts_t {
+typedef struct bench_opts_t
+{
     int cpuNum = -1;
     long iterNum = 0;
     std::string jsonPath;
@@ -105,6 +106,6 @@ enum JSONError {
     JOSN_ERROR_JSON_FORMAT,
 };
 
-void open_tcache();
+void OpenTcache();
 
 #define OPEN_MODE 0666

@@ -53,7 +53,7 @@ std::map<std::string, std::pair<BenchmarkFunc, std::string>> g_allBenchmarks;
 std::mutex g_benchmarkLock;
 std::map<std::string, std::pair<BenchmarkFunc, ApplyBenchmarkFunc>> g_applyBenchmarks;
 
-using args_vector=std::vector<std::vector<int64_t>>;
+using args_vector = std::vector<std::vector<int64_t>>;
 
 static struct option g_benchmarkLongOptions[] = {
     {"musl_cpu", required_argument, nullptr, 'c'},
@@ -271,7 +271,6 @@ void RegisterSingleBenchmark(bench_opts_t optsFromJson, bench_opts_t optsFromCom
         BenchmarkFunc func = g_applyBenchmarks.at(funcName).first;
         auto registration = benchmark::RegisterBenchmark(funcName.c_str(), LockAndRun, func,
             cpuNum)->Apply(g_applyBenchmarks.at(funcName).second);
-
         if (iterNum > 0) {
             registration->Iterations(iterNum);
         }
