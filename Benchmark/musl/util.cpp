@@ -27,7 +27,8 @@
 #include <cwchar>
 #include <cstdlib>
 
-void open_tcache() {
+void OpenTcache()
+{
 #if not defined __APPLE__
     mallopt(M_OHOS_CONFIG, M_TCACHE_PERFORMANCE_MODE);
     mallopt(M_OHOS_CONFIG, M_ENABLE_OPT_TCACHE);

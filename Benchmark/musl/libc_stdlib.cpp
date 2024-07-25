@@ -336,7 +336,7 @@ static void Bm_function_cxa_atexit(benchmark::State &state)
 
 static void Bm_function_Srandom(benchmark::State &state)
 {
-    unsigned int seed = (unsigned int)time(nullptr);
+    unsigned int seed = static_cast<unsigned int>(time(nullptr));
     for (auto _ : state) {
         srandom(seed);
     }

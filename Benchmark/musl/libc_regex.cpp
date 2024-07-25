@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2020-2023. All rights reserved
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -17,7 +17,7 @@
 #include <vector>
 #include "util.h"
 
-static int count[8] = {1, 2, 3, 4, 5, 6, 7, 8};
+static int g_count[8] = {1, 2, 3, 4, 5, 6, 7, 8};
 
 static const std::vector<int> regCompFlags {
     0,
@@ -38,7 +38,7 @@ static void Bm_function_Regcomp(benchmark::State &state)
 {
     const char* pattern = "hello.*world";
     int flag = state.range(0);
-    open_tcache();
+    OpenTcache();
     for (auto _state: state) {
         regex_t reg;
         benchmark::DoNotOptimize(regcomp(&reg, pattern, flag));
@@ -55,7 +55,7 @@ static void Bm_function_Regexec(benchmark::State &state)
         perror("regcomp");
         exit(-1);
     }
-    open_tcache();
+    OpenTcache();
     regmatch_t pmatch;
     for (auto _state: state) {
         benchmark::DoNotOptimize(regexec(&reg, "hello test world", 1, &pmatch, 0));
@@ -70,13 +70,13 @@ static void Bm_function_Regall(benchmark::State &state)
     int flag = state.range(0);
     regex_t reg;
 
-    open_tcache();
+    OpenTcache();
     regmatch_t pmatch;
     for (auto _ : state) {
         if (regcomp(&reg, pattern, flag)) {
             perror("regcomp");
         }
-        for (int i = 0; i < count[state.range(0)]; i++) {
+        for (int i = 0; i < g_count[state.range(0)]; i++) {
             regexec(&reg, "hello test world", 1, &pmatch, 0);
         }
         regfree(&reg);

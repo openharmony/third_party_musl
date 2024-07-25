@@ -2,7 +2,7 @@
 #include "test.h"
 
 __attribute__((constructor))
-void Ctor()
+void B_tor()
 {
 	exit(t_status);
 }

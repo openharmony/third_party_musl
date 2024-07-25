@@ -24,6 +24,7 @@
 using namespace std;
 
 constexpr int MALLOC_SIZE = 2;
+
 static const vector<int> blockSize {
     1,
     4,
@@ -50,7 +51,7 @@ static void Bm_function_Calloc(benchmark::State& state)
     int m = state.range(0);
     int n = state.range(1);
     void* ptr;
-    open_tcache();
+    OpenTcache();
     for (auto _ : state) {
         benchmark::DoNotOptimize(ptr = calloc(m, n));
         if (ptr) {
@@ -66,7 +67,7 @@ static void Bm_function_realloc_twice(benchmark::State &state)
     if (p == nullptr) {
         perror("malloc Je_realloc");
     }
-    open_tcache();
+    OpenTcache();
     for (auto _ : state) {
         benchmark::DoNotOptimize(realloc(p, size * 2));
     }
@@ -84,7 +85,7 @@ static void Bm_function_realloc_half(benchmark::State &state)
     if (p == nullptr) {
         perror("malloc Je_realloc");
     }
-    open_tcache();
+    OpenTcache();
     for (auto _ : state) {
         benchmark::DoNotOptimize(realloc(p, size / 2));
     }
@@ -102,7 +103,7 @@ static void Bm_function_realloc_equal(benchmark::State &state)
     if (p == nullptr) {
         perror("malloc Je_realloc");
     }
-    open_tcache();
+    OpenTcache();
     for (auto _ : state) {
         benchmark::DoNotOptimize(realloc(p, size));
     }
@@ -119,7 +120,7 @@ static void Bm_function_malloc_usable_size(benchmark::State &state)
     if (p == nullptr) {
         perror("malloc Je_malloc_usable_size");
     }
-    open_tcache();
+    OpenTcache();
     for (auto _ : state) {
 #if defined __APPLE__
         benchmark::DoNotOptimize(malloc_size(p));
@@ -139,4 +140,3 @@ MUSL_BENCHMARK(Bm_function_realloc_half);
 MUSL_BENCHMARK(Bm_function_realloc_equal);
 MUSL_BENCHMARK(Bm_function_malloc_usable_size);
 MUSL_BENCHMARK_WITH_APPLY(Bm_function_Calloc, PrepareCallocArgs);
-

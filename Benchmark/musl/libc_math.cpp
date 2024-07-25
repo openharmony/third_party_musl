@@ -392,9 +392,10 @@ static void Bm_function_Fmaf(benchmark::State &state)
     srand(time(nullptr));
     for (int i = 0; i <= state.range(0); i++) {
         for (auto _ : state) {
-            float a = (float)DOUBLE_VALUES[rand() % 8];
-            float b = (float)DOUBLE_VALUES[(rand()+1) % 8];
-            float c = (float)DOUBLE_VALUES[(rand()+2) % 8];
+            int eight = 8;
+            float a = (float)DOUBLE_VALUES[rand() % eight];
+            float b = (float)DOUBLE_VALUES[(rand()+1) % eight];
+            float c = (float)DOUBLE_VALUES[(rand()+2) % eight];
             benchmark::DoNotOptimize(fmaf(a, b, c));
         }
     }
