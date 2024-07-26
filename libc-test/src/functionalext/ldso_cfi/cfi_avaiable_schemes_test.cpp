@@ -25,7 +25,7 @@ void A::Test()
 }
 
 struct B : A {
-    virtual void Test();
+    void Test() override;
 };
 
 void B::Test()
@@ -148,7 +148,8 @@ int main()
     FindAndCheck("runtime error: control flow integrity check for type 'CallTestA' failed during virtual call");
 
     CfiIcall();
-    FindAndCheck("runtime error: control flow integrity check for type 'void (int)' failed during indirect function call");
+    FindAndCheck(
+        "runtime error: control flow integrity check for type 'void (int)' failed during indirect function call");
 
     if (DEBUG) {
         ShowCfiLogFile();

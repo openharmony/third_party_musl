@@ -11,11 +11,9 @@ extern "C" {
 
 enum fdtrack_type {
 	FDTRACK_EVENT_TYPE_CREATE,
-	FDTRACK_EVENT_TYPE_CLOSE,
 };
 
 struct fdtrack_event {
-	int fd;
 	uint32_t type;
 };
 

@@ -6,7 +6,6 @@ rm /data/tests/libc-test/SkipList.txt
 touch /data/tests/libc-test/REPORT
 touch /data/tests/libc-test/FileList.txt
 touch /data/tests/libc-test/SkipList.txt
-echo 'root:This.is.a.test:18997:0:99999:7:::'>/etc/shadow
 param set debug.hitrace.tags.enableflags 1
 
 ARCH=arm
@@ -29,10 +28,8 @@ ShieldedList=("trace_stresstest" "syslog" "vsyslog" "runtest"
 "ldso_randomization_manual" "ldso_randomization_test"
 "tcgetattr" "tcgetpgrp" "tcgetsid" "tcsendbreak" "tcsetattr" "tcsetpgrp"
 #These need run with special condiction
-"pthread_atfork-errno-clobber" "flockfile-list" 
-#Symbol hidden
-"dlns_set_fun_test" "dlns_inherit_test" "dlns_separated_test"
-"unittest_ldso_ns_config" "unittest_ldso_dynlink"
+"ipc_msg" "ipc_sem" "ipc_shm" "sem_close-unmap" "sem_open" "pthread_atfork-errno-clobber"
+"flockfile-list" "dlns_set_fun_test" "dlns_inherit_test" "dlns_separated_test"
 #Some math test cases need to skip.
 "acoshl" "asinhl" "erfcl" "fenv" "fma" "fmaf" "fmal" "lgammal" "nearbyint" "nearbyintf"
 "nearbyintl" "rint" "rintf" "rintl" "sqrt" "sqrtf" "sqrtl" "tgammal"

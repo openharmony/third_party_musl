@@ -38,7 +38,7 @@ typedef void (*fdtrack_hook)(struct fdtrack_event*);
 void set_fdtrack_enabled(bool newValue);
 bool fdtrack_cas_hook(fdtrack_hook* expected, fdtrack_hook value);
 bool normal_flow_control(struct timeval prevTime, int interval);
-bool check_open_func(const char*expected, const char* key);
+bool check_open_func(const char* expected, const char* key);
 bool check_beta_develop_before();
 bool check_before_memory_allocate(struct timeval prevTime, int interval);
 
