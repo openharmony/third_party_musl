@@ -12,11 +12,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <cstdio>
-#include <iostream>
+
 #include <dlfcn.h>
 #include <sys/time.h>
 #include "util.h"
+#include <cstdio>
+#include <iostream>
 
 constexpr double THOUSAND = 1000.0;
 

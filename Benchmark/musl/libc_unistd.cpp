@@ -322,7 +322,7 @@ static void Bm_function_Uname(benchmark::State &state)
 static void Bm_function_Lseek(benchmark::State &state)
 {
     const char *filepath = "/data/local/tmp/lseel_test.txt";
-    int fd = open(filepath, O_CREAT | O_RDONLY,OPEN_MODE);
+    int fd = open(filepath, O_CREAT | O_RDONLY, OPEN_MODE);
     if (fd == -1) {
         perror("open lseek");
     }

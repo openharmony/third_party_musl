@@ -54,10 +54,9 @@ static void StringtestArgs(benchmark::internal::Benchmark* b)
 {
     for (auto l : bufferSizes) {
         for (auto f : limitSizes) {
-            if(f > l){
+            if (f > l) {
                 b->Args({l, l, 0});
-            }
-            else{
+            } else {
                 b->Args({l, f, 0});
             }
         }
