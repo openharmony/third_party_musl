@@ -48,7 +48,7 @@ bool normal_flow_control(struct timeval prevTime, int interval)
 {
 	struct timeval currentTime;
 	gettimeofday(&currentTime, NULL);
-	int timeDifferenceSeconds= ((currentTime.tv_sec * TIME_IN_MILLISECONDS + currentTime.tv_usec) -
+	int timeDifferenceSeconds = ((currentTime.tv_sec * TIME_IN_MILLISECONDS + currentTime.tv_usec) -
 								(prevTime.tv_sec * TIME_IN_MILLISECONDS + prevTime.tv_usec)) / TIME_IN_MILLISECONDS;
 	return timeDifferenceSeconds > interval;
 }
@@ -63,7 +63,8 @@ bool check_open_func(const char*expected, const char* key)
 bool check_beta_develop_before()
 {
 	if (__beta_develop_mode == NOT_CHECK) {
-		if (check_open_func(__is_beta_version, __key_version_type) || check_open_func(__is_develop_mode, __key_develop_mode)) {
+		if (check_open_func(__is_beta_version, __key_version_type) ||
+			check_open_func(__is_develop_mode, __key_develop_mode)) {
 			__beta_develop_mode = ENABLE;
 		} else {
 			__beta_develop_mode = DISABLE;

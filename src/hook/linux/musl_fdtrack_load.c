@@ -43,7 +43,7 @@ __attribute__((constructor())) static void __musl_fdtrack_initialize()
 	void* shared_library_handle = NULL;
 	shared_library_handle = dlopen(__fdtrack_hook_shared_lib, RTLD_NOW | RTLD_LOCAL);
 	if (shared_library_handle == NULL) {
-		MUSL_LOGE("FdTrack, Unable to open shared library %s: %s.\n", __fdtrack_hook_shared_lib, dlerror());
+		MUSL_LOGI("FdTrack, Unable to open shared library %s: %s.\n", __fdtrack_hook_shared_lib, dlerror());
 		return;
 	}
 }
