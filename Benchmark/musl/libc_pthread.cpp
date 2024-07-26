@@ -474,7 +474,8 @@ static void Bm_function_pthread_cond_signal(benchmark::State &state)
 {
     pthread_cond_t cond;
     pthread_cond_init(&cond, nullptr);
-    while (state.KeepRunning()) {
+    while (state.KeepRunning())
+    {
         pthread_cond_signal(&cond);
     }
     pthread_cond_destroy(&cond);

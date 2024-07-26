@@ -27,7 +27,7 @@ static void Bm_function_Wait(benchmark::State &state)
     }
     for (auto _ : state) {
         if (pid == 0) {
-            exit(EXIT_SUCCESS);
+            continue;
         } else {
             wait(nullptr);
         }
