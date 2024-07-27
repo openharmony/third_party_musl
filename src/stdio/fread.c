@@ -28,11 +28,11 @@ int __fill_buffer(FILE *f)
 
 size_t fread(void *restrict destv, size_t size, size_t nmemb, FILE *restrict f)
 {
-	unsigned char *dest = destv;
-	size_t len = size * nmemb, l = len, k;
 #ifndef __LITEOS__
 	PARAM_CHECK(f);
 #endif
+	unsigned char *dest = destv;
+	size_t len = size * nmemb, l = len, k;
 	if (!size) {
 		nmemb = 0;
 	}
