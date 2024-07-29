@@ -30,7 +30,7 @@ const char unsigned *__map_file(const char *pathname, size_t *size)
 	return map == MAP_FAILED ? 0 : map;
 }
 
-size_t convert_byte_to_size_t(const unsigned char *map)
+static size_t convert_byte_to_size_t(const unsigned char *map)
 {
 	/* Parse 4 continue bytes to size_t. 0, 1, 2, 3 is the index of bytes, 24, 16, 8 is the offset of byte in size_t*/
 	return ((size_t)map[0] << 24) + ((size_t)map[1] << 16) + ((size_t)map[2] << 8) + (size_t)map[3];
