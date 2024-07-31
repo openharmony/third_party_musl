@@ -230,7 +230,7 @@ static inline void cfi_slowpath_common(uint64_t call_site_type_id, void *func_pt
 
         dso = (struct dso *)addr2dso((size_t)__builtin_return_address(0));
         if (dso == NULL) {
-	    LD_LOGE("[CFI] [%{public}s] can not find the dso!\n", __FUNCTION__);
+            LD_LOGE("[CFI] [%{public}s] can not find the dso!\n", __FUNCTION__);
             __builtin_trap();
         }
         LD_LOGD("[CFI] [%{public}s] dso name[%{public}s]!\n", __FUNCTION__, dso->name);
