@@ -85,7 +85,8 @@ static void Bm_function_Fstat64(benchmark::State &state)
 static void Bm_function_Mkdir(benchmark::State &state)
 {
     for (auto _ : state) {
-        benchmark::DoNotOptimize(mkdir(DATA_ROOT"/data/data/test_mkdir", S_IRWXU | S_IRWXG | S_IXGRP | S_IROTH | S_IXOTH));
+        benchmark::DoNotOptimize(mkdir(DATA_ROOT"/data/data/test_mkdir",
+                                S_IRWXU | S_IRWXG | S_IXGRP | S_IROTH | S_IXOTH));
         state.PauseTiming();
         rmdir(DATA_ROOT"/data/data/test_mkdir");
         state.ResumeTiming();
@@ -96,7 +97,8 @@ static void Bm_function_Mkdir(benchmark::State &state)
 static void Bm_function_Mkdirat(benchmark::State &state)
 {
     for (auto _ : state) {
-        benchmark::DoNotOptimize(mkdirat(AT_FDCWD, DATA_ROOT"/data/data/test_mkdirat", S_IRWXU | S_IRWXG | S_IXOTH | S_IROTH));
+        benchmark::DoNotOptimize(mkdirat(AT_FDCWD, DATA_ROOT"/data/data/test_mkdirat",
+                                S_IRWXU | S_IRWXG | S_IXOTH | S_IROTH));
         state.PauseTiming();
         rmdir(DATA_ROOT"/data/data/test_mkdirat");
         state.ResumeTiming();
