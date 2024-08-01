@@ -152,17 +152,18 @@ double strtod_l(const char *restrict s, char **restrict p, locale_t l)
 		int i;
 		for (i = 0; i < 8 && (*(tmp_s + i) | 32) == "infinity"[i]; i++) {}
 		if (i == 3 || i == 8 || i > 3) {
-			if (p && i != 8) {
+			if (!p) return sign * INFINITY;
+			if (i != 8) {
 				*p = tmp_s + 3;
-			} else if (p) {
+			} else {
 				*p = tmp_s + i;
 			}
 			return sign * INFINITY;
 		}
 
 		double res = icu_strtod_l(l->cat[LC_NUMERIC]->name, tmp_s, &cur_status, &parse_pos);
-		if (p && (cur_status == DLSYM_ICU_SUCC || cur_status == ICU_ERROR)) {
-			*p = parse_pos ? tmp_s + parse_pos : (char *)s;
+		if (cur_status == DLSYM_ICU_SUCC || cur_status == ICU_ERROR) {
+			if (p) *p = parse_pos ? tmp_s + parse_pos : (char *)s;
 			return sign * res;
 		}
 	}
