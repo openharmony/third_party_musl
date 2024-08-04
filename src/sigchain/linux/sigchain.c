@@ -74,8 +74,8 @@ static void create_pthread_key(void)
     SIGCHAIN_PRINT_INFO("%{public}s create the thread key!", __func__);
     int rc = pthread_key_create(&g_sigchain_key, NULL);
     if (rc != 0) {
-        SIGCHAIN_PRINT_FATAL("%{public}s failed to create sigchain pthread key, rc:%{public}d",
-                __func__,  rc);
+        SIGCHAIN_PRINT_FATAL("%{public}s failed to create sigchain pthread key, rc:%{public}d errno:%{public}d",
+                __func__,  rc, errno);
     }
 }
 
@@ -85,7 +85,6 @@ static void create_pthread_key(void)
   */
 static pthread_key_t get_handling_signal_key()
 {
-    call_once(&g_flag, create_pthread_key);
     return g_sigchain_key;
 }
 
@@ -237,6 +236,7 @@ static void sigchain_register(int signo)
     SIGCHAIN_PRINT_INFO("%{public}s signo: %{public}d", __func__, signo);
     struct sigaction signal_action = {};
     sigfillset(&signal_action.sa_mask);
+    call_once(&g_flag, create_pthread_key);
 
     signal_action.sa_sigaction = signal_chain_handler;
     signal_action.sa_flags = SA_RESTART | SA_SIGINFO | SA_ONSTACK;
