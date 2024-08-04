@@ -47,6 +47,12 @@ typedef enum {
     LOG_LEVEL_MAX = 8,
 } LogLevel;
 
+hidden bool CheckHilogValid();
+// Dangerous operation, please do not use in normal business
+hidden void RefreshHiLogSocketFd();
+
+hidden void InitHilogSocketFd();
+
 hidden int HiLogAdapterPrint(LogType type, LogLevel level, unsigned int domain, const char *tag, const char *fmt, ...)
     __attribute__((__format__(os_log, 5, 6)));
 
