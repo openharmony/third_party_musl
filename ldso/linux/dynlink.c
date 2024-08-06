@@ -52,8 +52,8 @@
 #include <sys/ioctl.h>
 
 #define OH_ENCAPS_MAGIC 'E'
-#define OH_ENCAPS_SYNC_BASE 0x19
-#define SYNC_ENCAPS_CMD _IO(OH_ENCAPS_MAGIC, OH_ENCAPS_SYNC_BASE)
+#define OH_ENCAPS_LOAD_BASE 0x19
+#define LOAD_ENCAPS_CMD _IO(OH_ENCAPS_MAGIC, OH_ENCAPS_LOAD_BASE)
 static int encpas_cost_time = 0;
 struct timespec encaps_time_start, encaps_time_end;
 #endif
@@ -1439,31 +1439,22 @@ static size_t phdr_table_get_maxinum_alignment(Phdr *phdr_table, size_t phdr_cou
 }
 
 #ifdef USE_ENCAPS
-static int do_sync_to_other()
+static void do_add_encaps(int fd)
 {
-	int fd;
+	int encaps_fd;
 	int ret;
 
-	fd = open("/dev/encaps", O_RDONLY);
-	if (fd < 0) {
+	encaps_fd = open("/dev/encaps", O_RDWR);
+	if (encaps_fd < 0) {
 		LD_LOGE("open encaps failed, %{public}s", strerror(errno));
-		return -1;
+		return;
 	}
+	ret = ioctl(encaps_fd, LOAD_ENCAPS_CMD, &fd);
 
-	ret = ioctl(fd, SYNC_ENCAPS_CMD);
 	if (ret != 0) {
-		LD_LOGE("ioctl encaps failed, %{public}s", strerror(errno));
-		close(fd);
-		return -1;
+		LD_LOGE("ioctl load encaps failed, %{public}s", strerror(errno));
 	}
-
-	close(fd);
-	return 0;
-}
-
-static void sync_to_other()
-{
-	__synccall(do_sync_to_other, NULL);
+	close(encaps_fd);
 }
 
 static bool is_section_exist(Ehdr *eh_buf, uint32_t en_size, int fd, char *section_name)
@@ -1544,7 +1535,7 @@ done_search:
 	if (sh_buf != NULL) {
 		free(sh_buf);
 	}
-	sync_to_other();
+	do_add_encaps(fd);
 	return true;
 }
 #endif
