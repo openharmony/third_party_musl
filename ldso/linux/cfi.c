@@ -228,6 +228,9 @@ static inline void cfi_slowpath_common(uint64_t call_site_type_id, void *func_pt
             return;
         }
 
+        LD_LOGE("[CFI] Invalid shadow value of address:%{public}p, lr:%{public}p.\n",
+                func_ptr, __builtin_return_address(0));
+
         dso = (struct dso *)addr2dso((size_t)__builtin_return_address(0));
         if (dso == NULL) {
 	    LD_LOGE("[CFI] [%{public}s] can not find the dso!\n", __FUNCTION__);
