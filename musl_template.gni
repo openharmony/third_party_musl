@@ -101,12 +101,12 @@ template("static_and_shared_libs_template") {
     if (musl_unit_test_flag) {
       defines += [ "UNIT_TEST_STATIC" ]
     }
-    if (use_jemalloc) {
+    if (musl_use_jemalloc) {
       defines += [ "USE_JEMALLOC" ]
-      if (use_jemalloc_dfx_intf) {
+      if (musl_use_jemalloc_dfx_intf) {
         defines += [ "USE_JEMALLOC_DFX_INTF" ]
       }
-      if (use_jemalloc_recycle_func) {
+      if (musl_use_jemalloc_recycle_func) {
         defines += [ "USE_JEMALLOC_RECYCLE_FUNC" ]
       }
       include_dirs += [ "${musl_malloc_plugin}/include/jemalloc" ]
@@ -463,12 +463,12 @@ template("static_and_shared_libs_template") {
       not_needed([ "__use_flto" ])
     }
 
-    if (use_jemalloc) {
+    if (musl_use_jemalloc) {
       defines += [ "USE_JEMALLOC" ]
-      if (use_jemalloc_dfx_intf) {
+      if (musl_use_jemalloc_dfx_intf) {
         defines += [ "USE_JEMALLOC_DFX_INTF" ]
       }
-      if (use_jemalloc_recycle_func) {
+      if (musl_use_jemalloc_recycle_func) {
         defines += [ "USE_JEMALLOC_RECYCLE_FUNC" ]
       }
       include_dirs = [ "${musl_malloc_plugin}/include/jemalloc" ]
@@ -954,7 +954,7 @@ template("musl_libs") {
     if (use_musl && !is_llvm_build) {
       external_deps += [ "init:parameterbase" ]
     }
-    if (use_jemalloc) {
+    if (musl_use_jemalloc) {
       deps += [ ":soft_musl_jemalloc" ]
     }
 
@@ -1088,7 +1088,7 @@ template("musl_libs") {
       external_deps += [ "init:parameterbase" ]
     }
 
-    if (use_jemalloc) {
+    if (musl_use_jemalloc) {
       deps += [ ":soft_musl_jemalloc" ]
     }
 

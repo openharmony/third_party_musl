@@ -242,22 +242,22 @@ if (is_lite_system && current_os == "ohos") {
     deps = [ ":create_porting_src" ]
   }
 
-  # if uapi_dir does not exist, then make uapi from linux_kernel_dir
+  # if musl_uapi_dir does not exist, then make uapi from musl_linux_kernel_dir
   if (exec_script("/bin/sh",
                   [
                     "-c",
-                    "if [ ! -d " + rebase_path(uapi_dir) +
+                    "if [ ! -d " + rebase_path(musl_uapi_dir) +
                         " ]; then echo true; else echo false; fi",
                   ],
                   "value")) {
-    kernel_dir = rebase_path(linux_kernel_dir)
+    kernel_dir = rebase_path(musl_linux_kernel_dir)
     kernel_out_dir = "${kernel_dir}/make_output"
-    uapi_dir = "${kernel_out_dir}/usr/include"
-    make_uapi_cmd = "rm -rf ${uapi_dir}"
+    musl_uapi_dir = "${kernel_out_dir}/usr/include"
+    make_uapi_cmd = "rm -rf ${musl_uapi_dir}"
     make_uapi_cmd += " && make -C ${kernel_dir} -sj headers O=${kernel_out_dir} ARCH=${target_cpu}"
-    make_uapi_cmd += " && cp -f ${kernel_dir}/drivers/staging/android/uapi/ashmem.h ${uapi_dir}/linux/ashmem.h"
-    make_uapi_cmd += " && sed -i '/#define _INPUT_H/i#define _UAPI_INPUT_H' ${uapi_dir}/linux/input.h"
-    make_uapi_cmd += " && sed -i '/struct __kernel_sockaddr_storage/i#define sockaddr_storage __kernel_sockaddr_storage' ${uapi_dir}/linux/socket.h"
+    make_uapi_cmd += " && cp -f ${kernel_dir}/drivers/staging/android/uapi/ashmem.h ${musl_uapi_dir}/linux/ashmem.h"
+    make_uapi_cmd += " && sed -i '/#define _INPUT_H/i#define _UAPI_INPUT_H' ${musl_uapi_dir}/linux/input.h"
+    make_uapi_cmd += " && sed -i '/struct __kernel_sockaddr_storage/i#define sockaddr_storage __kernel_sockaddr_storage' ${musl_uapi_dir}/linux/socket.h"
     args_make_uapi = [ "-c" ]
     args_make_uapi += [ make_uapi_cmd ]
     exec_script("/bin/sh", args_make_uapi, "value")
@@ -266,7 +266,7 @@ if (is_lite_system && current_os == "ohos") {
     uapi_from = "local"
   }
 
-  uapi_full_path = rebase_path(uapi_dir)
+  uapi_full_path = rebase_path(musl_uapi_dir)
   arguments_uapi = [ "-c" ]
 
   # exclude these files because they need special treatment
@@ -283,7 +283,7 @@ if (is_lite_system && current_os == "ohos") {
   # Generate a copy target for each file
   foreach(file, uspi_files) {
     copy("copy_uapi_${file}") {
-      sources = [ "${uapi_dir}/${file}" ]
+      sources = [ "${musl_uapi_dir}/${file}" ]
       outputs = [ "${target_out_dir}/${musl_inc_out_dir}/${file}" ]
     }
   }
@@ -292,7 +292,7 @@ if (is_lite_system && current_os == "ohos") {
     deps = []
     sources = []
     outputs = []
-    uapi_scsi_dir = rebase_path("${uapi_dir}/scsi")
+    uapi_scsi_dir = rebase_path("${musl_uapi_dir}/scsi")
     arguments_scsi = [ "-c" ]
     arguments_scsi += [ "ls ${uapi_scsi_dir}" ]
     uapi_scsi_files = exec_script("/bin/sh", arguments_scsi, "list lines")
@@ -300,7 +300,7 @@ if (is_lite_system && current_os == "ohos") {
     # Generate a copy target for each file in scsi dir to avoid being influenced by musl_copy_inc_scsi output
     foreach(file, uapi_scsi_files) {
       copy("copy_uapi_scsi_${file}") {
-        sources += [ "${uapi_dir}/scsi/${file}" ]
+        sources += [ "${musl_uapi_dir}/scsi/${file}" ]
         outputs += [ "${target_out_dir}/${musl_inc_out_dir}/scsi/${file}" ]
       }
       deps += [ ":copy_uapi_scsi_${file}" ]
@@ -318,9 +318,9 @@ if (is_lite_system && current_os == "ohos") {
       } else {  # aarch64 and x86_64 use same file
         file_name = "asm-arm64"
       }
-      sources = [ "${uapi_dir}/${file_name}/asm" ]
+      sources = [ "${musl_uapi_dir}/${file_name}/asm" ]
     } else {
-      sources = [ "${uapi_dir}/asm" ]
+      sources = [ "${musl_uapi_dir}/asm" ]
     }
     outputs = [ "${target_out_dir}/${musl_inc_out_dir}/asm" ]
   }
