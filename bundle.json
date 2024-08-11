@@ -44,7 +44,8 @@
                 "FreeBSD",
                 "faultloggerd",
                 "benchmark",
-                "cJSON"
+                "cJSON",
+                "bounds_checking_function"
             ],
             "third_party": []
         },
