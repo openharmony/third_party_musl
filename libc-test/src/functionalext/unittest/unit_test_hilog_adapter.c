@@ -259,11 +259,18 @@ static void HilogAdapterPrint_0030(void)
 
 int main(void)
 {
+    // 解除限制
+    system("/bin/hilog -Q pidoff");
+    system("/bin/hilog -Q domainoff");
+
     system(ENABLE_LOG);
     system(LOG_LEVEL_ERROR);
     HiLogAdapterPrint_0010();
     HilogAdapterPrint_0020();
     HilogAdapterPrint_0030();
 
+    // 恢复限制
+    system("/bin/hilog -Q pidon");
+    system("/bin/hilog -Q domainon");
 	return t_status;
 }
