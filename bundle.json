@@ -47,7 +47,9 @@
                 "cJSON",
                 "bounds_checking_function"
             ],
-            "third_party": []
+            "third_party": [
+                "googletest"
+            ]
         },
         "build": {
             "sub_component": [],
