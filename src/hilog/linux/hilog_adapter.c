@@ -30,6 +30,7 @@
 #include <pthread.h>
 #include <stdlib.h>
 #include <fcntl.h>
+#include <atomic.h>
 
 #include "hilog_common.h"
 #ifdef OHOS_ENABLE_PARAMETER
@@ -43,8 +44,11 @@
 #define SYSPARAM_LENGTH 32
 #endif
 
+#define INVALID_SOCKET (-1)
+#define INVALID_RESULT (-1)
+#define CAS_FAIL (-1)
+
 const int SOCKET_TYPE = SOCK_DGRAM | SOCK_NONBLOCK | SOCK_CLOEXEC;
-const int INVALID_SOCKET = -1;
 const struct sockaddr_un SOCKET_ADDR = {AF_UNIX, SOCKET_FILE_DIR INPUT_SOCKET_NAME};
 
 static bool musl_log_enable = false;
@@ -59,50 +63,106 @@ static volatile int g_socketFd = INVALID_SOCKET;
 
 extern int __close(int fd);
 
-static void Cleanup()
+// only generate a new socketFd
+static int GenerateHilogSocketFd()
 {
-    if (g_socketFd >= 0) {
-        __close(g_socketFd);
-        g_socketFd = INVALID_SOCKET;
+    int socketFd = TEMP_FAILURE_RETRY(socket(AF_UNIX, SOCKET_TYPE, 0));
+    if (socketFd == INVALID_SOCKET) {
+        dprintf(ERROR_FD, "HiLogAdapter_init: Can't create socket! Errno: %d\n", errno);
+        return INVALID_SOCKET;
     }
+    long int result =
+        TEMP_FAILURE_RETRY(connect(socketFd, (const struct sockaddr *)(&SOCKET_ADDR), sizeof(SOCKET_ADDR)));
+    if (result == INVALID_RESULT) {
+        dprintf(ERROR_FD, "HiLogAdapter_init: Can't connect to server. Errno: %d\n", errno);
+        __close(socketFd);
+        return INVALID_SOCKET;
+    }
+    return socketFd;
 }
 
-static int GetSocketFdInstance()
+HILOG_LOCAL_API
+int CASHilogGlobalSocketFd(int socketFd)
 {
-    if (g_socketFd == INVALID_SOCKET || fcntl(g_socketFd, F_GETFL) == -1) {
-        pthread_mutex_lock(&g_lock);
-        if (g_socketFd == INVALID_SOCKET || fcntl(g_socketFd, F_GETFL) == -1) {
-            int tempSocketFd = TEMP_FAILURE_RETRY(socket(AF_UNIX, SOCKET_TYPE, 0));
-            if (tempSocketFd < 0) {
-                dprintf(ERROR_FD, "HiLogAdapter: Can't create socket! Errno: %d\n", errno);
-                pthread_mutex_unlock(&g_lock);
-                return tempSocketFd;
-            }
-
-            long int result =
-                TEMP_FAILURE_RETRY(connect(tempSocketFd, (const struct sockaddr *)(&SOCKET_ADDR), sizeof(SOCKET_ADDR)));
-            if (result < 0) {
-                dprintf(ERROR_FD, "HiLogAdapter: Can't connect to server. Errno: %d\n", errno);
-                if (tempSocketFd >= 0) {
-                    __close(tempSocketFd);
-                }
-                pthread_mutex_unlock(&g_lock);
-                return result;
-            }
-            g_socketFd = tempSocketFd;
-            atexit(Cleanup);
-        }
-        pthread_mutex_unlock(&g_lock);
+    if (socketFd == INVALID_SOCKET) {
+        return INVALID_RESULT;
     }
-    return g_socketFd;
+    // we should use CAS to avoid multi-thread problem
+    if (a_cas(&g_socketFd, INVALID_SOCKET, socketFd) != INVALID_SOCKET) {
+        // failure CAS: other threads execute to this branch to close extra fd
+        return CAS_FAIL;
+    }
+    // success CAS: only one thread can execute to this branch
+    return socketFd;
+}
+
+HILOG_LOCAL_API
+bool CheckHilogValid()
+{
+    int socketFd = INVALID_SOCKET;
+    // read fd by using atomic operation
+#ifdef a_ll
+    socketFd = a_ll(&g_socketFd);
+#else
+    socketFd = g_socketFd;
+#endif
+    return socketFd != INVALID_SOCKET;
+}
+
+/**
+* This interface only for static-link style testcase, this symbol should not be exposed in dynamic libraries
+* Dangerous operation, please do not use in normal business
+*/
+HILOG_LOCAL_API
+void RefreshHiLogSocketFd()
+{
+    int socketFd = INVALID_SOCKET;
+    // read fd by using atomic operation
+#ifdef a_ll
+    socketFd = a_ll(&g_socketFd);
+#else
+    socketFd = g_socketFd;
+#endif
+    if (socketFd == INVALID_SOCKET) {
+        return;
+    }
+    a_store(&g_socketFd, INVALID_SOCKET);
+    __close(socketFd);
+}
+
+void InitHilogSocketFd()
+{
+    int socketFd = GenerateHilogSocketFd();
+    if (socketFd == INVALID_SOCKET) {
+        return;
+    }
+    int result = CASHilogGlobalSocketFd(socketFd);
+    if (result == CAS_FAIL) {
+        __close(socketFd);
+    }
 }
 
 static int SendMessage(HilogMsg *header, const char *tag, uint16_t tagLen, const char *fmt, uint16_t fmtLen)
 {
-    int socketFd = GetSocketFdInstance();
-    if (socketFd < 0) {
-        return socketFd;
+    bool releaseSocket = false;
+    int socketFd = INVALID_SOCKET;
+    // read fd by using atomic operation
+#ifdef a_ll
+    socketFd = a_ll(&g_socketFd);
+#else
+    socketFd = g_socketFd;
+#endif
+    if (socketFd == INVALID_SOCKET) {
+        socketFd = GenerateHilogSocketFd();
+        if (socketFd == INVALID_SOCKET) {
+            return INVALID_RESULT;
+        }
+        int result = CASHilogGlobalSocketFd(socketFd);
+        if (result == CAS_FAIL) {
+            releaseSocket = true;
+        }
     }
+
     struct timespec ts = {0};
     (void)clock_gettime(CLOCK_REALTIME, &ts);
     struct timespec ts_mono = {0};
@@ -121,6 +181,9 @@ static int SendMessage(HilogMsg *header, const char *tag, uint16_t tagLen, const
     vec[2].iov_base = (void *)((char *)(fmt));  // 2 : index of log content
     vec[2].iov_len = fmtLen;                    // 2 : index of log content
     int ret = TEMP_FAILURE_RETRY(writev(socketFd, vec, LOG_LEN));
+    if (releaseSocket) {
+        __close(socketFd);
+    }
     return ret;
 }
 
