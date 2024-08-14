@@ -131,8 +131,8 @@ ohos_executable("unittest_ldso_dynlink") {
 }
 
 ohos_executable("unittest_hilog_adapter") {
-  subsystem_name = "musl"
-  part_name = "libc-test"
+  subsystem_name = "thirdparty"
+  part_name = "musl"
 
   sources = [ "unit_test_hilog_adapter.c" ]
 
@@ -146,7 +146,17 @@ ohos_executable("unittest_hilog_adapter") {
 
   deps = [ "//third_party/musl:create_porting_src" ]
 
+  external_deps = [ "bounds_checking_function:libsec_shared" ]
+
+  cflags = [
+    "-Wno-int-to-void-pointer-cast",
+    "-Wno-void-pointer-to-int-cast",
+  ]
+
   libs = [ "${musl_lib_dir}/libc.a" ]
+
+  ohos_test = true
+  test_output_dir = "${root_out_dir}/musl/libc-test"
 }
 
 ohos_executable("unittest_ldso_strops") {
