@@ -41,6 +41,16 @@
 #include "strops.h"
 #include "trace/trace_marker.h"
 
+#ifdef IS_ASAN
+#if defined (__arm__)
+#define LIB "/lib/"
+#elif defined (__aarch64__)
+#define LIB "/lib64/"
+#else
+#error "unsupported arch"
+#endif
+#endif
+
 #ifdef OHOS_ENABLE_PARAMETER
 #include "sys_param.h"
 #endif
@@ -3519,11 +3529,27 @@ void *dlopen_impl(
 	struct loadtask *task = NULL;
 	bool is_task_appended = false;
 #endif
+#ifdef IS_ASAN
+	char asan_file[PATH_MAX] = {0};
+#endif
 
 	if (!file) {
 		LD_LOGD("dlopen_impl file is null, return head.");
 		return dlopen_post(head, mode);
 	}
+
+#ifdef IS_ASAN
+	if (g_is_asan) {
+		char *place = strstr(file, LIB);
+		if (place && asan_file) {
+			int ret = snprintf(asan_file, sizeof asan_file, "%.*s/asan%s", (int)(place - file), file, place);
+			if (ret > 0 && access(asan_file, F_OK) == 0) {
+				LD_LOGI("dlopen_impl redirect to asan library.");
+				file = asan_file;
+			}
+		}
+	}
+#endif
 
 	if (extinfo) {
 		reserved_address_recursive = extinfo->flag & DL_EXT_RESERVED_ADDRESS_RECURSIVE;
