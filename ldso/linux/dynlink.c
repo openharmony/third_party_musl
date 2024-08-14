@@ -3086,6 +3086,7 @@ void __dls3(size_t *sp, size_t *auxv, size_t *aux)
 #ifdef DFX_SIGNAL_LIBC
 	DFX_InstallSignalHandler();
 #endif
+	InitHilogSocketFd();
 	__init_fdsan();
 	/* If the main program was already loaded by the kernel,
 	 * AT_PHDR will point to some location other than the dynamic
