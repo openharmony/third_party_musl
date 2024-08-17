@@ -1744,8 +1744,19 @@ UT_STATIC void *map_library(int fd, struct dso *dso, struct reserved_address_par
 		unsigned char *temp_map_end = temp_map + tmp_map_len;
 		size_t unused_part_1 = real_map - temp_map;
 		size_t unused_part_2 = temp_map_end - (real_map + map_len);
-		munmap(temp_map, unused_part_1);
-		munmap(real_map + map_len, unused_part_2);
+		if (unused_part_1 > 0) {
+			int res1 = munmap(temp_map, unused_part_1);
+			if (res1 == -1) {
+				LD_LOGE("munmap unused part 1 failed, errno:%{public}d", errno);
+			}
+		}
+
+		if (unused_part_2 > 0) {
+			int res2 = munmap(real_map + map_len, unused_part_2);
+			if (res2 == -1) {
+				LD_LOGE("munmap unused part 2 failed, errno:%{public}d", errno);
+			}
+		}
 	}
 	dso->map = map;
 	dso->map_len = map_len;
