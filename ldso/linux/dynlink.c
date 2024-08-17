@@ -3254,11 +3254,13 @@ void __dls3(size_t *sp, size_t *auxv, size_t *aux)
 	/* Init all namespaces by config file. there is a default namespace always*/
 	init_namespace(&app);
 
+	char dfx_preload[] = "libdfx_signalhandler.z.so";
 #ifdef LOAD_ORDER_RANDOMIZATION
 	struct loadtasks *tasks = create_loadtasks();
 	if (!tasks) {
 		_exit(1);
 	}
+	load_preload(dfx_preload, get_default_ns(), tasks);
 	if (env_preload) {
 		load_preload(env_preload, get_default_ns(), tasks);
 	}
@@ -3272,6 +3274,7 @@ void __dls3(size_t *sp, size_t *auxv, size_t *aux)
 	free_loadtasks(tasks);
 	assign_tls(app.next);
 #else
+	load_preload(dfx_preload, get_default_ns());
 	if (env_preload) load_preload(env_preload, get_default_ns());
 	for (struct dso *q = head; q; q = q->next) {
 		q->is_global = true;
