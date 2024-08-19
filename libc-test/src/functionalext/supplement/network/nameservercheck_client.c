@@ -1,25 +1,56 @@
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <netinet/tcp.h>
+/**
+ * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 #include <netdb.h>
+#include <stdlib.h>
+#include <sys/socket.h>
+#include <pthread.h>
+#include <string.h>
+#include <errno.h>
+#include <netinet/in.h>
 #include <arpa/inet.h>
 #include <stdint.h>
-#include <string.h>
 #include <poll.h>
 #include <time.h>
 #include <ctype.h>
 #include <unistd.h>
-#include <errno.h>
 #include <pthread.h>
-#include "stdio_impl.h"
 #include "syscall.h"
-#include "lookup.h"
+#include "functionalext.h"
+
+struct address {
+	int family;
+	unsigned scopeid;
+	uint8_t addr[16];
+	int sortkey;
+};
+
+#define MAXNS 3
+#define TCP_FASTOPEN_CONNECT 30
+
+struct resolvconf {
+	struct address ns[MAXNS];
+	unsigned nns, attempts, ndots;
+	unsigned timeout;
+};
 
 static void cleanup(void *p)
 {
 	struct pollfd *pfd = p;
 	for (int i=0; pfd[i].fd >= -1; i++)
-		if (pfd[i].fd >= 0) __syscall(SYS_close, pfd[i].fd);
+		if (pfd[i].fd >= 0) close(pfd[i].fd);
 }
 
 static unsigned long mtime()
@@ -44,18 +75,6 @@ static int start_tcp(struct pollfd *pfd, int family, const void *sa,
 	};
 	int r;
 	int fd = socket(family, SOCK_STREAM|SOCK_CLOEXEC|SOCK_NONBLOCK, 0);
-#ifndef __LITEOS__
-	if (fd < 0) {
-		MUSL_LOGE("%{public}s: %{public}d: create TCP socket failed, errno id: %{public}d",
-			__func__, __LINE__, errno);
-	}
-	/**
-	 * Todo FwmarkClient::BindSocket
-	*/
-	if (netid > 0) {
-		res_bind_socket(fd, netid);
-	}
-#endif
 	pfd->fd = fd;
 	pfd->events = POLLOUT;
 	if (!setsockopt(fd, IPPROTO_TCP, TCP_FASTOPEN_CONNECT,
@@ -85,20 +104,9 @@ static void step_mh(struct msghdr *mh, size_t n)
 	mh->msg_iov->iov_len -= n;
 }
 
-/* Internal contract for __res_msend[_rc]: asize must be >=512, nqueries
- * must be sufficiently small to be safe as VLA size. In practice it's
- * either 1 or 2, anyway. */
-
-int __res_msend_rc(int nqueries, const unsigned char *const *queries,
-	const int *qlens, unsigned char *const *answers, int *alens, int asize,
-	const struct resolvconf *conf)
-{
-	return res_msend_rc_ext(0, nqueries, queries, qlens, answers, alens, asize, conf);
-}
-
 int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *queries,
 	const int *qlens, unsigned char *const *answers, int *alens, int asize,
-	const struct resolvconf *conf)
+	const struct resolvconf *conf, int newcheck)
 {
 	int fd;
 	int timeout, attempts, retry_interval, servfail_retry;
@@ -133,7 +141,7 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 		} else {
 			sl = sizeof sa.sin6;
 			memcpy(&ns[nns].sin6.sin6_addr, iplit->addr, 16);
-			ns[nns].sin6.sin6_port = htons(53);
+			ns[nns].sin6.sin6_port = htons(40000);
 			ns[nns].sin6.sin6_scope_id = iplit->scopeid;
 			ns[nns].sin6.sin6_family = family = AF_INET6;
 		}
@@ -141,12 +149,6 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 
 	/* Get local address and open/bind a socket */
 	fd = socket(family, SOCK_DGRAM|SOCK_CLOEXEC|SOCK_NONBLOCK, 0);
-#ifndef __LITEOS__
-	if (fd < 0) {
-		MUSL_LOGE("%{public}s: %{public}d: create UDP socket failed, errno id: %{public}d",
-			__func__, __LINE__, errno);
-	}
-#endif
 
 	/* Handle case where system lacks IPv6 support */
 	if (fd < 0 && family == AF_INET6 && errno == EAFNOSUPPORT) {
@@ -159,15 +161,6 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 		family = AF_INET;
 		sl = sizeof sa.sin;
 	}
-
-#ifndef __LITEOS__
-	/**
-	 * Todo FwmarkClient::BindSocket
-	*/
-	if (netid > 0) {
-		res_bind_socket(fd, netid);
-	}
-#endif
 
 	/* Convert any IPv4 addresses in a mixed environment to v4-mapped */
 	if (fd >= 0 && family == AF_INET6) {
@@ -222,10 +215,6 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 				if (!alens[i]) {
 					for (j=0; j<nns; j++) {
 						if (sendto(fd, queries[i], qlens[i], MSG_NOSIGNAL, (void *)&ns[j], sl) == -1) {
-#ifndef __LITEOS__
-							MUSL_LOGE("%{public}s: %{public}d: sendto failed, errno id: %{public}d",
-								__func__, __LINE__, errno);
-#endif
 						}
 					}
 				}
@@ -249,10 +238,6 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 			};
 			rlen = recvmsg(fd, &mh, 0);
 			if (rlen < 0) {
-#ifndef __LITEOS__
-				MUSL_LOGE("%{public}s: %{public}d: recvmsg failed, errno id: %{public}d",
-					__func__, __LINE__, errno);
-#endif
 				break;
 			}
 
@@ -260,36 +245,37 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 			if (rlen < 4) continue;
 
 			/* Ignore replies from addresses we didn't send to */
-			switch (sa.sin.sin_family) {
-				// for ipv4 response, need to compare family, port and address
-				case AF_INET:
-					for (j = 0; j < nns; j++) {
-						if (ns[j].sin.sin_family == AF_INET && ns[j].sin.sin_port == sa.sin.sin_port && (
-							ns[j].sin.sin_addr.s_addr == INADDR_ANY ||
-							ns[j].sin.sin_addr.s_addr == sa.sin.sin_addr.s_addr)) {
-							break;
-						}
-					}
-					break;
-				// for ipv6 response, need to compare family, port and address, flowinfo and scopeid is not necessary
-				case AF_INET6:
-					for (j = 0; j < nns; j++) {
-						if (ns[j].sin6.sin6_family == AF_INET6 &&
-							ns[j].sin6.sin6_port == sa.sin6.sin6_port && (
-							IN6_IS_ADDR_UNSPECIFIED(&ns[j].sin6.sin6_addr) ||
-							IN6_ARE_ADDR_EQUAL(&ns[j].sin6.sin6_addr, &sa.sin6.sin6_addr))) {
-							break;
-						}
-					}
-					break;
-				default:
-					j = nns;
-					break;
-			}
+            if (newcheck) {
+                switch (sa.sin.sin_family) {
+                    case AF_INET:
+                        for (j = 0; j < nns; j++) {
+                            if (ns[j].sin.sin_family == AF_INET && ns[j].sin.sin_port == sa.sin.sin_port &&
+                            (ns[j].sin.sin_addr.s_addr == INADDR_ANY ||
+                            ns[j].sin.sin_addr.s_addr == sa.sin.sin_addr.s_addr)) {
+                                break;
+                            }
+                        }
+                        break;
+                    case AF_INET6:
+                        for (j = 0; j < nns; j++) {
+                            if (ns[j].sin6.sin6_family == AF_INET6 &&
+                            ns[j].sin6.sin6_port == sa.sin6.sin6_port &&
+                            (ns[j].sin6.sin6_scope_id == 0 || ns[j].sin6.sin6_scope_id == sa.sin6.sin6_scope_id) &&
+                            (IN6_IS_ADDR_UNSPECIFIED(&ns[j].sin6.sin6_addr) ||
+                            IN6_ARE_ADDR_EQUAL(&ns[j].sin6.sin6_addr, &sa.sin6.sin6_addr))) {
+                                break;
+                            }
+                        }
+                        break;
+                    default:
+                        j = nns;
+                        break;
+                }
+            } else {
+                for (j=0; j<nns && memcmp(ns+j, &sa, sl); j++);
+            }
 			if (j==nns) {
-#ifndef __LITEOS__
-				MUSL_LOGE("%{public}s: %{public}d: replies from wrong addresses, ignore it", __func__, __LINE__);
-#endif
+				memset(answers[next], 0, asize);
 				continue;
 			}
 
@@ -329,10 +315,6 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 
 			/* If answer is truncated (TC bit), fallback to TCP */
 			if ((answers[i][2] & 2) || (mh.msg_flags & MSG_TRUNC)) {
-#ifndef __LITEOS__
-				MUSL_LOGE("%{public}s: %{public}d: fallback to TCP, msg_flags: %{public}d",
-					__func__, __LINE__, mh.msg_flags);
-#endif
 				alens[i] = -1;
 				pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, 0);
 				r = start_tcp(pfd+i, family, ns+j, sl, queries[i], qlens[i], netid);
@@ -384,7 +366,7 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 			 * Immediately close TCP socket so as not to consume
 			 * resources we no longer need. */
 			alens[i] = alen;
-			__syscall(SYS_close, pfd[i].fd);
+			close(pfd[i].fd);
 			pfd[i].fd = -1;
 		}
 	}
@@ -397,10 +379,58 @@ out:
 	return 0;
 }
 
-int __res_msend(int nqueries, const unsigned char *const *queries,
-	const int *qlens, unsigned char *const *answers, int *alens, int asize)
-{
-	struct resolvconf conf;
-	if (__get_resolv_conf(&conf, 0, 0) < 0) return -1;
-	return __res_msend_rc(nqueries, queries, qlens, answers, alens, asize, &conf);
+/**
+ * 该用例未在编译构建文件内开启，需手动开启，添加到test_src_functionalext_supplement_network.gni内
+ * 该用例需要两台测试设备，两台设备连接同一热点网络，本文件产物作为client端
+ * client端设备同时需执行ip addr flush dev p2p0, 关闭p2p0的ipv6网络，否则当前模拟场景因为p2p0存在，
+ * 无法在scopeid为0的情况下，正常发送给server端(内核将默认的0优先匹配给了p2p0)
+ */
+
+int main(void) {
+    unsigned char qbuf[2][280], abuf[2][4800];
+	const unsigned char *qp[2] = { qbuf[0], qbuf[1] };
+	unsigned char *ap[2] = { abuf[0], abuf[1] };
+	int qlens[2], alens[2];
+    int nqueries = 1;
+	// timeout: 查询超时时间，attempts: 失败重试次数, nns: nameserver数量
+    struct resolvconf conf = {
+        .nns = 1,
+        .attempts = 2,
+        .ndots = 1,
+        .timeout = 5};
+    conf.ns[0].family = AF_INET6;
+	// scopeid设置为0，在本地网络下(fe80::***), 内核会查询对应网卡的ifindex并返回
+	// 当前使用wlan0，在client端设置scopeid为0的情况下，内核返回的wlan0的ifindex为41或42(设备差异)
+    conf.ns[0].scopeid = 0;
+	// server设备wlan0网卡的ipv6地址，因设备与网络不同而不同，需要测试人员替换
+	// wlan0网卡的ipv6地址查询方式: ifconfig -a
+    char* dst = "fe80::****:****:****:****";
+    if ((inet_pton(AF_INET6, dst, conf.ns[0].addr) != 1)) {
+        t_error("%s invalid dns convert for ipv6\n", __func__);
+        return t_status;
+    }
+	// client端发送query内容，非正式的dns请求格式
+    char buffer[] = "test.check.platform.com";
+	// server端预期answer回复
+    unsigned char target[4800] = "test.check.platform.com A 111.111.11.11";
+    strcpy((char*)&qbuf[0], buffer);
+    qlens[0] = sizeof(buffer);
+	// 使用新的nameserver check逻辑，放宽scopeid严格相等的校验，校验通过
+    if (res_msend_rc_ext(0, nqueries, qp, qlens, ap, alens, sizeof *abuf, &conf, 1) < 0) {
+        t_error("%s invalid dns query\n", __func__);
+    }
+	if (strcmp((char*)&abuf[0], (char*)&target)) {
+		t_error("%s invalid answer %s, target: %s\n", __func__, abuf[0], target);
+	}
+	alens[0] = 0;
+	memset(abuf[0], 0, sizeof *abuf);
+	// 使用原本的nameserver check逻辑，scopeid校验失败
+    if (res_msend_rc_ext(0, nqueries, qp, qlens, ap, alens, sizeof *abuf, &conf, 0) < 0) {
+        t_error("%s invalid dns query\n", __func__);
+    }
+	if (!strcmp((char*)&abuf[0], (char*)&target)) {
+		t_error("%s invalid answer %s, target: %s\n", __func__, abuf[0], target);
+	}
+    
+    return t_status;
 }
