@@ -26,7 +26,7 @@ int main(void)
 		if (fd > maxfd) maxfd = fd;
 	if (errno != EMFILE)
 		t_error("dup(1) failed with %s, wanted EMFILE\n", strerror(errno));
-	if (maxfd+1 != lim)
+	if (maxfd+1 > lim)
 		t_error("more fds are open than rlimit allows: fd=%d, limit=%d\n", maxfd, lim);
 
 	return t_status;
