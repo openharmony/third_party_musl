@@ -32,7 +32,8 @@
  * 测试前，client端设备执行ipconfig -a指令，查询wlan0 ipv6地址，设置给client端dst addr
  * server端程序为循环监听，除非系统调用发生异常退出，否则需手动退出
  */
-int main(void) {
+int main(void)
+{
     int udp6_socket, ret;
     socklen_t addr_len;
     struct sockaddr_in6 saddr = {0};
@@ -54,7 +55,7 @@ int main(void) {
         return t_status;
     }
 
-    ret = setsockopt(udp6_socket, IPPROTO_IPV6, IPV6_V6ONLY, &(int){0}, sizeof 0);
+    ret = setsockopt(udp6_socket, IPPROTO_IPV6, IPV6_V6ONLY, &(int){0}, sizeof(int));
     if (ret == -1) {
         close(udp6_socket);
         t_error("%s setsockopt failed, errno is %d\n", __func__, errno);
@@ -83,7 +84,8 @@ int main(void) {
             goto out;
         }
 
-        ret = sendto(udp6_socket, &buffer[0], sizeof(buffer), 0, (struct sockaddr *)&daddr, sizeof(struct sockaddr_in6));
+        ret = sendto(udp6_socket, &buffer[0], sizeof(buffer), 0, (struct sockaddr *)&daddr,
+            sizeof(struct sockaddr_in6));
     }
 
 out:
