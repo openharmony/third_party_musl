@@ -207,6 +207,9 @@ static inline void cfi_slowpath_common(uint64_t call_site_type_id, void *func_pt
     }
 
     if (offset > shadow_size) {
+        LD_LOGE("[CFI] set value to sv_invalid because offset(%{public}x) > shadow_size(%{public}x), "
+                "addr:%{public}p lr:%{public}p.\n",
+                offset, shadow_size, func_ptr, __builtin_return_address(0));
         value = sv_invalid;
     } else {
         value = *((uint16_t*)(cfi_shadow_start + offset));
@@ -233,7 +236,8 @@ static inline void cfi_slowpath_common(uint64_t call_site_type_id, void *func_pt
 
         dso = (struct dso *)addr2dso((size_t)__builtin_return_address(0));
         if (dso == NULL) {
-            LD_LOGE("[CFI] [%{public}s] can not find the dso!\n", __FUNCTION__);
+            LD_LOGE("[CFI] [%{public}s] can not find matched dso of %{public}p !\n",
+                    __FUNCTION__, __builtin_return_address(0));
             __builtin_trap();
         }
         LD_LOGD("[CFI] [%{public}s] dso name[%{public}s]!\n", __FUNCTION__, dso->name);
@@ -435,8 +439,13 @@ static int fill_shadow_value_to_shadow(uintptr_t begin, uintptr_t end, uintptr_t
         LD_LOGE("[CFI] [%{public}s] mprotect failed!\n", __FUNCTION__);
         return CFI_FAILED;
     }
-    memcpy(tmp_shadow_start, aligned_shadow_begin, offset_begin);
-    memcpy(tmp_shadow_start + offset_end, shadow_end, aligned_shadow_end - shadow_end);
+    if (type == sv_valid_min) {
+        // We need to copy the whole area because we will read the old value below.
+        memcpy(tmp_shadow_start, aligned_shadow_begin, tmp_shadow_size);
+    } else {
+        memcpy(tmp_shadow_start, aligned_shadow_begin, offset_begin);
+        memcpy(tmp_shadow_start + offset_end, shadow_end, aligned_shadow_end - shadow_end);
+    }
 
     /* If the dso has __cfi_check(), calculate valid shadow value */
     if (type == sv_valid_min) {
