@@ -39,6 +39,12 @@ declare_args() {
 }
 
 declare_args() {
+  if (!is_llvm_build) {
+    musl_use_gwp_asan = true
+  } else {
+    musl_use_gwp_asan = false
+  }
+
   if (is_llvm_build) {
     runtime_lib_path = "//out/llvm-install/lib/clang/15.0.4/lib"
   } else {
@@ -49,11 +55,6 @@ declare_args() {
       runtime_lib_path =
           "//prebuilts/clang/ohos/linux-x86_64/llvm/lib/clang/15.0.4/lib"
     }
-  }
-  if (!is_llvm_build) {
-    musl_use_gwp_asan = true
-  } else {
-    musl_use_gwp_asan = false
   }
   musl_user_custom_libc = true
   use_jemalloc = false
