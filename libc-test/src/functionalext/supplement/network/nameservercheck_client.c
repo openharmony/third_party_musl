@@ -164,7 +164,7 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 
 	/* Convert any IPv4 addresses in a mixed environment to v4-mapped */
 	if (fd >= 0 && family == AF_INET6) {
-		setsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY, &(int){0}, sizeof 0);
+		setsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY, &(int){0}, sizeof(int));
 		for (i=0; i<nns; i++) {
 			if (ns[i].sin.sin_family != AF_INET) continue;
 			memcpy(ns[i].sin6.sin6_addr.s6_addr+12,
@@ -290,16 +290,16 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 			 * retry immediately on server failure, and ignore
 			 * all other codes such as refusal. */
 			switch (answers[next][3] & 15) {
-			case 0:
-			case 3:
-				break;
-			case 2:
-				if (servfail_retry && servfail_retry--)
-					sendto(fd, queries[i],
-						qlens[i], MSG_NOSIGNAL,
-						(void *)&ns[j], sl);
-			default:
-				continue;
+				case 0:
+				case 3:
+					break;
+				case 2:
+					if (servfail_retry && servfail_retry--)
+						sendto(fd, queries[i],
+							qlens[i], MSG_NOSIGNAL,
+							(void *)&ns[j], sl);
+				default:
+					continue;
 			}
 
 			/* Store answer in the right slot, or update next
@@ -386,7 +386,8 @@ out:
  * 无法在scopeid为0的情况下，正常发送给server端(内核将默认的0优先匹配给了p2p0)
  */
 
-int main(void) {
+int main(void)
+{
     unsigned char qbuf[2][280], abuf[2][4800];
 	const unsigned char *qp[2] = { qbuf[0], qbuf[1] };
 	unsigned char *ap[2] = { abuf[0], abuf[1] };
