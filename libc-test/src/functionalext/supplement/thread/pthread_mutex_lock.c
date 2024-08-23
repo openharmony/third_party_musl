@@ -20,8 +20,6 @@
 #include "functionalext.h"
 
 static pthread_mutex_t g_mutex;
-static int32_t g_count = 0;
-static int32_t g_run_max_count = 10000;
 
 void *threadfuncA(void *arg)
 {
@@ -42,11 +40,12 @@ void *threadfuncB(void *arg)
 
 void *threadfuncC(void *arg)
 {
-    g_count++;
     int32_t ret = pthread_mutex_lock(&g_mutex);
-    if (g_count == INT_MAX) {
-        EXPECT_EQ("pthread_mutex_lock_0300", ret, EAGAIN);
-    }
+    EXPECT_EQ("pthread_mutex_lock_0301", ret, 0);
+    ret = pthread_mutex_lock(&g_mutex);
+    EXPECT_EQ("pthread_mutex_lock_0302", ret, 0);
+
+    pthread_mutex_unlock(&g_mutex);
     pthread_mutex_unlock(&g_mutex);
     return arg;
 }
@@ -99,10 +98,8 @@ void pthread_mutex_lock_0300(void)
     int32_t type = PTHREAD_MUTEX_RECURSIVE;
     pthread_mutex_init(&g_mutex, (pthread_mutexattr_t *)(&type));
     pthread_t tid3;
-    for (int32_t i = 0; i <= g_run_max_count; i++) {
-        pthread_create(&tid3, NULL, threadfuncC, NULL);
-        pthread_join(tid3, NULL);
-    }
+    pthread_create(&tid3, NULL, threadfuncC, NULL);
+    pthread_join(tid3, NULL);
 }
 
 /**
