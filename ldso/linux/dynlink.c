@@ -5041,7 +5041,8 @@ static bool map_library_header(struct loadtask *task)
 		return false;
 	}
 	if (l < sizeof(Ehdr) || (task->eh->e_type != ET_DYN && task->eh->e_type != ET_EXEC)) {
-		LD_LOGE("Error mapping header %{public}s: invaliled Ehdr l=%{public}d", task->name, l);
+		LD_LOGE("Error mapping header %{public}s: invaliled Ehdr l=%{public}d e_type=%{public}hu",
+			task->name, l, task->eh->e_type);
 		goto noexec;
 	}
 	task->phsize = task->eh->e_phentsize * task->eh->e_phnum;
