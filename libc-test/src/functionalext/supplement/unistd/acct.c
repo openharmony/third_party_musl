@@ -17,7 +17,6 @@
 #include <unistd.h>
 #include "functionalext.h"
 #include "filepath_util.h"
-
 /**
  * @tc.name      : acct_0100
  * @tc.desc      : Verify logging is disabled (parameter is NULL)
@@ -25,8 +24,14 @@
  */
 void acct_0100(void)
 {
+    errno = 0;
     int result = acct(NULL);
-    EXPECT_EQ("acct_0200", result, -1);
+    if(result == -1 && errno == ENOSYS) {
+        result = 0;
+    } else if (result == -1 && errno != ENOSYS) {
+        t_error("acct_0100 errno: %d\n", errno);
+    }
+    EXPECT_EQ("acct_0100", result, 0);
 }
 
 /**

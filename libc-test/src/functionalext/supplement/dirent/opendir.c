@@ -17,8 +17,8 @@
 #include <dirent.h>
 #include <string.h>
 #include "test.h"
-
-const char *path = "/data";
+#include <sys/stat.h>
+#include <stdio.h>
 
 /*
  * @tc.name      : opendir_0100
@@ -27,15 +27,35 @@ const char *path = "/data";
  */
 void opendir_0100(void)
 {
+    errno = 0;
+    char *path = "/data/local/tmp/opendirtest";
+    if (access(path, F_OK) == 0) {
+        remove(path);
+    }
+    int ret = mkdir(path, 0777);
+    if (ret != 0) {
+        t_error("opendirtest create failed errno: %d\n", errno);
+    } 
     DIR *dir = opendir(path);
     if (!dir) {
         t_error("%s opendir failed\n", __func__);
     }
-    struct dirent *r = readdir(dir);
-    if (strcmp(r->d_name, ".")) {
-        t_error("%s opendir is not right, d_name is %s\n", __func__, r->d_name);
+    struct dirent *r;
+    int issuccess = 0;
+    while ((r = readdir(dir)) != NULL) {
+        if (strcmp(r->d_name, ".") == 0){
+            issuccess = 1;
+            break;
+        }
+    }
+    if (issuccess != 1) {
+        t_error("%s opendir is not right\n", __func__);
     }
     closedir(dir);
+    ret = remove(path);
+    if (ret != 0) {
+        t_error("remove failed errno: %d\n", errno);
+    } 
 }
 
 /*
