@@ -94,6 +94,8 @@ ohos_executable("unittest_ldso_ld_log") {
   deps = [ "//third_party/musl:create_porting_src" ]
   external_deps = [ "init:parameterbase" ]
   defines = [ "OHOS_ENABLE_PARAMETER" ]
+  ohos_test = true
+  test_output_dir = "${root_out_dir}/musl/libc-test"
 }
 
 ohos_executable("unittest_ldso_dynlink") {
@@ -128,6 +130,8 @@ ohos_executable("unittest_ldso_dynlink") {
       "OHOS_ENABLE_PARAMETER",
     ]
   }
+  ohos_test = true
+  test_output_dir = "${root_out_dir}/musl/libc-test"
 }
 
 ohos_executable("unittest_hilog_adapter") {
