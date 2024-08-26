@@ -43,13 +43,10 @@
                 "init",
                 "FreeBSD",
                 "faultloggerd",
-                "benchmark",
                 "cJSON",
                 "bounds_checking_function"
             ],
-            "third_party": [
-                "googletest"
-            ]
+            "third_party": []
         },
         "build": {
             "sub_component": [],
