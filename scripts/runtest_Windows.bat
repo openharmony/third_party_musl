@@ -11,6 +11,7 @@ set TESTDIR=%LOCAL%\%OUTDIR%\musl\libc-test
 set DYNLIB=%LOCAL%\%OUTDIR%\musl\libc-test-lib
 @REM 远程传输目标目录
 set REMOTE=/data/tests/libc-test
+set REMOTELOCAL=/data/local/tmp
 set REMOTESYSTEM=/system/lib
 @REM runtest脚本所在目录
 set SHDIR=%LOCAL%\third_party\musl\scripts
@@ -87,6 +88,7 @@ hdc shell mkdir %REMOTE%/src/A
 hdc shell mkdir %REMOTE%/src/B
 hdc shell mkdir %REMOTE%/src/C
 hdc shell mkdir %REMOTE%/src/D
+hdc shell mkdir %REMOTELOCAL%/libc-test-lib
 hdc shell mkdir -p %REMOTE%/src/rpath_lib/rpath_support_A
 hdc shell mkdir -p %REMOTE%/src/rpath_lib/rpath_support_B
 hdc shell mkdir -p %REMOTE%/src/rpath_support_C
@@ -118,6 +120,8 @@ hdc shell cp %REMOTE%/src/libdlclose_recursive.so /system/lib64/libdlclose_recur
 hdc shell cp %REMOTE%/src/libdlclose_recursive_dlopen_so.so /system/lib64/libdlclose_recursive_dlopen_so.so
 hdc shell cp %REMOTE%/src/libdl_gnu_hash_so.so %REMOTE%/src/libdl_gnu_hash_so.so
 hdc shell cp %REMOTE%/src/libdl_sysv_hash_so.so %REMOTE%/src/libdl_sysv_hash_so.so
+hdc shell cp %REMOTE%/src/libdlopen_dso.so %REMOTELOCAL%/libc-test-lib/libdlopen_dso.so
+hdc shell cp %REMOTE%/src/libdlopen_init.so %REMOTELOCAL%/libc-test-lib/libdlopen_init.so
 
 hdc shell mv %REMOTE%/src/zh_CN /tmp/zh_CN
 
