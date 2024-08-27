@@ -29,7 +29,7 @@ void readlink_0100(void)
     int ret;
     char *wstr = "this is a test\n";
     const char *softptr = "./readlink.txt.soft";
-    buf = malloc(sb.st_size + 1);
+    buf = malloc(sb.st_size + 256);
     const char *ptr = "readlink.txt";
     FILE *fptr = fopen(ptr, "w");
     EXPECT_TRUE("readlink_0100", fptr != NULL);
@@ -62,7 +62,7 @@ void readlink_0200(void)
     int ret;
     char *wstr = "this is a test\n";
     const char *softptr = "./readlink.txt.soft";
-    buf = malloc(sb.st_size + 1);
+    buf = malloc(sb.st_size + 256);
     const char *ptr = "readlink.txt";
     FILE *fptr = fopen(ptr, "w");
     EXPECT_TRUE("readlink_0200", fptr != NULL);
@@ -93,7 +93,7 @@ void readlink_0300(void)
     char *buf;
     int ret;
     const char *softptr = "./noreadlink.txt.soft";
-    buf = malloc(sb.st_size + 1);
+    buf = malloc(sb.st_size + 256);
     ret = readlink(softptr, buf, sizeof(buf));
     EXPECT_TRUE("readlink_0300", ret < 0);
     buf = NULL;
