@@ -61,6 +61,9 @@ test_sharedlib("dlopen_global") {
 test_sharedlib("dlopen_local") {
 }
 
+test_sharedlib("dlopen_init") {
+}
+
 group("dso_shared") {
   testonly = true
 
@@ -75,6 +78,7 @@ group("dso_shared") {
     ":dlopen_for_load_by_global_dso",
     ":dlopen_for_load_by_local_dso",
     ":dlopen_global",
+    ":dlopen_init",
     ":dlopen_local",
     ":dlopen_ns_dso",
     ":dlopen_so_dep_dlopen_ns_dso",
