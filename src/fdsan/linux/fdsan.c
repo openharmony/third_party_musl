@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <unistd.h>
 
 
 #include "musl_log.h"
@@ -30,13 +31,17 @@
 #include "libc.h"
 #include "pthread_impl.h"
 #include "hilog_adapter.h"
+#include <info/fatal_message.h>
 
 #ifdef OHOS_ENABLE_PARAMETER
 #include "sys_param.h"
-#define MUSL_FDSAN_ERROR(fmt, ap) HiLogAdapterVaList(MUSL_LOG_TYPE, LOG_ERROR, MUSL_LOG_DOMAIN, "MUSL-FDSAN", fmt, ap)
+#define MUSL_FDSAN_ERROR(fmt, ...) ((void)HiLogAdapterPrint(MUSL_LOG_TYPE, LOG_ERROR, MUSL_LOG_DOMAIN, "MUSL-FDSAN",\
+															fmt, __VA_ARGS__))
 #else
-#define MUSL_FDSAN_ERROR(fmt, ap)
+#define MUSL_FDSAN_ERROR(fmt, ...)
 #endif
+
+#define MAX_DEBUG_MSG_LEN 1024
 
 const char *fdsan_parameter_name = "musl.debug.fdsan";
 #define ALIGN(x,y) ((x)+(y)-1 & -(y))
@@ -120,6 +125,40 @@ static struct FdEntry* GetFdEntry(int fd)
 	return get_fd_entry(fd);
 }
 
+/*
+ * @brief Trigger the signal to grab the stack and save it on site,
+ *        and the msg will be recorded in the fault log
+ *        Will wait for the signal handle to grab the stack until it is completed or exits abnormally
+ * @param msg The debug message
+ */
+static void save_debug_message(const char *msg)
+{
+	if (msg == NULL) {
+		MUSL_LOGW("debug msg is NULL");
+		return;
+	}
+
+	const int NUMBER_ONE_THOUSAND = 1000; // 1000 : second to millisecond convert ratio
+	const int NUMBER_ONE_MILLION = 1000000; // 1000000 : nanosecond to millisecond convert ratio
+	struct timespec ts;
+	(void)clock_gettime(CLOCK_REALTIME, &ts);
+
+	debug_msg_t debug_message = {0, NULL};
+	debug_message.timestamp = ((uint64_t)ts.tv_sec * NUMBER_ONE_THOUSAND) +
+		(((uint64_t)ts.tv_sec) / NUMBER_ONE_MILLION);
+	debug_message.msg = msg;
+
+	const int signo = 42; // Custom stack capture signal and leak reuse
+	const int si_code = 1; // When si_signo = 42, use si_code = 1 mark the event as fdsan
+	siginfo_t info;
+	info.si_signo = signo;
+	info.si_code = si_code;
+	info.si_value.sival_ptr = &debug_message;
+	if (syscall(__NR_rt_tgsigqueueinfo, getpid(), __syscall(SYS_gettid), signo, &info) == -1) {
+		MUSL_LOGE("send failed errno=%{public}d", errno);
+	}
+}
+
 static void fdsan_error(const char* fmt, ...)
 {
 	struct FdTable* fd_table = __get_fdtable();
@@ -128,22 +167,26 @@ static void fdsan_error(const char* fmt, ...)
 	if (error_level == FDSAN_ERROR_LEVEL_DISABLED) {
 		return;
 	}
+	char msg[MAX_DEBUG_MSG_LEN] = {0};
 	va_list va;
 	va_start(va, fmt);
+	vsnprintf(msg, sizeof(msg) - 1, fmt, va);
+	va_end(va);
 	switch (error_level) {
 		case FDSAN_ERROR_LEVEL_WARN_ONCE:
-			MUSL_FDSAN_ERROR(fmt, va);
+			MUSL_FDSAN_ERROR("%{public}s", msg);
 			atomic_compare_exchange_strong(&fd_table->error_level, &error_level, FDSAN_ERROR_LEVEL_DISABLED);
-		case FDSAN_ERROR_LEVEL_WARN_ALWAYS:
-			MUSL_FDSAN_ERROR(fmt, va);
+		case FDSAN_ERROR_LEVEL_WARN_ALWAYS: {
+			MUSL_FDSAN_ERROR("%{public}s", msg);
+			save_debug_message(msg);
 			break;
+		}
 		case FDSAN_ERROR_LEVEL_FATAL:
-			MUSL_FDSAN_ERROR(fmt, va);
+			MUSL_FDSAN_ERROR("%{public}s", msg);
 			abort();
 		case FDSAN_ERROR_LEVEL_DISABLED:
 			break;
 	}
-	va_end(va);
 }
 
 uint64_t fdsan_create_owner_tag(enum fdsan_owner_type type, uint64_t tag)
@@ -206,18 +249,18 @@ void fdsan_exchange_owner_tag(int fd, uint64_t expected_tag, uint64_t new_tag)
 	uint64_t tag = expected_tag;
 	if (!atomic_compare_exchange_strong(&fde->close_tag, &tag, new_tag)) {
 		if (expected_tag && tag) {
-			fdsan_error("failed to exchange ownership of file descriptor: fd %{public}d,            \
-						was owned by %{public}s 0x%{public}016lx,                                   \
-						was expected to be owned by %{public}s 0x%{public}016lx",                   \
+			fdsan_error("failed to exchange ownership of file descriptor: fd %d, "\
+						"was owned by %s 0x%016lx, "\
+						"was expected to be owned by %s 0x%016lx",
 						fd, fdsan_get_tag_type(tag), fdsan_get_tag_value(tag),
 						fdsan_get_tag_type(expected_tag), fdsan_get_tag_value(expected_tag));
 		} else if (expected_tag && !tag) {
-			fdsan_error("failed to exchange ownership of file descriptor: fd %{public}d is unowned, \
-						was expected to be owned by %{public}s 0x%{public}016lx",                   \
+			fdsan_error("failed to exchange ownership of file descriptor: fd %d is unowned, "\
+						"was expected to be owned by %s 0x%016lx",
 						fd, fdsan_get_tag_type(expected_tag), fdsan_get_tag_value(expected_tag));
 		} else if (!expected_tag && tag) {
-			fdsan_error("failed to exchange ownership of file descriptor: fd %{public}d,            \
-						was owned by %{public}s 0x%{public}016lx, was expected to be unowned",      \
+			fdsan_error("failed to exchange ownership of file descriptor: fd %d, "\
+						"was owned by %s 0x%016lx, was expected to be unowned",
 						fd, fdsan_get_tag_type(tag), fdsan_get_tag_value(tag));
 		} else if (!expected_tag && !tag) {
 			// expected == actual == 0 but cas failed? 
@@ -243,17 +286,17 @@ int fdsan_close_with_tag(int fd, uint64_t expected_tag)
 		const char* actual_type = fdsan_get_tag_type(tag);
 		uint64_t actual_owner = fdsan_get_tag_value(tag);
 		if (expected_tag && tag) {
-			fdsan_error("attempted to close file descriptor %{public}d,                         \
-						expected to be owned by %{public}s 0x%{public}016lx,                    \
-						actually owned by %{public}s 0x%{public}016lx",                         \
+			fdsan_error("attempted to close file descriptor %d, "\
+						"expected to be owned by %s 0x%016lx, "\
+						"actually owned by %s 0x%016lx",
 						fd, expected_type, expected_owner, actual_type, actual_owner);
 		} else if (expected_tag && !tag) {
-			fdsan_error("attempted to close file descriptor %{public}d,                         \
-						expected to be owned by %{public}s 0x%{public}016lx, actually unowned", \
+			fdsan_error("attempted to close file descriptor %d,"\
+						"expected to be owned by %s 0x%016lx, actually unowned", \
 						fd, expected_type, expected_owner);
 		} else if (!expected_tag && tag) {
-			fdsan_error("attempted to close file descriptor %{public}d,                         \
-						expected to be unowned, actually owned by %{public}s 0x%{public}016lx", \
+			fdsan_error("attempted to close file descriptor %d, "\
+						"expected to be unowned, actually owned by %s 0x%016lx", \
 						fd, actual_type, actual_owner);
 		} else if (!expected_tag && !tag) {
 			// expected == actual == 0 but cas failed?
@@ -265,7 +308,7 @@ int fdsan_close_with_tag(int fd, uint64_t expected_tag)
 	int rc = __close(fd);
 	// If we were expecting to close with a tag, abort on EBADF.
 	if (expected_tag && rc == -1 && errno == EBADF) {
-		fdsan_error("EBADF: close failed for fd %{public}d with expected tag: 0x%{public}016lx", fd, expected_tag);
+		fdsan_error("EBADF: close failed for fd %d with expected tag: 0x%016lx", fd, expected_tag);
 	}
 	return rc;
 }

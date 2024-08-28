@@ -28,6 +28,11 @@ typedef struct fatal_msg {
     char msg[0];
 } fatal_msg_t;
 
+typedef struct debug_msg {
+    uint64_t timestamp;
+    const char* msg;
+} debug_msg_t;
+
 /**
   * @brief Set up fatal message
   * @param msg The fatal message
