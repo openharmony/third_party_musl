@@ -51,7 +51,7 @@ functionalext_supplement_ctype_test = [
   "iswblank",
 ]
 
-if (use_icu_locale == true) {
+if (musl_use_icu_locale == true) {
   functionalext_supplement_ctype_test += [
     "isalnum_l",
     "isalpha_l",
