@@ -281,7 +281,7 @@ template("static_and_shared_libs_template") {
 
     defines = []
     defines += [ "FEATURE_ICU_LOCALE" ]
-    if (use_icu_locale == true) {
+    if (musl_use_icu_locale == true) {
       defines += [ "FEATURE_ICU_LOCALE_TMP" ]
     }
 

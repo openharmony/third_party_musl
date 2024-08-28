@@ -95,10 +95,24 @@ musl支持的字符集编码格式，以及受支持的别名。
 
 ## locale数据能力支持的接口
 
-|                 函数                 |               用途              |         返回值        |        支持的字符集       |
-| :--------------------------------: | :---------------------------: | :----------------: | :-----------------: |
-| int isalnum\_l(int c, locale\_t l) | 根据locale设置判断字符是否是数字或字母（包括大小写） | 参数c是数字或字符返回1，否则返回0 | zh\_CN、zh\_CN.UTF-8 |
-|                                    |                               |                    |                     |
+locale是通过third\_party/icu的接口来实现，接口的规格取决于ICU。经过对比测试，ICU的范围能够完全覆盖且远大于mac os，但会小于linux的OS版本（如ubuntu、fedora）。
+
+|                  函数                 |                   用途                  |           返回值           |        支持的字符集       |
+| :---------------------------------: | :-----------------------------------: | :---------------------: | :-----------------: |
+|  int isalnum\_l(int c, locale\_t l) |     根据locale设置判断字符是否是数字或字母（包括大小写）     |    参数c是数字或字母返回1，否则返回0   | zh\_CN、zh\_CN.UTF-8 |
+|  int isalpha\_l(int c, locale\_t l) |       根据locale设置判断字符是否是字母（包括大小写）      |     参数c是字母返回1，否则返回0     | zh\_CN、zh\_CN.UTF-8 |
+|  int isblank\_l(int c, locale\_t l) |         根据locale设置判断字符是否是空白字符         |    参数c是空白字符返回1，否则返回0    | zh\_CN、zh\_CN.UTF-8 |
+|  int iscntrl\_l(int c, locale\_t l) |         根据locale设置判断字符是否是控制字符         |    参数c是控制字符返回1，否则返回0    | zh\_CN、zh\_CN.UTF-8 |
+|  int isdigit\_l(int c, locale\_t l) |          根据locale设置判断字符是否是数字          |     参数c是数字返回1，否则返回0     | zh\_CN、zh\_CN.UTF-8 |
+|  int isgraph\_l(int c, locale\_t l) |         根据locale设置判断字符是否是图形字符         |    参数c是图形字符返回1，否则返回0    | zh\_CN、zh\_CN.UTF-8 |
+|  int islower\_l(int c, locale\_t l) |         根据locale设置判断字符是否是小写字母         |    参数c是小写字母返回1，否则返回0    | zh\_CN、zh\_CN.UTF-8 |
+|  int isprint\_l(int c, locale\_t l) |         根据locale设置判断字符是否是可打印字符        |    参数c是可打印字符返回1，否则返回0   | zh\_CN、zh\_CN.UTF-8 |
+|  int ispunct\_l(int c, locale\_t l) |         根据locale设置判断字符是否是标点符号         |    参数c是标点符号返回1，否则返回0    | zh\_CN、zh\_CN.UTF-8 |
+|  int isspace\_l(int c, locale\_t l) | 根据locale设置判断字符是否是空白字符，范围比iswblank\_l小 |    参数c是空白字符返回1，否则返回0    | zh\_CN、zh\_CN.UTF-8 |
+|  int isupper\_l(int c, locale\_t l) |         根据locale设置判断字符是否是大写字母         |    参数c是大写字母返回1，否则返回0    | zh\_CN、zh\_CN.UTF-8 |
+| int isxdigit\_l(int c, locale\_t l) |       根据locale设置判断字符是否是十六进制数字字符       |  参数c是十六进制数字字符返回1，否则返回0  | zh\_CN、zh\_CN.UTF-8 |
+|  int tolower\_l(int c, locale\_t l) |        根据locale设置将给定的字符转换成小写形式        | 参数c是大写字母返回对应的小写字母，否则返回c | zh\_CN、zh\_CN.UTF-8 |
+|  int toupper\_l(int c, locale\_t l) |        根据locale设置将给定的字符转换成大写形式        | 参数c是小写字母返回对应的大写字母，否则返回c | zh\_CN、zh\_CN.UTF-8 |
 
 ## Musl使用文档
 
