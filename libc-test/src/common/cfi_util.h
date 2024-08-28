@@ -28,6 +28,9 @@ extern "C" {
 #define DEBUG 0
 #define BUFFER_SIZE 4096
 
+static void ClearCfiLog(const char *log_tag, const char *log_dir);
+static void FindAndCheck(const char *pattern, const char *log_tag, const char *log_dir);
+
 static void ShowCfiLogFile()
 {
     DIR *dir;
@@ -43,13 +46,18 @@ static void ShowCfiLogFile()
 
 static void ClearCfiLog()
 {
+    ClearCfiLog(UBSAN_LOG_TAG, UBSAN_LOG_DIR);
+}
+
+static void ClearCfiLog(const char *log_tag, const char *log_dir)
+{
     DIR *dir;
     struct dirent *ptr;
-    dir = opendir(UBSAN_LOG_DIR);
+    dir = opendir(log_dir);
     while ((ptr = readdir(dir)) != NULL) {
-        if (strstr(ptr->d_name, UBSAN_LOG_TAG) != NULL) {
-            char tmp[BUFFER_SIZE] = UBSAN_LOG_DIR;
-            strcat(tmp, ptr->d_name);
+        if (strstr(ptr->d_name, log_tag) != NULL) {
+            char tmp[BUFFER_SIZE];
+            snprintf(tmp, BUFFER_SIZE, "%s/%s", log_dir, ptr->d_name);
             remove(tmp);
         }
     }
@@ -100,11 +108,17 @@ static void CheckCfiLog(char *file, const char *needle)
 template<typename CallbackT>
 static void FindDirAndCheck(DIR *dir, CallbackT &&callback)
 {
+    FindDirAndCheck(dir, UBSAN_LOG_TAG, UBSAN_LOG_DIR, callback);
+}
+
+template<typename CallbackT>
+static void FindDirAndCheck(DIR *dir, const char *log_tag, const char *log_dir, CallbackT &&callback)
+{
     struct dirent *ptr;
     while ((ptr = readdir(dir)) != NULL) {
-        if (strstr(ptr->d_name, UBSAN_LOG_TAG) != NULL) {
-            char tmp[BUFFER_SIZE] = UBSAN_LOG_DIR;
-            strcat(tmp, ptr->d_name);
+        if (strstr(ptr->d_name, log_tag) != NULL) {
+            char tmp[BUFFER_SIZE];
+            snprintf(tmp, BUFFER_SIZE, "%s/%s", log_dir, ptr->d_name);
             callback(tmp);
         }
     }
@@ -118,6 +132,14 @@ static void FindAndCheck(const char *pattern)
     FindDirAndCheck(ubsanDir, callback);
     FindDirAndCheck(faultlogDir, callback);
     closedir(ubsanDir);
+    closedir(faultlogDir);
+}
+
+static void FindAndCheck(const char *pattern, const char *log_tag, const char *log_dir)
+{
+    DIR *faultlogDir = opendir(log_dir);
+    auto callback = [=](char *file) { CheckCfiLog(file, pattern); };
+    FindDirAndCheck(faultlogDir, log_tag, log_dir, callback);
     closedir(faultlogDir);
 }
 

@@ -5,6 +5,47 @@
 #include "atomic.h"
 #include "lock.h"
 #include "ksigaction.h"
+#if defined(MUSL_AARCH64_ARCH)
+#include <stdint.h>
+#include <stdio.h>
+#include <inttypes.h>
+#include <info/fatal_message.h>
+
+#define MESSAGE_BUFFER_SIZE 512
+
+/**
+ * @brief Retrieves the current value of the x1 register on AArch64.
+ *
+ * This function is used in CFI checks to obtain the function address
+ * stored in the x1 register during calls involving function pointers,
+ * virtual calls (vcall), and non-virtual calls (nvcall) using vtable addresses.
+ *
+ * @return Value of the x1 register.
+ */
+uint64_t fetch_function_address()
+{
+	uint64_t val;
+	__asm__ __volatile__(
+		"mov %0, x1"
+		: "=r" (val)
+		:
+		: "memory"
+	);
+	return val;
+}
+#endif
+
+_Noreturn void __cfi_fail_report(void)
+{
+#if defined(MUSL_AARCH64_ARCH)
+	uint64_t function_address = fetch_function_address();
+	char message[MESSAGE_BUFFER_SIZE];
+	snprintf(message, sizeof(message),
+			" CFI check failed. Function Address: 0x%" PRIx64, function_address);
+	set_fatal_message(message);
+#endif
+	abort();
+}
 
 _Noreturn void abort(void)
 {
