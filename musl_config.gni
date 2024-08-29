@@ -128,7 +128,7 @@ declare_args() {
 }
 
 declare_args() {
-  use_icu_locale = false
+  musl_use_icu_locale = false
 }
 
 # part of default_compiler_configs from build/config/BUILDCONFIG.gn
