@@ -109,7 +109,7 @@ ohos_executable("musl_dlopen") {
   testonly = true
   sources = [ "libc_dlopen.cpp" ]
   if (!is_llvm_build) {
-    deps = [ "//third_party/benchmark:benchmark" ]
+    external_deps = [ "benchmark:benchmark" ]
   }
 
   if (current_cpu == "arm") {
