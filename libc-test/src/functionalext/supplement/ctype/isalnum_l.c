@@ -26,7 +26,7 @@ const int RET_FALSE = 0;
 
 /**
  * @tc.name      : isalnum_l_0100
- * @tc.desc      : Verify isalnum_l process success when using the en-US.UTF-8 character set.
+ * @tc.desc      : Verify isalnum_l process success when using the en_US.UTF-8 character set.
  *                 The parameter c is an English letter,
  *                 and it is judged that the input character is a letter.
  * @tc.level     : Level 0
@@ -39,17 +39,17 @@ void isalnum_l_0100(void)
     const char *p = str;
 
     if (!m_locale) {
-        t_printf("Test case isalnum_l_0100 failed to call function newlocale\n");
-        EXPECT_NE("isalnum_l_0100", ret, RET_FALSE);
+        t_printf("Test case %s failed to call function newlocale\n", __FUNCTION__);
+        EXPECT_NE(__FUNCTION__, ret, RET_FALSE);
         return ;
     }
 
     while (p && *p != '\0') {
         ret = isalnum_l(*p, m_locale);
         if (!ret) {
-            t_printf("Test case isalnum_l_0100 failed while testing character %c\n", *p);
+            t_printf("Test case %s failed while testing character %c\n", __FUNCTION__, *p);
         }
-        EXPECT_EQ("isalnum_l_0100", ret, RET_TRUE);
+        EXPECT_EQ(__FUNCTION__, ret, RET_TRUE);
         p++;
     }
 
@@ -59,7 +59,7 @@ void isalnum_l_0100(void)
 
 /**
  * @tc.name      : isalnum_l_0200
- * @tc.desc      : Verify isalnum_l process success when using the en-US.UTF-8 character set.
+ * @tc.desc      : Verify isalnum_l process success when using the en_US.UTF-8 character set.
  *                 The parameter c is an English number,
  *                 and it is judged that the input character is a number.
  * @tc.level     : Level 0
@@ -72,17 +72,17 @@ void isalnum_l_0200(void)
     const char *p = str;
 
     if (!m_locale) {
-        t_printf("Test case isalnum_l_0200 failed to call function newlocale\n");
-        EXPECT_NE("isalnum_l_0200", ret, RET_FALSE);
+        t_printf("Test case %s failed to call function newlocale\n", __FUNCTION__);
+        EXPECT_NE(__FUNCTION__, ret, RET_FALSE);
         return ;
     }
 
     while (p && *p != '\0') {
         ret = isalnum_l(*p, m_locale);
         if (!ret) {
-            t_printf("Test case isalnum_l_0200 failed while testing character %c\n", *p);
+            t_printf("Test case %s failed while testing character %c\n", __FUNCTION__, *p);
         }
-        EXPECT_EQ("isalnum_l_0200", ret, RET_TRUE);
+        EXPECT_EQ(__FUNCTION__, ret, RET_TRUE);
         p++;
     }
 
@@ -92,7 +92,7 @@ void isalnum_l_0200(void)
 
 /**
  * @tc.name      : isalnum_l_0300
- * @tc.desc      : Verify isalnum_l process fail when using the en-US.UTF-8 character set.
+ * @tc.desc      : Verify isalnum_l process fail when using the en_US.UTF-8 character set.
  *                 The parameter c is an special character,
  *                 and it is judged that the input character is not a letter or a number.
  * @tc.level     : Level 2
@@ -105,17 +105,17 @@ void isalnum_l_0300(void)
     const char *p = str;
 
     if (!m_locale) {
-        t_printf("Test case isalnum_l_0300 failed to call function newlocale\n");
-        EXPECT_NE("isalnum_l_0300", ret, RET_FALSE);
+        t_printf("Test case %s failed to call function newlocale\n", __FUNCTION__);
+        EXPECT_NE(__FUNCTION__, ret, RET_FALSE);
         return ;
     }
 
     while (p && *p != '\0') {
         ret = isalnum_l(*p, m_locale);
         if (ret) {
-            t_printf("Test case isalnum_l_0300 failed while testing character %c\n", *p);
+            t_printf("Test case %s failed while testing character %c\n", __FUNCTION__, *p);
         }
-        EXPECT_EQ("isalnum_l_0300", ret, RET_FALSE);
+        EXPECT_EQ(__FUNCTION__, ret, RET_FALSE);
         p++;
     }
 
@@ -125,7 +125,7 @@ void isalnum_l_0300(void)
 
 /**
  * @tc.name      : isalnum_l_0400
- * @tc.desc      : Verify isalnum_l process fail when using the en-US.UTF-8 character set.
+ * @tc.desc      : Verify isalnum_l process fail when using the en_US.UTF-8 character set.
  *                 Determine the number of letters and numbers in the ascii code table.
  * @tc.level     : Level 1
  */
@@ -136,8 +136,8 @@ void isalnum_l_0400(void)
     int total = 0;
 
     if (!m_locale) {
-        t_printf("Test case isalnum_l_0400 failed to call function newlocale\n");
-        EXPECT_NE("isalnum_l_0400", ret, RET_FALSE);
+        t_printf("Test case %s failed to call function newlocale\n", __FUNCTION__);
+        EXPECT_NE(__FUNCTION__, ret, RET_FALSE);
         return ;
     }
 
@@ -148,14 +148,14 @@ void isalnum_l_0400(void)
         }
     }
 
-    EXPECT_EQ("isalnum_l_0400", total, COUNT);
+    EXPECT_EQ(__FUNCTION__, total, COUNT);
     freelocale(m_locale);
     m_locale = NULL;
 }
 
 /**
  * @tc.name      : isalnum_l_0500
- * @tc.desc      : Verify isalnum_l process success when using the en-US.UTF-8 character set.
+ * @tc.desc      : Verify isalnum_l process success when using the en_US.UTF-8 character set.
  *                 The parameter c is an wide English character,
  *                 and it is judged that the input wide character is a letter.
  * @tc.level     : Level 0
@@ -168,17 +168,17 @@ void isalnum_l_0500(void)
     const wchar_t *p = str;
 
     if (!m_locale) {
-        t_printf("Test case isalnum_l_0500 failed to call function newlocale\n");
-        EXPECT_NE("isalnum_l_0500", ret, RET_FALSE);
+        t_printf("Test case %s failed to call function newlocale\n", __FUNCTION__);
+        EXPECT_NE(__FUNCTION__, ret, RET_FALSE);
         return ;
     }
 
-    while (p && *p != '\0') {
+    while (p && *p != L'\0') {
         ret = isalnum_l(*p, m_locale);
         if (!ret) {
-            t_printf("Test case isalnum_l_0500 failed while testing character %c\n", *p);
+            t_printf("Test case %s failed while testing character %c\n", __FUNCTION__, *p);
         }
-        EXPECT_EQ("isalnum_l_0500", ret, RET_TRUE);
+        EXPECT_EQ(__FUNCTION__, ret, RET_TRUE);
         p++;
     }
 
@@ -188,7 +188,7 @@ void isalnum_l_0500(void)
 
 /**
  * @tc.name      : isalnum_l_0600
- * @tc.desc      : Verify isalnum_l process success when using the en-US.UTF-8 character set.
+ * @tc.desc      : Verify isalnum_l process success when using the en_US.UTF-8 character set.
  *                 The parameter c is an wide English character,
  *                 and it is judged that the input wide character is a number.
  * @tc.level     : Level 0
@@ -201,17 +201,17 @@ void isalnum_l_0600(void)
     const wchar_t *p = str;
 
     if (!m_locale) {
-        t_printf("Test case isalnum_l_0600 failed to call function newlocale\n");
-        EXPECT_NE("isalnum_l_0600", ret, RET_FALSE);
+        t_printf("Test case %s failed to call function newlocale\n", __FUNCTION__);
+        EXPECT_NE(__FUNCTION__, ret, RET_FALSE);
         return ;
     }
 
-    while (p && *p != '\0') {
+    while (p && *p != L'\0') {
         ret = isalnum_l(*p, m_locale);
         if (!ret) {
-            t_printf("Test case isalnum_l_0600 failed while testing character %c\n", *p);
+            t_printf("Test case %s failed while testing character %c\n", __FUNCTION__, *p);
         }
-        EXPECT_EQ("isalnum_l_0600", ret, RET_TRUE);
+        EXPECT_EQ(__FUNCTION__, ret, RET_TRUE);
         p++;
     }
 
@@ -221,7 +221,7 @@ void isalnum_l_0600(void)
 
 /**
  * @tc.name      : isalnum_l_0700
- * @tc.desc      : Verify isalnum_l process fail when using the en-US.UTF-8 character set.
+ * @tc.desc      : Verify isalnum_l process fail when using the en_US.UTF-8 character set.
  *                 The parameter c is an wide English character,
  *                 and it is judged that the input character is not a letter or a number.
  * @tc.level     : Level 2
@@ -234,17 +234,17 @@ void isalnum_l_0700(void)
     const wchar_t *p = str;
 
     if (!m_locale) {
-        t_printf("Test case isalnum_l_0700 failed to call function newlocale\n");
-        EXPECT_NE("isalnum_l_0700", ret, RET_FALSE);
+        t_printf("Test case %s failed to call function newlocale\n", __FUNCTION__);
+        EXPECT_NE(__FUNCTION__, ret, RET_FALSE);
         return ;
     }
 
-    while (p && *p != '\0') {
+    while (p && *p != L'\0') {
         ret = isalnum_l(*p, m_locale);
         if (ret) {
-            t_printf("Test case isalnum_l_0700 failed while testing character %c\n", *p);
+            t_printf("Test case %s failed while testing character %c\n", __FUNCTION__, *p);
         }
-        EXPECT_EQ("isalnum_l_0700", ret, RET_FALSE);
+        EXPECT_EQ(__FUNCTION__, ret, RET_FALSE);
         p++;
     }
 
@@ -267,17 +267,17 @@ void isalnum_l_0800(void)
     const char *p = str;
 
     if (!m_locale) {
-        t_printf("Test case isalnum_l_0800 failed to call function newlocale\n");
-        EXPECT_NE("isalnum_l_0800", ret, RET_FALSE);
+        t_printf("Test case %s failed to call function newlocale\n", __FUNCTION__);
+        EXPECT_NE(__FUNCTION__, ret, RET_FALSE);
         return ;
     }
 
     while (p && *p != '\0') {
         ret = isalnum_l(*p, m_locale);
         if (!ret) {
-            t_printf("Test case isalnum_l_0800 failed while testing character %c\n", *p);
+            t_printf("Test case %s failed while testing character %c\n", __FUNCTION__, *p);
         }
-        EXPECT_EQ("isalnum_l_0800", ret, RET_TRUE);
+        EXPECT_EQ(__FUNCTION__, ret, RET_TRUE);
         p++;
     }
 
@@ -300,17 +300,17 @@ void isalnum_l_0900(void)
     const char *p = str;
 
     if (!m_locale) {
-        t_printf("Test case isalnum_l_0900 failed to call function newlocale\n");
-        EXPECT_NE("isalnum_l_0900", ret, RET_FALSE);
+        t_printf("Test case %s failed to call function newlocale\n", __FUNCTION__);
+        EXPECT_NE(__FUNCTION__, ret, RET_FALSE);
         return ;
     }
 
     while (p && *p != '\0') {
         ret = isalnum_l(*p, m_locale);
         if (!ret) {
-            t_printf("Test case isalnum_l_0900 failed while testing character %c\n", *p);
+            t_printf("Test case %s failed while testing character %c\n", __FUNCTION__, *p);
         }
-        EXPECT_EQ("isalnum_l_0900", ret, RET_TRUE);
+        EXPECT_EQ(__FUNCTION__, ret, RET_TRUE);
         p++;
     }
 
@@ -333,17 +333,17 @@ void isalnum_l_1000(void)
     const char *p = str;
 
     if (!m_locale) {
-        t_printf("Test case isalnum_l_1000 failed to call function newlocale\n");
-        EXPECT_NE("isalnum_l_1000", ret, RET_FALSE);
+        t_printf("Test case %s failed to call function newlocale\n", __FUNCTION__);
+        EXPECT_NE(__FUNCTION__, ret, RET_FALSE);
         return ;
     }
 
     while (p && *p != '\0') {
         ret = isalnum_l(*p, m_locale);
         if (ret) {
-            t_printf("Test case isalnum_l_1000 failed while testing character %c\n", *p);
+            t_printf("Test case %s failed while testing character %c\n", __FUNCTION__, *p);
         }
-        EXPECT_EQ("isalnum_l_1000", ret, RET_FALSE);
+        EXPECT_EQ(__FUNCTION__, ret, RET_FALSE);
         p++;
     }
 
@@ -364,8 +364,8 @@ void isalnum_l_1100(void)
     int total = 0;
 
     if (!m_locale) {
-        t_printf("Test case isalnum_l_1100 failed to call function newlocale\n");
-        EXPECT_NE("isalnum_l_1100", ret, RET_FALSE);
+        t_printf("Test case %s failed to call function newlocale\n", __FUNCTION__);
+        EXPECT_NE(__FUNCTION__, ret, RET_FALSE);
         return ;
     }
 
@@ -376,7 +376,7 @@ void isalnum_l_1100(void)
         }
     }
 
-    EXPECT_EQ("isalnum_l_1100", total, COUNT);
+    EXPECT_EQ(__FUNCTION__, total, COUNT);
     freelocale(m_locale);
     m_locale = NULL;
 }
@@ -396,17 +396,17 @@ void isalnum_l_1200(void)
     const wchar_t *p = str;
 
     if (!m_locale) {
-        t_printf("Test case isalnum_l_1200 failed to call function newlocale\n");
-        EXPECT_NE("isalnum_l_1200", ret, RET_FALSE);
+        t_printf("Test case %s failed to call function newlocale\n", __FUNCTION__);
+        EXPECT_NE(__FUNCTION__, ret, RET_FALSE);
         return ;
     }
 
-    while (p && *p != '\0') {
+    while (p && *p != L'\0') {
         ret = isalnum_l(*p, m_locale);
         if (!ret) {
-            t_printf("Test case isalnum_l_1200 failed while testing character %c\n", *p);
+            t_printf("Test case %s failed while testing character %c\n", __FUNCTION__, *p);
         }
-        EXPECT_EQ("isalnum_l_1200", ret, RET_TRUE);
+        EXPECT_EQ(__FUNCTION__, ret, RET_TRUE);
         p++;
     }
 
@@ -429,17 +429,17 @@ void isalnum_l_1300(void)
     const wchar_t *p = str;
 
     if (!m_locale) {
-        t_printf("Test case isalnum_l_1300 failed to call function newlocale\n");
-        EXPECT_NE("isalnum_l_1300", ret, RET_FALSE);
+        t_printf("Test case %s failed to call function newlocale\n", __FUNCTION__);
+        EXPECT_NE(__FUNCTION__, ret, RET_FALSE);
         return ;
     }
 
-    while (p && *p != '\0') {
+    while (p && *p != L'\0') {
         ret = isalnum_l(*p, m_locale);
         if (!ret) {
-            t_printf("Test case isalnum_l_1300 failed while testing character %c\n", *p);
+            t_printf("Test case %s failed while testing character %c\n", __FUNCTION__, *p);
         }
-        EXPECT_EQ("isalnum_l_1300", ret, RET_TRUE);
+        EXPECT_EQ(__FUNCTION__, ret, RET_TRUE);
         p++;
     }
 
@@ -462,17 +462,17 @@ void isalnum_l_1400(void)
     const wchar_t *p = str;
 
     if (!m_locale) {
-        t_printf("Test case isalnum_l_1400 failed to call function newlocale\n");
-        EXPECT_NE("isalnum_l_1400", ret, RET_FALSE);
+        t_printf("Test case %s failed to call function newlocale\n", __FUNCTION__);
+        EXPECT_NE(__FUNCTION__, ret, RET_FALSE);
         return ;
     }
 
-    while (p && *p != '\0') {
+    while (p && *p != L'\0') {
         ret = isalnum_l(*p, m_locale);
         if (ret) {
-            t_printf("Test case isalnum_l_1400 failed while testing character %c\n", *p);
+            t_printf("Test case %s failed while testing character %c\n", __FUNCTION__, *p);
         }
-        EXPECT_EQ("isalnum_l_1400", ret, RET_FALSE);
+        EXPECT_EQ(__FUNCTION__, ret, RET_FALSE);
         p++;
     }
 
@@ -483,7 +483,7 @@ void isalnum_l_1400(void)
 /**
  * @tc.name      : isalnum_l_1500
  * @tc.desc      : Verify isalnum_l process success when using the zh_CN character set.
- *                 The characters are not in the en-US.UTF-8 and zh_CN character sets,
+ *                 The characters are not in the en_US.UTF-8 and zh_CN character sets,
  *                 and it is judged that the input character is a letter or a number.
  * @tc.level     : Level 2
  */
@@ -494,8 +494,8 @@ void isalnum_l_1500(void)
     locale_t m_locale = newlocale(LC_ALL_MASK, "zh_CN", NULL);
 
     if (!m_locale) {
-        t_printf("Test case isalnum_l_1500 failed to call function newlocale\n");
-        EXPECT_NE("isalnum_l_1500", ret, RET_FALSE);
+        t_printf("Test case %s failed to call function newlocale\n", __FUNCTION__);
+        EXPECT_NE(__FUNCTION__, ret, RET_FALSE);
         return ;
     }
 
@@ -503,9 +503,9 @@ void isalnum_l_1500(void)
     for (i = 0x0660; i <= 0x0669; i++) {
         ret = isalnum_l(i, m_locale);
         if (!ret) {
-            t_printf("Test case isalnum_l_1500 failed while testing unicode %04x\n", i);
+            t_printf("Test case %s failed while testing unicode %04x\n", __FUNCTION__, i);
         }
-        EXPECT_EQ("isalnum_l_1500", ret, RET_TRUE);
+        EXPECT_EQ(__FUNCTION__, ret, RET_TRUE);
     }
 
     //GREEK characters(U+03AC - U+03CE)
@@ -513,9 +513,9 @@ void isalnum_l_1500(void)
     for (i = 0x03AC; i <= 0x03CE; i++) {
         ret = isalnum_l(i, m_locale);
         if (!ret) {
-            t_printf("Test case isalnum_l_1500 failed while testing unicode %04x\n", i);
+            t_printf("Test case %s failed while testing unicode %04x\n", __FUNCTION__, i);
         }
-        EXPECT_EQ("isalnum_l_1500", ret, RET_TRUE);
+        EXPECT_EQ(__FUNCTION__, ret, RET_TRUE);
     }
 
     //ARMENIAN characters(U+0531 - U+0556)
@@ -523,9 +523,9 @@ void isalnum_l_1500(void)
     for (i = 0x0531; i <= 0x0556; i++) {
         ret = isalnum_l(i, m_locale);
         if (!ret) {
-            t_printf("Test case isalnum_l_1500 failed while testing unicode %04x\n", i);
+            t_printf("Test case %s failed while testing unicode %04x\n", __FUNCTION__, i);
         }
-        EXPECT_EQ("isalnum_l_1500", ret, RET_TRUE);
+        EXPECT_EQ(__FUNCTION__, ret, RET_TRUE);
     }
 
     freelocale(m_locale);
@@ -535,7 +535,7 @@ void isalnum_l_1500(void)
 /**
  * @tc.name      : isalnum_l_1600
  * @tc.desc      : Verify isalnum_l process fail when using the zh_CN character set.
- *                 The characters are not in the en-US.UTF-8 and zh_CN character sets,
+ *                 The characters are not in the en_US.UTF-8 and zh_CN character sets,
  *                 and it is judged that the input character is not a letter or a number.
  * @tc.level     : Level 2
  */
@@ -546,8 +546,8 @@ void isalnum_l_1600(void)
     locale_t m_locale = newlocale(LC_ALL_MASK, "zh_CN", NULL);
 
     if (!m_locale) {
-        t_printf("Test case isalnum_l_1600 failed to call function newlocale\n");
-        EXPECT_NE("isalnum_l_1600", ret, RET_FALSE);
+        t_printf("Test case %s failed to call function newlocale\n", __FUNCTION__);
+        EXPECT_NE(__FUNCTION__, ret, RET_FALSE);
         return ;
     }
 
@@ -556,9 +556,9 @@ void isalnum_l_1600(void)
     for (i = 0x0384; i <= 0x0385; i++) {
         ret = isalnum_l(i, m_locale);
         if (ret) {
-            t_printf("Test case isalnum_l_1600 failed while testing unicode %04x\n", i);
+            t_printf("Test case %s failed while testing unicode %04x\n", __FUNCTION__, i);
         }
-        EXPECT_EQ("isalnum_l_1600", ret, RET_FALSE);
+        EXPECT_EQ(__FUNCTION__, ret, RET_FALSE);
     }
 
     //ARMENIAN APOSTROPHE
@@ -570,9 +570,9 @@ void isalnum_l_1600(void)
     for (i = 0x055A; i <= 0x055F; i++) {
         ret = isalnum_l(i, m_locale);
         if (ret) {
-            t_printf("Test case isalnum_l_1600 failed while testing unicode %04x\n", i);
+            t_printf("Test case %s failed while testing unicode %04x\n", __FUNCTION__, i);
         }
-        EXPECT_EQ("isalnum_l_1600", ret, RET_FALSE);
+        EXPECT_EQ(__FUNCTION__, ret, RET_FALSE);
     }
 
     freelocale(m_locale);
@@ -592,8 +592,8 @@ void isalnum_l_1700(void)
     int total = 0;
 
     if (!m_locale) {
-        t_printf("Test case isalnum_l_1700 failed to call function newlocale\n");
-        EXPECT_NE("isalnum_l_1700", ret, RET_FALSE);
+        t_printf("Test case %s failed to call function newlocale\n", __FUNCTION__);
+        EXPECT_NE(__FUNCTION__, ret, RET_FALSE);
         return ;
     }
 
@@ -603,11 +603,11 @@ void isalnum_l_1700(void)
         if (ret) {
             total++;
         } else {
-            t_printf("Test case isalnum_l_1700 failed i = 0x%x\n", i);
+            t_printf("Test case %s failed i = 0x%x\n", __FUNCTION__, i);
         }
     }
 
-    EXPECT_EQ("isalnum_l_1700", total, BPMF_COUNT);
+    EXPECT_EQ(__FUNCTION__, total, BPMF_COUNT);
     freelocale(m_locale);
     m_locale = NULL;
 }
@@ -627,17 +627,17 @@ void isalnum_l_1800(void)
     const char *p = str;
 
     if (!m_locale) {
-        t_printf("Test case isalnum_l_1800 failed to call function newlocale\n");
-        EXPECT_NE("isalnum_l_1800", ret, RET_FALSE);
+        t_printf("Test case %s failed to call function newlocale\n", __FUNCTION__);
+        EXPECT_NE(__FUNCTION__, ret, RET_FALSE);
         return ;
     }
 
     while (p && *p != '\0') {
         ret = isalnum_l(*p, m_locale);
         if (!ret) {
-            t_printf("Test case isalnum_l_1800 failed while testing character %c\n", *p);
+            t_printf("Test case %s failed while testing character %c\n", __FUNCTION__, *p);
         }
-        EXPECT_EQ("isalnum_l_1800", ret, RET_TRUE);
+        EXPECT_EQ(__FUNCTION__, ret, RET_TRUE);
         p++;
     }
 
@@ -660,17 +660,17 @@ void isalnum_l_1900(void)
     const char *p = str;
 
     if (!m_locale) {
-        t_printf("Test case isalnum_l_1900 failed to call function newlocale\n");
-        EXPECT_NE("isalnum_l_1900", ret, RET_FALSE);
+        t_printf("Test case %s failed to call function newlocale\n", __FUNCTION__);
+        EXPECT_NE(__FUNCTION__, ret, RET_FALSE);
         return ;
     }
 
     while (p && *p != '\0') {
         ret = isalnum_l(*p, m_locale);
         if (!ret) {
-            t_printf("Test case isalnum_l_1900 failed while testing character %c\n", *p);
+            t_printf("Test case %s failed while testing character %c\n", __FUNCTION__, *p);
         }
-        EXPECT_EQ("isalnum_l_1900", ret, RET_TRUE);
+        EXPECT_EQ(__FUNCTION__, ret, RET_TRUE);
         p++;
     }
 
@@ -693,17 +693,17 @@ void isalnum_l_2000(void)
     const char *p = str;
 
     if (!m_locale) {
-        t_printf("Test case isalnum_l_2000 failed to call function newlocale\n");
-        EXPECT_NE("isalnum_l_2000", ret, RET_FALSE);
+        t_printf("Test case %s failed to call function newlocale\n", __FUNCTION__);
+        EXPECT_NE(__FUNCTION__, ret, RET_FALSE);
         return ;
     }
 
     while (p && *p != '\0') {
         ret = isalnum_l(*p, m_locale);
         if (ret) {
-            t_printf("Test case isalnum_l_2000 failed while testing character %c\n", *p);
+            t_printf("Test case %s failed while testing character %c\n", __FUNCTION__, *p);
         }
-        EXPECT_EQ("isalnum_l_2000", ret, RET_FALSE);
+        EXPECT_EQ(__FUNCTION__, ret, RET_FALSE);
         p++;
     }
 
@@ -724,8 +724,8 @@ void isalnum_l_2100(void)
     int total = 0;
 
     if (!m_locale) {
-        t_printf("Test case isalnum_l_2100 failed to call function newlocale\n");
-        EXPECT_NE("isalnum_l_2100", ret, RET_FALSE);
+        t_printf("Test case %s failed to call function newlocale\n", __FUNCTION__);
+        EXPECT_NE(__FUNCTION__, ret, RET_FALSE);
         return ;
     }
 
@@ -736,7 +736,7 @@ void isalnum_l_2100(void)
         }
     }
 
-    EXPECT_EQ("isalnum_l_2100", total, COUNT);
+    EXPECT_EQ(__FUNCTION__, total, COUNT);
     freelocale(m_locale);
     m_locale = NULL;
 }
@@ -756,17 +756,17 @@ void isalnum_l_2200(void)
     const wchar_t *p = str;
 
     if (!m_locale) {
-        t_printf("Test case isalnum_l_2200 failed to call function newlocale\n");
-        EXPECT_NE("isalnum_l_2200", ret, RET_FALSE);
+        t_printf("Test case %s failed to call function newlocale\n", __FUNCTION__);
+        EXPECT_NE(__FUNCTION__, ret, RET_FALSE);
         return ;
     }
 
-    while (p && *p != '\0') {
+    while (p && *p != L'\0') {
         ret = isalnum_l(*p, m_locale);
         if (!ret) {
-            t_printf("Test case isalnum_l_2200 failed while testing character %c\n", *p);
+            t_printf("Test case %s failed while testing character %c\n", __FUNCTION__, *p);
         }
-        EXPECT_EQ("isalnum_l_2200", ret, RET_TRUE);
+        EXPECT_EQ(__FUNCTION__, ret, RET_TRUE);
         p++;
     }
 
@@ -789,17 +789,17 @@ void isalnum_l_2300(void)
     const wchar_t *p = str;
 
     if (!m_locale) {
-        t_printf("Test case isalnum_l_2300 failed to call function newlocale\n");
-        EXPECT_NE("isalnum_l_2300", ret, RET_FALSE);
+        t_printf("Test case %s failed to call function newlocale\n", __FUNCTION__);
+        EXPECT_NE(__FUNCTION__, ret, RET_FALSE);
         return ;
     }
 
-    while (p && *p != '\0') {
+    while (p && *p != L'\0') {
         ret = isalnum_l(*p, m_locale);
         if (!ret) {
-            t_printf("Test case isalnum_l_2300 failed while testing character %c\n", *p);
+            t_printf("Test case %s failed while testing character %c\n", __FUNCTION__, *p);
         }
-        EXPECT_EQ("isalnum_l_2300", ret, RET_TRUE);
+        EXPECT_EQ(__FUNCTION__, ret, RET_TRUE);
         p++;
     }
 
@@ -822,17 +822,17 @@ void isalnum_l_2400(void)
     const wchar_t *p = str;
 
     if (!m_locale) {
-        t_printf("Test case isalnum_l_2400 failed to call function newlocale\n");
-        EXPECT_NE("isalnum_l_2400", ret, RET_FALSE);
+        t_printf("Test case %s failed to call function newlocale\n", __FUNCTION__);
+        EXPECT_NE(__FUNCTION__, ret, RET_FALSE);
         return ;
     }
 
-    while (p && *p != '\0') {
+    while (p && *p != L'\0') {
         ret = isalnum_l(*p, m_locale);
         if (ret) {
-            t_printf("Test case isalnum_l_2400 failed while testing character %c\n", *p);
+            t_printf("Test case %s failed while testing character %c\n", __FUNCTION__, *p);
         }
-        EXPECT_EQ("isalnum_l_2400", ret, RET_FALSE);
+        EXPECT_EQ(__FUNCTION__, ret, RET_FALSE);
         p++;
     }
 
@@ -843,7 +843,7 @@ void isalnum_l_2400(void)
 /**
  * @tc.name      : isalnum_l_2500
  * @tc.desc      : Verify isalnum_l process success when using the zh_CN.UTF-8 character set.
- *                 The characters are not in the en-US.UTF-8 and zh_CN.UTF-8 character sets,
+ *                 The characters are not in the en_US.UTF-8 and zh_CN.UTF-8 character sets,
  *                 and it is judged that the input character is a letter or a number.
  * @tc.level     : Level 2
  */
@@ -854,8 +854,8 @@ void isalnum_l_2500(void)
     locale_t m_locale = newlocale(LC_ALL_MASK, "zh_CN.UTF-8", NULL);
 
     if (!m_locale) {
-        t_printf("Test case isalnum_l_2500 failed to call function newlocale\n");
-        EXPECT_NE("isalnum_l_2500", ret, RET_FALSE);
+        t_printf("Test case %s failed to call function newlocale\n", __FUNCTION__);
+        EXPECT_NE(__FUNCTION__, ret, RET_FALSE);
         return ;
     }
 
@@ -863,9 +863,9 @@ void isalnum_l_2500(void)
     for (i = 0x0660; i <= 0x0669; i++) {
         ret = isalnum_l(i, m_locale);
         if (!ret) {
-            t_printf("Test case isalnum_l_2500 failed while testing unicode %04x\n", i);
+            t_printf("Test case %s failed while testing unicode %04x\n", __FUNCTION__, i);
         }
-        EXPECT_EQ("isalnum_l_2500", ret, RET_TRUE);
+        EXPECT_EQ(__FUNCTION__, ret, RET_TRUE);
     }
 
     //GREEK characters(U+03AC - U+03CE)
@@ -873,9 +873,9 @@ void isalnum_l_2500(void)
     for (i = 0x03AC; i <= 0x03CE; i++) {
         ret = isalnum_l(i, m_locale);
         if (!ret) {
-            t_printf("Test case isalnum_l_2500 failed while testing unicode %04x\n", i);
+            t_printf("Test case %s failed while testing unicode %04x\n", __FUNCTION__, i);
         }
-        EXPECT_EQ("isalnum_l_2500", ret, RET_TRUE);
+        EXPECT_EQ(__FUNCTION__, ret, RET_TRUE);
     }
 
     //ARMENIAN characters(U+0531 - U+0556)
@@ -883,9 +883,9 @@ void isalnum_l_2500(void)
     for (i = 0x0531; i <= 0x0556; i++) {
         ret = isalnum_l(i, m_locale);
         if (!ret) {
-            t_printf("Test case isalnum_l_2500 failed while testing unicode %04x\n", i);
+            t_printf("Test case %s failed while testing unicode %04x\n", __FUNCTION__, i);
         }
-        EXPECT_EQ("isalnum_l_2500", ret, RET_TRUE);
+        EXPECT_EQ(__FUNCTION__, ret, RET_TRUE);
     }
 
     freelocale(m_locale);
@@ -895,7 +895,7 @@ void isalnum_l_2500(void)
 /**
  * @tc.name      : isalnum_l_2600
  * @tc.desc      : Verify isalnum_l process fail when using the zh_CN.UTF-8 character set.
- *                 The characters are not in the en-US.UTF-8 and zh_CN.UTF-8 character sets,
+ *                 The characters are not in the en_US.UTF-8 and zh_CN.UTF-8 character sets,
  *                 and it is judged that the input character is not a letter or a number.
  * @tc.level     : Level 2
  */
@@ -906,8 +906,8 @@ void isalnum_l_2600(void)
     locale_t m_locale = newlocale(LC_ALL_MASK, "zh_CN.UTF-8", NULL);
 
     if (!m_locale) {
-        t_printf("Test case isalnum_l_2600 failed to call function newlocale\n");
-        EXPECT_NE("isalnum_l_2600", ret, RET_FALSE);
+        t_printf("Test case %s failed to call function newlocale\n", __FUNCTION__);
+        EXPECT_NE(__FUNCTION__, ret, RET_FALSE);
         return ;
     }
 
@@ -916,9 +916,9 @@ void isalnum_l_2600(void)
     for (i = 0x0384; i <= 0x0385; i++) {
         ret = isalnum_l(i, m_locale);
         if (ret) {
-            t_printf("Test case isalnum_l_2600 failed while testing unicode %04x\n", i);
+            t_printf("Test case %s failed while testing unicode %04x\n", __FUNCTION__, i);
         }
-        EXPECT_EQ("isalnum_l_2600", ret, RET_FALSE);
+        EXPECT_EQ(__FUNCTION__, ret, RET_FALSE);
     }
 
     //ARMENIAN APOSTROPHE
@@ -930,9 +930,9 @@ void isalnum_l_2600(void)
     for (i = 0x055A; i <= 0x055F; i++) {
         ret = isalnum_l(i, m_locale);
         if (ret) {
-            t_printf("Test case isalnum_l_2600 failed while testing unicode %04x\n", i);
+            t_printf("Test case %s failed while testing unicode %04x\n", __FUNCTION__, i);
         }
-        EXPECT_EQ("isalnum_l_2600", ret, RET_FALSE);
+        EXPECT_EQ(__FUNCTION__, ret, RET_FALSE);
     }
 
     freelocale(m_locale);
@@ -952,8 +952,8 @@ void isalnum_l_2700(void)
     int total = 0;
 
     if (!m_locale) {
-        t_printf("Test case isalnum_l_2700 failed to call function newlocale\n");
-        EXPECT_NE("isalnum_l_2700", ret, RET_FALSE);
+        t_printf("Test case %s failed to call function newlocale\n", __FUNCTION__);
+        EXPECT_NE(__FUNCTION__, ret, RET_FALSE);
         return ;
     }
 
@@ -963,11 +963,11 @@ void isalnum_l_2700(void)
         if (ret) {
             total++;
         } else {
-            t_printf("Test case isalnum_l_2700 failed i = 0x%x\n", i);
+            t_printf("Test case %s failed i = 0x%x\n", __FUNCTION__, i);
         }
     }
 
-    EXPECT_EQ("isalnum_l_2700", total, BPMF_COUNT);
+    EXPECT_EQ(__FUNCTION__, total, BPMF_COUNT);
     freelocale(m_locale);
     m_locale = NULL;
 }
