@@ -62,5 +62,6 @@ if (musl_use_icu_locale == true) {
     "ispunct_l",
     "isspace_l",
     "wctrans_l",
+    "isdigit_l",
   ]
 }
