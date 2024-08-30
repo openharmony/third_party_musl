@@ -33,6 +33,7 @@ void install_sigv_handler()
         .sa_flags = 0,
     };
     sigaction(SIGSEGV, &sigv, NULL);
+    sigaction(SIGTRAP, &sigv, NULL);
 }
 
 int main()
