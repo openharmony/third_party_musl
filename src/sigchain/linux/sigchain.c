@@ -203,7 +203,8 @@ static void signal_chain_handler(int signo, siginfo_t* siginfo, void* ucontext_r
     sigchain_sigmask(SIG_SETMASK, &mask, NULL);
 
     if ((sa_flags & SA_SIGINFO)) {
-        SIGCHAIN_PRINT_ERROR("%{public}s call usr sigaction for signal: %{public}d sig_action.sa_sigaction=%{public}p", __func__, signo, sig_chains[signo - 1].sig_action.sa_sigaction);
+        SIGCHAIN_PRINT_ERROR("%{public}s call usr sigaction for signal: %{public}d sig_action.sa_sigaction=%{public}llx",
+            __func__, signo, (unsigned long long)sig_chains[signo - 1].sig_action.sa_sigaction);
         sig_chains[signo - 1].sig_action.sa_sigaction(signo, siginfo, ucontext_raw);
     } else {
         if (sig_chains[signo - 1].sig_action.sa_handler == SIG_IGN) {
@@ -218,7 +219,8 @@ static void signal_chain_handler(int signo, siginfo_t* siginfo, void* ucontext_r
                 SIGCHAIN_PRINT_ERROR("pid(%{public}d) rethrow sig(%{public}d) success.", __syscall(SYS_getpid), signo);
             }
         } else {
-            SIGCHAIN_PRINT_ERROR("%{public}s call usr sa_handler: %{public}p for signal: %{public}d sig_action.sa_handler=%{public}p", __func__, signo, sig_chains[signo - 1].sig_action.sa_handler);
+            SIGCHAIN_PRINT_ERROR("%{public}s call usr sa_handler: %{public}llx for signal: %{public}d",
+                __func__, (unsigned long long)sig_chains[signo - 1].sig_action.sa_handler, signo);
             sig_chains[signo - 1].sig_action.sa_handler(signo);
         }
     }
