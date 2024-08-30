@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/mman.h>
+#include <sys/stat.h>
 #include <ctype.h>
 #include "libc.h"
 #include "lock.h"
@@ -40,7 +41,7 @@ static int dst_off;
 static int r0[5], r1[5];
 
 static const unsigned char *zi, *trans, *index, *types, *abbrevs, *abbrevs_end, *tzdata_map;
-static size_t map_size, tzdata_map_size, offset;
+static size_t map_size, tzdata_map_size, map_offset;
 
 static char old_tz_buf[32];
 static char *old_tz = old_tz_buf;
@@ -134,26 +135,6 @@ static size_t zi_dotprod(const unsigned char *z, const unsigned char *v, size_t 
 	return y;
 }
 
-static int check_cota()
-{
-#if defined(OHOS_ENABLE_PARAMETER) && (!defined(__LITEOS__))
-	static int cota_exist = 0;
-	if (cota_exist) return 1;
-	static CachedHandle cota_param_handle = NULL;
-	if (cota_param_handle == NULL) {
-		cota_param_handle = CachedParameterCreate("persist.global.tz_override", "false");
-	}
-	const char *cota_param_value = CachedParameterGet(cota_param_handle);
-	if (!strcmp(cota_param_value, "true")) {
-		cota_exist = 1;
-		return 1;
-	}
-	return 0;
-#else
-	return 0;
-#endif
-}
-
 static void do_tzset()
 {
 	char buf[NAME_MAX+25], *pathname=buf+24;
@@ -170,16 +151,15 @@ static void do_tzset()
 	 * timezone data is loaded.*/
 	int use_cota = 0;
 	int keep_old_tzid = 1;
+	int old_errno = errno;
+	struct stat st;
 	if (!cota_accessable) {
-		if (check_cota()) {
-			int fd = sys_open(cota_path, O_RDONLY|O_CLOEXEC|O_NONBLOCK);
-			if (fd >= 0) {
-				use_cota = 1;
-				keep_old_tzid = 0;
-				cota_accessable = 1;
-				__syscall(SYS_close, fd);
-			}
+		if (stat(cota_path, &st) == 0) {
+			use_cota = 1;
+			keep_old_tzid = 0;
+			cota_accessable = 1;
 		}
+		errno = old_errno;
 	} else {
 		use_cota = 1;
 	}
@@ -216,7 +196,7 @@ static void do_tzset()
 	for (i=0; i<5; i++) r0[i] = r1[i] = 0;
 
 	if (tzdata_map && zi) {
-		if (tzdata_map + offset == zi) {
+		if (tzdata_map + map_offset == zi) {
 			__munmap((void *)tzdata_map, tzdata_map_size);
 		} else {
 			__munmap((void *)zi, map_size);
@@ -259,7 +239,7 @@ static void do_tzset()
 			flag = 0;
 			if (!libc.secure || !strcmp(s, "/etc/localtime")) {
 				map = __map_file(s, &map_size);
-				offset = 0;
+				map_offset = 0;
 			}
 		}
 	}
@@ -272,16 +252,16 @@ static void do_tzset()
 			pathname[l] = 0;
 			/* Try to load distro timezone data first*/
 			if (use_cota) {
-				tzdata_map = __map_tzdata_file(cota_path, pathname, &tzdata_map_size, &offset, &map_size);
+				tzdata_map = __map_tzdata_file(cota_path, pathname, &tzdata_map_size, &map_offset, &map_size);
 				if (tzdata_map != NULL) {
-					map = tzdata_map + offset;
+					map = tzdata_map + map_offset;
 				}
 			}
 			try = search;
 			while (!map && *try) {
-				tzdata_map = __map_tzdata_file(try, pathname, &tzdata_map_size, &offset, &map_size);
+				tzdata_map = __map_tzdata_file(try, pathname, &tzdata_map_size, &map_offset, &map_size);
 				if (tzdata_map != NULL) {
-					map = tzdata_map + offset;
+					map = tzdata_map + map_offset;
 				}
 				try += strlen(try) + 1;
 			}
@@ -293,7 +273,7 @@ static void do_tzset()
 		if (*s == '/' || *s == '.') {
 			if (!libc.secure || !strcmp(s, "/etc/localtime"))
 				map = __map_file(s, &map_size);
-				offset = 0;
+				map_offset = 0;
 		} else {
 			size_t l = strlen(s);
 			if (l <= NAME_MAX && !strchr(s, '.')) {
@@ -303,7 +283,7 @@ static void do_tzset()
 					l = strlen(try);
 					memcpy(pathname-l, try, l);
 					map = __map_file(pathname-l, &map_size);
-					offset = 0;
+					map_offset = 0;
 				}
 			}
 		}
@@ -312,7 +292,7 @@ static void do_tzset()
 #endif
 
 	if (map && (map_size < 44 || memcmp(map, "TZif", 4))) {
-		if (tzdata_map + offset == map) {
+		if (tzdata_map + map_offset == map) {
 			__munmap((void *)tzdata_map, tzdata_map_size);
 			tzdata_map = 0;
 		} else {
