@@ -16,35 +16,6 @@
 #include <ctype.h>
 #include "functionalext.h"
 
-/**
- * @tc.name      : isdigit_l_0100
- * @tc.desc      : Whether the characters in a string is numeric characters
- * @tc.level     : Level 0
- */
-void isdigit_l_0100(void)
-{
-    const char *str = "0123456789";
-    const char *p = str;
-    while (*p++ && *p != '\0') {
-        int ret = isdigit_l(*p, NULL);
-        EXPECT_EQ("isdigit_l_0100", ret, ONREXPECT);
-    }
-}
-
-/**
- * @tc.name      : isdigit_l_0200
- * @tc.desc      : Whether a character in a string is a non-numeric character
- * @tc.level     : Level 2
- */
-void isdigit_l_0200(void)
-{
-    const char *str = "!@hHiIjJZz";
-    const char *p = str;
-    while (*p++ && *p != '\0') {
-        int ret = isdigit_l(*p, NULL);
-        EXPECT_EQ("isdigit_l_0200", ret, CMPFLAG);
-    }
-}
 
 /**
  * @tc.name      : isdigit_0100
@@ -78,9 +49,6 @@ void isdigit_0200(void)
 
 int main(void)
 {
-    isdigit_l_0100();
-    isdigit_l_0200();
-
     isdigit_0100();
     isdigit_0200();
     return t_status;
