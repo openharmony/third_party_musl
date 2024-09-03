@@ -1,16 +1,16 @@
 #include "time_impl.h"
+#include <errno.h>
 #include <fcntl.h>
 #include <stdint.h>
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/mman.h>
-#include <sys/stat.h>
 #include <ctype.h>
+#include <unistd.h>
 #include "libc.h"
 #include "lock.h"
 #include "fork_impl.h"
-#include "syscall.h"
 
 #include "time_impl.h"
 #ifdef OHOS_ENABLE_PARAMETER
@@ -135,6 +135,26 @@ static size_t zi_dotprod(const unsigned char *z, const unsigned char *v, size_t 
 	return y;
 }
 
+static int check_cota()
+{
+#if defined(OHOS_ENABLE_PARAMETER) && (!defined(__LITEOS__))
+	static int cota_exist = 0;
+	if (cota_exist) return 1;
+	static CachedHandle cota_param_handle = NULL;
+	if (cota_param_handle == NULL) {
+		cota_param_handle = CachedParameterCreate("persist.global.tz_override", "false");
+	}
+	const char *cota_param_value = CachedParameterGet(cota_param_handle);
+	if (cota_param_value != NULL && !strcmp(cota_param_value, "true")) {
+		cota_exist = 1;
+		return 1;
+	}
+	return 0;
+#else
+	return 0;
+#endif
+}
+
 static void do_tzset()
 {
 	char buf[NAME_MAX+25], *pathname=buf+24;
@@ -152,12 +172,13 @@ static void do_tzset()
 	int use_cota = 0;
 	int keep_old_tzid = 1;
 	int old_errno = errno;
-	struct stat st;
 	if (!cota_accessable) {
-		if (stat(cota_path, &st) == 0) {
-			use_cota = 1;
-			keep_old_tzid = 0;
-			cota_accessable = 1;
+		if (check_cota()) {
+			if (access(cota_path, R_OK) == 0) {
+				use_cota = 1;
+				keep_old_tzid = 0;
+				cota_accessable = 1;
+			}
 		}
 		errno = old_errno;
 	} else {
