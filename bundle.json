@@ -41,10 +41,10 @@
         "deps": {
             "components": [
                 "init",
+                "bounds_checking_function",
                 "FreeBSD",
                 "faultloggerd",
-                "cJSON",
-                "bounds_checking_function"
+                "cJSON"
             ],
             "third_party": []
         },
