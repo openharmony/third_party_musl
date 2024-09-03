@@ -19,7 +19,6 @@
 #include "test.h"
 #include <sys/stat.h>
 #include <stdio.h>
-
 /*
  * @tc.name      : opendir_0100
  * @tc.desc      : Verify that the parameters are valid to open the specified directory
@@ -34,8 +33,8 @@ void opendir_0100(void)
     }
     int ret = mkdir(path, 0777);
     if (ret != 0) {
-        t_error("opendirtest create failed errno: %d\n", errno);
-    } 
+        t_error("opendirtest create failed: errno = %d\n", errno);
+    }
     DIR *dir = opendir(path);
     if (!dir) {
         t_error("%s opendir failed\n", __func__);
@@ -43,19 +42,19 @@ void opendir_0100(void)
     struct dirent *r;
     int issuccess = 0;
     while ((r = readdir(dir)) != NULL) {
-        if (strcmp(r->d_name, ".") == 0){
+        if (strcmp(r->d_name, ".") == 0) {
             issuccess = 1;
             break;
         }
     }
     if (issuccess != 1) {
-        t_error("%s opendir is not right\n", __func__);
+        t_error("%s opendir is not right", __func__);
     }
     closedir(dir);
     ret = remove(path);
     if (ret != 0) {
-        t_error("remove failed errno: %d\n", errno);
-    } 
+        t_error("remove failed: errno = %d\n", errno);
+    }
 }
 
 /*
