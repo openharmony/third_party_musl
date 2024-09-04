@@ -27,7 +27,9 @@ static fatal_msg_t *fatal_message = NULL;
 
 void set_fatal_message(const char *msg)
 {
-    pthread_mutex_lock(&fatal_msg_lock);
+    if (pthread_mutex_trylock(&fatal_msg_lock) != 0) {
+        return;
+    }
 
     if (msg == NULL) {
         MUSL_LOGW("message null");
