@@ -281,9 +281,6 @@ template("static_and_shared_libs_template") {
 
     defines = []
     defines += [ "FEATURE_ICU_LOCALE" ]
-    if (use_icu_locale == true) {
-      defines += [ "FEATURE_ICU_LOCALE_TMP" ]
-    }
 
     # There are two ways to implement cxa_thread_atexit_impl:
     # - CXA_THREAD_USE_TSD(default): use pthread_key_xxx to implement cxa_thread_atexit_impl.
