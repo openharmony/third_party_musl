@@ -36,13 +36,13 @@ void gettimeofday_0100(void)
     FILE *fptr = fopen("time.txt", "r");
     fflush(fptr);
     fread(str, sizeof(str), 1, fptr);
-    str[10] = '\0';
+    str[sizeof(str) - 1] = '\0';
     
     int sec = atoi(str);
     int returnflag = gettimeofday(&tv, NULL);
     remove("time.txt");
     EXPECT_EQ("gettimeofday_0100", returnflag, SUCCESS);
-    EXPECT_EQ("gettimeofday_0100",(sec == tv.tv_sec || (sec+1) == tv.tv_sec),true);
+    EXPECT_EQ("gettimeofday_0100", (sec == tv.tv_sec || (sec+1) == tv.tv_sec), true);
 }
 
 /**
@@ -69,13 +69,13 @@ void gettimeofday_time64_0100(void)
     FILE *fptr = fopen("time.txt", "r");
     fflush(fptr);
     fread(str, sizeof(str), 1, fptr);
-    str[10] = '\0';
+    str[sizeof(str) - 1] = '\0';
     
     int sec = atoi(str);
     int returnflag = __gettimeofday_time64(&tv, NULL);
     remove("time.txt");
     EXPECT_EQ("gettimeofday_time64_0100", returnflag, SUCCESS);
-    EXPECT_EQ("gettimeofday_time64_0100", (sec == tv.tv_sec || (sec+1) == tv.tv_sec),true);
+    EXPECT_EQ("gettimeofday_time64_0100", (sec == tv.tv_sec || (sec+1) == tv.tv_sec), true);
 }
 
 int main(int argc, char *argv[])
