@@ -43,9 +43,6 @@ hidden char *__gettextdomain(void);
 #define ICU_UNUM_PARSE_DOUBLE_SYMBOL "unum_parseDouble"
 #define ICU_UNUM_GET_SYMBOL_SYMBOL "unum_getSymbol"
 #define ICU_AUSTRNCPY_SYMBOL "u_austrncpy"
-#ifdef FEATURE_ICU_LOCALE_TMP
-#define ICU_UCHAR_ISALNUM_SYMBOL	"u_isalnum"
-#endif
 
 typedef enum {
 	ICU_UC = 0,
@@ -71,9 +68,6 @@ typedef void *(*f_icu18n_u_str_from_utf32)(u_char *, int32_t, int32_t *, const w
 typedef double (*f_icu18n_unum_parse_double)(void *, u_char *, int32_t, int32_t *, int *);
 typedef int32_t(*f_icu18n_unum_get_symbol)(const void *, int, u_char *, int32_t, int *);
 typedef char *(*f_icuuc_u_austrncpy)(char *, const u_char *, int32_t);
-#ifdef FEATURE_ICU_LOCALE_TMP
-typedef int(*f_icu18n_u_isalnum)(int c);
-#endif
 
 struct icu_opt_func {
 	f_icuuc_get_icu_version get_icu_version;
@@ -85,9 +79,6 @@ struct icu_opt_func {
 	f_icu18n_unum_parse_double unum_parse_double;
 	f_icu18n_unum_get_symbol unum_get_symbol;
 	f_icuuc_u_austrncpy u_austrncpy;
-#ifdef FEATURE_ICU_LOCALE_TMP
-	f_icu18n_u_isalnum u_isalnum;
-#endif
 };
 extern hidden struct icu_opt_func g_icu_opt_func;
 
