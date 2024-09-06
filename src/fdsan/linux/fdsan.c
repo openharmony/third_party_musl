@@ -35,7 +35,7 @@
 
 #ifdef OHOS_ENABLE_PARAMETER
 #include "sys_param.h"
-#define MUSL_FDSAN_ERROR(fmt, ...) ((void)HiLogAdapterPrint(MUSL_LOG_TYPE, LOG_ERROR, MUSL_LOG_DOMAIN, "MUSL-FDSAN",\
+#define MUSL_FDSAN_ERROR(fmt, ...) ((void)HiLogAdapterPrint(MUSL_LOG_TYPE, LOG_ERROR, MUSL_LOG_DOMAIN, "MUSL-FDSAN", \
 															fmt, __VA_ARGS__))
 #else
 #define MUSL_FDSAN_ERROR(fmt, ...)
@@ -170,7 +170,7 @@ static void fdsan_error(const char* fmt, ...)
 	char msg[MAX_DEBUG_MSG_LEN] = {0};
 	va_list va;
 	va_start(va, fmt);
-	vsnprintf(msg, sizeof(msg) - 1, fmt, va);
+	(void)vsnprintf(msg, sizeof(msg) - 1, fmt, va);
 	va_end(va);
 	switch (error_level) {
 		case FDSAN_ERROR_LEVEL_WARN_ONCE:
