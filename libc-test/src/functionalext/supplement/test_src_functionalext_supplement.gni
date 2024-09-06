@@ -52,4 +52,5 @@ functionalext_supplement_list = [
   "select:functionalext_supplement_select_test",
   "search:functionalext_supplement_search_test",
   "manual:functionalext_supplement_manual_test",
+  "lock_info:functionalext_supplement_lock_info",
 ]
