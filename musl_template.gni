@@ -491,11 +491,11 @@ template("static_and_shared_libs_template") {
       }
     }
 
-    deps = porting_deps
-
     if (musl_use_encaps) {
       defines += [ "USE_ENCAPS" ]
     }
+
+    deps = porting_deps
 
     external_deps = [ "FreeBSD:libc_static" ]
     if (use_musl && !is_llvm_build) {
@@ -523,12 +523,19 @@ template("static_and_shared_libs_template") {
       "-fno-stack-protector",
       "-O3",
     ]
+
     if (is_asan || is_tsan) {
       defines = [
         "NSLIST_DEFAULT_SIZE=1600",
         "DSOLIST_DEFAULT_SIZE=1600",
         "INHERIT_DEFAULT_SIZE=1600",
       ]
+      if (is_asan) {
+        defines += [ "IS_ASAN" ]
+      }
+      if (is_tsan) {
+        defines += [ "IS_TSAN" ]
+      }
     } else {
       defines = [
         "HANDLE_RANDOMIZATION",
@@ -704,6 +711,7 @@ template("musl_libs") {
     }
 
     include_dirs += [
+      "//third_party",
       "//third_party/musl/src/include/",
       "${musl_malloc_plugin}/include/",
       "${musl_malloc_plugin}/include/jemalloc/internal",
