@@ -303,7 +303,8 @@ static void Bm_function_Srand48_Lrand48(benchmark::State &state)
 static void Bm_function_Putenv_Unsetenv(benchmark::State &state)
 {
     const char *putpath[] = { "TEST_A=/usr/local/myapp", "TEST_B=/bin/yes", "TEST_C=/usr/local/bin:/usr/bin:/bin",
-                              "TEST_D=vim", "TEST_E=hello", "TEST_F=en_US.UTF-8", "TEST_G=myname", "TEST_H=nichenzhan" };
+                              "TEST_D=vim", "TEST_E=hello", "TEST_F=en_US.UTF-8", "TEST_G=myname",
+                              "TEST_H=nichenzhan" };
     const char *unsetpath[] = { "TEST_A", "TEST_B", "TEST_C", "TEST_D",
                                 "TEST_E", "TEST_F", "TEST_G", "TEST_H" };
     const char *a = putpath[state.range(0)];
