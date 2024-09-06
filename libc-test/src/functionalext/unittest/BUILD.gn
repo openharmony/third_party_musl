@@ -71,8 +71,9 @@ ohos_executable("unittest_ldso_namesapce") {
 }
 
 ohos_executable("unittest_ldso_ld_log") {
-  subsystem_name = "thirdparty"
-  part_name = "musl"
+  subsystem_name = "musl"
+  part_name = "libc-test"
+
   sources = [
     "${musl_src_base}/ldso/ld_log.c",
     "unit_test_ldso_ld_log.c",
@@ -91,14 +92,17 @@ ohos_executable("unittest_ldso_ld_log") {
 
   configs = [ "//third_party/musl/libc-test/src/common:config_unittest" ]
 
-  deps = [ "//third_party/musl:create_porting_src" ]
-  external_deps = [ "init:parameterbase" ]
+  deps = [
+    "//base/startup/init/services/param/base:parameterbase",
+    "//third_party/musl:create_porting_src",
+  ]
   defines = [ "OHOS_ENABLE_PARAMETER" ]
 }
 
 ohos_executable("unittest_ldso_dynlink") {
-  subsystem_name = "thirdparty"
-  part_name = "musl"
+  subsystem_name = "musl"
+  part_name = "libc-test"
+
   sources = [
     "unit_test_ldso_dynlink.c",
     "unit_test_mock_dynlink.c",
@@ -116,8 +120,10 @@ ohos_executable("unittest_ldso_dynlink") {
 
   configs = [ "//third_party/musl/libc-test/src/common:config_unittest" ]
 
-  deps = [ "//third_party/musl:create_porting_src" ]
-  external_deps = [ "init:parameterbase" ]
+  deps = [
+    "//base/startup/init/services/param/base:parameterbase",
+    "//third_party/musl:create_porting_src",
+  ]
 
   if (!musl_unit_test_flag) {
     libs = [ "${musl_lib_dir}/libc.a" ]

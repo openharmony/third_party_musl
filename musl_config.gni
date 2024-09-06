@@ -119,10 +119,6 @@ declare_args() {
 }
 
 declare_args() {
-  dynamic_list = rebase_path("./dynamic.list")
-}
-
-declare_args() {
   musl_use_flto = false
 }
 
