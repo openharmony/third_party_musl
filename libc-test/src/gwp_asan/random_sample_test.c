@@ -13,9 +13,9 @@
  * limitations under the License.
  */
 
-#include "test.h"
-#include "gwp_asan.h"
 #include <malloc.h>
+#include "gwp_asan_test.h"
+#include "test.h"
 
 #define NUM_OF_MALLOC_FOR_OOM 10000
 #define SIZE_OF_SINGLE_MALLOC 20
@@ -23,6 +23,9 @@
 // It is expected that we can go to gwp_asan in higher frequency allocation scenarios.
 int main()
 {
+    may_init_gwp_asan(true);
+    cancel_gwp_asan_environment(false);
+
     int found = 0;
     for (size_t i = 0; i < NUM_OF_MALLOC_FOR_OOM; i++) {
         void *ptr = malloc(SIZE_OF_SINGLE_MALLOC);
@@ -38,4 +41,5 @@ int main()
     } else {
         printf("It's ok to call gwp_asan in higher frequency allocation scenarios\n");
     }
+    return t_status;
 }
