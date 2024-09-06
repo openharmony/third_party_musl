@@ -80,13 +80,20 @@ typedef int (*cfi_check_t)(uint64_t, void *, void *);
 
 static const uintptr_t shadow_granularity = LIBRARY_ALIGNMENT_BITS;
 static const uintptr_t cfi_check_granularity = 12;
+// __cfi_check should be 4k aligned.
+static const uintptr_t cfi_check_alignment = 1UL << cfi_check_granularity;
 static const uintptr_t shadow_alignment = 1UL << shadow_granularity;
+static const uint16_t shadow_value_step = 1 << (shadow_granularity - cfi_check_granularity);
+
 static uintptr_t shadow_size = 0;
 /* Start addr of the CFI shadow */
 static char *cfi_shadow_start = NULL;
 /* List head of all the DSOs loaded by the process */
 static struct dso *dso_list_head = NULL;
+
 static struct dso *pldso = NULL;
+static struct dso *r_app = NULL;
+static struct dso *r_vdso = NULL;
 
 /* Shadow value */
 /* The related shadow value(s) will be set to `sv_invalid` when:
@@ -135,32 +142,33 @@ static struct symdef find_cfi_check_sym(struct dso *p)
     return find_sym_impl(p, &verinfo, s_info_p, 0, p->namespace);
 }
 
-static int is_addr_in_ldso(size_t a)
+
+static int addr_in_dso(struct dso *dso, size_t addr)
 {
-    size_t i = 0;
-    if (DL_FDPIC) {
-        i = count_syms(pldso);
-        if (a - (size_t)pldso->funcdescs < i * sizeof(*pldso->funcdescs))
+    Phdr *ph = dso->phdr;
+    size_t phcnt = dso->phnum;
+    size_t entsz = dso->phentsize;
+    size_t base = (size_t)dso->base;
+    for (; phcnt--; ph = (void *)((char *)ph + entsz)) {
+        if (ph->p_type != PT_LOAD) continue;
+        if (addr - base - ph->p_vaddr < ph->p_memsz)
             return 1;
     }
-    if (DL_FDPIC && pldso->loadmap) {
-        for (i = 0; i < pldso->loadmap->nsegs; i++) {
-            if (a - pldso->loadmap->segs[i].p_vaddr
-                < pldso->loadmap->segs[i].p_memsz)
-                return 1;
-        }
-    } else {
-        Phdr *ph = pldso->phdr;
-        size_t phcnt = pldso->phnum;
-        size_t entsz = pldso->phentsize;
-        size_t base = (size_t)pldso->base;
-        for (; phcnt--; ph = (void *)((char *)ph + entsz)) {
-            if (ph->p_type != PT_LOAD) continue;
-            if (a - base - ph->p_vaddr < ph->p_memsz)
-                return 1;
-        }
-        if (a - (size_t)pldso->map < pldso->map_len)
-            return 0;
+    return 0;
+}
+
+static int addr_in_kernel_mapped_dso(size_t addr)
+{
+    if (addr_in_dso(pldso, addr)) {
+        return 1;
+    }
+
+    if (addr_in_dso(r_app, addr)) {
+        return 1;
+    }
+
+    if (addr_in_dso(r_vdso, addr)) {
+        return 1;
     }
     return 0;
 }
@@ -224,10 +232,14 @@ static inline void cfi_slowpath_common(uint64_t call_site_type_id, void *func_pt
     switch (value)
     {
     case sv_invalid:
-        /* The ldso is an exception because it is loaded by kernel and is not mapped to the CFI shadow.
-         * Do not check it. */
-        if (is_addr_in_ldso((size_t)func_ptr)) {
-            LD_LOGI("[CFI] [%{public}s] uncheck for ldso\n", __FUNCTION__);
+        // Kernel mapped sos don't guarantee the alignment requirements of the CFI,
+        // there will be potential to get to the wrong shadow value, For example:
+        //   If another so is mapped to the same "LibraryAligment" as kernel mapped so,
+        //   then they will use the same shadow, the shadow value will be set to invalid If this so is unloaded later,
+        //   and then call the address in the kernel mapped so will get an invalid shadow value.
+        // We fall back to uncheck for this scene.
+        if (addr_in_kernel_mapped_dso((size_t)func_ptr)) {
+            LD_LOGI("[CFI] [%{public}s] uncheck for kernel mapped so.\n", __FUNCTION__);
             return;
         }
 
@@ -261,7 +273,7 @@ static inline void cfi_slowpath_common(uint64_t call_site_type_id, void *func_pt
     return;
 }
 
-int init_cfi_shadow(struct dso *dso_list, struct dso *ldso)
+int init_cfi_shadow(struct dso *dso_list, struct dso *ldso, struct dso *app, struct dso *vdso)
 {
     LD_LOGD("[CFI] [%{public}s] start!\n", __FUNCTION__);
 
@@ -273,6 +285,8 @@ int init_cfi_shadow(struct dso *dso_list, struct dso *ldso)
     /* Save the head node of dso list */
     dso_list_head = dso_list;
     pldso = ldso;
+    r_app = app;
+    r_vdso = vdso;
 
     return map_dso_to_cfi_shadow(dso_list);
 }
@@ -302,12 +316,18 @@ int map_dso_to_cfi_shadow(struct dso *dso)
                 LD_LOGE("[CFI] [%{public}s] create cfi shadow failed!\n", __FUNCTION__);
                 return CFI_FAILED;
             }
-            add_dso_to_cfi_shadow(dso_list_head);
+
+            if (add_dso_to_cfi_shadow(dso_list_head) == CFI_FAILED) {
+                return CFI_FAILED;
+            }
+
             prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, cfi_shadow_start, shadow_size, "cfi_shadow:musl");
         }
     /* If the cfi shadow exists, map the current dso and its dependents to it. */
     } else {
-        add_dso_to_cfi_shadow(dso);
+        if (add_dso_to_cfi_shadow(dso) == CFI_FAILED) {
+            return CFI_FAILED;
+        }
         prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, cfi_shadow_start, shadow_size, "cfi_shadow:musl");
     }
 
@@ -331,6 +351,14 @@ void unmap_dso_from_cfi_shadow(struct dso *dso)
 
     if (dso->is_mapped_to_shadow == false)
         return;
+
+    if (((size_t)dso->map & (LIBRARY_ALIGNMENT - 1)) != 0) {
+        if (!(dso == pldso || dso == r_app || dso == r_vdso)) {
+            LD_LOGE("[CFI] [warning] %{public}s isn't aligned to %{public}x"
+                    "begin[%{public}x] end[%{public}x] cfi_check[%{public}x] type[%{public}x]!\n",
+                    dso->name, LIBRARY_ALIGNMENT, dso->map, dso->map + dso->map_len, 0, sv_invalid);
+        }
+    }
 
     /* Set the dso's shadow value as invalid. */
     fill_shadow_value_to_shadow(dso->map, dso->map + dso->map_len, 0, sv_invalid);
@@ -381,6 +409,15 @@ static int add_dso_to_cfi_shadow(struct dso *dso)
         /* If the dso doesn't have __cfi_check(), set it's shadow value unchecked. */
         if (!cfi_check_sym.sym) {
             LD_LOGD("[CFI] [%{public}s] %{public}s has no __cfi_check()!\n", __FUNCTION__, p->name);
+
+            if (((size_t)dso->map & (LIBRARY_ALIGNMENT - 1)) != 0) {
+                if (!(dso == pldso || dso == r_app || dso == r_vdso)) {
+                    LD_LOGE("[CFI] [warning] %{public}s isn't aligned to %{public}x "
+                            "begin[%{public}x] end[%{public}x] cfi_check[%{public}x] type[%{public}x]!\n",
+                            dso->name, LIBRARY_ALIGNMENT, dso->map, dso->map + dso->map_len, 0, sv_uncheck);
+                }
+            }
+
             if (fill_shadow_value_to_shadow(p->map, p->map + p->map_len, 0, sv_uncheck) == CFI_FAILED) {
                 LD_LOGE("[CFI] [%{public}s] add dso to cfi shadow failed!\n", __FUNCTION__);
                 return CFI_FAILED;
@@ -395,6 +432,28 @@ static int add_dso_to_cfi_shadow(struct dso *dso)
                 LD_LOGE("[CFI] [%{public}s] %{public}s has null cfi_check func!\n", __FUNCTION__, p->name);
                 return CFI_FAILED;
             }
+#ifdef __arm__
+            // cfi_check function address ends with 1 on the ARM platform.
+            if ((cfi_check & 1UL) != 1UL) {
+                LD_LOGE("[CFI] [%{public}s] __cfi_check address isn't a thumb function in %{public}s!\n",
+                        __FUNCTION__, p->name);
+                return CFI_FAILED;
+            }
+            cfi_check &= ~1UL;
+#endif
+            if ((cfi_check & (cfi_check_alignment - 1)) != 0) {
+                LD_LOGE("[CFI] [%{public}s] unaligned __cfi_check address in %{public}s!\n", __FUNCTION__, p->name);
+                return CFI_FAILED;
+            }
+
+            if (((size_t)dso->map & (LIBRARY_ALIGNMENT - 1)) != 0) {
+                if (!(dso == pldso || dso == r_app || dso == r_vdso)) {
+                    LD_LOGE("[CFI] [warning] %{public}s isn't aligned to %{public}x"
+                            "begin[%{public}x] end[%{public}x] cfi_check[%{public}x] type[%{public}x]!\n",
+                            dso->name, LIBRARY_ALIGNMENT, dso->map, dso->map + dso->map_len, cfi_check, sv_valid_min);
+                }
+            }
+
             if (fill_shadow_value_to_shadow(p->map, end, cfi_check, sv_valid_min) == CFI_FAILED) {
                 LD_LOGE("[CFI] [%{public}s] add %{public}s to cfi shadow failed!\n", __FUNCTION__, p->name);
                 return CFI_FAILED;
@@ -449,27 +508,20 @@ static int fill_shadow_value_to_shadow(uintptr_t begin, uintptr_t end, uintptr_t
 
     /* If the dso has __cfi_check(), calculate valid shadow value */
     if (type == sv_valid_min) {
-#ifdef __arm__
-        uint16_t shadow_value_begin = ((begin + shadow_alignment - (cfi_check - 1))
-            >> cfi_check_granularity) + sv_valid_min;
-#else
         uint16_t shadow_value_begin = ((begin + shadow_alignment - cfi_check)
             >> cfi_check_granularity) + sv_valid_min;
-#endif
         LD_LOGD("[CFI] [%{public}s] shadow_value_begin is 0x%{public}x!\n", __FUNCTION__, shadow_value_begin);
-        uint16_t shadow_value_step = 1 << (shadow_granularity - cfi_check_granularity);
-        uint16_t shadow_value = shadow_value_begin;
-
+        uint32_t shadow_value = shadow_value_begin;
         /* Set shadow_value */
         for (uint16_t *shadow_addr = tmp_shadow_start + offset_begin;
             shadow_addr != tmp_shadow_start + offset_end; shadow_addr++) {
-            /* If a dso is larger than 16G( = max_shadow_value * shadow_alignment / 1G),
-             * the excess is not checked. */
-            if (shadow_value < shadow_value_begin) {
+            // We fall back to uncheck if the length of so is larger than 256M((UINT16_MAX - 2) * cfi_check_alignment).
+            if (shadow_value > UINT16_MAX) {
                 *shadow_addr = sv_uncheck;
                 continue;
             }
-            *shadow_addr = (*shadow_addr == sv_invalid) ? shadow_value : sv_uncheck;
+
+            *shadow_addr = (*shadow_addr == sv_invalid) ? (uint16_t)shadow_value : sv_uncheck;
             shadow_value += shadow_value_step;
         }
     /* in these cases, shadow_value will always be sv_uncheck or sv_invalid */
