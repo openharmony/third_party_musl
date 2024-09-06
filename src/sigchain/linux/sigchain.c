@@ -21,6 +21,7 @@
 #include <musl_log.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <pthread_impl.h>
 #include "syscall.h"
 
 extern int __libc_sigaction(int sig, const struct sigaction *restrict sa,
@@ -46,6 +47,8 @@ extern int __libc_sigaction(int sig, const struct sigaction *restrict sa,
 #define SIGCHAIN_PRINT_DEBUG(...)
 #define SIGCHAIN_LOG_FATAL(...)
 #endif
+
+#define FREEZE_SIGNAL_35 (35)
 
 #define SIGCHAIN_PRINT_FATAL(...)  do {                    \
     SIGCHAIN_LOG_FATAL(__VA_ARGS__);                      \
@@ -170,6 +173,16 @@ static void signal_chain_handler(int signo, siginfo_t* siginfo, void* ucontext_r
             bool previous_value = get_handling_signal();
             if (!noreturn) {
                 set_handling_signal(true);
+            }
+            if (signo == FREEZE_SIGNAL_35) {
+                int thread_list_lock_status = -1;
+#ifdef a_ll
+                thread_list_lock_status = a_ll(&__thread_list_lock);
+#else
+                thread_list_lock_status = __thread_list_lock;
+#endif
+                SIGCHAIN_PRINT_ERROR("FREEZE_signo_%{public}d thread_list_lock_status:%{public}d",
+                    signo, thread_list_lock_status);
             }
             SIGCHAIN_PRINT_ERROR("%{public}s call %{public}d rd sigchain action for signal: %{public}d"
                 " sca_sigaction=%{public}llx noreturn=%{public}d",
