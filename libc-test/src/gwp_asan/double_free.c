@@ -14,15 +14,16 @@
  */
 
 #include <signal.h>
-#include <stdlib.h>
 #include <stdio.h>
-#include "gwp_asan.h"
+#include <sys/wait.h>
+#include "gwp_asan_test.h"
 #include "test.h"
 
 void double_free_handler()
 {
     find_and_check_file(GWP_ASAN_LOG_DIR, GWP_ASAN_LOG_TAG, "Double Free at");
     clear_log(GWP_ASAN_LOG_DIR, GWP_ASAN_LOG_TAG);
+    cancel_gwp_asan_environment(true);
     _exit(0);
 }
 
@@ -33,18 +34,46 @@ void install_sigv_handler()
         .sa_flags = 0,
     };
     sigaction(SIGSEGV, &sigv, NULL);
-    sigaction(SIGTRAP, &sigv, NULL);
+}
+
+void double_free_test()
+{
+    config_gwp_asan_environment(true);
+    clear_log(GWP_ASAN_LOG_DIR, GWP_ASAN_LOG_TAG);
+    install_sigv_handler();
+    
+    void *ptr = malloc(20);
+    if (!ptr) {
+        t_error("malloc failed.");
+        return;
+    }
+    if (!libc_gwp_asan_ptr_is_mine(ptr)) {
+        t_error("Memory is not allocated by gwp_asan.");
+        return;
+    }
+    free(ptr);
+    free(ptr);
 }
 
 int main()
 {
-    clear_log(GWP_ASAN_LOG_DIR, GWP_ASAN_LOG_TAG);
-    install_sigv_handler();
-    void *ptr = malloc(20);
-    if (!ptr) {
-        return 0;
+    pid_t pid = fork();
+    if (pid < 0) {
+        t_error("FAIL fork failed.");
+    } else if (pid == 0) { // child process
+        double_free_test();
+    } else { // parent process
+        int status;
+        if (waitpid(pid, &status, 0) != pid) {
+            t_error("gwp_asan_double_free_test waitpid failed.");
+        }
+
+        if (WIFEXITED(status) && WEXITSTATUS(status) != 0) {
+            t_error("gwp_asan_double_free_test failed.");
+        }
+
+        cancel_gwp_asan_environment(true);
     }
-    free(ptr);
-    free(ptr);
-    return 0;
+
+    return t_status;
 }

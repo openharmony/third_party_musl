@@ -70,4 +70,6 @@ int main()
             }
         }
     }
+
+    return t_status;
 }
