@@ -73,10 +73,7 @@ ohos_executable("musl_benchmark") {
     ]
   }
 
-  deps += [
-    ":cpp_benchmark",
-    "//third_party/musl:create_porting_src",
-  ]
+  deps += [ "//third_party/musl:create_porting_src" ]
 
   if (current_cpu == "arm") {
     defines = [ "SYSTEM_32_BIT" ]
@@ -84,25 +81,6 @@ ohos_executable("musl_benchmark") {
 
   part_name = "musl"
   subsystem_name = "thirdparty"
-}
-
-source_set("cpp_benchmark") {
-  include_dirs = []
-  sources = [ "libc_exception.cpp" ]
-
-  cflags = [
-    "-frtti",
-    "-fexceptions",
-  ]
-
-  configs -= [
-    "//build/config/compiler:no_exceptions",
-    "//build/config/compiler:no_rtti",
-  ]
-
-  if (!is_llvm_build) {
-    external_deps = [ "benchmark:benchmark" ]
-  }
 }
 
 ohos_executable("musl_dlopen") {
