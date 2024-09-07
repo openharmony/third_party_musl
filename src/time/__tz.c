@@ -135,7 +135,7 @@ static size_t zi_dotprod(const unsigned char *z, const unsigned char *v, size_t 
 	return y;
 }
 
-static int check_cota()
+static int check_cota(void)
 {
 #if defined(OHOS_ENABLE_PARAMETER) && (!defined(__LITEOS__))
 	static int cota_exist = 0;

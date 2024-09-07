@@ -124,7 +124,7 @@ static void Bm_function_socketpair_sendmmsg_recvmmsg(benchmark::State &state)
             msgs[i].msg_hdr.msg_iov = iovs[i];
             msgs[i].msg_hdr.msg_iovlen = 1;
         }
-        
+
         ret = sendmmsg(socks[1], msgs, MSG_COUNT, 0);
         if (ret == -1) {
             printf("sendmmsg err\n");
