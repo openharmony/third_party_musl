@@ -104,9 +104,6 @@ declare_args() {
 
 declare_args() {
   musl_ld128_flag = false
-  if (musl_arch == "x86_64") {
-    musl_ld128_flag = true
-  }
 }
 
 declare_args() {
