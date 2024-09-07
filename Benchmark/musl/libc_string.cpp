@@ -24,6 +24,11 @@
 #include "cerrno"
 #include "clocale"
 #include "util.h"
+#include <stdio_ext.h>
+#include <unistd.h>
+#include <thread>
+#include <iostream>
+
 using namespace std;
 
 static const std::vector<int> bufferSizes {
@@ -595,7 +600,6 @@ static void Bm_function_Wmemcmp(benchmark::State &state)
     }
     state.SetBytesProcessed(uint64_t(state.iterations()) * uint64_t(nbytes));
 }
-
 
 static void BM_function_Wcsstr(benchmark::State& state)
 {
