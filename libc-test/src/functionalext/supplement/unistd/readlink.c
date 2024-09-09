@@ -17,6 +17,7 @@
 #include <sys/stat.h>
 #include "functionalext.h"
 
+#define MALLOCLENGTH 256 
 /**
  * @tc.name      : readlink_0100
  * @tc.desc      : Symlink to path exists and bufsize is large enough to return the number of characters correctly.
@@ -29,7 +30,7 @@ void readlink_0100(void)
     int ret;
     char *wstr = "this is a test\n";
     const char *softptr = "./readlink.txt.soft";
-    buf = malloc(sb.st_size + 256);
+    buf = malloc(sb.st_size + MALLOCLENGTH);
     const char *ptr = "readlink.txt";
     FILE *fptr = fopen(ptr, "w");
     EXPECT_TRUE("readlink_0100", fptr != NULL);
@@ -62,7 +63,7 @@ void readlink_0200(void)
     int ret;
     char *wstr = "this is a test\n";
     const char *softptr = "./readlink.txt.soft";
-    buf = malloc(sb.st_size + 256);
+    buf = malloc(sb.st_size + MALLOCLENGTH);
     const char *ptr = "readlink.txt";
     FILE *fptr = fopen(ptr, "w");
     EXPECT_TRUE("readlink_0200", fptr != NULL);
@@ -93,7 +94,7 @@ void readlink_0300(void)
     char *buf;
     int ret;
     const char *softptr = "./noreadlink.txt.soft";
-    buf = malloc(sb.st_size + 256);
+    buf = malloc(sb.st_size + MALLOCLENGTH);
     ret = readlink(softptr, buf, sizeof(buf));
     EXPECT_TRUE("readlink_0300", ret < 0);
     buf = NULL;
