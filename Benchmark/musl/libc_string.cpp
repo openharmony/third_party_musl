@@ -596,30 +596,28 @@ static void Bm_function_Wmemcmp(benchmark::State &state)
     state.SetBytesProcessed(uint64_t(state.iterations()) * uint64_t(nbytes));
 }
 
-constexpr int BYTE_SIZE = 4;
-
 static void BM_function_Wcsstr(benchmark::State& state)
 {
     const size_t nbytes = state.range(0);
-    const size_t haystackAlignment = state.range(1);
-    const size_t needleAlignment = state.range(2);
+    const size_t haystack_alignment = state.range(1);
+    const size_t needle_alignment = state.range(2);
 
     std::vector<wchar_t> haystack;
     std::vector<wchar_t> needle;
-    wchar_t* haystackAligned = GetAlignedPtrFilled(&haystack, haystackAlignment, nbytes, L'x');
-    wchar_t* needleAligned = GetAlignedPtrFilled(&needle, needleAlignment, std::min(nbytes, static_cast<size_t>(5)),
-        L'x');
-    
-    if (nbytes / BYTE_SIZE > 2) {
-        for (size_t i = 0; nbytes / BYTE_SIZE >= 2 && i < nbytes / BYTE_SIZE - 2; i++) {
-        haystackAligned[BYTE_SIZE * i + 3] = L'y';
+    wchar_t* haystack_aligned = GetAlignedPtrFilled(&haystack, haystack_alignment, nbytes, L'x');
+    wchar_t* needle_aligned = GetAlignedPtrFilled(&needle, needle_alignment,
+                                                  std::min(nbytes, static_cast<size_t>(5)), L'x');
+
+    if (nbytes / 4 > 2) {
+        for (size_t i = 0; nbytes / 4 >= 2 && i < nbytes / 4 - 2; i++) {
+        haystack_aligned[4 * i + 3] = L'y';
         }
     }
-    haystackAligned[nbytes - 1] = L'\0';
-    needleAligned[needle.size() - 1] = L'\0';
+    haystack_aligned[nbytes - 1] = L'\0';
+    needle_aligned[needle.size() - 1] = L'\0';
 
     while (state.KeepRunning()) {
-        if (wcsstr(haystackAligned, needleAligned) == nullptr) {
+        if (wcsstr(haystack_aligned, needle_aligned) == nullptr) {
         errx(1, "ERROR: strstr failed to find valid substring.");
         }
     }
@@ -629,23 +627,24 @@ static void BM_function_Wcsstr(benchmark::State& state)
 static void BM_function_Strcasestr(benchmark::State& state)
 {
     const size_t nbytes = state.range(0);
-    const size_t haystackAlignment = state.range(1);
-    const size_t needleAlignment = state.range(2);
+    const size_t haystack_alignment = state.range(1);
+    const size_t needle_alignment = state.range(2);
 
     std::vector<char> haystack;
     std::vector<char> needle;
-    char* haystackAligned = GetAlignedPtrFilled(&haystack, haystackAlignment, nbytes, 'x');
-    char* needleAligned = GetAlignedPtrFilled(&needle, needleAlignment, std::min(nbytes, static_cast<size_t>(5)), 'X');
-    if (nbytes / BYTE_SIZE > 2) {
-        for (size_t i = 0; nbytes / BYTE_SIZE >= 2 && i < nbytes / BYTE_SIZE - 2; i++) {
-        haystackAligned[BYTE_SIZE * i + 3] = 'y';
+    char* haystack_aligned = GetAlignedPtrFilled(&haystack, haystack_alignment, nbytes, 'x');
+    char* needle_aligned = GetAlignedPtrFilled(&needle, needle_alignment,
+                                               std::min(nbytes, static_cast<size_t>(5)), 'X');
+    if (nbytes / 4 > 2) {
+        for (size_t i = 0; nbytes / 4 >= 2 && i < nbytes / 4 - 2; i++) {
+        haystack_aligned[4 * i + 3] = 'y';
         }
     }
-    haystackAligned[nbytes - 1] = '\0';
-    needleAligned[needle.size() - 1] = '\0';
+    haystack_aligned[nbytes - 1] = '\0';
+    needle_aligned[needle.size() - 1] = '\0';
 
     while (state.KeepRunning()) {
-        if (strcasestr(haystackAligned, needleAligned) == nullptr) {
+        if (strcasestr(haystack_aligned, needle_aligned) == nullptr) {
             errx(1, "ERROR: strcasestr failed to find valid substring.");
         }
     }
@@ -655,12 +654,12 @@ static void BM_function_Strcasestr(benchmark::State& state)
 static void BM_function_Strlcat(benchmark::State& state)
 {
     const size_t nbytes = state.range(0);
-    const size_t needleAlignment = state.range(1);
+    const size_t needle_alignment = state.range(1);
 
     std::vector<char> haystack(nbytes);
     std::vector<char> needle;
     char* dstBuf = haystack.data();
-    char* srcBuf = GetAlignedPtrFilled(&needle, needleAlignment, nbytes, 'x');
+    char* srcBuf = GetAlignedPtrFilled(&needle, needle_alignment, nbytes, 'x');
     srcBuf[needle.size() - 1] = '\0';
 
     while (state.KeepRunning()) {
@@ -677,8 +676,9 @@ static void BM_function_Getdelim(benchmark::State& state)
     }
     const char* buf = "123 4567 78901 ";
     const int bufLen = strlen(buf);
+    const int repeatTimes = 1024 * 1024;
     //增大测试文件，确保在进行benchmark循环测试时，不会读到文件尾而进入fseek函数影响数据准确性
-    for (int i = 0; i < 1024 * 1024; ++i) {
+    for (int i = 0; i < repeatTimes; ++i) {
         fwrite(buf, bufLen, 1, fp);
     }
 
