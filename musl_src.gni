@@ -154,6 +154,7 @@ if (musl_arch == "arm") {
     "src/math/mips/sqrtf.c",
     "src/setjmp/mips/longjmp.S",
     "src/setjmp/mips/setjmp.S",
+    "src/signal/mips/restore.s",
     "src/signal/mips/sigsetjmp.s",
     "src/thread/mips/__unmapself.s",
     "src/thread/mips/clone.s",
