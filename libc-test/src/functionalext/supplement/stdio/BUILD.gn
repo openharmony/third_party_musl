@@ -16,11 +16,36 @@ import("test_src_functionalext_supplement_stdio.gni")
 
 foreach(s, functionalext_supplement_stdio_test) {
   test_unittest(s) {
-    if (s == "fdsan") {
-      cpp_file = true
-    }
     target_dir = "functionalext/supplement/stdio"
   }
+}
+
+ohos_executable("fdsan") {
+  subsystem_name = "thirdparty"
+  part_name = "musl"
+
+  sources = [ "fdsan.cpp" ]
+
+  include_dirs = [
+    "//${test_dir}/src/functionalext/common",
+    "//${test_dir}/src/common",
+    "${musl_src_base}/src/internal",
+  ]
+
+  configs = [ "//third_party/musl/libc-test/src/common:config_unittest" ]
+
+  deps = [ "//third_party/musl:create_porting_src" ]
+
+  external_deps = [ "bounds_checking_function:libsec_shared" ]
+
+  cflags = [
+    "-Wno-int-to-void-pointer-cast",
+    "-Wno-void-pointer-to-int-cast",
+  ]
+
+  libs = [ "${musl_lib_dir}/libc.a" ]
+  ohos_test = true
+  test_output_dir = "${root_out_dir}/musl/libc-test"
 }
 
 group("functionalext_supplement_stdio_test") {

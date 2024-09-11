@@ -93,5 +93,4 @@ functionalext_supplement_stdio_test = [
   "fputc",
   "fputs",
   "fgetln",
-  "fdsan",
 ]
