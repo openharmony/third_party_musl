@@ -22,6 +22,8 @@
 #include <string.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <musl_log.h>
+#include <stdio_impl.h>
 
 #include <unordered_map>
 
@@ -32,6 +34,11 @@
 void signal_handler_abort(int signum)
 {
     kill(getpid(), SIGSTOP);
+}
+
+void signal_handler_abort1(int signum)
+{
+    exit(signum);
 }
 
 void fdsan_test_get_tag_value()
@@ -111,11 +118,73 @@ void fdsan_test_fatal_level()
     return;
 }
 
+bool CreateFile()
+{
+    // 创建一个临时文件
+    // 指定文件路径
+    const char *file_path = "/data/local/tmp/test.txt";
+
+    // 创建文件并打开文件描述符
+    int fd = open(file_path, O_CREAT | O_EXCL | O_WRONLY, S_IRUSR | S_IWUSR);
+    if (fd == -1) {
+        return false;
+    }
+
+    // 关闭文件描述符
+    close(fd);
+    return true;
+}
+
+
+void fdsan_test_internal_fopen_succeed()
+{
+    struct sigaction sigabrt = {
+        .sa_handler = signal_handler_abort,
+    };
+    sigaction(SIGABRT, &sigabrt, nullptr);
+    bool res = CreateFile();
+    if (!res) {
+        t_error("fdsan_test_internal_fopen create file failed");
+        return;
+    }
+    int status;
+    int pid = fork();
+    switch (pid) {
+        case -1: {
+            t_error("fork failed: %d\n", __LINE__);
+            break;
+        }
+        case 0: {
+            fdsan_set_error_level(FDSAN_ERROR_LEVEL_FATAL);
+            unsigned char str[1024];
+            FILE f;
+            FILE *ptr = __fopen_rb_ca(file_path, &f, str, sizeof(str));
+            EXPECT_NE("fdsan_test_internal_fopen_succeed open file failed", ptr, NULL);
+            if (ptr) {
+                __fclose_ca(ptr);
+            }
+            exit(0);
+        }
+        default: {
+            waitpid(pid, &status, WUNTRACED);
+            EXPECT_EQ("fdsan_test_fork_subprocess_disabled WIFEXITED", WIFEXITED(status), 1);
+            EXPECT_EQ("fdsan_test_fork_subprocess_disabled WIFSTOPPED", WIFSTOPPED(status), 0);
+            // 子进程应该能够匹配到对应的tag，不应该通过信号方式退出，这里检测子进程不会收到abort信号
+            EXPECT_EQ("fdsan_test_fork_subprocess_disabled WSTOPSIG", WSTOPSIG(status), 0);
+            kill(pid, SIGCONT);
+            break;
+        }
+    }
+    return;
+}
+
 int main()
 {
     fdsan_test_get_tag_value();
     fdsan_test_overflow();
     fdsan_test_vfork();
     fdsan_test_fatal_level();
+    fdsan_test_fork_subprocess_disabled();
+    fdsan_test_internal_fopen_succeed();
     return t_status;
 }
