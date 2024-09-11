@@ -92,3 +92,5 @@ struct ifaddrmsg {
 #define NLMSG_RTAOK(rta,nlh)	RTA_OK(rta,NLMSG_DATAEND(nlh))
 
 hidden int __rtnetlink_enumerate(int link_af, int addr_af, int (*cb)(void *ctx, struct nlmsghdr *h), void *ctx);
+hidden int __rtnetlink_enumerate_new(int link_af, int addr_af, int (*cb)(void *ctx, struct nlmsghdr *h),
+	void *ctx, int *getlink);
