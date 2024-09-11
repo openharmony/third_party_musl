@@ -5,9 +5,13 @@
 #include <unistd.h>
 #include <ifaddrs.h>
 #include <syscall.h>
+#include <sys/ioctl.h>
 #include <net/if.h>
 #include <netinet/in.h>
 #include "netlink.h"
+#ifndef __LITEOS__
+#include <musl_log.h>
+#endif
 
 #define IFADDRS_HASH_SIZE 64
 
@@ -110,6 +114,7 @@ static int netlink_msg_to_ifaddr(void *pctx, struct nlmsghdr *h)
 	struct ifaddrmsg *ifa = NLMSG_DATA(h);
 	struct rtattr *rta;
 	int stats_len = 0;
+	int get_link_fail = 0;
 
 	if (h->nlmsg_type == RTM_NEWLINK) {
 		for (rta = NLMSG_RTA(h, sizeof(*ifi)); NLMSG_RTAOK(rta, h); rta = RTA_NEXT(rta)) {
@@ -121,7 +126,9 @@ static int netlink_msg_to_ifaddr(void *pctx, struct nlmsghdr *h)
 		for (ifs0 = ctx->hash[ifa->ifa_index % IFADDRS_HASH_SIZE]; ifs0; ifs0 = ifs0->hash_next)
 			if (ifs0->index == ifa->ifa_index)
 				break;
-		if (!ifs0) return 0;
+		if (!ifs0) {
+			get_link_fail = 1;
+		}
 	}
 
 	ifs = calloc(1, sizeof(struct ifaddrs_storage) + stats_len);
@@ -157,8 +164,11 @@ static int netlink_msg_to_ifaddr(void *pctx, struct nlmsghdr *h)
 			ctx->hash[bucket] = ifs;
 		}
 	} else {
-		ifs->ifa.ifa_name = ifs0->ifa.ifa_name;
-		ifs->ifa.ifa_flags = ifs0->ifa.ifa_flags;
+		if (ifs0) {
+			ifs->ifa.ifa_name = ifs0->ifa.ifa_name;
+			ifs->ifa.ifa_flags = ifs0->ifa.ifa_flags;
+		}
+		ifs->index = ifa->ifa_index;
 		for (rta = NLMSG_RTA(h, sizeof(*ifa)); NLMSG_RTAOK(rta, h); rta = RTA_NEXT(rta)) {
 			switch (rta->rta_type) {
 			case IFA_ADDRESS:
@@ -194,7 +204,7 @@ static int netlink_msg_to_ifaddr(void *pctx, struct nlmsghdr *h)
 			gen_netmask(&ifs->ifa.ifa_netmask, ifa->ifa_family, &ifs->netmask, ifa->ifa_prefixlen);
 	}
 
-	if (ifs->ifa.ifa_name) {
+	if (ifs->ifa.ifa_name || get_link_fail) {
 		if (!ctx->first) ctx->first = &ifs->ifa;
 		if (ctx->last) ctx->last->ifa_next = &ifs->ifa;
 		ctx->last = &ifs->ifa;
@@ -204,13 +214,73 @@ static int netlink_msg_to_ifaddr(void *pctx, struct nlmsghdr *h)
 	return 0;
 }
 
+static void get_ifName_via_ioctl(struct ifaddrs_ctx *pctx)
+{
+	struct ifaddrs_storage* addr = (struct ifaddrs_storage*)(pctx->first);
+	struct ifaddrs_storage* prev_addr = NULL;
+	while (addr != NULL) {
+		struct ifaddrs* next_addr = addr->ifa.ifa_next;
+
+		if (strlen(addr->name) == 0) {
+			if (if_indextoname(addr->index, addr->name) != NULL) {
+				addr->ifa.ifa_name = addr->name;
+			}
+		}
+
+		if (strlen(addr->name) == 0) {
+			if (prev_addr == NULL) {
+				pctx->first = next_addr;
+			} else {
+				prev_addr->ifa.ifa_next = next_addr;
+			}
+			free(addr);
+		} else {
+			prev_addr = addr;
+		}
+		addr = (struct ifaddrs_storage*)(next_addr);
+	}
+}
+
+static void get_ifFlag_via_ioctl(struct ifaddrs_ctx *pctx)
+{
+	int fd;
+	if ((fd = socket(AF_INET, SOCK_DGRAM | SOCK_CLOEXEC, 0)) < 0) {
+#ifndef __LITEOS__
+		MUSL_LOGE("%{public}s: %{public}d: create Udp socket failed, errno: %{public}d",
+			__func__, __LINE__, errno);
+#endif
+		return;
+	}
+	for (struct ifaddrs* addr = pctx->first; addr != NULL; addr = addr->ifa_next) {
+		struct ifreq ifr;
+		strlcpy(ifr.ifr_name, addr->ifa_name, sizeof(ifr.ifr_name));
+		if (ioctl(fd, SIOCGIFFLAGS, &ifr) != -1) {
+			addr->ifa_flags = ifr.ifr_flags;
+		} else {
+#ifndef __LITEOS__
+			MUSL_LOGE("%{public}s: %{public}d: ioctl(SIOCGIFFLAGS) failed for %{public}s, errno: %{public}d",
+				__func__, __LINE__, addr->ifa_name, errno);
+#endif
+		}
+	}
+	__syscall(SYS_close, fd);
+}
+
 int getifaddrs(struct ifaddrs **ifap)
 {
 	struct ifaddrs_ctx _ctx, *ctx = &_ctx;
-	int r;
+	int r, getlink;
 	memset(ctx, 0, sizeof *ctx);
-	r = __rtnetlink_enumerate(AF_UNSPEC, AF_UNSPEC, netlink_msg_to_ifaddr, ctx);
-	if (r == 0) *ifap = ctx->first;
-	else freeifaddrs(ctx->first);
-	return r;
+	r = __rtnetlink_enumerate_new(AF_UNSPEC, AF_UNSPEC, netlink_msg_to_ifaddr, ctx, &getlink);
+	if (r < 0) {
+		freeifaddrs(ctx->first);
+		return -1;
+	}
+	if (getlink < 0) {
+		get_ifName_via_ioctl(ctx);
+		get_ifFlag_via_ioctl(ctx);
+	}
+
+	*ifap = ctx->first;
+	return 0;
 }

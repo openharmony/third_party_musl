@@ -50,3 +50,18 @@ int __rtnetlink_enumerate(int link_af, int addr_af, int (*cb)(void *ctx, struct 
 	__syscall(SYS_close,fd);
 	return r;
 }
+
+int __rtnetlink_enumerate_new(int link_af, int addr_af, int (*cb)(void *ctx, struct nlmsghdr *h),
+	void *ctx, int *getlink)
+{
+	int fd, r;
+
+	fd = socket(PF_NETLINK, SOCK_RAW | SOCK_CLOEXEC, NETLINK_ROUTE);
+	if (fd < 0) {
+		return -1;
+	}
+	*getlink = __netlink_enumerate(fd, 1, RTM_GETLINK, link_af, cb, ctx);
+	r = __netlink_enumerate(fd, 2, RTM_GETADDR, addr_af, cb, ctx);
+	__syscall(SYS_close, fd);
+	return r;
+}
