@@ -593,15 +593,19 @@ static void Bm_function_Sysconf(benchmark::State &state)
 static void Bm_function_Prctl(benchmark::State &state)
 {
     size_t pagesize = sysconf(_SC_PAGE_SIZE);
-    void *addr = mmap(nullptr, pagesize, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
-    if (addr == nullptr) {
-        perror("mmap error");
+    if (pagesize <= 0) {
+        perror("pagesize is lower than zero");
+    } else {
+        void *addr = mmap(nullptr, pagesize, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+        if (addr == nullptr) {
+            perror("mmap error");
+        }
+        static char addrName[] = "prctl_test";
+        for (auto _ : state) {
+            benchmark::DoNotOptimize(prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, addr, pagesize, addrName));
+        }
+        munmap(addr, pagesize);
     }
-    static char addrName[] = "prctl_test";
-    for (auto _ : state) {
-        benchmark::DoNotOptimize(prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, addr, pagesize, addrName));
-    }
-    munmap(addr, pagesize);
 }
 
 MUSL_BENCHMARK(Bm_function_Getpid);
