@@ -106,6 +106,7 @@ static void (*error)(const char *, ...) = error_noop;
 #define INVALID_FD_INHIBIT_FURTHER_SEARCH (-2)
 #endif
 
+#define MAP_XPM 0x40
 #define PARENTS_BASE_CAPACITY 8
 #define RELOC_CAN_SEARCH_DSO_BASE_CAPACITY 32
 #define ANON_NAME_MAX_LEN 70
@@ -213,6 +214,7 @@ static int do_dlclose(struct dso *p, bool check_deps_all);
 #endif
 
 #ifdef LOAD_ORDER_RANDOMIZATION
+static bool task_check_xpm(struct loadtask *task);
 static bool map_library_header(struct loadtask *task);
 static bool task_map_library(struct loadtask *task, struct reserved_address_params *reserved_params);
 static bool resolve_fd_to_realpath(struct loadtask *task);
@@ -1559,6 +1561,18 @@ done_search:
 }
 #endif
 
+static bool check_xpm(int fd)
+{
+	size_t mapLen = sizeof(Ehdr);
+	void *map = mmap(0, mapLen, PROT_READ, MAP_PRIVATE | MAP_XPM, fd, 0);
+	if (map == MAP_FAILED) {
+		LD_LOGE("Xpm check failed for so file, errno for mmap is: %{public}d", errno);
+		return false;
+	}
+	munmap(map, mapLen);
+	return true;
+}
+
 UT_STATIC void *map_library(int fd, struct dso *dso, struct reserved_address_params *reserved_params)
 {
 	Ehdr buf[(896+sizeof(Ehdr))/sizeof(Ehdr)];
@@ -1579,6 +1593,9 @@ UT_STATIC void *map_library(int fd, struct dso *dso, struct reserved_address_par
 	size_t start_addr;
 	size_t start_alignment = PAGE_SIZE;
 	bool hugepage_enabled = false;
+	if (!check_xpm(fd)) {
+		return 0;
+	}
 
 	ssize_t l = read(fd, buf, sizeof buf);
 	eh = buf;
@@ -5026,6 +5043,18 @@ int open_uncompressed_library_in_zipfile(const char *path, struct zip_info *z_in
 	return 0;
 }
 
+static bool task_check_xpm(struct loadtask *task)
+{
+	size_t mapLen = sizeof(Ehdr);
+	void *map = mmap(0, mapLen, PROT_READ, MAP_PRIVATE | MAP_XPM, task->fd, task->file_offset);
+	if (map == MAP_FAILED) {
+		LD_LOGE("Xpm check failed for %{public}s, errno for mmap is: %{public}d", task->name, errno);
+		return false;
+	}
+	munmap(map, mapLen);
+	return true;
+}
+
 static bool map_library_header(struct loadtask *task)
 {
 	off_t off_start;
@@ -5033,6 +5062,9 @@ static bool map_library_header(struct loadtask *task)
 	size_t i;
 	size_t str_size;
 	off_t str_table;
+	if (!task_check_xpm(task)) {
+		return false;
+	}
 
 	ssize_t l = pread(task->fd, task->ehdr_buf, sizeof task->ehdr_buf, task->file_offset);
 	task->eh = task->ehdr_buf;
