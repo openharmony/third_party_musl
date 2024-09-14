@@ -16,6 +16,7 @@
 #include <stdio.h>
 #include <pthread.h>
 #include "test.h"
+#include "functionalext.h"
 
 pthread_t pid;
 int flag = 0;
@@ -46,8 +47,23 @@ void pthread_join_0100(void)
     }
 }
 
+/**
+ * @tc.name      : pthread_join_0200
+ * @tc.desc      : The input parameter pthread_t is NULL, pthread_join() returns errno code ESRCH
+ * @tc.level     : Level 0
+ */
+void pthread_join_0200(void)
+{
+    pthread_t t = NULL;
+    int result = pthread_join(t, NULL);
+    if (result != ESRCH) {
+        t_error("%s pthread_join error get result is %d are not want ESRCH\n", __func__, result);
+    }
+}
+
 int main(int argc, char *argv[])
 {
     pthread_join_0100();
+    pthread_join_0200();
     return t_status;
 }

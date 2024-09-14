@@ -3,6 +3,7 @@
 #include <sys/mman.h>
 #ifndef __LITEOS__
 #include "param_check.h"
+#include "musl_log.h"
 #endif
 
 static void dummy1(pthread_t t)
@@ -62,7 +63,10 @@ out:
 int __pthread_join(pthread_t t, void **res)
 {
 #ifndef __LITEOS__
-	PARAM_CHECK(t);
+	if (t == NULL) {
+		MUSL_LOGE("musl libc: invalid pthread_t (0) passed to pthread_join");
+		return ESRCH;
+	}
 #endif
 	return __pthread_timedjoin_np(t, res, 0);
 }
