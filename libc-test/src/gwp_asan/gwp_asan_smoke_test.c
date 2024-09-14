@@ -15,8 +15,8 @@
 
 #include <malloc.h>
 #include <stdint.h>
-#include <stdlib.h>
-#include "gwp_asan.h"
+#include <sys/wait.h>
+#include "gwp_asan_test.h"
 #include "test.h"
 
 #define NUM_OF_MALLOC_FOR_OOM 10000
@@ -52,21 +52,34 @@ void test_gwp_asan_oom()
 
 int main()
 {
+    config_gwp_asan_environment(false);
+    
     void *ptr = malloc(2);
     if (!ptr) {
-        return 0;
+        t_error("malloc failed.");
+        cancel_gwp_asan_environment(false);
+        return t_status;
+    }
+    if (!libc_gwp_asan_ptr_is_mine(ptr)) {
+        t_error("Memory is not allocated by gwp_asan.");
+        cancel_gwp_asan_environment(false);
+        return t_status;
     }
     int size = malloc_usable_size(ptr);
     void *new_addr = realloc(ptr, 40);
     if (!new_addr) {
-        return 0;
+        t_error("realloc failed.");
+        cancel_gwp_asan_environment(false);
+        return t_status;
     }
     char c = *(char *)new_addr;
     printf("c:%c size:%d.\n", c, size);
 
     void *calloc_ptr = calloc(5, 4);
     if (!calloc_ptr) {
-        return 0;
+        t_error("calloc failed.");
+        cancel_gwp_asan_environment(false);
+        return t_status;
     }
     int value = *(int *)calloc_ptr;
     if (value != 0) {
@@ -74,6 +87,24 @@ int main()
     }
 
     free(new_addr);
-    test_gwp_asan_oom();
-    return 0;
+
+    pid_t pid = fork();
+    if (pid < 0) {
+        t_error("FAIL fork failed.");
+    } else if (pid == 0) { // child process
+        test_gwp_asan_oom();
+    } else { // parent process
+        int status;
+        if (waitpid(pid, &status, 0) != pid) {
+            t_error("gwp_asan_smoke_test waitpid failed.");
+        }
+
+        if (WIFEXITED(status) && WEXITSTATUS(status) != 0) {
+            t_error("gwp_asan_smoke_test failed.");
+        }
+
+        cancel_gwp_asan_environment(false);
+    }
+
+    return t_status;
 }
