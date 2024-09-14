@@ -182,7 +182,11 @@ static void signal_chain_handler(int signo, siginfo_t* siginfo, void* ucontext_r
                 thread_list_lock_status = __thread_list_lock;
 #endif
             }
-            // modify style: move `thread_list_lock_status` from `if` internal branch to outer branch. Avoid performance degradation
+              /**
+              * modify style: move `thread_list_lock_status` from `if`
+              * internal branch to outer branch.
+              * void performance degradation
+              */
             SIGCHAIN_PRINT_ERROR("%{public}s call %{public}d rd sigchain action for signal: %{public}d"
                 " sca_sigaction=%{public}llx noreturn=%{public}d "
                 "FREEZE_signo_%{public}d thread_list_lock_status:%{public}d",
