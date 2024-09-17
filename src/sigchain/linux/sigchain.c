@@ -21,6 +21,7 @@
 #include <musl_log.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <pthread_impl.h>
 #include "syscall.h"
 
 extern int __libc_sigaction(int sig, const struct sigaction *restrict sa,
@@ -46,6 +47,8 @@ extern int __libc_sigaction(int sig, const struct sigaction *restrict sa,
 #define SIGCHAIN_PRINT_DEBUG(...)
 #define SIGCHAIN_LOG_FATAL(...)
 #endif
+
+#define FREEZE_SIGNAL_35 (35)
 
 #define SIGCHAIN_PRINT_FATAL(...)  do {                    \
     SIGCHAIN_LOG_FATAL(__VA_ARGS__);                      \
@@ -171,10 +174,21 @@ static void signal_chain_handler(int signo, siginfo_t* siginfo, void* ucontext_r
             if (!noreturn) {
                 set_handling_signal(true);
             }
+            int thread_list_lock_status = -1;
+            if (signo == FREEZE_SIGNAL_35) {
+#ifdef a_ll
+                thread_list_lock_status = a_ll(&__thread_list_lock);
+#else
+                thread_list_lock_status = __thread_list_lock;
+#endif
+            }
+            // modify style: move `thread_list_lock_status` from `if` internal branch to outer branch.
+            // Avoid performance degradation
             SIGCHAIN_PRINT_ERROR("%{public}s call %{public}d rd sigchain action for signal: %{public}d"
-                " sca_sigaction=%{public}llx noreturn=%{public}d",
+                " sca_sigaction=%{public}llx noreturn=%{public}d "
+                "FREEZE_signo_%{public}d thread_list_lock_status:%{public}d",
                 __func__, idx, signo, (unsigned long long)sig_chains[signo - 1].sca_special_actions[idx].sca_sigaction,
-                noreturn);
+                noreturn, signo, thread_list_lock_status);
             if (sig_chains[signo - 1].sca_special_actions[idx].sca_sigaction(signo,
                                                             siginfo, ucontext_raw)) {
                 set_handling_signal(previous_value);
