@@ -161,6 +161,7 @@ static int noload;
 static int shutting_down;
 static jmp_buf *rtld_fail;
 static pthread_rwlock_t lock;
+static pthread_mutex_t dlclose_lock = { { PTHREAD_MUTEX_RECURSIVE } }; // set mutex type to PTHREAD_MUTEX_RECURSIVE
 static struct debug debug;
 static struct tls_module *tls_tail;
 static size_t tls_cnt, tls_offset, tls_align = MIN_TLS_ALIGN;
@@ -4415,11 +4416,13 @@ static int do_dlclose(struct dso *p, bool check_deps_all)
 
 hidden int __dlclose(void *p)
 {
+	pthread_mutex_lock(&dlclose_lock);
 	int rc;
 	pthread_rwlock_wrlock(&lock);
 	if (shutting_down) {
 		error("Cannot dlclose while program is exiting.");
 		pthread_rwlock_unlock(&lock);
+		pthread_mutex_unlock(&dlclose_lock);
 		return -1;
 	}
 #ifdef HANDLE_RANDOMIZATION
@@ -4429,6 +4432,7 @@ hidden int __dlclose(void *p)
 		error("Handle is invalid.");
 		LD_LOGE("Handle is not find.");
 		pthread_rwlock_unlock(&lock);
+		pthread_mutex_unlock(&dlclose_lock);
 		return -1;
 	}
 	rc = do_dlclose(dso, 0);
@@ -4436,6 +4440,7 @@ hidden int __dlclose(void *p)
 	rc = do_dlclose(p, 0);
 #endif
 	pthread_rwlock_unlock(&lock);
+	pthread_mutex_unlock(&dlclose_lock);
 	return rc;
 }
 
@@ -4607,6 +4612,7 @@ no_redir:
 
 int dl_iterate_phdr(int(*callback)(struct dl_phdr_info *info, size_t size, void *data), void *data)
 {
+	pthread_mutex_lock(&dlclose_lock);
 	struct dso *current;
 	struct dl_phdr_info info;
 	int ret = 0;
@@ -4631,6 +4637,7 @@ int dl_iterate_phdr(int(*callback)(struct dl_phdr_info *info, size_t size, void 
 		current = current->next;
 		pthread_rwlock_unlock(&lock);
 	}
+	pthread_mutex_unlock(&dlclose_lock);
 	return ret;
 }
 
