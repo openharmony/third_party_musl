@@ -101,15 +101,41 @@ weak_alias(dummy_0, __do_orphaned_stdio_locks);
 weak_alias(dummy_0, __dl_thread_cleanup);
 weak_alias(dummy_0, __membarrier_init);
 
+#define TID_ERROR_0 (0)
+#define TID_ERROR_INIT (-1)
+
 static int tl_lock_count;
 static int tl_lock_waiters;
+static int tl_lock_tid_fail = TID_ERROR_INIT;
+static int tl_lock_count_tid = TID_ERROR_INIT;
+
+int get_tl_lock_count() {
+	return tl_lock_count;
+}
+
+int get_tl_lock_waiters() {
+	return tl_lock_waiters;
+}
+
+int get_tl_lock_tid_fail() {
+	return tl_lock_tid_fail;
+}
+
+int get_tl_lock_count_tid() {
+	return tl_lock_count_tid;
+}
 
 void __tl_lock(void)
 {
 	int tid = __pthread_self()->tid;
+	if (tid == TID_ERROR_0 || tid == TID_ERROR_INIT) {
+		tl_lock_tid_fail = TID_ERROR_0;
+		tid = __syscall(SYS_gettid);
+	}
 	int val = __thread_list_lock;
 	if (val == tid) {
 		tl_lock_count++;
+		tl_lock_count_tid = val;
 		return;
 	}
 	while ((val = a_cas(&__thread_list_lock, 0, tid)))
