@@ -109,19 +109,23 @@ static int tl_lock_waiters;
 static int tl_lock_tid_fail = TID_ERROR_INIT;
 static int tl_lock_count_tid = TID_ERROR_INIT;
 
-int get_tl_lock_count() {
+int get_tl_lock_count(void)
+{
 	return tl_lock_count;
 }
 
-int get_tl_lock_waiters() {
+int get_tl_lock_waiters(void)
+{
 	return tl_lock_waiters;
 }
 
-int get_tl_lock_tid_fail() {
+int get_tl_lock_tid_fail(void)
+{
 	return tl_lock_tid_fail;
 }
 
-int get_tl_lock_count_tid() {
+int get_tl_lock_count_tid(void)
+{
 	return tl_lock_count_tid;
 }
 
