@@ -142,6 +142,9 @@ ${CMD} shell cp ${REMOTE}/src/libdl_gnu_hash_so.so ${REMOTE}/src/libdl_gnu_hash_
 ${CMD} shell cp ${REMOTE}/src/libdl_sysv_hash_so.so ${REMOTE}/src/libdl_sysv_hash_so.so
 ${CMD} shell cp ${REMOTE}/src/libdlopen_dso.so ${REMOTELOCAL}/libc-test-lib/libdlopen_dso.so
 ${CMD} shell cp ${REMOTE}/src/libdlopen_init.so ${REMOTELOCAL}/libc-test-lib/libdlopen_init.so
+${CMD} shell cp ${REMOTE}/src/libldso_debug_test_lib_6.so ${REMOTELOCAL}/libc-test-lib/libldso_debug_test_lib_6.so
+${CMD} shell cp ${REMOTE}/src/libldso_debug_test_lib_8.so ${REMOTELOCAL}/libc-test-lib/libldso_debug_test_lib_8.so
+${CMD} shell cp ${REMOTE}/src/libldso_debug_test_lib_9.so ${REMOTELOCAL}/libc-test-lib/libldso_debug_test_lib_9.so
 
 ${CMD} shell mv ${REMOTE}/src/zh_CN /tmp/zh_CN
 
