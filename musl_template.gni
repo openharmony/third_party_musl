@@ -463,6 +463,10 @@ template("static_and_shared_libs_template") {
       not_needed([ "__use_flto" ])
     }
 
+    if (is_asan && use_hwasan) {
+      defines += [ "HWASAN_REMOVE_CLEANUP" ]
+    }
+
     if (musl_use_jemalloc) {
       defines += [ "USE_JEMALLOC" ]
       if (musl_use_jemalloc_dfx_intf) {
