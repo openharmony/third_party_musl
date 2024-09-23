@@ -21,6 +21,7 @@
 #include <musl_log.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <pthread_impl.h>
 #include "syscall.h"
 
 extern int __libc_sigaction(int sig, const struct sigaction *restrict sa,
@@ -46,6 +47,8 @@ extern int __libc_sigaction(int sig, const struct sigaction *restrict sa,
 #define SIGCHAIN_PRINT_DEBUG(...)
 #define SIGCHAIN_LOG_FATAL(...)
 #endif
+
+#define FREEZE_SIGNAL_35 (35)
 
 #define SIGCHAIN_PRINT_FATAL(...)  do {                    \
     SIGCHAIN_LOG_FATAL(__VA_ARGS__);                      \
@@ -171,10 +174,27 @@ static void signal_chain_handler(int signo, siginfo_t* siginfo, void* ucontext_r
             if (!noreturn) {
                 set_handling_signal(true);
             }
+            int thread_list_lock_status = -1;
+            if (signo == FREEZE_SIGNAL_35) {
+#ifdef a_ll
+                thread_list_lock_status = a_ll(&__thread_list_lock);
+#else
+                thread_list_lock_status = __thread_list_lock;
+#endif
+            }
+              /**
+              * modify style: move `thread_list_lock_status` from `if`
+              * internal branch to outer branch.
+              * void performance degradation
+              */
             SIGCHAIN_PRINT_ERROR("%{public}s call %{public}d rd sigchain action for signal: %{public}d"
-                " sca_sigaction=%{public}llx noreturn=%{public}d",
+                " sca_sigaction=%{public}llx noreturn=%{public}d "
+                "FREEZE_signo_%{public}d thread_list_lock_status:%{public}d "
+                "tl_lock_count=%{public}d tl_lock_waiters=%{public}d "
+                "tl_lock_tid_fail=%{public}d tl_lock_count_tid=%{public}d",
                 __func__, idx, signo, (unsigned long long)sig_chains[signo - 1].sca_special_actions[idx].sca_sigaction,
-                noreturn);
+                noreturn, signo, thread_list_lock_status,
+                get_tl_lock_count(), get_tl_lock_waiters(), get_tl_lock_tid_fail(), get_tl_lock_count_tid());
             if (sig_chains[signo - 1].sca_special_actions[idx].sca_sigaction(signo,
                                                             siginfo, ucontext_raw)) {
                 set_handling_signal(previous_value);
@@ -203,7 +223,8 @@ static void signal_chain_handler(int signo, siginfo_t* siginfo, void* ucontext_r
     sigchain_sigmask(SIG_SETMASK, &mask, NULL);
 
     if ((sa_flags & SA_SIGINFO)) {
-        SIGCHAIN_PRINT_ERROR("%{public}s call usr sigaction for signal: %{public}d sig_action.sa_sigaction=%{public}p", __func__, signo, sig_chains[signo - 1].sig_action.sa_sigaction);
+        SIGCHAIN_PRINT_ERROR("%{public}s call usr sigaction for signal: %{public}d sig_action.sa_sigaction=%{public}llx",
+            __func__, signo, (unsigned long long)sig_chains[signo - 1].sig_action.sa_sigaction);
         sig_chains[signo - 1].sig_action.sa_sigaction(signo, siginfo, ucontext_raw);
     } else {
         if (sig_chains[signo - 1].sig_action.sa_handler == SIG_IGN) {
@@ -218,7 +239,8 @@ static void signal_chain_handler(int signo, siginfo_t* siginfo, void* ucontext_r
                 SIGCHAIN_PRINT_ERROR("pid(%{public}d) rethrow sig(%{public}d) success.", __syscall(SYS_getpid), signo);
             }
         } else {
-            SIGCHAIN_PRINT_ERROR("%{public}s call usr sa_handler: %{public}p for signal: %{public}d sig_action.sa_handler=%{public}p", __func__, signo, sig_chains[signo - 1].sig_action.sa_handler);
+            SIGCHAIN_PRINT_ERROR("%{public}s call usr sa_handler: %{public}llx for signal: %{public}d",
+                __func__, (unsigned long long)sig_chains[signo - 1].sig_action.sa_handler, signo);
             sig_chains[signo - 1].sig_action.sa_handler(signo);
         }
     }
