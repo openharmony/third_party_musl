@@ -101,6 +101,14 @@ void PthreadInternalLockInfoTest(void)
     }
     bool hilogResult = CheckHiLogPrint("FREEZE_signo_35");
     EXPECT_EQ("signal35_check_output", hilogResult, true);
+    hilogResult = CheckHiLogPrint("tl_lock_count");
+    EXPECT_EQ("signal35_check_output", hilogResult, true);
+    hilogResult = CheckHiLogPrint("tl_lock_waiters");
+    EXPECT_EQ("signal35_check_output", hilogResult, true);
+    hilogResult = CheckHiLogPrint("tl_lock_tid_fail");
+    EXPECT_EQ("signal35_check_output", hilogResult, true);
+    hilogResult = CheckHiLogPrint("tl_lock_count_tid");
+    EXPECT_EQ("signal35_check_output", hilogResult, true);
 
     // 在发送信号40之前，先将它的处理函数设置为不做任何操作
     sigResult = signal(INVALID_SIGNAL_40, ignore_signal);

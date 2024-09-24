@@ -280,6 +280,10 @@ hidden void __inhibit_ptc(void);
 hidden void __tl_lock(void);
 hidden void __tl_unlock(void);
 hidden void __tl_sync(pthread_t);
+hidden int get_tl_lock_count(void);
+hidden int get_tl_lock_waiters(void);
+hidden int get_tl_lock_tid_fail(void);
+hidden int get_tl_lock_count_tid(void);
 hidden struct pthread* __pthread_list_find(pthread_t, const char*);
 
 extern hidden volatile int __thread_list_lock;
