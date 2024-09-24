@@ -868,7 +868,8 @@ static inline struct symdef find_sym2(struct dso *dso, struct verinfo *verinfo, 
 	struct dso **deps = use_deps ? dso->deps : 0;
 	for (; dso; dso=use_deps ? *deps++ : dso->syms_next) {
 		Sym *sym;
-		if (ns && !check_sym_accessible(dso, ns)) {
+		// for ldso, app, preload so which is global, should be accessible in all exist namespaces
+		if (!dso->is_global && ns && !check_sym_accessible(dso, ns)) {
 			continue;
 		}
 		if ((ght = dso->ghashtab)) {
