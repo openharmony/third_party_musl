@@ -17,12 +17,12 @@
 #include <string.h>
 #include <dirent.h>
 #include <string>
+#include <unistd.h>
 
 extern "C" {
     #include "test.h"
 }
 
-#define UBSAN_LOG_DIR "/data/log/sanitizer/ubsan/"
 #define FAULTLOG_DIR "/data/log/faultlog/faultlogger/"
 #define UBSAN_LOG_TAG "ubsan"
 #define DEBUG 0
@@ -35,10 +35,10 @@ static void ShowCfiLogFile()
 {
     DIR *dir;
     struct dirent *ptr;
-    dir = opendir(UBSAN_LOG_DIR);
+    dir = opendir(FAULTLOG_DIR);
     while ((ptr = readdir(dir)) != NULL) {
         if (strstr(ptr->d_name, UBSAN_LOG_TAG) != NULL) {
-            printf("%s: %s\n", UBSAN_LOG_DIR, ptr->d_name);
+            printf("%s: %s\n", FAULTLOG_DIR, ptr->d_name);
         }
     }
     closedir(dir);
@@ -46,7 +46,7 @@ static void ShowCfiLogFile()
 
 static void ClearCfiLog()
 {
-    ClearCfiLog(UBSAN_LOG_TAG, UBSAN_LOG_DIR);
+    ClearCfiLog(UBSAN_LOG_TAG, FAULTLOG_DIR);
 }
 
 static void ClearCfiLog(const char *log_tag, const char *log_dir)
@@ -108,12 +108,13 @@ static void CheckCfiLog(char *file, const char *needle)
 template<typename CallbackT>
 static void FindDirAndCheck(DIR *dir, CallbackT &&callback)
 {
-    FindDirAndCheck(dir, UBSAN_LOG_TAG, UBSAN_LOG_DIR, callback);
+    FindDirAndCheck(dir, UBSAN_LOG_TAG, FAULTLOG_DIR, callback);
 }
 
 template<typename CallbackT>
 static void FindDirAndCheck(DIR *dir, const char *log_tag, const char *log_dir, CallbackT &&callback)
 {
+    sleep(1);
     struct dirent *ptr;
     while ((ptr = readdir(dir)) != NULL) {
         if (strstr(ptr->d_name, log_tag) != NULL) {
@@ -126,12 +127,9 @@ static void FindDirAndCheck(DIR *dir, const char *log_tag, const char *log_dir, 
 
 static void FindAndCheck(const char *pattern)
 {
-    DIR *ubsanDir = opendir(UBSAN_LOG_DIR);
     DIR *faultlogDir = opendir(FAULTLOG_DIR);
     auto callback = [=](char *file) { CheckCfiLog(file, pattern); };
-    FindDirAndCheck(ubsanDir, callback);
     FindDirAndCheck(faultlogDir, callback);
-    closedir(ubsanDir);
     closedir(faultlogDir);
 }
 
@@ -145,11 +143,8 @@ static void FindAndCheck(const char *pattern, const char *log_tag, const char *l
 
 static void ExpectCfiOk()
 {
-    DIR *ubsanDir = opendir(UBSAN_LOG_DIR);
     DIR *faultlogDir = opendir(FAULTLOG_DIR);
     auto callback = [](char *file) { t_error("FAIL CFI check failed!\n"); };
-    FindDirAndCheck(ubsanDir, callback);
     FindDirAndCheck(faultlogDir, callback);
-    closedir(ubsanDir);
     closedir(faultlogDir);
 }

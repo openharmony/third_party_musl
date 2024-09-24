@@ -16,7 +16,11 @@ import("../../../test_template.gni")
 group("ldso_cfi_test") {
   testonly = true
   deps = [
-    ":cfi_avaiable_schemes_test",
+    ":cfi_available_derived_cast_test",
+    ":cfi_available_icall_test",
+    ":cfi_available_nvcall_test",
+    ":cfi_available_unrelated_cast_test",
+    ":cfi_available_vccall_test",
     ":cfi_cross_dso_dtor_test_exe",
     ":cfi_cross_dso_dtor_test_use",
     ":cfi_cross_dso_test_exe",
@@ -159,7 +163,7 @@ ohos_executable("cfi_cross_dso_dtor_test_exe") {
   deps = [ ":cfi_cross_dso_dtor_test_base" ]
 }
 
-ohos_executable("cfi_avaiable_schemes_test") {
+ohos_executable("cfi_available_derived_cast_test") {
   sanitize = {
     cfi = true
     cfi_cross_dso = true
@@ -175,7 +179,87 @@ ohos_executable("cfi_avaiable_schemes_test") {
   ]
   use_rtti = true
 
-  sources = [ "cfi_avaiable_schemes_test.cpp" ]
+  sources = [ "cfi_available_derived_cast_test.cpp" ]
+  configs = [ "//third_party/musl/libc-test/src/common:config_runtest" ]
+}
+
+ohos_executable("cfi_available_icall_test") {
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = true
+  }
+  subsystem_name = "musl"
+  part_name = "libc-test"
+  include_dirs = [
+    "../common",
+    "//third_party/musl/porting/linux/user/include",
+    "//third_party/musl/porting/linux/user/ldso",
+    "//third_party/musl/libc-test/src/common",
+  ]
+  use_rtti = true
+
+  sources = [ "cfi_available_icall_test.cpp" ]
+  configs = [ "//third_party/musl/libc-test/src/common:config_runtest" ]
+}
+
+ohos_executable("cfi_available_nvcall_test") {
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = true
+  }
+  subsystem_name = "musl"
+  part_name = "libc-test"
+  include_dirs = [
+    "../common",
+    "//third_party/musl/porting/linux/user/include",
+    "//third_party/musl/porting/linux/user/ldso",
+    "//third_party/musl/libc-test/src/common",
+  ]
+  use_rtti = true
+
+  sources = [ "cfi_available_nvcall_test.cpp" ]
+  configs = [ "//third_party/musl/libc-test/src/common:config_runtest" ]
+}
+
+ohos_executable("cfi_available_unrelated_cast_test") {
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = true
+  }
+  subsystem_name = "musl"
+  part_name = "libc-test"
+  include_dirs = [
+    "../common",
+    "//third_party/musl/porting/linux/user/include",
+    "//third_party/musl/porting/linux/user/ldso",
+    "//third_party/musl/libc-test/src/common",
+  ]
+  use_rtti = true
+
+  sources = [ "cfi_available_unrelated_cast_test.cpp" ]
+  configs = [ "//third_party/musl/libc-test/src/common:config_runtest" ]
+}
+
+ohos_executable("cfi_available_vccall_test") {
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = true
+  }
+  subsystem_name = "musl"
+  part_name = "libc-test"
+  include_dirs = [
+    "../common",
+    "//third_party/musl/porting/linux/user/include",
+    "//third_party/musl/porting/linux/user/ldso",
+    "//third_party/musl/libc-test/src/common",
+  ]
+  use_rtti = true
+
+  sources = [ "cfi_available_vccall_test.cpp" ]
   configs = [ "//third_party/musl/libc-test/src/common:config_runtest" ]
 }
 
