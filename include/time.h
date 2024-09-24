@@ -74,6 +74,7 @@ size_t strftime_l (char *  __restrict, size_t, const char *  __restrict, const s
 
 struct tm *gmtime_r (const time_t *__restrict, struct tm *__restrict);
 struct tm *localtime_r (const time_t *__restrict, struct tm *__restrict);
+struct tm *localtime_noenv_r(const time_t *__restrict, struct tm *__restrict);
 char *asctime_r (const struct tm *__restrict, char *__restrict);
 char *ctime_r (const time_t *, char *);
 
