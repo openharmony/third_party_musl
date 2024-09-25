@@ -153,6 +153,7 @@ struct dso {
 	uint32_t flags;
 	uint32_t nr_dlopen;
 	bool is_global;
+	bool is_preload;
 	bool is_reloc_head_so_dep;
 	char relocated;
 	char constructed;
