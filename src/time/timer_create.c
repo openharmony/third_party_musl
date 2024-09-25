@@ -94,9 +94,13 @@ static void *start(void *arg)
 		siginfo_t si;
 		while (sigwaitinfo(SIGTIMER_SET, &si) < 0);
 		if (si.si_code == SI_TIMER && !setjmp(jb)) {
+#ifndef HWASAN_REMOVE_CLEANUP
 			pthread_cleanup_push(cleanup_fromsig, jb);
+#endif
 			notify(val);
+#ifndef HWASAN_REMOVE_CLEANUP
 			pthread_cleanup_pop(1);
+#endif
 		}
 		if (self->timer_id < 0) break;
 	}
