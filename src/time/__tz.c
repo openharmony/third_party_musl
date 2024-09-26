@@ -155,10 +155,11 @@ static int check_cota()
 #endif
 }
 
-static void do_tzset()
+static void do_tzset(int use_env)
 {
 	char buf[NAME_MAX+25], *pathname=buf+24;
-	const char *try, *s, *p;
+	const char *try, *p;
+	const char *s = NULL;
 	const unsigned char *map = 0;
 	size_t i;
 	static const char cota_path[] = "/etc/tzdata_distro/tzdata\0";
@@ -193,7 +194,10 @@ static void do_tzset()
 		"/usr/share/zoneinfo/tzdata\0/share/zoneinfo/tzdata\0/etc/zoneinfo/tzdata\0";
 #endif
 
-	s = getenv("TZ");
+	if (use_env == 1) {
+		s = getenv("TZ");
+	}
+
 	if (!s) {
 #if defined(OHOS_ENABLE_PARAMETER) && (!defined(__LITEOS__))
 		static CachedHandle tz_param_handle = NULL;
@@ -517,11 +521,14 @@ static long long rule_to_secs(const int *rule, int year)
  * enables a caller to efficiently adjust for the case where an explicit
  * DST specification mismatches what would be in effect at the time. */
 
-void __secs_to_zone(long long t, int local, int *isdst, long *offset, long *oppoff, const char **zonename)
+void __secs_to_zone(long long t, int local, int *isdst, long *offset, long *oppoff, const char **zonename, int use_env)
 {
 	LOCK(lock);
-
-	do_tzset();
+	if (use_env == 1) {
+		do_tzset(TZ_USE_ENV);
+	} else {
+		do_tzset(TZ_NO_USE_ENV);
+	}
 
 	if (zi) {
 		size_t alt, i = scan_trans(t, local, &alt);
@@ -575,7 +582,7 @@ dst:
 static void __tzset()
 {
 	LOCK(lock);
-	do_tzset();
+	do_tzset(TZ_USE_ENV);
 	UNLOCK(lock);
 }
 
@@ -585,7 +592,7 @@ const char *__tm_to_tzname(const struct tm *tm)
 {
 	const void *p = tm->__tm_zone;
 	LOCK(lock);
-	do_tzset();
+	do_tzset(TZ_USE_ENV);
 	if (p != __utc && p != __tzname[0] && p != __tzname[1] &&
 	    (!zi || (uintptr_t)p-(uintptr_t)abbrevs >= abbrevs_end - abbrevs))
 		p = "";

@@ -1081,6 +1081,7 @@
     localeconv;
     localtime;
     localtime_r;
+    localtime_noenv_r;
     lockf;
     lockf64;
     log;
