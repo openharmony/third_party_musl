@@ -2035,6 +2035,8 @@
     set_fdtrack_enabled;
     fdtrack_cas_hook;
     DFX_SetAppRunningUniqueId;
+    DFX_SetCrashObj;
+    DFX_ResetCrashObj;
   local:
     *;
 };
