@@ -164,6 +164,10 @@ void free_task(struct loadtask *task)
         __libc_free(task->allocated_buf);
         task->allocated_buf = NULL;
     }
+    if (task->shdr_allocated_buf != MAP_FAILED) {
+        munmap(task->shdr_allocated_buf, task->shsize);
+        task->shdr_allocated_buf = MAP_FAILED;
+    }
     if (task->dyn_map_len) {
         munmap(task->dyn_map, task->dyn_map_len);
         task->dyn_map = NULL;

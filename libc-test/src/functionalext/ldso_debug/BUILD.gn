@@ -18,10 +18,16 @@ group("functionalext_ldso_debug_test") {
   deps = [
     ":ldso_debug_test",
     ":ldso_debug_test_lib_1",
+    ":ldso_debug_test_lib_10",
     ":ldso_debug_test_lib_2",
     ":ldso_debug_test_lib_3",
     ":ldso_debug_test_lib_4",
     ":ldso_debug_test_lib_5",
+    ":ldso_debug_test_lib_6",
+    ":ldso_debug_test_lib_7",
+    ":ldso_debug_test_lib_8",
+    ":ldso_debug_test_lib_9",
+    ":ldso_memleak_check",
   ]
 }
 
@@ -31,6 +37,15 @@ ohos_executable("ldso_debug_test") {
   include_dirs = [ "../common" ]
 
   sources = [ "ldso_debug_test.c" ]
+  configs = [ "//third_party/musl/libc-test/src/common:config_runtest" ]
+}
+
+ohos_executable("ldso_memleak_check") {
+  subsystem_name = "musl"
+  part_name = "libc-test"
+  include_dirs = [ "../common" ]
+
+  sources = [ "ldso_memleak_check.c" ]
   configs = [ "//third_party/musl/libc-test/src/common:config_runtest" ]
 }
 
@@ -83,4 +98,59 @@ ohos_shared_library("ldso_debug_test_lib_5") {
   output_extension = "so"
   subsystem_name = "musl"
   part_name = "libc-test-lib"
+}
+
+ohos_shared_library("ldso_debug_test_lib_6") {
+  include_dirs = [ "." ]
+  deps = [ ":ldso_debug_test_lib_7" ]
+  sources = [ "ldso_debug_test_lib_4.c" ]
+
+  output_name = "ldso_debug_test_lib_6"
+  output_extension = "so"
+  subsystem_name = "musl"
+  part_name = "libc-test-lib"
+}
+
+ohos_shared_library("ldso_debug_test_lib_7") {
+  include_dirs = [ "." ]
+  sources = [ "ldso_debug_test_lib_5.c" ]
+
+  install_enable = false
+  output_name = "ldso_debug_test_lib_7"
+  output_extension = "so"
+  subsystem_name = "thirdparty"
+  part_name = "musl"
+}
+
+ohos_shared_library("ldso_debug_test_lib_8") {
+  include_dirs = [ "." ]
+  deps = [ ":ldso_debug_test_lib_9" ]
+  sources = [ "ldso_debug_test_lib_6.c" ]
+
+  output_name = "ldso_debug_test_lib_8"
+  output_extension = "so"
+  subsystem_name = "musl"
+  part_name = "libc-test-lib"
+}
+
+ohos_shared_library("ldso_debug_test_lib_9") {
+  include_dirs = [ "." ]
+  deps = [ ":ldso_debug_test_lib_10" ]
+  sources = [ "ldso_debug_test_lib_7.c" ]
+
+  output_name = "ldso_debug_test_lib_9"
+  output_extension = "so"
+  subsystem_name = "musl"
+  part_name = "libc-test-lib"
+}
+
+ohos_shared_library("ldso_debug_test_lib_10") {
+  include_dirs = [ "." ]
+  sources = [ "ldso_debug_test_lib_8.c" ]
+
+  install_enable = false
+  output_name = "ldso_debug_test_lib_10"
+  output_extension = "so"
+  subsystem_name = "thirdparty"
+  part_name = "musl"
 }

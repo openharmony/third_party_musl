@@ -3561,6 +3561,7 @@ void *dlopen_impl(
 #ifdef LOAD_ORDER_RANDOMIZATION
 	struct loadtasks *tasks = NULL;
 	struct loadtask *task = NULL;
+	struct loadtask **volatile tasks_ptr = &tasks;
 	bool is_task_appended = false;
 #endif
 #ifdef IS_ASAN
@@ -3830,7 +3831,7 @@ end:
 	if (!is_task_appended) {
 		free_task(task);
 	}
-	free_loadtasks(tasks);
+	free_loadtasks(*tasks_ptr);
 #endif
 	__release_ptc();
 	clock_gettime(CLOCK_MONOTONIC, &time_start);
@@ -5175,6 +5176,10 @@ static bool map_library_header(struct loadtask *task)
 		LD_LOGE("Error mapping header %{public}s: dynamic section not found", task->name);
 		goto noexec;
 	}
+	if (task->shdr_allocated_buf != MAP_FAILED) {
+		munmap(task->shdr_allocated_buf, task->shsize);
+		task->shdr_allocated_buf = MAP_FAILED;
+	}
 	return true;
 noexec:
 	errno = ENOEXEC;
@@ -5464,10 +5469,6 @@ done_mapping:
 	}
 	free(task->allocated_buf);
 	task->allocated_buf = NULL;
-	if (task->shdr_allocated_buf != MAP_FAILED) {
-		munmap(task->shdr_allocated_buf, task->shsize);
-		task->shdr_allocated_buf = MAP_FAILED;
-	}
 	return true;
 noexec:
 	errno = ENOEXEC;
@@ -5477,10 +5478,6 @@ error:
 	}
 	free(task->allocated_buf);
 	task->allocated_buf = NULL;
-	if (task->shdr_allocated_buf != MAP_FAILED) {
-		munmap(task->shdr_allocated_buf, task->shsize);
-		task->shdr_allocated_buf = MAP_FAILED;
-	}
 	return false;
 }
 
