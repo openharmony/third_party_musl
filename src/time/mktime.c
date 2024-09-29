@@ -7,7 +7,7 @@ time_t mktime(struct tm *tm)
 	long opp;
 	long long t = __tm_to_secs(tm);
 
-	__secs_to_zone(t, 1, &new.tm_isdst, &new.__tm_gmtoff, &opp, &new.__tm_zone);
+	__secs_to_zone(t, 1, &new.tm_isdst, &new.__tm_gmtoff, &opp, &new.__tm_zone, TZ_USE_ENV);
 
 	if (tm->tm_isdst>=0 && new.tm_isdst!=tm->tm_isdst)
 		t -= opp - new.__tm_gmtoff;
@@ -15,7 +15,7 @@ time_t mktime(struct tm *tm)
 	t -= new.__tm_gmtoff;
 	if ((time_t)t != t) goto error;
 
-	__secs_to_zone(t, 0, &new.tm_isdst, &new.__tm_gmtoff, &opp, &new.__tm_zone);
+	__secs_to_zone(t, 0, &new.tm_isdst, &new.__tm_gmtoff, &opp, &new.__tm_zone, TZ_USE_ENV);
 
 	if (__secs_to_tm(t + new.__tm_gmtoff, &new) < 0) goto error;
 
