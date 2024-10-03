@@ -549,8 +549,8 @@ HWTEST_F(ThreadPthrdTest, pthread_gettid_np_002, TestSize.Level1)
     arg.mutex = pMutex;
     pthread_mutex_lock(&arg.mutex);
     pthread_create(&thread, nullptr, reinterpret_cast<void* (*)(void*)>(ThreadGettidNpFn), &arg);
-    pthread_mutex_unlock(&arg.mutex);
     pid_t resultTid = pthread_gettid_np(thread);
+    pthread_mutex_unlock(&arg.mutex);
     EXPECT_EQ(0, pthread_join(thread, nullptr));
     EXPECT_EQ(arg.tid, resultTid);
 }
