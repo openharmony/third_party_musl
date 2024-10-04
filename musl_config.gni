@@ -115,6 +115,10 @@ declare_args() {
   musl_use_flto = false
 }
 
+declare_args() {
+  musl_use_icu_locale = false
+}
+
 # part of default_compiler_configs from build/config/BUILDCONFIG.gn
 musl_inherited_configs = [
   "//build/config/compiler:afdo",
