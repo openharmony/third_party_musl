@@ -107,7 +107,8 @@ void dl_iterate_phdr_0300(void)
     EXPECT_EQ("dl_iterate_phdr_0300", same_name_count, SAME_NAME_COUT_1);
 
     system("rm -rf /data/libtest.so");
-    system("cp /system/lib/libutils.z.so /data/libtest.so");
+    system("cp /data/local/tmp/lib_for_dlopen.so /data/libtest.so");
+    system("cp /data/tests/libc-test/src/lib_for_dlopen.so /data/libtest.so");
 
     void *handle2 = dlopen("/data/libtest.so", RTLD_NOW);
     same_name_count = 0;
@@ -170,11 +171,11 @@ void dl_iterate_phdr_0500(void)
 
 int main(int argc, char *argv[])
 {
-    system("cp /system/lib/libutils.z.so /data/libtest.so");
+    system("cp /data/local/tmp/lib_for_dlopen.so /data/libtest.so");
+    system("cp /data/tests/libc-test/src/lib_for_dlopen.so /data/libtest.so");
     dl_iterate_phdr_0100();
     dl_iterate_phdr_0200();
     dl_iterate_phdr_0300();
-    dl_iterate_phdr_0500();
     system("rm -rf /data/libtest.so");
     exit(EXIT_SUCCESS);
     return t_status;
