@@ -709,7 +709,6 @@ template("musl_libs") {
     }
 
     include_dirs += [
-      "//third_party",
       "//third_party/musl/src/include/",
       "${musl_malloc_plugin}/include/",
       "${musl_malloc_plugin}/include/jemalloc/internal",
@@ -977,7 +976,6 @@ template("musl_libs") {
     output_dir = "${target_out_dir}/${_libs_out_dir}"
     deps = [ ":soft_musl_ldso_static" ]
   }
-
   static_library("soft_libm") {
     complete_static_lib = true
     configs -= musl_inherited_configs
