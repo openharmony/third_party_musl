@@ -23,11 +23,11 @@ void __fork_handler(int who)
 	if (!funcs) return;
 	if (who < 0) {
 		LOCK(lock);
-		if(gwpfuncs && gwpfuncs->prepare) gwpfuncs->prepare();
 		for (p=funcs; p; p = p->next) {
 			if (p->prepare) p->prepare();
 			funcs = p;
 		}
+        if(gwpfuncs && gwpfuncs->prepare) gwpfuncs->prepare();
 	} else {
 		if (gwpfuncs && !who && gwpfuncs->parent) gwpfuncs->parent();
 		if (gwpfuncs && who && gwpfuncs->child) gwpfuncs->child();
