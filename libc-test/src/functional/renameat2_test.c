@@ -192,6 +192,29 @@ static void ZeroTest(int oldFolder, int newFolder)
     RemoveFile();
 }
 
+static void RenameExchangeTest(int oldFolder, int newFolder)
+{
+    WriteFile(g_oldPath, g_oldMsg);
+    WriteFile(g_newPath, g_newMsg);
+    if (renameat2(oldFolder, g_oldName, newFolder, g_newName, RENAME_EXCHANGE) == -1) {
+        g_error++;
+        return;
+    }
+    CompareFileString(g_newPath, strlen(g_oldMsg), g_oldMsg);
+    CompareFileString(g_oldPath, strlen(g_newMsg), g_newMsg);
+    RemoveFile();
+
+    WriteFile(g_oldPath, g_oldMsg);
+    WriteFile(g_newPath, g_newMsg);
+    if (renameat2(AT_FDCWD, g_oldPath, AT_FDCWD, g_newPath, RENAME_EXCHANGE) == -1) {
+        g_error++;
+        return;
+    }
+    CompareFileString(g_newPath, strlen(g_oldMsg), g_oldMsg);
+    CompareFileString(g_oldPath, strlen(g_newMsg), g_newMsg);
+    RemoveFile();
+}
+
 static void CloseFolder(DIR *dir)
 {
     if (closedir(dir)) {
@@ -230,6 +253,14 @@ int main(void)
         return 1;
     }
     
+    g_error = 0;
+    RenameExchangeTest(dirFD, dirFD);
+    if (g_error) {
+        t_error("%s renameat2 failed,flags: RENAME_EXCHANGE\n", __func__);
+        RemoveFile();
+        CloseFolder(dir);
+        return 1;
+    }
     CloseFolder(dir);
     return 0;
 }
