@@ -26,10 +26,10 @@ void __fork_handler(int who)
 		for (p=funcs; p; p = p->next) {
 			if (p->prepare) p->prepare();
 			funcs = p;
-		}
+        }
         if(gwpfuncs && gwpfuncs->prepare) gwpfuncs->prepare();
-	} else {
-		if (gwpfuncs && !who && gwpfuncs->parent) gwpfuncs->parent();
+    } else {
+        if (gwpfuncs && !who && gwpfuncs->parent) gwpfuncs->parent();
 		if (gwpfuncs && who && gwpfuncs->child) gwpfuncs->child();
 		for (p=funcs; p; p = p->prev) {
 			if (!who && p->parent) p->parent();
