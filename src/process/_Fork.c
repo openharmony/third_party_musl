@@ -32,6 +32,9 @@ void __post_Fork(int ret)
 		libc.threads_minus_1 = 0;
 #ifndef __LITEOS__
 		__clear_proc_pid();
+		// Setting the child process fdsan is invalid,
+		// preventing the child process from closing all fds and causing large batch errors
+		fdsan_set_error_level(FDSAN_ERROR_LEVEL_DISABLED);
 #endif
 		if (libc.need_locks) libc.need_locks = -1;
 #ifdef __LITEOS_A__

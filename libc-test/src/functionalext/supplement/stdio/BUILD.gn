@@ -50,7 +50,7 @@ ohos_executable("fdsan") {
 
 group("functionalext_supplement_stdio_test") {
   testonly = true
-  deps = []
+  deps = [ ":fdsan" ]
   foreach(s, functionalext_supplement_stdio_test) {
     deps += [ ":${s}" ]
   }
