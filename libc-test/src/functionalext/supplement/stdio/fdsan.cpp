@@ -23,13 +23,16 @@
 #include <sys/wait.h>
 #include <unistd.h>
 #include <musl_log.h>
-#include <stdio_impl.h>
 
 #include <unordered_map>
 
 #include "functionalext.h"
 
 #define DEV_NULL_PATH "/dev/null"
+const char *file_path = "/data/local/tmp/test.txt";
+
+extern "C" FILE *__fopen_rb_ca(const char *, FILE *, unsigned char *, size_t);
+extern "C" int __fclose_ca(FILE *);
 
 void signal_handler_abort(int signum)
 {
@@ -120,12 +123,8 @@ void fdsan_test_fatal_level()
 
 bool CreateFile()
 {
-    // 创建一个临时文件
-    // 指定文件路径
-    const char *file_path = "/data/local/tmp/test.txt";
-
     // 创建文件并打开文件描述符
-    int fd = open(file_path, O_CREAT | O_EXCL | O_WRONLY, S_IRUSR | S_IWUSR);
+    int fd = open(file_path, O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR);
     if (fd == -1) {
         return false;
     }
@@ -135,6 +134,39 @@ bool CreateFile()
     return true;
 }
 
+
+void fdsan_test_fork_subprocess_disabled()
+{
+    struct sigaction sigabrt = {
+        .sa_handler = signal_handler_abort,
+    };
+    sigaction(SIGABRT, &sigabrt, nullptr);
+    int status;
+    int pid = fork();
+    switch (pid) {
+        case -1: {
+            t_error("fork failed: %d\n", __LINE__);
+            break;
+        }
+        case 0: {
+            enum fdsan_error_level errorLevel = fdsan_get_error_level();
+            if (errorLevel != FDSAN_ERROR_LEVEL_DISABLED) {
+                abort();
+            }
+            exit(0);
+        }
+        default: {
+            waitpid(pid, &status, WUNTRACED);
+            EXPECT_EQ("fdsan_test_fork_subprocess_disabled WIFEXITED", WIFEXITED(status), 1);
+            EXPECT_EQ("fdsan_test_fork_subprocess_disabled WIFSTOPPED", WIFSTOPPED(status), 0);
+            // 子进程的错误等级默认应该是disabled，这里检测子进程不会收到abort信号
+            EXPECT_EQ("fdsan_test_fork_subprocess_disabled WSTOPSIG", WSTOPSIG(status), 0);
+            kill(pid, SIGCONT);
+            break;
+        }
+    }
+    return;
+}
 
 void fdsan_test_internal_fopen_succeed()
 {
@@ -159,7 +191,9 @@ void fdsan_test_internal_fopen_succeed()
             unsigned char str[1024];
             FILE f;
             FILE *ptr = __fopen_rb_ca(file_path, &f, str, sizeof(str));
-            EXPECT_NE("fdsan_test_internal_fopen_succeed open file failed", ptr, NULL);
+            if (ptr == nullptr) {
+                t_error("fdsan_test_internal_fopen_succeed open file failed: ptr == NULL");
+            }
             if (ptr) {
                 __fclose_ca(ptr);
             }
@@ -167,10 +201,10 @@ void fdsan_test_internal_fopen_succeed()
         }
         default: {
             waitpid(pid, &status, WUNTRACED);
-            EXPECT_EQ("fdsan_test_fork_subprocess_disabled WIFEXITED", WIFEXITED(status), 1);
-            EXPECT_EQ("fdsan_test_fork_subprocess_disabled WIFSTOPPED", WIFSTOPPED(status), 0);
+            EXPECT_EQ("fdsan_test_internal_fopen_succeed WIFEXITED", WIFEXITED(status), 1);
+            EXPECT_EQ("fdsan_test_internal_fopen_succeed WIFSTOPPED", WIFSTOPPED(status), 0);
             // 子进程应该能够匹配到对应的tag，不应该通过信号方式退出，这里检测子进程不会收到abort信号
-            EXPECT_EQ("fdsan_test_fork_subprocess_disabled WSTOPSIG", WSTOPSIG(status), 0);
+            EXPECT_EQ("fdsan_test_internal_fopen_succeed WSTOPSIG", WSTOPSIG(status), 0);
             kill(pid, SIGCONT);
             break;
         }
