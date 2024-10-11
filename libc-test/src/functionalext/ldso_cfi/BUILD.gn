@@ -21,6 +21,8 @@ group("ldso_cfi_test") {
     ":cfi_cross_dso_dtor_test_use",
     ":cfi_cross_dso_test_exe",
     ":cfi_cross_dso_test_lib",
+    ":large_size_lib",
+    ":large_size_test",
     ":ldso_cfi_check",
     ":ldso_cfi_test_lib",
     ":ldso_cfi_typeconversion",
@@ -218,4 +220,29 @@ ohos_executable("cfi_report_test") {
 
   sources = [ "./cfi_report_test/cfi_report_test.cpp" ]
   configs = [ "//third_party/musl/libc-test/src/common:config_runtest" ]
+}
+
+ohos_executable("large_size_test") {
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+  }
+  ldflags = [ "-Wl,-rpath=./" ]
+  subsystem_name = "musl"
+  part_name = "libc-test"
+  deps = [ ":large_size_lib" ]
+  sources = [ "./large_size_library/large_size_test.cpp" ]
+}
+
+ohos_shared_library("large_size_lib") {
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+  }
+  output_name = "large_size"
+  output_extension = "so"
+  subsystem_name = "musl"
+  part_name = "libc-test-lib"
+
+  sources = [ "./large_size_library/large_size_lib.cpp" ]
 }
