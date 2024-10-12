@@ -13,7 +13,7 @@ static struct atfork_funcs {
 	void (*parent)(void);
 	void (*child)(void);
 	struct atfork_funcs *prev, *next;
-} *funcs;
+} *funcs, *gwpfuncs;
 
 static volatile int lock[1];
 
@@ -27,7 +27,12 @@ void __fork_handler(int who)
 			if (p->prepare) p->prepare();
 			funcs = p;
 		}
+        // The gwpasan prepare must be executed last,and the gwpasan handler must be executed first.
+		if(gwpfuncs && gwpfuncs->prepare) gwpfuncs->prepare();
 	} else {
+        // The gwpasan child will unlock malloc mutex, so execute it first to avoid deadlocks.
+		if (gwpfuncs && !who && gwpfuncs->parent) gwpfuncs->parent();
+		if (gwpfuncs && who && gwpfuncs->child) gwpfuncs->child();
 		for (p=funcs; p; p = p->prev) {
 			if (!who && p->parent) p->parent();
 			else if (who && p->child) p->child();
@@ -35,6 +40,20 @@ void __fork_handler(int who)
 		}
 		UNLOCK(lock);
 	}
+}
+
+int pthread_atfork_for_gwpasan(void (*prepare)(void), void (*parent)(void), void (*child)(void))
+{
+	struct atfork_funcs *new = malloc(sizeof *new);
+	if (!new) return ENOMEM;
+
+	LOCK(lock);
+	new->prepare = prepare;
+	new->parent = parent;
+	new->child = child;
+	gwpfuncs = new;
+	UNLOCK(lock);
+	return 0;
 }
 
 int pthread_atfork(void (*prepare)(void), void (*parent)(void), void (*child)(void))
