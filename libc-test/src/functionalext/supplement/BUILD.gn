@@ -366,5 +366,5 @@ ohos_executable("musl_unittest") {
   if (musl_use_pthread_cancel) {
     cflags += [ "-DFEATURE_PTHREAD_CANCEL" ]
   }
-  deps = [ "//third_party/googletest:gtest_main" ]
+  external_deps = [ "googletest:gtest_main" ]
 }
