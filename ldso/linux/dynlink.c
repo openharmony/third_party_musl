@@ -857,7 +857,8 @@ static inline struct symdef find_sym2(struct dso *dso, struct verinfo *verinfo, 
 	struct dso **deps = use_deps ? dso->deps : 0;
 	for (; dso; dso=use_deps ? *deps++ : dso->syms_next) {
 		Sym *sym;
-		if (ns && !check_sym_accessible(dso, ns)) {
+		// for ldso, app, preload so which is global, should be accessible in all exist namespaces
+		if (!dso->is_preload && ns && !check_sym_accessible(dso, ns)) {
 			continue;
 		}
 		if ((ght = dso->ghashtab)) {
@@ -3266,6 +3267,7 @@ void __dls3(size_t *sp, size_t *auxv, size_t *aux)
 	}
 	for (struct dso *q = head; q; q = q->next) {
 		q->is_global = true;
+		q->is_preload = true;
 	}
 	preload_deps(&app, tasks);
 	unmap_preloaded_sections(tasks);
@@ -3277,6 +3279,7 @@ void __dls3(size_t *sp, size_t *auxv, size_t *aux)
 	if (env_preload) load_preload(env_preload, get_default_ns());
 	for (struct dso *q = head; q; q = q->next) {
 		q->is_global = true;
+		q->is_preload = true;
 	}
  	load_deps(&app, NULL);
 #endif
