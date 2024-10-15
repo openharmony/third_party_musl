@@ -62,12 +62,14 @@ int TrylockWithTimeout(pthread_mutex_t *mutex)
 
 int threadfuncA(void *arg)
 {
+    pthread_mutex_t *mtx = (pthread_mutex_t *)arg;
+    pthread_mutex_lock(mtx);
     count++;
     thrd_t id = thrd_current();
     if (!(thrd_equal(id, thr))) {
         t_error("%s thrd_current failed", __func__);
     }
-
+    pthread_mutex_unlock(mtx);
     thrd_exit(thrd_success);
 }
 
@@ -94,8 +96,11 @@ int threadfuncB(void *arg)
 void thrd_equal_0100(void)
 {
     int result;
-
-    result = thrd_create(&thr, threadfuncA, NULL);
+    pthread_mutex_t mtx = PTHREAD_MUTEX_INITIALIZER;
+    pthread_mutex_lock(&mtx);
+    result = thrd_create(&thr, threadfuncA, (void *)&mtx);
+    pthread_mutex_unlock(&mtx);
+    pthread_mutex_destroy(&mtx);
     if (result != thrd_success) {
         t_error("%s thrd_create failed", __func__);
     }
