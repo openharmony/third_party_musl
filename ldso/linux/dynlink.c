@@ -1714,6 +1714,9 @@ UT_STATIC void *map_library(int fd, struct dso *dso, struct reserved_address_par
 	size_t mapping_align = start_alignment > LIBRARY_ALIGNMENT ? start_alignment : LIBRARY_ALIGNMENT;
 	size_t tmp_map_len = ALIGN(map_len, mapping_align) + mapping_align - PAGE_SIZE;
 
+	/* map the whole load segments with PROT_READ first for security consideration. */
+	prot = PROT_READ;
+
 	/* if reserved_params exists, we should use start_addr as prefered result to do the mmap operation */
 	if (reserved_params) {
 		map = DL_NOMMU_SUPPORT
@@ -1801,9 +1804,15 @@ UT_STATIC void *map_library(int fd, struct dso *dso, struct reserved_address_par
 			((ph->p_flags&PF_W) ? PROT_WRITE: 0) |
 			((ph->p_flags&PF_X) ? PROT_EXEC : 0));
 		/* Reuse the existing mapping for the lowest-address LOAD */
-		if ((ph->p_vaddr & -PAGE_SIZE) != addr_min || DL_NOMMU_SUPPORT)
-			if (mmap_fixed(base+this_min, this_max-this_min, prot, MAP_PRIVATE|MAP_FIXED, fd, off_start) == MAP_FAILED)
-				goto error;
+		if (mmap_fixed(
+				base + this_min,
+				this_max - this_min,
+				prot, MAP_PRIVATE | MAP_FIXED,
+				fd,
+				off_start) == MAP_FAILED) {
+			LD_LOGE("Error mapping library: mmap fix failed errno=%{public}d", errno);
+			goto error;
+		}
 		if ((ph->p_flags & PF_X) && (ph->p_align == KPMD_SIZE) && hugepage_enabled)
 			madvise(base + this_min, this_max - this_min, MADV_HUGEPAGE);
 		if (ph->p_memsz > ph->p_filesz && (ph->p_flags&PF_W)) {
