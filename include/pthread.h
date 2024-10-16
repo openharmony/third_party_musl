@@ -348,6 +348,7 @@ int pthread_barrierattr_init(pthread_barrierattr_t *);
 int pthread_barrierattr_setpshared(pthread_barrierattr_t *, int);
 
 int pthread_atfork(void (*)(void), void (*)(void), void (*)(void));
+int pthread_atfork_for_gwpasan(void (*)(void), void (*)(void), void (*)(void));
 
 int pthread_getconcurrency(void);
 int pthread_setconcurrency(int);
