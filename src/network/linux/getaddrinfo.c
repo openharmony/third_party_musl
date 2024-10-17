@@ -175,6 +175,12 @@ int getaddrinfo_ext(const char *restrict host, const char *restrict serv, const 
 			if (family == tf[1 - i]) continue;
 			int s = socket(tf[i], SOCK_CLOEXEC | SOCK_DGRAM,
 				IPPROTO_UDP);
+#ifndef __LITEOS__
+			if (s < 0) {
+				MUSL_LOGE("%{public}s: %{public}d: create socket failed for family: %{public}d, errno: %{public}d",
+					__func__, __LINE__, tf[i], errno);
+			}
+#endif
 			if (s >= 0) {
 				int cs;
 				pthread_setcancelstate(
@@ -194,6 +200,10 @@ int getaddrinfo_ext(const char *restrict host, const char *restrict serv, const 
 			case ENETUNREACH:
 				break;
 			default:
+#ifndef __LITEOS__
+				MUSL_LOGE("%{public}s: %{public}d: connect to local address failed: %{public}d",
+					__func__, __LINE__, errno);
+#endif
 				return EAI_SYSTEM;
 			}
 			if (family == tf[i]) {
