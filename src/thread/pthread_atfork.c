@@ -28,7 +28,7 @@ void __fork_handler(int who)
 			funcs = p;
 		}
         // The gwpasan prepare must be executed last,and the gwpasan handler must be executed first.
-		if(gwpfuncs && gwpfuncs->prepare) gwpfuncs->prepare();
+		if (gwpfuncs && gwpfuncs->prepare) gwpfuncs->prepare();
 	} else {
         // The gwpasan child will unlock malloc mutex, so execute it first to avoid deadlocks.
 		if (gwpfuncs && !who && gwpfuncs->parent) gwpfuncs->parent();
