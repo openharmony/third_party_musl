@@ -103,11 +103,14 @@ weak_alias(dummy_0, __membarrier_init);
 
 #define TID_ERROR_0 (0)
 #define TID_ERROR_INIT (-1)
+#define COUNT_ERROR_INIT (-10000)
 
 static int tl_lock_count;
 static int tl_lock_waiters;
 static int tl_lock_tid_fail = TID_ERROR_INIT;
 static int tl_lock_count_tid = TID_ERROR_INIT;
+static int tl_lock_count_fail = COUNT_ERROR_INIT;
+static int thread_list_lock_pre_unlock = TID_ERROR_INIT;
 
 int get_tl_lock_count(void)
 {
@@ -127,6 +130,16 @@ int get_tl_lock_tid_fail(void)
 int get_tl_lock_count_tid(void)
 {
 	return tl_lock_count_tid;
+}
+
+int get_tl_lock_count_fail(void)
+{
+	return tl_lock_count_fail;
+}
+
+int get_thread_list_lock_pre_unlock(void)
+{
+	return thread_list_lock_pre_unlock;
 }
 
 void __tl_lock(void)
@@ -152,6 +165,7 @@ void __tl_unlock(void)
 		tl_lock_count--;
 		return;
 	}
+	thread_list_lock_pre_unlock = __thread_list_lock;
 	a_store(&__thread_list_lock, 0);
 	if (tl_lock_waiters) __wake(&__thread_list_lock, 1, 0);
 }
@@ -308,6 +322,14 @@ _Noreturn void __pthread_exit(void *result)
 #ifdef ENABLE_HWASAN
 	__hwasan_thread_exit();
 #endif
+
+	// If a thread call __tl_lock and call __pthread_exit without
+	// call __tl_unlock, the value of tl_lock_count will appear
+	// non-zero value, here set it to zero.
+	if(tl_lock_count != 0) {
+		tl_lock_count_fail = tl_lock_count;
+		tl_lock_count = 0;
+	}
 
 	for (;;) __syscall(SYS_exit, 0);
 }
