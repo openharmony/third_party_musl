@@ -463,6 +463,11 @@ int lookup_name_ext(struct address buf[static MAXADDRS], char canon[static 256],
 	/* Try each backend until there's at least one result. */
 	cnt = name_from_null(buf, name, family, flags);
 	if (!cnt) cnt = name_from_numeric(buf, name, family);
+#ifndef __LITEOS__
+	if (!cnt && (flags & AI_NUMERICHOST)) {
+		MUSL_LOGE("%{public}s: %{public}d: flag is AI_NUMERICHOST but host is Illegal", __func__, __LINE__);
+	}
+#endif
 	if (!cnt && !(flags & AI_NUMERICHOST)) {
 		cnt = predefined_host_name_from_hosts(buf, canon, name, family);
 		if (!cnt) cnt = name_from_hosts(buf, canon, name, family);
