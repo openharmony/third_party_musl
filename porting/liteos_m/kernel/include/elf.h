@@ -315,7 +315,8 @@ typedef struct {
 #define EM_RISCV	243
 #define EM_BPF		247
 #define EM_CSKY		252
-#define EM_NUM		253
+#define EM_LOONGARCH	258
+#define EM_NUM		259
 
 #define EM_ALPHA	0x9026
 
