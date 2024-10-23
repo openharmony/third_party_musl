@@ -914,7 +914,7 @@ template("musl_libs") {
       external_deps = [ "init:parameterbase" ]
     }
 
-    if (musl_guard_jemalloc_tsd) {
+    if (musl_guard_jemalloc_tsd || is_asan || use_hwasan) {
       defines += [ "GUARD_JEMALLOC_TSD" ]
     }
 
