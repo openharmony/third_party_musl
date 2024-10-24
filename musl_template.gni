@@ -498,10 +498,6 @@ template("static_and_shared_libs_template") {
       }
     }
 
-    if (musl_use_encaps) {
-      defines += [ "USE_ENCAPS" ]
-    }
-
     deps = porting_deps
 
     external_deps = [ "FreeBSD:libc_static" ]
@@ -548,10 +544,6 @@ template("static_and_shared_libs_template") {
         "HANDLE_RANDOMIZATION",
         "LOAD_ORDER_RANDOMIZATION",
       ]
-    }
-
-    if (musl_use_encaps) {
-      defines += [ "USE_ENCAPS" ]
     }
 
     deps = porting_deps

@@ -192,7 +192,6 @@ struct dlopen_time_info {
 	int map_cfi_time;
 	int init_time;
 	int total_time;
-	int encaps_time;
 };
 #endif
 
