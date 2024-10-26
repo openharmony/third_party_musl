@@ -39,6 +39,7 @@ weak_alias(dummy, __malloc_atfork);
 weak_alias(dummy, __aio_atfork);
 weak_alias(dummy, __pthread_key_atfork);
 weak_alias(dummy, __ldso_atfork);
+weak_alias(dummy, __pthread_mutex_unlock_atfork);
 
 static void dummy_0(void) { }
 weak_alias(dummy_0, __tl_lock);
@@ -82,6 +83,7 @@ pid_t fork(void)
 		if (ret) __aio_atfork(0);
 		__pthread_key_atfork(!ret);
 		__ldso_atfork(!ret);
+		__pthread_mutex_unlock_atfork(ret);
 	}
 	__restore_sigs(&set);
 	__fork_handler(!ret);
