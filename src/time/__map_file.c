@@ -69,5 +69,6 @@ const char unsigned *__map_tzdata_file(const char * tzdata_path, const char *tz_
 	if (flag) {
 		return map;
 	}
+	__munmap((void *)map, st.st_size);
 	return 0;
 }
