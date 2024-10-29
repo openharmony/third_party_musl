@@ -13,10 +13,11 @@
  * limitations under the License.
  */
 
-#include "test.h"
-
 #include <malloc.h>
 #include <pthread.h>
+#include <stdbool.h>
+#include "gwp_asan.h"
+#include "test.h"
 
 int process_task()
 {
@@ -31,6 +32,7 @@ int process_task()
 // Test whether it's ok to open gwp_asan in the fork scenario.
 int main()
 {
+    may_init_gwp_asan(true);
     pid_t pid = fork();
     if (pid < 0) {
         t_error("FAIL fork failed.");
@@ -39,5 +41,5 @@ int main()
     } else { // parent process
         return process_task();
     }
-    return 0;
+    return t_status;
 }
