@@ -13,10 +13,11 @@
  * limitations under the License.
  */
 
-#include "test.h"
-
 #include <malloc.h>
 #include <pthread.h>
+#include <sys/wait.h>
+#include "gwp_asan_test.h"
+#include "test.h"
 
 #define REPS 50
 static int a = 0;
@@ -35,13 +36,36 @@ void* fork_task(void *arg)
     return NULL;
 }
 
-// Test whether it's ok to open gwp_asan in the sub-thread fork scenario.
-int main()
+void thread_fork_test()
 {
+    config_gwp_asan_environment(false);
     for (int i = 0; i < REPS; i++) {
         pthread_t tid;
         pthread_create(&tid, NULL, fork_task, NULL);
         pthread_join(tid, NULL);
     }
-    return 0;
+}
+
+// Test whether it's ok to open gwp_asan in the sub-thread fork scenario.
+int main()
+{
+    pid_t pid = fork();
+    if (pid < 0) {
+        t_error("FAIL fork failed.");
+    } else if (pid == 0) { // child process
+        thread_fork_test();
+    } else { // parent process
+        int status;
+        if (waitpid(pid, &status, 0) != pid) {
+            t_error("gwp_asan_thread_fork_test waitpid failed.");
+        }
+
+        if (WIFEXITED(status) && WEXITSTATUS(status) != 0) {
+            t_error("gwp_asan_thread_fork_test failed.");
+        }
+
+        cancel_gwp_asan_environment(false);
+    }
+    
+    return t_status;
 }
