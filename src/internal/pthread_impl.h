@@ -287,6 +287,7 @@ hidden int get_tl_lock_count_tid(void);
 hidden int get_tl_lock_count_fail(void);
 hidden int get_thread_list_lock_pre_unlock(void);
 hidden struct pthread* __pthread_list_find(pthread_t, const char*);
+hidden void __pthread_mutex_unlock_recursive_inner(pthread_mutex_t *m);
 
 extern hidden volatile int __thread_list_lock;
 
