@@ -66,6 +66,20 @@ template("static_and_shared_libs_template") {
     }
   }
 
+  if (!is_llvm_build) {
+    if (target_name == "static") {
+      param_base_external_deps = [ "init:parameterbase_noflto" ]
+    } else {
+      param_base_external_deps = [ "init:parameterbase" ]
+    }
+  }
+
+  if (target_name == "static") {
+    freebsd_external_deps = [ "FreeBSD:libc_static_noflto" ]
+  } else {
+    freebsd_external_deps = [ "FreeBSD:libc_static" ]
+  }
+
   cur_gwp_asan_config = "gwp_asan_config_${target_name}"
   cur_soft_hook_config = "soft_hook_config_${target_name}"
 
@@ -95,7 +109,7 @@ template("static_and_shared_libs_template") {
     ]
     if (use_musl && !is_llvm_build) {
       defines = [ "OHOS_ENABLE_PARAMETER" ]
-      external_deps = [ "init:parameterbase" ]
+      external_deps = param_base_external_deps
     }
 
     if (musl_unit_test_flag) {
@@ -500,10 +514,10 @@ template("static_and_shared_libs_template") {
 
     deps = porting_deps
 
-    external_deps = [ "FreeBSD:libc_static" ]
+    external_deps = freebsd_external_deps
     if (use_musl && !is_llvm_build) {
       defines += [ "OHOS_ENABLE_PARAMETER" ]
-      external_deps += [ "init:parameterbase" ]
+      external_deps += param_base_external_deps
     }
   }
 
@@ -549,7 +563,7 @@ template("static_and_shared_libs_template") {
     deps = porting_deps
     if (use_musl && !is_llvm_build) {
       defines += [ "OHOS_ENABLE_PARAMETER" ]
-      external_deps = [ "init:parameterbase" ]
+      external_deps = param_base_external_deps
     }
 
     if (musl_unit_test_flag) {
@@ -568,12 +582,6 @@ template("musl_libs") {
 
   _libs_path_prefix = "."
   _libs_out_dir = "usr/lib/${musl_target_triple}/${musl_target_multilib}"
-
-  if (is_llvm_build) {
-    dfx_external_deps = []
-  } else {
-    dfx_external_deps = [ "faultloggerd:dfxsignalhandler" ]
-  }
 
   group(target_name) {
     deps = [
@@ -959,9 +967,12 @@ template("musl_libs") {
       ":soft_musl_src_static",
       ":soft_musl_src_strncpy",
     ]
-    external_deps = dfx_external_deps
+    external_deps = []
+    if (!is_llvm_build) {
+      external_deps += [ "faultloggerd:dfxsignalhandler_noflto" ]
+    }
     if (use_musl && !is_llvm_build) {
-      external_deps += [ "init:parameterbase" ]
+      external_deps += [ "init:parameterbase_noflto" ]
     }
     if (musl_use_jemalloc) {
       deps += [ ":soft_musl_jemalloc" ]
@@ -1091,7 +1102,11 @@ template("musl_libs") {
       ":soft_musl_src_shared",
       ":soft_musl_src_strncpy",
     ]
-    external_deps = dfx_external_deps
+
+    external_deps = []
+    if (!is_llvm_build) {
+      external_deps += [ "faultloggerd:dfxsignalhandler" ]
+    }
     if (use_musl && !is_llvm_build) {
       external_deps += [ "init:parameterbase" ]
     }
