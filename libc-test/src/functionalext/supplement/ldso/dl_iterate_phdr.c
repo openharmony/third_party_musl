@@ -16,12 +16,18 @@
 #include <dlfcn.h>
 #include <link.h>
 #include <stdlib.h>
+#include <pthread.h>
+#include <sys/wait.h>
 #include "functionalext.h"
 #include "test.h"
 
 #define SAME_NAME_COUT_1 1
 #define SAME_NAME_COUT_2 2
 #define OOM_FILL 50000
+
+void* handle_globle = NULL;
+static pthread_mutex_t lock1;
+static pthread_mutex_t lock2;
 
 static int header_handler(struct dl_phdr_info *info, size_t size, void *data)
 {
@@ -49,6 +55,31 @@ static int lock_recursive_handler(struct dl_phdr_info *info, size_t size, void *
         return 0;
     }
     return 1;
+}
+
+static int sync_handler(struct dl_phdr_info *info, size_t size, void *data)
+{
+    // Step 1:call dl_iterate_phdr and lock dlclose_lock, then call fork
+    pthread_mutex_unlock(&lock1);
+    pthread_mutex_lock(&lock2);
+    // Step 3:after call fork, unlock dlclose_lock and wait child process return
+    return 1;
+}
+
+static int nothing_handler(struct dl_phdr_info *info, size_t size, void *data)
+{
+    return 1;
+}
+
+void *call_dl_iterate_phdr(void *ptr)
+{
+    dl_iterate_phdr(sync_handler, NULL);
+    return NULL;
+}
+
+void child_func(void)
+{
+    dlclose(handle_globle);
 }
 
 /**
@@ -169,6 +200,59 @@ void dl_iterate_phdr_0500(void)
     dlclose(handle);
 }
 
+/**
+ * @tc.name      : dl_iterate_phdr_0600
+ * @tc.desc      : Call dl_iterate_phdr when fork happen.
+ * @tc.level     : Level 0
+ */
+void dl_iterate_phdr_0600(void)
+{
+    pthread_t thread1;
+    pid_t pid;
+    int status;
+    int ret;
+    // This test case must be executed in sequence:Step1 -> Step2 -> Step3(Parent process)
+    handle_globle = dlopen("/data/libtest.so", RTLD_NOW);
+    pthread_mutex_lock(&lock1);
+    pthread_mutex_lock(&lock2);
+    ret = pthread_create(&thread1, NULL, call_dl_iterate_phdr, NULL);
+    if (ret != 0) {
+        EXPECT_TRUE("dl_iterate_phdr_0600", false);
+        return;
+    }
+    pthread_atfork(NULL, NULL, child_func);
+    pthread_mutex_lock(&lock1);
+    // Step 2:after call dl_iterate_phdr, call fork, then dl_iterate_phdr can return
+    pid = fork();
+    pthread_mutex_unlock(&lock2);
+    if (pid < 0) {
+        return; // If fork failed, skip test dl_iterate_phdr_0600
+    } else if (pid == 0) {
+        // Child process, if can run here, dlclose_lock reset success
+        exit(EXIT_SUCCESS);
+        return;
+    } else {
+        // Parent process
+        dl_iterate_phdr(nothing_handler, NULL); // Test call dl_iterate_phdr success
+        pthread_join(thread1, NULL);
+        if (waitpid(pid, &status, 0) != pid) {
+            EXPECT_TRUE("dl_iterate_phdr_0600", false);
+            return;
+        }
+        if (!WIFEXITED(status)) {
+            EXPECT_TRUE("dl_iterate_phdr_0600", false);
+            return;
+        }
+        if (WEXITSTATUS(status) != 0) {
+            EXPECT_TRUE("dl_iterate_phdr_0600", false);
+            return;
+        }
+        EXPECT_TRUE("dl_iterate_phdr_0600", true);
+        dlclose(handle_globle);
+        return;
+    }
+}
+
 int main(int argc, char *argv[])
 {
     system("cp /data/local/tmp/lib_for_dlopen.so /data/libtest.so");
@@ -176,6 +260,7 @@ int main(int argc, char *argv[])
     dl_iterate_phdr_0100();
     dl_iterate_phdr_0200();
     dl_iterate_phdr_0300();
+    dl_iterate_phdr_0600();
     system("rm -rf /data/libtest.so");
     exit(EXIT_SUCCESS);
     return t_status;
