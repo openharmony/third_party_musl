@@ -2796,6 +2796,16 @@ void __libc_exit_fini()
 	}
 }
 
+void __pthread_mutex_unlock_atfork(int who)
+{
+	if (who == 0) {
+		// If a multithread process lock dlclose_lock and call fork,
+		// dlclose_lock will never unlock before child process call execve.
+		// so reset dlclose_lock to make sure child process can call dlclose after fork
+		__pthread_mutex_unlock_recursive_inner(&dlclose_lock);
+	}
+}
+
 void __ldso_atfork(int who)
 {
 	if (who<0) {
