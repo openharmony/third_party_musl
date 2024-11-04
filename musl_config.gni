@@ -14,6 +14,8 @@ declare_args() {
     musl_arch = "mips"
   } else if (current_cpu == "riscv64") {
     musl_arch = "riscv64"
+  } else if (current_cpu == "riscv32") {
+    musl_arch = "riscv32"
   } else if (current_cpu == "loongarch64") {
     musl_arch = "loongarch64"
   }
