@@ -109,7 +109,9 @@ static int tl_lock_count;
 static int tl_lock_waiters;
 static int tl_lock_tid_fail = TID_ERROR_INIT;
 static int tl_lock_count_tid = TID_ERROR_INIT;
+static int tl_lock_count_tid_sub = TID_ERROR_INIT;
 static int tl_lock_count_fail = COUNT_ERROR_INIT;
+static int thread_list_lock_after_lock = TID_ERROR_INIT;
 static int thread_list_lock_pre_unlock = TID_ERROR_INIT;
 
 int get_tl_lock_count(void)
@@ -132,9 +134,19 @@ int get_tl_lock_count_tid(void)
 	return tl_lock_count_tid;
 }
 
+int get_tl_lock_count_tid_sub(void)
+{
+	return tl_lock_count_tid_sub;
+}
+
 int get_tl_lock_count_fail(void)
 {
 	return tl_lock_count_fail;
+}
+
+int get_thread_list_lock_after_lock(void)
+{
+	return thread_list_lock_after_lock;
 }
 
 int get_thread_list_lock_pre_unlock(void)
@@ -157,12 +169,14 @@ void __tl_lock(void)
 	}
 	while ((val = a_cas(&__thread_list_lock, 0, tid)))
 		__wait(&__thread_list_lock, &tl_lock_waiters, val, 0);
+	thread_list_lock_after_lock = __thread_list_lock;
 }
 
 void __tl_unlock(void)
 {
 	if (tl_lock_count) {
 		tl_lock_count--;
+		tl_lock_count_tid_sub = __thread_list_lock;
 		return;
 	}
 	thread_list_lock_pre_unlock = __thread_list_lock;

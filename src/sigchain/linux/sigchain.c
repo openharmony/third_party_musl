@@ -192,11 +192,13 @@ static void signal_chain_handler(int signo, siginfo_t* siginfo, void* ucontext_r
                 "FREEZE_signo_%{public}d thread_list_lock_status:%{public}d "
                 "tl_lock_count=%{public}d tl_lock_waiters=%{public}d "
                 "tl_lock_tid_fail=%{public}d tl_lock_count_tid=%{public}d "
-                "tl_lock_count_fail=%{public}d thread_list_lock_pre_unlock=%{public}d",
+                "tl_lock_count_fail=%{public}d tl_lock_count_tid_sub=%{public}d "
+                "thread_list_lock_after_lock=%{public}d thread_list_lock_pre_unlock=%{public}d ",
                 __func__, idx, signo, (unsigned long long)sig_chains[signo - 1].sca_special_actions[idx].sca_sigaction,
                 noreturn, signo, thread_list_lock_status,
                 get_tl_lock_count(), get_tl_lock_waiters(), get_tl_lock_tid_fail(), get_tl_lock_count_tid(),
-                get_tl_lock_count_fail(), get_thread_list_lock_pre_unlock());
+                get_tl_lock_count_fail(), get_tl_lock_count_tid_sub(),
+                get_thread_list_lock_after_lock(), get_thread_list_lock_pre_unlock());
             if (sig_chains[signo - 1].sca_special_actions[idx].sca_sigaction(signo,
                                                             siginfo, ucontext_raw)) {
                 set_handling_signal(previous_value);
