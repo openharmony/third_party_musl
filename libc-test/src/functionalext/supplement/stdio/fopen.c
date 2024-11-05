@@ -256,10 +256,10 @@ void fopen_0700(void)
 void fopen_0800(void)
 {
     struct stat info;
-    if(stat("/data/local/tmp/empty/", &info) == 0 && S_ISDIR(info.st_mode) ) {
-        system("rm -rf /data/local/tmp/empty/");
+    if(stat("/data/local/tmp/libc-test-empty/", &info) == 0 && S_ISDIR(info.st_mode) ) {
+        system("rm -rf /data/local/tmp/libc-test-empty/");
     }
-    FILE *fptr = fopen("/data/local/tmp/empty/tempory_test.txt", "a");
+    FILE *fptr = fopen("/data/local/tmp/libc-test-empty/tempory_test.txt", "a");
     EXPECT_EQ("fopen_0800", fptr, NULL);
 }
 
