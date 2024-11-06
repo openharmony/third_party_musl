@@ -24,7 +24,6 @@
             "musl_is_legacy",
             "musl_enable_musl_log",
             "musl_unit_test_flag",
-            "musl_user_custom_libc",
             "musl_use_flto",
             "musl_use_gwp_asan",
             "musl_use_pthread_cancel",
