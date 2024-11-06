@@ -15,7 +15,9 @@
 
 #include <fcntl.h>
 #include <stdbool.h>
-#include <stdio.h>
+#include <stdio.h> 
+#include <sys/stat.h>  
+#include <unistd.h>  
 #include <stdlib.h>
 #include "functionalext.h"
 
@@ -253,7 +255,11 @@ void fopen_0700(void)
  */
 void fopen_0800(void)
 {
-    FILE *fptr = fopen("./tmp/tempory_test.txt", "a");
+    struct stat info;
+    if(stat("/data/local/tmp/libc-test-empty/", &info) == 0 && S_ISDIR(info.st_mode) ) {
+        system("rm -rf /data/local/tmp/libc-test-empty/");
+    }
+    FILE *fptr = fopen("/data/local/tmp/libc-test-empty/tempory_test.txt", "a");
     EXPECT_EQ("fopen_0800", fptr, NULL);
 }
 
