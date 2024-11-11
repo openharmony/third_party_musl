@@ -284,7 +284,9 @@ hidden int get_tl_lock_count(void);
 hidden int get_tl_lock_waiters(void);
 hidden int get_tl_lock_tid_fail(void);
 hidden int get_tl_lock_count_tid(void);
+hidden int get_tl_lock_count_tid_sub(void);
 hidden int get_tl_lock_count_fail(void);
+hidden int get_thread_list_lock_after_lock(void);
 hidden int get_thread_list_lock_pre_unlock(void);
 hidden struct pthread* __pthread_list_find(pthread_t, const char*);
 
