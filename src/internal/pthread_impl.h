@@ -277,6 +277,22 @@ hidden void __acquire_ptc(void);
 hidden void __release_ptc(void);
 hidden void __inhibit_ptc(void);
 
+typedef struct call_tl_lock {
+	int tl_lock_unlock_count;
+	int __pthread_gettid_np_tl_lock;
+	int __pthread_exit_tl_lock;
+	int __pthread_create_tl_lock;
+	int __pthread_key_delete_tl_lock;
+	int __synccall_tl_lock;
+	int __membarrier_tl_lock;
+	int install_new_tls_tl_lock;
+	int set_syscall_hooks_tl_lock;
+	int set_syscall_hooks_linux_tl_lock;
+	int fork_tl_lock;
+};
+
+hidden extern struct call_tl_lock tl_lock_caller_count;
+
 hidden void __tl_lock(void);
 hidden void __tl_unlock(void);
 hidden void __tl_sync(pthread_t);
@@ -288,6 +304,9 @@ hidden int get_tl_lock_count_tid_sub(void);
 hidden int get_tl_lock_count_fail(void);
 hidden int get_thread_list_lock_after_lock(void);
 hidden int get_thread_list_lock_pre_unlock(void);
+hidden int get_thread_list_lock_pthread_exit(void);
+hidden int get_thread_list_lock_tid_overlimit(void);
+hidden struct call_tl_lock *get_tl_lock_caller_count(void);
 hidden struct pthread* __pthread_list_find(pthread_t, const char*);
 hidden void __pthread_mutex_unlock_recursive_inner(pthread_mutex_t *m);
 

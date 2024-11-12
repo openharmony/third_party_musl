@@ -113,6 +113,10 @@ static int tl_lock_count_tid_sub = TID_ERROR_INIT;
 static int tl_lock_count_fail = COUNT_ERROR_INIT;
 static int thread_list_lock_after_lock = TID_ERROR_INIT;
 static int thread_list_lock_pre_unlock = TID_ERROR_INIT;
+static int thread_list_lock_pthread_exit = TID_ERROR_INIT;
+static int thread_list_lock_tid_overlimit = TID_ERROR_INIT;
+
+struct call_tl_lock tl_lock_caller_count = { 0 };
 
 int get_tl_lock_count(void)
 {
@@ -154,12 +158,31 @@ int get_thread_list_lock_pre_unlock(void)
 	return thread_list_lock_pre_unlock;
 }
 
+int get_thread_list_lock_pthread_exit(void)
+{
+	return thread_list_lock_pthread_exit;
+}
+
+int get_thread_list_lock_tid_overlimit(void)
+{
+	return thread_list_lock_tid_overlimit;
+}
+
+struct call_tl_lock *get_tl_lock_caller_count(void)
+{
+	return &tl_lock_caller_count;
+}
+
 void __tl_lock(void)
 {
 	int tid = __pthread_self()->tid;
 	if (tid == TID_ERROR_0 || tid == TID_ERROR_INIT) {
 		tl_lock_tid_fail = TID_ERROR_0;
 		tid = __syscall(SYS_gettid);
+	}
+	if ((thread_list_lock_pthread_exit == tid) &&
+	    (thread_list_lock_pthread_exit == __thread_list_lock)) {
+			thread_list_lock_tid_overlimit = __thread_list_lock;
 	}
 	int val = __thread_list_lock;
 	if (val == tid) {
@@ -170,6 +193,9 @@ void __tl_lock(void)
 	while ((val = a_cas(&__thread_list_lock, 0, tid)))
 		__wait(&__thread_list_lock, &tl_lock_waiters, val, 0);
 	thread_list_lock_after_lock = __thread_list_lock;
+	if (get_tl_lock_caller_count()) {
+		get_tl_lock_caller_count()->tl_lock_unlock_count++;
+	}
 }
 
 void __tl_unlock(void)
@@ -180,6 +206,9 @@ void __tl_unlock(void)
 		return;
 	}
 	thread_list_lock_pre_unlock = __thread_list_lock;
+	if (get_tl_lock_caller_count()) {
+		get_tl_lock_caller_count()->tl_lock_unlock_count--;
+	}
 	a_store(&__thread_list_lock, 0);
 	if (tl_lock_waiters) __wake(&__thread_list_lock, 1, 0);
 }
@@ -251,6 +280,9 @@ _Noreturn void __pthread_exit(void *result)
 	/* The thread list lock must be AS-safe, and thus depends on
 	 * application signals being blocked above. */
 	__tl_lock();
+	if (get_tl_lock_caller_count()) {
+		get_tl_lock_caller_count()->__pthread_exit_tl_lock++;
+	}
 
 #ifdef RESERVE_SIGNAL_STACK
 	__pthread_release_signal_stack();
@@ -259,6 +291,9 @@ _Noreturn void __pthread_exit(void *result)
 	 * termination of the thread, but restore the previous lock and
 	 * signal state to prepare for exit to call atexit handlers. */
 	if (self->next == self) {
+		if (get_tl_lock_caller_count()) {
+			get_tl_lock_caller_count()->__pthread_exit_tl_lock--;
+		}
 		__tl_unlock();
 		UNLOCK(self->killlock);
 		self->detach_state = state;
@@ -326,6 +361,15 @@ _Noreturn void __pthread_exit(void *result)
 
 		/* The following call unmaps the thread's stack mapping
 		 * and then exits without touching the stack. */
+		if(tl_lock_count != 0) {
+			tl_lock_count_fail = tl_lock_count;
+			tl_lock_count = 0;
+		}
+		thread_list_lock_pthread_exit = __thread_list_lock;
+		if (get_tl_lock_caller_count()) {
+			get_tl_lock_caller_count()->__pthread_exit_tl_lock--;
+			get_tl_lock_caller_count()->tl_lock_unlock_count--;
+		}
 		__unmapself(self->map_base, self->map_size);
 	}
 
@@ -343,6 +387,11 @@ _Noreturn void __pthread_exit(void *result)
 	if(tl_lock_count != 0) {
 		tl_lock_count_fail = tl_lock_count;
 		tl_lock_count = 0;
+	}
+	thread_list_lock_pthread_exit = __thread_list_lock;
+	if (get_tl_lock_caller_count()) {
+		get_tl_lock_caller_count()->__pthread_exit_tl_lock--;
+		get_tl_lock_caller_count()->tl_lock_unlock_count--;
 	}
 
 	for (;;) __syscall(SYS_exit, 0);
@@ -560,6 +609,9 @@ int __pthread_create(pthread_t *restrict res, const pthread_attr_t *restrict att
 		~(1UL<<((SIGCANCEL-1)%(8*sizeof(long))));
 
 	__tl_lock();
+	if (get_tl_lock_caller_count()) {
+		get_tl_lock_caller_count()->__pthread_create_tl_lock++;
+	}
 	if (!libc.threads_minus_1++) libc.need_locks = 1;
 	ret = __clone((c11 ? start_c11 : start), stack, flags, args, &new->tid, TP_ADJ(new), &__thread_list_lock);
 
@@ -587,6 +639,9 @@ int __pthread_create(pthread_t *restrict res, const pthread_attr_t *restrict att
 		new->prev->next = new;
 	} else {
 		if (!--libc.threads_minus_1) libc.need_locks = 0;
+	}
+	if (get_tl_lock_caller_count()) {
+		get_tl_lock_caller_count()->__pthread_create_tl_lock--;
 	}
 	__tl_unlock();
 	__restore_sigs(&set);
@@ -633,7 +688,13 @@ struct pthread* __pthread_list_find(pthread_t thread_id, const char* info)
 pid_t __pthread_gettid_np(pthread_t t)
 {
     __tl_lock();
+	if (get_tl_lock_caller_count()) {
+		get_tl_lock_caller_count()->__pthread_gettid_np_tl_lock++;
+	}
     struct pthread* thread = __pthread_list_find(t, "pthread_gettid_np");
+	if (get_tl_lock_caller_count()) {
+		get_tl_lock_caller_count()->__pthread_gettid_np_tl_lock--;
+	}
     __tl_unlock();
     return thread ? thread->tid : -1;
 }

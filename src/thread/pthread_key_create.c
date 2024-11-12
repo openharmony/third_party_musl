@@ -23,6 +23,13 @@ static void dummy_0(void)
 weak_alias(dummy_0, __tl_lock);
 weak_alias(dummy_0, __tl_unlock);
 
+static struct call_tl_lock *dummy_get_tl_lock_caller_count(void)
+{
+	return NULL;
+}
+
+weak_alias(dummy_get_tl_lock_caller_count, get_tl_lock_caller_count);
+
 void __pthread_key_atfork(int who)
 {
 	if (who<0) __pthread_rwlock_rdlock(&key_lock);
@@ -64,8 +71,14 @@ int __pthread_key_delete(pthread_key_t k)
 	__pthread_rwlock_wrlock(&key_lock);
 
 	__tl_lock();
+	if (get_tl_lock_caller_count()) {
+		get_tl_lock_caller_count()->__pthread_key_delete_tl_lock++;
+	}
 	do td->tsd[k] = 0;
 	while ((td=td->next)!=self);
+	if (get_tl_lock_caller_count()) {
+		get_tl_lock_caller_count()->__pthread_key_delete_tl_lock--;
+	}
 	__tl_unlock();
 
 	keys[k] = 0;
