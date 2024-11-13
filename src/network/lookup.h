@@ -45,7 +45,7 @@ struct service {
 	unsigned char proto, socktype;
 };
 
-#define MAXNS 3
+#define MAXNS 5
 
 struct resolvconf {
 	struct address ns[MAXNS];
