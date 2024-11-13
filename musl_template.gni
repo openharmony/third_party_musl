@@ -573,6 +573,39 @@ template("static_and_shared_libs_template") {
       ]
     }
   }
+
+  source_set("soft_musl_jemalloc_${target_name}") {
+    sources = [ "${musl_malloc_plugin}/src/static.c" ]
+
+    defines = []
+
+    deps = [
+      "//third_party/musl:create_alltypes_h",
+      "//third_party/musl:create_porting_src",
+      "//third_party/musl:create_syscall_h",
+      "//third_party/musl:create_version_h",
+      "//third_party/musl:musl_copy_inc_bits",
+      "//third_party/musl:musl_copy_inc_root",
+      "//third_party/musl:musl_copy_inc_sys",
+    ]
+
+    if (use_musl && !is_llvm_build) {
+      defines += [ "OHOS_ENABLE_PARAMETER" ]
+      if (__use_flto) {
+        external_deps = [ "init:parameterbase" ]
+      } else {
+        external_deps = [ "init:parameterbase_noflto" ]
+      }
+    }
+
+    if (musl_guard_jemalloc_tsd || is_asan || use_hwasan) {
+      defines += [ "GUARD_JEMALLOC_TSD" ]
+    }
+
+    configs -= musl_inherited_configs
+
+    configs += [ ":soft_jemalloc" ]
+  }
 }
 
 template("musl_libs") {
@@ -894,35 +927,6 @@ template("musl_libs") {
     deps = porting_deps
   }
 
-  source_set("soft_musl_jemalloc") {
-    sources = [ "${musl_malloc_plugin}/src/static.c" ]
-
-    defines = []
-
-    deps = [
-      "//third_party/musl:create_alltypes_h",
-      "//third_party/musl:create_porting_src",
-      "//third_party/musl:create_syscall_h",
-      "//third_party/musl:create_version_h",
-      "//third_party/musl:musl_copy_inc_bits",
-      "//third_party/musl:musl_copy_inc_root",
-      "//third_party/musl:musl_copy_inc_sys",
-    ]
-
-    if (use_musl && !is_llvm_build) {
-      defines += [ "OHOS_ENABLE_PARAMETER" ]
-      external_deps = [ "init:parameterbase" ]
-    }
-
-    if (musl_guard_jemalloc_tsd || is_asan || use_hwasan) {
-      defines += [ "GUARD_JEMALLOC_TSD" ]
-    }
-
-    configs -= musl_inherited_configs
-
-    configs += [ ":soft_jemalloc" ]
-  }
-
   source_set("soft_musl_src_ld128") {
     sources = []
     if (musl_arch == "x86_64") {
@@ -975,7 +979,7 @@ template("musl_libs") {
       external_deps += [ "init:parameterbase_noflto" ]
     }
     if (musl_use_jemalloc) {
-      deps += [ ":soft_musl_jemalloc" ]
+      deps += [ ":soft_musl_jemalloc_static" ]
     }
 
     if (musl_ld128_flag) {
@@ -1112,7 +1116,7 @@ template("musl_libs") {
     }
 
     if (musl_use_jemalloc) {
-      deps += [ ":soft_musl_jemalloc" ]
+      deps += [ ":soft_musl_jemalloc_shared" ]
     }
 
     if (musl_ld128_flag) {
