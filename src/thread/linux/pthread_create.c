@@ -687,6 +687,8 @@ struct pthread* __pthread_list_find(pthread_t thread_id, const char* info)
 
 pid_t __pthread_gettid_np(pthread_t t)
 {
+	sigset_t set;
+	__block_app_sigs(&set);
     __tl_lock();
 	if (get_tl_lock_caller_count()) {
 		get_tl_lock_caller_count()->__pthread_gettid_np_tl_lock++;
@@ -696,6 +698,7 @@ pid_t __pthread_gettid_np(pthread_t t)
 		get_tl_lock_caller_count()->__pthread_gettid_np_tl_lock--;
 	}
     __tl_unlock();
+	__restore_sigs(&set);
     return thread ? thread->tid : -1;
 }
 weak_alias(__pthread_gettid_np, pthread_gettid_np);
