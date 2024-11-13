@@ -9,7 +9,7 @@
 extern "C" {
 #endif
 
-#define MAXNS			3
+#define MAXNS			5
 #define MAXDFLSRCH		3
 #define MAXDNSRCH		6
 #define LOCALDOMAINPARTS	2
