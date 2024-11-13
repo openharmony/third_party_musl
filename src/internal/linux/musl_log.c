@@ -29,6 +29,7 @@
 static void (*g_dfxLogPtr)(char*, size_t);
 static void* g_dfxLibHandler = NULL;
 static pthread_mutex_t g_muslLogMutex = PTHREAD_MUTEX_INITIALIZER;
+extern bool g_dl_inited;
 
 int ohos_dfx_log(const char *str)
 {
@@ -36,6 +37,8 @@ int ohos_dfx_log(const char *str)
         g_dfxLogPtr(str, strlen(str));
         return 0;
     }
+    if (!g_dl_inited)
+        return 0;
 
     pthread_mutex_lock(&g_muslLogMutex);
     if (g_dfxLogPtr != NULL) {
