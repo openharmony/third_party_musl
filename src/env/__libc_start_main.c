@@ -7,11 +7,13 @@
 #include "atomic.h"
 #include "libc.h"
 #include "pthread_impl.h"
+#include <stdbool.h>
 
 static void dummy(void) {}
 weak_alias(dummy, _init);
 
 extern weak hidden void (*const __init_array_start)(void), (*const __init_array_end)(void);
+bool g_dl_inited = false;
 #ifdef __LITEOS_DEBUG__
 extern void parse_argv(int, char **);
 #endif
@@ -117,6 +119,7 @@ static int libc_start_main_stage2(int (*main)(int,char **,char **), int argc, ch
 	parse_argv(argc, argv);
 #endif
 
+	g_dl_inited = true;
 	/* Pass control to the application */
 	exit(main(argc, argv, envp));
 	return 0;
