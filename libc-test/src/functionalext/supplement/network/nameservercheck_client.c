@@ -37,7 +37,7 @@ struct address {
 	int sortkey;
 };
 
-#define MAXNS 5
+#define MAXNS 3
 #define TCP_FASTOPEN_CONNECT 30
 
 struct resolvconf {
