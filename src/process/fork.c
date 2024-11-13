@@ -45,6 +45,13 @@ static void dummy_0(void) { }
 weak_alias(dummy_0, __tl_lock);
 weak_alias(dummy_0, __tl_unlock);
 
+static struct call_tl_lock *dummy_get_tl_lock_caller_count(void)
+{
+	return NULL;
+}
+
+weak_alias(dummy_get_tl_lock_caller_count, get_tl_lock_caller_count);
+
 pid_t fork(void)
 {
 	sigset_t set;
@@ -60,6 +67,9 @@ pid_t fork(void)
 			if (*atfork_locks[i]) LOCK(*atfork_locks[i]);
 		__malloc_atfork(-1);
 		__tl_lock();
+		if (get_tl_lock_caller_count()) {
+			get_tl_lock_caller_count()->fork_tl_lock++;
+		}
 	}
 	pthread_t self=__pthread_self(), next=self->next;
 	pid_t ret = _Fork();
@@ -72,6 +82,9 @@ pid_t fork(void)
 				__vmlock_lockptr[0] = 0;
 				__vmlock_lockptr[1] = 0;
 			}
+		}
+		if (get_tl_lock_caller_count()) {
+			get_tl_lock_caller_count()->fork_tl_lock--;
 		}
 		__tl_unlock();
 		__malloc_atfork(!ret);
