@@ -26,7 +26,7 @@ __attribute__((noinline)) int func1(size_t *frame_buf, size_t max_record_stack, 
 {
     int res = 1;
     res += res;
-    *nums_frame = libc_gwp_asan_unwind_fast(frame_buf, max_record_stack, NULL);
+    *nums_frame = libc_gwp_asan_unwind_fast(frame_buf, max_record_stack);
     return res;
 }
 

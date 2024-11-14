@@ -21,8 +21,9 @@
 
 void invalid_free_left_handler()
 {
-    find_and_check_file(GWP_ASAN_LOG_DIR, GWP_ASAN_LOG_TAG, "Invalid (Wild) Free");
-    find_and_check_file(GWP_ASAN_LOG_DIR, GWP_ASAN_LOG_TAG, "1 byte to the left");
+    find_and_check_file(GWP_ASAN_LOG_DIR, GWP_ASAN_LOG_TAG, "Invalid (Wild) Free", false);
+    find_and_check_file(GWP_ASAN_LOG_DIR, GWP_ASAN_LOG_TAG, "1 byte to the left", false);
+    find_and_check_file(GWP_ASAN_LOG_DIR, GWP_ASAN_LOG_TAG, "#0.*?gwp_asan", true);
     clear_log(GWP_ASAN_LOG_DIR, GWP_ASAN_LOG_TAG);
     cancel_gwp_asan_environment(true);
     _exit(0);
