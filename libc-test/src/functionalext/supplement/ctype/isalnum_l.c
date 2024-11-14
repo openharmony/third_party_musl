@@ -492,7 +492,6 @@ void isalnum_l_1500(void)
     int ret = RET_FALSE;
     int i = 0;
     locale_t m_locale = newlocale(LC_ALL_MASK, "zh_CN", NULL);
-
     if (!m_locale) {
         t_printf("Test case %s failed to call function newlocale\n", __FUNCTION__);
         EXPECT_NE(__FUNCTION__, ret, RET_FALSE);
@@ -544,7 +543,6 @@ void isalnum_l_1600(void)
     int ret = RET_FALSE;
     int i = 0;
     locale_t m_locale = newlocale(LC_ALL_MASK, "zh_CN", NULL);
-
     if (!m_locale) {
         t_printf("Test case %s failed to call function newlocale\n", __FUNCTION__);
         EXPECT_NE(__FUNCTION__, ret, RET_FALSE);
@@ -852,7 +850,6 @@ void isalnum_l_2500(void)
     int ret = RET_FALSE;
     int i = 0;
     locale_t m_locale = newlocale(LC_ALL_MASK, "zh_CN.UTF-8", NULL);
-
     if (!m_locale) {
         t_printf("Test case %s failed to call function newlocale\n", __FUNCTION__);
         EXPECT_NE(__FUNCTION__, ret, RET_FALSE);
@@ -904,7 +901,6 @@ void isalnum_l_2600(void)
     int ret = RET_FALSE;
     int i = 0;
     locale_t m_locale = newlocale(LC_ALL_MASK, "zh_CN.UTF-8", NULL);
-
     if (!m_locale) {
         t_printf("Test case %s failed to call function newlocale\n", __FUNCTION__);
         EXPECT_NE(__FUNCTION__, ret, RET_FALSE);

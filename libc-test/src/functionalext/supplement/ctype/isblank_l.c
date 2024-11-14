@@ -35,16 +35,15 @@ void isblank_l_0100(void)
     int ret = RET_FALSE;
     const int arr[] = {'\t', ' '};
     locale_t m_locale = newlocale(LC_ALL_MASK, "en_US.UTF-8", NULL);
-
-    if(!m_locale) {
+    if (!m_locale) {
         t_printf("Test case %s failed to call function newlocale\n", __FUNCTION__);
         EXPECT_NE(__FUNCTION__, ret, RET_FALSE);
         return ;
     }
 
-    for(unsigned int i = 0; i < sizeof(arr)/sizeof(int); i++) {
+    for (unsigned int i = 0; i < sizeof(arr) / sizeof(int); i++) {
         ret = isblank_l(arr[i], m_locale);
-        if(!ret) {
+        if (!ret) {
             t_printf("Test case %s failed while testing character, index:%d\n", __FUNCTION__, i);
         }
         EXPECT_EQ(__FUNCTION__, ret, RET_TRUE);
@@ -67,16 +66,15 @@ void isblank_l_0200(void)
     const char *str = "\r\n\b\0\f";
     const char *p = str;
     locale_t m_locale = newlocale(LC_ALL_MASK, "en_US.UTF-8", NULL);
-
-    if(!m_locale) {
+    if (!m_locale) {
         t_printf("Test case %s failed to call function newlocale\n", __FUNCTION__);
         EXPECT_NE(__FUNCTION__, ret, RET_FALSE);
         return ;
     }
 
-    while(*p && *p != '\0') {
+    while (*p && *p != '\0') {
         ret = isblank_l(*p, m_locale);
-        if(ret) {
+        if (ret) {
             t_printf("Test case %s failed while testing character %c\n", __FUNCTION__, *p);
         }
         EXPECT_EQ(__FUNCTION__, ret, RET_FALSE);
@@ -89,7 +87,7 @@ void isblank_l_0200(void)
 
 /**
  * @tc.name      : isblank_l_0300
- * @tc.desc      : Verify isblank_l process fail when using the en_US.UTF-8 character set 
+ * @tc.desc      : Verify isblank_l process fail when using the en_US.UTF-8 character set
  *                 When the parameter c is an English letter,
  *                 and it is judged that the input character is not a space.
  * @tc.level     : Level 2
@@ -100,16 +98,15 @@ void isblank_l_0300(void)
     const char *str = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
     const char *p = str;
     locale_t m_locale = newlocale(LC_ALL_MASK, "en_US.UTF-8", NULL);
-
-    if(!m_locale) {
+    if (!m_locale) {
         t_printf("Test case %s failed to call function newlocale\n", __FUNCTION__);
         EXPECT_NE(__FUNCTION__, ret, RET_FALSE);
         return ;
     }
 
-    while(*p && *p != '\0') {
+    while (*p && *p != '\0') {
         ret = isblank_l(*p, m_locale);
-        if(ret) {
+        if (ret) {
             t_printf("Test case %s failed while testing character %c\n", __FUNCTION__, *p);
         }
         EXPECT_EQ(__FUNCTION__, ret, RET_FALSE);
@@ -133,16 +130,15 @@ void isblank_l_0400(void)
     const char *str = "1234567890";
     const char *p = str;
     locale_t m_locale = newlocale(LC_ALL_MASK, "en_US.UTF-8", NULL);
-
-    if(!m_locale) {
+    if (!m_locale) {
         t_printf("Test case %s failed to call function newlocale\n", __FUNCTION__);
         EXPECT_NE(__FUNCTION__, ret, RET_FALSE);
         return ;
     }
 
-    while(*p && *p != '\0') {
+    while (*p && *p != '\0') {
         ret = isblank_l(*p, m_locale);
-        if(ret) {
+        if (ret) {
             t_printf("Test case %s failed while testing character %c\n", __FUNCTION__, *p);
         }
         EXPECT_EQ(__FUNCTION__, ret, RET_FALSE);
@@ -166,16 +162,15 @@ void isblank_l_0500(void)
     const char *str = "!@#$%^()+{}[]";
     const char *p = str;
     locale_t m_locale = newlocale(LC_ALL_MASK, "en_US.UTF-8", NULL);
-
-    if(!m_locale) {
+    if (!m_locale) {
         t_printf("Test case %s failed to call function newlocale\n", __FUNCTION__);
         EXPECT_NE(__FUNCTION__, ret, RET_FALSE);
         return ;
     }
 
-    while(*p && *p != '\0') {
+    while (*p && *p != '\0') {
         ret = isblank_l(*p, m_locale);
-        if(ret) {
+        if (ret) {
             t_printf("Test case %s failed while testing character %c\n", __FUNCTION__, *p);
         }
         EXPECT_EQ(__FUNCTION__, ret, RET_FALSE);
@@ -197,8 +192,7 @@ void isblank_l_0600(void)
     int ret = RET_FALSE;
     int total = 0;
     locale_t m_locale = newlocale(LC_ALL_MASK, "en_US.UTF-8", NULL);
-
-    if(!m_locale) {
+    if (!m_locale) {
         t_printf("Test case %s failed to call function newlocale\n", __FUNCTION__);
         EXPECT_NE(__FUNCTION__, ret, RET_FALSE);
         return ;
@@ -229,16 +223,15 @@ void isblank_l_0700(void)
     int ret = RET_FALSE;
     const wchar_t arr[] = {L'\t', L' '};
     locale_t m_locale = newlocale(LC_ALL_MASK, "en_US.UTF-8", NULL);
-
-    if(!m_locale) {
+    if (!m_locale) {
         t_printf("Test case %s failed to call function newlocale\n", __FUNCTION__);
         EXPECT_NE(__FUNCTION__, ret, RET_FALSE);
         return ;
     }
 
-    for(unsigned int i = 0; i < sizeof(arr)/sizeof(wchar_t); i++) {
+    for (unsigned int i = 0; i < sizeof(arr) / sizeof(wchar_t); i++) {
         ret = isblank_l(arr[i], m_locale);
-        if(!ret) {
+        if (!ret) {
             t_printf("Test case %s failed while testing character, index:%d\n", __FUNCTION__, i);
         }
         EXPECT_EQ(__FUNCTION__, ret, RET_TRUE);
@@ -261,16 +254,15 @@ void isblank_l_0800(void)
     const wchar_t *str = L"\r\n\b\0\f";
     const wchar_t *p = str;
     locale_t m_locale = newlocale(LC_ALL_MASK, "en_US.UTF-8", NULL);
-
-    if(!m_locale) {
+    if (!m_locale) {
         t_printf("Test case %s failed to call function newlocale\n", __FUNCTION__);
         EXPECT_NE(__FUNCTION__, ret, RET_FALSE);
         return ;
     }
 
-    while(*p && *p != L'\0') {
+    while (*p && *p != L'\0') {
         ret = isblank_l(*p, m_locale);
-        if(ret) {
+        if (ret) {
             t_printf("Test case %s failed while testing character %c\n", __FUNCTION__, *p);
         }
         EXPECT_EQ(__FUNCTION__, ret, RET_FALSE);
@@ -283,7 +275,7 @@ void isblank_l_0800(void)
 
 /**
  * @tc.name      : isblank_l_0900
- * @tc.desc      : Verify isblank_l process fail when using the en_US.UTF-8 character set 
+ * @tc.desc      : Verify isblank_l process fail when using the en_US.UTF-8 character set
  *                 When the parameter c is a wide char English letter,
  *                 and it is judged that the input wide character is not a space.
  * @tc.level     : Level 2
@@ -294,16 +286,15 @@ void isblank_l_0900(void)
     const wchar_t *str = L"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
     const wchar_t *p = str;
     locale_t m_locale = newlocale(LC_ALL_MASK, "en_US.UTF-8", NULL);
-
-    if(!m_locale) {
+    if (!m_locale) {
         t_printf("Test case %s failed to call function newlocale\n", __FUNCTION__);
         EXPECT_NE(__FUNCTION__, ret, RET_FALSE);
         return ;
     }
 
-    while(*p && *p != L'\0') {
+    while (*p && *p != L'\0') {
         ret = isblank_l(*p, m_locale);
-        if(ret) {
+        if (ret) {
             t_printf("Test case %s failed while testing character %c\n", __FUNCTION__, *p);
         }
         EXPECT_EQ(__FUNCTION__, ret, RET_FALSE);
@@ -327,16 +318,15 @@ void isblank_l_1000(void)
     const wchar_t *str = L"1234567890";
     const wchar_t *p = str;
     locale_t m_locale = newlocale(LC_ALL_MASK, "en_US.UTF-8", NULL);
-
-    if(!m_locale) {
+    if (!m_locale) {
         t_printf("Test case %s failed to call function newlocale\n", __FUNCTION__);
         EXPECT_NE(__FUNCTION__, ret, RET_FALSE);
         return ;
     }
 
-    while(*p && *p != L'\0') {
+    while (*p && *p != L'\0') {
         ret = isblank_l(*p, m_locale);
-        if(ret) {
+        if (ret) {
             t_printf("Test case %s failed while testing character %c\n", __FUNCTION__, *p);
         }
         EXPECT_EQ(__FUNCTION__, ret, RET_FALSE);
@@ -360,16 +350,15 @@ void isblank_l_1100(void)
     const wchar_t *str = L"!@#$%^()+{}[]";
     const wchar_t *p = str;
     locale_t m_locale = newlocale(LC_ALL_MASK, "en_US.UTF-8", NULL);
-
-    if(!m_locale) {
+    if (!m_locale) {
         t_printf("Test case %s failed to call function newlocale\n", __FUNCTION__);
         EXPECT_NE(__FUNCTION__, ret, RET_FALSE);
         return ;
     }
 
-    while(*p && *p != L'\0') {
+    while (*p && *p != L'\0') {
         ret = isblank_l(*p, m_locale);
-        if(ret) {
+        if (ret) {
             t_printf("Test case %s failed while testing character %c\n", __FUNCTION__, *p);
         }
         EXPECT_EQ(__FUNCTION__, ret, RET_FALSE);
@@ -392,16 +381,15 @@ void isblank_l_1200(void)
     int ret = RET_FALSE;
     const int arr[] = {'\t', ' '};
     locale_t m_locale = newlocale(LC_ALL_MASK, "zh_CN", NULL);
-
-    if(!m_locale) {
+    if (!m_locale) {
         t_printf("Test case %s failed to call function newlocale\n", __FUNCTION__);
         EXPECT_NE(__FUNCTION__, ret, RET_FALSE);
         return ;
     }
 
-    for(unsigned int i = 0; i < sizeof(arr)/sizeof(int); i++) {
+    for (unsigned int i = 0; i < sizeof(arr) / sizeof(int); i++) {
         ret = isblank_l(arr[i], m_locale);
-        if(!ret) {
+        if (!ret) {
             t_printf("Test case %s failed while testing character, index:%d\n", __FUNCTION__, i);
         }
         EXPECT_EQ(__FUNCTION__, ret, RET_TRUE);
@@ -424,16 +412,15 @@ void isblank_l_1300(void)
     const char *str = "\r\n\b\0\f";
     const char *p = str;
     locale_t m_locale = newlocale(LC_ALL_MASK, "zh_CN", NULL);
-
-    if(!m_locale) {
+    if (!m_locale) {
         t_printf("Test case %s failed to call function newlocale\n", __FUNCTION__);
         EXPECT_NE(__FUNCTION__, ret, RET_FALSE);
         return ;
     }
 
-    while(*p && *p != '\0') {
+    while (*p && *p != '\0') {
         ret = isblank_l(*p, m_locale);
-        if(ret) {
+        if (ret) {
             t_printf("Test case %s failed while testing character %c\n", __FUNCTION__, *p);
         }
         EXPECT_EQ(__FUNCTION__, ret, RET_FALSE);
@@ -446,7 +433,7 @@ void isblank_l_1300(void)
 
 /**
  * @tc.name      : isblank_l_1400
- * @tc.desc      : Verify isblank_l process fail when using the zh_CN character set 
+ * @tc.desc      : Verify isblank_l process fail when using the zh_CN character set
  *                 When the parameter c is an English letter,
  *                 and it is judged that the input character is not a space.
  * @tc.level     : Level 2
@@ -457,16 +444,15 @@ void isblank_l_1400(void)
     const char *str = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
     const char *p = str;
     locale_t m_locale = newlocale(LC_ALL_MASK, "zh_CN", NULL);
-
-    if(!m_locale) {
+    if (!m_locale) {
         t_printf("Test case %s failed to call function newlocale\n", __FUNCTION__);
         EXPECT_NE(__FUNCTION__, ret, RET_FALSE);
         return ;
     }
 
-    while(*p && *p != '\0') {
+    while (*p && *p != '\0') {
         ret = isblank_l(*p, m_locale);
-        if(ret) {
+        if (ret) {
             t_printf("Test case %s failed while testing character %c\n", __FUNCTION__, *p);
         }
         EXPECT_EQ(__FUNCTION__, ret, RET_FALSE);
@@ -490,16 +476,15 @@ void isblank_l_1500(void)
     const char *str = "1234567890";
     const char *p = str;
     locale_t m_locale = newlocale(LC_ALL_MASK, "zh_CN", NULL);
-
-    if(!m_locale) {
+    if (!m_locale) {
         t_printf("Test case %s failed to call function newlocale\n", __FUNCTION__);
         EXPECT_NE(__FUNCTION__, ret, RET_FALSE);
         return ;
     }
 
-    while(*p && *p != '\0') {
+    while (*p && *p != '\0') {
         ret = isblank_l(*p, m_locale);
-        if(ret) {
+        if (ret) {
             t_printf("Test case %s failed while testing character %c\n", __FUNCTION__, *p);
         }
         EXPECT_EQ(__FUNCTION__, ret, RET_FALSE);
@@ -523,16 +508,15 @@ void isblank_l_1600(void)
     const char *str = "!@#$%^()+{}[]";
     const char *p = str;
     locale_t m_locale = newlocale(LC_ALL_MASK, "zh_CN", NULL);
-
-    if(!m_locale) {
+    if (!m_locale) {
         t_printf("Test case %s failed to call function newlocale\n", __FUNCTION__);
         EXPECT_NE(__FUNCTION__, ret, RET_FALSE);
         return ;
     }
 
-    while(*p && *p != '\0') {
+    while (*p && *p != '\0') {
         ret = isblank_l(*p, m_locale);
-        if(ret) {
+        if (ret) {
             t_printf("Test case %s failed while testing character %c\n", __FUNCTION__, *p);
         }
         EXPECT_EQ(__FUNCTION__, ret, RET_FALSE);
@@ -554,8 +538,7 @@ void isblank_l_1700(void)
     int ret = RET_FALSE;
     int total = 0;
     locale_t m_locale = newlocale(LC_ALL_MASK, "zh_CN", NULL);
-
-    if(!m_locale) {
+    if (!m_locale) {
         t_printf("Test case %s failed to call function newlocale\n", __FUNCTION__);
         EXPECT_NE(__FUNCTION__, ret, RET_FALSE);
         return ;

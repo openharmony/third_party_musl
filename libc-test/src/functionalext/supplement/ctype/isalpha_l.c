@@ -57,8 +57,6 @@ void isalpha_l_0100(void)
     m_locale = NULL;
 }
 
-
-
 /**
  * @tc.name      : isalpha_l_0200
  * @tc.desc      : Verify isalpha_l process fail when using the en_US.UTF-8 character set.
@@ -507,7 +505,6 @@ void isalpha_l_1500(void)
     int ret = RET_FALSE;
     int i = 0;
     locale_t m_locale = newlocale(LC_ALL_MASK, "zh_CN", NULL);
-
     if (!m_locale) {
         t_printf("Test case %s failed to call function newlocale\n", __FUNCTION__);
         EXPECT_NE(__FUNCTION__, ret, RET_FALSE);
