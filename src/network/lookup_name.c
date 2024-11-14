@@ -106,7 +106,7 @@ static int name_from_hosts(struct address buf[static MAXADDRS], char canon[stati
 		case 0:
 			continue;
 		default:
-			badfam = EAI_NONAME;
+			badfam = DNS_FAIL_REASON_PARAM_INVALID;
 			break;
 		}
 
@@ -233,7 +233,7 @@ static int name_from_dns(struct address buf[static MAXADDRS], char canon[static 
 #ifndef __LITEOS__
 			MUSL_LOGE("%{public}s: %{public}d: Network scenario mismatch: %{public}d", __func__, __LINE__, EAI_SYSTEM);
 #endif
-			return EAI_SYSTEM;
+			return DNS_FAIL_REASON_LACK_V6_SUPPORT;
 		}
 		queryNum = 1;
 		afrr = afrr_ipv4_only;
@@ -266,8 +266,8 @@ static int name_from_dns(struct address buf[static MAXADDRS], char canon[static 
 			}
 		}
 
-		if (res_msend_rc_ext(netid, nq, qp, qlens, ap, alens, sizeof *abuf, conf) < 0)
-			return EAI_SYSTEM;
+		int res = res_msend_rc_ext(netid, nq, qp, qlens, ap, alens, sizeof *abuf, conf, &dns_errno);
+		if (res < 0) return res;
 
 		for (i=0; i<nq; i++) {
 			checkBuf[i] = IsAnswerValid(abuf[i], alens[i]);
@@ -278,7 +278,20 @@ static int name_from_dns(struct address buf[static MAXADDRS], char canon[static 
 			MUSL_LOGE("%{public}s: %{public}d: Illegal answers, errno id: %{public}d",
 				__func__, __LINE__, checkBuf[MIN_ANSWER_TYPE - 1]);
 #endif
-			return checkBuf[MIN_ANSWER_TYPE - 1];
+			int res = checkBuf[MIN_ANSWER_TYPE - 1];
+			if (res != EAI_AGAIN) return res;
+			switch (dns_errno) {
+				case 0:
+					return DNS_FAIL_REASON_SERVER_NO_RESULT;
+                case ENETUNREACH:
+					return DNS_FAIL_REASON_ROUTE_CONFIG_ERR;
+				case EPERM:
+					return DNS_FAIL_REASON_FIREWALL_INTERCEPTION;
+				case FALLBACK_TCP_QUERY:
+					return DNS_FAIL_REASON_TCP_QUERY_FAILED;
+				default:
+					return DNS_FAIL_REASON_CORE_ERRNO_BASE - dns_errno;
+            }
 		}
 
 		for (i=nq-1; i>=0; i--) {
@@ -293,7 +306,7 @@ static int name_from_dns(struct address buf[static MAXADDRS], char canon[static 
 #ifndef __LITEOS__
 	MUSL_LOGE("%{public}s: %{public}d: failed to parse dns : %{public}d", __func__, __LINE__, cname_count);
 #endif
-	return EAI_NONAME;
+	return DNS_FAIL_REASON_FAIL_TO_PARSE_DNS;
 }
 
 static int name_from_dns_search(struct address buf[static MAXADDRS], char canon[static 256], const char *name, int family, int netid)
@@ -314,7 +327,7 @@ static int name_from_dns_search(struct address buf[static MAXADDRS], char canon[
 	char *p, *z;
 
 	int res = get_resolv_conf_ext(&conf, search, sizeof search, netid);
-	if (res < 0) return res;
+	if (res < 0) return DNS_FAIL_REASON_GET_RESOLV_CONF_FAILED;
 
 	/* Count dots, suppress search when >=ndots or name ends in
 	 * a dot, which is an explicit request for global scope. */
@@ -327,11 +340,11 @@ static int name_from_dns_search(struct address buf[static MAXADDRS], char canon[
 #ifndef __LITEOS__
 		MUSL_LOGE("%{public}s: %{public}d: fail when multiple trailing dots: %{public}d", __func__, __LINE__, EAI_NONAME);
 #endif
-		return EAI_NONAME;
+		return DNS_FAIL_REASON_HOST_NAME_ILLEGAL;
 	}
 
 	/* This can never happen; the caller already checked length. */
-	if (l >= 256) return EAI_NONAME;
+	if (l >= 256) return DNS_FAIL_REASON_HOST_NAME_ILLEGAL;
 
 	/* Name with search domain appended is setup in canon[]. This both
 	 * provides the desired default canonical name (if the requested
@@ -447,7 +460,7 @@ int lookup_name_ext(struct address buf[static MAXADDRS], char canon[static 256],
 #ifndef __LITEOS__
 			MUSL_LOGE("%{public}s: %{public}d: Illegal name length: %{public}zu", __func__, __LINE__, l);
 #endif
-			return EAI_NONAME;
+			return DNS_FAIL_REASON_HOST_NAME_ILLEGAL;
 		}
 		memcpy(canon, name, l+1);
 	}
@@ -468,12 +481,15 @@ int lookup_name_ext(struct address buf[static MAXADDRS], char canon[static 256],
 		MUSL_LOGE("%{public}s: %{public}d: flag is AI_NUMERICHOST but host is Illegal", __func__, __LINE__);
 	}
 #endif
+	if (cnt < 0) {
+		cnt = DNS_FAIL_REASON_PARAM_INVALID;
+	}
 	if (!cnt && !(flags & AI_NUMERICHOST)) {
 		cnt = predefined_host_name_from_hosts(buf, canon, name, family);
 		if (!cnt) cnt = name_from_hosts(buf, canon, name, family);
 		if (!cnt) cnt = name_from_dns_search(buf, canon, name, family, netid);
 	}
-	if (cnt<=0) return cnt ? cnt : EAI_NONAME;
+	if (cnt<=0) return cnt ? cnt : DNS_FAIL_REASON_SERVER_NO_SUCH_NAME;
 
 	/* Filter/transform results for v4-mapped lookup, if requested. */
 	if (flags & AI_V4MAPPED) {
