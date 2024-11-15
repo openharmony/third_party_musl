@@ -17,6 +17,13 @@ static void dummy(void *p)
 {
 }
 
+static struct call_tl_lock *dummy_get_tl_lock_caller_count(void)
+{
+	return NULL;
+}
+
+weak_alias(dummy_get_tl_lock_caller_count, get_tl_lock_caller_count);
+
 static void handler(int sig)
 {
 	if (__pthread_self()->tid != target_tid) return;
@@ -57,6 +64,9 @@ void __synccall(void (*func)(void *), void *ctx)
 	 * with the lock already held. */
 	__block_app_sigs(&oldmask);
 	__tl_lock();
+	if (get_tl_lock_caller_count()) {
+		get_tl_lock_caller_count()->__synccall_tl_lock++;
+	}
 	__block_all_sigs(0);
 	pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &cs);
 
@@ -115,6 +125,9 @@ single_threaded:
 	sem_destroy(&target_sem);
 
 	pthread_setcancelstate(cs, 0);
+	if (get_tl_lock_caller_count()) {
+		get_tl_lock_caller_count()->__synccall_tl_lock--;
+	}
 	__tl_unlock();
 	__restore_sigs(&oldmask);
 }

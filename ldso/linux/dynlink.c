@@ -2957,6 +2957,9 @@ static void install_new_tls(void)
 
 	__block_app_sigs(&set);
 	__tl_lock();
+	if (get_tl_lock_caller_count()) {
+		get_tl_lock_caller_count()->install_new_tls_tl_lock++;
+	}
 	/* Copy existing dtv contents from all existing threads. */
 	for (i=0, td=self; !i || td!=self; i++, td=td->next) {
 		memcpy(newdtv+i, td->dtv,
@@ -2991,6 +2994,9 @@ static void install_new_tls(void)
 		td->dtv = newdtv[j];
 	}
 
+	if (get_tl_lock_caller_count()) {
+		get_tl_lock_caller_count()->install_new_tls_tl_lock--;
+	}
 	__tl_unlock();
 	__restore_sigs(&set);
 }
