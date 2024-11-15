@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include "libc.h"
+#include <stdbool.h>
 #ifdef __LITEOS_A__
 #include <signal.h>
 #include <atomic.h>
@@ -8,7 +9,6 @@
 #include "syscall.h"
 #include <bits/errno.h>
 #ifdef __LITEOS_DEBUG__
-#include <stdbool.h>
 #include <debug.h>
 extern bool g_enable_check;
 extern void mem_check_deinit(void);
@@ -17,6 +17,7 @@ extern void clean_recycle_list(bool clean_all);
 
 pthread_mutex_t __exit_mutex = PTHREAD_MUTEX_INITIALIZER;
 #endif
+bool g_global_destroyed = false;
 static void dummy()
 {
 }
@@ -70,6 +71,7 @@ _Noreturn void exit(int code)
 	__cxa_thread_finalize();
 #endif
 	__funcs_on_exit();
+	g_global_destroyed = true;
 	__libc_exit_fini();
 	__stdio_exit();
 	_Exit(code);
