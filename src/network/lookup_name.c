@@ -218,6 +218,7 @@ static int name_from_dns(struct address buf[static MAXADDRS], char canon[static 
 	unsigned char *ap[2] = { abuf[0], abuf[1] };
 	int qlens[2], alens[2], qtypes[2];
 	int queryNum = 2;
+	int dns_errno = 0;
 	struct dpc_ctx ctx = { .addrs = buf, .canon = canon };
 	static const struct { int af; int rr; } afrr_ipv6_enable[2] = {
 		{ .af = AF_INET, .rr = RR_AAAA },
