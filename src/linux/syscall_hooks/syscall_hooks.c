@@ -55,6 +55,9 @@ int set_syscall_hooks(const char *hooks_table, int table_len, void *hooks_entry,
 
 	if (ret == 0) {
 		__tl_lock();
+		if (get_tl_lock_caller_count()) {
+			get_tl_lock_caller_count()->set_syscall_hooks_tl_lock++;
+		}
 		if (!libc.threads_minus_1) {
 			if (reset) {
 				g_syscall_hooks_entry = NULL;
@@ -66,6 +69,9 @@ int set_syscall_hooks(const char *hooks_table, int table_len, void *hooks_entry,
 			*tid_addr = &__thread_list_lock;
 		} else {
 			ret = -EPERM;
+		}
+		if (get_tl_lock_caller_count()) {
+			get_tl_lock_caller_count()->set_syscall_hooks_tl_lock--;
 		}
 		__tl_unlock();
 	}

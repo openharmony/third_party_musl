@@ -12,6 +12,13 @@ static void dummy_0(void)
 weak_alias(dummy_0, __tl_lock);
 weak_alias(dummy_0, __tl_unlock);
 
+static struct call_tl_lock *dummy_get_tl_lock_caller_count(void)
+{
+	return NULL;
+}
+
+weak_alias(dummy_get_tl_lock_caller_count, get_tl_lock_caller_count);
+
 static sem_t barrier_sem;
 
 static void bcast_barrier(int s)
@@ -33,6 +40,9 @@ int __membarrier(int cmd, int flags)
 		sigset_t set;
 		__block_app_sigs(&set);
 		__tl_lock();
+		if (get_tl_lock_caller_count()) {
+			get_tl_lock_caller_count()->__membarrier_tl_lock++;
+		}
 		sem_init(&barrier_sem, 0, 0);
 		struct sigaction sa = {
 			.sa_flags = SA_RESTART | SA_ONSTACK,
@@ -49,6 +59,9 @@ int __membarrier(int cmd, int flags)
 			__libc_sigaction(SIGSYNCCALL, &sa, 0);
 		}
 		sem_destroy(&barrier_sem);
+		if (get_tl_lock_caller_count()) {
+			get_tl_lock_caller_count()->__membarrier_tl_lock--;
+		}
 		__tl_unlock();
 		__restore_sigs(&set);
 	}
