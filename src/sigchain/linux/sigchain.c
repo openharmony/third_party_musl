@@ -182,20 +182,54 @@ static void signal_chain_handler(int signo, siginfo_t* siginfo, void* ucontext_r
                 thread_list_lock_status = __thread_list_lock;
 #endif
             }
-            // modify style: move `thread_list_lock_status` from `if` internal branch to outer branch.
-            // Avoid performance degradation
+              /**
+              * modify style: move `thread_list_lock_status` from `if`
+              * internal branch to outer branch.
+              * void performance degradation
+              */
+            struct call_tl_lock *call_tl_lock_dump;
+            struct call_tl_lock call_tl_lock_stub = { -1 };
+            if (get_tl_lock_caller_count()) {
+                call_tl_lock_dump = get_tl_lock_caller_count();
+            } else {
+                call_tl_lock_dump = &call_tl_lock_stub;
+            }
             SIGCHAIN_PRINT_ERROR("%{public}s call %{public}d rd sigchain action for signal: %{public}d"
                 " sca_sigaction=%{public}llx noreturn=%{public}d "
                 "FREEZE_signo_%{public}d thread_list_lock_status:%{public}d "
                 "tl_lock_count=%{public}d tl_lock_waiters=%{public}d "
                 "tl_lock_tid_fail=%{public}d tl_lock_count_tid=%{public}d "
                 "tl_lock_count_fail=%{public}d tl_lock_count_tid_sub=%{public}d "
-                "thread_list_lock_after_lock=%{public}d thread_list_lock_pre_unlock=%{public}d ",
+                "thread_list_lock_after_lock=%{public}d thread_list_lock_pre_unlock=%{public}d "
+                "thread_list_lock_pthread_exit=%{public}d thread_list_lock_tid_overlimit=%{public}d "
+                "tl_lock_unlock_count=%{public}d "
+                "__pthread_gettid_np_tl_lock=%{public}d "
+                "__pthread_exit_tl_lock=%{public}d "
+                "__pthread_create_tl_lock=%{public}d "
+                "__pthread_key_delete_tl_lock=%{public}d "
+                "__synccall_tl_lock=%{public}d "
+                "__membarrier_tl_lock=%{public}d "
+                "install_new_tls_tl_lock=%{public}d "
+                "set_syscall_hooks_tl_lock=%{public}d "
+                "set_syscall_hooks_linux_tl_lock=%{public}d "
+                "fork_tl_lock=%{public}d ",
                 __func__, idx, signo, (unsigned long long)sig_chains[signo - 1].sca_special_actions[idx].sca_sigaction,
                 noreturn, signo, thread_list_lock_status,
                 get_tl_lock_count(), get_tl_lock_waiters(), get_tl_lock_tid_fail(), get_tl_lock_count_tid(),
                 get_tl_lock_count_fail(), get_tl_lock_count_tid_sub(),
-                get_thread_list_lock_after_lock(), get_thread_list_lock_pre_unlock());
+                get_thread_list_lock_after_lock(), get_thread_list_lock_pre_unlock(),
+                get_thread_list_lock_pthread_exit(), get_thread_list_lock_tid_overlimit(),
+                call_tl_lock_dump->tl_lock_unlock_count,
+                call_tl_lock_dump->__pthread_gettid_np_tl_lock,
+                call_tl_lock_dump->__pthread_exit_tl_lock,
+                call_tl_lock_dump->__pthread_create_tl_lock,
+                call_tl_lock_dump->__pthread_key_delete_tl_lock,
+                call_tl_lock_dump->__synccall_tl_lock,
+                call_tl_lock_dump->__membarrier_tl_lock,
+                call_tl_lock_dump->install_new_tls_tl_lock,
+                call_tl_lock_dump->set_syscall_hooks_tl_lock,
+                call_tl_lock_dump->set_syscall_hooks_linux_tl_lock,
+                call_tl_lock_dump->fork_tl_lock);
             if (sig_chains[signo - 1].sca_special_actions[idx].sca_sigaction(signo,
                                                             siginfo, ucontext_raw)) {
                 set_handling_signal(previous_value);
@@ -224,7 +258,8 @@ static void signal_chain_handler(int signo, siginfo_t* siginfo, void* ucontext_r
     sigchain_sigmask(SIG_SETMASK, &mask, NULL);
 
     if ((sa_flags & SA_SIGINFO)) {
-        SIGCHAIN_PRINT_ERROR("%{public}s call usr sigaction for signal: %{public}d sig_action.sa_sigaction=%{public}llx", __func__, signo, sig_chains[signo - 1].sig_action.sa_sigaction);
+        SIGCHAIN_PRINT_ERROR("%{public}s call usr sigaction for signal: %{public}d sig_action.sa_sigaction=%{public}llx",
+            __func__, signo, (unsigned long long)sig_chains[signo - 1].sig_action.sa_sigaction);
         sig_chains[signo - 1].sig_action.sa_sigaction(signo, siginfo, ucontext_raw);
     } else {
         if (sig_chains[signo - 1].sig_action.sa_handler == SIG_IGN) {
