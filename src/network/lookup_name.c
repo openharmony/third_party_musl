@@ -279,8 +279,8 @@ static int name_from_dns(struct address buf[static MAXADDRS], char canon[static 
 			MUSL_LOGE("%{public}s: %{public}d: Illegal answers, errno id: %{public}d",
 				__func__, __LINE__, checkBuf[MIN_ANSWER_TYPE - 1]);
 #endif
-			int res = checkBuf[MIN_ANSWER_TYPE - 1];
-			if (res != EAI_AGAIN) return res;
+			int ret = checkBuf[MIN_ANSWER_TYPE - 1];
+			if (ret != EAI_AGAIN) return ret;
 			switch (dns_errno) {
 				case 0:
 					return DNS_FAIL_REASON_SERVER_NO_RESULT;
@@ -479,6 +479,7 @@ int lookup_name_ext(struct address buf[static MAXADDRS], char canon[static 256],
 	if (!cnt) cnt = name_from_numeric(buf, name, family);
 #ifndef __LITEOS__
 	if (!cnt && (flags & AI_NUMERICHOST)) {
+		cnt = DNS_FAIL_REASON_PARAM_INVALID;
 		MUSL_LOGE("%{public}s: %{public}d: flag is AI_NUMERICHOST but host is Illegal", __func__, __LINE__);
 	}
 #endif
