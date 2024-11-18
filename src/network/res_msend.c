@@ -152,6 +152,10 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 	if (fd < 0 && family == AF_INET6 && errno == EAFNOSUPPORT) {
 		for (i=0; i<nns && conf->ns[nns].family == AF_INET6; i++);
 		if (i==nns) {
+#ifndef __LITEOS__
+			MUSL_LOGE("%{public}s: %{public}d: system lacks IPv6 support: %{public}d",
+				__func__, __LINE__, errno);
+#endif
 			pthread_setcancelstate(cs, 0);
 			return -1;
 		}
@@ -186,6 +190,10 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 
 	sa.sin.sin_family = family;
 	if (fd < 0 || bind(fd, (void *)&sa, sl) < 0) {
+#ifndef __LITEOS__
+		MUSL_LOGE("%{public}s: %{public}d: AF_INET fd failed or bind failed, fd: %{public}d, errno: %{public}d",
+			__func__, __LINE__, fd, errno);
+#endif
 		if (fd >= 0) close(fd);
 		pthread_setcancelstate(cs, 0);
 		return -1;
