@@ -1,5 +1,15 @@
 #include "pthread_impl.h"
 
+// Set a recursive lock to init status, memory is "01 00 ... 00"
+void __pthread_mutex_unlock_recursive_inner(pthread_mutex_t *m)
+{
+	char *p = (char *)m;
+	for (size_t i = 0;i < sizeof(pthread_mutex_t);i++) {
+		*(p + i) = 0;
+	}
+	m->_m_type = PTHREAD_MUTEX_RECURSIVE; // Set recursive flag
+}
+
 int __pthread_mutex_unlock(pthread_mutex_t *m)
 {
 	pthread_t self;
