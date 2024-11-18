@@ -54,6 +54,8 @@ int set_syscall_hooks(const char *hooks_table, int table_len, void *hooks_entry,
 	}
 
 	if (ret == 0) {
+		sigset_t set;
+		__block_app_sigs(&set);
 		__tl_lock();
 
 		if (get_tl_lock_caller_count()) {
@@ -75,6 +77,7 @@ int set_syscall_hooks(const char *hooks_table, int table_len, void *hooks_entry,
 			get_tl_lock_caller_count()->set_syscall_hooks_linux_tl_lock--;
 		}
 		__tl_unlock();
+		__restore_sigs(&set);
 	}
 
 	return ret;
