@@ -15,6 +15,9 @@
 #define DNS_QUERY_SUCCESS 0
 #define DNS_QUERY_COMMOM_FAIL (-1)
 #define GETADDRINFO_PRINT_DEBUG(...)
+#define DNS_FAIL_REASON2_ROUND 99
+#define DNS_FAIL_REASON3_ROUND 299
+#define DNS_FAIL_REASON11_ROUND 99
 
 int reportdnsresult(int netid, char* name, int usedtime, int queryret, struct addrinfo *res, struct queryparam *param)
 {
@@ -292,14 +295,17 @@ int getaddrinfo_ext(const char *restrict host, const char *restrict serv, const 
 	return 0;
 }
 
-int revert_dns_fail_cause(int cause) {
-	if (cause <= DNS_FAIL_REASON_PARAM_INVALID && cause > DNS_FAIL_REASON_PARAM_INVALID - 99) {
+hidden int revert_dns_fail_cause(int cause)
+{
+	if (cause <= DNS_FAIL_REASON_PARAM_INVALID && cause > DNS_FAIL_REASON_PARAM_INVALID - DNS_FAIL_REASON2_ROUND) {
 		return EAI_NONAME;
 	}
-	if (cause <= DNS_FAIL_REASON_ROUTE_CONFIG_ERR && cause > DNS_FAIL_REASON_ROUTE_CONFIG_ERR - 299) {
+	if (cause <= DNS_FAIL_REASON_ROUTE_CONFIG_ERR && cause > DNS_FAIL_REASON_ROUTE_CONFIG_ERR -
+		DNS_FAIL_REASON3_ROUND) {
 		return EAI_AGAIN;
 	}
-	if (cause <= DNS_FAIL_REASON_LACK_V6_SUPPORT && cause > DNS_FAIL_REASON_LACK_V6_SUPPORT - 99) {
+	if (cause <= DNS_FAIL_REASON_LACK_V6_SUPPORT && cause > DNS_FAIL_REASON_LACK_V6_SUPPORT -
+		DNS_FAIL_REASON2_ROUND) {
 		return EAI_SYSTEM;
 	}
 	return cause;
