@@ -233,6 +233,11 @@ int getaddrinfo_ext(const char *restrict host, const char *restrict serv, const 
 		MUSL_LOGE("%{public}s: %{public}d: reportdnsresult: %{public}d in process %{public}d",
 			__func__, __LINE__, naddrs, getpid());
 #endif
+		naddrs = revert_dns_fail_cause(naddrs);
+#ifndef __LITEOS__
+		MUSL_LOGI("%{public}s: %{public}d: raw dnsresult: %{public}d in process %{public}d",
+			__func__, __LINE__, naddrs, getpid());
+#endif
 		return naddrs;
 	}
 
@@ -285,4 +290,17 @@ int getaddrinfo_ext(const char *restrict host, const char *restrict serv, const 
 	}
 #endif
 	return 0;
+}
+
+int revert_dns_fail_cause(int cause) {
+	if (cause <= DNS_FAIL_REASON_PARAM_INVALID && cause > DNS_FAIL_REASON_PARAM_INVALID - 99) {
+		return EAI_NONAME;
+	}
+	if (cause <= DNS_FAIL_REASON_ROUTE_CONFIG_ERR && cause > DNS_FAIL_REASON_ROUTE_CONFIG_ERR - 299) {
+		return EAI_AGAIN;
+	}
+	if (cause <= DNS_FAIL_REASON_LACK_V6_SUPPORT && cause > DNS_FAIL_REASON_LACK_V6_SUPPORT - 99) {
+		return EAI_SYSTEM;
+	}
+	return cause;
 }

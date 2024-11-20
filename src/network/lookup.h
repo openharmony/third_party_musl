@@ -69,7 +69,7 @@ hidden int __get_resolv_conf(struct resolvconf *, char *, size_t);
 hidden int get_resolv_conf_ext(struct resolvconf *, char *, size_t, int netid);
 hidden int __res_msend_rc(int, const unsigned char *const *, const int *, unsigned char *const *, int *, int, const struct resolvconf *);
 hidden int res_msend_rc_ext(int, int, const unsigned char *const *, const int *, unsigned char *const *,
-							int *, int, const struct resolvconf *);
+							int *, int, const struct resolvconf *, int *);
 
 hidden int __dns_parse(const unsigned char *, int, int (*)(void *, int, const void *, int, const void *, int), void *);
 hidden int predefined_host_name_from_hosts(struct address buf[static MAXADDRS],
@@ -78,6 +78,7 @@ hidden int predefined_host_is_contain_host(const char *host);
 hidden int predefined_host_lookup_ip(const char* host, const char* serv,
     const struct addrinfo* hint, struct addrinfo** res);
 hidden int res_bind_socket(int, int);
+hidden int revert_dns_fail_cause(int cause);
 
 #if OHOS_DNS_PROXY_BY_NETSYS
 #define DNS_SO_PATH "libnetsys_client.z.so"
@@ -172,4 +173,27 @@ typedef int32_t (*BindSocket)(int32_t fd, uint32_t netId);
 typedef int32_t (*BindSocket_Ext)(int32_t fd, uint32_t netId);
 
 #endif
+
+enum DNS_FAIL_REASON {
+	//-2 
+	DNS_FAIL_REASON_PARAM_INVALID = -1101,
+	DNS_FAIL_REASON_HOST_NAME_ILLEGAL = -1102,
+	DNS_FAIL_REASON_GET_RESOLV_CONF_FAILED = -1103,
+	DNS_FAIL_REASON_FAIL_TO_PARSE_DNS = -1104,
+	DNS_FAIL_REASON_SERVER_NO_SUCH_NAME = -1105,
+ 
+	//-3
+	DNS_FAIL_REASON_ROUTE_CONFIG_ERR = -1201,
+	DNS_FAIL_REASON_FIREWALL_INTERCEPTION = -1202,
+	DNS_FAIL_REASON_SERVER_NO_RESULT = -1203,
+	DNS_FAIL_REASON_TCP_QUERY_FAILED = -1204,
+	DNS_FAIL_REASON_CORE_ERRNO_BASE = -1205,
+ 
+	//-11
+	DNS_FAIL_REASON_LACK_V6_SUPPORT = -1501,
+	DNS_FAIL_REASON_CREATE_UDP_SOCKET_FAILED = -1502,
+};
+ 
+#define FALLBACK_TCP_QUERY 200
+
 #endif

@@ -93,12 +93,12 @@ int __res_msend_rc(int nqueries, const unsigned char *const *queries,
 	const int *qlens, unsigned char *const *answers, int *alens, int asize,
 	const struct resolvconf *conf)
 {
-	return res_msend_rc_ext(0, nqueries, queries, qlens, answers, alens, asize, conf);
+	return res_msend_rc_ext(0, nqueries, queries, qlens, answers, alens, asize, conf, NULL);
 }
 
 int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *queries,
 	const int *qlens, unsigned char *const *answers, int *alens, int asize,
-	const struct resolvconf *conf)
+	const struct resolvconf *conf, int *dns_errno)
 {
 	int fd;
 	int timeout, attempts, retry_interval, servfail_retry;
@@ -157,7 +157,7 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 				__func__, __LINE__, errno);
 #endif
 			pthread_setcancelstate(cs, 0);
-			return -1;
+			return DNS_FAIL_REASON_LACK_V6_SUPPORT;
 		}
 		fd = socket(AF_INET, SOCK_DGRAM|SOCK_CLOEXEC|SOCK_NONBLOCK, 0);
 		family = AF_INET;
@@ -196,7 +196,7 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 #endif
 		if (fd >= 0) close(fd);
 		pthread_setcancelstate(cs, 0);
-		return -1;
+		return DNS_FAIL_REASON_CREATE_UDP_SOCKET_FAILED;
 	}
 
 	/* Past this point, there are no errors. Each individual query will
@@ -230,10 +230,14 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 				if (!alens[i]) {
 					for (j=0; j<nns; j++) {
 						if (sendto(fd, queries[i], qlens[i], MSG_NOSIGNAL, (void *)&ns[j], sl) == -1) {
+							int errno_code = errno;
 #ifndef __LITEOS__
 							MUSL_LOGE("%{public}s: %{public}d: sendto failed, errno id: %{public}d",
-								__func__, __LINE__, errno);
+								__func__, __LINE__, errno_code);
 #endif
+							if (dns_errno) {
+								*dns_errno = errno_code;
+							}
 						}
 					}
 				}
@@ -342,6 +346,9 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 					__func__, __LINE__, mh.msg_flags);
 #endif
 				alens[i] = -1;
+				if (dns_errno) {
+					*dns_errno = FALLBACK_TCP_QUERY;
+				}
 				pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, 0);
 				r = start_tcp(pfd+i, family, ns+j, sl, queries[i], qlens[i], netid);
 				pthread_setcancelstate(cs, 0);
