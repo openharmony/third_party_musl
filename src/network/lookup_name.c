@@ -280,18 +280,20 @@ static int name_from_dns(struct address buf[static MAXADDRS], char canon[static 
 				__func__, __LINE__, checkBuf[MIN_ANSWER_TYPE - 1]);
 #endif
 			int ret = checkBuf[MIN_ANSWER_TYPE - 1];
-			if (ret != EAI_AGAIN) return ret;
-			switch (dns_errno) {
-				case 0:
-					return DNS_FAIL_REASON_SERVER_NO_RESULT;
+			if (ret != EAI_AGAIN) {
+				return ret;
+			}
+            switch (dns_errno) {
+                case 0:
+                    return DNS_FAIL_REASON_SERVER_NO_RESULT;
                 case ENETUNREACH:
-					return DNS_FAIL_REASON_ROUTE_CONFIG_ERR;
-				case EPERM:
-					return DNS_FAIL_REASON_FIREWALL_INTERCEPTION;
-				case FALLBACK_TCP_QUERY:
-					return DNS_FAIL_REASON_TCP_QUERY_FAILED;
-				default:
-					return DNS_FAIL_REASON_CORE_ERRNO_BASE - dns_errno;
+                    return DNS_FAIL_REASON_ROUTE_CONFIG_ERR;
+                case EPERM:
+                    return DNS_FAIL_REASON_FIREWALL_INTERCEPTION;
+                case FALLBACK_TCP_QUERY:
+                    return DNS_FAIL_REASON_TCP_QUERY_FAILED;
+                default:
+                    return DNS_FAIL_REASON_CORE_ERRNO_BASE - dns_errno;
             }
 		}
 
@@ -328,8 +330,9 @@ static int name_from_dns_search(struct address buf[static MAXADDRS], char canon[
 	char *p, *z;
 
 	int res = get_resolv_conf_ext(&conf, search, sizeof search, netid);
-	if (res < 0) return DNS_FAIL_REASON_GET_RESOLV_CONF_FAILED;
-
+	if (res < 0) {
+		return DNS_FAIL_REASON_GET_RESOLV_CONF_FAILED;
+	}
 	/* Count dots, suppress search when >=ndots or name ends in
 	 * a dot, which is an explicit request for global scope. */
 	for (dots=l=0; name[l]; l++) if (name[l]=='.') dots++;
