@@ -10,8 +10,7 @@ if (musl_use_gwp_asan) {
       "-Wno-incompatible-pointer-types",
     ]
     include_dirs = [
-      "//third_party/musl/porting/linux/user/src/gwp_asan",
-      "${musl_src_base}/src/gwp_asan",
+      "//third_party/musl/src/gwp_asan/linux",
       "//third_party/musl/libc-test/src/common",
     ]
     defines = [ "USE_GWP_ASAN" ]
