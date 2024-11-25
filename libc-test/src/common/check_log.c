@@ -18,10 +18,28 @@
 #include <stdio.h>
 #include <string.h>
 #include <test.h>
+#include <regex.h>
 
 #define NAME_BUFFER_SIZE 512
 
-void check_log(const char *file, const char *pattern)
+static void check_regex(char *buffer, const char *pattern, const char *file)
+{
+    regex_t regex;
+    int reti = regcomp(&regex, pattern, REG_EXTENDED);
+
+    if (reti) {
+        t_error("Fail to compile regex\n");
+    }
+    reti = regexec(&regex, buffer, 0, NULL, 0);
+    regfree(&regex);
+    if (!reti) {
+        printf("match found %s in %s.\n", pattern, file);
+    } else {
+        t_error("No match found %s in %s.\n", pattern, file);
+    }
+}
+
+void check_log(const char *file, const char *pattern, bool regex_match)
 {
     FILE *fp = fopen(file, "r");
     if (!fp) {
@@ -52,11 +70,15 @@ void check_log(const char *file, const char *pattern)
         return;
     }
 
-    if (strstr(buffer, pattern) != NULL) {
-        printf("It's ok to found %s in %s.\n", pattern, file);
+    if (regex_match) {
+        check_regex(buffer, pattern, file);
     } else {
-        // libctest use "FAIL" to determine whether test case failed.
-        t_error("FAIL can't find %s in %s!\n", pattern, file);
+        if (strstr(buffer, pattern) != NULL) {
+            printf("It's ok to found %s in %s.\n", pattern, file);
+        } else {
+            // libctest use "FAIL" to determine whether test case failed.
+            t_error("FAIL can't find %s in %s!\n", pattern, file);
+        }
     }
     int r = fclose(fp);
     if (r) {
@@ -65,7 +87,7 @@ void check_log(const char *file, const char *pattern)
     return;
 }
 
-void find_and_check_file(const char *log_dir, const char *file_tag, const char *pattern)
+void find_and_check_file(const char *log_dir, const char *file_tag, const char *pattern, bool regex_match)
 {
     struct dirent *ptr;
     int found = 0;
@@ -81,7 +103,7 @@ void find_and_check_file(const char *log_dir, const char *file_tag, const char *
             found = 1;
             char target_file[NAME_BUFFER_SIZE];
             snprintf(target_file, NAME_BUFFER_SIZE, "%s%s", log_dir, ptr->d_name);
-            check_log(target_file, pattern);
+            check_log(target_file, pattern, regex_match);
         }
     }
     if (!found) {
