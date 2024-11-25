@@ -14,6 +14,7 @@
  */
 
 #ifdef USE_GWP_ASAN
+#define _GNU_SOURCE
 
 #include <fcntl.h>
 #include <unistd.h>
@@ -39,17 +40,44 @@
 #define GWP_ASAN_LOGD(...) // change it to MUSL_LOGD to get gwp_asan debug log.
 #define GWP_ASAN_NO_ADDRESS __attribute__((no_sanitize("address", "hwaddress")))
 
+#if defined(__aarch64__)
+#define REG_AARCH64_X29 29
+static size_t get_pc(ucontext_t *context)
+{
+    return context->uc_mcontext.pc;
+}
+
+static size_t get_frame_pointer(ucontext_t *context)
+{
+    return context->uc_mcontext.regs[REG_AARCH64_X29];
+}
+#else
+static size_t get_pc(ucontext_t *context)
+{
+    GWP_ASAN_LOGD("[gwp_asan] Unsupported platform");
+    return 0;
+}
+
+static size_t get_frame_pointer(ucontext_t *context)
+{
+    GWP_ASAN_LOGD("[gwp_asan] Unsupported platform");
+    return 0;
+}
+#endif
+
 static bool gwp_asan_initialized = false;
 static uint8_t process_sample_rate = 128;
 static uint8_t force_sample_alloctor = 0;
 static uint8_t previous_random_value = 0;
 
+#ifndef _GNU_SOURCE
 typedef struct {
     const char *dli_fname;
     void *dli_fbase;
     const char *dli_sname;
     void *dli_saddr;
 } Dl_info;
+#endif
 
 // C interfaces of gwp_asan provided by LLVM side.
 extern void init_gwp_asan(void *init_options);
@@ -301,12 +329,12 @@ size_t strip_pac_pc(size_t ptr)
  * |   ......  |       |
  * --------------------| [High Address]
  */
-GWP_ASAN_NO_ADDRESS size_t libc_gwp_asan_unwind_fast(size_t *frame_buf, size_t max_record_stack,
-                                                     __attribute__((unused)) void *signal_context)
+GWP_ASAN_NO_ADDRESS size_t run_unwind(size_t *frame_buf,
+                                      size_t num_frames,
+                                      size_t max_record_stack,
+                                      size_t current_frame_addr)
 {
-    size_t current_frame_addr = __builtin_frame_address(0);
     size_t stack_end = (size_t)(__pthread_self()->stack);
-    size_t num_frames = 0;
     size_t prev_fp = 0;
     size_t prev_lr = 0;
     while (true) {
@@ -330,6 +358,29 @@ GWP_ASAN_NO_ADDRESS size_t libc_gwp_asan_unwind_fast(size_t *frame_buf, size_t m
     }
 
     return num_frames;
+}
+
+GWP_ASAN_NO_ADDRESS size_t libc_gwp_asan_unwind_fast(size_t *frame_buf, size_t max_record_stack)
+{
+    size_t current_frame_addr = __builtin_frame_address(0);
+    size_t num_frames = 0;
+
+    return run_unwind(frame_buf, num_frames, max_record_stack, current_frame_addr);
+}
+
+// Get fault address from sigchain in signal handler
+GWP_ASAN_NO_ADDRESS size_t libc_gwp_asan_unwind_segv(size_t *frame_buf, size_t max_record_stack, void *signal_context)
+{
+    ucontext_t *context = (ucontext_t *)signal_context;
+    size_t current_frame_addr = get_frame_pointer(context);
+    size_t pc = get_pc(context);
+    size_t num_frames = 0;
+
+    if (current_frame_addr && pc) {
+        frame_buf[num_frames] = strip_pac_pc(pc);
+        ++num_frames;
+    }
+    return run_unwind(frame_buf, num_frames, max_record_stack, current_frame_addr);
 }
 
 bool may_init_gwp_asan(bool force_init)
@@ -366,7 +417,7 @@ bool may_init_gwp_asan(bool force_init)
         .backtrace = libc_gwp_asan_unwind_fast,
         .gwp_asan_printf = gwp_asan_printf,
         .printf_backtrace = gwp_asan_printf_backtrace,
-        .segv_backtrace = libc_gwp_asan_unwind_fast,
+        .segv_backtrace = libc_gwp_asan_unwind_segv,
     };
 
     char buf[GWP_ASAN_NAME_LEN];

@@ -3294,6 +3294,8 @@ void __dls3(size_t *sp, size_t *auxv, size_t *aux)
 			a_crash();
 		}
 		td->tsd = self->tsd;
+		// Record stack here for unwinding in gwp-asan
+		td->stack = self->stack;
 	} else {
 		size_t tmp_tls_size = libc.tls_size;
 		pthread_t self = __pthread_self();

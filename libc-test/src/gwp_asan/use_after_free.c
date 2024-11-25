@@ -19,9 +19,19 @@
 #include "gwp_asan_test.h"
 #include "test.h"
 
+#define SIZE 100
+
+typedef struct {
+    char vars[SIZE];
+} thread_data;
+
+__thread thread_data threads;
+
 void use_after_free_handler()
 {
-    find_and_check_file(GWP_ASAN_LOG_DIR, GWP_ASAN_LOG_TAG, "Use After Free at");
+    find_and_check_file(GWP_ASAN_LOG_DIR, GWP_ASAN_LOG_TAG, "Use After Free at", false);
+    find_and_check_file(GWP_ASAN_LOG_DIR, GWP_ASAN_LOG_TAG, "#2", false);
+    find_and_check_file(GWP_ASAN_LOG_DIR, GWP_ASAN_LOG_TAG, "#0.*?gwp_asan", true);
     clear_log(GWP_ASAN_LOG_DIR, GWP_ASAN_LOG_TAG);
     cancel_gwp_asan_environment(true);
     _exit(0);
@@ -51,8 +61,8 @@ void use_after_free_test()
         return;
     }
     free(ptr);
-    char c = *ptr;
-    printf("c:%c", c);
+    threads.vars[SIZE - 1] = *ptr;
+    printf("c:%c", threads.vars[SIZE - 1]);
 }
 
 int main()

@@ -17,6 +17,13 @@ if (musl_use_gwp_asan) {
     defines = [ "USE_GWP_ASAN" ]
   }
 
+  config("gwp_asan_no_emutls") {
+    cflags = [
+      "-fno-emulated-tls",
+      "-fno-lto",
+    ]
+  }
+
   ohos_executable("gwp_asan_double_free_test") {
     testonly = true
     sources = [ "double_free.c" ]
@@ -78,6 +85,7 @@ if (musl_use_gwp_asan) {
     configs = [
       ":gwp_asan_test_config",
       "//third_party/musl/libc-test/src/common:config_runtest",
+      ":gwp_asan_no_emutls",
     ]
     subsystem_name = "musl"
     part_name = "libc-test"
