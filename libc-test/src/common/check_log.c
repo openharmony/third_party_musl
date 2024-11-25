@@ -26,7 +26,6 @@ static void check_regex(char *buffer, const char *pattern, const char *file)
 {
     regex_t regex;
     int reti = regcomp(&regex, pattern, REG_EXTENDED);
-
     if (reti) {
         t_error("Fail to compile regex\n");
     }
