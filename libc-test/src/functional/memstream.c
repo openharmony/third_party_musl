@@ -94,7 +94,7 @@ int main(void)
 
 	s = 0;
 	TEST_E(f = open_memstream(&s, &l));
-	TEST(i,fprintf(f,"Hello"),1,"%d != %d");
+	TEST(i,fprintf(f,"Hello"),5,"%d != %d");
 	fclose(f); 
 	TEST_S(s,"Hello","fflush fail");
 
