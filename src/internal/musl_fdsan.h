@@ -26,6 +26,7 @@
 
 struct FdEntry {
 	_Atomic(uint64_t) close_tag;
+	_Atomic(char) signal_flag;
 };
 
 struct FdTableOverflow {
