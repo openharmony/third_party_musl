@@ -17,13 +17,24 @@
 #define GWP_ASAN_TEST_H
 
 #include <stdbool.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include "gwp_asan.h"
 
 void config_gwp_asan_environment(bool logPath)
 {
     system("param set gwp_asan.sample.all true");
-    may_init_gwp_asan(true);
+
+    // If gwp_asan is inited by __dls3,
+    // it just samples some allocations randomly,
+    // the test may not be able to trigger the error,
+    // so just skip the test.
+    if (!may_init_gwp_asan(true)) {
+        system("param set gwp_asan.sample.all false");
+        printf("Skip gwp_asan test because it may be inited by __dls3 randomly, just rerun the test.\n");
+        exit(0);
+    }
+
     if (logPath) {
         system("param set gwp_asan.log.path file");
     }
