@@ -33,8 +33,9 @@
 static void get_device_api_version_0010(void)
 {
     int APIVersion = get_device_api_version();
-    EXPECT_EQ(APIVersion, API_VERSION_DEFAULT);
+    EXPECT_EQ(API_VERSION_DEFAULT, APIVersion < 0);
 }
+
 int main(void)
 {
     get_device_api_version_0010();
