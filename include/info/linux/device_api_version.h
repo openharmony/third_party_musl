@@ -21,8 +21,15 @@ extern "C" {
 #endif
 
 /**
-  * @brief Get the api version number of the device.
-  * @return The api version number of the device.
+  * @brief Init the api version number of the device.
+  * @return void.
+  */
+void InitDeviceApiVersion(void);
+
+/**
+  * @brief Get the api version number of the device, the value is equal to const.ohos.apiversion value.
+  * If get api version value not equal API_VERSION_DEFAULT, the cached value will be used and not be updated.
+  * @return The api version number of the device, or 0 on default/failure.
   */
 int get_device_api_version(void);
 
