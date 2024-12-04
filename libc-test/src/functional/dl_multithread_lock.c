@@ -26,6 +26,7 @@
 #define MAX_BUF 256
 #define TEST_NUM 1000
 #define TEST_SIZE 4096
+#define CALLBACK_TEST_VAL 2
 
 const char* g_libPath = "/data/local/tmp/libc-test-lib/libdlopen_dso.so";
 const char* g_initlibPath = "/data/local/tmp/libc-test-lib/libdlopen_init.so";
@@ -36,7 +37,9 @@ int check_loaded(char* so)
 {
     int pid = getpid();
     char path[MAX_BUF] = { 0 };
-    sprintf(path, "/proc/%d/maps", pid);
+    if (sprintf(path, "/proc/%d/maps", pid) < 0) {
+       t_error("Failed in sprintf: %s\n", strerror(errno));
+    }
     FILE* fp = fopen(path, "r");
     if (fp == NULL) {
         return 0;
@@ -75,12 +78,12 @@ static int CallBack002(struct dl_phdr_info* info, size_t size, void* data)
     if (strcmp(info->dlpi_name, g_libPath) != 0 || strcmp(info->dlpi_name, g_initlibPath) != 0) {
         return 0;
     }
-    test_value = test_value + 2;
-    if (test_value != 2) {
+    test_value = test_value + CALLBACK_TEST_VAL;
+    if (test_value != CALLBACK_TEST_VAL) {
         t_error("test_value should be 2, but: %d\n", test_value);
     }
 
-    test_value = test_value - 2;
+    test_value = test_value - CALLBACK_TEST_VAL;
     if (test_value != 0) {
         t_error("test_value should be 0, but: %d\n", test_value);
     }
