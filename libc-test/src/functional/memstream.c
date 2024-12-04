@@ -91,5 +91,12 @@ int main(void)
 	TEST(i, ftell(f), 8, "%d != %d");
 	TEST_S(buf, "hello104", "");
 	fclose(f);
+
+	s = 0;
+	TEST_E(f = open_memstream(&s, &l));
+	TEST(i,fprintf(f,"Hello"),5,"%d != %d");
+	fclose(f); 
+	TEST_S(s,"Hello","fflush fail");
+
 	return t_status;
 }
