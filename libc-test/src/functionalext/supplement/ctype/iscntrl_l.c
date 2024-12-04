@@ -40,16 +40,15 @@ void iscntrl_l_0100(void)
     const char arr[] = {0x0, 0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8, 0x9, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf, 0x10,
                 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f, 0x7f};
     locale_t m_locale = newlocale(LC_ALL_MASK, "en_US.UTF-8", NULL);
-
     if (!m_locale) {
         t_printf("Test case %s failed to call function newlocale\n", __FUNCTION__);
         EXPECT_NE(__FUNCTION__, ret, RET_FALSE);
         return ;
     }
 
-    for(unsigned int i = 0; i < sizeof(arr)/sizeof(char); i++) {
+    for (unsigned int i = 0; i < sizeof(arr) / sizeof(char); i++) {
         ret = iscntrl_l(arr[i], m_locale);
-        if(!ret) {
+        if (!ret) {
             t_printf("Test case %s failed while testing character, index:%d\n", __FUNCTION__, i);
         }
         EXPECT_EQ(__FUNCTION__, ret, RET_TRUE);
@@ -72,16 +71,15 @@ void iscntrl_l_0200(void)
     const char *str = "!@#$%^(){}[]";
     const char *p = str;
     locale_t m_locale = newlocale(LC_ALL_MASK, "en_US.UTF-8", NULL);
-
     if (!m_locale) {
         t_printf("Test case %s failed to call function newlocale\n", __FUNCTION__);
         EXPECT_NE(__FUNCTION__, ret, RET_FALSE);
         return ;
     }
 
-    while(*p && *p != '\0') {
+    while (*p && *p != '\0') {
         ret = iscntrl_l(*p, m_locale);
-        if(ret) {
+        if (ret) {
             t_printf("Test case %s failed while testing character %c\n", __FUNCTION__, *p);
         }
         EXPECT_EQ(__FUNCTION__, ret, RET_FALSE);
@@ -105,16 +103,15 @@ void iscntrl_l_0300(void)
     const char *str = "1234567890";
     const char *p = str;
     locale_t m_locale = newlocale(LC_ALL_MASK, "en_US.UTF-8", NULL);
-
     if (!m_locale) {
         t_printf("Test case %s failed to call function newlocale\n", __FUNCTION__);
         EXPECT_NE(__FUNCTION__, ret, RET_FALSE);
         return ;
     }
 
-    while(*p && *p != '\0') {
+    while (*p && *p != '\0') {
         ret = iscntrl_l(*p, m_locale);
-        if(ret) {
+        if (ret) {
             t_printf("Test case %s failed while testing character %c\n", __FUNCTION__, *p);
         }
         EXPECT_EQ(__FUNCTION__, ret, RET_FALSE);
@@ -138,16 +135,15 @@ void iscntrl_l_0400(void)
     const char *str = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
     const char *p = str;
     locale_t m_locale = newlocale(LC_ALL_MASK, "en_US.UTF-8", NULL);
-
     if (!m_locale) {
         t_printf("Test case %s failed to call function newlocale\n", __FUNCTION__);
         EXPECT_NE(__FUNCTION__, ret, RET_FALSE);
         return ;
     }
 
-    while(*p && *p != '\0') {
+    while (*p && *p != '\0') {
         ret = iscntrl_l(*p, m_locale);
-        if(ret) {
+        if (ret) {
             t_printf("Test case %s failed while testing character %c\n", __FUNCTION__, *p);
         }
         EXPECT_EQ(__FUNCTION__, ret, RET_FALSE);
@@ -169,7 +165,6 @@ void iscntrl_l_0500(void)
     int ret = RET_FALSE;
     int total = 0;
     locale_t m_locale = newlocale(LC_ALL_MASK, "en_US.UTF-8", NULL);
- 
     if (!m_locale) {
         t_printf("Test case %s failed to call function newlocale\n", __FUNCTION__);
         EXPECT_NE(__FUNCTION__, ret, RET_FALSE);
@@ -204,16 +199,15 @@ void iscntrl_l_0600(void)
                 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f, 0x7f};
 
     locale_t m_locale = newlocale(LC_ALL_MASK, "en_US.UTF-8", NULL);
-
     if (!m_locale) {
         t_printf("Test case %s failed to call function newlocale\n", __FUNCTION__);
         EXPECT_NE(__FUNCTION__, ret, RET_FALSE);
         return ;
     }
 
-    for(unsigned int i = 0; i < sizeof(arr)/sizeof(wchar_t); i++) {
+    for (unsigned int i = 0; i < sizeof(arr) / sizeof(wchar_t); i++) {
         ret = iscntrl_l(arr[i], m_locale);
-        if(!ret) {
+        if (!ret) {
             t_printf("Test case %s failed while testing character, index:%d\n", __FUNCTION__, i);
         }
         EXPECT_EQ(__FUNCTION__, ret, RET_TRUE);
@@ -236,16 +230,15 @@ void iscntrl_l_0700(void)
     const wchar_t *str = L"!@#$%^(){}[]";
     const wchar_t *p = str;
     locale_t m_locale = newlocale(LC_ALL_MASK, "en_US.UTF-8", NULL);
-
     if (!m_locale) {
         t_printf("Test case %s failed to call function newlocale\n", __FUNCTION__);
         EXPECT_NE(__FUNCTION__, ret, RET_FALSE);
         return ;
     }
 
-    while(*p && *p != L'\0') {
+    while (*p && *p != L'\0') {
         ret = iscntrl_l(*p, m_locale);
-        if(ret) {
+        if (ret) {
             t_printf("Test case %s failed while testing character %c\n", __FUNCTION__, *p);
         }
         EXPECT_EQ(__FUNCTION__, ret, RET_FALSE);
@@ -269,16 +262,15 @@ void iscntrl_l_0800(void)
     const wchar_t *str = L"1234567890";
     const wchar_t *p = str;
     locale_t m_locale = newlocale(LC_ALL_MASK, "en_US.UTF-8", NULL);
-
     if (!m_locale) {
         t_printf("Test case %s failed to call function newlocale\n", __FUNCTION__);
         EXPECT_NE(__FUNCTION__, ret, RET_FALSE);
         return ;
     }
 
-    while(*p && *p != L'\0') {
+    while (*p && *p != L'\0') {
         ret = iscntrl_l(*p, m_locale);
-        if(ret) {
+        if (ret) {
             t_printf("Test case %s failed while testing character %c\n", __FUNCTION__, *p);
         }
         EXPECT_EQ(__FUNCTION__, ret, RET_FALSE);
@@ -302,16 +294,15 @@ void iscntrl_l_0900(void)
     const wchar_t *str = L"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
     const wchar_t *p = str;
     locale_t m_locale = newlocale(LC_ALL_MASK, "en_US.UTF-8", NULL);
-
     if (!m_locale) {
         t_printf("Test case %s failed to call function newlocale\n", __FUNCTION__);
         EXPECT_NE(__FUNCTION__, ret, RET_FALSE);
         return ;
     }
 
-    while(*p && *p != L'\0') {
+    while (*p && *p != L'\0') {
         ret = iscntrl_l(*p, m_locale);
-        if(ret) {
+        if (ret) {
             t_printf("Test case %s failed while testing character %c\n", __FUNCTION__, *p);
         }
         EXPECT_EQ(__FUNCTION__, ret, RET_FALSE);
@@ -337,16 +328,15 @@ void iscntrl_l_1000(void)
                 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f, 0x7f};
 
     locale_t m_locale = newlocale(LC_ALL_MASK, "zh_CN", NULL);
-
     if (!m_locale) {
         t_printf("Test case %s failed to call function newlocale\n", __FUNCTION__);
         EXPECT_NE(__FUNCTION__, ret, RET_FALSE);
         return ;
     }
 
-    for(unsigned int i = 0; i < sizeof(arr)/sizeof(char); i++) {
+    for (unsigned int i = 0; i < sizeof(arr) / sizeof(char); i++) {
         ret = iscntrl_l(arr[i], m_locale);
-        if(!ret) {
+        if (!ret) {
             t_printf("Test case %s failed while testing character, index:%d\n", __FUNCTION__, i);
         }
         EXPECT_EQ(__FUNCTION__, ret, RET_TRUE);
@@ -369,16 +359,15 @@ void iscntrl_l_1100(void)
     const char *str = "!@#$%^(){}[]";
     const char *p = str;
     locale_t m_locale = newlocale(LC_ALL_MASK, "zh_CN", NULL);
-
     if (!m_locale) {
         t_printf("Test case %s failed to call function newlocale\n", __FUNCTION__);
         EXPECT_NE(__FUNCTION__, ret, RET_FALSE);
         return ;
     }
 
-    while(*p && *p != '\0') {
+    while (*p && *p != '\0') {
         ret = iscntrl_l(*p, m_locale);
-        if(ret) {
+        if (ret) {
             t_printf("Test case %s failed while testing character %c\n", __FUNCTION__, *p);
         }
         EXPECT_EQ(__FUNCTION__, ret, RET_FALSE);
@@ -402,16 +391,15 @@ void iscntrl_l_1200(void)
     const char *str = "1234567890";
     const char *p = str;
     locale_t m_locale = newlocale(LC_ALL_MASK, "zh_CN", NULL);
-
     if (!m_locale) {
         t_printf("Test case %s failed to call function newlocale\n", __FUNCTION__);
         EXPECT_NE(__FUNCTION__, ret, RET_FALSE);
         return ;
     }
 
-    while(*p && *p != '\0') {
+    while (*p && *p != '\0') {
         ret = iscntrl_l(*p, m_locale);
-        if(ret) {
+        if (ret) {
             t_printf("Test case %s failed while testing character %c\n", __FUNCTION__, *p);
         }
         EXPECT_EQ(__FUNCTION__, ret, RET_FALSE);
@@ -435,16 +423,15 @@ void iscntrl_l_1300(void)
     const char *str = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
     const char *p = str;
     locale_t m_locale = newlocale(LC_ALL_MASK, "zh_CN", NULL);
-
     if (!m_locale) {
         t_printf("Test case %s failed to call function newlocale\n", __FUNCTION__);
         EXPECT_NE(__FUNCTION__, ret, RET_FALSE);
         return ;
     }
 
-    while(*p && *p != '\0') {
+    while (*p && *p != '\0') {
         ret = iscntrl_l(*p, m_locale);
-        if(ret) {
+        if (ret) {
             t_printf("Test case %s failed while testing character %c\n", __FUNCTION__, *p);
         }
         EXPECT_EQ(__FUNCTION__, ret, RET_FALSE);
@@ -466,7 +453,6 @@ void iscntrl_l_1400(void)
     int ret = RET_FALSE;
     int total = 0;
     locale_t m_locale = newlocale(LC_ALL_MASK, "zh_CN", NULL);
- 
     if (!m_locale) {
         t_printf("Test case %s failed to call function newlocale\n", __FUNCTION__);
         EXPECT_NE(__FUNCTION__, ret, RET_FALSE);
@@ -501,16 +487,15 @@ void iscntrl_l_1500(void)
                 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f, 0x7f};
 
     locale_t m_locale = newlocale(LC_ALL_MASK, "zh_CN", NULL);
-
     if (!m_locale) {
         t_printf("Test case %s failed to call function newlocale\n", __FUNCTION__);
         EXPECT_NE(__FUNCTION__, ret, RET_FALSE);
         return ;
     }
 
-    for(int i = 0; i < sizeof(arr)/sizeof(wchar_t); i++) {
+    for (int i = 0; i < sizeof(arr) / sizeof(wchar_t); i++) {
         ret = iscntrl_l(arr[i], m_locale);
-        if(!ret) {
+        if (!ret) {
             t_printf("Test case %s failed while testing character, index:%d\n", __FUNCTION__, i);
         }
         EXPECT_EQ(__FUNCTION__, ret, RET_TRUE);
@@ -533,16 +518,15 @@ void iscntrl_l_1600(void)
     const wchar_t *str = L"!@#$%^(){}[]";
     const wchar_t *p = str;
     locale_t m_locale = newlocale(LC_ALL_MASK, "zh_CN", NULL);
-
     if (!m_locale) {
         t_printf("Test case %s failed to call function newlocale\n", __FUNCTION__);
         EXPECT_NE(__FUNCTION__, ret, RET_FALSE);
         return ;
     }
 
-    while(*p && *p != L'\0') {
+    while (*p && *p != L'\0') {
         ret = iscntrl_l(*p, m_locale);
-        if(ret) {
+        if (ret) {
             t_printf("Test case %s failed while testing character %c\n", __FUNCTION__, *p);
         }
         EXPECT_EQ(__FUNCTION__, ret, RET_FALSE);

@@ -16,18 +16,18 @@
 
 static int test_val;
 
-__attribute__((constructor)) static void Init()
+__attribute__((constructor)) static void Init(void)
 {
     sleep(1);
     test_val++;
 }
 
-int getVal()
+int getVal(void)
 {
     return test_val;
 }
 
-__attribute__((destructor)) static void DeInit()
+__attribute__((destructor)) static void DeInit(void)
 {
     sleep(1);
     test_val--;
