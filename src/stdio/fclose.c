@@ -49,14 +49,13 @@ int fclose(FILE *f)
 		free(f);
 	}else{
 		
-	/* set file to invalid descriptor */
-	f->fd = -EBADF;
-#endif
-
+		/* set file to invalid descriptor */
+		f->fd = -EBADF;
+		__ofl_free(f);
+	}
+#else
 	__ofl_free(f);
 
-#ifndef __LITEOS__	
-	}
 #endif
 
 	return r;
