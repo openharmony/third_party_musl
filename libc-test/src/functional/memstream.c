@@ -20,6 +20,52 @@
 !memcmp((s),(x),(n)) || \
 (t_error("[%s] != [%s] (%s)\n", s, x, m), 0) )
 
+static void test_memfile(void)
+{
+	FILE *f;
+	char *s;
+	size_t l;
+	char buf[100];
+	int i;
+	int index = 7;
+
+	TEST_E(f = fmemopen(buf, 10, "r+"));
+	TEST_E(fputs("hello", f) >= 0);
+	TEST_E(fclose(f) != -1);
+
+	s = 0;
+	f = NULL;
+	TEST_E(f = fmemopen(buf, 10, "a+"));
+	TEST(i, ftell(f), 5, "%d != %d");
+	TEST_E(fseek(f, 0, SEEK_SET) >= 0);
+	TEST(i, getc(f), 'h', "%d != %d");
+	TEST(i, getc(f), 'e', "%d != %d");
+	TEST(i, getc(f), 'l', "%d != %d");
+	TEST(i, getc(f), 'l', "%d != %d");
+	TEST(i, getc(f), 'o', "%d != %d");
+	TEST(i, getc(f), EOF, "%d != %d");
+	TEST_E(fseek(f, 6, SEEK_SET) >= 0);
+	TEST(i, ftell(f), 6, "%d != %d");
+	TEST(i, getc(f), EOF, "%d != %d");
+	TEST(i, ftell(f), 6, "%d != %d");
+	TEST_E(fseek(f, 0, SEEK_SET) >= 0);
+	TEST(i, getc(f), 'h', "%d != %d");
+	TEST_E(fseek(f, 0, SEEK_CUR) >= 0);
+	buf[index] = 'x';
+	TEST_E(fprintf(f, "%d", i) == 3);
+	TEST_E(fflush(f) == 0);
+	TEST(i, ftell(f), 8, "%d != %d");
+	TEST_S(buf, "hello104", "");
+	TEST_E(fclose(f) != -1);
+
+	s = 0;
+	f = NULL;
+	TEST_E(f = open_memstream(&s, &l));
+	TEST(i, fprintf(f, "Hello"), 5, "%d != %d");
+	TEST_E(fclose(f) != -1);
+	TEST_S(s, "Hello", "fflush fail");
+}
+
 int main(void)
 {
 	FILE *f;
@@ -69,34 +115,7 @@ int main(void)
 	TEST_S(buf, "hello", "");
 	fclose(f);
 
-	TEST_E(f = fmemopen(buf, 10, "a+"));
-	TEST(i, ftell(f), 5, "%d != %d");
-	TEST_E(fseek(f, 0, SEEK_SET)>=0);
-	TEST(i, getc(f), 'h', "%d != %d");
-	TEST(i, getc(f), 'e', "%d != %d");
-	TEST(i, getc(f), 'l', "%d != %d");
-	TEST(i, getc(f), 'l', "%d != %d");
-	TEST(i, getc(f), 'o', "%d != %d");
-	TEST(i, getc(f), EOF, "%d != %d");
-	TEST_E(fseek(f, 6, SEEK_SET)>=0);
-	TEST(i, ftell(f), 6, "%d != %d");
-	TEST(i, getc(f), EOF, "%d != %d");
-	TEST(i, ftell(f), 6, "%d != %d");
-	TEST_E(fseek(f, 0, SEEK_SET)>=0);
-	TEST(i, getc(f), 'h', "%d != %d");
-	TEST_E(fseek(f, 0, SEEK_CUR)>=0);
-	buf[7] = 'x';
-	TEST_E(fprintf(f, "%d", i)==3);
-	TEST_E(fflush(f)==0);
-	TEST(i, ftell(f), 8, "%d != %d");
-	TEST_S(buf, "hello104", "");
-	fclose(f);
-
-	s = 0;
-	TEST_E(f = open_memstream(&s, &l));
-	TEST(i,fprintf(f,"Hello"),5,"%d != %d");
-	fclose(f); 
-	TEST_S(s,"Hello","fflush fail");
+	test_memfile();
 
 	return t_status;
 }
