@@ -139,6 +139,10 @@ struct reserved_address_params {
 
 typedef void (*stage3_func)(size_t *, size_t *, size_t *);
 
+#ifdef BTI_SUPPORT
+static void enable_bti(struct dso *dso);
+#endif
+
 static struct builtin_tls {
 	char c[8];
 	struct pthread pt;
@@ -1725,6 +1729,10 @@ done_mapping:
 	dso->dynv = laddr(dso, dyn);
 	if (dso->tls.size) dso->tls.image = laddr(dso, tls_image);
 	free(allocated_buf);
+#ifdef BTI_SUPPORT
+	/* Security enhancement: support dynamic link library BTI protection. */
+	enable_bti(dso);
+#endif
 	return map;
 noexec:
 	errno = ENOEXEC;
@@ -3167,6 +3175,16 @@ void __dls3(size_t *sp, size_t *auxv, size_t *aux)
 
 	find_and_set_bss_name(&app);
 	find_and_set_bss_name(&ldso);
+
+#ifdef BTI_SUPPORT
+	/* Security enhancement: BTI protection for dynamically linked executable programs is supported.
+	 * The Linux kernel loads and parses the static link executable program, and the DL loads and
+	 *  parses the dynamic link executable program.
+	 *
+	 *  The test result shows that the BTI can be normally enabled without this function.
+	 *  To avoid omissions, this function is still added.*/
+	enable_bti(&app);
+#endif
 
 	/* Load preload/needed libraries, add symbols to global namespace. */
 	ldso.deps = (struct dso **)no_deps;
@@ -5367,6 +5385,10 @@ done_mapping:
 	}
 	free(task->allocated_buf);
 	task->allocated_buf = NULL;
+#ifdef BTI_SUPPORT
+	/* Security enhancement: support dynamic link library BTI protection. */
+	enable_bti(task->p);
+#endif
 	return true;
 noexec:
 	errno = ENOEXEC;
@@ -6239,3 +6261,68 @@ void remove_dso_handle_node(void *dso_handle)
 
 	return;
 }
+
+#ifdef BTI_SUPPORT
+struct gnu_property {
+	uint32_t pr_type;
+	uint32_t pr_datasz;
+};
+
+#define GNU_PROPERTY_TYPE_0_NAME "GNU"
+#define GNU_PROPERTY_AARCH64_FEATURE_1_AND 0xc0000000
+#define GNU_PROPERTY_AARCH64_FEATURE_1_BTI (1U << 0)
+#define NOTE_NAME_SZ (sizeof(GNU_PROPERTY_TYPE_0_NAME))
+
+#define ELF_GNU_PROPERTY_ALIGN 8
+
+/* Security enhancement: Traverse PT_GNU_PROPERTY and PT_NOTE in the ELF to check
+ * whether GNU_PROPERTY_AARCH64_FEATURE_1_BTI exists.
+ * If so BTI protection is enabled for the ELF. */
+static unsigned char dso_has_bti(struct dso *dso)
+{
+	Phdr *ph = dso->phdr;
+	for (int i = dso->phnum; i; i--, ph++) {
+		if (ph->p_type == PT_GNU_PROPERTY || ph->p_type == PT_NOTE) {
+			Elf64_Nhdr *nh = (Elf64_Nhdr *)(dso->map + ph->p_offset);
+			if (nh->n_type != NT_GNU_PROPERTY_TYPE_0 ||nh->n_namesz != NOTE_NAME_SZ) {
+				continue;
+			}
+			ssize_t off = (sizeof(Elf64_Nhdr)) + NOTE_NAME_SZ;
+			off = (off + ELF_GNU_PROPERTY_ALIGN - 1) & (-ELF_GNU_PROPERTY_ALIGN);
+			struct gnu_property *pr = (struct gnu_property *)(dso->map + ph->p_offset + off);
+			unsigned char *data = dso->map + ph->p_offset + off + sizeof(struct gnu_property);
+			if ((pr->pr_type == GNU_PROPERTY_AARCH64_FEATURE_1_AND) && ((*data & GNU_PROPERTY_AARCH64_FEATURE_1_BTI) != 0)) {
+				return 1;
+			}
+                }
+	}
+
+	return 0;
+}
+
+/* Security enhancement: Traverse the executable PT_LOAD segment, add PROT_BTI through mprotect,
+ * and instruct the kernel to enable BTI protection. */
+static void enable_bti(struct dso *dso)
+{
+	if (!dso_has_bti(dso)) {
+		return;
+	}
+	LD_LOGD("enable BTI for dso:%{public}s.", dso->name);
+	Phdr *ph = dso->phdr;
+	for (int i = dso->phnum; i; i--, ph++) {
+		if (ph->p_type != PT_LOAD || !(ph->p_flags & PF_X)) {
+			continue;
+		}
+		uint64_t start = (ph->p_vaddr & ~(PAGE_SIZE-1));
+		size_t len = (ph->p_filesz + PAGE_SIZE-1)  & ~(PAGE_SIZE-1);
+		unsigned prot = PROT_EXEC | PROT_BTI;
+		if (ph->p_flags & PF_R)
+			prot |= PROT_READ;
+		if (ph->p_flags & PF_W)
+			prot |= PROT_WRITE;
+		if (mprotect(dso->base + start, len, prot) != 0) {
+			error("Failed to enable BTI in so %{public}s.", dso->name);
+		}
+	}
+}
+#endif
