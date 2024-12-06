@@ -3,6 +3,7 @@ __asm__(
 ".global " START "\n"
 ".type " START ",%function\n"
 START ":\n"
+"	hint #34\n"
 "	mov x29, #0\n"
 "	mov x30, #0\n"
 "	mov x0, sp\n"

@@ -9,6 +9,7 @@
 .balign 4
 .endif
 _init:
+	hint #34
 	stp x29,x30,[sp,-16]!
 	mov x29,sp
 
@@ -19,5 +20,6 @@ _init:
 .balign 4
 .endif
 _fini:
+	hint #34
 	stp x29,x30,[sp,-16]!
 	mov x29,sp
