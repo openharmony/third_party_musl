@@ -560,6 +560,10 @@ template("static_and_shared_libs_template") {
       ]
     }
 
+    if (musl_arch == "aarch64") {
+      defines += [ "BTI_SUPPORT" ]
+    }
+
     deps = porting_deps
     if (use_musl && !is_llvm_build) {
       defines += [ "OHOS_ENABLE_PARAMETER" ]
@@ -794,6 +798,12 @@ template("musl_libs") {
       "-ffreestanding",
       "-fno-stack-protector",
     ]
+    if (musl_arch == "aarch64") {
+      cflags += [
+        "-mbranch-protection=bti",
+        "-mmark-bti-property",
+      ]
+    }
 
     deps = porting_deps
 
