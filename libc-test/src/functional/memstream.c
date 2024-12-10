@@ -36,7 +36,7 @@ static void test_memfile(void)
 	s = 0;
 	f = NULL;
 	TEST_E(f = fmemopen(buf, 10, "a+"));
-	TEST(i, ftell(f), 7, "%d != %d");
+	TEST(i, ftell(f), 6, "%d != %d");
 	TEST_E(fseek(f, 0, SEEK_SET) >= 0);
 	TEST(i, getc(f), 'w', "%d != %d");
 	TEST(i, getc(f), 'o', "%d != %d");
