@@ -85,7 +85,7 @@ int main(void)
 	free(s);
 
 	s = 0;
-	TEST_E(f = open_memstream(&s, &l)); 
+	TEST_E(f = open_memstream(&s, &l));
 	TEST_E(fseek(f,1,SEEK_CUR)>=0);
 	TEST_E(putc('q', f) == 'q');
 	TEST_E(!fflush(f));
