@@ -23,7 +23,7 @@
 static void test_memfile(void)
 {
 	FILE *f;
-	char *s;
+	char *ss;
 	size_t l;
 	char buf[100];
 	int i;
@@ -33,7 +33,7 @@ static void test_memfile(void)
 	TEST_E(fputs("world!", f) >= 0);
 	TEST_E(fclose(f) != -1);
 
-	s = 0;
+	ss = 0;
 	f = NULL;
 	TEST_E(f = fmemopen(buf, 10, "a+"));
 	TEST(i, ftell(f), 6, "%d != %d");
@@ -58,12 +58,12 @@ static void test_memfile(void)
 	TEST_S(buf, "world!119", "");
 	TEST_E(fclose(f) != -1);
 
-	s = 0;
+	ss = 0;
 	f = NULL;
-	TEST_E(f = open_memstream(&s, &l));
+	TEST_E(f = open_memstream(&ss, &l));
 	TEST(i, fprintf(f, "Hello"), 5, "%d != %d");
 	TEST_E(fclose(f) != -1);
-	TEST_S(s, "Hello", "fflush fail");
+	TEST_S(ss, "Hello", "fflush fail");
 }
 
 int main(void)
