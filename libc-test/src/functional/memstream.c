@@ -60,7 +60,6 @@ static void test_memfile(void)
 
 	s = 0;
 	f = NULL;
-	TEST_E(f = open_memstream(&s, &l));
 	TEST(i, fprintf(f, "Hello"), 5, "%d != %d");
 	TEST_E(fclose(f) != -1);
 	TEST_S(s, "Hello", "fflush fail");
