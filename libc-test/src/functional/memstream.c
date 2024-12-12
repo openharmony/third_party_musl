@@ -23,47 +23,47 @@
 static void test_memfile(void)
 {
 	FILE *f;
-	char *s;
+	char *ss;
 	size_t l;
 	char buf[100];
 	int i;
-	int index = 7;
+	int index = 8;
 
 	TEST_E(f = fmemopen(buf, 10, "r+"));
-	TEST_E(fputs("hello", f) >= 0);
+	TEST_E(fputs("world!", f) >= 0);
 	TEST_E(fclose(f) != -1);
 
-	s = 0;
+	ss = 0;
 	f = NULL;
 	TEST_E(f = fmemopen(buf, 10, "a+"));
-	TEST(i, ftell(f), 5, "%d != %d");
+	TEST(i, ftell(f), 6, "%d != %d");
 	TEST_E(fseek(f, 0, SEEK_SET) >= 0);
-	TEST(i, getc(f), 'h', "%d != %d");
-	TEST(i, getc(f), 'e', "%d != %d");
-	TEST(i, getc(f), 'l', "%d != %d");
-	TEST(i, getc(f), 'l', "%d != %d");
+	TEST(i, getc(f), 'w', "%d != %d");
 	TEST(i, getc(f), 'o', "%d != %d");
+	TEST(i, getc(f), 'r', "%d != %d");
+	TEST(i, getc(f), 'l', "%d != %d");
+	TEST(i, getc(f), 'd', "%d != %d");
+	TEST(i, getc(f), '!', "%d != %d");
+	TEST_E(fseek(f, 7, SEEK_SET) >= 0);
+	TEST(i, ftell(f), 7, "%d != %d");
 	TEST(i, getc(f), EOF, "%d != %d");
-	TEST_E(fseek(f, 6, SEEK_SET) >= 0);
-	TEST(i, ftell(f), 6, "%d != %d");
-	TEST(i, getc(f), EOF, "%d != %d");
-	TEST(i, ftell(f), 6, "%d != %d");
+	TEST(i, ftell(f), 7, "%d != %d");
 	TEST_E(fseek(f, 0, SEEK_SET) >= 0);
-	TEST(i, getc(f), 'h', "%d != %d");
+	TEST(i, getc(f), 'w', "%d != %d");
 	TEST_E(fseek(f, 0, SEEK_CUR) >= 0);
 	buf[index] = 'x';
 	TEST_E(fprintf(f, "%d", i) == 3);
 	TEST_E(fflush(f) == 0);
-	TEST(i, ftell(f), 8, "%d != %d");
-	TEST_S(buf, "hello104", "");
+	TEST(i, ftell(f), 9, "%d != %d");
+	TEST_S(buf, "world!119", "");
 	TEST_E(fclose(f) != -1);
 
-	s = 0;
+	ss = 0;
 	f = NULL;
-	TEST_E(f = open_memstream(&s, &l));
+	TEST_E(f = open_memstream(&ss, &l));
 	TEST(i, fprintf(f, "Hello"), 5, "%d != %d");
 	TEST_E(fclose(f) != -1);
-	TEST_S(s, "Hello", "fflush fail");
+	TEST_S(ss, "Hello", "fflush fail");
 }
 
 int main(void)
