@@ -42,7 +42,7 @@ int fclose(FILE *f)
 	free(f->base);
 
 #ifndef __LITEOS__
-	if(f->fd < 0) {
+	if (f->fd < 0) {
 		__ofl_lock();
 		FILE_LIST_REMOVE(f);
 		__ofl_unlock();
