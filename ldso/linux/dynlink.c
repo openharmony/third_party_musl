@@ -3778,21 +3778,25 @@ end:
 	dlopen_cost.total_time = (total_end.tv_sec - total_start.tv_sec) * CLOCK_SECOND_TO_MILLI
 		+ (total_end.tv_nsec - total_start.tv_nsec) / CLOCK_NANO_TO_MILLI;
 	if ((dlopen_cost.total_time > DLOPEN_TIME_THRESHOLD || is_dlopen_debug_enable()) && current_so) {
-		LD_LOGE("dlopen so: %{public}s time cost: "
+		LD_LOGE("dlopen so: %{public}s "
+#ifdef DLOPEN_TIME_LOG
 				"total_time: %{public}d ms, "
 				"entry_header_time: %{public}d ms, "
 				"deps_header_time: %{public}d ms, "
 				"map_so_time: %{public}d ms, "
 				"reloc_time: %{public}d ms, "
 				"map_cfi_time: %{public}d ms, "
+#endif
 				"init_time: %{public}d ms",
 				current_so->name,
+#ifdef DLOPEN_TIME_LOG
 				dlopen_cost.total_time,
 				dlopen_cost.entry_header_time,
 				dlopen_cost.deps_header_time,
 				dlopen_cost.map_so_time,
 				dlopen_cost.reloc_time,
 				dlopen_cost.map_cfi_time,
+#endif
 				dlopen_cost.init_time);
 	}
 	return p;
