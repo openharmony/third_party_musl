@@ -102,6 +102,10 @@ void malloc_stats_print(void (*write_cb) (void *, const char *), void *cbopaque,
 
 #define M_SET_QUARANTINE_MAX_BLOCK_SIZE (-1014)
 
+#define M_ENABLE_ISOLATE_TCACHE (-1015)
+#define M_ISOLATE_TCACHE_ENABLE 1
+#define M_ISOLATE_TCACHE_DISABLE 0
+
 int mallopt(int param, int value);
 ssize_t malloc_backtrace(void* pointer, uintptr_t* frames, size_t frame_count);
 #ifdef __cplusplus
