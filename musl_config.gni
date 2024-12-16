@@ -53,7 +53,7 @@ declare_args() {
     } else {
       runtime_lib_path =
           "//prebuilts/clang/ohos/linux-x86_64/llvm/lib/clang/15.0.4/lib"
-    }      
+    }
   }
   musl_user_custom_libc = true
   musl_use_jemalloc = false
