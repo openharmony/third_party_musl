@@ -53,7 +53,7 @@ declare_args() {
     } else {
       runtime_lib_path =
           "//prebuilts/clang/ohos/linux-x86_64/llvm/lib/clang/15.0.4/lib"
-    }      
+    }
   }
   musl_user_custom_libc = true
   musl_use_jemalloc = false
@@ -61,6 +61,7 @@ declare_args() {
   musl_malloc_plugin = ""
   musl_use_jemalloc_dfx_intf = false
   musl_use_jemalloc_recycle_func = false
+  musl_guard_jemalloc_tsd = false
   musl_use_pthread_cancel = false
   musl_ported_dir = "intermidiates/${musl_target_os}/musl_src_ported"
   musl_inc_out_dir = "usr/include/${musl_target_triple}"
