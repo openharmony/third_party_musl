@@ -61,6 +61,7 @@ struct tm *localtime (const time_t *);
 char *asctime (const struct tm *);
 char *ctime (const time_t *);
 int timespec_get(struct timespec *, int);
+void InitTimeZoneParam(void);
 
 #define CLOCKS_PER_SEC 1000000L
 
