@@ -140,10 +140,6 @@ struct reserved_address_params {
 
 typedef void (*stage3_func)(size_t *, size_t *, size_t *);
 
-#ifdef BTI_SUPPORT
-static void enable_bti(struct dso *dso);
-#endif
-
 static struct builtin_tls {
 	char c[8];
 	struct pthread pt;
@@ -248,6 +244,78 @@ static void remove_dso_info_from_debug_map(struct dso *p);
 /* add namespace function */
 static void get_sys_path(ns_configor *conf);
 static void dlclose_ns(struct dso *p);
+
+#if defined(BTI_SUPPORT) && (!defined(__LITEOS__))
+struct gnu_property {
+	uint32_t pr_type;
+	uint32_t pr_datasz;
+};
+
+/* Security enhancement: add BTI releated constant*/
+#define GNU_PROPERTY_TYPE_0_NAME "GNU"
+#define GNU_PROPERTY_AARCH64_FEATURE_1_AND 0xc0000000
+#define GNU_PROPERTY_AARCH64_FEATURE_1_BTI (1U << 0)
+#define NOTE_NAME_SZ (sizeof(GNU_PROPERTY_TYPE_0_NAME))
+
+#define ELF_GNU_PROPERTY_ALIGN 8
+#define BUF_MAX 0x400
+
+/* Security enhancement: Traverse PT_GNU_PROPERTY and PT_NOTE in the ELF to check
+ * whether GNU_PROPERTY_AARCH64_FEATURE_1_BTI exists.
+ * If so PROT_BTI is returned.
+ *
+ * If new protection is needed, please add in here */
+static uint32_t parse_elf_property(uint32_t type, const char* data)
+{
+	uint32_t prot = 0;
+	if (type == GNU_PROPERTY_AARCH64_FEATURE_1_AND) {
+		const uint32_t *p = data;
+		if ((*p & GNU_PROPERTY_AARCH64_FEATURE_1_BTI) != 0) {
+			prot |= PROT_BTI;
+		}
+	}
+	return prot;
+}
+
+static uint32_t parse_prot(const char *data, ssize_t *off, ssize_t datasz)
+{
+	ssize_t o;
+	const struct gnu_property *pr;
+	uint32_t ret;
+	o = *off;
+	ssize_t sz = datasz - *off;
+
+	if (sz < sizeof(*pr))
+		return 0;
+	pr = (const struct gnu_property *)(data + o);
+	o += sizeof(*pr);
+	if (pr->pr_datasz > sz)
+		return 0;
+	ret = parse_elf_property(pr->pr_type, data + o);
+	return ret;
+}
+
+static unsigned parse_extra_prot_fd(int fd, Phdr *ph)
+{
+	union {
+		Elf64_Nhdr nh;
+		char data[BUF_MAX];
+	} gnu_data;
+	ssize_t sz = ph->p_filesz > BUF_MAX ? BUF_MAX : ph->p_filesz;
+	ssize_t len = pread(fd, gnu_data.data, sz, ph->p_offset);
+	if (len < 0) return 0;
+	if ((gnu_data.nh.n_type != NT_GNU_PROPERTY_TYPE_0) || (gnu_data.nh.n_namesz != NOTE_NAME_SZ)) {
+		return 0;
+	}
+
+	ssize_t off_gp = (sizeof(gnu_data.nh)) + NOTE_NAME_SZ;
+	off_gp = (off_gp + ELF_GNU_PROPERTY_ALIGN - 1) & (-(ELF_GNU_PROPERTY_ALIGN));
+	ssize_t datasz_gp = off_gp + gnu_data.nh.n_descsz;
+	datasz_gp = datasz_gp > BUF_MAX ? BUF_MAX : datasz_gp;
+	return parse_prot((char *)gnu_data.data, &off_gp, datasz_gp);
+}
+#endif
+
 static bool get_app_path(char *path, size_t size)
 {
 	int l = 0;
@@ -1471,6 +1539,9 @@ UT_STATIC void *map_library(int fd, struct dso *dso, struct reserved_address_par
 	Ehdr *eh;
 	Phdr *ph, *ph0;
 	unsigned prot;
+#if defined(BTI_SUPPORT) && (!defined(__LITEOS__))
+	unsigned ext_prot = 0;
+#endif
 	unsigned char *map=MAP_FAILED, *base;
 	size_t dyn=0;
 	size_t tls_image=0;
@@ -1522,6 +1593,13 @@ UT_STATIC void *map_library(int fd, struct dso *dso, struct reserved_address_par
 					ph->p_memsz : DEFAULT_STACK_MAX;
 			}
 		}
+#if defined(BTI_SUPPORT) && (!defined(__LITEOS__))
+		/* Security enhancement: parse extra PROT in ELF.
+		 * Currently only for BTI protection*/
+		if (ph->p_type == PT_GNU_PROPERTY || ph->p_type == PT_NOTE) {
+			ext_prot |= parse_extra_prot_fd(fd, ph);
+		}
+#endif
 		if (ph->p_type != PT_LOAD) continue;
 		nsegs++;
 		if (ph->p_vaddr < addr_min) {
@@ -1530,6 +1608,11 @@ UT_STATIC void *map_library(int fd, struct dso *dso, struct reserved_address_par
 			prot = (((ph->p_flags&PF_R) ? PROT_READ : 0) |
 				((ph->p_flags&PF_W) ? PROT_WRITE: 0) |
 				((ph->p_flags&PF_X) ? PROT_EXEC : 0));
+#if defined(BTI_SUPPORT) && (!defined(__LITEOS__))
+			if (ph->p_flags & PF_X) {
+				prot |= ext_prot;
+			}
+#endif
 		}
 		if (ph->p_vaddr+ph->p_memsz > addr_max) {
 			addr_max = ph->p_vaddr+ph->p_memsz;
@@ -1546,6 +1629,11 @@ UT_STATIC void *map_library(int fd, struct dso *dso, struct reserved_address_par
 			prot = (((ph->p_flags&PF_R) ? PROT_READ : 0) |
 				((ph->p_flags&PF_W) ? PROT_WRITE: 0) |
 				((ph->p_flags&PF_X) ? PROT_EXEC : 0));
+#if defined(BTI_SUPPORT) && (!defined(__LITEOS__))
+			if (ph->p_flags & PF_X) {
+				prot |= ext_prot;
+			}
+#endif
 			map = mmap(0, ph->p_memsz + (ph->p_vaddr & PAGE_SIZE-1),
 				prot, MAP_PRIVATE,
 				fd, ph->p_offset & -PAGE_SIZE);
@@ -1696,6 +1784,11 @@ UT_STATIC void *map_library(int fd, struct dso *dso, struct reserved_address_par
 		prot = (((ph->p_flags&PF_R) ? PROT_READ : 0) |
 			((ph->p_flags&PF_W) ? PROT_WRITE: 0) |
 			((ph->p_flags&PF_X) ? PROT_EXEC : 0));
+#if defined(BTI_SUPPORT) && (!defined(__LITEOS__))
+		if (ph->p_flags & PF_X) {
+			prot |= ext_prot;
+		}
+#endif
 		/* Reuse the existing mapping for the lowest-address LOAD */
 		if (mmap_fixed(
 				base + this_min,
@@ -1730,10 +1823,6 @@ done_mapping:
 	dso->dynv = laddr(dso, dyn);
 	if (dso->tls.size) dso->tls.image = laddr(dso, tls_image);
 	free(allocated_buf);
-#ifdef BTI_SUPPORT
-	/* Security enhancement: support dynamic link library BTI protection. */
-	enable_bti(dso);
-#endif
 	return map;
 noexec:
 	errno = ENOEXEC;
@@ -3177,16 +3266,6 @@ void __dls3(size_t *sp, size_t *auxv, size_t *aux)
 
 	find_and_set_bss_name(&app);
 	find_and_set_bss_name(&ldso);
-
-#ifdef BTI_SUPPORT
-	/* Security enhancement: BTI protection for dynamically linked executable programs is supported.
-	 * The Linux kernel loads and parses the static link executable program, and the DL loads and
-	 *  parses the dynamic link executable program.
-	 *
-	 *  The test result shows that the BTI can be normally enabled without this function.
-	 *  To avoid omissions, this function is still added.*/
-	enable_bti(&app);
-#endif
 
 	/* Load preload/needed libraries, add symbols to global namespace. */
 	ldso.deps = (struct dso **)no_deps;
@@ -5130,6 +5209,9 @@ static bool task_map_library(struct loadtask *task, struct reserved_address_para
 	off_t off_start;
 	Phdr *ph = task->ph0;
 	unsigned prot;
+#if defined(BTI_SUPPORT) && (!defined(__LITEOS__))
+	unsigned ext_prot = 0;
+#endif
 	unsigned char *map = MAP_FAILED, *base;
 	size_t i;
 	int map_flags = MAP_PRIVATE;
@@ -5148,6 +5230,13 @@ static bool task_map_library(struct loadtask *task, struct reserved_address_para
 					ph->p_memsz : DEFAULT_STACK_MAX;
 			}
 		}
+#if defined(BTI_SUPPORT) && (!defined(__LITEOS__))
+		/* Security enhancement: parse extra PROT in ELF.
+		 * Currently only for BTI protection*/
+		if (ph->p_type == PT_GNU_PROPERTY || ph->p_type == PT_NOTE) {
+			ext_prot |= parse_extra_prot_fd(task->fd, ph);
+		}
+#endif
 		if (ph->p_type != PT_LOAD) {
 			continue;
 		}
@@ -5158,6 +5247,11 @@ static bool task_map_library(struct loadtask *task, struct reserved_address_para
 			prot = (((ph->p_flags & PF_R) ? PROT_READ : 0) |
 				((ph->p_flags & PF_W) ? PROT_WRITE : 0) |
 				((ph->p_flags & PF_X) ? PROT_EXEC : 0));
+#if defined(BTI_SUPPORT) && (!defined(__LITEOS__))
+			if (ph->p_flags & PF_X) {
+				prot |= ext_prot;
+			}
+#endif
 		}
 		if (ph->p_vaddr + ph->p_memsz > addr_max) {
 			addr_max = ph->p_vaddr + ph->p_memsz;
@@ -5181,6 +5275,11 @@ static bool task_map_library(struct loadtask *task, struct reserved_address_para
 			prot = (((ph->p_flags & PF_R) ? PROT_READ : 0) |
 				((ph->p_flags & PF_W) ? PROT_WRITE : 0) |
 				((ph->p_flags & PF_X) ? PROT_EXEC : 0));
+#if defined(BTI_SUPPORT) && (!defined(__LITEOS__))
+			if (ph->p_flags & PF_X) {
+				prot |= ext_prot;
+			}
+#endif
 			map = mmap(0, ph->p_memsz + (ph->p_vaddr & PAGE_SIZE - 1),
 				prot, MAP_PRIVATE,
 				task->fd, ph->p_offset & -PAGE_SIZE + task->file_offset);
@@ -5343,6 +5442,11 @@ static bool task_map_library(struct loadtask *task, struct reserved_address_para
 		prot = (((ph->p_flags & PF_R) ? PROT_READ : 0) |
 			((ph->p_flags & PF_W) ? PROT_WRITE : 0) |
 			((ph->p_flags & PF_X) ? PROT_EXEC : 0));
+#if defined(BTI_SUPPORT) && (!defined(__LITEOS__))
+		if (ph->p_flags & PF_X) {
+			prot |= ext_prot;
+		}
+#endif
 		/* Reuse the existing mapping for the lowest-address LOAD */
 		if (mmap_fixed(
 				base + this_min,
@@ -5391,10 +5495,6 @@ done_mapping:
 	}
 	free(task->allocated_buf);
 	task->allocated_buf = NULL;
-#ifdef BTI_SUPPORT
-	/* Security enhancement: support dynamic link library BTI protection. */
-	enable_bti(task->p);
-#endif
 	return true;
 noexec:
 	errno = ENOEXEC;
@@ -6267,68 +6367,3 @@ void remove_dso_handle_node(void *dso_handle)
 
 	return;
 }
-
-#ifdef BTI_SUPPORT
-struct gnu_property {
-	uint32_t pr_type;
-	uint32_t pr_datasz;
-};
-
-#define GNU_PROPERTY_TYPE_0_NAME "GNU"
-#define GNU_PROPERTY_AARCH64_FEATURE_1_AND 0xc0000000
-#define GNU_PROPERTY_AARCH64_FEATURE_1_BTI (1U << 0)
-#define NOTE_NAME_SZ (sizeof(GNU_PROPERTY_TYPE_0_NAME))
-
-#define ELF_GNU_PROPERTY_ALIGN 8
-
-/* Security enhancement: Traverse PT_GNU_PROPERTY and PT_NOTE in the ELF to check
- * whether GNU_PROPERTY_AARCH64_FEATURE_1_BTI exists.
- * If so BTI protection is enabled for the ELF. */
-static unsigned char dso_has_bti(struct dso *dso)
-{
-	Phdr *ph = dso->phdr;
-	for (int i = dso->phnum; i; i--, ph++) {
-		if (ph->p_type == PT_GNU_PROPERTY || ph->p_type == PT_NOTE) {
-			Elf64_Nhdr *nh = (Elf64_Nhdr *)(dso->map + ph->p_offset);
-			if (nh->n_type != NT_GNU_PROPERTY_TYPE_0 ||nh->n_namesz != NOTE_NAME_SZ) {
-				continue;
-			}
-			ssize_t off = (sizeof(Elf64_Nhdr)) + NOTE_NAME_SZ;
-			off = (off + ELF_GNU_PROPERTY_ALIGN - 1) & (-ELF_GNU_PROPERTY_ALIGN);
-			struct gnu_property *pr = (struct gnu_property *)(dso->map + ph->p_offset + off);
-			unsigned char *data = dso->map + ph->p_offset + off + sizeof(struct gnu_property);
-			if ((pr->pr_type == GNU_PROPERTY_AARCH64_FEATURE_1_AND) && ((*data & GNU_PROPERTY_AARCH64_FEATURE_1_BTI) != 0)) {
-				return 1;
-			}
-                }
-	}
-
-	return 0;
-}
-
-/* Security enhancement: Traverse the executable PT_LOAD segment, add PROT_BTI through mprotect,
- * and instruct the kernel to enable BTI protection. */
-static void enable_bti(struct dso *dso)
-{
-	if (!dso_has_bti(dso)) {
-		return;
-	}
-	LD_LOGD("enable BTI for dso:%{public}s.", dso->name);
-	Phdr *ph = dso->phdr;
-	for (int i = dso->phnum; i; i--, ph++) {
-		if (ph->p_type != PT_LOAD || !(ph->p_flags & PF_X)) {
-			continue;
-		}
-		uint64_t start = (ph->p_vaddr & ~(PAGE_SIZE-1));
-		size_t len = (ph->p_filesz + PAGE_SIZE-1)  & ~(PAGE_SIZE-1);
-		unsigned prot = PROT_EXEC | PROT_BTI;
-		if (ph->p_flags & PF_R)
-			prot |= PROT_READ;
-		if (ph->p_flags & PF_W)
-			prot |= PROT_WRITE;
-		if (mprotect(dso->base + start, len, prot) != 0) {
-			error("Failed to enable BTI in so %{public}s.", dso->name);
-		}
-	}
-}
-#endif
