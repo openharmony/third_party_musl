@@ -20,6 +20,43 @@ foreach(s, functionalext_supplement_stdio_test) {
   }
 }
 
+ohos_executable("fdsan_test") {
+  subsystem_name = "thirdparty"
+  part_name = "musl"
+
+  sources = [ "fdsan_test.c" ]
+
+  include_dirs = [
+    "//${test_dir}/src/functionalext/common",
+    "//${test_dir}/src/common",
+    "${musl_src_base}/src/internal",
+    "${musl_src_base}/arch/${musl_arch}",
+  ]
+
+  configs = [ "//third_party/musl/libc-test/src/common:config_unittest" ]
+
+  deps = [ "//third_party/musl:create_porting_src" ]
+
+  cflags = [
+    "-Wno-int-to-void-pointer-cast",
+    "-Wno-void-pointer-to-int-cast",
+  ]
+
+  ohos_test = true
+  test_output_dir = "${root_out_dir}/musl/libc-test"
+}
+
+group("functionalext_supplement_stdio_test") {
+  testonly = true
+  deps = [
+    ":fdsan",
+    ":fdsan_test",
+  ]
+  foreach(s, functionalext_supplement_stdio_test) {
+    deps += [ ":${s}" ]
+  }
+}
+
 ohos_executable("fdsan") {
   subsystem_name = "thirdparty"
   part_name = "musl"
@@ -46,12 +83,4 @@ ohos_executable("fdsan") {
   libs = [ "${musl_lib_dir}/libc.a" ]
   ohos_test = true
   test_output_dir = "${root_out_dir}/musl/libc-test"
-}
-
-group("functionalext_supplement_stdio_test") {
-  testonly = true
-  deps = [ ":fdsan" ]
-  foreach(s, functionalext_supplement_stdio_test) {
-    deps += [ ":${s}" ]
-  }
 }
