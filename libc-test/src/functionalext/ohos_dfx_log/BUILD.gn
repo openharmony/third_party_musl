@@ -1,0 +1,12 @@
+import("../../../../musl_template.gni")
+import("../../../test_template.gni")
+
+ohos_executable("ohos_dfx_log") {
+  testonly = true
+  subsystem_name = "musl"
+  part_name = "libc-test"
+
+  sources = [ "ohos_dfx_log.cpp" ]
+  include_dirs = [ "//third_party/musl/libc-test/src/common" ]
+  configs = [ "//third_party/musl/libc-test/src/common:config_runtest" ]
+}
