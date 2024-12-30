@@ -121,19 +121,19 @@ int tc_get_debuginfo(int argc, char **argv)
 
 int main()
 {
-	if(tc_pre_test(0, NULL)) {
+	if (tc_pre_test(0, NULL)) {
 		rt_err("tc_pre_test failed:\n");
 		return -1;
 	}
-	if(tc_do_test(0, NULL)) {
+	if (tc_do_test(0, NULL)) {
 		rt_err("tc_do_test failed:\n");
 		return -1;
 	}
-	if(tc_post_test(0, NULL)) {
+	if (tc_post_test(0, NULL)) {
 		rt_err("tc_post_test failed:\n");
 		return -1;
 	}
-	if(tc_get_debuginfo(0, NULL)) {
+	if (tc_get_debuginfo(0, NULL)) {
 		rt_err("tc_get_debuginfo failed:\n");
 		return -1;
 	}
