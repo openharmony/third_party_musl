@@ -104,7 +104,7 @@ int tc_get_debuginfo(int argc, char **argv)
 	return RT_EOK;
 }
 
-int main() 
+int main(void) 
 {
 	if (tc_pre_test(0, NULL)) {
 		rt_err("tc_pre_test failed:\n");
