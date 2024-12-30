@@ -4964,15 +4964,35 @@ static bool task_map_library(struct loadtask *task, struct reserved_address_para
 		/* find the mapping_align aligned address */
 		unsigned char *real_map = (unsigned char*)ALIGN((uintptr_t)temp_map, mapping_align);
 
-		/* mummap the space we mmap before so that we can mmap correct space again */
-		munmap(temp_map, tmp_map_len);
-
 		map = DL_NOMMU_SUPPORT
 			? mmap(real_map, map_len, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0)
 			/* use map_len to mmap correct space for the dso with file mapping */
-			: mmap(real_map, map_len, prot, map_flags, task->fd, off_start + task->file_offset);
-		if (map == MAP_FAILED) {
+			: mmap(real_map, map_len, prot, map_flags | MAP_FIXED, task->fd, off_start + task->file_offset);
+		if (map == MAP_FAILED || map != real_map) {
 			goto error;
+		}
+
+		/* Free unused memory.
+		 *	|--------------------------tmp_map_len--------------------------|
+		 *	^                   ^                       ^                   ^
+		 *	|---unused_part_1---|---------map_len-------|---unused_part_2---|
+		 *	temp_map            real_map(aligned)                           temp_map_end
+		 */
+		unsigned char *temp_map_end = temp_map + tmp_map_len;
+		size_t unused_part_1 = real_map - temp_map;
+		size_t unused_part_2 = temp_map_end - (real_map + map_len);
+		if (unused_part_1 > 0) {
+			int res1 = munmap(temp_map, unused_part_1);
+			if (res1 == -1) {
+				LD_LOGE("munmap unused part 1 failed, errno:%{public}d", errno);
+			}
+		}
+
+		if (unused_part_2 > 0) {
+			int res2 = munmap(real_map + map_len, unused_part_2);
+			if (res2 == -1) {
+				LD_LOGE("munmap unused part 2 failed, errno:%{public}d", errno);
+			}
 		}
 	}
 	task->p->map = map;
