@@ -33,7 +33,7 @@
 #include <pthread.h>
 #include "hook.h"
 
-using namespace testing::ext
+using namespace testing::ext;
 using namespace std;
 
 extern "C"{
@@ -42,10 +42,10 @@ extern "C"{
     ssize_t read(int fd, void *buf, size_t count);
 }
 
-namespace OHOS{
+namespace OHOS {
 namespace {
 
-class DynlinkTest : public testing::Test{
+class DynlinkTest : public testing::Test {
 public:
     static void TearDownTestCase(void);
 };
@@ -90,8 +90,9 @@ HWTEST_F(DynlinkTest, get_transparent_hugepages_supported_test_003, TestSize.Lev
     set_hook_flag(OPEN_FLAG, true);
     set_hook_flag(READ_FLAG_3, true);
     bool b = get_transparent_hugepages_supported();
-     set_hook_flag(READ_FLAG_3, false);
+    set_hook_flag(READ_FLAG_3, false);
     set_hook_flag(OPEN_FLAG, false);
+
     EXPECT_TRUE(b == false);
 }
 
@@ -101,12 +102,12 @@ HWTEST_F(DynlinkTest, get_transparent_hugepages_supported_test_003, TestSize.Lev
  * @tc.desc: read failed
  * @tc.type: FUNC
  */
-HWTEST_F(DynlinkTest, get_transparent_hugepages_supported_test_004, TestSize.Leve10)
+HWTEST_F(DynlinkTest, get_transparent_hugepages_supported_test_004, TestSize.Level0)
 {
     set_hook_flag(OPEN_FLAG, true);
     set_hook_flag(STRSTR_FLAG, true);
     bool b = get_transparent_hugepages_supported();
-     set_hook_flag(STRSTR_FLAG, false);
+    set_hook_flag(STRSTR_FLAG, false);
     set_hook_flag(OPEN_FLAG, false);
     EXPECT_TRUE(b == false);
 }
