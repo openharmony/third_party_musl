@@ -73,7 +73,7 @@ int tc_do_test(int argc, char **argv)
 		rt_err("dlclose %s failed: %s \n", direct_libs[0], dlerror());
 	}
 	if (!check_loaded(direct_libs[0])) {
-		rt_err{"dso %s shouldn't exist in /proc/self/maps\n", direct_libs[0]};
+		rt_err("dso %s shouldn't exist in /proc/self/maps\n", direct_libs[0]);
 	}
 	if (check_loaded(direct_libs[1])) {
 		rt_err("dso %s shouldn't exist in /proc/self/maps\n", direct_libs[1]);
@@ -97,7 +97,7 @@ int tc_do_test(int argc, char **argv)
 		rt_err("dlclose %s failed: %s \n", direct_libs[0], dlerror());
 	}
 	if (!check_loaded(direct_libs[0])) {
-		rt_err{"dso %s shouldn't exist in /proc/self/maps\n", direct_libs[0]};
+		rt_err("dso %s shouldn't exist in /proc/self/maps\n", direct_libs[0]);
 	}
 	if (check_loaded(direct_libs[1])) {
 		rt_err("dso %s shouldn't exist in /proc/self/maps\n", direct_libs[1]);

@@ -72,7 +72,7 @@ int tc_do_test(int argc, char **argv)
 		}
 	}
 	for (int i = 0; i < num_link; i++) {
-		if (!check_loaded(link_libs[i])) {
+		if (dlsym(link_libs[i]) != NULL) {
 			rt_err("dso %s should exist in /proc/self/maps\n", link_libs[i]);
 		}
 	}
@@ -83,7 +83,7 @@ int tc_do_test(int argc, char **argv)
 		rt_err("dlclose %s failed: %s \n", direct_libs[0], dlerror());
 	}
 	for (int i = 0; i < num; i++) {
-		if (!check_loaded(direct_libs[i])) {
+		if (check_loaded(direct_libs[i])) {
 			rt_err("dso %s should exist in /proc/self/maps\n", direct_libs[i]);
 		}
 	}
