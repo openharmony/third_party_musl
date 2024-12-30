@@ -36,7 +36,7 @@ int tc_pre_test(int argc,char **argv)
 		"/data/tests/libc-test/ola_test/libtest1.so",
 		"/data/tests/libc-test/ola_test/libtest3.so"
 	};
-	int num_files = sizeof(files) /sizeof(files[0]);
+	int num_files = sizeof(files) / sizeof(files[0]);
 	if (check_so_exist(num_files, files) != 0) {
 		rt_err("check so failed\n");
 	}
@@ -119,7 +119,8 @@ int tc_get_debuginfo(int argc, char **argv)
 	return RT_EOK;
 }
 
-int main() {
+int main()
+{
 	if(tc_pre_test(0, NULL)) {
 		rt_err("tc_pre_test failed:\n");
 		return -1;
