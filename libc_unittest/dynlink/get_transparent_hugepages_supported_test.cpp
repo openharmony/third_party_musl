@@ -45,7 +45,7 @@ extern "C"{
 namespace OHOS{
 namespace {
 
-class DylinkTest : public testing::Test{
+class DynlinkTest : public testing::Test{
 public:
     static void TearDownTestCase(void);
 };
@@ -59,7 +59,7 @@ void DynlinkTest::TearDownTestCase(void)
  * @tc.desc: open failed
  * @tc.type: FUNC
  */
-HWTEST_F(DynlinkTest, get_transparent_hugepages_supported_test001, TestSize.Level0)
+HWTEST_F(DynlinkTest, get_transparent_hugepages_supported_test_001, TestSize.Level0)
 {
     bool b = get_transparent_hugepages_supported();
     EXPECT_TRUE(b == false);
@@ -71,7 +71,7 @@ HWTEST_F(DynlinkTest, get_transparent_hugepages_supported_test001, TestSize.Leve
  * @tc.desc: open failed
  * @tc.type: FUNC
  */
-HWTEST_F(DynlinkTest, get_transparent_hugepages_supported_test002, TestSize.Level0)
+HWTEST_F(DynlinkTest, get_transparent_hugepages_supported_test_002, TestSize.Level0)
 {
     set_hook_flag(OPEN_FLAG, true);
     bool b = get_transparent_hugepages_supported();
@@ -82,15 +82,15 @@ HWTEST_F(DynlinkTest, get_transparent_hugepages_supported_test002, TestSize.Leve
 
 /**
  * @tc.name: get_transparent_hugepages_supported_test003
- * @tc.desc: open failed
+ * @tc.desc: read failed
  * @tc.type: FUNC
  */
-HWTEST_F(DynlinkTest, get_transparent_hugepages_supported_test003, TestSize.Level0)
+HWTEST_F(DynlinkTest, get_transparent_hugepages_supported_test_003, TestSize.Level0)
 {
     set_hook_flag(OPEN_FLAG, true);
-    set_hook_flag(OPEN_FLAG_3, true);
+    set_hook_flag(READ_FLAG_3, true);
     bool b = get_transparent_hugepages_supported();
-     set_hook_flag(OPEN_FLAG_3, false);
+     set_hook_flag(READ_FLAG_3, false);
     set_hook_flag(OPEN_FLAG, false);
     EXPECT_TRUE(b == false);
 }
@@ -98,10 +98,10 @@ HWTEST_F(DynlinkTest, get_transparent_hugepages_supported_test003, TestSize.Leve
 
 /**
  * @tc.name: get_transparent_hugepages_supported_test004
- * @tc.desc: open failed
+ * @tc.desc: read failed
  * @tc.type: FUNC
  */
-HWTEST_F(DynlinkTest, get_transparent_hugepages_supported_test004, TestSize.Leve10)
+HWTEST_F(DynlinkTest, get_transparent_hugepages_supported_test_004, TestSize.Leve10)
 {
     set_hook_flag(OPEN_FLAG, true);
     set_hook_flag(STRSTR_FLAG, true);

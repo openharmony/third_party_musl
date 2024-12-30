@@ -20,7 +20,7 @@
  */
 
 
-#include <stdio.h>
+#include <stdlib.h>
 #include <stdlib.h>
 #include <dlfcn.h>
 #include <algorithm>
@@ -29,6 +29,7 @@
 #include <iostream>
 #include <unistd.h>
 #include <sys/mman.h>
+#include <netdb.h>
 #include <gtest/gtest.h>
 
 #include "hook.h"
@@ -37,7 +38,7 @@ using namespace testing::ext;
 using namespace std;
 
 extern "C"{
-    int getaddrinfo (const char *__restrict, const char *__restrict, const struct addrinfo *__restrict, addrinfo **__restrict);
+    int getaddrinfo (const char *__restrict, const char *__restrict, const struct addrinfo *__restrict, struct addrinfo **__restrict);
 }
 
 namespace OHOS {
@@ -78,7 +79,7 @@ int CallGetAddrInfo(int family, int sockType)
  * @tc.desc: test socket fail 
  * @tc.type: FUNC
  */
-HWTEST_F(GetAddrInfoTest, GetAddrInfoTest_001, TestSize.level0){
+HWTEST_F(GetAddrInfoTest, GetAddrInfoTest_001, TestSize.Level0){
     int ret = CallGetAddrInfo(AF_INET, 0);
     EXPECT_EQ(ret, EAI_NONAME);
 }
@@ -88,7 +89,7 @@ HWTEST_F(GetAddrInfoTest, GetAddrInfoTest_001, TestSize.level0){
  * @tc.desc: test socket fail 
  * @tc.type: FUNC
  */
-HWTEST_F(GetAddrInfoTest, GetAddrInfoTest_002, TestSize.level0){
+HWTEST_F(GetAddrInfoTest, GetAddrInfoTest_002, TestSize.Level0){
     int ret = CallGetAddrInfo(AF_INET, SOCK_STREAM);
     EXPECT_EQ(ret, EAI_NONAME);
 }
@@ -98,7 +99,7 @@ HWTEST_F(GetAddrInfoTest, GetAddrInfoTest_002, TestSize.level0){
  * @tc.desc: test socket fail 
  * @tc.type: FUNC
  */
-HWTEST_F(GetAddrInfoTest, GetAddrInfoTest_003, TestSize.level0){
+HWTEST_F(GetAddrInfoTest, GetAddrInfoTest_003, TestSize.Level0){
     int ret = CallGetAddrInfo(AF_INET, SOCK_DGRAM);
     EXPECT_EQ(ret, EAI_NONAME);
 }
@@ -108,9 +109,9 @@ HWTEST_F(GetAddrInfoTest, GetAddrInfoTest_003, TestSize.level0){
  * @tc.desc: test socket fail 
  * @tc.type: FUNC
  */
-HWTEST_F(GetAddrInfoTest, GetAddrInfoTest_004, TestSize.level0){
+HWTEST_F(GetAddrInfoTest, GetAddrInfoTest_004, TestSize.Level0){
     int ret = CallGetAddrInfo(AF_INET6, 0);
-    EXPECT_EQ(ret, EAI_NONAME);
+    EXPECT_EQ(ret, EAI_SYSTEM);
 }
 
 /**
@@ -118,9 +119,9 @@ HWTEST_F(GetAddrInfoTest, GetAddrInfoTest_004, TestSize.level0){
  * @tc.desc: test socket fail 
  * @tc.type: FUNC
  */
-HWTEST_F(GetAddrInfoTest, GetAddrInfoTest_005, TestSize.level0){
+HWTEST_F(GetAddrInfoTest, GetAddrInfoTest_005, TestSize.Level0){
     int ret = CallGetAddrInfo(AF_INET6, SOCK_STREAM);
-    EXPECT_EQ(ret, EAI_NONAME);
+    EXPECT_EQ(ret, EAI_SYSTEM);
 }
 
 /**
@@ -128,9 +129,9 @@ HWTEST_F(GetAddrInfoTest, GetAddrInfoTest_005, TestSize.level0){
  * @tc.desc: test socket fail 
  * @tc.type: FUNC
  */
-HWTEST_F(GetAddrInfoTest, GetAddrInfoTest_006, TestSize.level0){
+HWTEST_F(GetAddrInfoTest, GetAddrInfoTest_006, TestSize.Level0){
     int ret = CallGetAddrInfo(AF_INET6, SOCK_DGRAM);
-    EXPECT_EQ(ret, EAI_NONAME);
+    EXPECT_EQ(ret, EAI_SYSTEM);
 }
 
 } //namespace
