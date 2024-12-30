@@ -20,18 +20,18 @@
  * IN THE SOFTWARE.
  */
 
-/********************************************************************
+/*********************************************************************
  *  @CaseName: dlclose_12
  *  @Brief: 测试并发创建线程加载卸载动态库
  *  Author: baoruyi
- ********************************************************************/
+ *********************************************************************/
 #include "common.h" /* PLEASE DON'T MODIFY THIS LINE */
 
-// Func: 本用例执行测试之前进行环境初始化
+// Func: 本用例执行测试前进行环境初始化
 // Args: 同用例参数
 int tc_pre_test(int argc, char **argv)
 {
-    // @PRE-1： 测试so存在, so内容为并发创建线程然后退出
+    // @PRE-1: 测试so存在, so内容为并发创建线程然后退出
     char *files[] = {
       "/data/tests/libc-test/ola_test/libtest1.so",
       "/data/tests/libc-test/ola_test/libtest1.so"
@@ -80,7 +80,7 @@ int tc_do_test(int argc, char **argv)
         }
     }
     for (int j = 0; j < TEST_NUM; j++) {
-        ret = pthread_join(tid[j], NULL);
+        ret = pthread_join(thid[j], NULL);
         if (ret != 0) {
             printf("pthread_join fail errno is %s\n", strerror(errno));
         }

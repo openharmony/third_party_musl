@@ -31,7 +31,7 @@
 // Args: 同用例参数
 int tc_pre_test(int argc, char **argv)
 {
-    // @PRE-1： 测试so存在, libtest3.so带tls变量
+    // @PRE-1: 测试so存在, libtest3.so带tls变量
     char *files[] = {
       "/data/tests/libc-test/ola_test/libtest1.so",
       "/data/tests/libc-test/ola_test/libtest3.so"
