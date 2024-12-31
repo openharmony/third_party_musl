@@ -48,8 +48,25 @@ static char *old_tz = old_tz_buf;
 static size_t old_tz_size = sizeof old_tz_buf;
 static int cota_accessable = 0;
 
+#if defined(OHOS_ENABLE_PARAMETER) && (!defined(__LITEOS__))
+static CachedHandle cota_param_handle = NULL;
+static CachedHandle tz_param_handle = NULL;
+#endif
+
 static volatile int lock[1];
 volatile int *const __timezone_lockptr = lock;
+
+void InitTimeZoneParam(void)
+{
+#if defined(OHOS_ENABLE_PARAMETER) && (!defined(__LITEOS__))
+	if (cota_param_handle == NULL) {
+		cota_param_handle = CachedParameterCreate("persist.global.tz_override", "false");
+	}
+	if (tz_param_handle == NULL) {
+		tz_param_handle = CachedParameterCreate("persist.time.timezone", "/etc/localtime");
+	}
+#endif
+}
 
 static int getint(const char **p)
 {
@@ -140,7 +157,6 @@ static int check_cota(void)
 #if defined(OHOS_ENABLE_PARAMETER) && (!defined(__LITEOS__))
 	static int cota_exist = 0;
 	if (cota_exist) return 1;
-	static CachedHandle cota_param_handle = NULL;
 	if (cota_param_handle == NULL) {
 		cota_param_handle = CachedParameterCreate("persist.global.tz_override", "false");
 	}
@@ -200,7 +216,6 @@ static void do_tzset(int use_env)
 
 	if (!s) {
 #if defined(OHOS_ENABLE_PARAMETER) && (!defined(__LITEOS__))
-		static CachedHandle tz_param_handle = NULL;
 		if (tz_param_handle == NULL) {
 			tz_param_handle = CachedParameterCreate("persist.time.timezone", "/etc/localtime");
 		}
