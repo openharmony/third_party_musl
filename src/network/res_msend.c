@@ -114,7 +114,7 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 	int i, j;
 	int cs;
 	struct pollfd pfd[nqueries+2];
-	int qpos[nqueries], apos[nqueries];
+	int qpos[nqueries], apos[nqueries], retry[nqueries];
 	unsigned char alen_buf[nqueries][2];
 	int r;
 	unsigned long t0, t1, t2;
@@ -227,6 +227,7 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 		if (t2-t1 >= retry_interval) {
 			/* Query all configured namservers in parallel */
 			for (i=0; i<nqueries; i++) {
+				retry[i] = 0;
 				if (!alens[i]) {
 					for (j=0; j<nns; j++) {
 						if (sendto(fd, queries[i], qlens[i], MSG_NOSIGNAL, (void *)&ns[j], sl) == -1) {
@@ -317,8 +318,18 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 			 * all other codes such as refusal. */
 			switch (answers[next][3] & 15) {
 			case 0:
-			case 3:
 				break;
+			case 3:
+				if (retry[i] + 1 < nns) {
+					retry[i]++;
+					continue;
+				} else {
+#ifndef __LITEOS__
+					MUSL_LOGE("%{public}s: %{public}d: retry failed for %{public}d nameservers, and get no such name",
+						__func__, __LINE__, retry[i]);
+#endif
+					break;
+				}
 			case 2:
 				if (servfail_retry && servfail_retry--)
 					sendto(fd, queries[i],
