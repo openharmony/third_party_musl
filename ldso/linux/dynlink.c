@@ -3130,7 +3130,9 @@ void __dls3(size_t *sp, size_t *auxv, size_t *aux)
 #ifdef DFX_SIGNAL_LIBC
 	DFX_InstallSignalHandler();
 #endif
+#if defined (ENABLE_MUSL_LOG) && !defined(__LITEOS__)
 	InitHilogSocketFd();
+#endif
 	__init_fdsan();
 	InitDeviceApiVersion(); // do nothing when no define OHOS_ENABLE_PARAMETER
 	InitTimeZoneParam();
