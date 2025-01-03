@@ -120,7 +120,8 @@ int dns_get_addr_info_from_netsys_cache2(const int netid, const char *restrict h
 				.ai_addr = (void *) &out[i].sa,
 				.ai_canonname = outcanon,
 		};
-		memcpy(&out[i].sa, &addr_info[i].ai_addr, addr_info[i].ai_addrLen);
+		uint32_t len = MACRO_MIN(addr_info[i].ai_addrLen, sizeof(addr_info[i].ai_addr));
+		memcpy(&out[i].sa, &addr_info[i].ai_addr, len);
 		if (i > 0) {
 			out[i - 1].ai.ai_next = &out[i].ai;
 		}
