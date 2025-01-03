@@ -111,6 +111,12 @@ int dns_get_addr_info_from_netsys_cache2(const int netid, const char *restrict h
 
 	for (int i = 0; i < num; i++) {
 		out[i].slot = (short) i;
+        if (addr_info[i].ai_addrLen > MAX_SOCKET_ADDR_LEN) {
+            MUSL_LOGE("%{public}s: %{public}d: ai_addrLen illegal, len =   %{public}d",
+                __func__, __LINE__, addr_info[i].ai_addrLen);
+            addr_info[i].ai_addrLen = addr_info[i].ai_family == AF_INET
+                ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6);
+        }
 		out[i].ai = (struct addrinfo) {
 				.ai_flags = (int) addr_info[i].ai_flags,
 				.ai_family = (int) addr_info[i].ai_family,
@@ -120,8 +126,7 @@ int dns_get_addr_info_from_netsys_cache2(const int netid, const char *restrict h
 				.ai_addr = (void *) &out[i].sa,
 				.ai_canonname = outcanon,
 		};
-		uint32_t len = MACRO_MIN(addr_info[i].ai_addrLen, sizeof(addr_info[i].ai_addr));
-		memcpy(&out[i].sa, &addr_info[i].ai_addr, len);
+		memcpy(&out[i].sa, &addr_info[i].ai_addr, addr_info[i].ai_addrLen);
 		if (i > 0) {
 			out[i - 1].ai.ai_next = &out[i].ai;
 		}
