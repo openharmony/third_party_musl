@@ -113,8 +113,10 @@ int dns_get_addr_info_from_netsys_cache2(const int netid, const char *restrict h
 	for (int i = 0; i < num; i++) {
 		out[i].slot = (short) i;
         if (addr_info[i].ai_addrLen > MAX_SOCKET_ADDR_LEN) {
-            MUSL_LOGE("%{public}s: %{public}d: ai_addrLen illegal, len =   %{public}d",
+#ifndef __LITEOS__
+            MUSL_LOGE("%{public}s: %{public}d: ai_addrLen illegal, len = %{public}d",
                 __func__, __LINE__, addr_info[i].ai_addrLen);
+#endif
             addr_info[i].ai_addrLen = addr_info[i].ai_family == AF_INET
                 ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6);
         }
