@@ -26,6 +26,7 @@
 #include "atomic.h"
 
 #define GETADDRINFO_PRINT_DEBUG(...)
+#define MAX_SOCKET_ADDR_LEN sizeof(aligned_sockAddr)
 
 static GetCache load_cache_getter(void)
 {
