@@ -6,6 +6,11 @@
 #include <limits.h>
 #include <stdint.h>
 #include "locale_impl.h"
+#ifndef __LITEOS__
+#ifdef FEATURE_ICU_LOCALE
+#include <info/device_api_version.h>
+#endif
+#endif
 
 #define UTF_32BE    0300
 #define UTF_16LE    0301
@@ -27,7 +32,22 @@
 #define GB2312      0332
 #define BIG5        0340
 #define EUC_KR      0350
-
+#ifndef __LITEOS__
+#ifdef FEATURE_ICU_LOCALE
+#define ICU_ZERO_ERROR 0
+#define ICU_IVALID_CHAR_ERROR 10
+#define ICU_TRUNCATED_CHAR_ERROR 11
+#define ICU_ILLEGAL_CHAR_ERROR 12
+#define ICU_BUFFER_OVERFLOW_ERROR 15
+#define ICU_SKIP_THRESHOLD 2
+#define DEVICE_VERSION_THRESHOLD 16
+#define TYPE_FLAG_POS 1
+#define TO_IGNORE_FLAG_POS 2
+#define FROM_IGNORE_FLAG_POS 3
+#define TO_TRANSLIT_FLAG_POS 4
+#define FROM_TRANSLIT_FLAG_POS 5
+#endif
+#endif
 /* Definitions of charmaps. Each charmap consists of:
  * 1. Empty-string-terminated list of null-terminated aliases.
  * 2. Special type code or number of elided quads of entries.
@@ -58,6 +78,60 @@ static const unsigned char charmaps[] =
 "euckr\0ksc5601\0ksx1001\0cp949\0\0\350"
 #include "codepages.h"
 ;
+
+#ifndef __LITEOS__
+#ifdef FEATURE_ICU_LOCALE
+// \0 split alias;  \0\0 split name in icu
+static const unsigned char icu_name_maps[] =
+"utf8\0char\0\0UTF-8\0"
+"utf7\0\0UTF-7\0"
+"ucs2\0utf16\0ucs2be\0utf16be\0\0UTF-16BE\0"
+"ucs2le\0utf16le\0\0UTF-16LE\0"
+"ucs4\0utf32\0ucs4be\0utf32be\0\0UTF-32BE\0"
+"wchart\0ucs4le\0utf32le\0\0UTF-32LE\0"
+"ascii\0usascii\0""20127\0iso646\0iso646us\0\0US-ASCII\0"
+"eucjp\0eucjp2007\0\0euc-jp-2007\0"
+"shiftjis\0sjis\0cp932\0ibm943p15a2003\0\0ibm-943_P15A-2003\0"
+"gb18030\0\0gb18030\0"
+"gbk\0""54936\0windows9362000\0\0windows-936-2000\0"
+"gb2312\0""52936\0ibm1383p1101999\0\0ibm-1383_P110-1999\0"
+"big5\0""950\0bigfive\0cp950\0windows9502000\0\0windows-950-2000\0"
+"big5hk\0big5hkscs\0""951\0ibm1375p1002008\0\0ibm-1375_P100-2008\0"
+"euckr\0ibm970p110p1102006u2\0\0ibm-970_P110_P110-2006_U2\0"
+"ksc5601\0ksx1001\0cp949\0windows9492000\0\0windows-949-2000\0"
+"iso88591\0latin1\0\0ISO-8859-1\0"
+"iso88592\0ibm912p1001995\0\0ibm-912_P100-1995\0"
+"iso88593\0ibm913p1002000\0\0ibm-913_P100-2000\0"
+"iso88594\0ibm914p1001995\0\0ibm-914_P100-1995\0"
+"iso88595\0ibm915p1001995\0\0ibm-915_P100-1995\0"
+"iso88596\0ibm1089p1001995\0\0ibm-1089_P100-1995\0"
+"iso88597\0ibm9005x1102007\0\0ibm-9005_X110-2007\0"
+"iso88598\0ibm5012p1001999\0\0ibm-5012_P100-1999\0"
+"iso88599\0ibm920p1001995\0\0ibm-920_P100-1995\0"
+"iso885910\0iso8859101998\0\0iso-8859_10-1998\0"
+"iso885911\0iso8859112001\0\0iso-8859_11-2001\0"
+"tis620\0windows8742000\0\0windows-874-2000\0"
+"iso885913\0ibm921p1001995\0\0ibm-921_P100-1995\0"
+"iso885914\0iso8859141998\0\0iso-8859_14-1998\0"
+"iso885915\0latin9\0ibm923p1001998\0\0ibm-923_P100-1998\0"
+"cp1250\0windows1250\0ibm5346p1001998\0\0ibm-5346_P100-1998\0"
+"cp1251\0windows1251\0ibm5347p1001998\0\0ibm-5347_P100-1998\0"
+"cp1252\0windows1252\0ibm5348p1001997\0\0ibm-5348_P100-1997\0"
+"cp1253\0windows1253\0ibm5349p1001998\0\0ibm-5349_P100-1998\0"
+"cp1254\0windows1254\0ibm5350p1001998\0\0ibm-5350_P100-1998\0"
+"cp1255\0windows1255\0ibm9447p1002002\0\0ibm-9447_P100-2002\0"
+"cp1256\0windows1256\0ibm9448x1002005\0\0ibm-9448_X100-2005\0"
+"cp1257\0windows1257\0ibm9449p1002002\0\0ibm-9449_P100-2002\0"
+"cp1258\0windows1258\0ibm5354p1001998\0\0ibm-5354_P100-1998\0"
+"koi8r\0ibm878p1001996\0\0ibm-878_P100-1996\0"
+"koi8u\0ibm1168p1002002\0\0ibm-1168_P100-2002\0"
+"cp437\0ibm437p1001995\0\0ibm-437_P100-1995\0"
+"cp850\0ibm850p1001995\0\0ibm-850_P100-1995\0"
+"cp866\0ibm866p1001995\0\0ibm-866_P100-1995\0"
+"ibm1047\0cp1047\0ibm1047p1001995\0\0ibm-1047_P100-1995\0"
+;
+#endif
+#endif
 
 /* Table of characters that appear in legacy 8-bit codepages,
  * limited to 1024 slots (10 bit indices). The first 256 entries
@@ -117,7 +191,42 @@ static size_t find_charmap(const void *name)
 	return -1;
 }
 
+#ifndef __LITEOS__
+#ifdef FEATURE_ICU_LOCALE
+static const unsigned char* find_icu_map(const void *query_name)
+{
+    if (!*(char *)query_name) {
+        query_name = icu_name_maps;
+    }
+
+    const unsigned char *icu_name = icu_name_maps;
+    while (*icu_name) {
+        if (!fuzzycmp(query_name, icu_name)) {
+            while (*icu_name) {
+                icu_name += strlen((void *)icu_name) + 1;  //find nearly \0\0
+            }
+            return icu_name + 1;
+        }
+        icu_name += strlen((void *)icu_name) + 1;  // skip \0
+        if (!*icu_name) {  // skip \0\0
+            icu_name++;
+            while (*icu_name) {icu_name++;}
+            icu_name++;
+        }
+    }
+    return NULL;
+}
+#endif
+#endif
+
 struct stateful_cd {
+#ifndef __LITEOS__
+#ifdef FEATURE_ICU_LOCALE
+    unsigned sign;
+    const unsigned char* to;
+    const unsigned char* from;
+#endif
+#endif
 	iconv_t base_cd;
 	unsigned state;
 };
@@ -137,11 +246,92 @@ static size_t extract_to(iconv_t cd)
 	return (size_t)cd >> 1 & 0x7fff;
 }
 
+#ifndef __LITEOS__
+#ifdef FEATURE_ICU_LOCALE
+static void set_type_flag(unsigned* value) {*value = (1 << TYPE_FLAG_POS) | *value;}
+static void set_to_ignore_flag(unsigned* value) {*value = (1 << TO_IGNORE_FLAG_POS) | *value;}
+static void set_from_ignore_flag(unsigned* value) {*value = (1 << FROM_IGNORE_FLAG_POS) | *value;}
+static void set_to_translit_flag(unsigned* value) {*value = (1 << TO_TRANSLIT_FLAG_POS) | *value;}
+static void set_from_translit_flag(unsigned* value) {*value = (1 << FROM_TRANSLIT_FLAG_POS) | *value;}
+static bool get_type_flag(unsigned value) {return (value >> TYPE_FLAG_POS) & 1;}
+static bool get_to_ignore_flag(unsigned value) {return (value >> TO_IGNORE_FLAG_POS) & 1;}
+static bool get_from_ignore_flag(unsigned value) {return (value >> FROM_IGNORE_FLAG_POS) & 1;}
+static bool get_to_translit_flag(unsigned value) {return (value >> TO_TRANSLIT_FLAG_POS) & 1;}
+static bool get_from_translit_flag(unsigned value) {return (value >> FROM_TRANSLIT_FLAG_POS) & 1;}
+
+static bool deal_with_tail(const char* ins, unsigned* sign, const unsigned char** res, bool is_from)
+{
+    char* ins_tmp = strdup(ins);
+    if (!ins_tmp) {return false;}
+    char* ins_ignore_pos = strstr(ins_tmp, "//IGNORE");
+    char* ins_translit_pos = strstr(ins_tmp, "//TRANSLIT");
+    if (ins_ignore_pos) {
+        if (is_from) {
+            set_from_ignore_flag(sign);
+        } else {
+            set_to_ignore_flag(sign);
+        }
+        *ins_ignore_pos = '\0';
+        *res = find_icu_map((void*)ins_tmp);
+    } else if (ins_translit_pos) {
+        if (is_from) {
+            set_from_translit_flag(sign);
+        } else {
+            set_to_translit_flag(sign);
+        }
+        *ins_translit_pos = '\0';
+        *res = find_icu_map((void*)ins_tmp);
+    } else {
+        *res = find_icu_map(ins);
+    }
+    free(ins_tmp);
+    return true;
+}
+#endif
+#endif
+
 iconv_t iconv_open(const char *to, const char *from)
 {
-	size_t f, t;
-	struct stateful_cd *scd;
+    struct stateful_cd *scd;
 
+#ifndef __LITEOS__
+#ifdef FEATURE_ICU_LOCALE
+    bool is_basic_open = false;
+    if (get_device_api_version_inner() < DEVICE_VERSION_THRESHOLD) {
+        is_basic_open = true;
+    } else {
+        for (const char* s = "iso885916\0iso2022jp\0\0"; *s;) {  // icu not support
+            if (!fuzzycmp((void*)to, (void*)s) || !fuzzycmp((void*)from, (void*)s)) {
+                is_basic_open = true;
+            }
+            s += strlen(s) + 1;
+        }
+    }
+
+    // icu open
+    if (!is_basic_open && icuuc_handle_init()) {
+        scd = malloc(sizeof *scd);
+        if (!scd) {return (iconv_t)-1;}
+        scd->sign = 0;
+        scd->state = 0;
+
+        if (!deal_with_tail(to, &scd->sign, &scd->to, false)) {return (iconv_t)-1;}
+        if (!deal_with_tail(from, &scd->sign, &scd->from, true)) {return (iconv_t)-1;}
+
+        if (!scd->to || !scd->from) {
+            errno = EINVAL;
+            free(scd);
+            return (iconv_t)-1;
+        }
+
+        set_type_flag(&scd->sign);
+        return (iconv_t)scd;
+    }
+#endif
+#endif
+
+    // basic open
+    size_t f, t;
 	if ((t = find_charmap(to))==-1
 	 || (f = find_charmap(from))==-1
 	 || (charmaps[t] >= 0330)) {
@@ -157,6 +347,7 @@ iconv_t iconv_open(const char *to, const char *from)
 	case ISO2022_JP:
 		scd = malloc(sizeof *scd);
 		if (!scd) return (iconv_t)-1;
+        memset(scd, 0, sizeof(*scd));
 		scd->base_cd = cd;
 		scd->state = 0;
 		cd = (iconv_t)scd;
@@ -224,13 +415,123 @@ static unsigned uni_to_jis(unsigned c)
 	}
 }
 
+#ifndef __LITEOS__
+#ifdef FEATURE_ICU_LOCALE
+static void ucnv_from_u_callback_ignore(
+    const void* context,
+    void* fromUArgs,
+    const void* codeUnits,
+    int32_t length,
+    int32_t codePoint,
+    int reason,
+    int* err)
+{
+    if (reason <= ICU_SKIP_THRESHOLD) {
+        *err = ICU_ZERO_ERROR;
+    }
+}
+
+static void ucnv_from_u_callback_stop(const void* context, ...) { }
+
+static void ucnv_to_u_callback_ignore(
+    const void* context,
+    void* toUArgs,
+    const void* codeUnits,
+    int32_t length,
+    int reason,
+    int* err)
+{
+    if (reason <= ICU_SKIP_THRESHOLD) {
+        *err = ICU_ZERO_ERROR;
+    }
+}
+
+static void ucnv_to_u_callback_stop(const void* context, ...) { }
+
+static void set_errno(int errCode)
+{
+    if (errCode == ICU_ZERO_ERROR) {
+        errno = 0;
+    } else if (errCode == ICU_BUFFER_OVERFLOW_ERROR) {
+        errno = E2BIG;
+    } else if (errCode == ICU_IVALID_CHAR_ERROR ||
+               errCode == ICU_TRUNCATED_CHAR_ERROR ||
+               errCode == ICU_ILLEGAL_CHAR_ERROR) {
+        errno = EILSEQ;
+    } else {
+        errno = EINVAL;
+    }
+}
+
+static size_t iconv_icu(unsigned sign, const unsigned char* to, const unsigned char* from,
+char **restrict in, size_t *restrict inb, char **restrict out, size_t *restrict outb)
+{
+    int errCode = ICU_ZERO_ERROR;
+    size_t out_size = 0;
+    size_t uchars_len = *inb * 4;
+    uint16_t uchars[uchars_len];
+
+    // (from -> UChars) <=> ucnv_toUChars
+    void* conv_to_u = g_icu_opt_func.ucnv_open((void*)from, &errCode);
+    if (get_from_ignore_flag(sign)) {
+        g_icu_opt_func.ucnv_setToUCallBack(conv_to_u, ucnv_to_u_callback_ignore, NULL, NULL, NULL, &errCode);
+    } else if (!get_from_translit_flag(sign)) {
+        g_icu_opt_func.ucnv_setFromUCallBack(conv_to_u, ucnv_to_u_callback_stop, NULL, NULL, NULL, &errCode);
+    }
+    uchars_len = g_icu_opt_func.ucnv_toUChars(conv_to_u, uchars, uchars_len, *in, *inb, &errCode);
+    if (errCode > ICU_ZERO_ERROR) {
+        set_errno(errCode);
+        return (size_t)-1;
+    } else {
+        errCode = ICU_ZERO_ERROR;
+    }
+    g_icu_opt_func.ucnv_close(conv_to_u);
+
+    // (UChars -> to) <=> ucnv_fromUChars
+    void* conv_from_u = g_icu_opt_func.ucnv_open((void*)to, &errCode);
+    if (get_to_ignore_flag(sign)) {
+        g_icu_opt_func.ucnv_setFromUCallBack(conv_from_u, ucnv_from_u_callback_ignore, NULL, NULL, NULL, &errCode);
+    } else if (!get_to_translit_flag(sign)) {
+        g_icu_opt_func.ucnv_setFromUCallBack(conv_from_u, ucnv_from_u_callback_stop, NULL, NULL, NULL, &errCode);
+    }
+    out_size = g_icu_opt_func.ucnv_fromUChars(conv_from_u, *out, *outb, uchars, uchars_len, &errCode);
+    if (errCode > ICU_ZERO_ERROR) {
+        set_errno(errCode);
+        return (size_t)-1;
+    } else {
+        errCode = ICU_ZERO_ERROR;
+    }
+    g_icu_opt_func.ucnv_close(conv_from_u);
+
+    *out += out_size;
+    *outb -= out_size;
+    *in += *inb;
+    *inb -= *inb;
+    set_errno(errCode);
+
+    return (size_t)errCode;
+}
+#endif
+#endif
+
 size_t iconv(iconv_t cd, char **restrict in, size_t *restrict inb, char **restrict out, size_t *restrict outb)
 {
-	size_t x=0;
+    if (!in || !*in || !*inb) {
+        return 0;
+    }
+
+    size_t x=0;
 	struct stateful_cd *scd=0;
 	if (!((size_t)cd & 1)) {
 		scd = (void *)cd;
 		cd = scd->base_cd;
+#ifndef __LITEOS__
+#ifdef FEATURE_ICU_LOCALE
+        if (get_type_flag(scd->sign)) {
+            return iconv_icu(scd->sign, scd->to, scd->from, in, inb, out, outb);
+        }
+#endif
+#endif
 	}
 	unsigned to = extract_to(cd);
 	unsigned from = extract_from(cd);
@@ -244,8 +545,6 @@ size_t iconv(iconv_t cd, char **restrict in, size_t *restrict inb, char **restri
 	unsigned char type = map[-1];
 	unsigned char totype = tomap[-1];
 	locale_t *ploc = &CURRENT_LOCALE, loc = *ploc;
-
-	if (!in || !*in || !*inb) return 0;
 
 	*ploc = UTF8_LOCALE;
 
