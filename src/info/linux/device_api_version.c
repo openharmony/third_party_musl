@@ -48,6 +48,12 @@ void InitDeviceApiVersion(void)
 
 int get_device_api_version(void)
 {
+    // depend subsystem of syspara support the interface of get system property
+    return API_VERSION_DEFAULT;
+}
+
+int get_device_api_version_inner(void)
+{
 #ifdef OHOS_ENABLE_PARAMETER
     if (device_api_level == API_VERSION_DEFAULT) {
         // Api version may not init by InitDeviceApiVersion in dls3, try again.
