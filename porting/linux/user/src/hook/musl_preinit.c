@@ -348,9 +348,8 @@ static void clear_function_table()
 		function_of_shared_lib[i] = NULL;
 		if (__get_memleak_hook_flag()) {
 			function_of_memleak_shared_lib[i] = NULL;
-		} else if (__get_global_hook_flag()) {
-			function_of_ohos_malloc_shared_lib[i] = NULL;
 		}
+		function_of_ohos_malloc_shared_lib[i] = NULL;
 	}
 }
 
@@ -371,16 +370,15 @@ bool init_malloc_hook_shared_library(void* shared_library_handle, const char* sh
 		char symbol[MAX_SYM_NAME_SIZE];
 		snprintf(symbol, sizeof(symbol), "%s_%s", prefix, names[i]);
 		function_of_shared_lib[i] = dlsym(shared_library_handle, symbol);
-		if (__get_memleak_hook_flag()) {
-			function_of_memleak_shared_lib[i] = function_of_shared_lib[i];
-		} else if (__get_global_hook_flag()) {
-			function_of_ohos_malloc_shared_lib[i] = function_of_shared_lib[i];
-		}
 		if (function_of_shared_lib[i] == NULL) {
 			// __musl_log(__MUSL_LOG_ERROR, "%s: %s routine not found in %s\n", getprogname(), symbol, shared_lib);
 			clear_function_table();
 			return false;
 		}
+		if (__get_memleak_hook_flag()) {
+			function_of_memleak_shared_lib[i] = function_of_shared_lib[i];
+		}
+		function_of_ohos_malloc_shared_lib[i] = function_of_shared_lib[i];
 	}
 
 	if (!init_hook_functions(shared_library_handle, dispatch_table, prefix)) {
@@ -536,9 +534,8 @@ static void __restore_hook_function_table()
 	for (size_t i = 0; i < LAST_FUNCTION; i++) {
 		if (__get_memleak_hook_flag()) {
 			function_of_shared_lib[i] = function_of_memleak_shared_lib[i];
-		} else if (__get_global_hook_flag()) {
-			function_of_shared_lib[i] = function_of_ohos_malloc_shared_lib[i];
 		}
+		function_of_shared_lib[i] = function_of_ohos_malloc_shared_lib[i];
 	}
 }
 
