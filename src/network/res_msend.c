@@ -14,6 +14,7 @@
 #include "stdio_impl.h"
 #include "syscall.h"
 #include "lookup.h"
+#include <errno.h>
 
 static void cleanup(void *p)
 {
@@ -297,8 +298,10 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 			rlen = recvmsg(fd, &mh, 0);
 			if (rlen < 0) {
 #ifndef __LITEOS__
-				MUSL_LOGE("%{public}s: %{public}d: recvmsg failed, errno id: %{public}d",
+				if (errno != EAGAIN) {
+					MUSL_LOGE("%{public}s: %{public}d: recvmsg failed, errno id: %{public}d",
 					__func__, __LINE__, errno);
+				}
 #endif
 				break;
 			}
