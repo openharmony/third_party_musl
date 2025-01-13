@@ -118,7 +118,7 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 	unsigned char alen_buf[nqueries][2];
 	int r;
 	unsigned long t0, t1, t2, temp_t;
-	uint8_t nres;
+	uint8_t nres, end_query;
 
 	pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &cs);
 
@@ -220,6 +220,7 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 	t1 = t2 - retry_interval;
 	temp_t = 0;
 	nres = 0;
+	end_query = 0;
 
 	for (; t2-t0 < timeout; t2=mtime()) {
 		/* This is the loop exit condition: that all queries
@@ -227,10 +228,18 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 		for (i=0; i<nqueries && alens[i]>0; i++);
 		if (i==nqueries) break;
 
+		/* if the temp_t * 2 timeout, return result immediately. */
+		if (end_query) {
+			goto out;
+		}
+
 		if (t2-t1 >= retry_interval) {
 			/* if the first query round timeout, determine whether 
 			 * to return based on the num of answers. */
 			if (nres) {
+#ifndef __LITEOS__
+				MUSL_LOGE("%{public}s: %{public}d: first round timeout and had answer", __func__, __LINE__);
+#endif
 				goto out;
 			}
 			/* Query all configured namservers in parallel */
@@ -265,6 +274,7 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 					remaining_time = retry_interval - temp_t;
 				} else if (temp_t < retry_interval / 2 && temp_t > 0) {
 					remaining_time = temp_t;
+					end_query = 1;
 				} else {
 					goto out;
 				}
@@ -388,7 +398,7 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 				}
 				pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, 0);
 				r = start_tcp(pfd+i, family, ns+j, sl, queries[i], qlens[i], netid);
-				pthread_setcancelstate(cs, 0);
+				pthread_setcancels3tate(cs, 0);
 				if (r >= 0) {
 					qpos[i] = r;
 					apos[i] = 0;
