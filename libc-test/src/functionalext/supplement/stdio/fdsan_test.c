@@ -38,7 +38,7 @@
 #define THREE (3)
 #define DIRECTORY_PATH "/data/log/faultlog/temp"
 #define FDSAN_SEARCH_STRING "DEBUG SIGNAL(FDSAN)"
-#define BADFD_SEARCH_STRING "(BADFD)"
+#define BADFD_SEARCH_STRING "EBADF:"
 
 #define TEMP_FD_0 (0)
 #define TEMP_FD_1 (1)
@@ -49,6 +49,7 @@
 #define TEMP_FD_6 (6)
 #define INVALID_TAG_999 (999)
 #define INVALID_TAG_998 (998)
+#define TEMP_TAG_99 (99)
 
 // 子线程函数，向主线程发送信号，触发fdsan校验失败循环三次
 void* thread_func(void* arg)
@@ -256,9 +257,10 @@ void check_bad_fd(void)
         t_error("check_bad_fd open failed errno=%d\n", errno);
         return;
     }
-    close(fd);
-    close(fd);
-    close(fd);
+    fdsan_exchange_owner_tag(fd, ZERO, TEMP_TAG_99);
+    fdsan_close_with_tag(fd, TEMP_TAG_99);
+    fdsan_close_with_tag(fd, TEMP_TAG_99);
+    fdsan_close_with_tag(fd, TEMP_TAG_99);
 
     // 获取当前进程的 PID
     pid_t pid = getpid();
