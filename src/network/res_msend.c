@@ -398,7 +398,7 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 				}
 				pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, 0);
 				r = start_tcp(pfd+i, family, ns+j, sl, queries[i], qlens[i], netid);
-				pthread_setcancels3tate(cs, 0);
+				pthread_setcancelstate(cs, 0);
 				if (r >= 0) {
 					qpos[i] = r;
 					apos[i] = 0;
