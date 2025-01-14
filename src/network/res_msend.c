@@ -14,6 +14,7 @@
 #include "stdio_impl.h"
 #include "syscall.h"
 #include "lookup.h"
+#include <errno.h>
 
 static void cleanup(void *p)
 {
@@ -117,7 +118,8 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 	int qpos[nqueries], apos[nqueries], retry[nqueries];
 	unsigned char alen_buf[nqueries][2];
 	int r;
-	unsigned long t0, t1, t2;
+	unsigned long t0, t1, t2, temp_t;
+	uint8_t nres, end_query;
 
 	pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &cs);
 
@@ -217,6 +219,9 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 	next = 0;
 	t0 = t2 = mtime();
 	t1 = t2 - retry_interval;
+	temp_t = 0;
+	nres = 0;
+	end_query = 0;
 
 	for (; t2-t0 < timeout; t2=mtime()) {
 		/* This is the loop exit condition: that all queries
@@ -224,7 +229,20 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 		for (i=0; i<nqueries && alens[i]>0; i++);
 		if (i==nqueries) break;
 
+		/* if the temp_t * 2 timeout, return result immediately. */
+		if (end_query) {
+			goto out;
+		}
+
 		if (t2-t1 >= retry_interval) {
+			/* if the first query round timeout, determine whether 
+			 * to return based on the num of answers. */
+			if (nres) {
+#ifndef __LITEOS__
+				MUSL_LOGE("%{public}s: %{public}d: first round timeout and had answer", __func__, __LINE__);
+#endif
+				goto out;
+			}
 			/* Query all configured namservers in parallel */
 			for (i=0; i<nqueries; i++) {
 				retry[i] = 0;
@@ -247,8 +265,23 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 			servfail_retry = 2 * nqueries;
 		}
 
+		unsigned long remaining_time = t1 + retry_interval - t2;
+        if (nres) {
+            if (!temp_t) {
+                temp_t = t2 - t1;
+            }
+            if (temp_t >= retry_interval / 2 && temp_t < retry_interval) {
+                remaining_time = retry_interval - temp_t;
+            } else if (temp_t < retry_interval / 2 && temp_t > 0) {
+                remaining_time = temp_t;
+                end_query = 1;
+            } else {
+                goto out;
+            }
+        }
+
 		/* Wait for a response, or until time to retry */
-		if (poll(pfd, nqueries+1, t1+retry_interval-t2) <= 0) continue;
+		if (poll(pfd, nqueries+1, remaining_time) <= 0) continue;
 
 		while (next < nqueries) {
 			struct msghdr mh = {
@@ -263,8 +296,10 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 			rlen = recvmsg(fd, &mh, 0);
 			if (rlen < 0) {
 #ifndef __LITEOS__
-				MUSL_LOGE("%{public}s: %{public}d: recvmsg failed, errno id: %{public}d",
+				if (errno != EAGAIN) {
+					MUSL_LOGE("%{public}s: %{public}d: recvmsg failed, errno id: %{public}d",
 					__func__, __LINE__, errno);
+				}
 #endif
 				break;
 			}
@@ -342,6 +377,7 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 			/* Store answer in the right slot, or update next
 			 * available temp slot if it's already in place. */
 			alens[i] = rlen;
+			nres++;
 			if (i == next)
 				for (; next<nqueries && alens[next]; next++);
 			else
@@ -357,6 +393,7 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 					__func__, __LINE__, mh.msg_flags);
 #endif
 				alens[i] = -1;
+				nres--;
 				if (dns_errno) {
 					*dns_errno = FALLBACK_TCP_QUERY;
 				}
@@ -410,6 +447,7 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 			 * Immediately close TCP socket so as not to consume
 			 * resources we no longer need. */
 			alens[i] = alen;
+			nres++;
 			__syscall(SYS_close, pfd[i].fd);
 			pfd[i].fd = -1;
 		}
