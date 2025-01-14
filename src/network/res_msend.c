@@ -266,21 +266,19 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 		}
 
 		unsigned long remaining_time = t1 + retry_interval - t2;
-		{
-			if (nres) {
-				if (!temp_t) {
-					temp_t = t2 - t1;
-				}
-				if (temp_t >= retry_interval / 2 && temp_t < retry_interval) {
-					remaining_time = retry_interval - temp_t;
-				} else if (temp_t < retry_interval / 2 && temp_t > 0) {
-					remaining_time = temp_t;
-					end_query = 1;
-				} else {
-					goto out;
-				}
-			}
-		}
+        if (nres) {
+            if (!temp_t) {
+                temp_t = t2 - t1;
+            }
+            if (temp_t >= retry_interval / 2 && temp_t < retry_interval) {
+                remaining_time = retry_interval - temp_t;
+            } else if (temp_t < retry_interval / 2 && temp_t > 0) {
+                remaining_time = temp_t;
+                end_query = 1;
+            } else {
+                goto out;
+            }
+        }
 
 		/* Wait for a response, or until time to retry */
 		if (poll(pfd, nqueries+1, remaining_time) <= 0) continue;
