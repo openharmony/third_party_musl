@@ -43,6 +43,12 @@ hidden char *__gettextdomain(void);
 #define ICU_UNUM_PARSE_DOUBLE_SYMBOL "unum_parseDouble"
 #define ICU_UNUM_GET_SYMBOL_SYMBOL "unum_getSymbol"
 #define ICU_AUSTRNCPY_SYMBOL "u_austrncpy"
+#define ICU_UCNV_OPEN_SYMBOL  "ucnv_open"
+#define ICU_UCNV_SETTOUCALLBACK_SYMBOL  "ucnv_setToUCallBack"
+#define ICU_UCNV_SETFROMUCALLBACK_SYMBOL  "ucnv_setFromUCallBack"
+#define ICU_UCNV_TOUCHARS_SYMBOL  "ucnv_toUChars"
+#define ICU_UCNV_FROMUCHARS_SYMBOL "ucnv_fromUChars"
+#define ICU_UCNV_CLOSE_SYMBOL  "ucnv_close"
 #ifdef FEATURE_ICU_LOCALE_TMP
 #define ICU_UCHAR_ISALNUM_SYMBOL	"u_isalnum"
 #define ICU_UCHAR_ISALPHA_SYMBOL 	"u_isalpha"
@@ -74,6 +80,7 @@ hidden void get_valid_icu_locale_name(const char *name, const char *icu_name, in
 hidden void *icu_unum_open(char *icu_locale_name, int *cur_status);
 hidden void icu_unum_close(void *fmt);
 hidden double icu_parse_double(void *fmt, u_char *ustr, int32_t *parse_pos, int *cur_status);
+hidden bool icuuc_handle_init();
 
 typedef char *(*f_icuuc_get_icu_version)(void);
 typedef void (*f_icuuc_u_set_data_directory)(void);
@@ -84,6 +91,12 @@ typedef void *(*f_icu18n_u_str_from_utf32)(u_char *, int32_t, int32_t *, const w
 typedef double (*f_icu18n_unum_parse_double)(void *, u_char *, int32_t, int32_t *, int *);
 typedef int32_t(*f_icu18n_unum_get_symbol)(const void *, int, u_char *, int32_t, int *);
 typedef char *(*f_icuuc_u_austrncpy)(char *, const u_char *, int32_t);
+typedef void* (*f_ucnv_open)(const char*, int*);
+typedef int32_t (*f_ucnv_setToUCallBack)(void*, void*, void*, void*, void*, int*);
+typedef int32_t (*f_ucnv_setFromUCallBack)(void*, void*, void*, void*, void*, int*);
+typedef int32_t (*f_ucnv_toUChars)(void*, char*, size_t, void*, size_t, int*);
+typedef int32_t (*f_ucnv_fromUChars)(void*, char*, size_t, uint16_t*, size_t, int*);
+typedef void (*f_ucnv_close)(void*);
 #ifdef FEATURE_ICU_LOCALE_TMP
 typedef int(*f_icu18n_u_isalnum)(int c);
 typedef int(*f_icu18n_u_isalpha)(int c);
@@ -111,6 +124,12 @@ struct icu_opt_func {
 	f_icu18n_unum_parse_double unum_parse_double;
 	f_icu18n_unum_get_symbol unum_get_symbol;
 	f_icuuc_u_austrncpy u_austrncpy;
+    f_ucnv_open ucnv_open;
+    f_ucnv_setToUCallBack ucnv_setToUCallBack;
+    f_ucnv_setFromUCallBack ucnv_setFromUCallBack;
+    f_ucnv_toUChars ucnv_toUChars;
+    f_ucnv_fromUChars ucnv_fromUChars;
+    f_ucnv_close ucnv_close;
 #ifdef FEATURE_ICU_LOCALE_TMP
 	f_icu18n_u_isalnum u_isalnum;
 	f_icu18n_u_isalpha u_isalpha;

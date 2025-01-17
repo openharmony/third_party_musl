@@ -27,6 +27,7 @@ static void *g_icuuc_handle = NULL;
 static void *g_icui18n_handle = NULL;
 hidden struct icu_opt_func g_icu_opt_func = { NULL };
 static int dlopen_fail_flag = 0;
+static int icuuc_handle_init_fail = 0;
 
 static void *get_icu_handle(icu_so_type type, const char *symbol_name)
 {
@@ -42,6 +43,11 @@ static void *get_icu_handle(icu_so_type type, const char *symbol_name)
 
 	if (!cur_handle && !dlopen_fail_flag) {
 		cur_handle = dlopen(cur_so, RTLD_LOCAL);
+        if (type == ICU_UC) {
+            g_icuuc_handle = cur_handle;
+        } else {
+            g_icui18n_handle = cur_handle;
+        }
 	}
 	if (!cur_handle) {
 		dlopen_fail_flag = 1;
@@ -97,5 +103,67 @@ void get_valid_icu_locale_name(const char *name, const char *icu_name, int icu_n
 	if (icu_name_len > valid_len) {
 		strncpy(icu_name, name, valid_len);
 	}
+}
+
+bool icuuc_handle_init()
+{
+    if (icuuc_handle_init_fail) {
+        return false;
+    }
+
+    if (!g_icu_opt_func.set_data_directory) {
+        g_icu_opt_func.set_data_directory = get_icu_handle(ICU_UC, ICU_SET_DATA_DIRECTORY_SYMBOL);
+        if (g_icu_opt_func.set_data_directory) {
+            g_icu_opt_func.set_data_directory();
+        } else {
+            icuuc_handle_init_fail = 1;
+            return false;
+        }
+    }
+    if (!g_icu_opt_func.ucnv_open) {
+        get_icu_symbol(ICU_UC, &(g_icu_opt_func.ucnv_open), ICU_UCNV_OPEN_SYMBOL);
+        if (!g_icu_opt_func.ucnv_open) {
+            icuuc_handle_init_fail = 1;
+            return false;
+        }
+    }
+    if (!g_icu_opt_func.ucnv_setToUCallBack) {
+        get_icu_symbol(ICU_UC, &(g_icu_opt_func.ucnv_setToUCallBack), ICU_UCNV_SETTOUCALLBACK_SYMBOL);
+        if (!g_icu_opt_func.ucnv_setToUCallBack) {
+            icuuc_handle_init_fail = 1;
+            return false;
+        }
+    }
+    if (!g_icu_opt_func.ucnv_setFromUCallBack) {
+        get_icu_symbol(ICU_UC, &(g_icu_opt_func.ucnv_setFromUCallBack), ICU_UCNV_SETFROMUCALLBACK_SYMBOL);
+        if (!g_icu_opt_func.ucnv_setFromUCallBack) {
+            icuuc_handle_init_fail = 1;
+            return false;
+        }
+    }
+    if (!g_icu_opt_func.ucnv_toUChars) {
+        get_icu_symbol(ICU_UC, &(g_icu_opt_func.ucnv_toUChars), ICU_UCNV_TOUCHARS_SYMBOL);
+        if (!g_icu_opt_func.ucnv_toUChars) {
+            icuuc_handle_init_fail = 1;
+            return false;
+        }
+    }
+    if (!g_icu_opt_func.ucnv_fromUChars) {
+        get_icu_symbol(ICU_UC, &(g_icu_opt_func.ucnv_fromUChars), ICU_UCNV_FROMUCHARS_SYMBOL);
+        if (!g_icu_opt_func.ucnv_fromUChars) {
+            icuuc_handle_init_fail = 1;
+            return false;
+        }
+    }
+    if (!g_icu_opt_func.ucnv_close) {
+        get_icu_symbol(ICU_UC, &(g_icu_opt_func.ucnv_close), ICU_UCNV_CLOSE_SYMBOL);
+        if (!g_icu_opt_func.ucnv_close) {
+            icuuc_handle_init_fail = 1;
+            return false;
+        }
+    }
+
+    errno = 0;
+    return true;
 }
 #endif
