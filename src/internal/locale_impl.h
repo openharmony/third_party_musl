@@ -94,7 +94,7 @@ typedef void* (*f_ucnv_open)(const char*, int*);
 typedef int32_t (*f_ucnv_setToUCallBack)(void*, void*, void*, void*, void*, int*);
 typedef int32_t (*f_ucnv_setFromUCallBack)(void*, void*, void*, void*, void*, int*);
 typedef void (*f_ucnv_convertEx)(void*, void*, char**, const char *,const char **, const char *,
-				u_char*, u_char **,const u_char*, int8_t, int8_t, int*);
+				u_char*, u_char **, u_char **, const u_char*, int8_t, int8_t, int*);
 typedef void (*f_ucnv_close)(void*);
 #ifdef FEATURE_ICU_LOCALE_TMP
 typedef int(*f_icu18n_u_isalnum)(int c);
