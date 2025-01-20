@@ -46,7 +46,7 @@
 #define FROM_IGNORE_FLAG_POS 3
 #define TO_TRANSLIT_FLAG_POS 4
 #define FROM_TRANSLIT_FLAG_POS 5
-#defile ICU_CHUNK_SIZE 1024
+#define ICU_CHUNK_SIZE 1024
 #endif
 #endif
 /* Definitions of charmaps. Each charmap consists of:
