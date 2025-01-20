@@ -46,9 +46,8 @@ hidden char *__gettextdomain(void);
 #define ICU_UCNV_OPEN_SYMBOL  "ucnv_open"
 #define ICU_UCNV_SETTOUCALLBACK_SYMBOL  "ucnv_setToUCallBack"
 #define ICU_UCNV_SETFROMUCALLBACK_SYMBOL  "ucnv_setFromUCallBack"
-#define ICU_UCNV_TOUCHARS_SYMBOL  "ucnv_toUChars"
-#define ICU_UCNV_FROMUCHARS_SYMBOL "ucnv_fromUChars"
 #define ICU_UCNV_CLOSE_SYMBOL  "ucnv_close"
+#define ICU_UCNV_CONVERTEX_SYMBOL  "ucnv_convertEx"
 #ifdef FEATURE_ICU_LOCALE_TMP
 #define ICU_UCHAR_ISALNUM_SYMBOL	"u_isalnum"
 #define ICU_UCHAR_ISALPHA_SYMBOL 	"u_isalpha"
@@ -94,8 +93,8 @@ typedef char *(*f_icuuc_u_austrncpy)(char *, const u_char *, int32_t);
 typedef void* (*f_ucnv_open)(const char*, int*);
 typedef int32_t (*f_ucnv_setToUCallBack)(void*, void*, void*, void*, void*, int*);
 typedef int32_t (*f_ucnv_setFromUCallBack)(void*, void*, void*, void*, void*, int*);
-typedef int32_t (*f_ucnv_toUChars)(void*, char*, size_t, void*, size_t, int*);
-typedef int32_t (*f_ucnv_fromUChars)(void*, char*, size_t, uint16_t*, size_t, int*);
+typedef void (*f_ucnv_convertEx)(void*, void*, char**, const char *,const char **, const char *,
+				u_char*, u_char **,const u_char*, int8_t, int8_t, int*);
 typedef void (*f_ucnv_close)(void*);
 #ifdef FEATURE_ICU_LOCALE_TMP
 typedef int(*f_icu18n_u_isalnum)(int c);
@@ -127,8 +126,7 @@ struct icu_opt_func {
     f_ucnv_open ucnv_open;
     f_ucnv_setToUCallBack ucnv_setToUCallBack;
     f_ucnv_setFromUCallBack ucnv_setFromUCallBack;
-    f_ucnv_toUChars ucnv_toUChars;
-    f_ucnv_fromUChars ucnv_fromUChars;
+	f_ucnv_convertEx ucnv_convertEx;
     f_ucnv_close ucnv_close;
 #ifdef FEATURE_ICU_LOCALE_TMP
 	f_icu18n_u_isalnum u_isalnum;
