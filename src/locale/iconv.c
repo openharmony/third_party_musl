@@ -469,7 +469,6 @@ char **restrict in, size_t *restrict inb, char **restrict out, size_t *restrict 
 {
     int errCode = ICU_ZERO_ERROR;
 
-    // (from -> UChars) <=> ucnv_toUChars
     void* conv_in = g_icu_opt_func.ucnv_open((void*)from, &errCode);
     if (get_from_ignore_flag(sign)) {
         g_icu_opt_func.ucnv_setToUCallBack(conv_in, ucnv_to_u_callback_ignore, NULL, NULL, NULL, &errCode);
@@ -477,7 +476,6 @@ char **restrict in, size_t *restrict inb, char **restrict out, size_t *restrict 
         g_icu_opt_func.ucnv_setFromUCallBack(conv_in, ucnv_to_u_callback_stop, NULL, NULL, NULL, &errCode);
     }
 
-    // (UChars -> to) <=> ucnv_fromUChars
     void* conv_out = g_icu_opt_func.ucnv_open((void*)to, &errCode);
     if (get_to_ignore_flag(sign)) {
         g_icu_opt_func.ucnv_setFromUCallBack(conv_out, ucnv_from_u_callback_ignore, NULL, NULL, NULL, &errCode);
