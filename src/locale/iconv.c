@@ -486,8 +486,8 @@ char **restrict in, size_t *restrict inb, char **restrict out, size_t *restrict 
 	u_char pivot_buffer[ICU_CHUNK_SIZE];
 	u_char *pivot, *pivot2;
 	char *mytarget;
-	const char * source_limit;
-	const char * target_limit;
+	const char *source_limit;
+	const char *target_limit;
 	int32_t target_length = 0;
 	source_limit = *in + *inb;
 	pivot = pivot2 = pivot_buffer;
