@@ -141,16 +141,9 @@ bool icuuc_handle_init()
             return false;
         }
     }
-    if (!g_icu_opt_func.ucnv_toUChars) {
-        get_icu_symbol(ICU_UC, &(g_icu_opt_func.ucnv_toUChars), ICU_UCNV_TOUCHARS_SYMBOL);
-        if (!g_icu_opt_func.ucnv_toUChars) {
-            icuuc_handle_init_fail = 1;
-            return false;
-        }
-    }
-    if (!g_icu_opt_func.ucnv_fromUChars) {
-        get_icu_symbol(ICU_UC, &(g_icu_opt_func.ucnv_fromUChars), ICU_UCNV_FROMUCHARS_SYMBOL);
-        if (!g_icu_opt_func.ucnv_fromUChars) {
+    if (!g_icu_opt_func.ucnv_convertEx) {
+        get_icu_symbol(ICU_UC, &(g_icu_opt_func.ucnv_convertEx), ICU_UCNV_CONVERTEX_SYMBOL);
+        if (!g_icu_opt_func.ucnv_convertEx) {
             icuuc_handle_init_fail = 1;
             return false;
         }

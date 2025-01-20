@@ -46,6 +46,7 @@
 #define FROM_IGNORE_FLAG_POS 3
 #define TO_TRANSLIT_FLAG_POS 4
 #define FROM_TRANSLIT_FLAG_POS 5
+#define ICU_CHUNK_SIZE 1024
 #endif
 #endif
 /* Definitions of charmaps. Each charmap consists of:
@@ -467,44 +468,45 @@ static size_t iconv_icu(unsigned sign, const unsigned char* to, const unsigned c
 char **restrict in, size_t *restrict inb, char **restrict out, size_t *restrict outb)
 {
     int errCode = ICU_ZERO_ERROR;
-    size_t out_size = 0;
-    size_t uchars_len = *inb * 4;
-    uint16_t uchars[uchars_len];
 
-    // (from -> UChars) <=> ucnv_toUChars
-    void* conv_to_u = g_icu_opt_func.ucnv_open((void*)from, &errCode);
+    void* conv_in = g_icu_opt_func.ucnv_open((void*)from, &errCode);
     if (get_from_ignore_flag(sign)) {
-        g_icu_opt_func.ucnv_setToUCallBack(conv_to_u, ucnv_to_u_callback_ignore, NULL, NULL, NULL, &errCode);
+        g_icu_opt_func.ucnv_setToUCallBack(conv_in, ucnv_to_u_callback_ignore, NULL, NULL, NULL, &errCode);
     } else if (!get_from_translit_flag(sign)) {
-        g_icu_opt_func.ucnv_setFromUCallBack(conv_to_u, ucnv_to_u_callback_stop, NULL, NULL, NULL, &errCode);
+        g_icu_opt_func.ucnv_setFromUCallBack(conv_in, ucnv_to_u_callback_stop, NULL, NULL, NULL, &errCode);
     }
-    uchars_len = g_icu_opt_func.ucnv_toUChars(conv_to_u, uchars, uchars_len, *in, *inb, &errCode);
-    if (errCode > ICU_ZERO_ERROR) {
-        set_errno(errCode);
-        return (size_t)-1;
-    } else {
-        errCode = ICU_ZERO_ERROR;
-    }
-    g_icu_opt_func.ucnv_close(conv_to_u);
 
-    // (UChars -> to) <=> ucnv_fromUChars
-    void* conv_from_u = g_icu_opt_func.ucnv_open((void*)to, &errCode);
+    void* conv_out = g_icu_opt_func.ucnv_open((void*)to, &errCode);
     if (get_to_ignore_flag(sign)) {
-        g_icu_opt_func.ucnv_setFromUCallBack(conv_from_u, ucnv_from_u_callback_ignore, NULL, NULL, NULL, &errCode);
+        g_icu_opt_func.ucnv_setFromUCallBack(conv_out, ucnv_from_u_callback_ignore, NULL, NULL, NULL, &errCode);
     } else if (!get_to_translit_flag(sign)) {
-        g_icu_opt_func.ucnv_setFromUCallBack(conv_from_u, ucnv_from_u_callback_stop, NULL, NULL, NULL, &errCode);
+        g_icu_opt_func.ucnv_setFromUCallBack(conv_out, ucnv_from_u_callback_stop, NULL, NULL, NULL, &errCode);
     }
-    out_size = g_icu_opt_func.ucnv_fromUChars(conv_from_u, *out, *outb, uchars, uchars_len, &errCode);
+
+	u_char pivot_buffer[ICU_CHUNK_SIZE];
+	u_char *pivot, *pivot2;
+	char *mytarget;
+	const char *source_limit;
+	const char *target_limit;
+	int32_t target_length = 0;
+	source_limit = *in + *inb;
+	pivot = pivot2 = pivot_buffer;
+	mytarget = *out;
+    target_limit = *out + *outb;
+	g_icu_opt_func.ucnv_convertEx(conv_out, conv_in, &mytarget, target_limit, in, source_limit,
+						pivot_buffer, &pivot, &pivot2, pivot_buffer + ICU_CHUNK_SIZE, false, true, &errCode);
+	target_length = (int32_t)(mytarget - *out);
     if (errCode > ICU_ZERO_ERROR) {
         set_errno(errCode);
         return (size_t)-1;
     } else {
         errCode = ICU_ZERO_ERROR;
     }
-    g_icu_opt_func.ucnv_close(conv_from_u);
+    g_icu_opt_func.ucnv_close(conv_in);
+	g_icu_opt_func.ucnv_close(conv_out);
 
-    *out += out_size;
-    *outb -= out_size;
+    *out += target_length;
+    *outb -= target_length;
     *in += *inb;
     *inb -= *inb;
     set_errno(errCode);
