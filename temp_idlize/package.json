@@ -1,0 +1,15 @@
+{
+  "name": "idlize",
+  "version": "1.0.0",
+  "description": "idlize tool",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "@idlizer/core": "2.0.19",
+    "@idlizer/arkgen": "2.0.19"
+  },
+  "author": "",
+  "license": "ISC"
+}
