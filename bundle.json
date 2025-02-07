@@ -53,6 +53,9 @@
             "inner_kits": [
                 {
                     "name": "//third_party/musl:soft_libc_musl_static"
+                },
+                {
+                    "name": "//third_party/musl:soft_libc_musl_shared"
                 }
             ],
             "test": [
