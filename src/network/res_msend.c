@@ -86,6 +86,9 @@ static void step_mh(struct msghdr *mh, size_t n)
 	mh->msg_iov->iov_len -= n;
 }
 
+// equal to answer buffer size
+#define BPBUF_SIZE 4800
+
 /* Internal contract for __res_msend[_rc]: asize must be >=512, nqueries
  * must be sufficiently small to be safe as VLA size. In practice it's
  * either 1 or 2, anyway. */
@@ -120,6 +123,8 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 	int r;
 	unsigned long t0, t1, t2, temp_t;
 	uint8_t nres, end_query;
+	int blens[2] = {0};
+	unsigned char *bp[2] = { NULL, NULL };
 
 	pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &cs);
 
@@ -235,7 +240,7 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 		}
 
 		if (t2-t1 >= retry_interval) {
-			/* if the first query round timeout, determine whether 
+			/* if the first query round timeout, determine whether
 			 * to return based on the num of answers. */
 			if (nres) {
 #ifndef __LITEOS__
@@ -383,6 +388,18 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 			else
 				memcpy(answers[i], answers[next], rlen);
 
+			/* If answer is truncated (TC bit), before fallback to TCP, restore the UDP answer*/
+			if ((answers[i][2] & 2) || (mh.msg_flags & MSG_TRUNC)) {
+				if (bp[i] == NULL) {
+					bp[i] = calloc(1, sizeof(unsigned char) * BPBUF_SIZE);
+					/* If fail to calloc backup buffer, only use TCP even if it fails*/
+					if (bp[i] != NULL) {
+						blens[i] = rlen;
+						memcpy(bp[i], answers[i], rlen);
+					}
+				}
+			}
+
 			/* Ignore further UDP if all slots full or TCP-mode */
 			if (next == nqueries) pfd[nqueries].events = 0;
 
@@ -454,9 +471,23 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 	}
 out:
 	pthread_cleanup_pop(1);
-
-	/* Disregard any incomplete TCP results */
-	for (i=0; i<nqueries; i++) if (alens[i]<0) alens[i] = 0;
+	/* Disregard any incomplete TCP results and try to reuse UDP */
+	for (i = 0; i < nqueries; i++) {
+		if (alens[i] < 0) {
+			if (blens[i] != 0 && bp[i] != NULL) {
+				alens[i] = blens[i];
+				memcpy(answers[i], bp[i], blens[i]);
+#ifndef __LITEOS__
+				MUSL_LOGE("%{public}s: %{public}d: rollback to UDP", __func__, __LINE__);
+#endif
+			} else {
+				alens[i] = 0;
+			}
+		}
+		if (bp[i] != NULL) {
+			free(bp[i]);
+		}
+	}
 
 	return 0;
 }
