@@ -343,9 +343,17 @@ void test_large_string(void)
         return;
     }
     char* inptr = malloc(EXTRA_LARGE_SIZE);
+    if (inptr == NULL) {
+        t_error("malloc failed, errno : %s \n", strerror(errno));
+        return;
+    }
     memset(inptr, 'A', EXTRA_LARGE_SIZE - 1);
     size_t input_len_ptr = EXTRA_LARGE_SIZE;
     char* outptr = malloc(EXTRA_LARGE_SIZE * 4);
+    if (outptr == NULL) {
+        t_error("malloc failed, errno : %s \n", strerror(errno));
+        return;
+    }
     size_t output_len_ptr = EXTRA_LARGE_SIZE * 4;
     size_t res = iconv(cd, &inptr, &input_len_ptr, &outptr, &output_len_ptr);
     if (res == -1) {
