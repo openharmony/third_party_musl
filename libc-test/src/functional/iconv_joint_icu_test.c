@@ -25,6 +25,8 @@
 #include <iconv.h>
 #include <stdlib.h>
 #include <string.h>
+
+#define EXTRA_LARGE_SIZE 30*1024*1024
 #define BUFFER_SIZE 1024
 #define IGNORE_SIZE 9
 
@@ -333,6 +335,25 @@ void test_empty_type(void)
     iconv_close_with_strerror(scd);
 }
 
+void test_large_string(void)
+{
+    iconv_t cd = iconv_open("utf8", "utf16");
+    if (cd == (iconv_t)-1) {
+        t_error("iconv open failed, from utf8 to utf16,error: %s \n", strerror(errno));
+        return;
+    }
+    char* inptr = malloc(EXTRA_LARGE_SIZE);
+    memset(inptr, 'A', EXTRA_LARGE_SIZE - 1);
+    size_t input_len_ptr = EXTRA_LARGE_SIZE;
+    char* outptr = malloc(EXTRA_LARGE_SIZE * 4);
+    size_t output_len_ptr = EXTRA_LARGE_SIZE * 4;
+    size_t res = iconv(cd, &inptr, &input_len_ptr, &outptr, &output_len_ptr);
+    if (res == -1) {
+        t_error("iconv failed, error: %s \n", strerror(errno));
+    }
+    iconv_close_with_strerror(cd);
+}
+
 int main(void)
 {
     g_ins_zh_len = strlen(g_ins_zh);
@@ -371,6 +392,9 @@ int main(void)
 
     // empty type -> fill UTF-8
     test_empty_type();
+
+    // test extra large string convert
+    test_large_string();
 
     return t_status;
 }
