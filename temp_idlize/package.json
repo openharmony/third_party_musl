@@ -7,8 +7,8 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
-    "@idlizer/core": "2.0.19",
-    "@idlizer/arkgen": "2.0.19"
+    "@idlizer/core": "2.0.21",
+    "@idlizer/arkgen": "2.0.21"
   },
   "author": "",
   "license": "ISC"
