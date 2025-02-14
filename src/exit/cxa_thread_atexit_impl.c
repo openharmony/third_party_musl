@@ -31,13 +31,20 @@ struct dtor_list {
     struct dtor_list* next;
 };
 
+#ifndef ENABLE_HWASAN
 // A list for current thread local dtors.
 __thread struct dtor_list* thread_local_dtors = NULL;
 // Whether the current thread local dtors have not been executed or registered.
 __thread bool thread_local_dtors_alive = false;
+#endif
+
 static pthread_key_t dtors_key;
 
+#ifndef ENABLE_HWASAN
 void run_cur_thread_dtors(void *)
+#else
+void run_cur_thread_dtors(void *thread_local_dtors)
+#endif
 {
     while (thread_local_dtors != NULL) {
         struct dtor_list* cur = thread_local_dtors;
@@ -48,7 +55,9 @@ void run_cur_thread_dtors(void *)
         }
         __libc_free(cur);
     }
+#ifndef ENABLE_HWASAN
     thread_local_dtors_alive = false;
+#endif
     return;
 } 
 
@@ -69,12 +78,18 @@ __attribute__((constructor())) void cxa_thread_init()
  */
 void __cxa_thread_finalize()
 {
+#ifndef ENABLE_HWASAN
     run_cur_thread_dtors(NULL);
+#else
+    run_cur_thread_dtors(pthread_getspecific(dtors_key));
+#endif
+
     return;
 }
 
 int __cxa_thread_atexit_impl(void (*func)(void*), void *arg, void *dso_handle)
 {
+#ifndef ENABLE_HWASAN
     if (!thread_local_dtors_alive) {
         // Bind dtors_key to current thread, so that `run_cur_thread_dtors` can be executed when thread exits.
         if (pthread_setspecific(dtors_key, &dtors_key) != 0) {
@@ -82,6 +97,9 @@ int __cxa_thread_atexit_impl(void (*func)(void*), void *arg, void *dso_handle)
         }
         thread_local_dtors_alive = true;
     }
+#else
+    struct dtor_list* prev_dtors = pthread_getspecific(dtors_key);
+#endif
     struct dtor_list* dtor = __libc_malloc(sizeof(*dtor));
     if (!dtor) {
         return -1;
@@ -89,8 +107,13 @@ int __cxa_thread_atexit_impl(void (*func)(void*), void *arg, void *dso_handle)
     dtor->dtor = func;
     dtor->arg = arg;
     dtor->dso_handle = dso_handle;
+#ifndef ENABLE_HWASAN
     dtor->next = thread_local_dtors;
     thread_local_dtors = dtor;
+#else
+    dtor->next = prev_dtors;
+    pthread_setspecific(dtors_key, dtor);
+#endif
     if (add_dso_handle_node != NULL) {
         add_dso_handle_node(dso_handle);
     }
