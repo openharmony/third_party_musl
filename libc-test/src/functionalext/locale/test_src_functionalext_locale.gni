@@ -21,4 +21,5 @@ functionalext_locale_test = [
   "uselocale",
   "strtod_l",
   "wcstod_l",
+  "iconv",
 ]
