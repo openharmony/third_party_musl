@@ -7,8 +7,11 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
-    "@idlizer/core": "2.0.21",
-    "@idlizer/arkgen": "2.0.21"
+    "@idlizer/ohosgen": "2.0.28",
+    "@koalaui/interop": "1.5.5",
+    "@koalaui/common": "1.5.5",
+    "@koalaui/compat": "1.5.5",
+    "@koalaui/runtime": "1.5.5"
   },
   "author": "",
   "license": "ISC"
