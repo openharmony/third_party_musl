@@ -189,7 +189,7 @@ bool should_sample_process()
 }
 
 #define ASAN_LOG_LIB "libasan_logger.z.so"
-static void (*WriteGwpAsanLog)(char*, size_t);
+static void (*WriteSanitizerLog)(char*, size_t, char*);
 static void* handle = NULL;
 static bool try_load_asan_logger = false;
 static pthread_mutex_t gwpasan_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -237,16 +237,16 @@ void gwp_asan_printf(const char *fmt, ...)
         if (result < 0) {
             MUSL_LOGE("[gwp_asan] write log failed!\n");
         }
-        if (WriteGwpAsanLog != NULL) {
-            WriteGwpAsanLog(log_buffer, strlen(log_buffer));
+        if (WriteSanitizerLog != NULL) {
+            WriteSanitizerLog(log_buffer, strlen(log_buffer), "faultlogger");
             return;
 	}
         if (try_load_asan_logger) {
             return;
         }
         pthread_mutex_lock(&gwpasan_mutex);
-        if (WriteGwpAsanLog != NULL) {
-            WriteGwpAsanLog(log_buffer, strlen(log_buffer));
+        if (WriteSanitizerLog != NULL) {
+            WriteSanitizerLog(log_buffer, strlen(log_buffer), "faultlogger");
             pthread_mutex_unlock(&gwpasan_mutex);
             return;
         }
@@ -257,9 +257,9 @@ void gwp_asan_printf(const char *fmt, ...)
                 return;
             }
             try_load_asan_logger = true;
-            *(void**)(&WriteGwpAsanLog) = dlsym(handle, "WriteGwpAsanLog");
-            if (WriteGwpAsanLog != NULL) {
-                WriteGwpAsanLog(log_buffer, strlen(log_buffer));
+            *(void**)(&WriteSanitizerLog) = dlsym(handle, "WriteSanitizerLog");
+            if (WriteSanitizerLog != NULL) {
+                WriteSanitizerLog(log_buffer, strlen(log_buffer), "faultlogger");
             }
         }
         pthread_mutex_unlock(&gwpasan_mutex);
