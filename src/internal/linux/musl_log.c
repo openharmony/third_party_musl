@@ -27,8 +27,8 @@
 
 #define DEFAULT_STRING_SIZE 409600
 #define DFX_LOG_LIB "libasan_logger.z.so"
-#define DFX_LOG_INTERFACE "WriteGwpAsanLog"
-static void (*g_dfxLogPtr)(char*, size_t);
+#define DFX_LOG_INTERFACE "WriteSanitizerLog"
+static void (*g_dfxLogPtr)(char*, size_t, char*);
 static void* g_dfxLibHandler = NULL;
 static pthread_mutex_t g_muslLogMutex = PTHREAD_MUTEX_INITIALIZER;
 extern bool g_dl_inited; // flag indicates musl ldso initialization completed
@@ -49,16 +49,35 @@ static void buffer_clean_up(const char *str)
     g_end = DEFAULT_STRING_SIZE;
 }
 
+bool load_asan_logger()
+{
+    if (g_dfxLibHandler == NULL) {
+        g_dfxLibHandler = dlopen(DFX_LOG_LIB, RTLD_LAZY);
+        if (g_dfxLibHandler == NULL) {
+            MUSL_LOGE("[ohos_dfx_log] dlopen %{public}s failed!\n", DFX_LOG_LIB);
+            return false;
+        }
+    }
+    if (g_dfxLogPtr == NULL) {
+        *(void **)(&g_dfxLogPtr) = dlsym(g_dfxLibHandler, DFX_LOG_INTERFACE);
+        if (g_dfxLogPtr == NULL) {
+            MUSL_LOGE("[ohos_dfx_log] dlsym %{public}s, failed!\n", DFX_LOG_INTERFACE);
+            return false;
+        }
+    }
+    return true;
+}
+
 /*
  * This function is not async-signal-safe
  * Don't use it in signal handler or in child process that is forked from any other process
  * Don't use it during initialization
  * Don't use it before execve
 */
-static void write_to_dfx(const char *str)
+static void write_to_dfx(const char *str, const char *path)
 {
     if (g_dfxLogPtr != NULL) {
-        g_dfxLogPtr(g_buffer, g_offset);
+        g_dfxLogPtr(g_buffer, g_offset, path);
         return;
     }
 
@@ -66,21 +85,10 @@ static void write_to_dfx(const char *str)
         return;
     }
 
-    if (g_dfxLibHandler == NULL) {
-        g_dfxLibHandler = dlopen(DFX_LOG_LIB, RTLD_LAZY);
-        if (g_dfxLibHandler == NULL) {
-            MUSL_LOGE("[ohos_dfx_log] dlopen %{public}s failed!\n", DFX_LOG_LIB);
-            return;
-        }
+    if (!load_asan_logger()) {
+        return;
     }
-    if (g_dfxLogPtr == NULL) {
-        *(void **)(&g_dfxLogPtr) = dlsym(g_dfxLibHandler, DFX_LOG_INTERFACE);
-        if (g_dfxLogPtr != NULL) {
-            g_dfxLogPtr(g_buffer, g_offset);
-        } else {
-            MUSL_LOGE("[ohos_dfx_log] dlsym %{public}s, failed!\n", DFX_LOG_INTERFACE);
-        }
-    }
+    g_dfxLogPtr(g_buffer, g_offset, path);
 }
 
 /*
@@ -91,7 +99,7 @@ static void write_to_dfx(const char *str)
  * Don't use it during initialization
  * Don't use it before execve
 */
-int ohos_dfx_log(const char *str)
+int ohos_dfx_log(const char *str, const char *path)
 {
     if (g_global_destroyed) {
         return 0;
@@ -132,7 +140,7 @@ int ohos_dfx_log(const char *str)
         return 0;
     }
 
-    write_to_dfx(str);
+    write_to_dfx(str, path);
     buffer_clean_up(str);
     pthread_mutex_unlock(&g_muslLogMutex);
 
