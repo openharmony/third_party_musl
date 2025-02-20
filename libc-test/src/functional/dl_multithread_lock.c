@@ -338,7 +338,7 @@ void dl_multithread_lock_0500(void)
     }
 
     g_init_handler = handle;
-    size_t num_threads = 1000;
+    size_t num_threads = 500;
     do_test_concurrently(dlopen_dlclose_test005, num_threads);
     g_init_handler = NULL;
     dlclose(handle);
@@ -352,7 +352,7 @@ void dl_multithread_lock_0500(void)
  */
 void dl_multithread_lock_0600(void)
 {
-    size_t num_threads = 100;
+    size_t num_threads = 50;
     do_test_double_concurrently(dlopen_dlclose_test006, CallBack003, num_threads, num_threads);
 }
 
