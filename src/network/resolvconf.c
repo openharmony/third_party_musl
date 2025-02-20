@@ -116,6 +116,7 @@ int get_resolv_conf_ext(struct resolvconf *conf, char *search, size_t search_sz,
 	conf->ndots = 1;
 	conf->timeout = 5;
 	conf->attempts = 2;
+    conf->non_public = 0;
 	if (search) *search = 0;
 
 #if OHOS_DNS_PROXY_BY_NETSYS
@@ -161,6 +162,7 @@ netsys_conf:
 			nns++;
 		}
 	}
+    conf->non_public = config.non_public_num;
 
         if (nns != 0) {
             goto get_conf_ok;
