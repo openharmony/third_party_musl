@@ -17,6 +17,20 @@
 #include "functionalext.h"
 
 const int COUNT = 62;
+const int ISALNUM_SUCCESS_RETURN = 1;
+const int COUNT_DEFAULT_LOCALE_UTF_8_1_BYTE = 62;
+const int COUNT_DEFAULT_LOCALE_UTF_8_2_BYTE = 0;
+const int COUNT_DEFAULT_LOCALE_UTF_8_3_BYTE = 0;
+const int COUNT_DEFAULT_LOCALE_UTF_8_4_BYTE = 0;
+const int COUNT_DEFAULT_LOCALE_UTF_8_4_BYTE_NEGTIVE = 0;
+const int UTF_8_1_BYTE_MIN = 0x00;
+const int UTF_8_1_BYTE_MAX = 0x7f;
+const int UTF_8_2_BYTE_MIN = 0x0080;
+const int UTF_8_2_BYTE_MAX = 0x07ff;
+const int UTF_8_3_BYTE_MIN = 0x0800;
+const int UTF_8_3_BYTE_MAX = 0xffff;
+const int UTF_8_4_BYTE_MIN = 0x10000;
+const int UTF_8_4_BYTE_MAX = 0x10ffff;
 const int EOK = 0;
 
 /**
@@ -70,12 +84,131 @@ void isalnum_0400(void)
     EXPECT_EQ("isalnum_0400", total, COUNT);
 }
 
+/**
+ * @tc.name      : isalnum_0500
+ * @tc.desc      : Test all input:0x00 - 0x7f(UTF-8 1 byte).
+ * @tc.level     : Level 1
+ */
+void isalnum_0500(void)
+{
+    int total = 0;
+    for (int i = UTF_8_1_BYTE_MIN; i <= UTF_8_1_BYTE_MAX; i++) {
+        int ret = isalnum(i);
+        if (ret) {
+            EXPECT_EQ("isalnum_0500", ret, ISALNUM_SUCCESS_RETURN);
+            total++;
+        }
+    }
+    EXPECT_EQ("isalnum_0500", total, COUNT_DEFAULT_LOCALE_UTF_8_1_BYTE);
+}
+
+/**
+ * @tc.name      : isalnum_0600
+ * @tc.desc      : Test all input:0x0080 - 0x07ff(UTF-8 2 byte).
+ * @tc.level     : Level 1
+ */
+void isalnum_0600(void)
+{
+    int total = 0;
+    for (int i = UTF_8_2_BYTE_MIN; i <= UTF_8_2_BYTE_MAX; i++) {
+        int ret = isalnum(i);
+        if (ret) {
+            EXPECT_EQ("isalnum_0600", ret, ISALNUM_SUCCESS_RETURN);
+            total++;
+        }
+    }
+    EXPECT_EQ("isalnum_0600", total, COUNT_DEFAULT_LOCALE_UTF_8_2_BYTE);
+}
+
+/**
+ * @tc.name      : isalnum_0700
+ * @tc.desc      : Test all input:0x0800 - 0xffff(UTF-8 3 byte).
+ * @tc.level     : Level 1
+ */
+void isalnum_0700(void)
+{
+    int total = 0;
+    for (int i = UTF_8_3_BYTE_MIN; i <= UTF_8_3_BYTE_MAX; i++) {
+        int ret = isalnum(i);
+        if (ret) {
+            EXPECT_EQ("isalnum_0700", ret, ISALNUM_SUCCESS_RETURN);
+            total++;
+        }
+    }
+    EXPECT_EQ("isalnum_0700", total, COUNT_DEFAULT_LOCALE_UTF_8_3_BYTE);
+}
+
+/**
+ * @tc.name      : isalnum_0800
+ * @tc.desc      : Test all input:0x10000 - 0x10ffff(UTF-8 4 byte).
+ * @tc.level     : Level 1
+ */
+void isalnum_0800(void)
+{
+    int total = 0;
+    for (int i = UTF_8_4_BYTE_MIN; i <= UTF_8_4_BYTE_MAX; i++) {
+        int ret = isalnum(i);
+        if (ret) {
+            EXPECT_EQ("isalnum_0800", ret, ISALNUM_SUCCESS_RETURN);
+            total++;
+        }
+    }
+    EXPECT_EQ("isalnum_0800", total, COUNT_DEFAULT_LOCALE_UTF_8_4_BYTE);
+}
+
+/**
+ * @tc.name      : isalnum_0900
+ * @tc.desc      : Test zero input.
+ * @tc.level     : Level 1
+ */
+void isalnum_0900(void)
+{
+    int ret = isalnum(0);
+    EXPECT_EQ("isalnum_0900", ret, 0);
+}
+
+/**
+ * @tc.name      : isalnum_1000
+ * @tc.desc      : Test negative input -1.
+ * @tc.level     : Level 1
+ */
+void isalnum_1000(void)
+{
+    int ret = isalnum(-1);
+    EXPECT_EQ("isalnum_1000", ret, 0);
+}
+
+/**
+ * @tc.name      : isalnum_1100
+ * @tc.desc      : Test negative input, max -1 * 0x10ffff.
+ * @tc.level     : Level 1
+ */
+void isalnum_1100(void)
+{
+    int total = 0;
+    for (int i = -1; i >= -1 * UTF_8_4_BYTE_MAX; i--) {
+        int ret = isalnum(i);
+        if (ret) {
+            EXPECT_EQ("isalnum_1100", ret, ISALNUM_SUCCESS_RETURN);
+            total++;
+        }
+    }
+    EXPECT_EQ("isalnum_1100", total, COUNT_DEFAULT_LOCALE_UTF_8_4_BYTE_NEGTIVE);
+}
+
 int main(void)
 {
     isalnum_0100();
     isalnum_0200();
     isalnum_0300();
     isalnum_0400();
+    isalnum_0500();
+    isalnum_0600();
+    isalnum_0700();
+    isalnum_0800();
+    isalnum_0900();
+    isalnum_1000();
+    isalnum_1100();
 
     return t_status;
 }
