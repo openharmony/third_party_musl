@@ -255,7 +255,7 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 			for (i=0; i<nqueries; i++) {
 				retry[i] = 0;
 				if (!alens[i]) {
-                    /* First time only use non public ns，public ns is used after first query failed */
+                    /* First time only use non public ns, public ns is used after first query failed */
                     if (retry_count > 1) {
 						retry_limit = nns;
 					} else {
