@@ -49,7 +49,7 @@ struct service {
 
 struct resolvconf {
 	struct address ns[MAXNS];
-	unsigned nns, attempts, ndots;
+	unsigned nns, attempts, ndots, non_public;
 	unsigned timeout;
 };
 
@@ -98,6 +98,7 @@ struct resolv_config {
 	int32_t error;
 	int32_t timeout_ms;
 	uint32_t retry_count;
+    uint32_t non_public_num;
 	char nameservers[MAX_SERVER_NUM][MAX_SERVER_LENGTH + 1];
 };
 
