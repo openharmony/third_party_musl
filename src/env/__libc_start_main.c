@@ -119,6 +119,12 @@ static int libc_start_main_stage2(int (*main)(int,char **,char **), int argc, ch
 	parse_argv(argc, argv);
 #endif
 
+#ifdef SANITIZER_OHOS
+	if (!load_asan_logger()) {
+		MUSL_LOGI("[musl_log] dlopen and dlsym libasan_logger failed!");
+	}
+#endif
+
 	g_dl_inited = true;
 	/* Pass control to the application */
 	exit(main(argc, argv, envp));
