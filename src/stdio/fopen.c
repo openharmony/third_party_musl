@@ -2,6 +2,9 @@
 #include <fcntl.h>
 #include <string.h>
 #include <errno.h>
+#ifdef OHOS_FDTRACK_HOOK_ENABLE
+#include "musl_fdtrack_hook.h"
+#endif
 
 FILE *fopen(const char *restrict filename, const char *restrict mode)
 {
@@ -23,6 +26,9 @@ FILE *fopen(const char *restrict filename, const char *restrict mode)
 
 	f = __fdopenx(fd, file_flags);
 	if (f) {
+#ifdef OHOS_FDTRACK_HOOK_ENABLE
+		FDTRACK_START_HOOK(fd);
+#endif
 		return f;
 	}
 
