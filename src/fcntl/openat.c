@@ -1,6 +1,9 @@
 #include <fcntl.h>
 #include <stdarg.h>
 #include "syscall.h"
+#ifdef OHOS_FDTRACK_HOOK_ENABLE
+#include "musl_fdtrack_hook.h"
+#endif
 
 int openat(int fd, const char *filename, int flags, ...)
 {
@@ -13,6 +16,9 @@ int openat(int fd, const char *filename, int flags, ...)
 		va_end(ap);
 	}
 
+#ifdef OHOS_FDTRACK_HOOK_ENABLE
+	return FDTRACK_START_HOOK(syscall_cp(SYS_openat, fd, filename, flags|O_LARGEFILE, mode));
+#endif
 	return syscall_cp(SYS_openat, fd, filename, flags|O_LARGEFILE, mode);
 }
 
