@@ -859,7 +859,10 @@ int predefined_host_name_from_hosts(
 	}
 
 	if (cnt > 0) {
-		memcpy(canon, name, size);
+		errno_t result = strcpy_s(canon, name, size);
+		if (result != 0) {
+			DNS_CONFIG_PRINT("predefined_host_name_from_hosts strcpy_s fail\n");
+		}
 	}
 	return cnt;
 }
