@@ -446,16 +446,14 @@ bool finish_install_ohos_malloc_hooks(struct musl_libc_globals* globals, const c
 		return false;
 	}
 	on_start_func_t start_func = (on_start_func_t)(function_of_shared_lib[ON_START_FUNCTION]);
-	if (__get_global_hook_flag()) {
-		if (!start_func(__uninstal_malloc_hook)) {
-			// __musl_log(__MUSL_LOG_ERROR, "%s: failed to start %s\n", getprogname(), prefix);
-			clear_function_table();
-			return false;
-		}
-		atomic_store_explicit(&ohos_malloc_hook_shared_library, (volatile long long)shared_library_handle, memory_order_seq_cst);
-		atomic_store_explicit(&__musl_libc_globals.so_dispatch_table, (volatile long long)&globals->malloc_dispatch_table, memory_order_seq_cst);
-		atomic_store_explicit(&__musl_libc_globals.current_dispatch_table, (volatile long long)&globals->malloc_dispatch_table, memory_order_seq_cst);
+	if (!start_func(__uninstal_malloc_hook)) {
+		// __musl_log(__MUSL_LOG_ERROR, "%s: failed to start %s\n", getprogname(), prefix);
+		clear_function_table();
+		return false;
 	}
+	atomic_store_explicit(&ohos_malloc_hook_shared_library, (volatile long long)shared_library_handle, memory_order_seq_cst);
+	atomic_store_explicit(&__musl_libc_globals.so_dispatch_table, (volatile long long)&globals->malloc_dispatch_table, memory_order_seq_cst);
+	atomic_store_explicit(&__musl_libc_globals.current_dispatch_table, (volatile long long)&globals->malloc_dispatch_table, memory_order_seq_cst);
 	if (__get_memleak_hook_flag() && checkLoadMallocMemTrack) {
 		if (!start_func(memLeakTypeContent)) {
 			clear_function_table();
@@ -487,9 +485,8 @@ static void install_ohos_malloc_hook(struct musl_libc_globals* globals, const ch
 	assert(shared_library_handle == NULL || shared_library_handle == (volatile void*)-1);
 	if (__get_memleak_hook_flag()) {
 		shared_library_handle = (volatile void*)load_malloc_hook_shared_library(shared_lib, prefix, &globals->memleak_tracker_malloc_dispatch_table);
-	} else if (__get_global_hook_flag()) {
-		shared_library_handle = (volatile void*)load_malloc_hook_shared_library(shared_lib, prefix, &globals->malloc_dispatch_table);
 	}
+	shared_library_handle = (volatile void*)load_malloc_hook_shared_library(shared_lib, prefix, &globals->malloc_dispatch_table);
 	if (shared_library_handle == NULL) {
 		// __musl_log(__MUSL_LOG_ERROR, "Can't load shared library '%s'\n", __malloc_hook_shared_lib);
 		return;
