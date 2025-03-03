@@ -42,7 +42,7 @@ struct address {
 
 struct resolvconf {
 	struct address ns[MAXNS];
-	unsigned nns, attempts, ndots, non_public;
+	unsigned nns, attempts, ndots;
 	unsigned timeout;
 };
 
@@ -398,7 +398,6 @@ int main(void)
         .nns = 1,
         .attempts = 2,
         .ndots = 1,
-        .non_public = 1
         .timeout = 5};
     conf.ns[0].family = AF_INET6;
 	// scopeid设置为0，在本地网络下(fe80::***), 内核会查询对应网卡的ifindex并返回
