@@ -49,7 +49,10 @@ struct service {
 
 struct resolvconf {
 	struct address ns[MAXNS];
-	unsigned nns, attempts, ndots, non_public;
+	unsigned nns, attempts, ndots
+#if OHOS_DNS_PROXY_BY_NETSYS
+    unsigned non_public;
+#endif
 	unsigned timeout;
 };
 
