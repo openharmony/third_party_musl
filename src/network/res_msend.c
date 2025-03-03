@@ -256,10 +256,10 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 				retry[i] = 0;
 				if (!alens[i]) {
                     /* First time only use non public ns, public ns is used after first query failed */
-                    if (retry_count <= 1 && conf->non_public > 0) {
-						retry_limit = conf->non_public;
-					} else {
+                    if (retry_count > 1) {
 						retry_limit = nns;
+					} else {
+						retry_limit = conf->non_public;
 					}
 					for (j=0; j<retry_limit; j++) {
 						if (sendto(fd, queries[i], qlens[i], MSG_NOSIGNAL, (void *)&ns[j], sl) == -1) {
