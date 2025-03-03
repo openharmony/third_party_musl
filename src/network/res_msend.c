@@ -125,8 +125,10 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 	uint8_t nres, end_query;
 	int blens[2] = {0};
 	unsigned char *bp[2] = { NULL, NULL };
+#if OHOS_DNS_PROXY_BY_NETSYS
     int retry_count = 0;
 	int retry_limit;
+#endif
 
 	pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &cs);
 
@@ -231,7 +233,9 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 	end_query = 0;
 
 	for (; t2-t0 < timeout; t2=mtime()) {
+#if OHOS_DNS_PROXY_BY_NETSYS
         retry_count++;
+#endif
 		/* This is the loop exit condition: that all queries
 		 * have an accepted answer. */
 		for (i=0; i<nqueries && alens[i]>0; i++);
@@ -255,13 +259,17 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 			for (i=0; i<nqueries; i++) {
 				retry[i] = 0;
 				if (!alens[i]) {
+#if OHOS_DNS_PROXY_BY_NETSYS
                     /* First time only use non public ns, public ns is used after first query failed */
-                    if (retry_count > 1) {
-						retry_limit = nns;
-					} else {
+                    if (retry_count <= 1 && conf->non_public > 0) {
 						retry_limit = conf->non_public;
+					} else {
+						retry_limit = nns;
 					}
 					for (j=0; j<retry_limit; j++) {
+#else
+                    for (j=0; j<nns; j++) {
+#endif
 						if (sendto(fd, queries[i], qlens[i], MSG_NOSIGNAL, (void *)&ns[j], sl) == -1) {
 							int errno_code = errno;
 #ifndef __LITEOS__

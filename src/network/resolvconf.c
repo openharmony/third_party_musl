@@ -116,7 +116,9 @@ int get_resolv_conf_ext(struct resolvconf *conf, char *search, size_t search_sz,
 	conf->ndots = 1;
 	conf->timeout = 5;
 	conf->attempts = 2;
+#if OHOS_DNS_PROXY_BY_NETSYS
     conf->non_public = 0;
+#endif
 	if (search) *search = 0;
 
 #if OHOS_DNS_PROXY_BY_NETSYS
