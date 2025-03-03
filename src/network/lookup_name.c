@@ -859,7 +859,8 @@ int predefined_host_name_from_hosts(
 	}
 
 	if (cnt > 0) {
-		memcpy(canon, name, size);
+		strncpy(canon, name, size - 1);
+		canon[size - 1] = '\0';
 	}
 	return cnt;
 }
