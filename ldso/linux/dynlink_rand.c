@@ -157,7 +157,7 @@ void free_task(struct loadtask *task)
         return;
     }
     if (task->name) {
-        __libc_free(task->name);
+        __libc_free((void *)task->name);
         task->name = NULL;
     }
     if (task->allocated_buf) {

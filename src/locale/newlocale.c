@@ -25,7 +25,7 @@ static locale_t do_newlocale(int mask, const char *name, locale_t loc)
 	for (int i=0; i<LC_ALL; i++) {
 		tmp.cat[i] = (!(mask & (1<<i)) && loc) ? loc->cat[i] :
 			__get_locale(i, (mask & (1<<i)) ? name : "");
-		if (tmp.cat[i] == LOC_MAP_FAILED || tmp.cat[i] && tmp.cat[i]->flag == INVALID)
+		if (tmp.cat[i] == LOC_MAP_FAILED || (tmp.cat[i] && tmp.cat[i]->flag == INVALID))
 			return 0;
 	}
 

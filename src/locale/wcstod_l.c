@@ -25,14 +25,14 @@
 
 static int icu_wchar_trans(wchar_t *src, u_char *des, int des_size)
 {
-	get_icu_symbol(ICU_I18N, &(g_icu_opt_func.u_str_from_utf32), ICU_STR_FROM_UTF32_SYMBOL);
+	get_icu_symbol(ICU_I18N, (void **)&(g_icu_opt_func.u_str_from_utf32), ICU_STR_FROM_UTF32_SYMBOL);
 
 	if (!g_icu_opt_func.u_str_from_utf32) {
 		return DLSYM_ICU_FAIL;
 	}
 
 	int icu_status = 0;
-	void *res_tmp = g_icu_opt_func.u_str_from_utf32(des, des_size, NULL, src, -1, &icu_status);
+	(void)g_icu_opt_func.u_str_from_utf32(des, des_size, NULL, src, -1, &icu_status);
 	if (icu_status > 0) {
 		return ICU_ERROR;
 	}
@@ -97,9 +97,9 @@ double wcstod_l(const wchar_t *restrict s, wchar_t **restrict p, locale_t l)
 			return sign * INFINITY;
 		}
 
-		double res = icu_wcstod_l(l->cat[LC_NUMERIC]->name, tmp_s, &cur_status, &parse_pos);
+		double res = icu_wcstod_l((char *)l->cat[LC_NUMERIC]->name, tmp_s, &cur_status, &parse_pos);
 		if (cur_status == DLSYM_ICU_SUCC || cur_status == ICU_ERROR) {
-			if (p) *p = parse_pos ? tmp_s + parse_pos : (char *)s;
+			if (p) *p = parse_pos ? tmp_s + parse_pos : (wchar_t *)s;
 			return sign * res;
 		}
 	}

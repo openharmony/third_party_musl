@@ -91,7 +91,7 @@ static line_status config_line(char *line, char *section, char *key, char *value
         strtrim(section);
         return LINE_SECTION;
     }
-    if (split = strchr(line, '=')) {
+    if ((split = strchr(line, '='))) {
         /* key and value */
         size_t klen, vlen;
         klen = split - line;

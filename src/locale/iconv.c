@@ -493,7 +493,7 @@ char **restrict in, size_t *restrict inb, char **restrict out, size_t *restrict 
 	pivot = pivot2 = pivot_buffer;
 	mytarget = *out;
     target_limit = *out + *outb;
-	g_icu_opt_func.ucnv_convertEx(conv_out, conv_in, &mytarget, target_limit, in, source_limit,
+	g_icu_opt_func.ucnv_convertEx(conv_out, conv_in, &mytarget, target_limit, (const char **)in, source_limit,
 						pivot_buffer, &pivot, &pivot2, pivot_buffer + ICU_CHUNK_SIZE, false, true, &errCode);
 	target_length = (int32_t)(mytarget - *out);
     if (errCode > ICU_ZERO_ERROR) {

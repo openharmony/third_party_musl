@@ -68,7 +68,7 @@ int __getgmtoff(const char *restrict s, struct tm *restrict tm)
     if (!isexit) {
         /* Possible time zone formats are HH:MM. */
         if (*p == ':') {
-            *p++;
+            (void)(*p++);
         }
 
         /* get minutes */

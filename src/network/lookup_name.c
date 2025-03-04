@@ -835,7 +835,7 @@ int predefined_host_set_host(const char* host, const char* ip)
 		return 0;
 	}
 
-	return _predefined_host_add_record(host, ip);
+	return _predefined_host_add_record((char *)host, (char *)ip);
 }
 
 int predefined_host_name_from_hosts(
