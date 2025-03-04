@@ -41,7 +41,7 @@ __thread bool thread_local_dtors_alive = false;
 static pthread_key_t dtors_key;
 
 #ifndef ENABLE_HWASAN
-void run_cur_thread_dtors(void *)
+void run_cur_thread_dtors(void *unused)
 #else
 void run_cur_thread_dtors(void *thread_local_dtors)
 #endif

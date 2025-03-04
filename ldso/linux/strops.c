@@ -60,7 +60,7 @@ strlist *strsplit(const char *str, const char *split_s)
     }
 
     cur = ss;
-    while (next = strstr(cur, split_s)) {
+    while ((next = strstr(cur, split_s))) {
         *next = 0;
         strtrim(cur);
         strlist_set(sl, cur);

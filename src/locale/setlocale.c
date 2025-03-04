@@ -49,7 +49,7 @@ char *setlocale(int cat, const char *name)
 					return 0;
 				}
 #ifndef __LITEOS__
-				if(Fresh(lm) == INVALID) {
+				if(Fresh((struct __locale_map *)lm) == INVALID) {
 					flag = INVALID;
 				}
 #endif
@@ -85,7 +85,7 @@ char *setlocale(int cat, const char *name)
 			return 0;
 		}
 #ifndef __LITEOS__
-		flag = Fresh(lm);
+		flag = Fresh((struct __locale_map *)lm);
 #endif
 		libc.global_locale.cat[cat] = lm;
 	} else {

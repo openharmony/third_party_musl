@@ -75,7 +75,7 @@ static void update_lconv_member(u_char *icu_symbol, void *fmt, char *lconv_membe
 	if (!g_icu_opt_func.unum_get_symbol) {
 		return;
 	}
-	int len = g_icu_opt_func.unum_get_symbol(fmt, type, icu_symbol, ICU_BUFFER_SIZE, &icu_status);
+	(void)g_icu_opt_func.unum_get_symbol(fmt, type, icu_symbol, ICU_BUFFER_SIZE, &icu_status);
 	if (icu_status <= 0) {
 		if (g_icu_opt_func.u_austrncpy) {
 			g_icu_opt_func.u_austrncpy(lconv_member, icu_symbol, ICU_BUFFER_SIZE);
@@ -119,9 +119,9 @@ struct lconv *localeconv(void)
 		refresh_lconv_icures();
 
 		/* ICU function: unum_getSymbol, return specific information, e.g. currency symbol */
-		get_icu_symbol(ICU_I18N, &(g_icu_opt_func.unum_get_symbol), ICU_UNUM_GET_SYMBOL_SYMBOL);
+		get_icu_symbol(ICU_I18N, (void **)&(g_icu_opt_func.unum_get_symbol), ICU_UNUM_GET_SYMBOL_SYMBOL);
 		/* ICU function: u_austrncpy, transfer result from unum_getSymbol to utf-8 string */
-		get_icu_symbol(ICU_UC, &(g_icu_opt_func.u_austrncpy), ICU_AUSTRNCPY_SYMBOL);
+		get_icu_symbol(ICU_UC, (void **)&(g_icu_opt_func.u_austrncpy), ICU_AUSTRNCPY_SYMBOL);
 
 		if (!(g_icu_opt_func.unum_get_symbol) || !(g_icu_opt_func.u_austrncpy)) {
 			return (void *)&g_lconv_icures;

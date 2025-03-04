@@ -163,7 +163,7 @@ static int noload;
 static int shutting_down;
 static jmp_buf *rtld_fail;
 static pthread_rwlock_t lock;
-static pthread_mutex_t dlclose_lock = { { PTHREAD_MUTEX_RECURSIVE } }; // set mutex type to PTHREAD_MUTEX_RECURSIVE
+static pthread_mutex_t dlclose_lock = {{{ PTHREAD_MUTEX_RECURSIVE }}}; // set mutex type to PTHREAD_MUTEX_RECURSIVE
 static struct debug debug;
 static struct tls_module *tls_tail;
 static size_t tls_cnt, tls_offset, tls_align = MIN_TLS_ALIGN;
@@ -269,7 +269,7 @@ static uint32_t parse_elf_property(uint32_t type, const char* data)
 {
 	uint32_t prot = 0;
 	if (type == GNU_PROPERTY_AARCH64_FEATURE_1_AND) {
-		const uint32_t *p = data;
+		const uint32_t *p = (const uint32_t *)data;
 		if ((*p & GNU_PROPERTY_AARCH64_FEATURE_1_BTI) != 0) {
 			prot |= PROT_BTI;
 		}
@@ -585,7 +585,7 @@ UT_STATIC int check_verinfo(Verdef *def, int16_t *versym, uint32_t index, struct
 
 	/* find the verneed symbol. */
 	if (verinfo->use_vna_hash) {
-		if (vsym != VER_NDX_LOCAL && versym != VER_NDX_GLOBAL) {
+		if (vsym != VER_NDX_LOCAL && versym != (int16_t *)VER_NDX_GLOBAL) {
 			return check_vna_hash(def, vsym, verinfo->vna_hash);
 		}
 	}
@@ -965,7 +965,7 @@ static inline struct symdef find_sym_by_deps(struct dso *dso, struct verinfo *ve
 {
 	struct sym_info_pair s_info_g = gnu_hash(verinfo->s);
 	struct sym_info_pair s_info_s = {0, 0};
-	uint32_t h = 0, gh = s_info_g.sym_h, gho = gh / (8 * sizeof(size_t)), *ght;
+	uint32_t gh = s_info_g.sym_h, gho = gh / (8 * sizeof(size_t)), *ght;
 	size_t ghm = 1ul << gh % (8 * sizeof(size_t));
 	struct symdef def = {0};
 	struct dso **deps = dso->deps;
@@ -3572,7 +3572,7 @@ void *dlopen_impl(
 #ifdef LOAD_ORDER_RANDOMIZATION
 	struct loadtasks *tasks = NULL;
 	struct loadtask *task = NULL;
-	struct loadtask **volatile tasks_ptr = &tasks;
+	struct loadtasks **volatile tasks_ptr = (struct loadtasks **volatile)&tasks;
 	bool is_task_appended = false;
 #endif
 #ifdef IS_ASAN
@@ -3904,7 +3904,7 @@ void dlns_init(Dl_namespace *dlns, const char *name)
 	}
 
 	const void *caller_addr = __builtin_return_address(0);
-	if (is_permitted(caller_addr, name) == false) {
+	if (is_permitted(caller_addr, (char *)name) == false) {
 		return;
 	}
 
@@ -4096,7 +4096,7 @@ void *addr2dso(size_t a)
 	struct dso *p;
 	size_t i;
 	for (p=head; p; p=p->next) {
-		if (a < p->map || a - (size_t)p->map >= p->map_len) continue;
+		if (a < (size_t)p->map || a - (size_t)p->map >= p->map_len) continue;
 		Phdr *ph = p->phdr;
 		size_t phcnt = p->phnum;
 		size_t entsz = p->phentsize;
@@ -4714,7 +4714,7 @@ int dlns_set_namespace_lib_path(const char * name, const char * lib_path)
 
 	pthread_rwlock_wrlock(&lock);
 	const void *caller_addr = __builtin_return_address(0);
-	if (is_permitted(caller_addr, name) == false) {
+	if (is_permitted(caller_addr, (char *)name) == false) {
 		pthread_rwlock_unlock(&lock);
 		return EPERM;
 	}
@@ -4740,7 +4740,7 @@ int dlns_set_namespace_separated(const char * name, const bool separated)
 
 	pthread_rwlock_wrlock(&lock);
 	const void *caller_addr = __builtin_return_address(0);
-	if (is_permitted(caller_addr, name) == false) {
+	if (is_permitted(caller_addr, (char *)name) == false) {
 		pthread_rwlock_unlock(&lock);
 		return EPERM;
 	}
@@ -4766,7 +4766,7 @@ int dlns_set_namespace_permitted_paths(const char * name, const char * permitted
 
 	pthread_rwlock_wrlock(&lock);
 	const void *caller_addr = __builtin_return_address(0);
-	if (is_permitted(caller_addr, name) == false) {
+	if (is_permitted(caller_addr, (char *)name) == false) {
 		pthread_rwlock_unlock(&lock);
 		return EPERM;
 	}
@@ -4792,7 +4792,7 @@ int dlns_set_namespace_allowed_libs(const char * name, const char * allowed_libs
 
 	pthread_rwlock_wrlock(&lock);
 	const void *caller_addr = __builtin_return_address(0);
-	if (is_permitted(caller_addr, name) == false) {
+	if (is_permitted(caller_addr, (char *)name) == false) {
 		pthread_rwlock_unlock(&lock);
 		return EPERM;
 	}
@@ -5080,7 +5080,7 @@ static bool map_library_header(struct loadtask *task)
 	}
 	if (l < sizeof(Ehdr) || (task->eh->e_type != ET_DYN && task->eh->e_type != ET_EXEC)) {
 		LD_LOGE("Error mapping header %{public}s: invaliled Ehdr l=%{public}d e_type=%{public}hu",
-			task->name, l, task->eh->e_type);
+			task->name, (int)l, task->eh->e_type);
 		goto noexec;
 	}
 	task->phsize = task->eh->e_phentsize * task->eh->e_phnum;
@@ -5166,7 +5166,7 @@ static bool map_library_header(struct loadtask *task)
 			task->name, errno);
 		goto error;
 	}
-	Shdr *sh = (char *)task->shdr_allocated_buf + task->eh->e_shoff - off_start;
+	Shdr *sh = (Shdr *)((char *)task->shdr_allocated_buf + task->eh->e_shoff - off_start);
 	for (i = task->eh->e_shnum; i; i--, sh = (void *)((char *)sh + task->eh->e_shentsize)) {
 		if (sh->sh_type != SHT_STRTAB || sh->sh_addr != str_table || sh->sh_size != str_size) {
 			continue;
@@ -5267,7 +5267,7 @@ static bool task_map_library(struct loadtask *task, struct reserved_address_para
 	if (DL_FDPIC && !(task->eh->e_flags & FDPIC_CONSTDISP_FLAG)) {
 		task->p->loadmap = calloc(1, sizeof(struct fdpic_loadmap) + nsegs * sizeof(struct fdpic_loadseg));
 		if (!task->p->loadmap) {
-			LD_LOGE("Error mapping library: calloc failed errno=%{public}d nsegs=%{public}d", errno, nsegs);
+			LD_LOGE("Error mapping library: calloc failed errno=%{public}d nsegs=%{public}zu", errno, nsegs);
 			goto error;
 		}
 		task->p->loadmap->nsegs = nsegs;
@@ -5288,7 +5288,7 @@ static bool task_map_library(struct loadtask *task, struct reserved_address_para
 				task->fd, ph->p_offset & -PAGE_SIZE + task->file_offset);
 			if (map == MAP_FAILED) {
 				unmap_library(task->p);
-				LD_LOGE("Error mapping library: PT_LOAD mmap failed task->name=%{public}s errno=%{public}d map_len=%{public}d",
+				LD_LOGE("Error mapping library: PT_LOAD mmap failed task->name=%{public}s errno=%{public}d map_len=%{public}lu",
 					task->name, errno, ph->p_memsz + (ph->p_vaddr & PAGE_SIZE - 1));
 				goto error;
 			}
@@ -5356,7 +5356,7 @@ static bool task_map_library(struct loadtask *task, struct reserved_address_para
 			: mmap((void *)start_addr, map_len, prot, map_flags, task->fd, off_start + task->file_offset);
 		if (map == MAP_FAILED) {
 			LD_LOGE("Error mapping library: reserved_params mmap failed errno=%{public}d DL_NOMMU_SUPPORT=%{public}d"
-				" task->fd=%{public}d task->name=%{public}s map_len=%{public}d",
+				" task->fd=%{public}d task->name=%{public}s map_len=%{public}lu",
 				errno, DL_NOMMU_SUPPORT, task->fd, task->name, map_len);
 			goto error;
 		}
@@ -5369,7 +5369,7 @@ static bool task_map_library(struct loadtask *task, struct reserved_address_para
 		/* use tmp_map_len to mmap enough space for the dso with anonymous mapping */
 		unsigned char *temp_map = mmap((void *)NULL, tmp_map_len, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
 		if (temp_map == MAP_FAILED) {
-			LD_LOGE("Error mapping library: !reserved_params mmap failed errno=%{public}d tmp_map_len=%{public}d",
+			LD_LOGE("Error mapping library: !reserved_params mmap failed errno=%{public}d tmp_map_len=%{public}lu",
 				errno, tmp_map_len);
 			goto error;
 		}
@@ -5383,7 +5383,7 @@ static bool task_map_library(struct loadtask *task, struct reserved_address_para
 			: mmap(real_map, map_len, prot, map_flags | MAP_FIXED, task->fd, off_start + task->file_offset);
 		if (map == MAP_FAILED || map != real_map) {
 			LD_LOGE("Error mapping library: !reserved_params mmap failed errno=%{public}d DL_NOMMU_SUPPORT=%{public}d"
-				"task->fd=%{public}d task->name=%{public}s map_len=%{public}d",
+				"task->fd=%{public}d task->name=%{public}s map_len=%{public}lu",
 				errno, DL_NOMMU_SUPPORT, task->fd, task->name, map_len);
 			goto error;
 		}
@@ -5474,7 +5474,7 @@ static bool task_map_library(struct loadtask *task, struct reserved_address_para
 				MAP_PRIVATE | MAP_FIXED | MAP_ANONYMOUS,
 				-1,
 				0) == MAP_FAILED) {
-				LD_LOGE("Error mapping library: PF_W mmap fix failed errno=%{public}d task->name=%{public}s zeromap_size=%{public}d",
+				LD_LOGE("Error mapping library: PF_W mmap fix failed errno=%{public}d task->name=%{public}s zeromap_size=%{public}lu",
 					errno, task->name, zeromap_size);
 				goto error;
 			}

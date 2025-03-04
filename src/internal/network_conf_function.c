@@ -20,7 +20,7 @@
 char *g_fixedServices[] = {
 #define PORT_DESC(a) a
 #include "services.h"
-#undef PORT_DESC(a)
+#undef PORT_DESC
 };
 
 #define FIXED_SERVICES_COUNT (sizeof(g_fixedServices) / sizeof(char*))
