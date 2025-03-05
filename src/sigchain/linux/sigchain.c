@@ -22,6 +22,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <pthread_impl.h>
+#include "malloc.h"
 #include "syscall.h"
 
 extern int __libc_sigaction(int sig, const struct sigaction *restrict sa,
@@ -144,6 +145,19 @@ static bool ismarked(int signo)
     return sig_chains[signo - 1].marked;
 }
 
+#ifdef USE_JEMALLOC_DFX_INTF
+/**
+  * @brief This is a print function for malloc_stats_print.
+  * @param[in] fp, file descriptor for print.
+  * @param[in] str, string to print.
+  * @retval void
+  */
+static void binlock_print(void *fp, const char *str)
+{
+    SIGCHAIN_PRINT_ERROR("%{public}s", str);
+}
+#endif
+
 /**
   * @brief This is a callback function, which is registered to the kernel
   * @param[in] signo, the value of the signal.
@@ -230,6 +244,9 @@ static void signal_chain_handler(int signo, siginfo_t* siginfo, void* ucontext_r
                 call_tl_lock_dump->set_syscall_hooks_tl_lock,
                 call_tl_lock_dump->set_syscall_hooks_linux_tl_lock,
                 call_tl_lock_dump->fork_tl_lock);
+#ifdef USE_JEMALLOC_DFX_INTF
+                malloc_stats_print(binlock_print, NULL, "o");
+#endif
             if (sig_chains[signo - 1].sca_special_actions[idx].sca_sigaction(signo,
                                                             siginfo, ucontext_raw)) {
                 set_handling_signal(previous_value);
