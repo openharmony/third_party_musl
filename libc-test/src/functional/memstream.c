@@ -31,6 +31,7 @@ static void test_memfile(void)
 
 	TEST_E(f = fmemopen(buf, 10, "r+"));
 	TEST_E(fputs("world!", f) >= 0);
+	TEST_E(!fflush(f));
 	TEST_E(fclose(f) != -1);
 
 	ss = 0;
