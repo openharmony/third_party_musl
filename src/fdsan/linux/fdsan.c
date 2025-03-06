@@ -50,7 +50,6 @@
 const char *fdsan_parameter_name = "musl.debug.fdsan";
 #define ALIGN(x,y) ((x)+(y)-1 & -(y))
 extern int __close(int fd);
-static atomic_int g_signalOnce = ZERO;
 
 static struct FdTable g_fd_table = {
 	.error_level = FDSAN_ERROR_LEVEL_WARN_ALWAYS,
@@ -183,9 +182,9 @@ static void fdsan_error(struct FdEntry* fde, const char* fmt, ...)
 			atomic_compare_exchange_strong(&fd_table->error_level, &error_level, FDSAN_ERROR_LEVEL_DISABLED);
 		case FDSAN_ERROR_LEVEL_WARN_ALWAYS: {
 			MUSL_FDSAN_ERROR("%{public}s", msg);
-			int value = ZERO;
-			if (fde == NULL || !atomic_load(&fde->signal_flag)
-				&& atomic_compare_exchange_strong(&fde->signal_flag, &value, ONE)) {
+			char value = ZERO;
+			if (fde == NULL || (!atomic_load(&fde->signal_flag)
+				&& atomic_compare_exchange_strong(&fde->signal_flag, &value, ONE))) {
 				save_debug_message(msg);
 			}
 			break;
@@ -352,7 +351,7 @@ enum fdsan_error_level fdsan_set_error_level_from_param(enum fdsan_error_level d
 		if (param_handler == NULL) {
 				param_handler = CachedParameterCreate(fdsan_parameter_name, "0");
 		}
-		char *param_value = CachedParameterGet(param_handler);
+		const char *param_value = CachedParameterGet(param_handler);
 		if (param_value == NULL) {
 				return fdsan_set_error_level(default_level);
 		} else if (strcmp(param_value, "fatal") == 0) {

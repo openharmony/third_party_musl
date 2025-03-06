@@ -24,7 +24,7 @@ void __assert_fail(const char *expr, const char *file, int line, const char *fun
     // call set_fatal_message to set assert_fatal_message
     set_fatal_message(assert_fatal_message);
     AssertFailureInfo assert_fail = {
-        expr, file, func, line
+        (char *)expr, (char *)file, (char *)func, line
     };
 
     Assert_Status assert_status = ASSERT_ABORT;

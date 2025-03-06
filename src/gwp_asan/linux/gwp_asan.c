@@ -126,7 +126,7 @@ bool is_gwp_asan_disable()
     if (para_handler == NULL) {
         para_handler = CachedParameterCreate(para_name, "false");
     }
-    char *para_value = CachedParameterGet(para_handler);
+    const char *para_value = CachedParameterGet(para_handler);
     if (para_value != NULL && strcmp(para_value, "true") == 0) {
         return true;
     }
@@ -146,7 +146,7 @@ bool force_sample_process_by_env()
     if (app_enable_handle == NULL) {
         app_enable_handle = CachedParameterCreate(para_name, "false");
     }
-    char *param_value = CachedParameterGet(app_enable_handle);
+    const char *param_value = CachedParameterGet(app_enable_handle);
     if (param_value != NULL) {
         if (strcmp(param_value, "true") == 0) {
             return true;
@@ -162,7 +162,7 @@ bool force_sample_alloctor_by_env()
     if (para_handler == NULL) {
         para_handler = CachedParameterCreate(para_name, "false");
     }
-    char *para_value = CachedParameterGet(para_handler);
+    const char *para_value = CachedParameterGet(para_handler);
     if (para_value != NULL && strcmp(para_value, "true") == 0) {
         force_sample_alloctor = 1;
         return true;
@@ -201,7 +201,7 @@ void gwp_asan_printf(const char *fmt, ...)
     if (para_handler == NULL) {
         para_handler = CachedParameterCreate(para_name, "default");
     }
-    char *para_value = CachedParameterGet(para_handler);
+    const char *para_value = CachedParameterGet(para_handler);
     if (strcmp(para_value, "file") == 0) {
         char process_short_name[GWP_ASAN_NAME_LEN];
         char *path = get_process_short_name(process_short_name, GWP_ASAN_NAME_LEN);

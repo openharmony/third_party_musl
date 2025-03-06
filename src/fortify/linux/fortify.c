@@ -239,7 +239,7 @@ char* __stpcpy_chk(char* dest, const char* src, size_t dst_len)
 void* __memchr_chk(const void* s, int c, size_t n, size_t actual_size)
 {
     __diagnose_buffer_access("memchr", "read from", n, actual_size);
-    void* const_cast_s = s;
+    const void* const_cast_s = s;
     return __DIAGNOSE_CALL_BYPASSING_FORTIFY(memchr)(const_cast_s, c, n);
 }
 
@@ -298,7 +298,7 @@ char *__strrchr_chk(const char *s, int c, size_t s_len)
 void* __memrchr_chk(const void *s, int c, size_t n, size_t actual_size)
 {
     __diagnose_buffer_access("memrchr", "read from", n, actual_size);
-    void *const_cast_s = s;
+    const void *const_cast_s = s;
     return __DIAGNOSE_CALL_BYPASSING_FORTIFY(memrchr)(const_cast_s, c, n);
 }
 #endif
