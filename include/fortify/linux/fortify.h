@@ -20,15 +20,19 @@
 extern "C" {
 #endif
 
+#ifdef _FORTIFY_SOURCE
 #if (_FORTIFY_SOURCE == 1) || (_FORTIFY_SOURCE == 2)
 #ifndef __FORTIFY_COMPILATION
 #define __FORTIFY_COMPILATION
 #endif
 #endif
+#endif
 
+#ifdef _FORTIFY_SOURCE
 #if (_FORTIFY_SOURCE == 2)
 #ifndef __FORTIFY_RUNTIME
 #define __FORTIFY_RUNTIME
+#endif
 #endif
 #endif
 

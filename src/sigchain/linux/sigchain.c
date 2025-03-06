@@ -271,7 +271,7 @@ static void signal_chain_handler(int signo, siginfo_t* siginfo, void* ucontext_r
             if (__syscall(SYS_rt_tgsigqueueinfo, __syscall(SYS_getpid), __syscall(SYS_gettid), signo, siginfo) != 0) {
                 SIGCHAIN_PRINT_ERROR("Failed to rethrow sig(%{public}d), errno(%{public}d).", signo, errno);
             } else {
-                SIGCHAIN_PRINT_ERROR("pid(%{public}d) rethrow sig(%{public}d) success.", __syscall(SYS_getpid), signo);
+                SIGCHAIN_PRINT_ERROR("pid(%{public}ld) rethrow sig(%{public}d) success.", __syscall(SYS_getpid), signo);
             }
         } else {
             SIGCHAIN_PRINT_ERROR("%{public}s call usr sa_handler: %{public}llx for signal: %{public}d",

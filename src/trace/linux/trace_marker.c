@@ -48,7 +48,7 @@ static uint64_t g_trace_switch_status = 0;
 
 uint64_t get_uint64_sysparam(CachedHandle cachedhandle)
 {
-    char *param_value = CachedParameterGet(cachedhandle);
+    const char *param_value = CachedParameterGet(cachedhandle);
     if (param_value != NULL) {
         return strtoull(param_value, NULL, 0);
     }

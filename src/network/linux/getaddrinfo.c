@@ -84,7 +84,6 @@ int getaddrinfo_ext(const char *restrict host, const char *restrict serv, const 
 {
 	int netid = 0;
 	int type = 0;
-	int usedtime = 0;
 	struct timeval timeStart, timeEnd;
 
 	if (!host && !serv) return EAI_NONAME;
@@ -117,7 +116,7 @@ int getaddrinfo_ext(const char *restrict host, const char *restrict serv, const 
 	if (type == QEURY_TYPE_NORMAL && predefined_host_is_contain_host(host) == 0) {
 		if (dns_get_addr_info_from_netsys_cache2(netid, host, serv, hint, res) == 0) {
 			GETADDRINFO_PRINT_DEBUG("getaddrinfo_ext get from netsys cache OK\n");
-			reportdnsresult(netid, host, 0, DNS_QUERY_SUCCESS, *res, param);
+			reportdnsresult(netid, (char *)host, 0, DNS_QUERY_SUCCESS, *res, param);
 			return 0;
 		}
 	}
@@ -231,7 +230,7 @@ int getaddrinfo_ext(const char *restrict host, const char *restrict serv, const 
 		t_cost /= COST_FOR_MS;
 	}
 	if (naddrs < 0) {
-		reportdnsresult(netid, host, t_cost, naddrs, NULL, param);
+		reportdnsresult(netid, (char *)host, t_cost, naddrs, NULL, param);
 #ifndef __LITEOS__
 		MUSL_LOGE("%{public}s: %{public}d: reportdnsresult: %{public}d in process %{public}d",
 			__func__, __LINE__, naddrs, getpid());
@@ -281,7 +280,7 @@ int getaddrinfo_ext(const char *restrict host, const char *restrict serv, const 
 	out[0].ref = nais;
 	*res = &out->ai;
 
-	reportdnsresult(netid, host, t_cost, DNS_QUERY_SUCCESS, *res, param);
+	reportdnsresult(netid, (char *)host, t_cost, DNS_QUERY_SUCCESS, *res, param);
 	int cnt = predefined_host_is_contain_host(host);
 #if OHOS_DNS_PROXY_BY_NETSYS
 	if (type == QEURY_TYPE_NORMAL && cnt == 0) {

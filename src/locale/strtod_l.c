@@ -32,7 +32,7 @@ float strtof_l(const char *restrict s, char **restrict p, locale_t l)
 void *icu_unum_open(char *icu_locale_name, int *cur_status)
 {
 	/* ICU function: unum_open, returns a format related to specific locale */
-	get_icu_symbol(ICU_I18N, &(g_icu_opt_func.unum_open), ICU_UNUM_OPEN_SYMBOL);
+	get_icu_symbol(ICU_I18N, (void **)&(g_icu_opt_func.unum_open), ICU_UNUM_OPEN_SYMBOL);
 
 	/* dlopen/dlsym fail */
 	if (!g_icu_opt_func.unum_open) {
@@ -55,7 +55,7 @@ void *icu_unum_open(char *icu_locale_name, int *cur_status)
 void icu_unum_close(void *fmt)
 {
 	/* ICU function: unum_close, close the formate returned from unum_open */
-	get_icu_symbol(ICU_I18N, &(g_icu_opt_func.unum_close), ICU_UNUM_CLOSE_SYMBOL);
+	get_icu_symbol(ICU_I18N, (void **)&(g_icu_opt_func.unum_close), ICU_UNUM_CLOSE_SYMBOL);
 	if (g_icu_opt_func.unum_close) {
 		g_icu_opt_func.unum_close(fmt);
 	}
@@ -66,7 +66,7 @@ static int icu_char_trans(char *src, u_char *des, int des_size)
 	/* ICU function: u_strFromUTF8, transfer utf-8 string to Uchar* string which is
 	 * the input format of icu parse methods
 	 */
-	get_icu_symbol(ICU_I18N, &(g_icu_opt_func.u_str_from_utf8), ICU_STR_FROM_UTF8_SYMBOL);
+	get_icu_symbol(ICU_I18N, (void **)&(g_icu_opt_func.u_str_from_utf8), ICU_STR_FROM_UTF8_SYMBOL);
 	if (!g_icu_opt_func.u_str_from_utf8) {
 		return DLSYM_ICU_FAIL;
 	}
@@ -82,7 +82,7 @@ static int icu_char_trans(char *src, u_char *des, int des_size)
 double icu_parse_double(void *fmt, u_char *ustr, int32_t *parse_pos, int *cur_status)
 {
 	/* ICU function: unum_parseDouble, parse the given Uchar* string to double */
-	get_icu_symbol(ICU_I18N, &(g_icu_opt_func.unum_parse_double), ICU_UNUM_PARSE_DOUBLE_SYMBOL);
+	get_icu_symbol(ICU_I18N, (void **)&(g_icu_opt_func.unum_parse_double), ICU_UNUM_PARSE_DOUBLE_SYMBOL);
 	if (!g_icu_opt_func.unum_parse_double) {
 		*cur_status = DLSYM_ICU_FAIL;
 		return 0;
@@ -161,7 +161,7 @@ double strtod_l(const char *restrict s, char **restrict p, locale_t l)
 			return sign * INFINITY;
 		}
 
-		double res = icu_strtod_l(l->cat[LC_NUMERIC]->name, tmp_s, &cur_status, &parse_pos);
+		double res = icu_strtod_l((char *)l->cat[LC_NUMERIC]->name, tmp_s, &cur_status, &parse_pos);
 		if (cur_status == DLSYM_ICU_SUCC || cur_status == ICU_ERROR) {
 			if (p) *p = parse_pos ? tmp_s + parse_pos : (char *)s;
 			return sign * res;

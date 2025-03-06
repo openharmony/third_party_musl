@@ -483,9 +483,9 @@ __attribute__((no_sanitize("hwaddress")))
 int __pthread_create(pthread_t *restrict res, const pthread_attr_t *restrict attrp, void *(*entry)(void *), void *restrict arg)
 {
 	int ret, c11 = (attrp == __ATTRP_C11_THREAD);
-	size_t size, guard, size_len;
+	size_t size, guard;
 	struct pthread *self, *new;
-	unsigned char *map = 0, *stack = 0, *tsd = 0, *stack_limit, *start_addr;
+	unsigned char *map = 0, *stack = 0, *tsd = 0, *stack_limit;
 	unsigned flags = CLONE_VM | CLONE_FS | CLONE_FILES | CLONE_SIGHAND
 		| CLONE_THREAD | CLONE_SYSVSEM | CLONE_SETTLS
 		| CLONE_PARENT_SETTID | CLONE_CHILD_CLEARTID | CLONE_DETACHED;

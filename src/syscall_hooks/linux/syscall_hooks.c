@@ -69,7 +69,7 @@ int set_syscall_hooks(const char *hooks_table, int table_len, void *hooks_entry,
 				g_syscall_hooks_entry = hooks_entry;
 				g_syscall_hooks_table = hooks_table;
 			}
-			*tid_addr = &__thread_list_lock;
+			*tid_addr = (int *)&__thread_list_lock;
 		} else {
 			ret = -EPERM;
 		}

@@ -215,7 +215,7 @@ static inline void cfi_slowpath_common(uint64_t call_site_type_id, void *func_pt
     }
 
     if (offset > shadow_size) {
-        LD_LOGE("[CFI] set value to sv_invalid because offset(%{public}x) > shadow_size(%{public}x), "
+        LD_LOGE("[CFI] set value to sv_invalid because offset(%{public}lx) > shadow_size(%{public}lx), "
                 "addr:%{public}p lr:%{public}p.\n",
                 offset, shadow_size, func_ptr, __builtin_return_address(0));
         value = sv_invalid;
@@ -354,8 +354,8 @@ void unmap_dso_from_cfi_shadow(struct dso *dso)
 
     if (((size_t)dso->map & (LIBRARY_ALIGNMENT - 1)) != 0) {
         if (!(dso == pldso || dso == r_app || dso == r_vdso)) {
-            LD_LOGE("[CFI] [warning] %{public}s isn't aligned to %{public}x"
-                    "begin[%{public}x] end[%{public}x] cfi_check[%{public}x] type[%{public}x]!\n",
+            LD_LOGE("[CFI] [warning] %{public}s isn't aligned to %{public}lx"
+                    "begin[%{public}p] end[%{public}p] cfi_check[%{public}x] type[%{public}x]!\n",
                     dso->name, LIBRARY_ALIGNMENT, dso->map, dso->map + dso->map_len, 0, sv_invalid);
         }
     }
@@ -395,7 +395,7 @@ static int add_dso_to_cfi_shadow(struct dso *dso)
     for (struct dso *p = dso; p; p = p->next) {
         LD_LOGD("[CFI] [%{public}s] adding %{public}s to cfi shadow!\n", __FUNCTION__, p->name);
         if (p->map == 0 || p->map_len == 0) {
-            LD_LOGW("[CFI] [%{public}s] the dso has no data! map[%{public}p] map_len[0x%{public}x]\n",
+            LD_LOGW("[CFI] [%{public}s] the dso has no data! map[%{public}p] map_len[0x%{public}lx]\n",
                     __FUNCTION__, p->map, p->map_len);
             continue;
         }
@@ -412,8 +412,8 @@ static int add_dso_to_cfi_shadow(struct dso *dso)
 
             if (((size_t)dso->map & (LIBRARY_ALIGNMENT - 1)) != 0) {
                 if (!(dso == pldso || dso == r_app || dso == r_vdso)) {
-                    LD_LOGE("[CFI] [warning] %{public}s isn't aligned to %{public}x "
-                            "begin[%{public}x] end[%{public}x] cfi_check[%{public}x] type[%{public}x]!\n",
+                    LD_LOGE("[CFI] [warning] %{public}s isn't aligned to %{public}lx "
+                            "begin[%{public}p] end[%{public}p] cfi_check[%{public}x] type[%{public}x]!\n",
                             dso->name, LIBRARY_ALIGNMENT, dso->map, dso->map + dso->map_len, 0, sv_uncheck);
                 }
             }
@@ -448,8 +448,8 @@ static int add_dso_to_cfi_shadow(struct dso *dso)
 
             if (((size_t)dso->map & (LIBRARY_ALIGNMENT - 1)) != 0) {
                 if (!(dso == pldso || dso == r_app || dso == r_vdso)) {
-                    LD_LOGE("[CFI] [warning] %{public}s isn't aligned to %{public}x"
-                            "begin[%{public}x] end[%{public}x] cfi_check[%{public}x] type[%{public}x]!\n",
+                    LD_LOGE("[CFI] [warning] %{public}s isn't aligned to %{public}lx"
+                            "begin[%{public}p] end[%{public}p] cfi_check[%{public}lx] type[%{public}x]!\n",
                             dso->name, LIBRARY_ALIGNMENT, dso->map, dso->map + dso->map_len, cfi_check, sv_valid_min);
                 }
             }
@@ -513,8 +513,8 @@ static int fill_shadow_value_to_shadow(uintptr_t begin, uintptr_t end, uintptr_t
         LD_LOGD("[CFI] [%{public}s] shadow_value_begin is 0x%{public}x!\n", __FUNCTION__, shadow_value_begin);
         uint32_t shadow_value = shadow_value_begin;
         /* Set shadow_value */
-        for (uint16_t *shadow_addr = tmp_shadow_start + offset_begin;
-            shadow_addr != tmp_shadow_start + offset_end; shadow_addr++) {
+        for (uint16_t *shadow_addr = (uint16_t *)(tmp_shadow_start + offset_begin);
+            shadow_addr != (uint16_t *)(tmp_shadow_start + offset_end); shadow_addr++) {
             // We fall back to uncheck if the length of so is larger than 256M((UINT16_MAX - 2) * cfi_check_alignment).
             if (shadow_value > UINT16_MAX) {
                 *shadow_addr = sv_uncheck;
@@ -527,8 +527,8 @@ static int fill_shadow_value_to_shadow(uintptr_t begin, uintptr_t end, uintptr_t
     /* in these cases, shadow_value will always be sv_uncheck or sv_invalid */
     } else if (type == sv_uncheck || type == sv_invalid) {
         /* Set shadow_value */
-        for (uint16_t *shadow_addr = tmp_shadow_start + offset_begin;
-            shadow_addr != tmp_shadow_start + offset_end; shadow_addr++) {
+        for (uint16_t *shadow_addr = (uint16_t *)(tmp_shadow_start + offset_begin);
+            shadow_addr != (uint16_t *)(tmp_shadow_start + offset_end); shadow_addr++) {
             *shadow_addr = type;
         }
     } else {
