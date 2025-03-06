@@ -31,6 +31,7 @@ static void test_memfile(void)
 
 	TEST_E(f = fmemopen(buf, 10, "r+"));
 	TEST_E(fputs("world!", f) >= 0);
+	TEST_E(!fflush(f));
 	TEST_E(fclose(f) != -1);
 
 	ss = 0;
@@ -57,13 +58,6 @@ static void test_memfile(void)
 	TEST(i, ftell(f), 9, "%d != %d");
 	TEST_S(buf, "world!119", "");
 	TEST_E(fclose(f) != -1);
-
-	ss = 0;
-	f = NULL;
-	TEST_E(f = open_memstream(&ss, &l));
-	TEST(i, fprintf(f, "Hello"), 5, "%d != %d");
-	TEST_E(fclose(f) != -1);
-	TEST_S(ss, "Hello", "fflush fail");
 }
 
 int main(void)

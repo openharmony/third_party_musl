@@ -13,7 +13,7 @@ int fclose(FILE *f)
 	
 	FLOCK(f);
 #ifndef __LITEOS__
-	if (!f || f->fd == -EBADF) {
+	if (!f || f->fd < 0) {
 		errno = EBADF;
 		FUNLOCK(f);
 		return -EBADF;
@@ -42,19 +42,11 @@ int fclose(FILE *f)
 	free(f->base);
 
 #ifndef __LITEOS__
-	if (f->fd < 0) {
-		__ofl_lock();
-		FILE_LIST_REMOVE(f);
-		__ofl_unlock();
-		free(f);
-	} else {
-		/* set file to invalid descriptor */
-		f->fd = -EBADF;
-		__ofl_free(f);
-	}
-#else
-	__ofl_free(f);
+	/* set file to invalid descriptor */
+	f->fd = -EBADF;
 #endif
+
+	__ofl_free(f);
 
 	return r;
 }
