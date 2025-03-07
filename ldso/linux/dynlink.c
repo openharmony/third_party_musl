@@ -4094,7 +4094,6 @@ hidden int __dl_invalid_handle(void *h)
 void *addr2dso(size_t a)
 {
 	struct dso *p;
-	size_t i;
 	for (p=head; p; p=p->next) {
 		if (a < (size_t)p->map || a - (size_t)p->map >= p->map_len) continue;
 		Phdr *ph = p->phdr;
