@@ -77,7 +77,7 @@ bool load_asan_logger()
 static void write_to_dfx(const char *str, const char *path)
 {
     if (g_dfxLogPtr != NULL) {
-        g_dfxLogPtr(g_buffer, g_offset, path);
+        g_dfxLogPtr(g_buffer, g_offset, (char *)path);
         return;
     }
 
@@ -88,7 +88,7 @@ static void write_to_dfx(const char *str, const char *path)
     if (!load_asan_logger()) {
         return;
     }
-    g_dfxLogPtr(g_buffer, g_offset, path);
+    g_dfxLogPtr(g_buffer, g_offset, (char *)path);
 }
 
 /*
@@ -127,7 +127,7 @@ int ohos_dfx_log(const char *str, const char *path)
         }
         g_end = g_end * 2;
         g_buffer = new_buffer;
-        MUSL_LOGE("[ohos_dfx_log] g_end expand to %{public}d\n", g_end);
+        MUSL_LOGE("[ohos_dfx_log] g_end expand to %{public}lu\n", g_end);
     }
 
     strcpy(g_buffer + g_offset, str);
