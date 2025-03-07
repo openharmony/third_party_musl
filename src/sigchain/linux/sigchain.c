@@ -50,6 +50,7 @@ extern int __libc_sigaction(int sig, const struct sigaction *restrict sa,
 #endif
 
 #define FREEZE_SIGNAL_35 (35)
+#define FREEZE_SIGNAL_38 (38)
 
 #define SIGCHAIN_PRINT_FATAL(...)  do {                    \
     SIGCHAIN_LOG_FATAL(__VA_ARGS__);                      \
@@ -195,6 +196,13 @@ static void signal_chain_handler(int signo, siginfo_t* siginfo, void* ucontext_r
 #else
                 thread_list_lock_status = __thread_list_lock;
 #endif
+#ifdef USE_JEMALLOC_DFX_INTF
+                malloc_stats_print(binlock_print, NULL, "o");
+#endif //USE_JEMALLOC_DFX_INTF
+            } else if (signo == FREEZE_SIGNAL_38) {
+#ifdef USE_JEMALLOC_DFX_INTF
+                malloc_stats_print(binlock_print, NULL, "o");
+#endif
             }
               /**
               * modify style: move `thread_list_lock_status` from `if`
@@ -244,9 +252,6 @@ static void signal_chain_handler(int signo, siginfo_t* siginfo, void* ucontext_r
                 call_tl_lock_dump->set_syscall_hooks_tl_lock,
                 call_tl_lock_dump->set_syscall_hooks_linux_tl_lock,
                 call_tl_lock_dump->fork_tl_lock);
-#ifdef USE_JEMALLOC_DFX_INTF
-                malloc_stats_print(binlock_print, NULL, "o");
-#endif
             if (sig_chains[signo - 1].sca_special_actions[idx].sca_sigaction(signo,
                                                             siginfo, ucontext_raw)) {
                 set_handling_signal(previous_value);
