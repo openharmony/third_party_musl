@@ -140,8 +140,6 @@ int get_resolv_conf_ext(struct resolvconf *conf, char *search, size_t search_sz,
 		return EAI_NONAME;
 	}
 	int32_t timeout_second = config.timeout_ms / 1000;
-
-netsys_conf:
 	if (timeout_second > 0) {
 		if (timeout_second >= 60) {
 			conf->timeout = 60;
