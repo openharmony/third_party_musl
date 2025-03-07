@@ -50,6 +50,7 @@
 #else
 #error "unsupported arch"
 #endif
+#define CHIP_PROD_ETC "/etc/"
 #endif
 
 #ifdef OHOS_ENABLE_PARAMETER
@@ -3550,6 +3551,14 @@ static bool is_permitted(const void *caller_addr, char *target)
  *  Sanitizer requires this interface to be exposed.
  *  Pay attention to call __builtin_return_address in this interface because sanitizer can hook and call this interface.
  */
+#ifdef IS_ASAN
+static const char *redir_paths[] = {
+	LIB,
+	CHIP_PROD_ETC,
+	NULL
+};
+#endif
+
 void *dlopen_impl(
 	const char *file, int mode, const char *namespace, const void *caller_addr, const dl_extinfo *extinfo)
 {
@@ -3586,12 +3595,15 @@ void *dlopen_impl(
 
 #ifdef IS_ASAN
 	if (g_is_asan) {
-		char *place = strstr(file, LIB);
-		if (place && asan_file) {
-			int ret = snprintf(asan_file, sizeof asan_file, "%.*s/asan%s", (int)(place - file), file, place);
-			if (ret > 0 && access(asan_file, F_OK) == 0) {
-				LD_LOGI("dlopen_impl redirect to asan library.");
-				file = asan_file;
+		for (int i=0; redir_paths[i] != NULL; i++) {
+			char *place = strstr(file, redir_paths[i]);
+			if (place && asan_file) {
+				int ret = snprintf(asan_file, sizeof asan_file, "%.*s/asan%s", (int)(place - file), file, place);
+				if (ret > 0 && access(asan_file, F_OK) == 0) {
+					LD_LOGI("dlopen_impl redirect to asan library.");
+					file = asan_file;
+					break;
+				}
 			}
 		}
 	}
