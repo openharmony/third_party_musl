@@ -1363,20 +1363,6 @@ static void reclaim_gaps(struct dso *dso)
 	}
 }
 
-static ssize_t read_loop(int fd, void *p, size_t n)
-{
-	for (size_t i=0; i<n; ) {
-		ssize_t l = read(fd, (char *)p+i, n-i);
-		if (l<0) {
-			if (errno==EINTR) continue;
-			else return -1;
-		}
-		if (l==0) return i;
-		i += l;
-	}
-	return n;
-}
-
 UT_STATIC void *mmap_fixed(void *p, size_t n, int prot, int flags, int fd, off_t off)
 {
 	static int no_map_fixed;

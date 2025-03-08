@@ -2,7 +2,7 @@
 
 char *__stpncpy(char *dst, const char *src, size_t n)
 {
-	char *d = dst, *s = src;
+	char *d = dst;
 	dst = &dst[n];
 	while (n > 0) {
 		if ((*d++ = *src++) == 0) {
