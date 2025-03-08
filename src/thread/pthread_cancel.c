@@ -119,5 +119,6 @@ hidden long __cancel()
 
 int pthread_cancel(pthread_t t)
 {
+	return ENOSYS;
 }
 #endif
