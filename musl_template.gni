@@ -715,6 +715,7 @@ template("musl_libs") {
       "-Wno-unused-function",
       "-Wno-missing-field-initializers",
       "-Wno-excess-initializers",
+      "-Wno-extra-tokens",
       "-Wno-format",
       "-Wno-implicit-function-declaration",
       "-Wno-incompatible-pointer-types",
@@ -725,6 +726,7 @@ template("musl_libs") {
       "-Wno-unused-label",
       "-Wno-unused-variable",
       "-Wno-shorten-64-to-32",
+      "-Wno-sign-compare",
       "-Wno-string-conversion",
 
       "-U_FORTIFY_SOURCE",
