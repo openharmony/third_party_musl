@@ -22,6 +22,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <pthread_impl.h>
+#include "malloc.h"
 #include "syscall.h"
 
 extern int __libc_sigaction(int sig, const struct sigaction *restrict sa,
@@ -49,6 +50,7 @@ extern int __libc_sigaction(int sig, const struct sigaction *restrict sa,
 #endif
 
 #define FREEZE_SIGNAL_35 (35)
+#define FREEZE_SIGNAL_38 (38)
 
 #define SIGCHAIN_PRINT_FATAL(...)  do {                    \
     SIGCHAIN_LOG_FATAL(__VA_ARGS__);                      \
@@ -144,6 +146,19 @@ static bool ismarked(int signo)
     return sig_chains[signo - 1].marked;
 }
 
+#ifdef USE_JEMALLOC_DFX_INTF
+/**
+  * @brief This is a print function for malloc_stats_print.
+  * @param[in] fp, file descriptor for print.
+  * @param[in] str, string to print.
+  * @retval void
+  */
+static void binlock_print(void *fp, const char *str)
+{
+    SIGCHAIN_PRINT_ERROR("%{public}s", str);
+}
+#endif
+
 /**
   * @brief This is a callback function, which is registered to the kernel
   * @param[in] signo, the value of the signal.
@@ -180,6 +195,13 @@ static void signal_chain_handler(int signo, siginfo_t* siginfo, void* ucontext_r
                 thread_list_lock_status = a_ll(&__thread_list_lock);
 #else
                 thread_list_lock_status = __thread_list_lock;
+#endif
+#ifdef USE_JEMALLOC_DFX_INTF
+                malloc_stats_print(binlock_print, NULL, "o");
+#endif //USE_JEMALLOC_DFX_INTF
+            } else if (signo == FREEZE_SIGNAL_38) {
+#ifdef USE_JEMALLOC_DFX_INTF
+                malloc_stats_print(binlock_print, NULL, "o");
 #endif
             }
               /**
