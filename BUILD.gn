@@ -503,5 +503,5 @@ if (is_lite_system && current_os == "ohos") {
 
 config("stack_config_musl") {
   cflags = [ "-mbranch-protection=pac-ret+b-key" ]
-  cflags_c = ["-fno-stack-protector"]
+  cflags_c = [ "-fno-stack-protector" ]
 }
