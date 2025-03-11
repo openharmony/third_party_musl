@@ -500,3 +500,8 @@ if (is_lite_system && current_os == "ohos") {
     musl_use_flto = true
   }
 }
+
+config("stack_config_musl") {
+  cflags = [ "-mbranch-protection=pac-ret+b-key" ]
+  cflags_c = ["-fno-stack-protector"]
+}
