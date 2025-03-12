@@ -30,6 +30,8 @@
 #define BUFFER_SIZE 1024
 #define IGNORE_SIZE 9
 
+void set_icu_enable(bool enable);
+
 typedef struct StatefulCombined {
     unsigned sign;
     const unsigned char* to;
@@ -364,6 +366,8 @@ void test_large_string(void)
 
 int main(void)
 {
+    set_icu_enable(true);
+
     g_ins_zh_len = strlen(g_ins_zh);
 
     for (int i = 0; i < g_target_num; i++) {
