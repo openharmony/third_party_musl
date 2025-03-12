@@ -290,8 +290,8 @@ static bool deal_with_tail(const char* ins, unsigned* sign, const unsigned char*
     free(ins_tmp);
     return true;
 }
-#endif
-#endif
+
+int icu_first_init = 0;
 
 bool icu_locale_enable = false;
 
@@ -315,6 +315,9 @@ int set_icu_enable()
 	return ICU_ZERO_ERROR;
 }
 
+#endif
+#endif
+
 iconv_t iconv_open(const char *to, const char *from)
 {
     struct stateful_cd *scd;
@@ -323,9 +326,10 @@ iconv_t iconv_open(const char *to, const char *from)
 #ifdef FEATURE_ICU_LOCALE
     bool is_basic_open = false;
 
-	if (get_device_api_version_inner() >= DEVICE_VERSION_THRESHOLD)
+	if (get_device_api_version_inner() >= DEVICE_VERSION_THRESHOLD && icu_first_init == 0)
 	{
 		set_icu_enable();
+		icu_first_init++;
 	}
     for (const char* s = "iso885916\0iso2022jp\0\0"; *s;) {  // icu not support
         if (!fuzzycmp((void*)to, (void*)s) || !fuzzycmp((void*)from, (void*)s)) {
