@@ -27,7 +27,7 @@ static void *g_icuuc_handle = NULL;
 static void *g_icui18n_handle = NULL;
 hidden struct icu_opt_func g_icu_opt_func = { NULL };
 static int dlopen_fail_flag = 0;
-static int icuuc_handle_init_fail = 0;
+static int icuuc_handle_init_succeed = 0;
 
 static void *get_icu_handle(icu_so_type type, const char *symbol_name)
 {
@@ -107,8 +107,8 @@ void get_valid_icu_locale_name(const char *name, const char *icu_name, int icu_n
 
 bool icuuc_handle_init()
 {
-    if (icuuc_handle_init_fail) {
-        return false;
+    if (icuuc_handle_init_succeed) {
+        return true;
     }
 
     if (!g_icu_opt_func.set_data_directory) {
@@ -116,46 +116,40 @@ bool icuuc_handle_init()
         if (g_icu_opt_func.set_data_directory) {
             g_icu_opt_func.set_data_directory();
         } else {
-            icuuc_handle_init_fail = 1;
             return false;
         }
     }
     if (!g_icu_opt_func.ucnv_open) {
         get_icu_symbol(ICU_UC, (void **)&(g_icu_opt_func.ucnv_open), ICU_UCNV_OPEN_SYMBOL);
         if (!g_icu_opt_func.ucnv_open) {
-            icuuc_handle_init_fail = 1;
             return false;
         }
     }
     if (!g_icu_opt_func.ucnv_setToUCallBack) {
         get_icu_symbol(ICU_UC, (void **)&(g_icu_opt_func.ucnv_setToUCallBack), ICU_UCNV_SETTOUCALLBACK_SYMBOL);
         if (!g_icu_opt_func.ucnv_setToUCallBack) {
-            icuuc_handle_init_fail = 1;
             return false;
         }
     }
     if (!g_icu_opt_func.ucnv_setFromUCallBack) {
         get_icu_symbol(ICU_UC, (void **)&(g_icu_opt_func.ucnv_setFromUCallBack), ICU_UCNV_SETFROMUCALLBACK_SYMBOL);
         if (!g_icu_opt_func.ucnv_setFromUCallBack) {
-            icuuc_handle_init_fail = 1;
             return false;
         }
     }
     if (!g_icu_opt_func.ucnv_convertEx) {
         get_icu_symbol(ICU_UC, (void **)&(g_icu_opt_func.ucnv_convertEx), ICU_UCNV_CONVERTEX_SYMBOL);
         if (!g_icu_opt_func.ucnv_convertEx) {
-            icuuc_handle_init_fail = 1;
             return false;
         }
     }
     if (!g_icu_opt_func.ucnv_close) {
         get_icu_symbol(ICU_UC, (void **)&(g_icu_opt_func.ucnv_close), ICU_UCNV_CLOSE_SYMBOL);
         if (!g_icu_opt_func.ucnv_close) {
-            icuuc_handle_init_fail = 1;
             return false;
         }
     }
-
+    icuuc_handle_init_succeed = 1;
     errno = 0;
     return true;
 }

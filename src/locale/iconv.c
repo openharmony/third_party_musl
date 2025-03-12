@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <limits.h>
 #include <stdint.h>
+#include <pthread.h>
 #include "locale_impl.h"
 #ifndef __LITEOS__
 #ifdef FEATURE_ICU_LOCALE
@@ -35,6 +36,7 @@
 #ifndef __LITEOS__
 #ifdef FEATURE_ICU_LOCALE
 #define ICU_ZERO_ERROR 0
+#define ICU_SYMBOL_LOAD_ERROR 1
 #define ICU_IVALID_CHAR_ERROR 10
 #define ICU_TRUNCATED_CHAR_ERROR 11
 #define ICU_ILLEGAL_CHAR_ERROR 12
@@ -293,14 +295,19 @@ static bool deal_with_tail(const char* ins, unsigned* sign, const unsigned char*
 
 bool icu_locale_enable = false;
 
-void set_icu_enable(bool enable)
-{
-	icu_locale_enable = enable;
-}
+pthread_mutex_t icu_init_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-static bool is_icu_enable()
+int set_icu_enable()
 {
-	return icu_locale_enable;
+	pthread_mutex_lock(&icu_init_mutex);
+	if (!icuuc_handle_init()) {
+		pthread_mutex_unlock(&icu_init_mutex);
+		return ICU_SYMBOL_LOAD_ERROR;
+	}
+
+	icu_locale_enable = true;
+	pthread_mutex_unlock(&icu_init_mutex);
+	return ICU_ZERO_ERROR;
 }
 
 iconv_t iconv_open(const char *to, const char *from)
@@ -310,19 +317,16 @@ iconv_t iconv_open(const char *to, const char *from)
 #ifndef __LITEOS__
 #ifdef FEATURE_ICU_LOCALE
     bool is_basic_open = false;
-    if ((get_device_api_version_inner() < DEVICE_VERSION_THRESHOLD) && !is_icu_enable()) {
-        is_basic_open = true;
-    } else {
-        for (const char* s = "iso885916\0iso2022jp\0\0"; *s;) {  // icu not support
-            if (!fuzzycmp((void*)to, (void*)s) || !fuzzycmp((void*)from, (void*)s)) {
-                is_basic_open = true;
-            }
-            s += strlen(s) + 1;
+
+    for (const char* s = "iso885916\0iso2022jp\0\0"; *s;) {  // icu not support
+        if (!fuzzycmp((void*)to, (void*)s) || !fuzzycmp((void*)from, (void*)s)) {
+            is_basic_open = true;
         }
+        s += strlen(s) + 1;
     }
 
     // icu open
-    if (!is_basic_open && icuuc_handle_init()) {
+    if (!is_basic_open && icu_locale_enable) {
         scd = malloc(sizeof *scd);
         if (!scd) {return (iconv_t)-1;}
         scd->sign = 0;
