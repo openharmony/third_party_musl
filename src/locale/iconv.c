@@ -36,7 +36,7 @@
 #ifndef __LITEOS__
 #ifdef FEATURE_ICU_LOCALE
 #define ICU_ZERO_ERROR 0
-#define ICU_SYMBOL_LOAD_ERROR 1
+#define ICU_SYMBOL_LOAD_ERROR (-1)
 #define ICU_IVALID_CHAR_ERROR 10
 #define ICU_TRUNCATED_CHAR_ERROR 11
 #define ICU_ILLEGAL_CHAR_ERROR 12
@@ -298,11 +298,13 @@ bool icu_locale_enable = false;
 pthread_mutex_t icu_init_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 /**
-* @Description: The set_icu_enable function is used to switch the internal implementation of iconv to that of the ICU library.
+* @Description: The set_icu_enable function is used to set the internal implementation of iconv to the implementation of the ICU library.
+* The iconv internal implementation may have been set to the ICU library implementation before the function was executed. In this case,
+* the function also returns success.
 * @return:If the function call is successful, the returned value will be zero; otherwise, the returned value will be a non-zero error code.
 */
 
-int set_icu_enable()
+int set_iconv_icu_enable()
 {
 	pthread_mutex_lock(&icu_init_mutex);
 	if (!icuuc_handle_init()) {
@@ -328,7 +330,7 @@ iconv_t iconv_open(const char *to, const char *from)
 
 	if ((get_device_api_version_inner() >= DEVICE_VERSION_THRESHOLD) && (icu_first_init == 0))
 	{
-		set_icu_enable();
+		set_iconv_icu_enable();
 		icu_first_init++;
 	}
     for (const char* s = "iso885916\0iso2022jp\0\0"; *s;) {  // icu not support
