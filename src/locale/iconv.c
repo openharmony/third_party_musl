@@ -326,7 +326,7 @@ iconv_t iconv_open(const char *to, const char *from)
 #ifdef FEATURE_ICU_LOCALE
     bool is_basic_open = false;
 
-	if (get_device_api_version_inner() >= DEVICE_VERSION_THRESHOLD && icu_first_init == 0)
+	if ((get_device_api_version_inner() >= DEVICE_VERSION_THRESHOLD) && (icu_first_init == 0))
 	{
 		set_icu_enable();
 		icu_first_init++;
