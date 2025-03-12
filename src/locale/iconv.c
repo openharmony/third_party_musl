@@ -40,7 +40,7 @@
 #define ICU_ILLEGAL_CHAR_ERROR 12
 #define ICU_BUFFER_OVERFLOW_ERROR 15
 #define ICU_SKIP_THRESHOLD 2
-#define DEVICE_VERSION_THRESHOLD 18
+#define DEVICE_VERSION_THRESHOLD 20
 #define TYPE_FLAG_POS 1
 #define TO_IGNORE_FLAG_POS 2
 #define FROM_IGNORE_FLAG_POS 3
@@ -291,6 +291,18 @@ static bool deal_with_tail(const char* ins, unsigned* sign, const unsigned char*
 #endif
 #endif
 
+bool icu_locale_enable = false;
+
+void set_icu_enable(bool enable)
+{
+	icu_locale_enable = enable;
+}
+
+static bool is_icu_enable()
+{
+	return icu_locale_enable;
+}
+
 iconv_t iconv_open(const char *to, const char *from)
 {
     struct stateful_cd *scd;
@@ -298,7 +310,7 @@ iconv_t iconv_open(const char *to, const char *from)
 #ifndef __LITEOS__
 #ifdef FEATURE_ICU_LOCALE
     bool is_basic_open = false;
-    if (get_device_api_version_inner() < DEVICE_VERSION_THRESHOLD) {
+    if ((get_device_api_version_inner() < DEVICE_VERSION_THRESHOLD) && !is_icu_enable()) {
         is_basic_open = true;
     } else {
         for (const char* s = "iso885916\0iso2022jp\0\0"; *s;) {  // icu not support
