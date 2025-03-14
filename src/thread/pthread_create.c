@@ -336,7 +336,7 @@ int __pthread_create(pthread_t *restrict res, const pthread_attr_t *restrict att
 	new->robust_list.head = &new->robust_list.head;
 	new->canary = self->canary;
 	new->sysinfo = self->sysinfo;
-
+	new->gwp_asan_tls.random_state = 0xacd979ce;
 	/* Setup argument structure for the new thread on its stack.
 	 * It's safe to access from the caller only until the thread
 	 * list is unlocked. */
