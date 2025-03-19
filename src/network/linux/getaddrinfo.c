@@ -232,8 +232,8 @@ int getaddrinfo_ext(const char *restrict host, const char *restrict serv, const 
 	if (naddrs < 0) {
 		reportdnsresult(netid, (char *)host, t_cost, naddrs, NULL, param);
 #ifndef __LITEOS__
-		MUSL_LOGE("%{public}s: %{public}d: reportdnsresult: %{public}d in process %{public}d",
-			__func__, __LINE__, naddrs, getpid());
+		MUSL_LOGE("%{public}s: %{public}d: reportdnsresult: %{public}d",
+			__func__, __LINE__, naddrs);
 #endif
 		naddrs = revert_dns_fail_cause(naddrs);
 		return naddrs;

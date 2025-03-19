@@ -5608,7 +5608,7 @@ static bool load_library_header(struct loadtask *task)
 		} else {
 			task->pathname = name;
 			if (!is_accessible(namespace, task->pathname, g_is_asan, check_inherited)) {
-				LD_LOGE("Open absolute_path library: check ns accessible failed, pathname %{public}s namespace %{public}s.",
+				LD_LOGE("load absolute_path %{public}s: check ns accessible failed namespace=%{public}s.",
 						task->pathname, namespace ? namespace->ns_name : "NULL");
 				task->fd = -1;
 			} else {
@@ -5662,7 +5662,7 @@ static bool load_library_header(struct loadtask *task)
 	}
 	if (task->fd < 0) {
 		if (!check_inherited || !namespace->ns_inherits) {
-			LD_LOGE("Error loading header %{public}s, namespace %{public}s has no inherits, errno=%{public}d",
+			LD_LOGE("load %{public}s failed, namespace=%{public}s no inherits, errno=%{public}d",
 				task->name, namespace->ns_name, errno);
 			return false;
 		}
@@ -5678,8 +5678,8 @@ static bool load_library_header(struct loadtask *task)
 				return true;
 			}
 		}
-		LD_LOGE("Error loading header: can't find library %{public}s in namespace: %{public}s",
-			task->name, namespace->ns_name);
+		LD_LOGE("load %{public}s failed, namespace=%{public}s, errno=%{public}d",
+			task->name, namespace->ns_name, errno);
 		return false;
 	}
 
@@ -5803,8 +5803,8 @@ static void task_load_library(struct loadtask *task, struct reserved_address_par
 		task->name = ld_strdup("libc.so");
 		task->check_inherited = true;
 		if (!load_library_header(task)) {
-			LD_LOGE("Error loading library %{public}s: failed to load libc.so", task->name);
-			error("Error loading library %s: failed to load libc.so", task->name);
+			LD_LOGE("failed to load %{public}s: failed to load libc.so", task->name);
+			error("failed to load %s: failed to load libc.so", task->name);
 			if (runtime) {
 				longjmp(*rtld_fail, 1);
 			}
@@ -5892,7 +5892,7 @@ static void preload_direct_deps(struct dso *p, ns_t *namespace, struct loadtasks
 		if (!load_library_header(task)) {
 			free_task(task);
 			task = NULL;
-			LD_LOGE("Error loading shared library %{public}s: (needed by %{public}s)",
+			LD_LOGE("failed to load %{public}s: (needed by %{public}s)",
 				p->strings + p->dynv[i + 1],
 				p->name);
 			error("Error loading shared library %s: %m (needed by %s)",
