@@ -19,7 +19,7 @@ int __pthread_mutex_trylock_owner(pthread_mutex_t *m)
 	}
 #else
 	if (__is_mutex_destroyed(m->_m_type))
-		__handle_using_destroyed_mutex(m, __FUNCTION__);
+		__handle_using_destroyed_mutex(__FUNCTION__);
 	if (own == tid) {
 		if ((type&8) && m->_m_count<0) {
 			old &= 0x40000000;
