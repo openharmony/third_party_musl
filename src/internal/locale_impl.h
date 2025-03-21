@@ -50,19 +50,6 @@ hidden char *__gettextdomain(void);
 #define ICU_UCNV_CONVERTEX_SYMBOL  "ucnv_convertEx"
 #ifdef FEATURE_ICU_LOCALE_TMP
 #define ICU_UCHAR_ISALNUM_SYMBOL	"u_isalnum"
-#define ICU_UCHAR_ISALPHA_SYMBOL 	"u_isalpha"
-#define ICU_UCHAR_ISBLANK_SYMBOL 	"u_isblank"
-#define ICU_UCHAR_ISCNTRL_SYMBOL 	"u_iscntrl"
-#define ICU_UCHAR_ISDIGIT_SYMBOL 	"u_isdigit"
-#define ICU_UCHAR_ISGRAPH_SYMBOL 	"u_isgraph"
-#define ICU_UCHAR_ISLOWER_SYMBOL 	"u_islower"
-#define ICU_UCHAR_ISPRINT_SYMBOL 	"u_isprint"
-#define ICU_UCHAR_ISPUNCT_SYMBOL 	"u_ispunct"
-#define ICU_UCHAR_ISSPACE_SYMBOL 	"u_isspace"
-#define ICU_UCHAR_ISUPPER_SYMBOL 	"u_isupper"
-#define ICU_UCHAR_ISXDIGIT_SYMBOL 	"u_isxdigit"
-#define ICU_UCHAR_TOLOWER_SYMBOL 	"u_tolower"
-#define ICU_UCHAR_TOUPPER_SYMBOL 	"u_toupper"
 #endif
 
 typedef enum {
@@ -93,24 +80,11 @@ typedef char *(*f_icuuc_u_austrncpy)(char *, const u_char *, int32_t);
 typedef void* (*f_ucnv_open)(const char*, int*);
 typedef int32_t (*f_ucnv_setToUCallBack)(void*, void*, void*, void*, void*, int*);
 typedef int32_t (*f_ucnv_setFromUCallBack)(void*, void*, void*, void*, void*, int*);
-typedef void (*f_ucnv_convertEx)(void*, void*, char**, const char *,const char **, const char *,
+typedef void (*f_ucnv_convertEx)(void*, void*, char**, const char *, const char **, const char *,
 				u_char*, u_char **, u_char **, const u_char*, int8_t, int8_t, int*);
 typedef void (*f_ucnv_close)(void*);
 #ifdef FEATURE_ICU_LOCALE_TMP
 typedef int(*f_icu18n_u_isalnum)(int c);
-typedef int(*f_icu18n_u_isalpha)(int c);
-typedef int(*f_icu18n_u_isblank)(int c);
-typedef int(*f_icu18n_u_iscntrl)(int c);
-typedef int(*f_icu18n_u_isdigit)(int c);
-typedef int(*f_icu18n_u_isgraph)(int c);
-typedef int(*f_icu18n_u_islower)(int c);
-typedef int(*f_icu18n_u_isprint)(int c);
-typedef int(*f_icu18n_u_ispunct)(int c);
-typedef int(*f_icu18n_u_isspace)(int c);
-typedef int(*f_icu18n_u_isupper)(int c);
-typedef int(*f_icu18n_u_isxdigit)(int c);
-typedef int(*f_icu18n_u_tolower)(int c);
-typedef int(*f_icu18n_u_toupper)(int c);
 #endif
 
 struct icu_opt_func {
@@ -130,19 +104,6 @@ struct icu_opt_func {
     f_ucnv_close ucnv_close;
 #ifdef FEATURE_ICU_LOCALE_TMP
 	f_icu18n_u_isalnum u_isalnum;
-	f_icu18n_u_isalpha u_isalpha;
-	f_icu18n_u_isblank u_isblank;
-	f_icu18n_u_iscntrl u_iscntrl;
-	f_icu18n_u_isdigit u_isdigit;
-	f_icu18n_u_isgraph u_isgraph;
-	f_icu18n_u_islower u_islower;
-	f_icu18n_u_isprint u_isprint;
-	f_icu18n_u_ispunct u_ispunct;
-	f_icu18n_u_isspace u_isspace;
-	f_icu18n_u_isupper u_isupper;
-	f_icu18n_u_isxdigit u_isxdigit;
-	f_icu18n_u_tolower u_tolower;
-	f_icu18n_u_toupper u_toupper;
 #endif
 };
 extern hidden struct icu_opt_func g_icu_opt_func;
