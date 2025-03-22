@@ -30,7 +30,7 @@
 #define BUFFER_SIZE 1024
 #define IGNORE_SIZE 9
 
-int set_iconv_icu_enable();
+int set_iconv_icu_enable(void);
 
 typedef struct StatefulCombined {
     unsigned sign;
