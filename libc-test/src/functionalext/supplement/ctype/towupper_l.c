@@ -1,16 +1,23 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Copyright (c) 2025 Huawei Device Co., Ltd.
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
  */
 
 #include <stdio.h>
@@ -20,41 +27,12 @@
 #include "test.h"
 
 /**
- * @tc.name      : towlower_0100
- * @tc.desc      : Convert wide characters to lowercase via towlower
- * @tc.level     : Level 0
- */
-void towlower_0100(void)
-{
-    wint_t wt = L'\u0190';
-    wint_t result = towlower(wt);
-    unsigned int want = 603;
-    if (result != want) {
-        t_error("%s towlower get result is %d are not 603\n", __func__, result);
-    }
-}
-
-/**
- * @tc.name      : towlower_0200
- * @tc.desc      : Test that the incoming character exceeds the function limit
- * @tc.level     : Level 1
- */
-void towlower_0200(void)
-{
-    wint_t wt = 0x20000;
-    wint_t result = towlower(wt);
-    if (result != wt) {
-        t_error("%s towlower get result is %d are not 0x20000\n", __func__, result);
-    }
-}
-
-/**
- * @tc.name      : towlower_l_0100
- * @tc.desc      : Verify towlower_l process success when using the en_US.UTF-8 character set.
+ * @tc.name      : towupper_l_0100
+ * @tc.desc      : Verify towupper_l process success when using the en_US.UTF-8 character set.
  *                 Input parameters are Uppercase letters, verify conversion to Lowercase letters.
  * @tc.level     : Level 1
  */
-void towlower_l_0100(void) 
+void towupper_l_0100(void) 
 {
     locale_t m_locale = newlocale(LC_ALL_MASK, "en_US.UTF-8", NULL);
     const char *upstr = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -69,8 +47,8 @@ void towlower_l_0100(void)
     }
 
     while (up && *up != '\0' && lp && *lp != '\0') {
-        res = towlower_l(*up, m_locale);
-        if (res != *lp) {
+        res = towupper_l(*lp, m_locale);
+        if (res != *up) {
             t_error("Test case %s failed, get result is %c but want get value %c\n", __FUNCTION__, (char)res, *lp);
         }
         up++;
@@ -80,12 +58,12 @@ void towlower_l_0100(void)
 }
 
 /**
- * @tc.name      : towlower_l_0200
- * @tc.desc      : Verify towlower_l process fail when using the en_US.UTF-8 character set.
+ * @tc.name      : towupper_l_0200
+ * @tc.desc      : Verify towupper_l process fail when using the en_US.UTF-8 character set.
  *                 Input parameters as numbers, verify conversion to Lowercase letters.
  * @tc.level     : Level 1
  */
-void towlower_l_0200(void)
+void towupper_l_0200(void)
 {
     locale_t m_locale = newlocale(LC_ALL_MASK, "en_US.UTF-8", NULL);
     const char *str = "0123456789";
@@ -98,7 +76,7 @@ void towlower_l_0200(void)
     }
 
     while (p && *p != '\0') {
-        res = towlower_l(*p, m_locale);
+        res = towupper_l(*p, m_locale);
         if (res != *p) {
             t_error("Test case %s failed, result is %c but want get value %c \n", __FUNCTION__, (char)res, *p);
         }
@@ -108,12 +86,12 @@ void towlower_l_0200(void)
 }
 
 /**
- * @tc.name      : towlower_l_0300
- * @tc.desc      : Verify towlower_l process fail when using the zh_CN character set.
+ * @tc.name      : towupper_l_0300
+ * @tc.desc      : Verify towupper_l process fail when using the zh_CN character set.
  *                 Input parameters as numbers, verify conversion to Lowercase letters.
  * @tc.level     : Level 1
  */
-void towlower_l_0300(void)
+void towupper_l_0300(void)
 {
     locale_t m_locale = newlocale(LC_ALL_MASK, "zh_CN", NULL);
     const char *str = "0123456789";
@@ -126,7 +104,7 @@ void towlower_l_0300(void)
     }
 
     while (p && *p != '\0') {
-        res = towlower_l(*p, m_locale);
+        res = towupper_l(*p, m_locale);
         if (res != *p) {
             t_error("Test case %s failed, result is %c but want get value %c \n", __FUNCTION__, (char)res, *p);
         }
@@ -136,12 +114,12 @@ void towlower_l_0300(void)
 }
 
 /**
- * @tc.name      : towlower_l_0400
+ * @tc.name      : towupper_l_0400
  * @tc.desc      : Verify towlower_l process success when using the zh_CN character set.
  *                 Input parameters are Uppercase letters, verify conversion to Lowercase letters.
  * @tc.level     : Level 1
  */
-void towlower_l_0400(void) 
+void towupper_l_0400(void) 
 {
     locale_t m_locale = newlocale(LC_ALL_MASK, "zh_CN", NULL);
     const char *upstr = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -156,8 +134,8 @@ void towlower_l_0400(void)
     }
 
     while (up && *up != '\0' && lp && *lp != '\0') {
-        res = towlower_l(*up, m_locale);
-        if (res != *lp) {
+        res = towupper_l(*lp, m_locale);
+        if (res != *up) {
             t_error("Test case %s failed, get result is %c but want get value %c\n", __FUNCTION__, (char)res, *lp);
         }
         up++;
@@ -169,11 +147,9 @@ void towlower_l_0400(void)
 int main(int argc, char *argv[])
 {
     set_wctype_icu_enable();
-    towlower_0100();
-    towlower_0200();
-    towlower_l_0100();
-    towlower_l_0200();
-    towlower_l_0300();
-    towlower_l_0400();
+    towupper_l_0100();
+    towupper_l_0200();
+    towupper_l_0300();
+    towupper_l_0400();
     return t_status;
 }
