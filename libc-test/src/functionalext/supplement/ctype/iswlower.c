@@ -17,10 +17,13 @@
 #include <ctype.h>
 #include <wchar.h>
 #include <wctype.h>
+#include <locale.h>
 
 #include "functionalext.h"
 #include "test.h"
 
+const int COUNT = 2233;
+const int SIZE = 1114111;  // unicode max: 10FFFF
 /**
  * @tc.name      : iswlower_0100
  * @tc.desc      : Use the iswlower method to determine whether the incoming wide character is a lowercase letter
@@ -93,12 +96,53 @@ void iswlower_l_0200(void)
     }
 }
 
+/**
+ * @tc.name      : iswlower_l_0300
+ * @tc.desc      : Whether the characters in a wide string are non-lower character
+ * @tc.level     : Level 2
+ */
+void iswlower_l_0300(void)
+{
+    locale_t m_locale = newlocale(LC_CTYPE_MASK, "en_US.UTF-8", NULL);
+    int total = 0;
+    for (int i = 0; i < SIZE; i++) {
+        int ret = iswlower_l(i, m_locale);
+        if (ret) {
+            total++;
+        }
+    }
+    freelocale(m_locale);
+    EXPECT_EQ("iswlower_l_0300", total, COUNT);
+}
+
+/**
+ * @tc.name      : iswlower_l_0400
+ * @tc.desc      : Whether the characters in a wide string are non-lower character
+ * @tc.level     : Level 2
+ */
+void iswlower_l_0400(void)
+{
+    locale_t m_locale = newlocale(LC_CTYPE_MASK, "zh_CN", NULL);
+    int total = 0;
+    for (int i = 0; i < SIZE; i++) {
+        int ret = iswlower_l(i, m_locale);
+        if (ret) {
+            total++;
+        }
+    }
+    freelocale(m_locale);
+    EXPECT_EQ("iswlower_l_0400", total, COUNT);
+}
+
 int main(int argc, char *argv[])
 {
+    set_wctype_icu_enable();
     iswlower_0100();
     iswlower_0200();
     iswlower_0300();
     iswlower_l_0100();
     iswlower_l_0200();
+    iswlower_l_0300();
+    iswlower_l_0400();
     return t_status;
 }

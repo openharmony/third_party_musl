@@ -16,8 +16,11 @@
 #include <ctype.h>
 #include <wchar.h>
 #include <wctype.h>
+#include <locale.h>
 #include "functionalext.h"
 
+const int COUNT = 18;
+const int SIZE = 1114111;  // unicode max: 10FFFF
 /**
  * @tc.name      : iswblank_l_0100
  * @tc.desc      : Whether a character in a wide string is a blank character
@@ -46,6 +49,44 @@ void iswblank_l_0200(void)
         int ret = iswblank_l(*p, NULL);
         EXPECT_EQ("iswblank_l_0200", ret, CMPFLAG);
     }
+}
+
+/**
+ * @tc.name      : iswblank_l_0300
+ * @tc.desc      : Whether the characters in a wide string is blank characters
+ * @tc.level     : Level 1
+ */
+void iswblank_l_0300(void)
+{
+    locale_t m_locale = newlocale(LC_CTYPE_MASK, "en_US.UTF-8", NULL);
+    int total = 0;
+    for (int i = 0; i < SIZE; i++) {
+        int ret = iswblank_l(i, m_locale);
+        if (ret) {
+            total++;
+        }
+    }
+    freelocale(m_locale);
+    EXPECT_EQ("iswblank_l_0300", total, COUNT);
+}
+
+/**
+ * @tc.name      : iswblank_l_0400
+ * @tc.desc      : Whether the characters in a wide string is blank characters
+ * @tc.level     : Level 1
+ */
+void iswblank_l_0400(void)
+{
+    locale_t m_locale = newlocale(LC_CTYPE_MASK, "zh_CN", NULL);
+    int total = 0;
+    for (int i = 0; i < SIZE; i++) {
+        int ret = iswblank_l(i, m_locale);
+        if (ret) {
+            total++;
+        }
+    }
+    freelocale(m_locale);
+    EXPECT_EQ("iswblank_l_0400", total, COUNT);
 }
 
 /**
@@ -80,8 +121,11 @@ void iswblank_0200(void)
 
 int main(void)
 {
+    set_wctype_icu_enable();
     iswblank_l_0100();
     iswblank_l_0200();
+    iswblank_l_0300();
+    iswblank_l_0400();
 
     iswblank_0100();
     iswblank_0200();
