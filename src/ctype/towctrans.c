@@ -3,7 +3,7 @@
 #include <ctype.h>
 #include <dlfcn.h>
 #include <stddef.h>
-#include <string>
+#include <string.h>
 #include "locale_impl.h"
 #endif
 
