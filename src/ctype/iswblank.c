@@ -2,7 +2,7 @@
 #include <ctype.h>
 #ifndef __LITEOS__
 #ifdef FEATURE_ICU_LOCALE
-#include <string>
+#include <string.h>
 #include "locale_impl.h"
 #endif
 #endif
