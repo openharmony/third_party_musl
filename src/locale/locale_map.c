@@ -102,7 +102,7 @@ const struct __locale_map *__get_locale(int cat, const char *val)
 			new->name[n] = 0;
 			new->next = loc_head;
 			if (strcmp(val, "en_US.UTF-8") == 0) {
-				new->flag = INVALID;
+				new->flag = ICU_VALID;
 			} else {
 				new->flag = VALID;
 			}
@@ -166,11 +166,11 @@ const struct __locale_map *__get_locale(int cat, const char *val)
 				break;
 			}
 		}
-		/* Use ICU_VALID flag to indicate that other icu-related functions can use icu methods */
-		if (new->flag == ICU_VALID) {
-			/* ICU function: u_setDataDirectory, Load ICU data to memory */
-			set_icu_directory();
-		}
+	}
+    /* Use ICU_VALID flag to indicate that other icu-related functions can use icu methods */
+	if (new->flag == ICU_VALID) {
+		/* ICU function: u_setDataDirectory, Load ICU data to memory */
+		set_icu_directory();
 	}
 #endif
 
