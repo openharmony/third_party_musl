@@ -25,7 +25,7 @@ int __iswpunct_l(wint_t c, locale_t l)
 		&& l->cat[LC_CTYPE]->flag == ICU_VALID) {
 		char* type_name = (char*)(l->cat[LC_CTYPE]->name);
 		if (!strcmp(type_name, "zh_CN") || !strcmp(type_name, "en_US.UTF-8")) {
-			return g_icu_opt_func.u_isprint(c);
+			return g_icu_opt_func.u_ispunct(c);
 		}
 	}
 #endif
