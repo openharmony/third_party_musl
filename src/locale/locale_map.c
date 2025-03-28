@@ -106,7 +106,6 @@ const struct __locale_map *__get_locale(int cat, const char *val)
 			} else {
 				new->flag = VALID;
 			}
-			new->flag = VALID;
 			loc_head = new;
 		}
 	}
