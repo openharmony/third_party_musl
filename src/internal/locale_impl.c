@@ -28,6 +28,9 @@ static void *g_icui18n_handle = NULL;
 hidden struct icu_opt_func g_icu_opt_func = { NULL };
 static int dlopen_fail_flag = 0;
 static int icuuc_handle_init_succeed = 0;
+static int icuuc_wctype_handle_init_succeed = 0;
+bool icu_locale_wctype_enable = false;
+pthread_mutex_t icu_wctype_init_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 static void *get_icu_handle(icu_so_type type, const char *symbol_name)
 {
@@ -103,6 +106,112 @@ void get_valid_icu_locale_name(const char *name, const char *icu_name, int icu_n
 	if (icu_name_len > valid_len) {
 		strncpy((char *)icu_name, name, valid_len);
 	}
+}
+
+int set_wctype_icu_enable()
+{
+    pthread_mutex_lock(&icu_wctype_init_mutex);
+    if (!icuuc_wctype_handle_init()){
+        pthread_mutex_unlock(&icu_wctype_init_mutex);
+        return ICU_SYMBOL_LOAD_ERROR;
+    }
+
+    icu_locale_wctype_enable = true;
+    pthread_mutex_unlock(&icu_wctype_init_mutex);
+    return ICU_ZERO_ERROR;
+}
+
+bool icuuc_wctype_handle_init()
+{
+    if (icuuc_wctype_handle_init_succeed) {
+        return true;
+    }
+    if (!g_icu_opt_func.u_isalnum) {
+        get_icu_symbol(ICU_I18N, &g_icu_opt_func.u_isalnum, ICU_UCHAR_ISALNUM_SYMBOL);
+        if (!g_icu_opt_func.u_isalnum) {
+            return false;
+        }
+    }
+    if (!g_icu_opt_func.u_isalpha) {
+        get_icu_symbol(ICU_I18N, &g_icu_opt_func.u_isalpha, ICU_UCHAR_ISALPHA_SYMBOL);
+        if (!g_icu_opt_func.u_isalpha) {
+            return false;
+        }
+    }
+    if (!g_icu_opt_func.u_isblank) {
+        get_icu_symbol(ICU_I18N, &g_icu_opt_func.u_isblank, ICU_UCHAR_ISBLANK_SYMBOL);
+        if (!g_icu_opt_func.u_isblank) {
+            return false;
+        }
+    }
+    if (!g_icu_opt_func.u_iscntrl) {
+        get_icu_symbol(ICU_I18N, &g_icu_opt_func.u_iscntrl, ICU_UCHAR_ISCNTRL_SYMBOL);
+        if (!g_icu_opt_func.u_iscntrl) {
+            return false;
+        }
+    }
+    if (!g_icu_opt_func.u_isdigit) {
+        get_icu_symbol(ICU_I18N, &g_icu_opt_func.u_isdigit, ICU_UCHAR_ISDIGIT_SYMBOL);
+        if (!g_icu_opt_func.u_isdigit) {
+            return false;
+        }
+    }
+    if (!g_icu_opt_func.u_isgraph) {
+        get_icu_symbol(ICU_I18N, &g_icu_opt_func.u_isgraph, ICU_UCHAR_ISGRAPH_SYMBOL);
+        if (!g_icu_opt_func.u_isgraph) {
+            return false;
+        }
+    }
+    if (!g_icu_opt_func.u_islower) {
+        get_icu_symbol(ICU_I18N, &g_icu_opt_func.u_islower, ICU_UCHAR_ISLOWER_SYMBOL);
+        if (!g_icu_opt_func.u_islower) {
+            return false;
+        }
+    }
+    if (!g_icu_opt_func.u_isprint) {
+        get_icu_symbol(ICU_I18N, &g_icu_opt_func.u_isprint, ICU_UCHAR_ISPRINT_SYMBOL);
+        if (!g_icu_opt_func.u_isprint) {
+            return false;
+        }
+    }
+    if (!g_icu_opt_func.u_ispunct) {
+        get_icu_symbol(ICU_I18N, &g_icu_opt_func.u_ispunct, ICU_UCHAR_ISPUNCT_SYMBOL);
+        if (!g_icu_opt_func.u_ispunct) {
+            return false;
+        }
+    }
+    if (!g_icu_opt_func.u_isspace) {
+        get_icu_symbol(ICU_I18N, &g_icu_opt_func.u_isspace, ICU_UCHAR_ISSPACE_SYMBOL);
+        if (!g_icu_opt_func.u_isspace) {
+            return false;
+        }
+    }
+    if (!g_icu_opt_func.u_isupper) {
+        get_icu_symbol(ICU_I18N, &g_icu_opt_func.u_isupper, ICU_UCHAR_ISUPPER_SYMBOL);
+        if (!g_icu_opt_func.u_isupper) {
+            return false;
+        }
+    }
+    if (!g_icu_opt_func.u_isxdigit) {
+        get_icu_symbol(ICU_I18N, &g_icu_opt_func.u_isxdigit, ICU_UCHAR_ISXDIGIT_SYMBOL);
+        if (!g_icu_opt_func.u_isxdigit) {
+            return false;
+        }
+    }
+    if (!g_icu_opt_func.u_tolower) {
+        get_icu_symbol(ICU_UC, &g_icu_opt_func.u_tolower, ICU_UCHAR_TOLOWER_SYMBOL);
+        if (!g_icu_opt_func.u_tolower) {
+            return false;
+        }
+    }
+    if (!g_icu_opt_func.u_toupper) {
+        get_icu_symbol(ICU_UC, &g_icu_opt_func.u_toupper, ICU_UCHAR_TOUPPER_SYMBOL);
+        if (!g_icu_opt_func.u_toupper) {
+            return false;
+        }
+    }
+    icuuc_wctype_handle_init_succeed = true;
+    return true;
 }
 
 bool icuuc_handle_init()

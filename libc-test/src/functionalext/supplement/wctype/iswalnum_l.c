@@ -21,6 +21,9 @@
 const int COUNT = 62;
 const int SIZE = 128;
 
+#define ALNUM_WINT_COUNT 136784
+#define UNICODE_SIZE 1114111
+
 /**
  * @tc.name      : iswalnum_l_0100
  * @tc.desc      : Verify iswalnum_l process success. The parameter c is an English letter,
@@ -82,11 +85,52 @@ void iswalnum_l_0400(void)
     EXPECT_EQ("iswalnum_l_0400", total, COUNT);
 }
 
+/**
+ * @tc.name      : iswalnum_l_0500
+ * @tc.desc      : Verify iswalnum_l process success. Determine the number of letters and numbers in the ascii
+ *                 code table.
+ * @tc.level     : Level 1
+ */
+void iswalnum_l_0500(void)
+{
+    locale_t m_locale = newlocale(LC_ALL_MASK, "en_US.UTF-8", NULL);
+    int total = 0;
+    for (int i = 0; i < UNICODE_SIZE; i++) {
+        int ret = iswalnum_l((wchar_t)i, m_locale);
+        if (ret) {
+            total++;
+        }
+    }
+    EXPECT_EQ("iswalnum_l_0400", total, ALNUM_WINT_COUNT);
+}
+
+/**
+ * @tc.name      : iswalnum_l_0600
+ * @tc.desc      : Verify iswalnum_l process success. Determine the number of letters and numbers in the ascii
+ *                 code table.
+ * @tc.level     : Level 1
+ */
+void iswalnum_l_0600(void)
+{
+    locale_t m_locale = newlocale(LC_ALL_MASK, "zh_CN", NULL);
+    int total = 0;
+    for (int i = 0; i < UNICODE_SIZE; i++) {
+        int ret = iswalnum_l((wchar_t)i, m_locale);
+        if (ret) {
+            total++;
+        }
+    }
+    EXPECT_EQ("iswalnum_l_0400", total, ALNUM_WINT_COUNT);
+}
+
 int main(void)
 {
+    set_wctype_icu_enable();
     iswalnum_l_0100();
     iswalnum_l_0200();
     iswalnum_l_0300();
     iswalnum_l_0400();
+    iswalnum_l_0500();
+    iswalnum_l_0600();
     return t_status;
 }

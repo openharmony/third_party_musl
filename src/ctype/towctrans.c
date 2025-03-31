@@ -3,6 +3,8 @@
 #include <ctype.h>
 #include <dlfcn.h>
 #include <stddef.h>
+#include <string.h>
+#include "locale_impl.h"
 #endif
 
 static const unsigned char tab[];
@@ -107,11 +109,33 @@ wint_t towupper(wint_t wc)
 
 wint_t __towupper_l(wint_t c, locale_t l)
 {
+#ifndef __LITEOS__
+#ifdef FEATURE_ICU_LOCALE
+	if (icu_locale_wctype_enable && l && l->cat[LC_CTYPE]
+		&& l->cat[LC_CTYPE]->flag == ICU_VALID) {
+		char* type_name = (char*)(l->cat[LC_CTYPE]->name);
+		if (!strcmp(type_name, "zh_CN") || !strcmp(type_name, "en_US.UTF-8")) {
+			return g_icu_opt_func.u_toupper(c);
+		}
+	}
+#endif
+#endif
 	return towupper(c);
 }
 
 wint_t __towlower_l(wint_t c, locale_t l)
 {
+#ifndef __LITEOS__
+#ifdef FEATURE_ICU_LOCALE
+	if (icu_locale_wctype_enable && l && l->cat[LC_CTYPE]
+		&& l->cat[LC_CTYPE]->flag == ICU_VALID) {
+		char* type_name = (char*)(l->cat[LC_CTYPE]->name);
+		if (!strcmp(type_name, "zh_CN") || !strcmp(type_name, "en_US.UTF-8")) {
+			return g_icu_opt_func.u_tolower(c);
+		}
+	}
+#endif
+#endif
 	return towlower(c);
 }
 

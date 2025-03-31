@@ -17,10 +17,13 @@
 #include <stdio.h>
 #include <wchar.h>
 #include <wctype.h>
+#include <locale.h>
 
 #include "functionalext.h"
 #include "test.h"
 
+#define UPPER_WINT_COUNT 1831
+#define UNICODE_SIZE 1114111
 /**
  * @tc.name      : iswupper_0100
  * @tc.desc      : Determine whether the incoming wide character is an uppercase letter by the iswupper method
@@ -93,12 +96,53 @@ void iswupper_l_0200(void)
     }
 }
 
+/**
+ * @tc.name      : iswupper_l_0300
+ * @tc.desc      : Whether the characters in a wide string are non-upper character
+ * @tc.level     : Level 2
+ */
+void iswupper_l_0300(void)
+{
+    locale_t m_locale = newlocale(LC_CTYPE_MASK, "en_US.UTF-8", NULL);
+    int total = 0;
+    for (int i = 0; i < UNICODE_SIZE; i++) {
+        int ret = iswupper_l(i, m_locale);
+        if (ret) {
+            total++;
+        }
+    }
+    freelocale(m_locale);
+    EXPECT_EQ("iswupper_l_0300", total, UPPER_WINT_COUNT);
+}
+
+/**
+ * @tc.name      : iswupper_l_0400
+ * @tc.desc      : Whether the characters in a wide string are non-upper character
+ * @tc.level     : Level 2
+ */
+void iswupper_l_0400(void)
+{
+    locale_t m_locale = newlocale(LC_CTYPE_MASK, "zh_CN", NULL);
+    int total = 0;
+    for (int i = 0; i < UNICODE_SIZE; i++) {
+        int ret = iswupper_l(i, m_locale);
+        if (ret) {
+            total++;
+        }
+    }
+    freelocale(m_locale);
+    EXPECT_EQ("iswupper_l_0400", total, UPPER_WINT_COUNT);
+}
+
 int main(int argc, char *argv[])
 {
+    set_wctype_icu_enable();
     iswupper_0100();
     iswupper_0200();
     iswupper_0300();
     iswupper_l_0100();
     iswupper_l_0200();
+    iswupper_l_0300();
+    iswupper_l_0400();
     return t_status;
 }

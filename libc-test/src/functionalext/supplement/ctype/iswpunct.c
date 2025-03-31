@@ -17,10 +17,13 @@
 #include <stdio.h>
 #include <wchar.h>
 #include <wctype.h>
+#include <locale.h>
 
 #include "functionalext.h"
 #include "test.h"
 
+#define PUNCT_WINT_COUNT 842
+#define UNICODE_SIZE 1114111
 /**
  * @tc.name      : iswpunct_0100
  * @tc.desc      : Use the iswpunct method to determine whether the incoming wide character is a punctuation mark
@@ -79,11 +82,52 @@ void iswpunct_l_0200(void)
     }
 }
 
+/**
+ * @tc.name      : iswpunct_l_0300
+ * @tc.desc      : Whether the characters in a wide string are non-punctuation marks
+ * @tc.level     : Level 2
+ */
+void iswpunct_l_0300(void)
+{
+    locale_t m_locale = newlocale(LC_CTYPE_MASK, "en_US.UTF-8", NULL);
+    int total = 0;
+    for (int i = 0; i < UNICODE_SIZE; i++) {
+        int ret = iswpunct_l(i, m_locale);
+        if (ret) {
+            total++;
+        }
+    }
+    freelocale(m_locale);
+    EXPECT_EQ("iswpunct_l_0300", total, PUNCT_WINT_COUNT);
+}
+
+/**
+ * @tc.name      : iswpunct_l_0400
+ * @tc.desc      : Whether the characters in a wide string are non-punctuation marks
+ * @tc.level     : Level 2
+ */
+void iswpunct_l_0400(void)
+{
+    locale_t m_locale = newlocale(LC_CTYPE_MASK, "zh_CN", NULL);
+    int total = 0;
+    for (int i = 0; i < UNICODE_SIZE; i++) {
+        int ret = iswpunct_l(i, m_locale);
+        if (ret) {
+            total++;
+        }
+    }
+    freelocale(m_locale);
+    EXPECT_EQ("iswpunct_l_0400", total, PUNCT_WINT_COUNT);
+}
+
 int main(int argc, char *argv[])
 {
+    set_wctype_icu_enable();
     iswpunct_0100();
     iswpunct_0200();
     iswpunct_l_0100();
     iswpunct_l_0200();
+    iswpunct_l_0300();
+    iswpunct_l_0400();
     return t_status;
 }

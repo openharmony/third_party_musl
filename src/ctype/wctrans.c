@@ -22,7 +22,9 @@ wctrans_t __wctrans_l(const char *s, locale_t l)
 
 wint_t __towctrans_l(wint_t c, wctrans_t t, locale_t l)
 {
-	return towctrans(c, t);
+	if (t == (wctrans_t)1) return towupper_l(c, l);
+	if (t == (wctrans_t)2) return towlower_l(c, l);
+	return c;
 }
 
 weak_alias(__wctrans_l, wctrans_l);
