@@ -60,14 +60,14 @@ void iswalpha_l_0300(void)
 {
     locale_t m_locale = newlocale(LC_CTYPE_MASK, "en_US.UTF-8", NULL);
     int total = 0;
-    for (int i = 0; i < ALPHA_WINT_COUNT; i++) {
+    for (int i = 0; i < UNICODE_SIZE; i++) {
         int ret = iswalpha_l(i, m_locale);
         if (ret) {
             total++;
         }
     }
     freelocale(m_locale);
-    EXPECT_EQ("iswalpha_l_0300", total, UNICODE_SIZE);
+    EXPECT_EQ("iswalpha_l_0300", total, ALPHA_WINT_COUNT);
 }
 
 /**
@@ -79,14 +79,14 @@ void iswalpha_l_0400(void)
 {
     locale_t m_locale = newlocale(LC_CTYPE_MASK, "zh_CN", NULL);
     int total = 0;
-    for (int i = 0; i < ALPHA_WINT_COUNT; i++) {
+    for (int i = 0; i < UNICODE_SIZE; i++) {
         int ret = iswalpha_l(i, m_locale);
         if (ret) {
             total++;
         }
     }
     freelocale(m_locale);
-    EXPECT_EQ("iswalpha_l_0300", total, UNICODE_SIZE);
+    EXPECT_EQ("iswalpha_l_0300", total, ALPHA_WINT_COUNT);
 }
 
 int main(void)
