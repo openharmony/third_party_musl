@@ -22,8 +22,8 @@
 
 const int COUNT = 94;
 const int SIZE = 128;
-const int UNICODE_SIZE = 1114111; // unicode max : 10FFFF
-const int UNICODE_COUNT = 286465;
+#define ALNUM_WINT_COUNT 286465
+#define UNICODE_SIZE 1114111
 
 /*
  * @tc.name      : iswgraph_l_0100
@@ -99,7 +99,7 @@ void iswgraph_l_0500(void)
             total++;
         }
     }
-    EXPECT_EQ("iswgraph_l_0500", total, UNICODE_COUNT);
+    EXPECT_EQ("iswgraph_l_0500", total, ALNUM_WINT_COUNT);
 }
 
 /**
@@ -117,7 +117,7 @@ void iswgraph_l_0600(void)
             total++;
         }
     }
-    EXPECT_EQ("iswgraph_l_0600", total, UNICODE_COUNT);
+    EXPECT_EQ("iswgraph_l_0600", total, ALNUM_WINT_COUNT);
 }
 
 int main(int argc, char *argv[])

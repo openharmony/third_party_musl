@@ -21,8 +21,8 @@
 const int COUNT = 62;
 const int SIZE = 128;
 
-const int UNICODE_SIZE = 1114111; // unicode max : 10FFFF
-const int UNICODE_COUNT = 136784;
+#define ALNUM_WINT_COUNT 136784
+#define UNICODE_SIZE 1114111
 
 /**
  * @tc.name      : iswalnum_l_0100
@@ -101,7 +101,7 @@ void iswalnum_l_0500(void)
             total++;
         }
     }
-    EXPECT_EQ("iswalnum_l_0400", total, UNICODE_COUNT);
+    EXPECT_EQ("iswalnum_l_0400", total, ALNUM_WINT_COUNT);
 }
 
 /**
@@ -120,7 +120,7 @@ void iswalnum_l_0600(void)
             total++;
         }
     }
-    EXPECT_EQ("iswalnum_l_0400", total, UNICODE_COUNT);
+    EXPECT_EQ("iswalnum_l_0400", total, ALNUM_WINT_COUNT);
 }
 
 int main(void)
