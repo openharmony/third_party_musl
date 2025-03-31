@@ -17,10 +17,13 @@
 #include <ctype.h>
 #include <wchar.h>
 #include <wctype.h>
+#include <locale.h>
 
 #include "functionalext.h"
 #include "test.h"
 
+#define PRINT_WINT_COUNT 149016
+#define UNICODE_SIZE 1114111
 /**
  * @tc.name      : iswprint_0100
  * @tc.desc      : Determine whether the incoming wide character can be printed by the iswprint method
@@ -79,11 +82,52 @@ void iswprint_l_0200(void)
     }
 }
 
+/**
+ * @tc.name      : iswprint_l_0300
+ * @tc.desc      : Whether the characters in a wide string are non-printable characters
+ * @tc.level     : Level 2
+ */
+void iswprint_l_0300(void)
+{
+    locale_t m_locale = newlocale(LC_CTYPE_MASK, "en_US.UTF-8", NULL);
+    int total = 0;
+    for (int i = 0; i < UNICODE_SIZE; i++) {
+        int ret = iswprint_l(i, m_locale);
+        if (ret) {
+            total++;
+        }
+    }
+    freelocale(m_locale);
+    EXPECT_EQ("iswprint_l_0300", total, PRINT_WINT_COUNT);
+}
+
+/**
+ * @tc.name      : iswprint_l_0400
+ * @tc.desc      : Whether the characters in a wide string are non-printable characters
+ * @tc.level     : Level 2
+ */
+void iswprint_l_0400(void)
+{
+    locale_t m_locale = newlocale(LC_CTYPE_MASK, "zh_CN", NULL);
+    int total = 0;
+    for (int i = 0; i < UNICODE_SIZE; i++) {
+        int ret = iswprint_l(i, m_locale);
+        if (ret) {
+            total++;
+        }
+    }
+    freelocale(m_locale);
+    EXPECT_EQ("iswprint_l_0400", total, PRINT_WINT_COUNT);
+}
+
 int main(int argc, char *argv[])
 {
+    set_wctype_icu_enable();
     iswprint_0100();
     iswprint_0200();
     iswprint_l_0100();
     iswprint_l_0200();
+    iswprint_l_0300();
+    iswprint_l_0400();
     return t_status;
 }

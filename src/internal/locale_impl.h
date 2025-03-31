@@ -48,7 +48,6 @@ hidden char *__gettextdomain(void);
 #define ICU_UCNV_SETFROMUCALLBACK_SYMBOL  "ucnv_setFromUCallBack"
 #define ICU_UCNV_CLOSE_SYMBOL  "ucnv_close"
 #define ICU_UCNV_CONVERTEX_SYMBOL  "ucnv_convertEx"
-#ifdef FEATURE_ICU_LOCALE_TMP
 #define ICU_UCHAR_ISALNUM_SYMBOL	"u_isalnum"
 #define ICU_UCHAR_ISALPHA_SYMBOL 	"u_isalpha"
 #define ICU_UCHAR_ISBLANK_SYMBOL 	"u_isblank"
@@ -63,7 +62,6 @@ hidden char *__gettextdomain(void);
 #define ICU_UCHAR_ISXDIGIT_SYMBOL 	"u_isxdigit"
 #define ICU_UCHAR_TOLOWER_SYMBOL 	"u_tolower"
 #define ICU_UCHAR_TOUPPER_SYMBOL 	"u_toupper"
-#endif
 
 typedef enum {
 	ICU_UC = 0,
@@ -73,6 +71,7 @@ typedef enum {
 #define MAX_VALID_ICU_NAME_LEN 8
 typedef uint16_t u_char;
 
+extern hidden bool icu_locale_wctype_enable;
 hidden void set_icu_directory();
 hidden void get_icu_symbol(icu_so_type type, void **icu_symbol_handle, const char *symbol_name);
 hidden void get_valid_icu_locale_name(const char *name, const char *icu_name, int icu_name_len);
@@ -80,6 +79,7 @@ hidden void *icu_unum_open(char *icu_locale_name, int *cur_status);
 hidden void icu_unum_close(void *fmt);
 hidden double icu_parse_double(void *fmt, u_char *ustr, int32_t *parse_pos, int *cur_status);
 hidden bool icuuc_handle_init();
+hidden bool icuuc_wctype_handle_init();
 
 typedef char *(*f_icuuc_get_icu_version)(void);
 typedef void (*f_icuuc_u_set_data_directory)(void);
@@ -96,7 +96,6 @@ typedef int32_t (*f_ucnv_setFromUCallBack)(void*, void*, void*, void*, void*, in
 typedef void (*f_ucnv_convertEx)(void*, void*, char**, const char *,const char **, const char *,
 				u_char*, u_char **, u_char **, const u_char*, int8_t, int8_t, int*);
 typedef void (*f_ucnv_close)(void*);
-#ifdef FEATURE_ICU_LOCALE_TMP
 typedef int(*f_icu18n_u_isalnum)(int c);
 typedef int(*f_icu18n_u_isalpha)(int c);
 typedef int(*f_icu18n_u_isblank)(int c);
@@ -111,7 +110,6 @@ typedef int(*f_icu18n_u_isupper)(int c);
 typedef int(*f_icu18n_u_isxdigit)(int c);
 typedef int(*f_icu18n_u_tolower)(int c);
 typedef int(*f_icu18n_u_toupper)(int c);
-#endif
 
 struct icu_opt_func {
 	f_icuuc_get_icu_version get_icu_version;
@@ -128,7 +126,6 @@ struct icu_opt_func {
     f_ucnv_setFromUCallBack ucnv_setFromUCallBack;
 	f_ucnv_convertEx ucnv_convertEx;
     f_ucnv_close ucnv_close;
-#ifdef FEATURE_ICU_LOCALE_TMP
 	f_icu18n_u_isalnum u_isalnum;
 	f_icu18n_u_isalpha u_isalpha;
 	f_icu18n_u_isblank u_isblank;
@@ -143,13 +140,14 @@ struct icu_opt_func {
 	f_icu18n_u_isxdigit u_isxdigit;
 	f_icu18n_u_tolower u_tolower;
 	f_icu18n_u_toupper u_toupper;
-#endif
 };
 extern hidden struct icu_opt_func g_icu_opt_func;
 
 #define DLSYM_ICU_SUCC 0
 #define DLSYM_ICU_FAIL 1
 #define ICU_ERROR (-1)
+#define ICU_ZERO_ERROR 0
+#define ICU_SYMBOL_LOAD_ERROR (-1)
 #endif
 
 #define LOC_MAP_FAILED ((const struct __locale_map *)-1)

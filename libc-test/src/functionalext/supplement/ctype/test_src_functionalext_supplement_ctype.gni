@@ -24,6 +24,7 @@ functionalext_supplement_ctype_test = [
   "iswprint",
   "toascii",
   "towlower",
+  "towupper_l",
   "iswpunct",
   "iswspace",
   "iswupper",

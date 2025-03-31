@@ -22,6 +22,8 @@
 
 const int COUNT = 94;
 const int SIZE = 128;
+#define ALNUM_WINT_COUNT 286465
+#define UNICODE_SIZE 1114111
 
 /*
  * @tc.name      : iswgraph_l_0100
@@ -82,11 +84,50 @@ void iswgraph_l_0400(void)
     EXPECT_EQ("iswgraph_l_0400", total, COUNT);
 }
 
+/**
+ * @tc.name      : iswgraph_l_0500
+ * @tc.desc      : Verify iswgraph_l process success. Determine the number of control characters in the ascii code table.
+ * @tc.level     : Level 1
+ */
+void iswgraph_l_0500(void)
+{
+    locale_t m_locale = newlocale(LC_ALL_MASK, "en_US.UTF-8", NULL);
+    int total = 0;
+    for (int i = 0; i < UNICODE_SIZE; i++) {
+        int ret = iswgraph_l((wchar_t)i, m_locale);
+        if (ret) {
+            total++;
+        }
+    }
+    EXPECT_EQ("iswgraph_l_0500", total, ALNUM_WINT_COUNT);
+}
+
+/**
+ * @tc.name      : iswgraph_l_0600
+ * @tc.desc      : Verify iswgraph_l process success. Determine the number of control characters in the ascii code table.
+ * @tc.level     : Level 1
+ */
+void iswgraph_l_0600(void)
+{
+    locale_t m_locale = newlocale(LC_ALL_MASK, "zh_CN", NULL);
+    int total = 0;
+    for (int i = 0; i < UNICODE_SIZE; i++) {
+        int ret = iswgraph_l((wchar_t)i, m_locale);
+        if (ret) {
+            total++;
+        }
+    }
+    EXPECT_EQ("iswgraph_l_0600", total, ALNUM_WINT_COUNT);
+}
+
 int main(int argc, char *argv[])
 {
+    set_wctype_icu_enable();
     iswgraph_l_0100();
     iswgraph_l_0200();
     iswgraph_l_0300();
     iswgraph_l_0400();
+    iswgraph_l_0500();
+    iswgraph_l_0600();
     return t_status;
 }

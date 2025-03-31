@@ -16,8 +16,11 @@
 #include <ctype.h>
 #include <wchar.h>
 #include <wctype.h>
+#include <locale.h>
 #include "functionalext.h"
 
+#define ALPHA_WINT_COUNT 136104
+#define UNICODE_SIZE 1114111
 /**
  * @tc.name      : iswalpha_l_0100
  * @tc.desc      : Whether the characters in a wide string are letters
@@ -48,9 +51,50 @@ void iswalpha_l_0200(void)
     }
 }
 
+/**
+ * @tc.name      : iswalpha_l_0300
+ * @tc.desc      : Whether a character in a wide string is not a letter
+ * @tc.level     : Level 1
+ */
+void iswalpha_l_0300(void)
+{
+    locale_t m_locale = newlocale(LC_CTYPE_MASK, "en_US.UTF-8", NULL);
+    int total = 0;
+    for (int i = 0; i < UNICODE_SIZE; i++) {
+        int ret = iswalpha_l(i, m_locale);
+        if (ret) {
+            total++;
+        }
+    }
+    freelocale(m_locale);
+    EXPECT_EQ("iswalpha_l_0300", total, ALPHA_WINT_COUNT);
+}
+
+/**
+ * @tc.name      : iswalpha_l_0400
+ * @tc.desc      : Whether a character in a wide string is not a letter
+ * @tc.level     : Level 1
+ */
+void iswalpha_l_0400(void)
+{
+    locale_t m_locale = newlocale(LC_CTYPE_MASK, "zh_CN", NULL);
+    int total = 0;
+    for (int i = 0; i < UNICODE_SIZE; i++) {
+        int ret = iswalpha_l(i, m_locale);
+        if (ret) {
+            total++;
+        }
+    }
+    freelocale(m_locale);
+    EXPECT_EQ("iswalpha_l_0300", total, ALPHA_WINT_COUNT);
+}
+
 int main(void)
 {
+    set_wctype_icu_enable();
     iswalpha_l_0100();
     iswalpha_l_0200();
+    iswalpha_l_0300();
+    iswalpha_l_0400();
     return t_status;
 }

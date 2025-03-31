@@ -63,7 +63,33 @@ wctype_t wctype(const char *s)
 
 int __iswctype_l(wint_t c, wctype_t t, locale_t l)
 {
-	return iswctype(c, t);
+	switch (t) {
+	case WCTYPE_ALNUM:
+		return iswalnum_l(c, l);
+	case WCTYPE_ALPHA:
+		return iswalpha_l(c, l);
+	case WCTYPE_BLANK:
+		return iswblank_l(c, l);
+	case WCTYPE_CNTRL:
+		return iswcntrl_l(c, l);
+	case WCTYPE_DIGIT:
+		return iswdigit_l(c, l);
+	case WCTYPE_GRAPH:
+		return iswgraph_l(c, l);
+	case WCTYPE_LOWER:
+		return iswlower_l(c, l);
+	case WCTYPE_PRINT:
+		return iswprint_l(c, l);
+	case WCTYPE_PUNCT:
+		return iswpunct_l(c, l);
+	case WCTYPE_SPACE:
+		return iswspace_l(c, l);
+	case WCTYPE_UPPER:
+		return iswupper_l(c, l);
+	case WCTYPE_XDIGIT:
+		return iswxdigit_l(c, l);
+	}
+	return 0;
 }
 
 wctype_t __wctype_l(const char *s, locale_t l)
