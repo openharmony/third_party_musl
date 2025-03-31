@@ -22,8 +22,8 @@
 #include "functionalext.h"
 #include "test.h"
 
-const int COUNT = 680;
-const int SIZE = 1114111;  // unicode max: 10FFFF
+#define DIGIT_WINT_COUNT 680
+#define UNICODE_SIZE 1114111
 /**
  * @tc.name      : iswdigit_0100
  * @tc.desc      : Use the iswdigit function to determine whether the incoming wide character is a decimal number
@@ -91,14 +91,14 @@ void iswdigit_l_0300(void)
 {
     locale_t m_locale = newlocale(LC_CTYPE_MASK, "en_US.UTF-8", NULL);
     int total = 0;
-    for (int i = 0; i < SIZE; i++) {
+    for (int i = 0; i < UNICODE_SIZE; i++) {
         int ret = iswdigit_l(i, m_locale);
         if (ret) {
             total++;
         }
     }
     freelocale(m_locale);
-    EXPECT_EQ("iswdigit_l_0300", total, COUNT);
+    EXPECT_EQ("iswdigit_l_0300", total, DIGIT_WINT_COUNT);
 }
 
 /**
@@ -110,14 +110,14 @@ void iswdigit_l_0400(void)
 {
     locale_t m_locale = newlocale(LC_CTYPE_MASK, "zh_CN", NULL);
     int total = 0;
-    for (int i = 0; i < SIZE; i++) {
+    for (int i = 0; i < UNICODE_SIZE; i++) {
         int ret = iswdigit_l(i, m_locale);
         if (ret) {
             total++;
         }
     }
     freelocale(m_locale);
-    EXPECT_EQ("iswdigit_l_0400", total, COUNT);
+    EXPECT_EQ("iswdigit_l_0400", total, DIGIT_WINT_COUNT);
 }
 
 int main(int argc, char *argv[])

@@ -22,8 +22,8 @@
 #include "functionalext.h"
 #include "test.h"
 
-const int COUNT = 29;
-const int SIZE = 1114111;  // unicode max: 10FFFF
+#define SPACE_WINT_COUNT 29
+#define UNICODE_SIZE 1114111
 /**
  * @tc.name      : iswspace_0100
  * @tc.desc      : Use the iswspace method to determine whether the incoming wide character is a blank symbol
@@ -91,14 +91,14 @@ void iswspace_l_0300(void)
 {
     locale_t m_locale = newlocale(LC_CTYPE_MASK, "en_US.UTF-8", NULL);
     int total = 0;
-    for (int i = 0; i < SIZE; i++) {
+    for (int i = 0; i < UNICODE_SIZE; i++) {
         int ret = iswspace_l(i, m_locale);
         if (ret) {
             total++;
         }
     }
     freelocale(m_locale);
-    EXPECT_EQ("iswspace_l_0300", total, COUNT);
+    EXPECT_EQ("iswspace_l_0300", total, SPACE_WINT_COUNT);
 }
 
 /**
@@ -110,14 +110,14 @@ void iswspace_l_0400(void)
 {
     locale_t m_locale = newlocale(LC_CTYPE_MASK, "zh_CN", NULL);
     int total = 0;
-    for (int i = 0; i < SIZE; i++) {
+    for (int i = 0; i < UNICODE_SIZE; i++) {
         int ret = iswspace_l(i, m_locale);
         if (ret) {
             total++;
         }
     }
     freelocale(m_locale);
-    EXPECT_EQ("iswspace_l_0400", total, COUNT);
+    EXPECT_EQ("iswspace_l_0400", total, SPACE_WINT_COUNT);
 }
 
 int main(int argc, char *argv[])

@@ -22,8 +22,8 @@
 #include "functionalext.h"
 #include "test.h"
 
-const int COUNT = 842;
-const int SIZE = 1114111;  // unicode max: 10FFFF
+#define PUNCT_WINT_COUNT 842
+#define UNICODE_SIZE 1114111
 /**
  * @tc.name      : iswpunct_0100
  * @tc.desc      : Use the iswpunct method to determine whether the incoming wide character is a punctuation mark
@@ -91,14 +91,14 @@ void iswpunct_l_0300(void)
 {
     locale_t m_locale = newlocale(LC_CTYPE_MASK, "en_US.UTF-8", NULL);
     int total = 0;
-    for (int i = 0; i < SIZE; i++) {
+    for (int i = 0; i < UNICODE_SIZE; i++) {
         int ret = iswpunct_l(i, m_locale);
         if (ret) {
             total++;
         }
     }
     freelocale(m_locale);
-    EXPECT_EQ("iswpunct_l_0300", total, COUNT);
+    EXPECT_EQ("iswpunct_l_0300", total, PUNCT_WINT_COUNT);
 }
 
 /**
@@ -110,14 +110,14 @@ void iswpunct_l_0400(void)
 {
     locale_t m_locale = newlocale(LC_CTYPE_MASK, "zh_CN", NULL);
     int total = 0;
-    for (int i = 0; i < SIZE; i++) {
+    for (int i = 0; i < UNICODE_SIZE; i++) {
         int ret = iswpunct_l(i, m_locale);
         if (ret) {
             total++;
         }
     }
     freelocale(m_locale);
-    EXPECT_EQ("iswpunct_l_0400", total, COUNT);
+    EXPECT_EQ("iswpunct_l_0400", total, PUNCT_WINT_COUNT);
 }
 
 int main(int argc, char *argv[])

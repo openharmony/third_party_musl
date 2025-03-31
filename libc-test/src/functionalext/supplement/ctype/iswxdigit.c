@@ -19,8 +19,8 @@
 #include <wctype.h>
 #include <locale.h>
 
-const int COUNT = 704;
-const int SIZE = 1114111;  // unicode max: 10FFFF
+#define XDIGIT_WINT_COUNT 704
+#define UNICODE_SIZE 1114111
 
 #include "functionalext.h"
 #include "test.h"
@@ -106,14 +106,14 @@ void iswxdigit_l_0300(void)
 {
     locale_t m_locale = newlocale(LC_CTYPE_MASK, "en_US.UTF-8", NULL);
     int total = 0;
-    for (int i = 0; i < SIZE; i++) {
+    for (int i = 0; i < UNICODE_SIZE; i++) {
         int ret = iswxdigit_l(i, m_locale);
         if (ret) {
             total++;
         }
     }
     freelocale(m_locale);
-    EXPECT_EQ("iswxdigit_l_0300", total, COUNT);
+    EXPECT_EQ("iswxdigit_l_0300", total, XDIGIT_WINT_COUNT);
 }
 
 /**
@@ -125,14 +125,14 @@ void iswxdigit_l_0400(void)
 {
     locale_t m_locale = newlocale(LC_CTYPE_MASK, "zh_CN", NULL);
     int total = 0;
-    for (int i = 0; i < SIZE; i++) {
+    for (int i = 0; i < UNICODE_SIZE; i++) {
         int ret = iswxdigit_l(i, m_locale);
         if (ret) {
             total++;
         }
     }
     freelocale(m_locale);
-    EXPECT_EQ("iswxdigit_l_0400", total, COUNT);
+    EXPECT_EQ("iswxdigit_l_0400", total, XDIGIT_WINT_COUNT);
 }
 
 int main(int argc, char *argv[])
