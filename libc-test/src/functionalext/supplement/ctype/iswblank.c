@@ -19,8 +19,9 @@
 #include <locale.h>
 #include "functionalext.h"
 
-const int COUNT = 18;
-const int SIZE = 1114111;  // unicode max: 10FFFF
+#define BLANK_WINT_COUNT 18
+#define UNICODE_SIZE 1114111
+
 /**
  * @tc.name      : iswblank_l_0100
  * @tc.desc      : Whether a character in a wide string is a blank character
@@ -60,14 +61,14 @@ void iswblank_l_0300(void)
 {
     locale_t m_locale = newlocale(LC_CTYPE_MASK, "en_US.UTF-8", NULL);
     int total = 0;
-    for (int i = 0; i < SIZE; i++) {
+    for (int i = 0; i < UNICODE_SIZE; i++) {
         int ret = iswblank_l(i, m_locale);
         if (ret) {
             total++;
         }
     }
     freelocale(m_locale);
-    EXPECT_EQ("iswblank_l_0300", total, COUNT);
+    EXPECT_EQ("iswblank_l_0300", total, BLANK_WINT_COUNT);
 }
 
 /**
@@ -79,14 +80,14 @@ void iswblank_l_0400(void)
 {
     locale_t m_locale = newlocale(LC_CTYPE_MASK, "zh_CN", NULL);
     int total = 0;
-    for (int i = 0; i < SIZE; i++) {
+    for (int i = 0; i < UNICODE_SIZE; i++) {
         int ret = iswblank_l(i, m_locale);
         if (ret) {
             total++;
         }
     }
     freelocale(m_locale);
-    EXPECT_EQ("iswblank_l_0400", total, COUNT);
+    EXPECT_EQ("iswblank_l_0400", total, BLANK_WINT_COUNT);
 }
 
 /**

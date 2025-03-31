@@ -22,8 +22,8 @@
 #include "functionalext.h"
 #include "test.h"
 
-const int COUNT = 149016;
-const int SIZE = 1114111;  // unicode max: 10FFFF
+#define PRINT_WINT_COUNT 149016
+#define UNICODE_SIZE 1114111
 /**
  * @tc.name      : iswprint_0100
  * @tc.desc      : Determine whether the incoming wide character can be printed by the iswprint method
@@ -91,14 +91,14 @@ void iswprint_l_0300(void)
 {
     locale_t m_locale = newlocale(LC_CTYPE_MASK, "en_US.UTF-8", NULL);
     int total = 0;
-    for (int i = 0; i < SIZE; i++) {
+    for (int i = 0; i < UNICODE_SIZE; i++) {
         int ret = iswprint_l(i, m_locale);
         if (ret) {
             total++;
         }
     }
     freelocale(m_locale);
-    EXPECT_EQ("iswprint_l_0300", total, COUNT);
+    EXPECT_EQ("iswprint_l_0300", total, PRINT_WINT_COUNT);
 }
 
 /**
@@ -110,14 +110,14 @@ void iswprint_l_0400(void)
 {
     locale_t m_locale = newlocale(LC_CTYPE_MASK, "zh_CN", NULL);
     int total = 0;
-    for (int i = 0; i < SIZE; i++) {
+    for (int i = 0; i < UNICODE_SIZE; i++) {
         int ret = iswprint_l(i, m_locale);
         if (ret) {
             total++;
         }
     }
     freelocale(m_locale);
-    EXPECT_EQ("iswprint_l_0400", total, COUNT);
+    EXPECT_EQ("iswprint_l_0400", total, PRINT_WINT_COUNT);
 }
 
 int main(int argc, char *argv[])
