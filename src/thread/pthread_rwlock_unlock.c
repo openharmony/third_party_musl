@@ -1,5 +1,14 @@
 #include "pthread_impl.h"
 
+// Set a rw lock to init status: PTHREAD_RWLOCK_INITIALIZER
+void __pthread__rwlock_unlock_inner(pthread_rwlock_t *m)
+{
+	char *p = (char *)m;
+	for (size_t i = 0;i < sizeof(pthread_rwlock_t);i++) {
+		*(p + i) = 0;
+	}
+}
+
 int __pthread_rwlock_unlock(pthread_rwlock_t *rw)
 {
 	int val, cnt, waiters, new, priv = rw->_rw_shared^128;
