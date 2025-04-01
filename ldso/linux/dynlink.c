@@ -102,6 +102,9 @@ static void (*error)(const char *, ...) = error_noop;
 #define PARENTS_BASE_CAPACITY 8
 #define RELOC_CAN_SEARCH_DSO_BASE_CAPACITY 32
 #define ANON_NAME_MAX_LEN 70
+#define NOTIFY_BASE_CAPACITY 8
+#define SEC_CHECK_HAS_ENCAPS 0x1
+#define HM_PR_CHECK_ENCAPS 0x6a6975
 
 #define KPMD_SIZE (1UL << 21)
 #define HUGEPAGES_SUPPORTED_STR_SIZE (32)
@@ -164,6 +167,10 @@ static int noload;
 static int shutting_down;
 static jmp_buf *rtld_fail;
 static pthread_rwlock_t lock;
+static pthread_rwlock_t notifier_lock = PTHREAD_RWLOCK_INITIALIZER;
+static notify_call *notify_list = NULL;
+static size_t notify_cnt = 0;
+static size_t notify_capacity = 0;
 static pthread_mutex_t dlclose_lock = {{{ PTHREAD_MUTEX_RECURSIVE }}}; // set mutex type to PTHREAD_MUTEX_RECURSIVE
 static struct debug debug;
 static struct tls_module *tls_tail;
@@ -519,6 +526,124 @@ static void (*fdbarrier(void *p))()
 #define laddr_pg(p, v) laddr(p, v)
 #define fpaddr(p, v) ((void (*)())laddr(p, v))
 #endif
+
+struct notify_dso *create_notify_dso_list(void)
+{
+	struct notify_dso *list = malloc(sizeof(struct notify_dso));
+	if (list) {
+		list->dso_list = NULL;
+		list->capacity = 0;
+		list->length = 0;
+		return list;
+	}
+	return NULL;
+}
+
+void free_notify_dso_list(struct notify_dso *list)
+{
+	if (list) {
+		if (list->dso_list) {
+			free(list->dso_list);
+			list->dso_list = NULL;
+		}
+		list->capacity = 0;
+		list->length = 0;
+		free(list);
+	}
+}
+
+void append_notify_dso(struct notify_dso *list, struct dso *p)
+{
+	if (list->length >= list->capacity) {
+		struct dso **realloced =
+			(struct dso **)realloc(list->dso_list, sizeof(struct dso *) * (list->capacity + NOTIFY_BASE_CAPACITY));
+		if (!realloced) {
+			LD_LOGE("realloc failed for append notify for so %{public}s, errno %{public}d", p->name, errno);
+			return;
+		}
+		list->dso_list = realloced;
+		list->capacity += NOTIFY_BASE_CAPACITY;
+	}
+	list->dso_list[list->length++] = p;
+}
+
+void iterate_notify_dso(struct notify_dso *list, notify_call callback)
+{
+	struct dso *p = NULL;
+	for (size_t index = 0; index < list->length; index++) {
+		p = list->dso_list[index];
+		callback(p->map, p->map_len, p->name);
+	}
+}
+
+static void add_notify_callback(notify_call callback)
+{
+	if (notify_cnt >= notify_capacity) {
+		notify_call *realloced =
+			(notify_call *)realloc(notify_list, sizeof(notify_call) * (notify_capacity + NOTIFY_BASE_CAPACITY));
+		if (!realloced) {
+			LD_LOGE("realloc failed for append notify callback, errno %{public}d", errno);
+			return;
+		}
+		notify_list = realloced;
+		notify_capacity += NOTIFY_BASE_CAPACITY;
+	}
+	notify_list[notify_cnt++] = callback;
+}
+
+struct encaps_for_prctl {
+	unsigned int option;
+	char *key;
+	unsigned int key_len;
+	unsigned int value_type;
+	unsigned int value;
+};
+
+int check_encaps_for_got()
+{
+	struct encaps_for_prctl encaps_args = {0};
+	char got_key[] = "ohos.permission.kernel.DISABLE_GOTPLT_RO_PROTECTION";
+	encaps_args.option = SEC_CHECK_HAS_ENCAPS;
+	encaps_args.key = got_key;
+	encaps_args.key_len = strlen(got_key);
+	return prctl(HM_PR_CHECK_ENCAPS, &encaps_args);
+}
+
+/**
+ * @brief This function can register callback functions to linker.
+ *        During the registration phase, this callback will be executed for all SOs already loaded.
+ *        In the subsequent dynamic loading phase(dlopen), this callback will be executed for the newly loaded Sos.
+ *        Only async-signal-safe functions can be called safely in callback. OtherWise, the behavior of
+ *        the program may be undefined. For example, using memory allocation operations within callbacks
+ *        may result in a deadlock with fork behavior.
+ * @param callback A pointer of the callback function which has three input parameters.
+ * @retval  0 is returned on success.
+ * @retval -1 is returned on failure, and errno is set:
+ *         EACCES: The calling process don't have registration permission and cannot register callback successfully
+ */
+int register_ldso_func_for_add_dso(notify_call callback)
+{
+	LD_LOGE("process call register_ldso_func_for_add_dso");
+	if (check_encaps_for_got() < 0) {
+		errno = EACCES;
+		return -1;
+	}
+	struct dso *p;
+	pthread_rwlock_rdlock(&lock);
+	update_register_count();
+	for (p = head; p; p = p->next) {
+		// Skip vdso map.
+		if(!p->map) {
+			continue;
+		}
+		callback(p->map, p->map_len, p->name);
+	}
+	pthread_rwlock_wrlock(&notifier_lock);
+	pthread_rwlock_unlock(&lock);
+	add_notify_callback(callback);
+	pthread_rwlock_unlock(&notifier_lock);
+	return 0;
+}
 
 static void decode_vec(size_t *v, size_t *a, size_t cnt)
 {
@@ -2769,6 +2894,10 @@ void __pthread_mutex_unlock_atfork(int who)
 		// dlclose_lock will never unlock before child process call execve.
 		// so reset dlclose_lock to make sure child process can call dlclose after fork
 		__pthread_mutex_unlock_recursive_inner(&dlclose_lock);
+		// If a multithread process lock notifier_lock and call fork,
+		// notifier_lock will has wrong r/w status before child process call execve.
+		// so reset notifier_lock to make sure child process can use this lock rightly
+		__pthread__rwlock_unlock_inner(&notifier_lock);
 	}
 }
 
@@ -3548,7 +3677,7 @@ static const char *redir_paths[] = {
 void *dlopen_impl(
 	const char *file, int mode, const char *namespace, const void *caller_addr, const dl_extinfo *extinfo)
 {
-	struct dso *volatile p, *orig_tail, *orig_syms_tail, *orig_lazy_head, *next;
+	struct dso *volatile p, *orig_tail, *notifier_tail, *orig_syms_tail, *orig_lazy_head, *next;
 	struct tls_module *orig_tls_tail;
 	size_t orig_tls_cnt, orig_tls_offset, orig_tls_align;
 	size_t i;
@@ -3563,6 +3692,8 @@ void *dlopen_impl(
 	struct dlopen_time_info dlopen_cost = {0};
 	struct timespec time_start, time_end, total_start, total_end;
 	struct dso *current_so = NULL;
+	struct notify_dso *list = NULL;
+	int volatile has_notifier = 0;
 	clock_gettime(CLOCK_MONOTONIC, &total_start);
 #ifdef LOAD_ORDER_RANDOMIZATION
 	struct loadtasks *tasks = NULL;
@@ -3832,9 +3963,22 @@ void *dlopen_impl(
 		notify_addition_to_debugger(orig_tail->next);
 	}
 
+	notifier_tail = orig_tail;
 	orig_tail = tail;
 	current_so = p;
 	p = dlopen_post(p, mode);
+	pthread_rwlock_rdlock(&notifier_lock);
+	if (notify_list) {
+		list = create_notify_dso_list();
+		if (list != NULL) {
+			for (struct dso *new = notifier_tail->next; new; new = new->next) {
+				if (!new->lazy_cnt) {
+					append_notify_dso(list, new);
+				}
+			}
+		}
+	}
+	has_notifier = 1;
 end:
 #ifdef LOAD_ORDER_RANDOMIZATION
 	if (!is_task_appended) {
@@ -3845,6 +3989,15 @@ end:
 	__release_ptc();
 	clock_gettime(CLOCK_MONOTONIC, &time_start);
 	pthread_rwlock_unlock(&lock);
+	if (has_notifier) {
+		if (notify_list && list) {
+			for (size_t notify_index = 0; notify_index < notify_cnt; notify_index++) {
+				iterate_notify_dso(list, notify_list[notify_index]);
+			}
+			free_notify_dso_list(list);
+		}
+		pthread_rwlock_unlock(&notifier_lock);
+	}
 	if (ctor_queue) {
 		do_init_fini(ctor_queue);
 		free(ctor_queue);

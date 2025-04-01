@@ -1527,6 +1527,7 @@
     regerror;
     regexec;
     regfree;
+    register_ldso_func_for_add_dso;
     remainder;
     remainderf;
     remainderl;

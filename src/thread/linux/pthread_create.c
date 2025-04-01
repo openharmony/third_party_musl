@@ -115,6 +115,7 @@ static int thread_list_lock_after_lock = TID_ERROR_INIT;
 static int thread_list_lock_pre_unlock = TID_ERROR_INIT;
 static int thread_list_lock_pthread_exit = TID_ERROR_INIT;
 static int thread_list_lock_tid_overlimit = TID_ERROR_INIT;
+static int register_count = 0;
 
 struct call_tl_lock tl_lock_caller_count = { 0 };
 
@@ -171,6 +172,16 @@ int get_thread_list_lock_tid_overlimit(void)
 struct call_tl_lock *get_tl_lock_caller_count(void)
 {
 	return &tl_lock_caller_count;
+}
+
+int get_register_count()
+{
+	return register_count;
+}
+
+void update_register_count()
+{
+	register_count++;
 }
 
 void __tl_lock(void)
