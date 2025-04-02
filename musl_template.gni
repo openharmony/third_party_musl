@@ -471,6 +471,7 @@ template("static_and_shared_libs_template") {
     cflags = [
       "-O3",
       "-fPIC",
+      "-fstack-protector-strong",
     ]
 
     if (!(use_libfuzzer || is_mac || is_asan || is_tsan || use_clang_coverage) && __use_flto) {
@@ -541,6 +542,7 @@ template("static_and_shared_libs_template") {
     cflags = [
       "-fPIC",
       "-ffreestanding",
+      "-fno-stack-protector",
       "-O3",
     ]
 
@@ -782,6 +784,7 @@ template("musl_libs") {
     cflags = [
       "-fPIC",
       "-ffreestanding",
+      "-fno-stack-protector",
     ]
     if (musl_arch == "aarch64") {
       cflags += [
@@ -807,6 +810,7 @@ template("musl_libs") {
     cflags = [
       "-O2",
       "-fPIC",
+      "-fstack-protector-strong",
     ]
 
     deps = porting_deps
@@ -861,6 +865,7 @@ template("musl_libs") {
       "-ffp-contract=fast",
       "-O3",
       "-fPIC",
+      "-fstack-protector-strong",
     ]
 
     deps = porting_deps
@@ -917,6 +922,7 @@ template("musl_libs") {
       "-O3",
       "-fPIC",
       "-ffreestanding",
+      "-fno-stack-protector",
     ]
 
     deps = porting_deps
@@ -977,6 +983,7 @@ template("musl_libs") {
       "-ffp-contract=fast",
       "-O3",
       "-fPIC",
+      "-fstack-protector-strong",
     ]
 
     deps = porting_deps
