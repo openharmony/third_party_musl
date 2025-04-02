@@ -291,8 +291,6 @@ static bool deal_with_tail(const char* ins, unsigned* sign, const unsigned char*
     return true;
 }
 
-int icu_first_init = 0;
-
 bool icu_locale_enable = false;
 
 pthread_mutex_t icu_init_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -328,11 +326,6 @@ iconv_t iconv_open(const char *to, const char *from)
 #ifdef FEATURE_ICU_LOCALE
     bool is_basic_open = false;
 
-	if ((get_device_api_version_inner() >= DEVICE_VERSION_THRESHOLD) && (icu_first_init == 0))
-	{
-		set_iconv_icu_enable();
-		icu_first_init++;
-	}
     for (const char* s = "iso885916\0iso2022jp\0\0"; *s;) {  // icu not support
         if (!fuzzycmp((void*)to, (void*)s) || !fuzzycmp((void*)from, (void*)s)) {
             is_basic_open = true;
