@@ -296,6 +296,8 @@ hidden extern struct call_tl_lock tl_lock_caller_count;
 hidden void __tl_lock(void);
 hidden void __tl_unlock(void);
 hidden void __tl_sync(pthread_t);
+hidden int get_register_count(void);
+hidden void update_register_count(void);
 hidden int get_tl_lock_count(void);
 hidden int get_tl_lock_waiters(void);
 hidden int get_tl_lock_tid_fail(void);
@@ -309,6 +311,7 @@ hidden int get_thread_list_lock_tid_overlimit(void);
 hidden struct call_tl_lock *get_tl_lock_caller_count(void);
 hidden struct pthread* __pthread_list_find(pthread_t, const char*);
 hidden void __pthread_mutex_unlock_recursive_inner(pthread_mutex_t *m);
+hidden void __pthread__rwlock_unlock_inner(pthread_rwlock_t *m);
 
 extern hidden volatile int __thread_list_lock;
 
