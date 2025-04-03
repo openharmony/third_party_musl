@@ -195,6 +195,12 @@ struct dlopen_time_info {
 };
 #endif
 
+struct notify_dso {
+	struct dso **dso_list;
+	size_t capacity;
+	size_t length;
+};
+
 struct fdpic_loadseg {
 	uintptr_t addr, p_vaddr, p_memsz;
 };
@@ -302,7 +308,8 @@ hidden void *__dlsym(void *restrict, const char *restrict, void *restrict);
 hidden void __dl_seterr(const char *, ...);
 hidden int __dl_invalid_handle(void *);
 hidden void __dl_vseterr(const char *, va_list);
-
+typedef void(*notify_call)(uintptr_t dso_base, size_t dso_len, const char *dso_path);
+int register_ldso_func_for_add_dso(notify_call callback);
 hidden ptrdiff_t __tlsdesc_static(), __tlsdesc_dynamic();
 
 hidden extern int __malloc_replaced;

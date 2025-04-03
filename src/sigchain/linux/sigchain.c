@@ -234,7 +234,8 @@ static void signal_chain_handler(int signo, siginfo_t* siginfo, void* ucontext_r
                 "install_new_tls_tl_lock=%{public}d "
                 "set_syscall_hooks_tl_lock=%{public}d "
                 "set_syscall_hooks_linux_tl_lock=%{public}d "
-                "fork_tl_lock=%{public}d ",
+                "fork_tl_lock=%{public}d "
+                "register_count=%{public}d ",
                 __func__, idx, signo, (unsigned long long)sig_chains[signo - 1].sca_special_actions[idx].sca_sigaction,
                 noreturn, signo, thread_list_lock_status,
                 get_tl_lock_count(), get_tl_lock_waiters(), get_tl_lock_tid_fail(), get_tl_lock_count_tid(),
@@ -251,7 +252,8 @@ static void signal_chain_handler(int signo, siginfo_t* siginfo, void* ucontext_r
                 call_tl_lock_dump->install_new_tls_tl_lock,
                 call_tl_lock_dump->set_syscall_hooks_tl_lock,
                 call_tl_lock_dump->set_syscall_hooks_linux_tl_lock,
-                call_tl_lock_dump->fork_tl_lock);
+                call_tl_lock_dump->fork_tl_lock,
+                get_register_count());
             if (sig_chains[signo - 1].sca_special_actions[idx].sca_sigaction(signo,
                                                             siginfo, ucontext_raw)) {
                 set_handling_signal(previous_value);

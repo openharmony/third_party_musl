@@ -64,6 +64,15 @@ test_sharedlib("dlopen_local") {
 test_sharedlib("dlopen_init") {
 }
 
+test_sharedlib("dlopen_register_a") {
+}
+
+test_sharedlib("dlopen_register_b") {
+}
+
+test_sharedlib("dlopen_register_c") {
+}
+
 group("dso_shared") {
   testonly = true
 
@@ -81,6 +90,9 @@ group("dso_shared") {
     ":dlopen_init",
     ":dlopen_local",
     ":dlopen_ns_dso",
+    ":dlopen_register_a",
+    ":dlopen_register_b",
+    ":dlopen_register_c",
     ":dlopen_so_dep_dlopen_ns_dso",
     ":dlopen_weak",
     ":dlopen_weak_deps",
