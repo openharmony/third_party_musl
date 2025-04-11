@@ -3967,6 +3967,18 @@ void *dlopen_impl(
 	orig_tail = tail;
 	current_so = p;
 	p = dlopen_post(p, mode);
+
+#ifdef ENABLE_HWASAN
+    /* The shadow memory corresponding to HWASAN-instrumented global 
+	 * variables of loaded dso should be initialized to prevent 
+	 * tag-mismatch errors when do_init_fini call the initialization 
+	 * interfaces which will modify related global variables. */
+    for (struct dso *new = notifier_tail->next; new; new = new->next) {
+    	if (new && libc.load_hook) {
+    	    libc.load_hook((long unsigned int)new->base, new->phdr, new->phnum);
+    	    }
+    }
+#endif
 	pthread_rwlock_rdlock(&notifier_lock);
 	if (notify_list) {
 		list = create_notify_dso_list();
