@@ -482,7 +482,15 @@ static bool is_empty_string(const char* str)
 static void install_ohos_malloc_hook(struct musl_libc_globals* globals, const char* shared_lib, const char* prefix)
 {
 	volatile void* shared_library_handle = (volatile void *)atomic_load_explicit(&ohos_malloc_hook_shared_library, memory_order_acquire);
-	assert(shared_library_handle == NULL || shared_library_handle == (volatile void*)-1);
+	if (!(shared_library_handle == NULL || shared_library_handle == (volatile void*)-1)) {
+		on_start_func_t start_func = (on_start_func_t)(function_of_shared_lib[ON_START_FUNCTION]);
+		if (start_func && !start_func(__uninstal_malloc_hook)) {
+			// __musl_log(__MUSL_LOG_ERROR, "%s: failed to enable malloc\n", getprogname());
+		}
+		volatile const struct MallocDispatchType* so_dispatch_value = (volatile const struct MallocDispatchType* )atomic_load_explicit(&__musl_libc_globals.so_dispatch_table, memory_order_acquire);
+		atomic_store_explicit(&__musl_libc_globals.current_dispatch_table, (volatile long long)so_dispatch_value, memory_order_seq_cst);
+		return;
+	}
 	if (__get_memleak_hook_flag()) {
 		shared_library_handle = (volatile void*)load_malloc_hook_shared_library(shared_lib, prefix, &globals->memleak_tracker_malloc_dispatch_table);
 	}
