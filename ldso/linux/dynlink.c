@@ -5819,6 +5819,7 @@ static bool load_library_header(struct loadtask *task)
 				task->name, namespace->ns_name, errno);
 			return false;
 		}
+		int topLayerErrno = errno;
 		/* Load lib in inherited namespace. Do not check inherited again.*/
 		for (size_t i = 0; i < namespace->ns_inherits->num; i++) {
 			ns_inherit *inherit = namespace->ns_inherits->inherits[i];
@@ -5832,7 +5833,7 @@ static bool load_library_header(struct loadtask *task)
 			}
 		}
 		LD_LOGE("load %{public}s failed, namespace=%{public}s, errno=%{public}d",
-			task->name, namespace->ns_name, errno);
+			task->name, namespace->ns_name, topLayerErrno);
 		return false;
 	}
 
