@@ -32,7 +32,7 @@
 #include "sys_param.h"
 #endif
 
-#define MAX_SIMULTANEOUS_ALLOCATIONS 32
+#define MAX_SIMULTANEOUS_ALLOCATIONS 1000
 #define SAMPLE_RATE 2500
 #define GWP_ASAN_NAME_LEN 256
 #define GWP_ASAN_PREDICT_TRUE(exp) __builtin_expect((exp) != 0, 1)
