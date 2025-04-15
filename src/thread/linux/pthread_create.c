@@ -625,12 +625,13 @@ int __pthread_create(pthread_t *restrict res, const pthread_attr_t *restrict att
 	}
 	if (!libc.threads_minus_1++) libc.need_locks = 1;
 	ret = __clone((c11 ? start_c11 : start), stack, flags, args, &new->tid, TP_ADJ(new), &__thread_list_lock);
-
+	int cloneErrno = 0;
 	/* All clone failures translate to EAGAIN. If explicit scheduling
 	 * was requested, attempt it before unlocking the thread list so
 	 * that the failed thread is never exposed and so that we can
 	 * clean up all transient resource usage before returning. */
 	if (ret < 0) {
+		cloneErrno = ret;
 		ret = -EAGAIN;
 	} else if (attr._a_sched) {
 		ret = __syscall(SYS_sched_setscheduler,
@@ -660,7 +661,8 @@ int __pthread_create(pthread_t *restrict res, const pthread_attr_t *restrict att
 
 	if (ret < 0) {
 		if (map) __munmap(map, size);
-		MUSL_LOGE("pthread_create: ret:%{public}d, err:%{public}s", ret, strerror(errno));
+		MUSL_LOGE("pthread_create: ret: %{public}d, cloneErrno: %{public}d, err: %{public}s",
+			ret, cloneErrno, strerror(errno));
 		return -ret;
 	}
 
