@@ -17,7 +17,7 @@ static int gtd_init(struct timeval *tv, void *tz)
 	__get_vdso_info();
 	void *p = __get_vdso_addr(VDSO_GTD_VER, VDSO_GTD_SYM);
 	int (*f)(struct timeval *, void *) =
-		(int (*)(struct timval *, void *))p;
+		(int (*)(struct timeval *, void *))p;
 	a_cas_p(&vdso_gtd, (void *)gtd_init, p);
 	return f ? f(tv, tz) : -ENOSYS;
 }
