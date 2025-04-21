@@ -79,7 +79,7 @@ weak void __hwasan_library_loaded(unsigned long int base, const Elf64_Phdr* phdr
 weak void __hwasan_library_unloaded(unsigned long int base, const Elf64_Phdr* phdr, int phnum);
 weak void __hwasan_init();
 extern int __hwasan_check_enabled;
-__attribute__((no_sanitize(hwaddress)))
+__attribute__((no_sanitize("hwaddress")))
 #endif
 int __libc_start_main(int (*main)(int,char **,char **), int argc, char **argv,
 	void (*init_dummy)(), void(*fini_dummy)(), void(*ldso_dummy)())
