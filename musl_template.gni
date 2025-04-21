@@ -150,7 +150,7 @@ template("static_and_shared_libs_template") {
       configs += [ "//build/config/sanitizers:default_sanitizer_flags" ]
       cflags += [
         "-mllvm",
-        "-hwasan-instrument-check-enable=true",
+        "-hwasan-instrument-check-enabled=true",
       ]
     }
 
@@ -511,7 +511,7 @@ template("static_and_shared_libs_template") {
       configs += [ "//build/config/sanitizers:default_sanitizer_flags" ]
       cflags += [
         "-mllvm",
-        "-hwasan-instrument-check-enable=true",
+        "-hwasan-instrument-check-enabled=true",
       ]
     }
 
@@ -563,7 +563,7 @@ template("static_and_shared_libs_template") {
       configs += [ "//build/config/sanitizers:default_sanitizer_flags" ]
       cflags += [
         "-mllvm",
-        "-hwasan-instrument-check-enable=true",
+        "-hwasan-instrument-check-enabled=true",
       ]
     }
 
@@ -737,7 +737,7 @@ template("musl_libs") {
     if (use_hwasan) {
       cflags += [
         "-mllvm",
-        "-hwasan-instrument-check-enable=true",
+        "-hwasan-instrument-check-enabled=true",
       ]
     }
 
@@ -825,7 +825,7 @@ template("musl_libs") {
       configs += [ "//build/config/sanitizers:default_sanitizer_flags" ]
       cflags += [
         "-mllvm",
-        "-hwasan-instrument-check-enable=true",
+        "-hwasan-instrument-check-enabled=true",
       ]
     }
 
@@ -853,7 +853,7 @@ template("musl_libs") {
       configs += [ "//build/config/sanitizers:default_sanitizer_flags" ]
       cflags += [
         "-mllvm",
-        "-hwasan-instrument-check-enable=true",
+        "-hwasan-instrument-check-enabled=true",
       ]
     }
 
@@ -916,7 +916,7 @@ template("musl_libs") {
       configs += [ "//build/config/sanitizers:default_sanitizer_flags" ]
       cflags += [
         "-mllvm",
-        "-hwasan-instrument-check-enable=true",
+        "-hwasan-instrument-check-enabled=true",
       ]
     }
 
@@ -981,7 +981,7 @@ template("musl_libs") {
       configs += [ "//build/config/sanitizers:default_sanitizer_flags" ]
       cflags += [
         "-mllvm",
-        "-hwasan-instrument-check-enable=true",
+        "-hwasan-instrument-check-enabled=true",
       ]
     }
 
@@ -1050,7 +1050,7 @@ template("musl_libs") {
       configs += [ "//build/config/sanitizers:default_sanitizer_flags" ]
       cflags += [
         "-mllvm",
-        "-hwasan-instrument-check-enable=true",
+        "-hwasan-instrument-check-enabled=true",
       ]
     }
 
