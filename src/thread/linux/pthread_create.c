@@ -69,6 +69,9 @@ void __pthread_reserve_signal_stack()
 	return;
 }
 
+#ifdef ENABLE_HWASAN
+__attribute__((no_sanitize("hwaddress")))
+#endif
 void __pthread_release_signal_stack()
 {
 	pthread_t self = __pthread_self();
@@ -184,6 +187,9 @@ void update_register_count()
 	register_count++;
 }
 
+#ifdef ENABLE_HWASAN
+__attribute__((no_sanitize("hwaddress")))
+#endif
 void __tl_lock(void)
 {
 	int tid = __pthread_self()->tid;

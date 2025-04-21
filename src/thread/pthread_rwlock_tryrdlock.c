@@ -1,5 +1,8 @@
 #include "pthread_impl.h"
 
+#ifdef ENABLE_HWASAN
+__attribute__((no_sanitize("hwaddress")))
+#endif
 int __pthread_rwlock_tryrdlock(pthread_rwlock_t *rw)
 {
 	int val, cnt;
