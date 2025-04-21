@@ -1,6 +1,9 @@
 #include "pthread_impl.h"
 #include "pthread_ffrt.h"
 
+#ifdef ENABLE_HWASAN
+__attribute__((no_sanitize("hwaddress")))
+#endif
 int pthread_setspecific(pthread_key_t k, const void *x)
 {
 	struct pthread *self = __pthread_self();

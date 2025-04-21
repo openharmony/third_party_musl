@@ -16,6 +16,9 @@
  * with INT_MIN as a lock flag.
  */
 
+#ifdef ENABLE_HWASAN
+__attribute__((no_sanitize("hwaddress")))
+#endif
 void __lock(volatile int *l)
 {
 	int need_locks = libc.need_locks;
@@ -51,6 +54,9 @@ void __lock(volatile int *l)
 	}
 }
 
+#ifdef ENABLE_HWASAN
+__attribute__((no_sanitize("hwaddress")))
+#endif
 void __unlock(volatile int *l)
 {
 	/* Check l[0] to see if we are multi-threaded. */

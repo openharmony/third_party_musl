@@ -71,6 +71,9 @@ static struct builtin_tls {
 
 static struct tls_module main_tls;
 
+#ifdef ENABLE_HWASAN
+__attribute__((no_sanitize("hwaddress")))
+#endif
 void *__copy_tls(unsigned char *mem)
 {
 	pthread_t td;

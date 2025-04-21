@@ -13,7 +13,14 @@ static size_t slash_len(const char *s)
 
 char *realpath(const char *restrict filename, char *restrict resolved)
 {
+#ifdef ENABLE_HWASAN
+	/* In realpath, the stack is read in 8-byte chunks. hwasan
+	 * detects out-of-bounds reads. Therefore, the stack is
+	 * changed to be an 8-byte multiple.*/
+	char stack[PATH_MAX+8];
+#else
 	char stack[PATH_MAX+1];
+#endif
 	char output[PATH_MAX];
 	size_t p, q, l, l0, cnt=0, nup=0;
 	int check_dir=0;

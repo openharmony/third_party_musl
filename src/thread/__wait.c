@@ -1,5 +1,8 @@
 #include "pthread_impl.h"
 
+#ifdef ENABLE_HWASAN
+__attribute__((no_sanitize("hwaddress")))
+#endif
 void __wait(volatile int *addr, volatile int *waiters, int val, int priv)
 {
 	int spins=100;
