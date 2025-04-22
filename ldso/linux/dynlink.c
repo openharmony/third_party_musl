@@ -200,6 +200,10 @@ extern hidden void (*const __init_array_end)(void), (*const __fini_array_end)(vo
 extern bool init_gwp_asan_by_libc(bool force_init);
 #endif
 
+#ifdef ENABLE_HWASAN
+__attribute__((used,retain)) int __hwasan_check_enabled = 0;
+#endif
+
 weak_alias(__init_array_start, __init_array_end);
 weak_alias(__fini_array_start, __fini_array_end);
 #ifdef DFX_SIGNAL_LIBC
@@ -1313,6 +1317,13 @@ static void do_relocs(struct dso *dso, size_t *rel, size_t rel_size, size_t stri
 
 			if (!def.sym && (sym->st_shndx != SHN_UNDEF
 				|| sym->st_info>>4 != STB_WEAK)) {
+#ifdef ENABLE_HWASAN
+				/* libc hwasan symbols will be preloaded during the
+				 * dls3 stage, so we will skip this step. */
+				if (dso == &ldso) {
+					continue;
+				}
+#endif
 				if (dso->lazy && (type==REL_PLT || type==REL_GOT)) {
 					dso->lazy[3*dso->lazy_cnt+0] = rel[0];
 					dso->lazy[3*dso->lazy_cnt+1] = rel[1];

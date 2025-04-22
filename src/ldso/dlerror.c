@@ -30,6 +30,9 @@ char *dlerror()
 
 static void *volatile freebuf_queue;
 
+#ifdef ENABLE_HWASAN
+__attribute__((no_sanitize("hwaddress")))
+#endif
 void __dl_thread_cleanup(void)
 {
 	pthread_t self = __pthread_self();

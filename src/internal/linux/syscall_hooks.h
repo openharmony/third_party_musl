@@ -22,6 +22,9 @@
 extern hidden volatile const char *g_syscall_hooks_table __attribute__((aligned(8)));
 extern hidden volatile void *g_syscall_hooks_entry __attribute__((aligned(8)));
 
+#ifdef ENABLE_HWASAN
+__attribute__((no_sanitize("hwaddress")))
+#endif
 static inline int is_syscall_hooked(long n)
 {
 	return g_syscall_hooks_table != NULL && g_syscall_hooks_table[n] != 0;

@@ -146,6 +146,14 @@ template("static_and_shared_libs_template") {
       "-Wno-int-conversion",
     ]
 
+    if (use_hwasan) {
+      configs += [ "//build/config/sanitizers:default_sanitizer_flags" ]
+      cflags += [
+        "-mllvm",
+        "-hwasan-instrument-check-enabled=true",
+      ]
+    }
+
     if (!__use_flto) {
       cflags_c = [ "-fno-lto" ]
     }
@@ -480,10 +488,6 @@ template("static_and_shared_libs_template") {
       not_needed([ "__use_flto" ])
     }
 
-    if (is_asan && use_hwasan) {
-      defines += [ "HWASAN_REMOVE_CLEANUP" ]
-    }
-
     if (musl_use_jemalloc) {
       defines += [ "USE_JEMALLOC" ]
       if (musl_use_jemalloc_dfx_intf) {
@@ -501,6 +505,15 @@ template("static_and_shared_libs_template") {
       ":$cur_gwp_asan_config",
       ":stack_config_musl",
     ]
+
+    if (use_hwasan) {
+      defines += [ "HWASAN_REMOVE_CLEANUP" ]
+      configs += [ "//build/config/sanitizers:default_sanitizer_flags" ]
+      cflags += [
+        "-mllvm",
+        "-hwasan-instrument-check-enabled=true",
+      ]
+    }
 
     if (!defined(defines)) {
       defines = []
@@ -545,6 +558,14 @@ template("static_and_shared_libs_template") {
       "-fno-stack-protector",
       "-O3",
     ]
+
+    if (use_hwasan) {
+      configs += [ "//build/config/sanitizers:default_sanitizer_flags" ]
+      cflags += [
+        "-mllvm",
+        "-hwasan-instrument-check-enabled=true",
+      ]
+    }
 
     if (is_asan || is_tsan) {
       defines = [
@@ -713,6 +734,13 @@ template("musl_libs") {
       "-DOHOS_TCACHE_NSLOTS_LARGE=16",
     ]
 
+    if (use_hwasan) {
+      cflags += [
+        "-mllvm",
+        "-hwasan-instrument-check-enabled=true",
+      ]
+    }
+
     if (is_llvm_build) {
       cflags += [ "-fno-unwind-tables" ]
     } else {
@@ -793,6 +821,14 @@ template("musl_libs") {
       ]
     }
 
+    if (use_hwasan) {
+      configs += [ "//build/config/sanitizers:default_sanitizer_flags" ]
+      cflags += [
+        "-mllvm",
+        "-hwasan-instrument-check-enabled=true",
+      ]
+    }
+
     deps = porting_deps
 
     asmflags = cflags
@@ -812,6 +848,14 @@ template("musl_libs") {
       "-fPIC",
       "-fstack-protector-strong",
     ]
+
+    if (use_hwasan) {
+      configs += [ "//build/config/sanitizers:default_sanitizer_flags" ]
+      cflags += [
+        "-mllvm",
+        "-hwasan-instrument-check-enabled=true",
+      ]
+    }
 
     deps = porting_deps
   }
@@ -867,6 +911,14 @@ template("musl_libs") {
       "-fPIC",
       "-fstack-protector-strong",
     ]
+
+    if (use_hwasan) {
+      configs += [ "//build/config/sanitizers:default_sanitizer_flags" ]
+      cflags += [
+        "-mllvm",
+        "-hwasan-instrument-check-enabled=true",
+      ]
+    }
 
     deps = porting_deps
   }
@@ -924,6 +976,14 @@ template("musl_libs") {
       "-ffreestanding",
       "-fno-stack-protector",
     ]
+
+    if (use_hwasan) {
+      configs += [ "//build/config/sanitizers:default_sanitizer_flags" ]
+      cflags += [
+        "-mllvm",
+        "-hwasan-instrument-check-enabled=true",
+      ]
+    }
 
     deps = porting_deps
   }
@@ -985,6 +1045,14 @@ template("musl_libs") {
       "-fPIC",
       "-fstack-protector-strong",
     ]
+
+    if (use_hwasan) {
+      configs += [ "//build/config/sanitizers:default_sanitizer_flags" ]
+      cflags += [
+        "-mllvm",
+        "-hwasan-instrument-check-enabled=true",
+      ]
+    }
 
     deps = porting_deps
     external_deps = [ "FreeBSD:ld128_static" ]
