@@ -78,8 +78,9 @@ static lsm2_fn libc_start_main_stage2;
 weak void __hwasan_library_loaded(unsigned long int base, const Elf64_Phdr* phdr, int phnum);
 weak void __hwasan_library_unloaded(unsigned long int base, const Elf64_Phdr* phdr, int phnum);
 weak void __hwasan_init();
+extern int __hwasan_check_enabled;
+__attribute__((no_sanitize("hwaddress")))
 #endif
-
 int __libc_start_main(int (*main)(int,char **,char **), int argc, char **argv,
 	void (*init_dummy)(), void(*fini_dummy)(), void(*ldso_dummy)())
 {
@@ -89,6 +90,7 @@ int __libc_start_main(int (*main)(int,char **,char **), int argc, char **argv,
 	libc.load_hook = __hwasan_library_loaded;
 	libc.unload_hook = __hwasan_library_unloaded;
 	__hwasan_init();
+	__hwasan_check_enabled = 1;
 #endif
 	/* External linkage, and explicit noinline attribute if available,
 	 * are used to prevent the stack frame used during init from

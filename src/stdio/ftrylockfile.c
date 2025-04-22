@@ -2,6 +2,9 @@
 #include "pthread_impl.h"
 #include <limits.h>
 
+#ifdef ENABLE_HWASAN
+__attribute__((no_sanitize("hwaddress")))
+#endif
 void __do_orphaned_stdio_locks()
 {
 	FILE *f;

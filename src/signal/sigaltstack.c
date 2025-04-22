@@ -3,6 +3,9 @@
 #include "syscall.h"
 #include <unsupported_api.h>
 
+#ifdef ENABLE_HWASAN
+__attribute__((no_sanitize("hwaddress")))
+#endif
 int sigaltstack(const stack_t *restrict ss, stack_t *restrict old)
 {
 	UNSUPPORTED_API_VOID(LITEOS_A);

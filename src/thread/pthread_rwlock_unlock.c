@@ -9,6 +9,9 @@ void __pthread__rwlock_unlock_inner(pthread_rwlock_t *m)
 	}
 }
 
+#ifdef ENABLE_HWASAN
+__attribute__((no_sanitize("hwaddress")))
+#endif
 int __pthread_rwlock_unlock(pthread_rwlock_t *rw)
 {
 	int val, cnt, waiters, new, priv = rw->_rw_shared^128;

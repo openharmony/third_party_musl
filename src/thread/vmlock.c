@@ -4,6 +4,9 @@
 static volatile int vmlock[2];
 volatile int *const __vmlock_lockptr = vmlock;
 
+#ifdef ENABLE_HWASAN
+__attribute__((no_sanitize("hwaddress")))
+#endif
 void __vm_wait()
 {
 	int tmp;
@@ -16,6 +19,9 @@ void __vm_lock()
 	a_inc(vmlock);
 }
 
+#ifdef ENABLE_HWASAN
+__attribute__((no_sanitize("hwaddress")))
+#endif
 void __vm_unlock()
 {
 	if (a_fetch_add(vmlock, -1)==1 && vmlock[1])

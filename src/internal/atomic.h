@@ -180,6 +180,9 @@ static inline void a_dec(volatile int *p)
 
 #ifndef a_store
 #define a_store a_store
+#ifdef ENABLE_HWASAN
+__attribute__((no_sanitize("hwaddress")))
+#endif
 static inline void a_store(volatile int *p, int v)
 {
 #ifdef a_barrier

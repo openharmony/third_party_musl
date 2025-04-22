@@ -2041,6 +2041,7 @@
     DFX_SetAppRunningUniqueId;
     DFX_SetCrashObj;
     DFX_ResetCrashObj;
+    __hwasan_check_enabled;
   local:
     *;
 };
