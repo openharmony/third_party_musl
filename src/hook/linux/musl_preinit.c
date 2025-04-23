@@ -51,19 +51,21 @@ which need be escaped.
 #include "musl_log.h"
 
 void* ohos_malloc_hook_init_function(size_t bytes);
+void* ohos_aligned_alloc_hook_init_function(size_t alignment, size_t bytes);
+void* ohos_mmap_hook_init_function(void* addr, size_t length, int prot, int flags, int fd, off_t offset);
 void default_memtrace(void* addr, size_t size, const char* tag, bool is_using) {}
 
 static struct MallocDispatchType __ohos_malloc_hook_init_dispatch = {
 	.malloc = ohos_malloc_hook_init_function,
 	.free = MuslFunc(free),
-	.mmap = MuslMalloc(mmap),
+	.mmap = ohos_mmap_hook_init_function,
 	.munmap = MuslMalloc(munmap),
 	.calloc = MuslFunc(calloc),
 	.realloc = MuslFunc(realloc),
 	.prctl = MuslMalloc(prctl),
 	.malloc_usable_size = MuslMalloc(malloc_usable_size),
 	.memtrace = default_memtrace,
-	.aligned_alloc = MuslMalloc(aligned_alloc),
+	.aligned_alloc = ohos_aligned_alloc_hook_init_function,
 };
 #define MAX_SYM_NAME_SIZE 1000
 #define MAX_PROC_NAME_SIZE 256
@@ -529,7 +531,10 @@ static void* init_ohos_malloc_hook()
 
 void* ohos_malloc_hook_init_function(size_t bytes)
 {
-	if (atomic_exchange(&__musl_libc_globals.current_dispatch_table, (volatile const long long)NULL)) {
+	long long expect_table = (volatile const long long)&__ohos_malloc_hook_init_dispatch;
+    if (atomic_compare_exchange_strong_explicit(&__musl_libc_globals.current_dispatch_table, &expect_table,
+                                                (volatile const long long)NULL, memory_order_release,
+                                                memory_order_relaxed)) {
 		pthread_t thread_id;
 		MUSL_LOGI("HiProfiler, ohos_malloc_hook_init_function, pthread_create.");
 		if (pthread_create(&thread_id, NULL, init_ohos_malloc_hook, NULL) != 0) {
@@ -540,7 +545,38 @@ void* ohos_malloc_hook_init_function(size_t bytes)
 	}
 	void*ptr = MuslFunc(malloc)(bytes);
 	return ptr;
+}
 
+void* ohos_aligned_alloc_hook_init_function(size_t alignment, size_t bytes)
+{
+    long long expect_table = (volatile const long long)&__ohos_malloc_hook_init_dispatch;
+    if (atomic_compare_exchange_strong_explicit(&__musl_libc_globals.current_dispatch_table, &expect_table,
+                                                (volatile const long long)NULL, memory_order_release,
+                                                memory_order_relaxed)) {
+            pthread_t thread_id;
+            MUSL_LOGI("HiProfiler, ohos_aligned_alloc_hook_init_function, pthread_create.");
+            if (pthread_create(&thread_id, NULL, init_ohos_malloc_hook, NULL) != 0) {
+            } else if (pthread_detach(thread_id) != 0) {
+            }
+    }
+    void* ptr = MuslMalloc(aligned_alloc)(alignment, bytes);
+    return ptr;
+}
+
+void* ohos_mmap_hook_init_function(void* addr, size_t length, int prot, int flags, int fd, off_t offset)
+{
+	long long expect_table = (volatile const long long)&__ohos_malloc_hook_init_dispatch;
+    if (atomic_compare_exchange_strong_explicit(&__musl_libc_globals.current_dispatch_table, &expect_table,
+                                                (volatile const long long)NULL, memory_order_release,
+                                                memory_order_relaxed)) {
+            pthread_t thread_id;
+            MUSL_LOGI("HiProfiler, ohos_mmap_hook_init_function, pthread_create.");
+            if (pthread_create(&thread_id, NULL, init_ohos_malloc_hook, NULL) != 0) {
+            } else if (pthread_detach(thread_id) != 0) {
+            }
+    }
+    void* ptr = MuslMalloc(mmap)(addr, length, prot, flags, fd, offset);
+    return ptr;
 }
 
 static void __set_default_malloc()
