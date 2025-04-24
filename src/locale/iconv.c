@@ -291,17 +291,16 @@ static bool deal_with_tail(const char* ins, unsigned* sign, const unsigned char*
     return true;
 }
 
-int icu_first_init = 0;
-
 bool icu_locale_enable = false;
 
 pthread_mutex_t icu_init_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 /**
-* @Description: The set_icu_enable function is used to set the internal implementation of iconv to the implementation of the ICU library.
-* The iconv internal implementation may have been set to the ICU library implementation before the function was executed. In this case,
-* the function also returns success.
-* @return:If the function call is successful, the returned value will be zero; otherwise, the returned value will be a non-zero error code.
+* @Description: The set_icu_enable function is used to set the internal implementation of iconv to the implementation
+* of the ICU library.The iconv internal implementation may have been set to the ICU library implementation before the
+* function was executed. In this case, the function also returns success.
+* @return:If the function call is successful, the returned value will be zero; otherwise, the returned value will be a
+* non-zero error code.
 */
 
 int set_iconv_icu_enable()
@@ -328,11 +327,6 @@ iconv_t iconv_open(const char *to, const char *from)
 #ifdef FEATURE_ICU_LOCALE
     bool is_basic_open = false;
 
-	if ((get_device_api_version_inner() >= DEVICE_VERSION_THRESHOLD) && (icu_first_init == 0))
-	{
-		set_iconv_icu_enable();
-		icu_first_init++;
-	}
     for (const char* s = "iso885916\0iso2022jp\0\0"; *s;) {  // icu not support
         if (!fuzzycmp((void*)to, (void*)s) || !fuzzycmp((void*)from, (void*)s)) {
             is_basic_open = true;
