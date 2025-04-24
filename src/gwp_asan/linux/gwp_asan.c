@@ -341,7 +341,7 @@ GWP_ASAN_NO_ADDRESS size_t run_unwind(size_t *frame_buf,
         unwind_info *frame = (unwind_info*)(current_frame_addr);
         GWP_ASAN_LOGD("[gwp_asan] unwind info:%{public}d cur:%{public}p, end:%{public}p fp:%{public}p lr:%{public}p \n",
                       num_frames, current_frame_addr, stack_end, frame->fp, frame->lr);
-	size_t stripped_lr = strip_pac_pc(frame->lr);
+        size_t stripped_lr = strip_pac_pc(frame->lr);
         if (!stripped_lr) {
             break;
         }
