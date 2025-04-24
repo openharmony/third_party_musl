@@ -30,7 +30,7 @@ int __pthread_mutex_unlock(pthread_mutex_t *m)
 		if ((type & PTHREAD_MUTEX_TYPE_MASK) == PTHREAD_MUTEX_RECURSIVE && m->_m_count)
 #else
 		if (__is_mutex_destroyed(m->_m_type))
-			__handle_using_destroyed_mutex(m, __FUNCTION__);
+			__handle_using_destroyed_mutex(__FUNCTION__);
 		if ((type&3) == PTHREAD_MUTEX_RECURSIVE && m->_m_count)
 #endif
 			return m->_m_count--, 0;
