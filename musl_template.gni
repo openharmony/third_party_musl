@@ -86,7 +86,6 @@ template("static_and_shared_libs_template") {
   cur_soft_hook_config = "soft_hook_config_${target_name}"
 
   source_set("soft_musl_hook_${target_name}") {
-    include_dirs = []
     sources = [
       "./src/hook/linux/malloc_common.c",
       "./src/hook/linux/memory_trace.c",
@@ -125,12 +124,16 @@ template("static_and_shared_libs_template") {
       if (musl_use_jemalloc_recycle_func) {
         defines += [ "USE_JEMALLOC_RECYCLE_FUNC" ]
       }
-      include_dirs += [ "${musl_malloc_plugin}/include/jemalloc" ]
+      include_dirs = [ "${musl_malloc_plugin}/include/jemalloc" ]
     }
 
     configs -= musl_inherited_configs
 
-    include_dirs += [ "${target_out_dir}/${musl_ported_dir}/src/internal" ]
+    if (defined(include_dirs)) {
+      include_dirs += [ "${target_out_dir}/${musl_ported_dir}/src/internal" ]
+    } else {
+      include_dirs = [ "${target_out_dir}/${musl_ported_dir}/src/internal" ]
+    }
 
     configs += [
       "//build/config/compiler:compiler",
