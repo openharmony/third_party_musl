@@ -18,6 +18,7 @@ extern int je_iterate(uintptr_t base, size_t size,
 	void (*callback)(uintptr_t ptr, size_t size, void* arg), void* arg);
 extern int je_mallopt(int param, int value);
 #endif
+extern int je_malloc_check_from_ptr(void *ptr);
 #endif
 
 #ifdef MALLOC_SECURE_ALL
@@ -504,3 +505,27 @@ ssize_t malloc_backtrace(void* pointer, uintptr_t* frames, size_t frame_count)
 {
 	return 0;
 }
+
+/**
+ * @brief This function determines whether a given memory block was allocated using
+ *        Standard C library Memory Allocator.
+ * 		  This function is MT-Safe(multi-thread safe) but not signal-safe.
+ * @param ptr A pointer to the memory block to be checked.
+ * @param int Status indicating whether the memory block was allocated by
+ * 		  Standard C library Memory Allocator.
+ * @retval  1 - The memory block was allocated using Standard C library Memory Allocator.
+ * @retval  0 - The memory block was not allocated using Standard C library Memory Allocator.
+ * @retval -1 - The function is not implemented or other error:
+ * 		   ENOSYS: Indicates that the function is not implemented.
+ * 		   EINVAL: Indicates that an invalid argument was passed to the function.
+ */
+int __malloc_check_from_ptr(void *ptr)
+{
+#ifdef USE_JEMALLOC
+	return je_malloc_check_from_ptr(ptr);
+#endif
+	errno = ENOSYS;
+	return -1;
+}
+
+weak_alias(__malloc_check_from_ptr, malloc_check_from_ptr);
