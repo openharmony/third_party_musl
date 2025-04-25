@@ -38,6 +38,40 @@ void iswblank_l_0100(void)
 }
 
 /**
+ * @tc.name      : iswblank_l_0101
+ * @tc.desc      : Whether a character in a wide string is a blank character
+ * @tc.level     : Level 0
+ */
+void iswblank_l_0101(void)
+{
+    locale_t m_locale = newlocale(LC_CTYPE_MASK, "en_US.UTF-8", NULL);
+    const wchar_t *str = L" \t";
+    const wchar_t *p = str;
+    while (*p++ && *p != '\0') {
+        int ret = iswblank_l(*p, m_locale);
+        EXPECT_EQ("iswblank_l_0101", ret, ONREXPECT);
+    }
+    freelocale(m_locale);
+}
+
+/**
+ * @tc.name      : iswblank_l_0102
+ * @tc.desc      : Whether a character in a wide string is a blank character
+ * @tc.level     : Level 0
+ */
+void iswblank_l_0102(void)
+{
+    locale_t m_locale = newlocale(LC_CTYPE_MASK, "zh_CN", NULL);
+    const wchar_t *str = L" \t";
+    const wchar_t *p = str;
+    while (*p++ && *p != '\0') {
+        int ret = iswblank_l(*p, m_locale);
+        EXPECT_EQ("iswblank_l_0102", ret, ONREXPECT);
+    }
+    freelocale(m_locale);
+}
+
+/**
  * @tc.name      : iswblank_l_0200
  * @tc.desc      : Whether the characters in a wide string is blank characters
  * @tc.level     : Level 2
@@ -50,6 +84,40 @@ void iswblank_l_0200(void)
         int ret = iswblank_l(*p, NULL);
         EXPECT_EQ("iswblank_l_0200", ret, CMPFLAG);
     }
+}
+
+/**
+ * @tc.name      : iswblank_l_0201
+ * @tc.desc      : Whether the characters in a wide string is blank characters
+ * @tc.level     : Level 2
+ */
+void iswblank_l_0201(void)
+{
+    locale_t m_locale = newlocale(LC_CTYPE_MASK, "en_US.UTF-8", NULL);
+    const wchar_t *str = L"2!~*3Ad";
+    const wchar_t *p = str;
+    while (*p++ && *p != '\0') {
+        int ret = iswblank_l(*p, m_locale);
+        EXPECT_EQ("iswblank_l_0201", ret, CMPFLAG);
+    }
+    freelocale(m_locale);
+}
+
+/**
+ * @tc.name      : iswblank_l_0202
+ * @tc.desc      : Whether the characters in a wide string is blank characters
+ * @tc.level     : Level 2
+ */
+void iswblank_l_0202(void)
+{
+    locale_t m_locale = newlocale(LC_CTYPE_MASK, "zh_CN", NULL);
+    const wchar_t *str = L"2!~*3Ad";
+    const wchar_t *p = str;
+    while (*p++ && *p != '\0') {
+        int ret = iswblank_l(*p, m_locale);
+        EXPECT_EQ("iswblank_l_0202", ret, CMPFLAG);
+    }
+    freelocale(m_locale);
 }
 
 /**
@@ -124,7 +192,11 @@ int main(void)
 {
     set_wctype_icu_enable();
     iswblank_l_0100();
+    iswblank_l_0101();
+    iswblank_l_0102();
     iswblank_l_0200();
+    iswblank_l_0201();
+    iswblank_l_0202();
     iswblank_l_0300();
     iswblank_l_0400();
 
