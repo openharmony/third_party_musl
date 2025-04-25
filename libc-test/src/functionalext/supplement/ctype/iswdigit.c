@@ -68,7 +68,7 @@ void iswdigit_l_0100(void)
 }
 
 /**
- * @tc.name      : iswdigit_l_0100
+ * @tc.name      : iswdigit_l_0101
  * @tc.desc      : Whether a character in a wide string is a number character
  * @tc.level     : Level 0
  */
@@ -79,7 +79,7 @@ void iswdigit_l_0101(void)
     const wchar_t *p = str;
     while (*p++ && *p != '\0') {
         int ret = iswdigit_l(*p, m_locale);
-        EXPECT_EQ("iswdigit_l_0100", ret, ONREXPECT);
+        EXPECT_EQ("iswdigit_l_0101", ret, ONREXPECT);
     }
     freelocale(m_locale);
 }
