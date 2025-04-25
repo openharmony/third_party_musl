@@ -47,7 +47,7 @@ void malloc_enable(void);
 
 int malloc_info(int options, FILE* fp);
 void malloc_stats_print(void (*write_cb) (void *, const char *), void *cbopaque, const char *opts);
-
+int malloc_check_from_ptr(void *ptr);
 
 #define M_SET_THREAD_CACHE -1001
 #define M_THREAD_CACHE_ENABLE 1

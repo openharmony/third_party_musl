@@ -2042,6 +2042,7 @@
     DFX_SetCrashObj;
     DFX_ResetCrashObj;
     __hwasan_check_enabled;
+    malloc_check_from_ptr;
   local:
     *;
 };
