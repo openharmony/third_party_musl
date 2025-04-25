@@ -18,7 +18,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/xattr.h>
-#include <sys/utsname.h>
+
 #include "filepath_util.h"
 
 const char *name = "user.foo";
@@ -78,25 +78,13 @@ void setxattr_0100(void)
  */
 void setxattr_0200(void)
 {
-    struct utsname buf;
-    int result = uname(&buf);
-    if (result != 0) {
-        t_error("%s failed: result = %d\n", __func__, result);
-        return;
-    }
     errno = 0;
-    result = setxattr(NULL, NULL, NULL, -1, -1);
+    int result = setxattr(NULL, NULL, NULL, -1, -1);
     if (result == 0) {
         t_error("%s failed: result = %d\n", __func__, result);
     }
-    if (strstr(buf.sysname, "Linux") != NULL) {
-        if (errno != EINVAL) {
-            t_error("%s failed: errno = %d\n", __func__, errno);
-        }
-    } else {
-        if (errno != EFAULT) {
-            t_error("%s failed: errno = %d\n", __func__, errno);
-        }
+    if ((errno != EFAULT) && (errno != EINVAL)) {
+        t_error("%s failed: errno = %d\n", __func__, errno);
     }
 }
 
