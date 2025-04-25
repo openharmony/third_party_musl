@@ -82,6 +82,40 @@ void iswlower_l_0100(void)
 }
 
 /**
+ * @tc.name      : iswlower_l_0101
+ * @tc.desc      : Whether the characters in a wide string is lower character
+ * @tc.level     : Level 0
+ */
+void iswlower_l_0101(void)
+{
+    locale_t m_locale = newlocale(LC_CTYPE_MASK, "en_US.UTF-8", NULL);
+    const wchar_t *str = L"abcdefghijklmnopqrstuvwxyz";
+    const wchar_t *p = str;
+    while (*p++ && *p != '\0') {
+        int ret = iswlower_l(*p, m_locale);
+        EXPECT_EQ("iswlower_l_0101", ret, ONREXPECT);
+    }
+    freelocale(m_locale);
+}
+
+/**
+ * @tc.name      : iswlower_l_0102
+ * @tc.desc      : Whether the characters in a wide string is lower character
+ * @tc.level     : Level 0
+ */
+void iswlower_l_0102(void)
+{
+    locale_t m_locale = newlocale(LC_CTYPE_MASK, "zh_CN", NULL);
+    const wchar_t *str = L"abcdefghijklmnopqrstuvwxyz";
+    const wchar_t *p = str;
+    while (*p++ && *p != '\0') {
+        int ret = iswlower_l(*p, m_locale);
+        EXPECT_EQ("iswlower_l_0102", ret, ONREXPECT);
+    }
+    freelocale(m_locale);
+}
+
+/**
  * @tc.name      : iswlower_l_0200
  * @tc.desc      : Whether the characters in a wide string are non-lower character
  * @tc.level     : Level 2
@@ -94,6 +128,40 @@ void iswlower_l_0200(void)
         int ret = iswlower_l(*p, NULL);
         EXPECT_EQ("iswlower_l_0200", ret, CMPFLAG);
     }
+}
+
+/**
+ * @tc.name      : iswlower_l_0201
+ * @tc.desc      : Whether the characters in a wide string are non-lower character
+ * @tc.level     : Level 2
+ */
+void iswlower_l_0201(void)
+{
+    locale_t m_locale = newlocale(LC_CTYPE_MASK, "en_US.UTF-8", NULL);
+    const wchar_t *str = L"12ABC!@#";
+    const wchar_t *p = str;
+    while (*p++ && *p != '\0') {
+        int ret = iswlower_l(*p, m_locale);
+        EXPECT_EQ("iswlower_l_0201", ret, CMPFLAG);
+    }
+    freelocale(m_locale);
+}
+
+/**
+ * @tc.name      : iswlower_l_0202
+ * @tc.desc      : Whether the characters in a wide string are non-lower character
+ * @tc.level     : Level 2
+ */
+void iswlower_l_0202(void)
+{
+    locale_t m_locale = newlocale(LC_CTYPE_MASK, "en_US.UTF-8", NULL);
+    const wchar_t *str = L"12ABC!@#";
+    const wchar_t *p = str;
+    while (*p++ && *p != '\0') {
+        int ret = iswlower_l(*p, m_locale);
+        EXPECT_EQ("iswlower_l_0202", ret, CMPFLAG);
+    }
+    freelocale(m_locale);
 }
 
 /**
@@ -141,7 +209,11 @@ int main(int argc, char *argv[])
     iswlower_0200();
     iswlower_0300();
     iswlower_l_0100();
+    iswlower_l_0101();
+    iswlower_l_0102();
     iswlower_l_0200();
+    iswlower_l_0201();
+    iswlower_l_0202();
     iswlower_l_0300();
     iswlower_l_0400();
     return t_status;
