@@ -102,6 +102,7 @@ static void (*error)(const char *, ...) = error_noop;
 #define PARENTS_BASE_CAPACITY 8
 #define RELOC_CAN_SEARCH_DSO_BASE_CAPACITY 32
 #define ANON_NAME_MAX_LEN 70
+#define HM_GOT_RO 0x70726f74
 
 #define KPMD_SIZE (1UL << 21)
 #define HUGEPAGES_SUPPORTED_STR_SIZE (32)
@@ -2696,6 +2697,15 @@ static void reloc_all(struct dso *p, const dl_extinfo *extinfo)
 		}
 		/* Handle serializing/mapping the RELRO segment */
 		handle_relro_sharing(p, extinfo, &relro_fd_offset);
+
+		/* We need to skip dso with shared RELRO*/
+		if (head != &ldso && p->relro_start != p->relro_end && extinfo == NULL) {
+			if (prctl(HM_GOT_RO, 0, laddr(p, p->relro_start), p->relro_end - p->relro_start)) {
+				if (errno != EINVAL && runtime) {
+					LD_LOGE("Failed to set readonly to relro segment of %{public}s, errno %{public}d", p->name, errno);
+				}
+			}
+		}
 
 		p->relocated = 1;
 		free_reloc_can_search_dso(p);
