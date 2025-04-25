@@ -154,7 +154,7 @@ void iswlower_l_0201(void)
  */
 void iswlower_l_0202(void)
 {
-    locale_t m_locale = newlocale(LC_CTYPE_MASK, "en_US.UTF-8", NULL);
+    locale_t m_locale = newlocale(LC_CTYPE_MASK, "zh_CN", NULL);
     const wchar_t *str = L"12ABC!@#";
     const wchar_t *p = str;
     while (*p++ && *p != '\0') {
