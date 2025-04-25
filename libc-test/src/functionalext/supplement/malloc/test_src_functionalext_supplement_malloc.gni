@@ -17,4 +17,5 @@ functionalext_supplement_malloc_test = [
   "memalign",
   "aligned_alloc",
   "malloc_usable_size",
+  "malloc_check_from_ptr",
 ]
