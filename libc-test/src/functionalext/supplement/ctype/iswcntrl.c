@@ -48,6 +48,40 @@ void iswcntrl_l_0100(void)
 }
 
 /**
+ * @tc.name      : iswcntrl_l_0101
+ * @tc.desc      : Whether a character in a wide string is a control character
+ * @tc.level     : Level 0
+ */
+void iswcntrl_l_0101(void)
+{
+    locale_t m_locale = newlocale(LC_CTYPE_MASK, "en_US.UTF-8", NULL);
+    const wchar_t *str = L"\b";
+    const wchar_t *p = str;
+    while (*p++ && *p != '\0') {
+        int ret = iswcntrl_l(*p, m_locale);
+        EXPECT_EQ("iswcntrl_l_0101", ret, ONREXPECT);
+    }
+    freelocale(m_locale);
+}
+
+/**
+ * @tc.name      : iswcntrl_l_0102
+ * @tc.desc      : Whether a character in a wide string is a control character
+ * @tc.level     : Level 0
+ */
+void iswcntrl_l_0102(void)
+{
+    locale_t m_locale = newlocale(LC_CTYPE_MASK, "zh_CN", NULL);
+    const wchar_t *str = L"\b";
+    const wchar_t *p = str;
+    while (*p++ && *p != '\0') {
+        int ret = iswcntrl_l(*p, m_locale);
+        EXPECT_EQ("iswcntrl_l_0102", ret, ONREXPECT);
+    }
+    freelocale(m_locale);
+}
+
+/**
  * @tc.name      : iswcntrl_l_0200
  * @tc.desc      : Whether a character in a wide string is a non-control character
  * @tc.level     : Level 2
@@ -60,6 +94,40 @@ void iswcntrl_l_0200(void)
         int ret = iswcntrl_l(*p, NULL);
         EXPECT_EQ("iswcntrl_l_0200", ret, CMPFLAG);
     }
+}
+
+/**
+ * @tc.name      : iswcntrl_l_0201
+ * @tc.desc      : Whether a character in a wide string is a non-control character
+ * @tc.level     : Level 2
+ */
+void iswcntrl_l_0201(void)
+{
+    locale_t m_locale = newlocale(LC_CTYPE_MASK, "en_US.UTF-8", NULL);
+    const wchar_t *str = L"2!~*3Ad";
+    const wchar_t *p = str;
+    while (*p++ && *p != '\0') {
+        int ret = iswcntrl_l(*p, m_locale);
+        EXPECT_EQ("iswcntrl_l_0201", ret, CMPFLAG);
+    }
+    freelocale(m_locale);
+}
+
+/**
+ * @tc.name      : iswcntrl_l_0202
+ * @tc.desc      : Whether a character in a wide string is a non-control character
+ * @tc.level     : Level 2
+ */
+void iswcntrl_l_0202(void)
+{
+    locale_t m_locale = newlocale(LC_CTYPE_MASK, "zh_CN", NULL);
+    const wchar_t *str = L"2!~*3Ad";
+    const wchar_t *p = str;
+    while (*p++ && *p != '\0') {
+        int ret = iswcntrl_l(*p, m_locale);
+        EXPECT_EQ("iswcntrl_l_0202", ret, CMPFLAG);
+    }
+    freelocale(m_locale);
 }
 
 /**
@@ -133,7 +201,11 @@ int main(int argc, char *argv[])
     iswcntrl_test(L'\ufff9', 1, "iswcntrl_0400");
 
     iswcntrl_l_0100();
+    iswcntrl_l_0101();
+    iswcntrl_l_0102();
     iswcntrl_l_0200();
+    iswcntrl_l_0201();
+    iswcntrl_l_0202();
     iswcntrl_l_0300();
     iswcntrl_l_0400();
     return t_status;
