@@ -14,14 +14,14 @@
 
 #### **DESCRIPTION**
 
-​       The malloc_from_check() function determines whether the memory block
+​       The malloc_check_from_ptr() function determines whether the memory block
 ​       pointed to by ptr was allocated using Standard C library Memory Allocator.
 
 ​       Note: This function is MT-Safe(multi-thread safe) but not signal-safe.
 
 #### **RETURN VALUE**
 
-​       On success, malloc_from_check() returns one of the following values:
+​       On success, malloc_check_from_ptr() returns one of the following values:
 ​       1  The memory block was allocated using by Standard C library Memory Allocator.
 ​       0  The memory block was not allocated using by Standard C library Memory Allocator.
 ​       -1 The function is not implemented or an error occurred, errno is set to indicate the error.
@@ -34,10 +34,10 @@
 
 #### ATTRIBUTES
 
-| Interface           | Attribute     | Value    |
-| ------------------- | ------------- | -------- |
-| malloc_from_check() | Thread safety | MT-safe  |
-|                     | Signal safety | Not Safe |
+| Interface               | Attribute     | Value    |
+| ----------------------- | ------------- | -------- |
+| malloc_check_from_ptr() | Thread safety | MT-safe  |
+|                         | Signal safety | Not Safe |
 
 #### HISTORY
 
@@ -74,7 +74,7 @@
         if (errno == ENOSYS) {
              printf("Function not implemented on this platform.\n");
         } else {
-            perror("malloc_from_check failed");
+            perror("malloc_check_from_ptr failed");
         }
         return 0;
      }
