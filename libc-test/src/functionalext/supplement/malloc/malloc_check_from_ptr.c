@@ -21,7 +21,7 @@
 #define TEST_MEM_SIZE 256
 #define NO_JEMALLOC_ZONE 0
 #define JEMALLOC_ZONE 1
-#define UN_JEMALLOC -1
+#define UN_JEMALLOC (-1)
 
 /**
  * @tc.name      : malloc_check_from_ptr_0100
