@@ -96,7 +96,7 @@ void iswalpha_l_0201(void)
     const wchar_t *str = L"2!~*";
     const wchar_t *p = str;
     while (*p++ && *p != '\0') {
-        int ret = iswalpha_l(*p, newlocale);
+        int ret = iswalpha_l(*p, m_locale);
         EXPECT_EQ("iswalpha_l_0201", ret, CMPFLAG);
     }
     freelocale(m_locale);
@@ -113,7 +113,7 @@ void iswalpha_l_0202(void)
     const wchar_t *str = L"2!~*";
     const wchar_t *p = str;
     while (*p++ && *p != '\0') {
-        int ret = iswalpha_l(*p, newlocale);
+        int ret = iswalpha_l(*p, m_locale);
         EXPECT_EQ("iswalpha_l_0202", ret, CMPFLAG);
     }
     freelocale(m_locale);
