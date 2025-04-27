@@ -41,6 +41,8 @@ typedef struct gwp_asan_option {
     printf_t gwp_asan_printf;
     printf_backtrace_t printf_backtrace;
     segv_backtrace_t segv_backtrace;
+    int min_sample_size;
+    const char *white_list_path;
 } gwp_asan_option;
 
 typedef struct unwind_info {
