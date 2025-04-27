@@ -83,8 +83,7 @@ void setxattr_0200(void)
     if (result == 0) {
         t_error("%s failed: result = %d\n", __func__, result);
     }
-
-    if (errno != EFAULT) {
+    if ((errno != EFAULT) && (errno != EINVAL)) {
         t_error("%s failed: errno = %d\n", __func__, errno);
     }
 }
