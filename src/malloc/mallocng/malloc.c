@@ -511,7 +511,7 @@ ssize_t malloc_backtrace(void* pointer, uintptr_t* frames, size_t frame_count)
  *        Standard C library Memory Allocator.
  * 		  This function is MT-Safe(multi-thread safe) but not signal-safe.
  * @param ptr A pointer to the memory block to be checked.
- * @param int Status indicating whether the memory block was allocated by
+ * @return int Status indicating whether the memory block was allocated by
  * 		  Standard C library Memory Allocator.
  * @retval  1 - The memory block was allocated using Standard C library Memory Allocator.
  * @retval  0 - The memory block was not allocated using Standard C library Memory Allocator.
