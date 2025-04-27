@@ -341,11 +341,12 @@ GWP_ASAN_NO_ADDRESS size_t run_unwind(size_t *frame_buf,
         unwind_info *frame = (unwind_info*)(current_frame_addr);
         GWP_ASAN_LOGD("[gwp_asan] unwind info:%{public}d cur:%{public}p, end:%{public}p fp:%{public}p lr:%{public}p \n",
                       num_frames, current_frame_addr, stack_end, frame->fp, frame->lr);
-        if (!frame->lr) {
+        size_t stripped_lr = strip_pac_pc(frame->lr);
+        if (!stripped_lr) {
             break;
         }
         if (num_frames < max_record_stack) {
-            frame_buf[num_frames] = strip_pac_pc(frame->lr) - 4;
+            frame_buf[num_frames] = stripped_lr - 4;
         }
         ++num_frames;
         if (frame->fp == prev_fp || frame->lr == prev_lr || frame->fp < current_frame_addr + sizeof(unwind_info) ||
