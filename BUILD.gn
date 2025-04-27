@@ -499,4 +499,14 @@ if (is_lite_system && current_os == "ohos") {
   static_and_shared_libs_template("shared") {
     musl_use_flto = true
   }
+
+  config("stack_config_musl") {
+    cflags = []
+    cflags_c = []
+
+    if (musl_arch == "aarch64") {
+      cflags += [ "-mbranch-protection=pac-ret+b-key" ]
+      cflags_c += [ "-fno-stack-protector" ]
+    }
+  }
 }
