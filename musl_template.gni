@@ -138,6 +138,7 @@ template("static_and_shared_libs_template") {
     configs += [
       "//build/config/compiler:compiler",
       ":$cur_soft_hook_config",
+      ":stack_config_musl",
     ]
 
     cflags = [
@@ -501,6 +502,7 @@ template("static_and_shared_libs_template") {
     configs += [
       "//build/config/components/musl:soft_musl_config",
       ":$cur_gwp_asan_config",
+      ":stack_config_musl",
     ]
 
     if (!defined(defines)) {
@@ -538,6 +540,7 @@ template("static_and_shared_libs_template") {
     configs += [
       "//build/config/components/musl:soft_musl_config",
       ":$cur_gwp_asan_config",
+      ":stack_config_musl",
     ]
     cflags = [
       "-fPIC",
@@ -778,6 +781,7 @@ template("musl_libs") {
     configs += [
       "//build/config/components/musl:soft_musl_config",
       ":gwp_asan_config_shared",
+      ":stack_config_musl",
     ]
     cflags = [
       "-fPIC",
@@ -803,6 +807,7 @@ template("musl_libs") {
     configs += [
       "//build/config/components/musl:soft_musl_config",
       ":gwp_asan_config_shared",
+      ":stack_config_musl",
     ]
     cflags = [
       "-O2",
@@ -854,6 +859,7 @@ template("musl_libs") {
     configs += [
       "//build/config/components/musl:soft_musl_config",
       ":gwp_asan_config_shared",
+      ":stack_config_musl",
     ]
     cflags = [
       "-mllvm",
@@ -912,6 +918,7 @@ template("musl_libs") {
     configs += [
       "//build/config/components/musl:soft_musl_config",
       ":gwp_asan_config_shared",
+      ":stack_config_musl",
     ]
     cflags = [
       "-O3",
@@ -949,7 +956,10 @@ template("musl_libs") {
 
     configs -= musl_inherited_configs
 
-    configs += [ ":soft_jemalloc" ]
+    configs += [
+      ":soft_jemalloc",
+      ":stack_config_musl",
+    ]
   }
 
   source_set("soft_musl_src_ld128") {
@@ -967,6 +977,7 @@ template("musl_libs") {
     configs += [
       "//build/config/components/musl:soft_musl_config",
       ":gwp_asan_config_shared",
+      ":stack_config_musl",
     ]
     cflags = [
       "-mllvm",
@@ -1038,6 +1049,7 @@ template("musl_libs") {
   static_library("soft_libpthread") {
     complete_static_lib = true
     configs -= musl_inherited_configs
+    configs += [ ":stack_config_musl" ]
     output_name = "libpthread"
     output_dir = "${target_out_dir}/${_libs_out_dir}"
   }
@@ -1073,6 +1085,7 @@ template("musl_libs") {
   static_library("soft_libdl") {
     complete_static_lib = true
     configs -= musl_inherited_configs
+    configs += [ ":stack_config_musl" ]
     output_name = "libdl"
     output_dir = "${target_out_dir}/${_libs_out_dir}"
   }
@@ -1147,6 +1160,7 @@ template("musl_libs") {
     if (musl_ld128_flag) {
       deps += [ ":soft_musl_src_ld128" ]
     }
+    configs += [ ":stack_config_musl" ]
   }
 
   action_foreach("soft_musl_crt_install_action") {
