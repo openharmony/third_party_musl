@@ -2039,6 +2039,7 @@
     DFX_SetAppRunningUniqueId;
     DFX_SetCrashObj;
     DFX_ResetCrashObj;
+    DFX_SetCrashLogConfig;
   local:
     *;
 };
