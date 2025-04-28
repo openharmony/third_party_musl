@@ -214,7 +214,7 @@ weak_alias(__InstallSignalHandler, DFX_InstallSignalHandler);
 #endif
 
 #ifdef HANDLE_RANDOMIZATION
-static int do_dlclose(struct dso *p, bool check_deps_all);
+int do_dlclose(struct dso *p, bool check_deps_all);
 #endif
 
 #ifdef LOAD_ORDER_RANDOMIZATION
@@ -4460,7 +4460,7 @@ static int dlclose_impl(struct dso *p)
 	return 0;
 }
 
-static int do_dlclose(struct dso *p, bool check_deps_all)
+int do_dlclose(struct dso *p, bool check_deps_all)
 {
 	struct dso_entry *ef = NULL;
 	struct dso_entry *ef_tmp = NULL;
