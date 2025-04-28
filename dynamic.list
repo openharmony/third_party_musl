@@ -40,6 +40,7 @@ h_errno;
 
 # Sanitizer requires this symbol to be exposed.
 dlopen_impl;
+do_dlclose;
 
 program_invocation_name;
 program_invocation_short_name;
