@@ -542,9 +542,9 @@ void* ohos_aligned_alloc_hook_init_function(size_t alignment, size_t bytes)
             pthread_t thread_id;
             MUSL_LOGI("HiProfiler, ohos_aligned_alloc_hook_init_function, pthread_create.");
             if (pthread_create(&thread_id, NULL, init_ohos_malloc_hook, NULL) != 0) {
-				MUSL_LOGI("%s: ohos_aligned_alloc_hook_init_function: failed to pthread_create.", getprogname());
+				MUSL_LOGI("HiProfiler: ohos_aligned_alloc_hook_init_function: failed to pthread_create.");
             } else if (pthread_detach(thread_id) != 0) {
-				MUSL_LOGI("%s: ohos_aligned_alloc_hook_init_function: failed to pthread_detach.", getprogname());
+				MUSL_LOGI("HiProfiler: ohos_aligned_alloc_hook_init_function: failed to pthread_detach.");
             }
     }
     void* ptr = MuslMalloc(aligned_alloc)(alignment, bytes);
@@ -560,9 +560,9 @@ void* ohos_mmap_hook_init_function(void* addr, size_t length, int prot, int flag
             pthread_t thread_id;
             MUSL_LOGI("HiProfiler, ohos_mmap_hook_init_function, pthread_create.");
             if (pthread_create(&thread_id, NULL, init_ohos_malloc_hook, NULL) != 0) {
-				MUSL_LOGI("%s: ohos_mmap_hook_init_function: failed to pthread_create.", getprogname());
+				MUSL_LOGI("HiProfiler: ohos_mmap_hook_init_function: failed to pthread_create.");
             } else if (pthread_detach(thread_id) != 0) {
-				MUSL_LOGI("%s: ohos_mmap_hook_init_function: failed to pthread_detach.", getprogname());
+				MUSL_LOGI("HiProfiler: ohos_mmap_hook_init_function: failed to pthread_detach.");
             }
     }
     void* ptr = MuslMalloc(mmap)(addr, length, prot, flags, fd, offset);
