@@ -68,6 +68,40 @@ void iswspace_l_0100(void)
 }
 
 /**
+ * @tc.name      : iswspace_l_0101
+ * @tc.desc      : Whether the characters in a wide string is whitespace character
+ * @tc.level     : Level 0
+ */
+void iswspace_l_0101(void)
+{
+    locale_t m_locale = newlocale(LC_CTYPE_MASK, "en_US.UTF-8", NULL);
+    const wchar_t *str = L" \t\n\r";
+    const wchar_t *p = str;
+    while (*p++ && *p != '\0') {
+        int ret = iswspace_l(*p, m_locale);
+        EXPECT_EQ("iswspace_l_0101", ret, ONREXPECT);
+    }
+    freelocale(m_locale);
+}
+
+/**
+ * @tc.name      : iswspace_l_0102
+ * @tc.desc      : Whether the characters in a wide string is whitespace character
+ * @tc.level     : Level 0
+ */
+void iswspace_l_0102(void)
+{
+    locale_t m_locale = newlocale(LC_CTYPE_MASK, "zh_CN", NULL);
+    const wchar_t *str = L" \t\n\r";
+    const wchar_t *p = str;
+    while (*p++ && *p != '\0') {
+        int ret = iswspace_l(*p, m_locale);
+        EXPECT_EQ("iswspace_l_0102", ret, ONREXPECT);
+    }
+    freelocale(m_locale);
+}
+
+/**
  * @tc.name      : iswspace_l_0200
  * @tc.desc      : Whether the characters in a wide string are non-whitespace character
  * @tc.level     : Level 2
@@ -80,6 +114,40 @@ void iswspace_l_0200(void)
         int ret = iswspace_l(*p, NULL);
         EXPECT_EQ("iswspace_l_0200", ret, CMPFLAG);
     }
+}
+
+/**
+ * @tc.name      : iswspace_l_0201
+ * @tc.desc      : Whether the characters in a wide string are non-whitespace character
+ * @tc.level     : Level 2
+ */
+void iswspace_l_0201(void)
+{
+    locale_t m_locale = newlocale(LC_CTYPE_MASK, "en_US.UTF-8", NULL);
+    const wchar_t *str = L"1AaÂÆ";
+    const wchar_t *p = str;
+    while (*p++ && *p != '\0') {
+        int ret = iswspace_l(*p, m_locale);
+        EXPECT_EQ("iswspace_l_0201", ret, CMPFLAG);
+    }
+    freelocale(m_locale);
+}
+
+/**
+ * @tc.name      : iswspace_l_0202
+ * @tc.desc      : Whether the characters in a wide string are non-whitespace character
+ * @tc.level     : Level 2
+ */
+void iswspace_l_0202(void)
+{
+    locale_t m_locale = newlocale(LC_CTYPE_MASK, "zh_CN", NULL);
+    const wchar_t *str = L"1AaÂÆ";
+    const wchar_t *p = str;
+    while (*p++ && *p != '\0') {
+        int ret = iswspace_l(*p, m_locale);
+        EXPECT_EQ("iswspace_l_0202", ret, CMPFLAG);
+    }
+    freelocale(m_locale);
 }
 
 /**
@@ -126,7 +194,11 @@ int main(int argc, char *argv[])
     iswspace_0100();
     iswspace_0200();
     iswspace_l_0100();
+    iswspace_l_0101();
+    iswspace_l_0102();
     iswspace_l_0200();
+    iswspace_l_0201();
+    iswspace_l_0202();
     iswspace_l_0300();
     iswspace_l_0400();
     return t_status;
