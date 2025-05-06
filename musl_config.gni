@@ -56,6 +56,8 @@ declare_args() {
   if (!is_llvm_build && current_cpu == "arm64") {
     musl_use_gwp_asan = true
   }
+  # Macro for Mutex Lock Performance Optimization
+  musl_use_mutex_wait_opt = false
   musl_use_jemalloc = false
   musl_use_encaps = false
   musl_malloc_plugin = ""

@@ -1,4 +1,7 @@
 #include "pthread_impl.h"
+#ifdef USE_MUTEX_WAIT_OPT
+#include "musl_opt.h"
+#endif
 
 #define IS32BIT(x) !((x)+0x80000000ULL>>32)
 #define CLAMP(x) (int)(IS32BIT(x) ? (x) : 0x7fffffffU+((0ULL+(x))>>63))
@@ -70,8 +73,17 @@ int __pthread_mutex_timedlock_inner(pthread_mutex_t *restrict m, const struct ti
 	if (r != EBUSY) return r;
 	int clock = (m->_m_clock == CLOCK_MONOTONIC) ? CLOCK_MONOTONIC : CLOCK_REALTIME;
 	int t, priv = (type & 128) ^ 128;
+
+	/* Marco: Optimazation for mutex lock wait. 
+	   When enabled, call function implemented in libkccl_lockopt.so.
+	   Otherwise, use the default spin.
+	*/
+#ifdef USE_MUTEX_WAIT_OPT
+	lock_func(m);
+#else
 	int spins = 100;
 	while (spins-- && m->_m_lock && !m->_m_waiters) a_spin();
+#endif
 
 	while ((r=__pthread_mutex_trylock(m)) == EBUSY) {
 		r = m->_m_lock;
