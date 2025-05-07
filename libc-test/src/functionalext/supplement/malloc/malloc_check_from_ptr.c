@@ -61,13 +61,13 @@ void malloc_check_from_ptr_0200(void)
         return;
     }
     int ret = malloc_check_from_ptr(p);
-     EXPECT_EQ_ONE_OF("malloc_check_from_ptr_0200", ret, NO_JEMALLOC_ZONE, UN_JEMALLOC);
+    EXPECT_EQ_ONE_OF("malloc_check_from_ptr_0200", ret, NO_JEMALLOC_ZONE, UN_JEMALLOC);
     munmap(p, TEST_MEM_SIZE);
 }
 
 /**
  * @tc.name      : malloc_check_from_ptr_0300
- * @tc.desc      : The memory block was not allocated using calloc
+ * @tc.desc      : The memory block was allocated using calloc
  * @tc.level     : Level 0
  */
 void malloc_check_from_ptr_0300(void)
@@ -84,7 +84,7 @@ void malloc_check_from_ptr_0300(void)
 
 /**
  * @tc.name      : malloc_check_from_ptr_0400
- * @tc.desc      : The memory block was not allocated using calloc
+ * @tc.desc      : multiple test malloc_check_from_ptr
  * @tc.level     : Level 0
  */
 void malloc_check_from_ptr_0400(void)
