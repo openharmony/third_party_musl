@@ -689,6 +689,7 @@ template("musl_libs") {
       "-Wno-unused-parameter",
       "-Wno-unused-function",
       "-Wno-missing-field-initializers",
+      "-Wno-compare-distinct-pointer-types",
       "-Wno-excess-initializers",
       "-Wno-extra-tokens",
       "-Wno-format",
