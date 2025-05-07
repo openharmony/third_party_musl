@@ -3548,7 +3548,7 @@ static const char *redir_paths[] = {
 void *dlopen_impl(
 	const char *file, int mode, const char *namespace, const void *caller_addr, const dl_extinfo *extinfo)
 {
-	struct dso *volatile p, *orig_tail, *orig_syms_tail, *orig_lazy_head, *next;
+	struct dso *volatile p, *orig_tail, *notifier_tail, *orig_syms_tail, *orig_lazy_head, *next;
 	struct tls_module *orig_tls_tail;
 	size_t orig_tls_cnt, orig_tls_offset, orig_tls_align;
 	size_t i;
@@ -3832,9 +3832,22 @@ void *dlopen_impl(
 		notify_addition_to_debugger(orig_tail->next);
 	}
 
+	notifier_tail = orig_tail;
 	orig_tail = tail;
 	current_so = p;
 	p = dlopen_post(p, mode);
+
+#ifdef ENABLE_HWASAN
+    /* The shadow memory corresponding to HWASAN-instrumented global
+	 * variables of loaded dso should be initialized to prevent
+	 * tag-mismatch errors when do_init_fini call the initialization
+	 * interfaces which will modify related global variables. */
+    for (struct dso *new = notifier_tail->next; new; new = new->next) {
+    	if (new && libc.load_hook) {
+    	    libc.load_hook((long unsigned int)new->base, new->phdr, new->phnum);
+    	    }
+    }
+#endif
 end:
 #ifdef LOAD_ORDER_RANDOMIZATION
 	if (!is_task_appended) {
