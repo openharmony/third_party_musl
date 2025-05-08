@@ -89,10 +89,10 @@ void malloc_check_from_ptr_0300(void)
  */
 void malloc_check_from_ptr_0400(void)
 {
-    void *ptrs[NUM_ALLOCS];
+    void *ptrs[NUM_MALLOCS];
 
     // multiple malloc
-    for (int i = 0; i < NUM_ALLOCS; ++i) {
+    for (int i = 0; i < NUM_MALLOCS; ++i) {
         ptrs[i] = malloc(TEST_MEM_SIZE);
         if (!ptrs[i]) {
             return;
@@ -100,13 +100,13 @@ void malloc_check_from_ptr_0400(void)
     }
 
     // malloc_check_from_ptr in ptrs
-    for (int i = 0; i < NUM_ALLOCS; ++i) {
+    for (int i = 0; i < NUM_MALLOCS; ++i) {
         int ret = malloc_check_from_ptr(ptrs[i]);
         EXPECT_EQ_ONE_OF("malloc_check_from_ptr_0400", ret, JEMALLOC_ZONE, UN_JEMALLOC);
     }
 
     // free all
-    for (int i = 0; i < NUM_ALLOCS; ++i) {
+    for (int i = 0; i < NUM_MALLOCS; ++i) {
         free(ptrs[i]);
     }
 }
