@@ -21,6 +21,7 @@
 
 #define BLANK_WINT_COUNT 18
 #define UNICODE_SIZE 1114111
+#define MAX_VALUE 4294967295
 
 /**
  * @tc.name      : iswblank_l_0100
@@ -159,6 +160,32 @@ void iswblank_l_0400(void)
 }
 
 /**
+ * @tc.name      : iswblank_l_0500
+ * @tc.desc      : Whether a character in a the maximum value of int is not a letter
+ * @tc.level     : Level 1
+ */
+ void iswblank_l_0500(void)
+ {
+    locale_t m_locale = newlocale(LC_CTYPE_MASK, "zh_CN", NULL);
+    int ret = iswblank_l(MAX_VALUE, m_locale);
+    freelocale(m_locale);
+    EXPECT_EQ("iswblank_l_0500", ret, CMPFLAG);
+ }
+
+/**
+* @tc.name      : iswblank_l_0600
+* @tc.desc      : Whether a character in a the maximum value of int is not a letter
+* @tc.level     : Level 1
+*/
+void iswblank_l_0600(void)
+{
+    locale_t m_locale = newlocale(LC_CTYPE_MASK, "en_US.UTF-8", NULL);
+    int ret = iswblank_l(MAX_VALUE, m_locale);
+    freelocale(m_locale);
+    EXPECT_EQ("iswblank_l_0600", ret, CMPFLAG);
+}
+
+/**
  * @tc.name      : iswblank_0100
  * @tc.desc      : Whether a character in a wide string is a blank character
  * @tc.level     : Level 0
@@ -199,6 +226,8 @@ int main(void)
     iswblank_l_0202();
     iswblank_l_0300();
     iswblank_l_0400();
+    iswblank_l_0500();
+    iswblank_l_0600();
 
     iswblank_0100();
     iswblank_0200();

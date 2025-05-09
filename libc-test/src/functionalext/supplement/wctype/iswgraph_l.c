@@ -24,6 +24,7 @@ const int COUNT = 94;
 const int SIZE = 128;
 #define ALNUM_WINT_COUNT 286465
 #define UNICODE_SIZE 1114111
+#define MAX_VALUE 4294967295
 
 /*
  * @tc.name      : iswgraph_l_0100
@@ -120,6 +121,34 @@ void iswgraph_l_0600(void)
     EXPECT_EQ("iswgraph_l_0600", total, ALNUM_WINT_COUNT);
 }
 
+/**
+ * @tc.name      : iswgraph_l_0700
+ * @tc.desc      : Verify iswgraph_l process success. Input parameter is the maximum value of int, please verify that the return is CMPFLAG
+ *                 code table.
+ * @tc.level     : Level 1
+ */
+ void iswgraph_l_0700(void)
+ {
+    locale_t m_locale = newlocale(LC_CTYPE_MASK, "en_US.UTF-8", NULL);
+    int ret = iswgraph_l((wchar_t)MAX_VALUE, m_locale);
+    freelocale(m_locale);
+    EXPECT_EQ("iswgraph_l_0700", ret, CMPFLAG);
+ }
+
+ /**
+ * @tc.name      : iswgraph_l_0800
+ * @tc.desc      : Verify iswgraph_l process success. Input parameter is the maximum value of int, please verify that the return is CMPFLAG
+ *                 code table.
+ * @tc.level     : Level 1
+ */
+ void iswgraph_l_0800(void)
+ {
+    locale_t m_locale = newlocale(LC_CTYPE_MASK, "en_US.UTF-8", NULL);
+    int ret = iswgraph_l((wchar_t)MAX_VALUE, m_locale);
+    freelocale(m_locale);
+    EXPECT_EQ("iswgraph_l_0800", ret, CMPFLAG);
+ }
+
 int main(int argc, char *argv[])
 {
     set_wctype_icu_enable();
@@ -129,5 +158,7 @@ int main(int argc, char *argv[])
     iswgraph_l_0400();
     iswgraph_l_0500();
     iswgraph_l_0600();
+    iswgraph_l_0700();
+    iswgraph_l_0800();
     return t_status;
 }
