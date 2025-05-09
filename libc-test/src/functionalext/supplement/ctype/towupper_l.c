@@ -26,6 +26,7 @@
 #include <locale.h>
 #include "test.h"
 
+#define MAX_VALUE 4294967295
 /**
  * @tc.name      : towupper_l_0100
  * @tc.desc      : Verify towupper_l process success when using the en_US.UTF-8 character set.
@@ -144,6 +145,38 @@ void towupper_l_0400(void)
     freelocale(m_locale);
 }
 
+/**
+ * @tc.name      : towupper_l_0500
+ * @tc.desc      : Verify towupper_l process success when using the zh_CN character set.
+ *                 Input parameter is the maximum value of int, please verify that the return is -1
+ * @tc.level     : Level 1
+ */
+ void towupper_l_0500(void) 
+ {
+    locale_t m_locale = newlocale(LC_ALL_MASK, "zh_CN", NULL);
+    wint_t res = towupper_l(MAX_VALUE, m_locale);
+    if (res != -1) {
+        t_error("Test case %s failed, get result is -1 but want get value %d\n", __FUNCTION__, res);
+    } 
+    freelocale(m_locale);
+ }
+
+ /**
+ * @tc.name      : towupper_l_0600
+ * @tc.desc      : Verify towupper_l process success when using the en_US.UTF-8 character set.
+ *                 Input parameter is the maximum value of int, please verify that the return is -1
+ * @tc.level     : Level 1
+ */
+ void towupper_l_0600(void) 
+ {
+    locale_t m_locale = newlocale(LC_ALL_MASK, "en_US.UTF-8", NULL);
+    wint_t res = towupper_l(MAX_VALUE, m_locale);
+    if (res != -1) {
+        t_error("Test case %s failed, get result is -1 but want get value %d\n", __FUNCTION__, res);
+    } 
+    freelocale(m_locale);
+ }
+
 int main(int argc, char *argv[])
 {
     set_wctype_icu_enable();
@@ -151,5 +184,7 @@ int main(int argc, char *argv[])
     towupper_l_0200();
     towupper_l_0300();
     towupper_l_0400();
+    towupper_l_0500();
+    towupper_l_0600();
     return t_status;
 }

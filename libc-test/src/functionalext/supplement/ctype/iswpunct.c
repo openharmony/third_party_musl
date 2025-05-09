@@ -24,6 +24,7 @@
 
 #define PUNCT_WINT_COUNT 842
 #define UNICODE_SIZE 1114111
+#define MAX_VALUE 4294967295
 /**
  * @tc.name      : iswpunct_0100
  * @tc.desc      : Use the iswpunct method to determine whether the incoming wide character is a punctuation mark
@@ -188,6 +189,32 @@ void iswpunct_l_0400(void)
     EXPECT_EQ("iswpunct_l_0400", total, PUNCT_WINT_COUNT);
 }
 
+/**
+ * @tc.name      : iswpunct_l_0500
+ * @tc.desc      : Whether a character in a the maximum value of int is not a letter
+ * @tc.level     : Level 1
+ */
+ void iswpunct_l_0500(void)
+ {
+    locale_t m_locale = newlocale(LC_CTYPE_MASK, "zh_CN", NULL);
+    int ret = iswpunct_l(MAX_VALUE, m_locale);
+    freelocale(m_locale);
+    EXPECT_EQ("iswpunct_l_0500", ret, CMPFLAG);
+ }
+
+/**
+* @tc.name      : iswpunct_l_0600
+* @tc.desc      : Whether a character in a the maximum value of int is not a letter
+* @tc.level     : Level 1
+*/
+void iswpunct_l_0600(void)
+{
+    locale_t m_locale = newlocale(LC_CTYPE_MASK, "en_US.UTF-8", NULL);
+    int ret = iswpunct_l(MAX_VALUE, m_locale);
+    freelocale(m_locale);
+    EXPECT_EQ("iswpunct_l_0600", ret, CMPFLAG);
+}
+
 int main(int argc, char *argv[])
 {
     set_wctype_icu_enable();
@@ -201,5 +228,7 @@ int main(int argc, char *argv[])
     iswpunct_l_0202();
     iswpunct_l_0300();
     iswpunct_l_0400();
+    iswpunct_l_0500();
+    iswpunct_l_0600();
     return t_status;
 }
