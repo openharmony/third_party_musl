@@ -1354,6 +1354,7 @@
     psiginfo;
     psignal;
     pthread_atfork;
+    pthread_atfork_for_gwpasan;
     pthread_attr_destroy;
     pthread_attr_getdetachstate;
     pthread_attr_getguardsize;
