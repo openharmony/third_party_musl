@@ -96,7 +96,7 @@ $(TARGETS:%=musl_copy_for_%):
 optimized_routines_install_for_liteos_a_user: musl_copy_for_liteos_a_user
 ifneq ($(ARCH),)
 	$(HIDE) cp -rfp $(OPTRTDIR)/string/$(ARCH)/* $</src/string/$(ARCH)/
-	$(HIDE) cp -rfp $(OPTRTDIR)/string/asmdefs.h $</src/string/asmdefs.h
+	$(HIDE) cp -rfp $(OPTRTDIR)/string/$(ARCH)/asmdefs.h $</src/string/$(ARCH)/asmdefs.h
 ifeq ($(ARCH),arm)
 	$(HIDE) rm -f $</src/string/arm/memcpy.c
 	$(HIDE) rm -f $</src/string/arm/memcpy_le.S
