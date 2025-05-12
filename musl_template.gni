@@ -337,11 +337,16 @@ template("static_and_shared_libs_template") {
       sources += [ "${target_out_dir}/${musl_ported_dir}/${s}" ]
     }
     if (musl_arch == "arm") {
+      include_dirs = [
+        "$OPTRTDIR/math",
+        "$OPTRTDIR/math/include",
+      ]
       sources += [
         "$OPTRTDIR/math/cosf.c",
         "$OPTRTDIR/math/exp2.c",
         "$OPTRTDIR/math/exp2f.c",
         "$OPTRTDIR/math/exp2f_data.c",
+        "$OPTRTDIR/math/exp_data.c",
         "$OPTRTDIR/math/expf.c",
         "$OPTRTDIR/math/log.c",
         "$OPTRTDIR/math/log2.c",
@@ -351,8 +356,12 @@ template("static_and_shared_libs_template") {
         "$OPTRTDIR/math/log_data.c",
         "$OPTRTDIR/math/logf.c",
         "$OPTRTDIR/math/logf_data.c",
+        "$OPTRTDIR/math/math_err.c",
+        "$OPTRTDIR/math/math_errf.c",
         "$OPTRTDIR/math/pow.c",
+        "$OPTRTDIR/math/pow_log_data.c",
         "$OPTRTDIR/math/powf.c",
+        "$OPTRTDIR/math/powf_log2_data.c",
         "$OPTRTDIR/math/sincosf.c",
         "$OPTRTDIR/math/sincosf_data.c",
         "$OPTRTDIR/math/sinf.c",
@@ -845,8 +854,13 @@ template("musl_libs") {
     }
 
     if (musl_arch == "aarch64") {
+      include_dirs = [
+        "$OPTRTDIR/math",
+        "$OPTRTDIR/math/include",
+      ]
       sources += [
         "$OPTRTDIR/math/cosf.c",
+        "$OPTRTDIR/math/math_errf.c",
         "$OPTRTDIR/math/sincosf.c",
         "$OPTRTDIR/math/sincosf_data.c",
         "$OPTRTDIR/math/sinf.c",
