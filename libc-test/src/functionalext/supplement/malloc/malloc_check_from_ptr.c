@@ -22,6 +22,14 @@
 #define NO_JEMALLOC_ZONE 0
 #define JEMALLOC_ZONE 1
 #define UN_JEMALLOC (-1)
+#define NUM_MALLOCS 256
+
+#define EXPECT_EQ_ONE_OF(fun, val, exp1, exp2) do { \
+    if (((val) != (exp1)) && ((val) != (exp2))) { \
+        t_error("[%s] failed: %d != %d and %d != %d\n", \
+                #fun, (int)(val), (int)(exp1), (int)(val), (int)(exp2)); \
+    } \
+} while (0)
 
 /**
  * @tc.name      : malloc_check_from_ptr_0100
@@ -36,7 +44,7 @@ void malloc_check_from_ptr_0100(void)
         return;
     }
     int ret = malloc_check_from_ptr(p);
-    EXPECT_NE("malloc_check_from_ptr_0100", ret, NO_JEMALLOC_ZONE);
+    EXPECT_EQ_ONE_OF("malloc_check_from_ptr_0100", ret, JEMALLOC_ZONE, UN_JEMALLOC);
     free(p);
 }
 
@@ -53,13 +61,13 @@ void malloc_check_from_ptr_0200(void)
         return;
     }
     int ret = malloc_check_from_ptr(p);
-    EXPECT_NE("malloc_check_from_ptr_0200", ret, JEMALLOC_ZONE);
+    EXPECT_EQ_ONE_OF("malloc_check_from_ptr_0200", ret, NO_JEMALLOC_ZONE, UN_JEMALLOC);
     munmap(p, TEST_MEM_SIZE);
 }
 
 /**
  * @tc.name      : malloc_check_from_ptr_0300
- * @tc.desc      : The memory block was not allocated using calloc
+ * @tc.desc      : The memory block was allocated using calloc
  * @tc.level     : Level 0
  */
 void malloc_check_from_ptr_0300(void)
@@ -70,8 +78,37 @@ void malloc_check_from_ptr_0300(void)
         return;
     }
     int ret = malloc_check_from_ptr(p);
-    EXPECT_NE("malloc_check_from_ptr_0300", ret, NO_JEMALLOC_ZONE);
+    EXPECT_EQ_ONE_OF("malloc_check_from_ptr_0300", ret, JEMALLOC_ZONE, UN_JEMALLOC);
     free(p);
+}
+
+/**
+ * @tc.name      : malloc_check_from_ptr_0400
+ * @tc.desc      : multiple test malloc_check_from_ptr
+ * @tc.level     : Level 0
+ */
+void malloc_check_from_ptr_0400(void)
+{
+    void *ptrs[NUM_MALLOCS];
+
+    // multiple malloc
+    for (int i = 0; i < NUM_MALLOCS; ++i) {
+        ptrs[i] = malloc(TEST_MEM_SIZE);
+        if (!ptrs[i]) {
+            return;
+        }
+    }
+
+    // malloc_check_from_ptr in ptrs
+    for (int i = 0; i < NUM_MALLOCS; ++i) {
+        int ret = malloc_check_from_ptr(ptrs[i]);
+        EXPECT_EQ_ONE_OF("malloc_check_from_ptr_0400", ret, JEMALLOC_ZONE, UN_JEMALLOC);
+    }
+
+    // free all
+    for (int i = 0; i < NUM_MALLOCS; ++i) {
+        free(ptrs[i]);
+    }
 }
 
 int main(void)
@@ -79,5 +116,6 @@ int main(void)
     malloc_check_from_ptr_0100();
     malloc_check_from_ptr_0200();
     malloc_check_from_ptr_0300();
+    malloc_check_from_ptr_0400();
     return t_status;
 }
