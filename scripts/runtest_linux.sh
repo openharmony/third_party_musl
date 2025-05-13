@@ -44,6 +44,7 @@ TESTDIR=${LOCAL}/${OUTDIR}/musl/libc-test
 DYNLIB=${LOCAL}/${OUTDIR}/musl/libc-test-lib
 SHDIR=${LOCAL}/third_party/musl/scripts
 REMOTE=/data/tests/libc-test
+REMOTELOCAL=/data/local/tmp
 REMOTESYSTEM=/system/lib
 
 echo checking HDC device....
@@ -106,6 +107,7 @@ ${CMD} shell mkdir ${REMOTE}/src/A
 ${CMD} shell mkdir ${REMOTE}/src/B
 ${CMD} shell mkdir ${REMOTE}/src/C
 ${CMD} shell mkdir ${REMOTE}/src/D
+${CMD} shell mkdir ${REMOTELOCAL}/libc-test-lib
 ${CMD} shell mkdir -p ${REMOTE}/src/rpath_lib/rpath_support_A
 ${CMD} shell mkdir -p ${REMOTE}/src/rpath_lib/rpath_support_B
 ${CMD} shell mkdir -p ${REMOTE}/src/rpath_support_C
@@ -137,6 +139,8 @@ ${CMD} shell cp ${REMOTE}/src/libdlclose_recursive.so /system/lib64/libdlclose_r
 ${CMD} shell cp ${REMOTE}/src/libdlclose_recursive_dlopen_so.so /system/lib64/libdlclose_recursive_dlopen_so.so
 ${CMD} shell cp ${REMOTE}/src/libdl_gnu_hash_so.so ${REMOTE}/src/libdl_gnu_hash_so.so
 ${CMD} shell cp ${REMOTE}/src/libdl_sysv_hash_so.so ${REMOTE}/src/libdl_sysv_hash_so.so
+${CMD} shell cp ${REMOTE}/src/libdlopen_dso.so ${REMOTELOCAL}/libc-test-lib/libdlopen_dso.so
+${CMD} shell cp ${REMOTE}/src/libdlopen_init.so ${REMOTELOCAL}/libc-test-lib/libdlopen_init.so
 
 ${CMD} shell mv ${REMOTE}/src/zh_CN /tmp/zh_CN
 

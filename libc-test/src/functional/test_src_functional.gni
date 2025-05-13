@@ -9,6 +9,7 @@ functional_list = [
   "dirname",
   "dlopen",
   "dlopen_ns",
+  "dl_multithread_lock",
   "dl_multithread_test",
   "env",
   "fcntl",
