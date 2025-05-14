@@ -24,6 +24,7 @@
 
 #define UPPER_WINT_COUNT 1831
 #define UNICODE_SIZE 1114111
+#define MAX_VALUE 4294967295
 /**
  * @tc.name      : iswupper_0100
  * @tc.desc      : Determine whether the incoming wide character is an uppercase letter by the iswupper method
@@ -202,6 +203,32 @@ void iswupper_l_0400(void)
     EXPECT_EQ("iswupper_l_0400", total, UPPER_WINT_COUNT);
 }
 
+/**
+ * @tc.name      : iswupper_l_0500
+ * @tc.desc      : Whether a character in a the maximum value of int is not a letter
+ * @tc.level     : Level 1
+ */
+ void iswupper_l_0500(void)
+ {
+    locale_t m_locale = newlocale(LC_CTYPE_MASK, "zh_CN", NULL);
+    int ret = iswupper_l(MAX_VALUE, m_locale);
+    freelocale(m_locale);
+    EXPECT_EQ("iswupper_l_0500", ret, CMPFLAG);
+ }
+
+/**
+* @tc.name      : iswupper_l_0600
+* @tc.desc      : Whether a character in a the maximum value of int is not a letter
+* @tc.level     : Level 1
+*/
+void iswupper_l_0600(void)
+{
+    locale_t m_locale = newlocale(LC_CTYPE_MASK, "en_US.UTF-8", NULL);
+    int ret = iswupper_l(MAX_VALUE, m_locale);
+    freelocale(m_locale);
+    EXPECT_EQ("iswupper_l_0600", ret, CMPFLAG);
+}
+
 int main(int argc, char *argv[])
 {
     set_wctype_icu_enable();
@@ -216,5 +243,7 @@ int main(int argc, char *argv[])
     iswupper_l_0202();
     iswupper_l_0300();
     iswupper_l_0400();
+    iswupper_l_0500();
+    iswupper_l_0600();
     return t_status;
 }

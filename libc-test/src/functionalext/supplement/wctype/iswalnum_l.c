@@ -23,6 +23,7 @@ const int SIZE = 128;
 
 #define ALNUM_WINT_COUNT 136784
 #define UNICODE_SIZE 1114111
+#define MAX_VALUE 4294967295
 
 /**
  * @tc.name      : iswalnum_l_0100
@@ -123,6 +124,33 @@ void iswalnum_l_0600(void)
     EXPECT_EQ("iswalnum_l_0400", total, ALNUM_WINT_COUNT);
 }
 
+/**
+ * @tc.name      : iswalnum_l_0700
+ * @tc.desc      : Verify iswalnum_l process success. Input parameter is the maximum value of int, please verify that the return is CMPFLAG
+ * @tc.level     : Level 1
+ */
+ void iswalnum_l_0700(void)
+ {
+    locale_t m_locale = newlocale(LC_CTYPE_MASK, "en_US.UTF-8", NULL);
+    int ret = iswalnum_l((wchar_t)MAX_VALUE, m_locale);
+    freelocale(m_locale);
+    EXPECT_EQ("iswalnum_l_0700", ret, CMPFLAG);
+ }
+
+ /**
+ * @tc.name      : iswalnum_l_0800
+ * @tc.desc      : Verify iswalnum_l process success. Input parameter is the maximum value of int, please verify that the return is CMPFLAG
+ *                 code table.
+ * @tc.level     : Level 1
+ */
+ void iswalnum_l_0800(void)
+ {
+    locale_t m_locale = newlocale(LC_CTYPE_MASK, "en_US.UTF-8", NULL);
+    int ret = iswalnum_l((wchar_t)MAX_VALUE, m_locale);
+    freelocale(m_locale);
+    EXPECT_EQ("iswalnum_l_0800", ret, CMPFLAG);
+ }
+
 int main(void)
 {
     set_wctype_icu_enable();
@@ -132,5 +160,7 @@ int main(void)
     iswalnum_l_0400();
     iswalnum_l_0500();
     iswalnum_l_0600();
+    iswalnum_l_0700();
+    iswalnum_l_0800();
     return t_status;
 }
