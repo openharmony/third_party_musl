@@ -26,7 +26,7 @@ void* malloc(size_t bytes)
 	volatile const struct MallocDispatchType* dispatch_table = (struct MallocDispatchType *)atomic_load_explicit(
 		&__musl_libc_globals.current_dispatch_table, memory_order_acquire);
 	if (__predict_false(dispatch_table != NULL)) {
-		if (__get_memleak_hook_flag()) {
+		if (__get_custom_hook_flag()) {
 			return dispatch_table->malloc(bytes);
 		}
 		if (!__get_global_hook_flag()) {
@@ -54,7 +54,7 @@ void* aligned_alloc(size_t align, size_t len)
 	volatile const struct MallocDispatchType* dispatch_table = (struct MallocDispatchType *)atomic_load_explicit(
 		&__musl_libc_globals.current_dispatch_table, memory_order_acquire);
 	if (__predict_false(dispatch_table != NULL)) {
-		if (__get_memleak_hook_flag()) {
+		if (__get_custom_hook_flag()) {
 			return dispatch_table->aligned_alloc(align, len);
 		}
 		if (!__get_global_hook_flag()) {
@@ -73,7 +73,7 @@ void free(void* mem)
 	volatile const struct MallocDispatchType* dispatch_table = (struct MallocDispatchType *)atomic_load_explicit(
 		&__musl_libc_globals.current_dispatch_table, memory_order_acquire);
 	if (__predict_false(dispatch_table != NULL)) {
-		if (__get_memleak_hook_flag()) {
+		if (__get_custom_hook_flag()) {
 			dispatch_table->free(mem);
 			return;
 		}
