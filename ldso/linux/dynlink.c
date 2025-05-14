@@ -6224,8 +6224,10 @@ void remove_dso_handle_node(void *dso_handle)
 		pthread_rwlock_unlock(&lock);
 		return;
 	} else {
-		LD_LOGE("[cxa_thread] can't find matched dso handle node by %{public}p, count:%{public}d", dso_handle, node->count);
-		error("[cxa_thread] can't find matched dso handle node by %p, count:%d", dso_handle, node->count);
+		LD_LOGE("[cxa_thread] can't find matched dso handle node by %{public}p, node %{public}s null, count:%{public}d",
+			dso_handle, node ? "not" : "is", node ? node->count : 0);
+		error("[cxa_thread] can't find matched dso handle node by %p, node %s null, count:%d",
+			dso_handle, node ? "not" : "is", node ? node->count : 0);
 	}
 	pthread_rwlock_unlock(&lock);
 
