@@ -48,6 +48,10 @@ template("static_and_shared_libs_template") {
       ]
     }
 
+    if (musl_use_mutex_wait_opt) {
+      defines += [ "USE_MUTEX_WAIT_OPT" ]
+    }
+
     if (!is_llvm_build && !is_asan && musl_arch != "mips") {
       defines += [ "OHOS_FDTRACK_HOOK_ENABLE" ]
     }
@@ -96,6 +100,7 @@ template("static_and_shared_libs_template") {
       "./src/hook/linux/musl_socket_preinit.c",
       "./src/hook/linux/musl_socket_preinit_common.c",
       "./src/hook/linux/socket_common.c",
+      "./src/hook/linux/musl_opt.c"
     ]
 
     deps = [
@@ -130,9 +135,15 @@ template("static_and_shared_libs_template") {
     configs -= musl_inherited_configs
 
     if (defined(include_dirs)) {
-      include_dirs += [ "${target_out_dir}/${musl_ported_dir}/src/internal" ]
+      include_dirs += [
+        "${target_out_dir}/${musl_ported_dir}/src/internal",
+        "${target_out_dir}/${musl_ported_dir}/arch/${musl_arch}"
+      ]
     } else {
-      include_dirs = [ "${target_out_dir}/${musl_ported_dir}/src/internal" ]
+      include_dirs = [
+        "${target_out_dir}/${musl_ported_dir}/src/internal",
+        "${target_out_dir}/${musl_ported_dir}/arch/${musl_arch}"
+      ]
     }
 
     configs += [
@@ -500,6 +511,10 @@ template("static_and_shared_libs_template") {
         defines += [ "USE_JEMALLOC_RECYCLE_FUNC" ]
       }
       include_dirs = [ "${musl_malloc_plugin}/include/jemalloc" ]
+    }
+
+    if (musl_use_mutex_wait_opt) {
+      defines += [ "USE_MUTEX_WAIT_OPT" ]
     }
 
     configs -= musl_inherited_configs

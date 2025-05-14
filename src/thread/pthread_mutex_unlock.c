@@ -61,6 +61,10 @@ int __pthread_mutex_unlock(pthread_mutex_t *m)
 	}
 #endif
 
+#ifdef USE_MUTEX_WAIT_OPT
+	__asm__ volatile ("sev" : : : "memory");
+#endif
+
 	if (type != PTHREAD_MUTEX_NORMAL && !priv) {
 		self->robust_list.pending = 0;
 		__vm_unlock();

@@ -2304,6 +2304,7 @@ musl_src_files_ext = [
   "src/hook/linux/musl_fdtrack_load.c",
   "src/hook/linux/musl_preinit_common.c",
   "src/hook/linux/musl_socket_preinit_common.c",
+  "src/hook/linux/musl_opt.c",
   "crt/linux/crtplus.c",
   "src/linux/arm/linux/flock.s",
   "src/linux/aarch64/linux/flock.s",
@@ -2384,6 +2385,7 @@ musl_src_files_ext = [
   "src/hook/linux/musl_malloc.h",
   "src/hook/linux/musl_socket_dispatch.h",
   "src/hook/linux/musl_socket_preinit_common.h",
+  "src/hook/linux/musl_opt.h",
   "src/hook/linux/memory_trace.h",
   "src/hook/linux/musl_socket.h",
 ]
@@ -2405,6 +2407,7 @@ musl_src_linux_files = [
   "src/hook/musl_socket_preinit_common.h",
   "src/hook/memory_trace.h",
   "src/hook/musl_socket.h",
+  "src/hook/musl_opt.h",
   "src/internal/musl_log.c",
   "src/internal/vdso.c",
   "src/hook/malloc_common.c",
@@ -2416,6 +2419,7 @@ musl_src_linux_files = [
   "src/hook/musl_fdtrack_load.c",
   "src/hook/musl_preinit_common.c",
   "src/hook/musl_socket_preinit_common.c",
+  "src/hook/musl_opt.c",
   "crt/crtplus.c",
   "src/linux/arm/flock.s",
   "src/linux/aarch64/flock.s",
@@ -2515,6 +2519,7 @@ musl_inc_hook_files = [
   "src/hook/linux/musl_malloc_dispatch.h",
   "src/hook/linux/musl_preinit_common.h",
   "src/hook/linux/musl_socket_dispatch.h",
+  "src/hook/linux/musl_opt.h"
 ]
 
 freebsd_headers = [ "$FREEBSD_DIR/contrib/libexecinfo/execinfo.h" ]

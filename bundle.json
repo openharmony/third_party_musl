@@ -33,7 +33,8 @@
             "musl_use_jemalloc_recycle_func",
             "musl_guard_jemalloc_tsd",
             "musl_malloc_plugin",
-            "musl_linux_kernel_dir"
+            "musl_linux_kernel_dir",
+            "musl_use_mutex_wait_opt"
         ],
         "adapted_system_type": ["mini", "small", "standard"],
         "rom": "",
