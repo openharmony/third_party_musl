@@ -24,6 +24,7 @@
 
 #define DIGIT_WINT_COUNT 680
 #define UNICODE_SIZE 1114111
+#define MAX_VALUE 4294967295
 /**
  * @tc.name      : iswdigit_0100
  * @tc.desc      : Use the iswdigit function to determine whether the incoming wide character is a decimal number
@@ -188,6 +189,32 @@ void iswdigit_l_0400(void)
     EXPECT_EQ("iswdigit_l_0400", total, DIGIT_WINT_COUNT);
 }
 
+/**
+ * @tc.name      : iswdigit_l_0500
+ * @tc.desc      : Whether a character in a the maximum value of int is not a letter
+ * @tc.level     : Level 1
+ */
+ void iswdigit_l_0500(void)
+ {
+    locale_t m_locale = newlocale(LC_CTYPE_MASK, "zh_CN", NULL);
+    int ret = iswdigit_l(MAX_VALUE, m_locale);
+    freelocale(m_locale);
+    EXPECT_EQ("iswdigit_l_0500", ret, CMPFLAG);
+ }
+
+/**
+* @tc.name      : iswdigit_l_0600
+* @tc.desc      : Whether a character in a the maximum value of int is not a letter
+* @tc.level     : Level 1
+*/
+void iswdigit_l_0600(void)
+{
+    locale_t m_locale = newlocale(LC_CTYPE_MASK, "en_US.UTF-8", NULL);
+    int ret = iswdigit_l(MAX_VALUE, m_locale);
+    freelocale(m_locale);
+    EXPECT_EQ("iswdigit_l_0600", ret, CMPFLAG);
+}
+
 int main(int argc, char *argv[])
 {
     set_wctype_icu_enable();
@@ -201,5 +228,7 @@ int main(int argc, char *argv[])
     iswdigit_l_0202();
     iswdigit_l_0300();
     iswdigit_l_0400();
+    iswdigit_l_0500();
+    iswdigit_l_0600();
     return t_status;
 }
