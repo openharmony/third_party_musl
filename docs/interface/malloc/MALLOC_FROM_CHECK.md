@@ -8,7 +8,7 @@
 
 #### **SYNOPSIS**
 
-​       #include <stdlib.h>
+​       #include <malloc.h>
 
        int malloc_check_from_ptr(void *ptr);
 
