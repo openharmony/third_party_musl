@@ -22,15 +22,15 @@
 #### **RETURN VALUE**
 
 ​       On success, malloc_check_from_ptr() returns one of the following values:  
-​       1  The memory block was allocated using by Standard C library Memory Allocator.  
-​       0  The memory block was not allocated using by Standard C library Memory Allocator.  
-​       -1 The function is not implemented or an error occurred, errno is set to indicate the error.
+​         1  The memory block was allocated using by Standard C library Memory Allocator.  
+​         0  The memory block was not allocated using by Standard C library Memory Allocator.  
+​         -1 The function is not implemented or an error occurred, errno is set to indicate the error.
 
 #### **ERRORS**
 
 ​       The following error codes may be set in errno:  
-       **ENOSYS**: The current standard allocator does not support this interface or it is not implemented.  
-​       **EINVAL**: Indicates that an invalid argument was passed to the function.
+​         **ENOSYS**: The current standard allocator does not support this interface or it is not implemented.  
+​         **EINVAL**: Indicates that an invalid argument was passed to the function.
 
 #### ATTRIBUTES
 
@@ -46,7 +46,7 @@
 #### NOTES
 
 ​      If the function returns -1 and errno is set to ENOSYS, it indicates that the functionality is not implemented on the current platform.  
-      If the function returns -1 and errno is set to a value other than ENOSYS, it indicates that an internal error occurred in the memory allocator.
+​      If the function returns -1 and errno is set to a value other than ENOSYS, it indicates that an internal error occurred in the memory allocator.
 
 #### CONFORMING TO
 
