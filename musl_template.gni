@@ -139,8 +139,8 @@ template("static_and_shared_libs_template") {
     ]
 
     cflags = [
-      #"-mllvm",
-      #"--instcombine-max-iterations=0",
+      "-mllvm",
+      "--instcombine-max-iterations=0",
       "-ffp-contract=fast",
       "-O3",
       "-Wno-int-conversion",
@@ -860,8 +860,8 @@ template("musl_libs") {
       ":stack_config_musl",
     ]
     cflags = [
-      #"-mllvm",
-      #"-instcombine-max-iterations=0",
+      "-mllvm",
+      "-instcombine-max-iterations=0",
       "-ffp-contract=fast",
       "-O3",
       "-fPIC",
@@ -978,8 +978,8 @@ template("musl_libs") {
       ":stack_config_musl",
     ]
     cflags = [
-      #"-mllvm",
-      #"-instcombine-max-iterations=0",
+      "-mllvm",
+      "-instcombine-max-iterations=0",
       "-ffp-contract=fast",
       "-O3",
       "-fPIC",
