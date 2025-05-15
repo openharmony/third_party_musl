@@ -29,8 +29,8 @@
 #### **ERRORS**
 
 ​        The following error codes may be set in errno:
-​        **ENOSYS **: The current standard allocator does not support this interface or it is not implemented.
-​        **EINVAL **: Indicates that an invalid argument was passed to the function.
+​        **ENOSYS**: The current standard allocator does not support this interface or it is not implemented.
+​        **EINVAL**: Indicates that an invalid argument was passed to the function.
 
 #### ATTRIBUTES
 
