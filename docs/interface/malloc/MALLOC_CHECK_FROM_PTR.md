@@ -28,9 +28,9 @@
 
 #### **ERRORS**
 
-​        The following error codes may be set in errno:
-​        **ENOSYS**: The current standard allocator does not support this interface or it is not implemented.
-​        **EINVAL**: Indicates that an invalid argument was passed to the function.
+​        The following error codes may be set in errno:  
+​        **ENOSYS**: The current standard allocator does not support this interface or it is not implemented.  
+​        **EINVAL**: Indicates that an invalid argument was passed to the function.  
 
 #### ATTRIBUTES
 
@@ -45,8 +45,8 @@
 
 #### NOTES
 
-​      If the function returns -1 and errno is set to ENOSYS, it indicates that the functionality is not implemented on the current platform.
-​      If the function returns -1 and errno is set to a value other than ENOSYS, it indicates that an internal error occurred in the memory allocator.
+​      If the function returns -1 and errno is set to ENOSYS, it indicates that the functionality is not implemented on the current platform.  
+​      If the function returns -1 and errno is set to a value other than ENOSYS, it indicates that an internal error occurred in the memory allocator.  
 
 #### CONFORMING TO
 
