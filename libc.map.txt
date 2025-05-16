@@ -2042,6 +2042,7 @@
     DFX_SetAppRunningUniqueId;
     DFX_SetCrashObj;
     DFX_ResetCrashObj;
+    DFX_SetCrashLogConfig;
     __hwasan_check_enabled;
     malloc_check_from_ptr;
   local:
