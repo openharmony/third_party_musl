@@ -55,6 +55,26 @@ void* ohos_aligned_alloc_hook_init_function(size_t alignment, size_t bytes);
 void* ohos_mmap_hook_init_function(void* addr, size_t length, int prot, int flags, int fd, off_t offset);
 void default_memtrace(void* addr, size_t size, const char* tag, bool is_using) {}
 
+#ifdef USE_GWP_ASAN
+extern void* libc_gwp_asan_malloc(size_t bytes);
+extern void libc_gwp_asan_free(void *mem);
+extern size_t libc_gwp_asan_malloc_usable_size(void *mem);
+extern void* libc_gwp_asan_realloc(void *ptr, size_t size);
+extern void* libc_gwp_asan_calloc(size_t nmemb, size_t size);
+ 
+static struct MallocDispatchType __ohos_malloc_hook_init_dispatch = {
+	.malloc = ohos_malloc_hook_init_function,
+	.free = libc_gwp_asan_free,
+	.mmap = ohos_mmap_hook_init_function,
+	.munmap = MuslMalloc(munmap),
+	.calloc = libc_gwp_asan_calloc,
+	.realloc = libc_gwp_asan_realloc,
+	.prctl = MuslMalloc(prctl),
+	.malloc_usable_size = libc_gwp_asan_malloc_usable_size,
+	.memtrace = default_memtrace,
+	.aligned_alloc = ohos_aligned_alloc_hook_init_function,
+};
+#else
 static struct MallocDispatchType __ohos_malloc_hook_init_dispatch = {
 	.malloc = ohos_malloc_hook_init_function,
 	.free = MuslFunc(free),
@@ -67,6 +87,7 @@ static struct MallocDispatchType __ohos_malloc_hook_init_dispatch = {
 	.memtrace = default_memtrace,
 	.aligned_alloc = ohos_aligned_alloc_hook_init_function,
 };
+#endif
 #define MAX_SYM_NAME_SIZE 1000
 #define MAX_PROC_NAME_SIZE 256
 #define ADDR_NATIVE_ENABLE (1<<4)
@@ -543,8 +564,13 @@ void* ohos_malloc_hook_init_function(size_t bytes)
 			// __musl_log(__MUSL_LOG_ERROR, "%s: ohos_malloc_hook: failed to pthread_detach\n", getprogname());
 		}
 	}
+#ifdef USE_GWP_ASAN
+    void* ptr = libc_gwp_asan_malloc(bytes);
+    return ptr;
+#else
 	void*ptr = MuslFunc(malloc)(bytes);
 	return ptr;
+#endif
 }
 
 void* ohos_aligned_alloc_hook_init_function(size_t alignment, size_t bytes)
