@@ -31,6 +31,20 @@
     } \
 } while (0)
 
+static void free_ptrs_range(void **ptrs, int count)
+{
+    if (!ptrs || count <= 0) {
+        return;
+    }
+
+    for (int i = 0; i < count; ++i) {
+        if (ptrs[i]) {
+            free(ptrs[i]);
+            ptrs[i] = NULL;
+        }
+    }
+}
+
 /**
  * @tc.name      : malloc_check_from_ptr_0100
  * @tc.desc      : The memory block was allocated using malloc
@@ -95,6 +109,7 @@ void malloc_check_from_ptr_0400(void)
     for (int i = 0; i < NUM_MALLOCS; ++i) {
         ptrs[i] = malloc(TEST_MEM_SIZE);
         if (!ptrs[i]) {
+            free_ptrs_range(ptrs, i);
             return;
         }
     }
@@ -106,9 +121,7 @@ void malloc_check_from_ptr_0400(void)
     }
 
     // free all
-    for (int i = 0; i < NUM_MALLOCS; ++i) {
-        free(ptrs[i]);
-    }
+    free_ptrs_range(ptrs, NUM_MALLOCS);
 }
 
 int main(void)
