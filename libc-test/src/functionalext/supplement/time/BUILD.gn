@@ -29,41 +29,12 @@ ohos_shared_library("tls_timer") {
 
   output_extension = "so"
 
-  cflags_common = [
-    "-pipe",
-    "-Wall",
-    "-Wno-unused",
-    "-Wno-unused-function",
-    "-Wno-missing-braces",
-    "-Wno-overflow",
-    "-Wno-unknown-pragmas",
-    "-Wno-unsupported-floating-point-opt",
-    "-fno-builtin",
-    "-frounding-math",
-    "-Werror=implicit-function-declaration",
-    "-Werror=implicit-int",
-    "-Werror=pointer-sign",
-    "-Werror=pointer-arith",
-    "-g",
-    "-D_FILE_OFFSET_BITS=64",
-    "-fPIC",
-    "-DSHARED",
-    "-c",
-    "-o",
-  ]
-
   cflags = [
     "-fno-emulated-tls",
     "-fno-lto",
   ]
 
   cflags_c = cflags
-  cflags_c += cflags_common
-
-  ldflags = [
-    "-shared",
-    "-nostdlib",
-  ]
 
   subsystem_name = "musl"
 
