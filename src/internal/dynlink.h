@@ -11,6 +11,7 @@
 #include <sys/types.h>
 #include <stdlib.h>
 #include "libc.h"
+#include "stdatomic_impl.h"
 #ifdef __HISPARK_LINUX__
 #include "../../ldso/namespace.h"
 #else
@@ -68,6 +69,8 @@ enum {
 	REL_TLSDESC,
 	REL_FUNCDESC,
 	REL_FUNCDESC_VAL,
+	REL_AUTH_SYMBOLIC,
+	REL_AUTH_RELATIVE,
 };
 #ifndef __LITEOS__
 struct td_index {
@@ -85,6 +88,19 @@ struct verinfo {
 struct sym_info_pair {
 	uint_fast32_t sym_h;
 	uint32_t sym_l;
+};
+
+struct cfi_modifier {
+	size_t offset;
+	size_t modifier;
+};
+
+struct icall_item {
+	_Atomic(uint64_t) pc_check;
+	int valid;
+	size_t base;
+	size_t modifier_begin;
+	size_t modifier_end;
 };
 
 struct dso {
@@ -112,6 +128,9 @@ struct dso {
 	Verneed *verneed;
 	char *strings;
 	struct dso *syms_next, *lazy_next;
+	size_t modifier_begin;
+	size_t modifier_end;
+	struct icall_item *item;
 	size_t *lazy, lazy_cnt;
 	unsigned char *map;
 	size_t map_len;
@@ -165,6 +184,7 @@ struct dso {
 	char by_dlopen;
 	bool is_mapped_to_shadow;
 	struct dso_debug_info *debug_info;
+	/* do not add new elements after buf[]*/
 	char buf[];
 };
 
@@ -265,6 +285,14 @@ struct fdpic_dummy_loadmap {
 
 #define DT_ANDROID_RELA (DT_LOOS + 4)
 #define DT_ANDROID_RELASZ (DT_LOOS + 5)
+
+#define DT_AARCH64_AUTH_RELRSZ 0x70000011
+#define DT_AARCH64_AUTH_RELR 0x70000012
+#define DT_AARCH64_AUTH_RELRENT 0x70000013
+#define APIA 0
+#define APIB 1
+#define APDA 2
+#define APDB 3
 
 #define ANDROID_REL_SIGN_SIZE 4
 

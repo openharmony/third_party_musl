@@ -70,6 +70,7 @@ typedef struct sigaltstack stack_t;
 #define ILL_PRVREG 6
 #define ILL_COPROC 7
 #define ILL_BADSTK 8
+#define ILL_ILLPACCFI 0xacac
 
 #define SEGV_MAPERR 1
 #define SEGV_ACCERR 2
