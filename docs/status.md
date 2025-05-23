@@ -9,6 +9,10 @@ https://gitee.com/openharmony/interface_sdk_c/blob/master/third_party/musl/ndk_s
 
 ## 系统侧libc新的变化
 
+
+2025/04/24 <malloc.h>
+- 新增`malloc_check_from_ptr`: 判断一个指针指向的内存地址是否由标准C库的内存分配器分配（since API 19）
+
 2023/12/2 <unistd.h>
 - `getproctid`: 获取当前线程的全局id，即从init命名空间看到的id
 
