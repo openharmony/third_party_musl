@@ -19,6 +19,8 @@
 #define REL_DTPOFF      R_AARCH64_TLS_DTPREL64
 #define REL_TPOFF       R_AARCH64_TLS_TPREL64
 #define REL_TLSDESC     R_AARCH64_TLSDESC
+#define REL_AUTH_SYMBOLIC R_AARCH64_AUTH_ABS64
+#define REL_AUTH_RELATIVE R_AARCH64_AUTH_RELATIVE
 
 #define CRTJMP(pc,sp) __asm__ __volatile__( \
 	"mov sp,%1 ; br %0" : : "r"(pc), "r"(sp) : "memory" )

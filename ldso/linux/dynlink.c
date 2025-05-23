@@ -41,6 +41,8 @@
 #include "strops.h"
 #include "trace/trace_marker.h"
 #include "info/device_api_version.h"
+#include "signal.h"
+#include "sigchain.h"
 
 #ifdef IS_ASAN
 #if defined (__arm__)
@@ -105,6 +107,9 @@ static void (*error)(const char *, ...) = error_noop;
 #define NOTIFY_BASE_CAPACITY 8
 #define SEC_CHECK_HAS_ENCAPS 0x1
 #define HM_PR_CHECK_ENCAPS 0x6a6975
+#define PAC_MODIFIER_SIZE 4
+#define PAC_TARGET_ADDR_REGISTER 17
+#define PAC_MODIFIER_REGISTER 16
 
 #define KPMD_SIZE (1UL << 21)
 #define HUGEPAGES_SUPPORTED_STR_SIZE (32)
@@ -185,6 +190,7 @@ static struct dso *builtin_ctor_queue[4];
 static struct dso **main_ctor_queue;
 static struct fdpic_loadmap *app_loadmap;
 static struct fdpic_dummy_loadmap app_dummy_loadmap;
+static struct icall_item pac_items[PAC_MODIFIER_SIZE] = {0};
 
 struct debug *_dl_debug_addr = &debug;
 
@@ -1247,6 +1253,44 @@ static void get_verinfo(struct dso *dso, int sym_index, struct verinfo *vinfo)
 	}
 }
 
+#if defined(__aarch64__) && (!defined(__LITEOS__))
+static inline size_t do_sign_ia(size_t val, size_t modifier)
+{
+	register size_t pac_x17 __asm__("x17") = val;
+	register size_t modifier_x16 __asm__("x16") = modifier;
+	__asm__ ("pacia1716" : "+r"(pac_x17) : "r"(modifier_x16));
+	return pac_x17;
+}
+#endif
+
+static void do_pauth_reloc(size_t *reloc_addr, size_t val)
+{
+#if defined(__aarch64__) && (!defined(__LITEOS__))
+	if (val == 0) {
+		*reloc_addr = 0;
+		return;
+	}
+	size_t schema = *reloc_addr;
+	unsigned discriminator = (schema >> 32) & 0xffff;
+	int addr_diversity = schema >> 63;
+	int key = (schema >> 60) & 0x3;
+	size_t modifier = discriminator;
+	if (addr_diversity) {
+		modifier = (modifier << 48) | ((size_t)reloc_addr & 0xffffffffffff);
+	}
+
+	switch (key) {
+		case APIB:
+		case APDA:
+		case APDB:
+			break; // for now, only support pacia.
+		default:
+			*reloc_addr = do_sign_ia(val, modifier);
+			break;
+	}
+#endif
+}
+
 static void do_relocs(struct dso *dso, size_t *rel, size_t rel_size, size_t stride)
 {
 	unsigned char *base = dso->base;
@@ -1408,6 +1452,12 @@ static void do_relocs(struct dso *dso, size_t *rel, size_t rel_size, size_t stri
 			*reloc_addr = def.dso->tls.offset - tls_val + addend;
 			break;
 #endif
+		case REL_AUTH_SYMBOLIC:
+			do_pauth_reloc(reloc_addr, sym_val + addend);
+			break;
+		case REL_AUTH_RELATIVE:
+			do_pauth_reloc(reloc_addr, base + addend);
+			break;
 		case REL_TLSDESC:
 			if (stride<3) addend = reloc_addr[!TLSDESC_BACKWARDS];
 			if (def.dso->tls_id > static_tls_cnt) {
@@ -1650,6 +1700,42 @@ static bool check_xpm(int fd)
 	return true;
 }
 
+void add_pac_info(struct dso *dso)
+{
+#if defined(__aarch64__) && (!defined(__LITEOS__))
+	for (int index = 0; index < PAC_MODIFIER_SIZE; index++) {
+		if (!pac_items[index].valid) {
+			pac_items[index].valid = 1;
+			pac_items[index].base = dso->base;
+			// VA_BITS in arm64 is 39, we have enough bits to compress two virtual address into 64 bits.
+			size_t addr_mask = 0xffffffff;
+			uint64_t begin_check = (((size_t)(dso->map) >> 12) & addr_mask) << 32;
+			uint64_t end_check = (((size_t)(dso->map) + dso->map_len) >> 12) & addr_mask;
+			uint64_t check_value = begin_check | end_check;
+			atomic_store(&pac_items[index].pc_check, check_value);
+			pac_items[index].modifier_begin = (size_t)(dso->base) + dso->modifier_begin;
+			pac_items[index].modifier_end = (size_t)(dso->base) + dso->modifier_end;
+			dso->item = &pac_items[index];
+			break;
+		}
+	}
+#endif
+}
+
+void clear_pac_info(struct dso *dso)
+{
+#if defined(__aarch64__) && (!defined(__LITEOS__))
+	if (dso->item == NULL) {
+		return;
+	}
+	dso->item->valid = 0;
+	atomic_store(&dso->item->pc_check, 0);
+	dso->item->modifier_begin = 0;
+	dso->item->modifier_end = 0;
+	dso->item = NULL;
+#endif
+}
+
 UT_STATIC void *map_library(int fd, struct dso *dso, struct reserved_address_params *reserved_params)
 {
 	Ehdr buf[(896+sizeof(Ehdr))/sizeof(Ehdr)];
@@ -1715,6 +1801,9 @@ UT_STATIC void *map_library(int fd, struct dso *dso, struct reserved_address_par
 					ph->p_memsz < DEFAULT_STACK_MAX ?
 					ph->p_memsz : DEFAULT_STACK_MAX;
 			}
+		} else if (ph->p_type == PT_OHOS_CFI_MODIFIER) {
+			dso->modifier_begin = ph->p_vaddr;
+			dso->modifier_end = ph->p_vaddr + ph->p_memsz;
 		}
 #if defined(BTI_SUPPORT) && (!defined(__LITEOS__))
 		/* Security enhancement: parse extra PROT in ELF.
@@ -1946,6 +2035,9 @@ done_mapping:
 	dso->dynv = laddr(dso, dyn);
 	if (dso->tls.size) dso->tls.image = laddr(dso, tls_image);
 	free(allocated_buf);
+	if (dso->modifier_begin && dso->modifier_end) {
+		add_pac_info(dso);
+	}
 	return map;
 noexec:
 	errno = ENOEXEC;
@@ -2801,6 +2893,41 @@ static void do_relr_relocs(struct dso *dso, size_t *relr, size_t relr_size)
 		}
 }
 
+static void do_auth_relr_relocs(struct dso *p, size_t dt_name, size_t dt_size)
+{
+	if (p == &ldso) {
+		return; /* self-relocation has done in _dlstart*/
+	}
+	size_t auth_relr_addr = 0, auth_relr_size = 0, val = 0;
+
+	search_vec(p->dynv, &auth_relr_addr, dt_name);
+	if (auth_relr_addr == 0) {
+		return;
+	}
+	search_vec(p->dynv, &auth_relr_size, dt_size);
+	unsigned char *base = p->base;
+	size_t *auth_reloc_addr;
+	size_t *auth_relr = laddr(p, auth_relr_addr);
+	for (; auth_relr_size; auth_relr++, auth_relr_size -= sizeof(size_t)) {
+		if ((auth_relr[0] & 1) == 0) {
+			auth_reloc_addr = laddr(p, auth_relr[0]);
+			/* 31:0 bits is reserved for addend in pauth Place, current actual relocation type is RELATIVE. */
+			val = (size_t)base + (*auth_reloc_addr & 0xffffffff);
+			do_pauth_reloc(auth_reloc_addr, val);
+			auth_reloc_addr++;
+		} else {
+			int i = 0;
+			for (size_t bitmap = auth_relr[0]; (bitmap >>= 1); i++) {
+				if (bitmap & 1) {
+					val = (size_t)base + (auth_reloc_addr[i] & 0xffffffff);
+					do_pauth_reloc(&auth_reloc_addr[i], val);
+				}
+			}
+			auth_reloc_addr += 8 * sizeof(size_t) - 1;
+		}
+	}
+}
+
 static void reloc_all(struct dso *p, const dl_extinfo *extinfo)
 {
 	ssize_t relro_fd_offset = 0;
@@ -2820,6 +2947,9 @@ static void reloc_all(struct dso *p, const dl_extinfo *extinfo)
 		if (!DL_FDPIC)
 			do_relr_relocs(p, laddr(p, dyn[DT_RELR]), dyn[DT_RELRSZ]);
 
+#if defined(__aarch64__) && (!defined(__LITEOS__))
+		do_auth_relr_relocs(p, DT_AARCH64_AUTH_RELR, DT_AARCH64_AUTH_RELRSZ); // only enable in arm64
+#endif
 		do_android_relocs(p, DT_ANDROID_REL, DT_ANDROID_RELSZ);
 		do_android_relocs(p, DT_ANDROID_RELA, DT_ANDROID_RELASZ);
 
@@ -4467,6 +4597,10 @@ static int dlclose_impl(struct dso *p)
 		free(p->deps_all);
 	}
 
+	if (p->item != NULL) {
+		clear_pac_info(p);
+	}
+
 	trace_marker_end(HITRACE_TAG_MUSL);
 
 	return 0;
@@ -5405,6 +5539,9 @@ static bool task_map_library(struct loadtask *task, struct reserved_address_para
 					ph->p_memsz < DEFAULT_STACK_MAX ?
 					ph->p_memsz : DEFAULT_STACK_MAX;
 			}
+		} else if (ph->p_type == PT_OHOS_CFI_MODIFIER) {
+			task->p->modifier_begin = ph->p_vaddr;
+			task->p->modifier_end = ph->p_vaddr + ph->p_memsz;
 		}
 #if defined(BTI_SUPPORT) && (!defined(__LITEOS__))
 		/* Security enhancement: parse extra PROT in ELF.
@@ -5671,6 +5808,9 @@ done_mapping:
 	}
 	free(task->allocated_buf);
 	task->allocated_buf = NULL;
+	if (task->p->modifier_begin && task->p->modifier_end) {
+		add_pac_info(task->p);
+	}
 	return true;
 noexec:
 	errno = ENOEXEC;

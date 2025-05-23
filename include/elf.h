@@ -408,6 +408,7 @@ typedef struct {
 #define SHT_HISUNW	  0x6fffffff
 #define SHT_HIOS	  0x6fffffff
 #define SHT_LOPROC	  0x70000000
+#define SHT_AARCH64_AUTH_RELR 0x70000004
 #define SHT_HIPROC	  0x7fffffff
 #define SHT_LOUSER	  0x80000000
 #define SHT_HIUSER	  0x8fffffff
@@ -617,6 +618,7 @@ typedef struct {
 #define PT_GNU_STACK	0x6474e551
 #define PT_GNU_RELRO	0x6474e552
 #define PT_GNU_PROPERTY	0x6474e553
+#define PT_OHOS_CFI_MODIFIER 0x6833fc30
 #define PT_LOSUNW	0x6ffffffa
 #define PT_SUNWBSS	0x6ffffffa
 #define PT_SUNWSTACK	0x6ffffffb
@@ -2516,6 +2518,7 @@ enum
 #define R_AARCH64_TLSLE_LDST128_TPREL_LO12_NC 571
 #define R_AARCH64_TLSLD_LDST128_DTPREL_LO12 572
 #define R_AARCH64_TLSLD_LDST128_DTPREL_LO12_NC 573
+#define R_AARCH64_AUTH_ABS64 580
 #define R_AARCH64_COPY         1024
 #define R_AARCH64_GLOB_DAT     1025
 #define R_AARCH64_JUMP_SLOT    1026
@@ -2527,6 +2530,7 @@ enum
 #define R_AARCH64_TLS_TPREL    1030
 #define R_AARCH64_TLS_TPREL64  1030
 #define R_AARCH64_TLSDESC      1031
+#define R_AARCH64_AUTH_RELATIVE 1041
 
 
 #define R_ARM_NONE		0
