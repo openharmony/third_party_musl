@@ -2019,6 +2019,7 @@
     __cfi_slowpath;
     __cfi_slowpath_diag;
     __memleak_hook_flag;
+    __custom_hook_flag;
     mallopt;
     reallocarray;
     CachedParameterCreate;
