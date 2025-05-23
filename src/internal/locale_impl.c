@@ -127,85 +127,85 @@ bool icuuc_wctype_handle_init()
         return true;
     }
     if (!g_icu_opt_func.u_isalnum) {
-        get_icu_symbol(ICU_I18N, &g_icu_opt_func.u_isalnum, ICU_UCHAR_ISALNUM_SYMBOL);
+        get_icu_symbol(ICU_I18N, (void **)&(g_icu_opt_func.u_isalnum), ICU_UCHAR_ISALNUM_SYMBOL);
         if (!g_icu_opt_func.u_isalnum) {
             return false;
         }
     }
     if (!g_icu_opt_func.u_isalpha) {
-        get_icu_symbol(ICU_I18N, &g_icu_opt_func.u_isalpha, ICU_UCHAR_ISALPHA_SYMBOL);
+        get_icu_symbol(ICU_I18N, (void **)&(g_icu_opt_func.u_isalpha), ICU_UCHAR_ISALPHA_SYMBOL);
         if (!g_icu_opt_func.u_isalpha) {
             return false;
         }
     }
     if (!g_icu_opt_func.u_isblank) {
-        get_icu_symbol(ICU_I18N, &g_icu_opt_func.u_isblank, ICU_UCHAR_ISBLANK_SYMBOL);
+        get_icu_symbol(ICU_I18N, (void **)&(g_icu_opt_func.u_isblank), ICU_UCHAR_ISBLANK_SYMBOL);
         if (!g_icu_opt_func.u_isblank) {
             return false;
         }
     }
     if (!g_icu_opt_func.u_iscntrl) {
-        get_icu_symbol(ICU_I18N, &g_icu_opt_func.u_iscntrl, ICU_UCHAR_ISCNTRL_SYMBOL);
+        get_icu_symbol(ICU_I18N, (void **)&(g_icu_opt_func.u_iscntrl), ICU_UCHAR_ISCNTRL_SYMBOL);
         if (!g_icu_opt_func.u_iscntrl) {
             return false;
         }
     }
     if (!g_icu_opt_func.u_isdigit) {
-        get_icu_symbol(ICU_I18N, &g_icu_opt_func.u_isdigit, ICU_UCHAR_ISDIGIT_SYMBOL);
+        get_icu_symbol(ICU_I18N, (void **)&(g_icu_opt_func.u_isdigit), ICU_UCHAR_ISDIGIT_SYMBOL);
         if (!g_icu_opt_func.u_isdigit) {
             return false;
         }
     }
     if (!g_icu_opt_func.u_isgraph) {
-        get_icu_symbol(ICU_I18N, &g_icu_opt_func.u_isgraph, ICU_UCHAR_ISGRAPH_SYMBOL);
+        get_icu_symbol(ICU_I18N, (void **)&(g_icu_opt_func.u_isgraph), ICU_UCHAR_ISGRAPH_SYMBOL);
         if (!g_icu_opt_func.u_isgraph) {
             return false;
         }
     }
     if (!g_icu_opt_func.u_islower) {
-        get_icu_symbol(ICU_I18N, &g_icu_opt_func.u_islower, ICU_UCHAR_ISLOWER_SYMBOL);
+        get_icu_symbol(ICU_I18N, (void **)&(g_icu_opt_func.u_islower), ICU_UCHAR_ISLOWER_SYMBOL);
         if (!g_icu_opt_func.u_islower) {
             return false;
         }
     }
     if (!g_icu_opt_func.u_isprint) {
-        get_icu_symbol(ICU_I18N, &g_icu_opt_func.u_isprint, ICU_UCHAR_ISPRINT_SYMBOL);
+        get_icu_symbol(ICU_I18N, (void **)&(g_icu_opt_func.u_isprint), ICU_UCHAR_ISPRINT_SYMBOL);
         if (!g_icu_opt_func.u_isprint) {
             return false;
         }
     }
     if (!g_icu_opt_func.u_ispunct) {
-        get_icu_symbol(ICU_I18N, &g_icu_opt_func.u_ispunct, ICU_UCHAR_ISPUNCT_SYMBOL);
+        get_icu_symbol(ICU_I18N, (void **)&(g_icu_opt_func.u_ispunct), ICU_UCHAR_ISPUNCT_SYMBOL);
         if (!g_icu_opt_func.u_ispunct) {
             return false;
         }
     }
     if (!g_icu_opt_func.u_isspace) {
-        get_icu_symbol(ICU_I18N, &g_icu_opt_func.u_isspace, ICU_UCHAR_ISSPACE_SYMBOL);
+        get_icu_symbol(ICU_I18N, (void **)&(g_icu_opt_func.u_isspace), ICU_UCHAR_ISSPACE_SYMBOL);
         if (!g_icu_opt_func.u_isspace) {
             return false;
         }
     }
     if (!g_icu_opt_func.u_isupper) {
-        get_icu_symbol(ICU_I18N, &g_icu_opt_func.u_isupper, ICU_UCHAR_ISUPPER_SYMBOL);
+        get_icu_symbol(ICU_I18N, (void **)&(g_icu_opt_func.u_isupper), ICU_UCHAR_ISUPPER_SYMBOL);
         if (!g_icu_opt_func.u_isupper) {
             return false;
         }
     }
     if (!g_icu_opt_func.u_isxdigit) {
-        get_icu_symbol(ICU_I18N, &g_icu_opt_func.u_isxdigit, ICU_UCHAR_ISXDIGIT_SYMBOL);
+        get_icu_symbol(ICU_I18N, (void **)&(g_icu_opt_func.u_isxdigit), ICU_UCHAR_ISXDIGIT_SYMBOL);
         if (!g_icu_opt_func.u_isxdigit) {
             return false;
         }
     }
     if (!g_icu_opt_func.u_tolower) {
-        get_icu_symbol(ICU_UC, &g_icu_opt_func.u_tolower, ICU_UCHAR_TOLOWER_SYMBOL);
+        get_icu_symbol(ICU_UC, (void **)&(g_icu_opt_func.u_tolower), ICU_UCHAR_TOLOWER_SYMBOL);
         if (!g_icu_opt_func.u_tolower) {
             return false;
         }
     }
     if (!g_icu_opt_func.u_toupper) {
-        get_icu_symbol(ICU_UC, &g_icu_opt_func.u_toupper, ICU_UCHAR_TOUPPER_SYMBOL);
+        get_icu_symbol(ICU_UC, (void **)&(g_icu_opt_func.u_toupper), ICU_UCHAR_TOUPPER_SYMBOL);
         if (!g_icu_opt_func.u_toupper) {
             return false;
         }
