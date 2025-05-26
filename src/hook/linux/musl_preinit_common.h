@@ -26,6 +26,7 @@
 #include <stdatomic.h>
 #include "musl_malloc_dispatch_table.h"
 #include "musl_malloc_dispatch.h"
+
 extern struct musl_libc_globals __musl_libc_globals;
 
 extern struct MallocDispatchType __libc_malloc_default_dispatch;
@@ -33,8 +34,6 @@ extern struct MallocDispatchType __libc_malloc_default_dispatch;
 extern volatile atomic_bool __hook_enable_hook_flag;
 
 extern volatile atomic_bool __memleak_hook_flag;
-extern volatile atomic_bool __custom_hook_flag;
-
 extern bool checkLoadMallocMemTrack;
 
 enum EnumFunc {
@@ -86,16 +85,6 @@ inline bool __get_memleak_hook_flag()
 #endif // HOOK_ENABLE
 }
 
-__attribute__((always_inline))
-inline bool __get_custom_hook_flag()
-{
-#ifdef HOOK_ENABLE
-	volatile bool custom_flag = atomic_load_explicit(&__custom_hook_flag, memory_order_acquire);
-	return custom_flag;
-#else
-	return false;
-#endif // HOOK_ENABLE
-}
 
 __attribute__((always_inline))
 inline bool __get_hook_flag()
@@ -144,7 +133,7 @@ inline volatile const struct MallocDispatchType* get_current_dispatch_table()
 #ifdef HOOK_ENABLE
 	volatile const struct MallocDispatchType* ret = (struct MallocDispatchType *)atomic_load_explicit(&__musl_libc_globals.current_dispatch_table, memory_order_acquire);
 	if (ret != NULL) {
-		if (__get_custom_hook_flag()) {
+		if (__get_memleak_hook_flag()) {
 			return ret;
 		}
 		if (!__get_global_hook_flag()) {

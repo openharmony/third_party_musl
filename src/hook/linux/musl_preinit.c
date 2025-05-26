@@ -626,7 +626,7 @@ static void __restore_hook_function_table()
 
 static void __install_malloc_hook()
 {
-	if (__get_custom_hook_flag()) {
+	if (__get_memleak_hook_flag()) {
 		return;
 	}
 	atomic_store_explicit(&__hook_enable_hook_flag, (volatile bool)true, memory_order_seq_cst);
@@ -653,7 +653,7 @@ static void __install_malloc_hook()
 
 static void __uninstal_malloc_hook()
 {
-	if (__get_custom_hook_flag()) {
+	if (__get_memleak_hook_flag()) {
 		return;
 	}
 	if (!atomic_load_explicit(&__hook_enable_hook_flag, memory_order_acquire)) {
