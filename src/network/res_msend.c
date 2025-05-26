@@ -128,6 +128,11 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 #if OHOS_DNS_PROXY_BY_NETSYS
     int retry_count = 0;
 	int retry_limit;
+	int nv4 = 0, nv6 = 0;
+	int iv4[MAXNS] = {0}, iv6[MAXNS] = {0};
+	int first_try[MAXNS] = {0}, sec_try[MAXNS] = {0};
+	int try_ns[MAXNS] = {0};
+	bool multiV4 = false;
 #endif
 
 	pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &cs);
@@ -141,14 +146,40 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 			memcpy(&ns[nns].sin.sin_addr, iplit->addr, 4);
 			ns[nns].sin.sin_port = htons(53);
 			ns[nns].sin.sin_family = AF_INET;
+#if OHOS_DNS_PROXY_BY_NETSYS
+			iv4[nv4] = nns;
+			nv4++;
+#endif
 		} else {
 			sl = sizeof sa.sin6;
 			memcpy(&ns[nns].sin6.sin6_addr, iplit->addr, 16);
 			ns[nns].sin6.sin6_port = htons(53);
 			ns[nns].sin6.sin6_scope_id = iplit->scopeid;
 			ns[nns].sin6.sin6_family = family = AF_INET6;
+#if OHOS_DNS_PROXY_BY_NETSYS
+			iv6[nv6] = nns;
+			nv6++;
+#endif
 		}
 	}
+
+#if OHOS_DNS_PROXY_BY_NETSYS
+	/* If public dns added by netsys, nv4 > 3, else if public dns added by net, nv4 > 2 */
+	if ((nv4 > 3 && conf->nns != conf->non_public) || (nv4 > 2 && conf->nns == conf->non_public)) {
+		multiV4 = true;
+	}
+	/* Use two v4 and all v6 dns for first try, use other v4 for second try */
+	if (multiV4) {
+		first_try[0] = iv4[0];
+		first_try[1] = iv4[1];
+		for (int k=0; k<nv6; k++) {
+			first_try[2+k] = iv6[k];
+		}
+		for (int l=2; l<nv4; l++) {
+			sec_try[l-2] = iv4[l];
+		}
+	}
+#endif
 
 	/* Get local address and open/bind a socket */
 	fd = socket(family, SOCK_DGRAM|SOCK_CLOEXEC|SOCK_NONBLOCK, 0);
@@ -260,16 +291,49 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 				retry[i] = 0;
 				if (!alens[i]) {
 #if OHOS_DNS_PROXY_BY_NETSYS
-                    /* First time only use non public ns, public ns is used after first query failed */
-                    if (retry_count <= 1 && conf->non_public > 0) {
-						retry_limit = conf->non_public;
+					if (multiV4) {
+						/* Use two v4 and all v6 dns for first try, use other v4 for second try */
+						if (retry_count <= 1) {
+							retry_limit = 2 + nv6;
+							memcpy(try_ns, first_try, MAXNS * sizeof(int));
+						} else {
+							retry_limit = nv4 - 2;
+							memcpy(try_ns, sec_try, MAXNS * sizeof(int));
+						}
+						for (j=0; j<retry_limit; j++) {
+							if (sendto(fd, queries[i], qlens[i], MSG_NOSIGNAL, (void *)&ns[try_ns[j]], sl) == -1) {
+								int errno_code = errno;
+#ifndef __LITEOS__
+								MUSL_LOGE("%{public}s: %{public}d: sendto failed, errno id: %{public}d",
+									__func__, __LINE__, errno_code);
+#endif
+								if (dns_errno) {
+									*dns_errno = errno_code;
+								}
+							}
+						}
 					} else {
-						retry_limit = nns;
+						/* First time only use non public ns, public ns is used after first query failed */
+						if (retry_count <= 1 && conf->non_public > 0) {
+							retry_limit = conf->non_public;
+						} else {
+							retry_limit = nns;
+						}
+						for (j=0; j<retry_limit; j++) {
+							if (sendto(fd, queries[i], qlens[i], MSG_NOSIGNAL, (void *)&ns[j], sl) == -1) {
+								int errno_code = errno;
+#ifndef __LITEOS__
+								MUSL_LOGE("%{public}s: %{public}d: sendto failed, errno id: %{public}d",
+									__func__, __LINE__, errno_code);
+#endif
+								if (dns_errno) {
+									*dns_errno = errno_code;
+								}
+							}
+						}
 					}
-					for (j=0; j<retry_limit; j++) {
 #else
                     for (j=0; j<nns; j++) {
-#endif
 						if (sendto(fd, queries[i], qlens[i], MSG_NOSIGNAL, (void *)&ns[j], sl) == -1) {
 							int errno_code = errno;
 #ifndef __LITEOS__
@@ -281,6 +345,7 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 							}
 						}
 					}
+#endif
 				}
 			}
 			t1 = t2;
