@@ -45,7 +45,11 @@ struct service {
 	unsigned char proto, socktype;
 };
 
+#if OHOS_DNS_PROXY_BY_NETSYS
+#define MAXNS 8
+#else
 #define MAXNS 5
+#endif
 
 struct resolvconf {
 	struct address ns[MAXNS];
@@ -85,7 +89,7 @@ hidden int revert_dns_fail_cause(int cause);
 
 #if OHOS_DNS_PROXY_BY_NETSYS
 #define DNS_SO_PATH "libnetsys_client.z.so"
-#define MAX_SERVER_NUM 5
+#define MAX_SERVER_NUM 8
 #define MAX_SERVER_LENGTH 50
 #define OHOS_GET_CONFIG_FUNC_NAME "NetSysGetResolvConf"
 #define OHOS_GET_CACHE_FUNC_NAME "NetSysGetResolvCache"
