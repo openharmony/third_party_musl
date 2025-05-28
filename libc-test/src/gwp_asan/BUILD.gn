@@ -144,6 +144,17 @@ if (musl_use_gwp_asan) {
     subsystem_name = "musl"
     part_name = "libc-test"
   }
+  
+  ohos_executable("gwp_asan_enable_hook_test") {
+    testonly = true
+    sources = [ "enable_hook_test.c" ]
+    configs = [
+      ":gwp_asan_test_config",
+      "//third_party/musl/libc-test/src/common:config_runtest",
+    ]
+    subsystem_name = "musl"
+    part_name = "libc-test"
+  }
 
   group("gwp_asan_test") {
     testonly = true
@@ -159,6 +170,7 @@ if (musl_use_gwp_asan) {
       ":gwp_asan_thread_fork_test",
       ":gwp_asan_unwind_test",
       ":gwp_asan_use_after_free_test",
+      ":gwp_asan_enable_hook_test",
     ]
   }
 }
