@@ -19,6 +19,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include "gwp_asan.h"
 
 void config_gwp_asan_environment(bool logPath)
@@ -46,6 +47,16 @@ void cancel_gwp_asan_environment(bool logPath)
         system("param set gwp_asan.log.path default");
     }
     system("param set gwp_asan.sample.all false");
+}
+
+void send_sig36()
+{
+    pid_t pid = getpid();
+
+    char command[64];
+    int ret = snprintf(command, sizeof(command), "kill -36 %d", pid);
+    system(command);
+    printf("Exec command: %s .\n", command);
 }
 
 #endif
