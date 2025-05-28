@@ -523,6 +523,7 @@ char **restrict in, size_t *restrict inb, char **restrict out, size_t *restrict 
 	target_length = (int32_t)(mytarget - *out);
     if (errCode > ICU_ZERO_ERROR) {
         set_errno(errCode);
+		*in = source_limit - *inb;
         return (size_t)-1;
     } else {
         errCode = ICU_ZERO_ERROR;
