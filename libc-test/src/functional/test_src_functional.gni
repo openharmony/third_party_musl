@@ -87,6 +87,8 @@ functional_list = [
   "fopencookie_test",
   "iconv_test",
   "iconv_joint_icu_test",
+  "iconv_thread",
+  "iconv_icu_test",
 ]
 
 if (musl_use_pthread_cancel) {
