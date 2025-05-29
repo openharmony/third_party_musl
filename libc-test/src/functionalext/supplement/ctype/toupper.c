@@ -14,6 +14,7 @@
  */
 
 #include <stdio.h>
+#include <string.h>
 #include <ctype.h>
 #include "test.h"
 
@@ -73,11 +74,89 @@ void toupper_0400(void)
     }
 }
 
+/**
+ * @tc.name      : toupper_0500
+ * @tc.desc      : Test the result of passing whitespace character into toupper
+ * @tc.level     : Level 2
+ */
+void toupper_0500(void)
+{
+    char ch = ' ';
+    char result = toupper(ch);
+    if (result != ch) {
+        t_error("%s toupper get result is %c but want get value %c ", __func__, result, ch);
+    }
+}
+
+/**
+ * @tc.name      : toupper_0600
+ * @tc.desc      : Test the result of passing all lowercase characters into toupper
+ * @tc.level     : Level 2
+ */
+void toupper_0600(void)
+{
+    char str1[] = "helloworld";
+    size_t sizeStr = sizeof(str1);
+    char str2[sizeStr];
+    for (int i = 0; str1[i]; i++) {
+        str2[i] = toupper(str1[i]);
+    }
+    char wantStr[] = "HELLOWORLD";
+    int result = strcmp(wantStr, str2);
+    if (result != 0) {
+        t_error("%s toupper get str2 is %s but want get value %s ", __func__, str2, wantStr);
+    }
+}
+
+/**
+ * @tc.name      : toupper_0700
+ * @tc.desc      : Test the result of passing all uppercase characters into toupper
+ * @tc.level     : Level 2
+ */
+void toupper_0700(void)
+{
+    char str1[] = "HELLOWORLD";
+    size_t sizeStr = sizeof(str1);
+    char str2[sizeStr];
+    for (int i = 0; str1[i]; i++) {
+        str2[i] = toupper(str1[i]);
+    }
+    char wantStr[] = "HELLOWORLD";
+    int result = strcmp(wantStr, str2);
+    if (result != 0) {
+        t_error("%s toupper get str2 is %s but want get value %s ", __func__, str2, wantStr);
+    }
+}
+
+/**
+ * @tc.name      : toupper_0800
+ * @tc.desc      : Test the result of passing Uncertain characters into toupper
+ * @tc.level     : Level 2
+ */
+void toupper_0800(void)
+{
+    char str1[] = "Hello world!";
+    size_t sizeStr = sizeof(str1);
+    char str2[sizeStr];
+    for (int i = 0; str1[i]; i++) {
+        str2[i] = toupper(str1[i]);
+    }
+    char wantStr[] = "HELLO WORLD!";
+    int result = strcmp(wantStr, str2);
+    if (result != 0) {
+        t_error("%s toupper get str2 is %s but want get value %s ", __func__, str2, wantStr);
+    }
+}
+
 int main(int argc, char *argv[])
 {
     toupper_0100();
     toupper_0200();
     toupper_0300();
     toupper_0400();
+    toupper_0500();
+    toupper_0600();
+    toupper_0700();
+    toupper_0800();
     return t_status;
 }
