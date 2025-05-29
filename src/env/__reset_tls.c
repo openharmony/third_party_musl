@@ -9,7 +9,9 @@ void __reset_tls()
 	size_t i, n = self->dtv[0];
 	if (n) for (p=libc.tls_head, i=1; i<=n; i++, p=p->next) {
 		char *mem = (char *)(self->dtv[i] - DTP_OFFSET);
-		memcpy(mem, p->image, p->len);
-		memset(mem+p->len, 0, p->size - p->len);
+		if (p->image) {
+			memcpy(mem, p->image, p->len);
+			memset(mem+p->len, 0, p->size - p->len);
+		}
 	}
 }

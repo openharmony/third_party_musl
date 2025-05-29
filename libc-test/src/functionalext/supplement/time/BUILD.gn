@@ -20,10 +20,32 @@ foreach(s, functionalext_supplement_time_test) {
   }
 }
 
+ohos_shared_library("tls_timer") {
+  include_dirs = [ "." ]
+
+  sources = [ "tls_timer.c" ]
+
+  output_name = "tls_timer"
+
+  output_extension = "so"
+
+  cflags = [
+    "-fno-emulated-tls",
+    "-fno-lto",
+  ]
+
+  cflags_c = cflags
+
+  subsystem_name = "musl"
+
+  part_name = "libc-test-lib"
+}
+
 group("functionalext_supplement_time_test") {
   testonly = true
   deps = []
   foreach(s, functionalext_supplement_time_test) {
     deps += [ ":${s}" ]
   }
+  deps += [ ":tls_timer" ]
 }
