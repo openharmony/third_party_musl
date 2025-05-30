@@ -155,6 +155,46 @@ void mkostemp_0600(void)
     }
 }
 
+/**
+ * @tc.name      : mkostemp_0700
+ * @tc.desc      : Template with 'XXXXXX' not at the end
+ * @tc.level     : Level 2
+ */
+void mkostemp_0700(void)
+{
+    char temp_dir[] = "/data/mkostemp_0700_XXXXXX_dir";
+    int fd = mkostemp(temp_dir, O_SYNC);
+    //XXXXXX is not at the end, mkdtemp() will fail and return -1. Now template is unchanged.
+    EXPECT_TRUE("mkostemp_0700", fd == -1);
+    if (fd == -1) {
+        EXPECT_EQ("mkostemp_0700", errno, EINVAL);
+        EXPECT_STREQ("mkostemp_0700", temp_dir, "/data/mkostemp_0700_XXXXXX_dir");
+    }
+}
+
+/**
+ * @tc.name      : mkostemp_0800
+ * @tc.desc      : Verify mkostemp generates unique filenames on multiple calls.
+ * @tc.level     : Level 0
+ */
+void mkostemp_0800(void)
+{
+    char tmpfile1[] = "/data/mkostemp_0800_XXXXXX";
+    char tmpfile2[] = "/data/mkostemp_0800_XXXXXX";
+    int fd1 = mkostemp(tmpfile1, O_CLOEXEC);
+    int fd2 = mkostemp(tmpfile2, O_CLOEXEC);
+    EXPECT_TRUE("mkostemp_0800", fd1 != -1 && fd2 != -1);
+    EXPECT_STRNE("mkostemp_0800", tmpfile1, tmpfile2); // The two results should be different
+    if (fd1 != -1) {
+        close(fd1);
+        remove(tmpfile1); // clean
+    }
+    if (fd2 != -1) {
+        close(fd2);
+        remove(tmpfile2); // clean
+    }
+}
+
 int main(void)
 {
     mkostemp_0100();
@@ -163,5 +203,7 @@ int main(void)
     mkostemp_0400();
     mkostemp_0500();
     mkostemp_0600();
+    mkostemp_0700();
+    mkostemp_0800();
     return t_status;
 }

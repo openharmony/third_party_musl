@@ -50,4 +50,5 @@ functionalext_supplement_misc_test = [
   "getrusage",
   "ioctl",
   "functionalext_wordfree",
+  "a64l",
 ]
