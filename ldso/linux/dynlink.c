@@ -3247,6 +3247,92 @@ static void install_new_tls(void)
 	__restore_sigs(&set);
 }
 
+#if defined(__aarch64__) && (!defined(__LITEOS__))
+bool check_modifier(size_t addr, size_t modifier, int index)
+{
+	struct cfi_modifier *modifier_begin = pac_items[index].modifier_begin;
+	if (!modifier_begin) {
+		return false;
+	}
+	size_t modifier_size = (pac_items[index].modifier_end - pac_items[index].modifier_begin) /
+		sizeof(struct cfi_modifier);
+	size_t start = 0;
+	size_t end = modifier_size - 1;
+	size_t addr_off = addr - pac_items[index].base;
+	while (start <= end) {
+		size_t mid = start + (end - start) / 2;
+		if (modifier_begin[mid].offset == addr_off) {
+			return modifier_begin[mid].modifier == modifier;
+		} else if (modifier_begin[mid].offset < addr_off) {
+			start = mid + 1;
+		} else {
+			end = mid - 1;
+		}
+	}
+	return false;
+}
+
+bool check_icall_item(size_t addr, size_t modifier)
+{
+	for (int index = 0; index < PAC_MODIFIER_SIZE; index++) {
+		size_t check_pc = atomic_load(&pac_items[index].pc_check);
+		if (check_pc == 0) {
+			continue;
+		}
+		// restore virtual addresses from atomic 64 bits.
+		size_t begin_check = (check_pc >> 20) & 0xffffffff000;
+		size_t end_check = (check_pc << 12) & 0xffffffff000;
+		size_t addr_check = addr & 0xfffffffffff;
+		if (addr_check >= begin_check && addr_check < end_check) {
+			return check_modifier(addr, modifier, index);
+		} else {
+			continue;
+		}
+	}
+	return true;
+}
+
+static size_t inline remove_sign_pc(size_t addr)
+{
+	register size_t result __asm__("x30") = addr;
+	__asm__ ("xpaclri" : "+r"(result));
+	return result;
+}
+
+bool pac_reset_handler(int signo, siginfo_t *siginfo, void *ucontext_raw)
+{
+	if (siginfo == NULL || ucontext_raw == NULL || siginfo->si_signo != SIGILL || siginfo->si_code != ILL_ILLPACCFI) {
+		return false;
+	}
+	ucontext_t *ucontext = (ucontext_t *)(ucontext_raw);
+	size_t addr = ucontext->uc_mcontext.regs[PAC_TARGET_ADDR_REGISTER];
+	size_t modifier = ucontext->uc_mcontext.regs[PAC_MODIFIER_REGISTER];
+	size_t vcall_mask = 0xffffffffffff0000;
+	if ((modifier & vcall_mask) != 0) {
+		return false;
+	}
+	if (addr != remove_sign_pc(addr)) {
+		return false;
+	}
+	if (!check_icall_item(addr, modifier)) {
+		return false;
+	}
+	ucontext->uc_mcontext.regs[PAC_TARGET_ADDR_REGISTER] = addr;
+	ucontext->uc_mcontext.pc = ucontext->uc_mcontext.pc + 4;
+	return true;
+}
+
+void InstallPACHandler(void)
+{
+	struct signal_chain_action sigill_action = {
+		.sca_sigaction = pac_reset_handler,
+		.sca_mask = {},
+		.sca_flags = 0,
+	};
+	add_special_handler_at_last(SIGILL, &sigill_action);
+}
+#endif
+
 /* Stage 1 of the dynamic linker is defined in dlstart.c. It calls the
  * following stage 2 and stage 3 functions via primitive symbolic lookup
  * since it does not have access to their addresses to begin with. */
@@ -3389,6 +3475,9 @@ void __dls3(size_t *sp, size_t *auxv, size_t *aux)
 #endif
 #if defined (ENABLE_MUSL_LOG) && !defined(__LITEOS__)
 	InitHilogSocketFd();
+#endif
+#if defined(__aarch64__) && (!defined(__LITEOS__))
+	InstallPACHandler();
 #endif
 	__init_fdsan();
 	InitDeviceApiVersion(); // do nothing when no define OHOS_ENABLE_PARAMETER
