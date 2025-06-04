@@ -91,7 +91,7 @@ hidden int revert_dns_fail_cause(int cause);
 #define DNS_SO_PATH "libnetsys_client.z.so"
 #define MAX_SERVER_NUM 8
 #define MAX_SERVER_LENGTH 50
-#define OHOS_GET_CONFIG_FUNC_NAME "NetSysGetResolvConf"
+#define OHOS_GET_CONFIG_FUNC_NAME "NetSysGetResolvConfExt"
 #define OHOS_GET_CACHE_FUNC_NAME "NetSysGetResolvCache"
 #define OHOS_SET_CACHE_FUNC_NAME "NetSysSetResolvCache"
 #define OHOS_JUDGE_IPV6_FUNC_NAME "NetSysIsIpv6Enable"
