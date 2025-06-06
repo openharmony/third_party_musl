@@ -17,6 +17,7 @@
 #include <sys/stat.h>
 #include "functionalext.h"
 
+#define DIR_MODE 0700
 /**
  * @tc.name      : mkdtemp_0100
  * @tc.desc      : Create a temporary directory with the correct parameters
@@ -29,6 +30,7 @@ void mkdtemp_0100(void)
     EXPECT_PTRNE("mkdtemp_0100", ret, NULL);
     if (ret) {
         EXPECT_NE("mkdtemp_0100", ret[0], CMPFLAG);
+        rmdir(ret);
     }
 }
 
@@ -88,6 +90,8 @@ void mkdtemp_0500(void)
     EXPECT_PTRNE("mkdtemp_0500", ret2, NULL);
     if (ret1 && ret2) {
         EXPECT_STRNE("mkdtemp_0500", ret1, ret2); // The two results should be different
+        rmdir(ret1);
+        rmdir(ret2);
     }
 }
 
@@ -96,14 +100,15 @@ void mkdtemp_0500(void)
  * @tc.desc      : Check directory permissions (should be 0700)
  * @tc.level     : Level 2
  */
-void mkdtemp_0600(void) {
+void mkdtemp_0600(void)
+{
     char temp_dir[] = "test-XXXXXX";
     char *ret = mkdtemp(temp_dir);
     EXPECT_PTRNE("mkdtemp_0600", ret, NULL);
     if (ret) {
         struct stat st;
         stat(ret, &st);
-        EXPECT_EQ("mkdtemp_0600", st.st_mode & 0777, 0700);
+        EXPECT_EQ("mkdtemp_0600", st.st_mode & DIR_MODE, DIR_MODE);
         rmdir(ret);
     }
 }

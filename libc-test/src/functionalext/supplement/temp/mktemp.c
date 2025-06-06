@@ -68,8 +68,8 @@ void mktemp_0300(void)
  */
 void mktemp_0400(void)
 {
-    char temp_dir[] = "test-XXXXXX-dir";
-    char *ret = mktemp(temp_dir);
+    char temp_file[] = "test-XXXXXX-dir";
+    char *ret = mktemp(temp_file);
     EXPECT_PTRNE("mktemp_0400", ret, NULL);
     //XXXXXX is not at the end, mktemp() will fail
     if (ret) {
@@ -79,15 +79,15 @@ void mktemp_0400(void)
 
 /**
  * @tc.name      : mktemp_0500
- * @tc.desc      : Repeated calls generate unique directories
+ * @tc.desc      : Repeated calls generate unique file
  * @tc.level     : Level 1
  */
 void mktemp_0500(void)
 {
-    char temp_dir1[] = "test-XXXXXX";
-    char temp_dir2[] = "test-XXXXXX";
-    char *ret1 = mkdtemp(temp_dir1);
-    char *ret2 = mkdtemp(temp_dir2);
+    char temp_file1[] = "test-XXXXXX";
+    char temp_file2[] = "test-XXXXXX";
+    char *ret1 = mktemp(temp_file1);
+    char *ret2 = mktemp(temp_file2);
     EXPECT_PTRNE("mktemp_0500", ret1, NULL);
     EXPECT_PTRNE("mktemp_0500", ret2, NULL);
     if (ret1 && ret2) {
@@ -103,16 +103,17 @@ void mktemp_0500(void)
 void mktemp_0600(void)
 {
     char temp_file[] = "test-XXXXXX";
-
+    char new_file[256] = {0};
     int fd = mkstemp(temp_file); // create file
-
     if (fd != -1)  {
+        strcpy(new_file, temp_file); // get the file name
         char *ret = mktemp(temp_file);
         EXPECT_PTRNE("mktemp_0600", ret, NULL);
-        if(ret) {
+        if (ret) {
             EXPECT_EQ("mktemp_0600", ret[0], 0);
         }
-        unlink(temp_file); // clean file
+        close(fd);
+        unlink(new_file); // clean file
     }
 }
 
