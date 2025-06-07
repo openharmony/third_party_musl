@@ -166,7 +166,9 @@ fail:
 	_exit(127);
 }
 
-
+#ifdef ENABLE_HWASAN
+__attribute__((no_sanitize("hwaddress")))
+#endif
 int posix_spawn(pid_t *restrict res, const char *restrict path,
 	const posix_spawn_file_actions_t *fa,
 	const posix_spawnattr_t *restrict attr,
