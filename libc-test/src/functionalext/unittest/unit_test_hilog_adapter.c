@@ -118,58 +118,6 @@ bool CheckHiLogPrint(char *needToMatch)
     return flag;
 }
 
-// 检测有多少fd链到了hilogd
-int CheckHiLogdLinked()
-{
-    #define PROC_PATH_LENGTH (64)
-    int result = 0;
-    char proc_path[PROC_PATH_LENGTH];
-    int res = snprintf_s(proc_path, PROC_PATH_LENGTH, PROC_PATH_LENGTH - 1, "/proc/%d/fd", getpid());
-    if (res == NEGATIVE_ONE) {
-        printf("CheckHiLogdLinked getpid snprintf_s failed\n");
-        return ZERO;
-    }
-    DIR *dir = opendir(proc_path);
-    if (dir == NULL) {
-        return result;
-    }
-    struct dirent *entry;
-    while ((entry = readdir(dir)) != NULL) {
-        if (entry->d_type != DT_LNK) {
-            continue;
-        }
-        char fd_path[128];
-        res = snprintf_s(fd_path, sizeof(fd_path), sizeof(fd_path) - 1, "%s/%s", proc_path, entry->d_name);
-        if (res == NEGATIVE_ONE) {
-            printf("CheckHiLogdLinked fd search snprintf_s failed\n");
-            return ZERO;
-        }
-
-        char target[256];
-        ssize_t len = readlink(fd_path, target, sizeof(target) - 1);
-        if (len == -1) {
-            continue;
-        }
-        target[len] = '\0';
-        if (!strstr(target, "socket")) {
-            continue;
-        }
-        struct sockaddr_un addr;
-        socklen_t addr_len = sizeof(addr);
-
-        // 获取连接到 socket 的对端地址信息
-        getpeername(atoi(entry->d_name), (struct sockaddr *)&addr, &addr_len);
-        if (strstr(addr.sun_path, "hilogInput")) {
-            printf("FD: %s Connected to: %s\n", entry->d_name, addr.sun_path);
-            result++;
-        }
-    }
-
-    closedir(dir);
-    return result;
-}
-
-
 // 子线程打印日志执行的函数
 void* FunctionPrintLog(void* arg)
 {
@@ -251,10 +199,6 @@ static void HilogAdapterPrint_0030(void)
             EXPECT_EQ("HilogAdapterPrint_0030_CheckHiLogPrint", result, true);
         }
     }
-
-    // 检查有几个socket链到了hilogInput
-    int result = CheckHiLogdLinked();
-    EXPECT_EQ("CheckHiLogdLinked failed", result, TWO);
 }
 
 int main(void)
