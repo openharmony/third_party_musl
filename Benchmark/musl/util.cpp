@@ -111,10 +111,10 @@ char* ReadJsonFile(const char *fileName)
 
     /* read the json file into memory */
     readFileContent = fread(contentBuffer, sizeof(char), (size_t)jsonFileLength, jsonFile);
+    fclose(jsonFile);
     if ((long)readFileContent != jsonFileLength) {
         free(contentBuffer);
         contentBuffer = nullptr;
-        fclose(jsonFile);
         return contentBuffer;
     }
     contentBuffer[readFileContent] = '\0';
