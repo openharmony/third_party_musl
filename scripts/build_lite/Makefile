@@ -78,6 +78,10 @@ endif
 CFLAGS = -fstack-protector-strong -D_FORTIFY_SOURCE=2 -Wl,-z,relro,-z,now,-z,noexecstack -Wl,--build-id=sha1
 CFLAGS += -Wno-int-conversion
 
+ifeq ($(IS_LLVM_BUILD),true)
+CFLAGS += -D__IS_LLVM_BUILD
+endif
+
 .PHONY: $(TARGETS:%=musl_copy_for_%)
 .PHONY: $(TARGETS:%=musl_patch_for_%)
 .PHONY: $(TARGETS:%=musl_install_for_%)

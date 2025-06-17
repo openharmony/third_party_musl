@@ -47,7 +47,7 @@ build_ext_component("build_sysroot") {
   exec_path = rebase_path(target_out_dir)
   if (!defined(board_configed_sysroot) || board_configed_sysroot == "") {
     makefile = rebase_path("Makefile", exec_path)
-    command = "make TOPDIR=$ohos_root_path SYSROOTDIR=$sysroot_path TARGETS=$targets -f $makefile"
+    command = "make TOPDIR=$ohos_root_path SYSROOTDIR=$sysroot_path TARGETS=$targets IS_LLVM_BUILD=${is_llvm_build} -f $makefile"
     command += " ARCH=$arch ARCH_CFLAGS=\"$arch_cflags\""
     if (ohos_build_compiler == "clang") {
       command += " CLANG=\"$ohos_current_cc_command\" TARGET=$target_triple"
@@ -103,7 +103,7 @@ build_ext_component("build_sysroot_header") {
   exec_path = rebase_path(target_out_dir)
   if (!defined(board_configed_sysroot) || board_configed_sysroot == "") {
     makefile = rebase_path("Makefile", exec_path)
-    command = "make musl_header_install_for_liteos_a_user TOPDIR=$ohos_root_path SYSROOTDIR=$sysroot_path TARGETS=$targets -f $makefile"
+    command = "make musl_header_install_for_liteos_a_user TOPDIR=$ohos_root_path SYSROOTDIR=$sysroot_path TARGETS=$targets IS_LLVM_BUILD=${is_llvm_build} -f $makefile"
     command += " ARCH=$arch ARCH_CFLAGS=\"$arch_cflags\""
     if (ohos_build_compiler == "clang") {
       command += " CLANG=\"$ohos_current_cc_command\" TARGET=$target_triple"
