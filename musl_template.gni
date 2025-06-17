@@ -359,6 +359,9 @@ template("static_and_shared_libs_template") {
       sources += [ "${target_out_dir}/${musl_ported_dir}/${s}" ]
     }
     if (musl_arch == "arm") {
+      if (is_llvm_build) {
+        defines += [ "__IS_LLVM_BUILD" ]
+      }
       include_dirs = [
         "$OPTRTDIR/math",
         "$OPTRTDIR/math/include",
