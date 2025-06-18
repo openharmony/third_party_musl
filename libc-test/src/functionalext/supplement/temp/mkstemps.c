@@ -16,6 +16,8 @@
 #include <stdlib.h>
 #include "functionalext.h"
 
+#define SUFFIX_LEN 5
+
 /**
  * @tc.name      : mkstemps_0100
  * @tc.desc      : Provide the correct template, create a temporary file
@@ -82,10 +84,43 @@ void mkstemps_0300(void)
     }
 }
 
+/**
+ * @tc.name      : mkstemps_0400
+ * @tc.desc      : Template with 'XXXXXX' not at the end
+ * @tc.level     : Level 2
+ */
+void mkstemps_0400(void)
+{
+    char tmpfile[] = "/data/mkstemps_0400_XXXXXX_dir";
+    int fd = mkstemps(tmpfile, 0);
+    EXPECT_TRUE("mkstemps_0400", fd == -1);
+    if (fd == -1) {
+        EXPECT_EQ("mkstemps_0400", errno, EINVAL);
+        EXPECT_STREQ("mkstemps_0400", tmpfile, "/data/mkstemps_0400_XXXXXX_dir");
+    }
+}
+
+/**
+ * @tc.name      : mkstemps_0500
+ * @tc.desc      : Verify with suffix length larger than actual suffix
+ * @tc.level     : Level 2
+ */
+void mkstemps_0500(void)
+{
+    char tmpfile[] = "/data/local/tmp/mkstemps_0500_XXXXXX.dat";
+    int fd = mkstemps(tmpfile, strlen(".dat") + SUFFIX_LEN); // Exceeding the actual suffix length
+    EXPECT_TRUE("mkstemps_0500", fd == -1);
+    if (fd == -1) {
+        EXPECT_EQ("mkstemps_0500", errno, EINVAL);
+    }
+}
+
 int main(void)
 {
     mkstemps_0100();
     mkstemps_0200();
     mkstemps_0300();
+    mkstemps_0400();
+    mkstemps_0500();
     return t_status;
 }
