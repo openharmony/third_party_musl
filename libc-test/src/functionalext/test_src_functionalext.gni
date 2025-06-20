@@ -39,4 +39,5 @@ functionalext_list = [
   "dl_different_hash:dl_different_hash",
   "hilog:hilog_level",
   "ohos_dfx_log:ohos_dfx_log",
+  "string:functionalext_string_test",
 ]
