@@ -30,7 +30,11 @@ static int __sys_dup2(int old, int new)
 #endif
 }
 
+#ifdef ENABLE_HWASAN
+__attribute__((no_sanitize("hwaddress"))) int child(void *args_vp)
+#else
 static int child(void *args_vp)
+#endif
 {
 	int i, ret;
 	struct sigaction sa = {0};
