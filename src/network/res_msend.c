@@ -132,6 +132,7 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 	int first_try[MAXNS] = {0}, sec_try[MAXNS] = {0};
 	int try_ns[MAXNS] = {0};
 	bool multiV4 = false;
+	int last_retry = 0;
 #endif
 
 	pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &cs);
@@ -167,15 +168,26 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 	if ((nv4 > 3 && conf->nns != conf->non_public) || (nv4 > 2 && conf->nns == conf->non_public)) {
 		multiV4 = true;
 	}
-	/* Use two v4 and all v6 dns for first try, use other v4 for second try */
 	if (multiV4) {
-		first_try[0] = iv4[0];
-		first_try[1] = iv4[1];
-		for (int k=0; k<nv6; k++) {
-			first_try[2+k] = iv6[k];
-		}
-		for (int l=2; l<nv4; l++) {
-			sec_try[l-2] = iv4[l];
+		if (nv6 > 0) {
+			/* Use two v4 and all v6 dns for first try, use other v4 for second try */
+			first_try[0] = iv4[0];
+			first_try[1] = iv4[1];
+			for (int k = 0; k < nv6; k++) {
+				first_try[2+k] = iv6[k]; // v6 index starts from 2
+			}
+			for (int l = 2; l < nv4; l++) {
+				sec_try[l-2] = iv4[l]; // ignore the first 2 v4
+			}
+		} else if (nv4 > 4) { // if v4 <= 4, multiV4 is false
+			for (int k = 0; k < 4; k++) { // use 4 v4 for the first try
+				first_try[k] = iv4[k];
+			}
+			for (int l = 4; l < nv4; l++) {
+				sec_try[l-4] = iv4[l]; // ignore the first 4 v4
+			}
+		} else {
+			multiV4 = false;
 		}
 	}
 #endif
@@ -272,6 +284,11 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 			/* Query all configured namservers in parallel */
 			for (i=0; i<nqueries; i++) {
 				retry[i] = 0;
+#if OHOS_DNS_PROXY_BY_NETSYS
+				if (multiV4) {
+					retry[i] = last_retry;
+				}
+#endif
 				if (!alens[i]) {
 #if OHOS_DNS_PROXY_BY_NETSYS
 					if (multiV4) {
@@ -412,6 +429,11 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 			case 3:
 				if (retry[i] + 1 < nns) {
 					retry[i]++;
+#if OHOS_DNS_PROXY_BY_NETSYS
+					if (multiV4) {
+						last_retry = retry[i];
+					}
+#endif
 					continue;
 				} else {
 #ifndef __LITEOS__
