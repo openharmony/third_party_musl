@@ -292,13 +292,13 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 				if (!alens[i]) {
 #if OHOS_DNS_PROXY_BY_NETSYS
 					if (multiV4) {
-                        if (retry_count <= 1) {
-                            retry_limit = (nv6 > 0) ? (2 + nv6) : 4; // 2 v4 and all v6 or 4 v4
-                            memcpy(try_ns, first_try, MAXNS * sizeof(int));
-                        } else {
-                            retry_limit = (nv6 > 0) ? (nv4 - 2) : (nv4 - 4); // ignore the first 2 or 4 v4
-                            memcpy(try_ns, sec_try, MAXNS * sizeof(int));
-                        }
+						if (retry_count <= 1) {
+							retry_limit = (nv6 > 0) ? (2 + nv6) : 4; // 2 v4 and all v6 or 4 v4
+							memcpy(try_ns, first_try, MAXNS * sizeof(int));
+						} else {
+							retry_limit = (nv6 > 0) ? (nv4 - 2) : (nv4 - 4); // ignore the first 2 or 4 v4
+							memcpy(try_ns, sec_try, MAXNS * sizeof(int));
+						}
 						for (j=0; j<retry_limit; j++) {
 							if (sendto(fd, queries[i], qlens[i], MSG_NOSIGNAL, (void *)&ns[try_ns[j]], sl) == -1) {
 								int errno_code = errno;
