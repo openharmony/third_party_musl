@@ -16,6 +16,16 @@
 #include "lookup.h"
 #include <errno.h>
 
+#define LARGE_LATENCY 500
+#define RR_A 1
+#define RR_AAAA 28
+#define MIN_WAIT_V6 80
+
+struct type_ctx {
+	int count_v4;
+	int count_v6;
+};
+
 static void cleanup(void *p)
 {
 	struct pollfd *pfd = p;
@@ -89,6 +99,26 @@ static void step_mh(struct msghdr *mh, size_t n)
 // equal to answer buffer size
 #define BPBUF_SIZE 4800
 
+static int type_parse_callback(void *c, int rr, const void *data, int len, const void *packet, int plen)
+{
+	struct type_ctx *ctx = c;
+
+	switch (rr) {
+	case RR_A:
+		if (len != 4) return -1;
+		ctx->count_v4++;
+		break;
+	case RR_AAAA:
+		if (len != 16) return -1;
+		ctx->count_v6++;
+		break;
+	default:
+		break;
+	}
+
+	return 0;
+}
+
 /* Internal contract for __res_msend[_rc]: asize must be >=512, nqueries
  * must be sufficiently small to be safe as VLA size. In practice it's
  * either 1 or 2, anyway. */
@@ -121,7 +151,9 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 	int qpos[nqueries], apos[nqueries], retry[nqueries];
 	unsigned char alen_buf[nqueries][2];
 	int r;
-	unsigned long t0, t1, t2;
+	unsigned long t0, t1, t2, t3, temp_t;
+	struct type_ctx ctx;
+	uint8_t nres_v4, nres_v6, end_query;
 	int blens[2] = {0};
 	unsigned char *bp[2] = { NULL, NULL };
 #if OHOS_DNS_PROXY_BY_NETSYS
@@ -258,6 +290,11 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 	next = 0;
 	t0 = t2 = mtime();
 	t1 = t2 - retry_interval;
+	t3 = 0;
+	temp_t = 0;
+	nres_v4 = 0;
+	nres_v6 = 0;
+	end_query = 0;
 
 	for (; t2-t0 < timeout; t2=mtime()) {
 #if OHOS_DNS_PROXY_BY_NETSYS
@@ -268,7 +305,17 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 		for (i=0; i<nqueries && alens[i]>0; i++);
 		if (i==nqueries) break;
 
+		/* if the temp_t timeout, return result immediately. */
+		if (end_query) {
+			goto out;
+		}
+
 		if (t2-t1 >= retry_interval) {
+			/* if the first query round timeout, determine whether
+			 * to return based on the num of answers. */
+			if (nres_v4 > 0) {
+				goto out;
+			}
 			/* Query all configured namservers in parallel */
 			for (i=0; i<nqueries; i++) {
 				retry[i] = 0;
@@ -335,8 +382,45 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 			servfail_retry = 2 * nqueries;
 		}
 
+		unsigned long remaining_time = t1 + retry_interval - t2;
+		if (nres_v4 > 0) {
+			if (!temp_t) {
+				/* The first time to receive a v4 */
+				temp_t = t2 - t1;
+				t3 = t2;
+
+				if (temp_t <= LARGE_LATENCY && temp_t > 0) {
+					remaining_time = MIN_WAIT_V6;
+					end_query = 1;
+				} else {
+#ifndef __LITEOS__
+					MUSL_LOGE("%{public}s: %{public}d: has v4 addr but large latency.", __func__, __LINE__);
+#endif
+					goto out;
+				}
+			} else {
+				/* This is not the first time to receive a v4 */
+				if (t2 > t3 + MIN_WAIT_V6) {
+#ifndef __LITEOS__
+					MUSL_LOGE("%{public}s: %{public}d: t2 > t3 + MIN_WAIT_V6 %{public}ld, %{public}ld",
+						__func__, __LINE__, t2, t3);
+#endif
+					goto out;
+				}
+				remaining_time = t3 + MIN_WAIT_V6 - t2;
+				if (remaining_time > MIN_WAIT_V6) {
+#ifndef __LITEOS__
+					MUSL_LOGE("%{public}s: %{public}d: remaining_time error", __func__, __LINE__);
+#endif
+					goto out;
+				}
+				end_query = 1;
+			}
+		}
+
 		/* Wait for a response, or until time to retry */
-		if (poll(pfd, nqueries+1, t1+retry_interval-t2) <= 0) continue;
+		if (poll(pfd, nqueries+1, remaining_time) <= 0) continue;
+		end_query = 0;
 
 		while (next < nqueries) {
 			struct msghdr mh = {
@@ -437,6 +521,17 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 			else
 				memcpy(answers[i], answers[next], rlen);
 
+			ctx.count_v4 = 0;
+			ctx.count_v6 = 0;
+			__dns_parse(answers[i], alens[i], type_parse_callback, &ctx);
+			nres_v4 += ctx.count_v4;
+			nres_v6 += ctx.count_v6;
+#ifndef __LITEOS__
+			if (ctx.count_v4 == 0 && ctx.count_v6 == 0) {
+				MUSL_LOGE("%{public}s: %{public}d: response have no ip.", __func__, __LINE__);
+			}
+#endif
+
 			/* If answer is truncated (TC bit), before fallback to TCP, restore the UDP answer*/
 			if ((answers[i][2] & 2) || (mh.msg_flags & MSG_TRUNC)) {
 				if (bp[i] == NULL) {
@@ -459,6 +554,8 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 					__func__, __LINE__, mh.msg_flags);
 #endif
 				alens[i] = -1;
+				nres_v4 = 0;
+				nres_v6 = 0;
 				if (dns_errno) {
 					*dns_errno = FALLBACK_TCP_QUERY;
 				}
