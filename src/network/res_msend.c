@@ -292,14 +292,25 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 				if (!alens[i]) {
 #if OHOS_DNS_PROXY_BY_NETSYS
 					if (multiV4) {
-						/* Use two v4 and all v6 dns for first try, use other v4 for second try */
-						if (retry_count <= 1) {
-							retry_limit = 2 + nv6;
-							memcpy(try_ns, first_try, MAXNS * sizeof(int));
-						} else {
-							retry_limit = nv4 - 2;
-							memcpy(try_ns, sec_try, MAXNS * sizeof(int));
-						}
+                        if (nv6 > 0) {
+                            /* Use two v4 and all v6 dns for first try, use other v4 for second try */
+                            if (retry_count <= 1) {
+                                retry_limit = 2 + nv6; // 2 v4 and all v6
+                                memcpy(try_ns, first_try, MAXNS * sizeof(int));
+                            } else {
+                                retry_limit = nv4 - 2; // ignore the first 2 v4
+                                memcpy(try_ns, sec_try, MAXNS * sizeof(int));
+                            }
+                        } else {
+                            /* Use four v4 for first try, use other v4 for second try */
+                            if (retry_count <= 1) {
+                                retry_limit = 4; // 4 v4, if v4 <= 4, multiV4 is false
+                                memcpy(try_ns, first_try, MAXNS * sizeof(int));
+                            } else {
+                                retry_limit = nv4 - 4; // ignore the first v4
+                                memcpy(try_ns, sec_try, MAXNS * sizeof(int));
+                            }
+                        }
 						for (j=0; j<retry_limit; j++) {
 							if (sendto(fd, queries[i], qlens[i], MSG_NOSIGNAL, (void *)&ns[try_ns[j]], sl) == -1) {
 								int errno_code = errno;
