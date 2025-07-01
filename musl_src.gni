@@ -1652,6 +1652,7 @@ musl_src_file = [
   "src/thread/pthread_rwlock_timedrdlock_monotonic_np.c",
   "src/thread/pthread_rwlock_clockwrlock.c",
   "src/thread/pthread_rwlock_timedwrlock_monotonic_np.c",
+  "src/dfx/dfx_signal_handler_stub.c"
 ]
 
 if (musl_arch == "arm") {
