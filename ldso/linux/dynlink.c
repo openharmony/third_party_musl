@@ -212,12 +212,6 @@ __attribute__((used,retain)) int __hwasan_check_enabled = 0;
 
 weak_alias(__init_array_start, __init_array_end);
 weak_alias(__fini_array_start, __fini_array_end);
-#ifdef DFX_SIGNAL_LIBC
-UT_STATIC void __InstallSignalHandler()
-{
-}
-weak_alias(__InstallSignalHandler, DFX_InstallSignalHandler);
-#endif
 
 #ifdef HANDLE_RANDOMIZATION
 int do_dlclose(struct dso *p, bool check_deps_all);
@@ -3469,10 +3463,7 @@ void __dls3(size_t *sp, size_t *auxv, size_t *aux)
 #ifdef OHOS_ENABLE_PARAMETER
 	InitParameterClient();
 #endif
-// we may abort when linking other libs, load signal handler before stage start
-#ifdef DFX_SIGNAL_LIBC
-	DFX_InstallSignalHandler();
-#endif
+
 #if defined (ENABLE_MUSL_LOG) && !defined(__LITEOS__)
 	InitHilogSocketFd();
 #endif
