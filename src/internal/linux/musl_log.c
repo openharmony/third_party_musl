@@ -101,7 +101,7 @@ static void write_to_dfx(const char *str, const char *path)
 */
 int ohos_dfx_log(const char *str, const char *path)
 {
-    if (g_global_destroyed) {
+    if (g_global_destroyed || str == NULL) {
         return 0;
     }
 
