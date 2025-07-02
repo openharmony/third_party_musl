@@ -32,7 +32,7 @@
 #include "sys_param.h"
 #endif
 
-#define MAX_SIMULTANEOUS_ALLOCATIONS 1000
+#define MAX_SIMULTANEOUS_ALLOCATIONS 32
 #define SAMPLE_RATE 2500
 #define MIN_SAMPLE_SIZE 0
 #define WHITE_LIST_PATH ""
