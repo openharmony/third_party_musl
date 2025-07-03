@@ -1369,11 +1369,13 @@ static void do_relocs(struct dso *dso, size_t *rel, size_t rel_size, size_t stri
 					dso->lazy_cnt++;
 					continue;
 				}
-				LD_LOGE("relocating failed: symbol not found. "
-					"dso=%{public}s s=%{public}s use_vna_hash=%{public}d van_hash=%{public}x",
-					dso->name, name, vinfo.use_vna_hash, vinfo.vna_hash);
-				error("Error relocating %s: %s: symbol not found",
-					dso->name, name);
+				if (dso != &ldso) {
+					LD_LOGE("relocating failed: symbol not found. "
+						"dso=%{public}s s=%{public}s use_vna_hash=%{public}d van_hash=%{public}x",
+						dso->name, name, vinfo.use_vna_hash, vinfo.vna_hash);
+					error("Error relocating %s: %s: symbol not found",
+						dso->name, name);
+				}
 				if (runtime) longjmp(*rtld_fail, 1);
 				continue;
 			}
