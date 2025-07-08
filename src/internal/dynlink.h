@@ -71,6 +71,7 @@ enum {
 	REL_FUNCDESC_VAL,
 	REL_AUTH_SYMBOLIC,
 	REL_AUTH_RELATIVE,
+	REL_AUTH_GLOB_DAT,
 };
 #ifndef __LITEOS__
 struct td_index {

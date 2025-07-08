@@ -21,6 +21,7 @@
 #define REL_TLSDESC     R_AARCH64_TLSDESC
 #define REL_AUTH_SYMBOLIC R_AARCH64_AUTH_ABS64
 #define REL_AUTH_RELATIVE R_AARCH64_AUTH_RELATIVE
+#define REL_AUTH_GLOB_DAT R_AARCH64_AUTH_GLOB_DAT
 
 #define CRTJMP(pc,sp) __asm__ __volatile__( \
 	"mov sp,%1 ; br %0" : : "r"(pc), "r"(sp) : "memory" )
