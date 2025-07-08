@@ -1449,6 +1449,7 @@ static void do_relocs(struct dso *dso, size_t *rel, size_t rel_size, size_t stri
 			break;
 #endif
 		case REL_AUTH_SYMBOLIC:
+		case REL_AUTH_GLOB_DAT:      
 			do_pauth_reloc(reloc_addr, sym_val + addend);
 			break;
 		case REL_AUTH_RELATIVE:
