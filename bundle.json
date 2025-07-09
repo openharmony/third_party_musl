@@ -45,7 +45,8 @@
                 "bounds_checking_function",
                 "FreeBSD",
                 "faultloggerd",
-                "cJSON"
+                "cJSON",
+                "optimized_routines"
             ],
             "third_party": []
         },
