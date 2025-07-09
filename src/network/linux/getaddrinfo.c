@@ -521,8 +521,8 @@ int getaddrinfo_ext(const char *restrict host, const char *restrict serv, const 
 	if (naddrs < 0) {
 		reportdnsresult(netid, (char *)host, t_cost, naddrs, NULL, param);
 #ifndef __LITEOS__
-		MUSL_LOGE("%{public}s: %{public}d: reportdnsresult: %{public}d in process %{public}d",
-			__func__, __LINE__, naddrs, getpid());
+		MUSL_LOGE("%{public}s: %{public}d: reportdnsresult: %{public}d",
+			__func__, __LINE__, naddrs);
 #endif
 #if OHOS_DNS_PROXY_BY_NETSYS
 		update_addr_info_cache(host, serv, hint, NULL, 0, netid);
