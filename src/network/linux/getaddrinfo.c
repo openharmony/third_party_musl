@@ -9,6 +9,7 @@
 #include <endian.h>
 #include <errno.h>
 #include "lookup.h"
+#include "lock.h"
 
 #define COST_FOR_MS 1000
 #define COST_FOR_NANOSEC 1000000
@@ -18,6 +19,282 @@
 #define DNS_FAIL_REASON2_ROUND 99
 #define DNS_FAIL_REASON3_ROUND 299
 #define DNS_FAIL_REASON11_ROUND 99
+
+#if OHOS_DNS_PROXY_BY_NETSYS
+#define CACHE_VALID_TIME 2000
+struct aicache {
+	const char *host;
+	const char *serv;
+	struct aibuf *res;
+	struct addrinfo hint;
+	int ressize;
+	int netid;
+};
+
+typedef struct aicachelist {
+	struct aicache ai;
+	volatile int lock[1];
+	unsigned long obtainingtime;
+	struct aicachelist *next;
+	struct aicachelist *prev;
+} aicachelist;
+
+static aicachelist g_dnscachelist;
+volatile int g_dnscachelock[1];
+
+static unsigned long mtime(void)
+{
+	struct timespec ts;
+	if (clock_gettime(CLOCK_MONOTONIC, &ts) < 0 && errno == ENOSYS) {
+		clock_gettime(CLOCK_REALTIME, &ts);
+	}
+	return (unsigned long)ts.tv_sec * COST_FOR_MS + ts.tv_nsec / COST_FOR_NANOSEC;
+}
+
+void free_host(aicachelist* node)
+{
+	if (node == NULL) {
+		return;
+	}
+
+	if (node->ai.host != NULL) {
+		free(node->ai.host);
+	}
+
+	if (node->ai.serv != NULL) {
+		free(node->ai.serv);
+	}
+
+	if (node->ai.res != NULL) {
+		free(node->ai.res);
+	}
+	free(node);
+}
+
+aicachelist *alloc_host(const char *restrict host, const char *restrict serv,
+						const struct addrinfo *restrict hint, int netid)
+{
+	aicachelist *node = (aicachelist *)calloc(1, sizeof(aicachelist));
+	if (node == NULL) {
+		return NULL;
+	}
+	if (host != NULL) {
+		node->ai.host = strdup(host);
+	}
+	if (serv != NULL) {
+		node->ai.serv = strdup(serv);
+	}
+	if (hint != NULL) {
+		memcpy(&node->ai.hint, hint, sizeof(struct addrinfo));
+	}
+	node->ai.netid = netid;
+	return node;
+}
+
+void remove_host(aicachelist *node)
+{
+	if (node == NULL) {
+		return;
+	}
+	if (node->prev != NULL) {
+		node->prev->next = node->next;
+	}
+	if (node->next != NULL) {
+		node->next->prev = node->prev;
+	}
+}
+
+void insert_host(aicachelist *node)
+{
+	if (node == NULL) {
+		return;
+	}
+	LOCK(g_dnscachelock);
+	node->prev = &g_dnscachelist;
+	if (g_dnscachelist.next != NULL) {
+		g_dnscachelist.next->prev = node;
+	}
+	g_dnscachelist.next = node;
+	UNLOCK(g_dnscachelock);
+}
+
+struct aibuf *copy_aibuf(struct aibuf *src, int size)
+{
+	if (src == NULL || size == 0) {
+		return NULL;
+	}
+
+	struct aibuf *des = calloc(1, size);
+	if (des == NULL) {
+		return NULL;
+	}
+
+	memcpy(des, src, size);
+
+	int nais = des[0].ref;
+	if (nais > 0) {
+		for (int i = 0; i < nais - 1; i++) {
+			des[i].ai.ai_next = &des[i + 1].ai;
+		}
+	}
+
+	return des;
+}
+
+void refresh_cache(void)
+{
+	if (g_dnscachelist.next == NULL) {
+#ifndef __LITEOS__
+		MUSL_LOGE("%{public}s: %{public}d: %{public}d", __func__, __LINE__, getpid());
+#endif
+		return;
+	}
+	LOCK(g_dnscachelock);
+	aicachelist *node = NULL;
+	unsigned long currenttime = mtime();
+	for (node = g_dnscachelist.next; node != NULL; node = node->next) {
+		if (node->obtainingtime == 0) {
+			continue;
+		}
+		if (currenttime - node->obtainingtime > CACHE_VALID_TIME) {
+			aicachelist *tmp = node->prev;
+			remove_host(node);
+			free_host(node);
+			node = tmp;
+		}
+	}
+	UNLOCK(g_dnscachelock);
+}
+
+int compare_hint(aicachelist *node, const struct addrinfo *restrict hint)
+{
+	if (!hint) {
+		if (node->ai.hint.ai_flags == 0 && node->ai.hint.ai_family == 0 &&
+			node->ai.hint.ai_socktype == 0 && node->ai.hint.ai_protocol == 0) {
+			return 0;
+		} else {
+			return 1;
+		}
+	} else {
+		if (hint->ai_flags != node->ai.hint.ai_flags || hint->ai_family != node->ai.hint.ai_family ||
+			hint->ai_socktype != node->ai.hint.ai_socktype || hint->ai_protocol != node->ai.hint.ai_protocol) {
+			return 1;
+		} else {
+			return 0;
+		}
+	}
+	return 0;
+}
+
+int compare_serv(const char *l, const char *r)
+{
+	if (l == NULL && r == NULL) {
+		return 0;
+	}
+	if (l != NULL && r != NULL && strcmp(l, r) == 0) {
+		return 0;
+	}
+	return 1;
+}
+
+aicachelist *find_host(const char *restrict host,
+	const char *restrict serv, const struct addrinfo *restrict hint, int netid, int needlock)
+{
+	if (host == NULL) {
+		return NULL;
+	}
+	aicachelist *node = NULL;
+	if (g_dnscachelist.next == NULL) {
+#ifndef __LITEOS__
+		MUSL_LOGE("%{public}s: %{public}d: %{public}d", __func__, __LINE__, getpid());
+#endif
+		return NULL;
+	}
+	LOCK(g_dnscachelock);
+	for (node = g_dnscachelist.next; node != NULL; node = node->next) {
+		if (netid != node->ai.netid || strcmp(host, node->ai.host) != 0 || compare_serv(serv, node->ai.serv) != 0 || compare_hint(node, hint) != 0 ||
+			(node->ai.res == NULL && node->obtainingtime != 0)) {
+			continue;
+		}
+		UNLOCK(g_dnscachelock);
+
+		if (!needlock) {
+			return node;
+		}
+
+		LOCK(node->lock);
+		if (node->ai.res == NULL) {
+			UNLOCK(node->lock);
+#ifndef __LITEOS__
+			MUSL_LOGE("%{public}s: %{public}d: %{public}d", __func__, __LINE__, getpid());
+#endif
+			return NULL;
+		}
+		UNLOCK(node->lock);
+		return node;
+	}
+	UNLOCK(g_dnscachelock);
+	return NULL;
+}
+
+int query_addr_info_from_local_cache(const char *restrict host, const char *restrict serv,
+	const struct addrinfo *restrict hint, struct addrinfo **restrict res, int netid)
+{
+	refresh_cache();
+
+	aicachelist *node = find_host(host, serv, hint, netid, true);
+	if (node != NULL) {
+#ifndef __LITEOS__
+		MUSL_LOGI("%{public}s: %{public}d: %{public}d, found from cache", __func__, __LINE__, getpid());
+#endif
+		struct aibuf *out = copy_aibuf(node->ai.res, node->ai.ressize);
+		if (out != NULL) {
+			*res = &out->ai;
+			return 1;
+		}
+	}
+	node = alloc_host(host, serv, hint, netid);
+	if (node == NULL) {
+#ifndef __LITEOS__
+		MUSL_LOGE("%{public}s: %{public}d: %{public}d", __func__, __LINE__, getpid());
+#endif
+		return 0;
+	}
+
+	LOCK(node->lock);
+	insert_host(node);
+	return 0;
+}
+
+void update_addr_info_cache(const char *restrict host,
+	const char *restrict serv, const struct addrinfo *restrict hint, struct aibuf *res, int size, int netid)
+{
+	aicachelist *node = find_host(host, serv, hint, netid, false);
+	if (node == NULL) {
+#ifndef __LITEOS__
+		MUSL_LOGE("%{public}s: %{public}d: %{public}d", __func__, __LINE__, getpid());
+#endif
+		return;
+	}
+	if (res == NULL) {
+#ifndef __LITEOS__
+		MUSL_LOGE("%{public}s: %{public}d: %{public}d", __func__, __LINE__, getpid());
+#endif
+		node->ai.ressize = 0;
+		node->ai.res = NULL;
+		node->obtainingtime = mtime();
+		UNLOCK(node->lock);
+		return;
+	}
+	node->ai.ressize = 0;
+	node->ai.res = copy_aibuf(res, size);
+	if (node->ai.res != NULL) {
+		node->ai.ressize = size;
+	}
+	node->obtainingtime = mtime();
+	UNLOCK(node->lock);
+}
+#endif
 
 int reportdnsresult(int netid, char* name, int usedtime, int queryret, struct addrinfo *res, struct queryparam *param)
 {
@@ -218,9 +495,21 @@ int getaddrinfo_ext(const char *restrict host, const char *restrict serv, const 
 		}
 	}
 
+#if OHOS_DNS_PROXY_BY_NETSYS
+	if (query_addr_info_from_local_cache(host, serv, hint, res, netid) == 1) {
+		reportdnsresult(netid, (char *)host, 0, DNS_QUERY_SUCCESS, *res, param);
+		return 0;
+	}
+#endif
+
 	int timeStartRet = gettimeofday(&timeStart, NULL);
 	nservs = __lookup_serv(ports, serv, proto, socktype, flags);
-	if (nservs < 0) return nservs;
+	if (nservs < 0) {
+#if OHOS_DNS_PROXY_BY_NETSYS
+		update_addr_info_cache(host, serv, hint, NULL, 0, netid);
+#endif
+		return nservs;
+	}
 
 	naddrs = lookup_name_ext(addrs, canon, host, family, flags, netid);
 	int timeEndRet = gettimeofday(&timeEnd, NULL);
@@ -232,8 +521,11 @@ int getaddrinfo_ext(const char *restrict host, const char *restrict serv, const 
 	if (naddrs < 0) {
 		reportdnsresult(netid, (char *)host, t_cost, naddrs, NULL, param);
 #ifndef __LITEOS__
-		MUSL_LOGE("%{public}s: %{public}d: reportdnsresult: %{public}d",
-			__func__, __LINE__, naddrs);
+		MUSL_LOGE("%{public}s: %{public}d: reportdnsresult: %{public}d in process %{public}d",
+			__func__, __LINE__, naddrs, getpid());
+#endif
+#if OHOS_DNS_PROXY_BY_NETSYS
+		update_addr_info_cache(host, serv, hint, NULL, 0, netid);
 #endif
 		naddrs = revert_dns_fail_cause(naddrs);
 		return naddrs;
@@ -241,8 +533,14 @@ int getaddrinfo_ext(const char *restrict host, const char *restrict serv, const 
 
 	nais = nservs * naddrs;
 	canon_len = strlen(canon);
+	int totalsize = nais * sizeof(*out) + canon_len + 1;
 	out = calloc(1, nais * sizeof(*out) + canon_len + 1);
-	if (!out) return EAI_MEMORY;
+	if (!out) {
+#if OHOS_DNS_PROXY_BY_NETSYS
+		update_addr_info_cache(host, serv, hint, NULL, 0, netid);
+#endif
+		return EAI_MEMORY;
+	}
 
 	if (canon_len) {
 		outcanon = (void *)&out[nais];
@@ -283,6 +581,7 @@ int getaddrinfo_ext(const char *restrict host, const char *restrict serv, const 
 	reportdnsresult(netid, (char *)host, t_cost, DNS_QUERY_SUCCESS, *res, param);
 	int cnt = predefined_host_is_contain_host(host);
 #if OHOS_DNS_PROXY_BY_NETSYS
+	update_addr_info_cache(host, serv, hint, out, totalsize, netid);
 	if (type == QEURY_TYPE_NORMAL && cnt == 0) {
 		dns_set_addr_info_to_netsys_cache2(netid, host, serv, hint, *res);
 	}
