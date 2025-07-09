@@ -1,7 +1,7 @@
 import("musl_config.gni")
 
 FREEBSD_DIR = "//third_party/FreeBSD/"
-OPTRTDIR = "//third_party/optimized-routines/"
+
 if (musl_arch == "arm") {
   musl_src_arch_file = [
     "src/exit/arm/__aeabi_atexit.c",
