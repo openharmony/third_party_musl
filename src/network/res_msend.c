@@ -153,7 +153,7 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 	int r;
 	unsigned long t0, t1, t2, t3, temp_t;
 	struct type_ctx ctx;
-	uint8_t nres_v4, nres_v6, end_query;
+	uint8_t nres_v4, end_query;
 	int blens[2] = {0};
 	unsigned char *bp[2] = { NULL, NULL };
 #if OHOS_DNS_PROXY_BY_NETSYS
@@ -305,7 +305,6 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 	t3 = 0;
 	temp_t = 0;
 	nres_v4 = 0;
-	nres_v6 = 0;
 	end_query = 0;
 
 	for (; t2-t0 < timeout; t2=mtime()) {
@@ -546,7 +545,6 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 			ctx.count_v6 = 0;
 			__dns_parse(answers[i], alens[i], type_parse_callback, &ctx);
 			nres_v4 += ctx.count_v4;
-			nres_v6 += ctx.count_v6;
 #ifndef __LITEOS__
 			if (ctx.count_v4 == 0 && ctx.count_v6 == 0) {
 				MUSL_LOGE("%{public}s: %{public}d: response have no ip.", __func__, __LINE__);
@@ -576,7 +574,6 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 #endif
 				alens[i] = -1;
 				nres_v4 = 0;
-				nres_v6 = 0;
 				if (dns_errno) {
 					*dns_errno = FALLBACK_TCP_QUERY;
 				}
