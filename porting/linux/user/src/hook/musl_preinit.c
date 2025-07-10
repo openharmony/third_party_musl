@@ -43,7 +43,7 @@ void default_memtrace(void* addr, size_t size, const char* tag, bool is_using) {
 static struct MallocDispatchType __ohos_malloc_hook_init_dispatch = {
 	.malloc = ohos_malloc_hook_init_function,
 	.free = MuslFunc(free),
-	.mmap = ohos_mmap_hook_init_function,
+	.mmap = MuslMalloc(mmap),
 	.munmap = MuslMalloc(munmap),
 	.calloc = MuslFunc(calloc),
 	.realloc = MuslFunc(realloc),
@@ -548,24 +548,6 @@ void* ohos_aligned_alloc_hook_init_function(size_t alignment, size_t bytes)
             }
     }
     void* ptr = MuslMalloc(aligned_alloc)(alignment, bytes);
-    return ptr;
-}
-
-void* ohos_mmap_hook_init_function(void* addr, size_t length, int prot, int flags, int fd, off_t offset)
-{
-	long long expect_table = (volatile const long long)&__ohos_malloc_hook_init_dispatch;
-    if (atomic_compare_exchange_strong_explicit(&__musl_libc_globals.current_dispatch_table, &expect_table,
-                                                (volatile const long long)NULL, memory_order_release,
-                                                memory_order_relaxed)) {
-            pthread_t thread_id;
-            MUSL_LOGI("HiProfiler, ohos_mmap_hook_init_function, pthread_create.");
-            if (pthread_create(&thread_id, NULL, init_ohos_malloc_hook, NULL) != 0) {
-				MUSL_LOGI("HiProfiler: ohos_mmap_hook_init_function: failed to pthread_create.");
-            } else if (pthread_detach(thread_id) != 0) {
-				MUSL_LOGI("HiProfiler: ohos_mmap_hook_init_function: failed to pthread_detach.");
-            }
-    }
-    void* ptr = MuslMalloc(mmap)(addr, length, prot, flags, fd, offset);
     return ptr;
 }
 
