@@ -73,8 +73,9 @@ struct pthread {
 	/* musl doesn't support libc using tls, so we reserve some slots here for gwp_asan to use. */
 	struct {
 		uint32_t random_state;
-		uint32_t next_sample_counter : 31;
+		uint32_t next_sample_counter : 30;
 		char recursive_guard : 1;
+		char is_configured : 1;
 	} gwp_asan_tls;
 
 	#ifdef CXA_THREAD_USE_TLS
