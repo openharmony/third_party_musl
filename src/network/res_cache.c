@@ -69,6 +69,24 @@ dns_set_addr_info_to_netsys_cache2(const int netid, const char *restrict host, c
 	GETADDRINFO_PRINT_DEBUG("set to netsys cache OK\n");
 }
 
+static int IsIpv6Enable(int netid)
+{
+	int ret = 0;
+#if OHOS_DNS_PROXY_BY_NETSYS
+    JudgeIpv6 ipv6_judger = NULL;
+	resolve_dns_sym((void **) &ipv6_judger, OHOS_JUDGE_IPV6_FUNC_NAME);
+	if (!ipv6_judger) {
+		return -1;
+	}
+
+	ret = ipv6_judger(netid);
+	if (ret < 0) {
+		return -1;
+	}
+#endif
+    return ret;
+}
+
 void dns_set_addr_info_to_netsys_cache(const char *restrict host, const char *restrict serv,
 									   const struct addrinfo *restrict hint, struct addrinfo *res)
 {
@@ -87,6 +105,13 @@ int dns_get_addr_info_from_netsys_cache2(const int netid, const char *restrict h
 	struct addr_info_wrapper addr_info[MAX_RESULTS] = {0};
 	uint32_t num = 0;
 	struct param_wrapper param = {(char *) host, (char *) serv, (struct addrinfo *) hint};
+	struct addrinfo hintTemp = *hint;
+	if (hint != NULL) {
+        if (hint->ai_family == 0 && (IsIpv6Enable(netid) != 1)) {
+            hintTemp.ai_family = AF_INET;
+			param.hint = &hintTemp;
+		}
+	}
 	int ret = func(netid, param, addr_info, &num);
 	if (ret < 0) {
 		GETADDRINFO_PRINT_DEBUG("dns_get_addr_info_from_netsys_cache OHOS_GET_CACHE_FUNC_NAME err %d\n", ret);
