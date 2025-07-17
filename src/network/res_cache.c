@@ -107,7 +107,7 @@ int dns_get_addr_info_from_netsys_cache2(const int netid, const char *restrict h
 	struct param_wrapper param = {(char *) host, (char *) serv, (struct addrinfo *) hint};
 	struct addrinfo hintTemp = *hint;
 	if (hint != NULL) {
-        if (hint->ai_family == 0 && (IsIpv6Enable(netid) != 1)) {
+        if (hint->ai_family == 0 && (IsIpv6Enable(netid) == 0)) {
             hintTemp.ai_family = AF_INET;
 			param.hint = &hintTemp;
 		}
