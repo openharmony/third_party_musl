@@ -98,7 +98,7 @@ static void get_icu_version_num(void) {
 static void* find_hmicu_symbol(const char* symbol_name) {
 	get_icu_version_num();
 	if (g_hmicu_version) {
-		snprint(valid_icu_symbol, sizeof(valid_icu_symbol), "%s_%s", symbol_name, g_hmicu_version);
+		snprintf(valid_icu_symbol, sizeof(valid_icu_symbol), "%s_%s", symbol_name, g_hmicu_version);
 		return dlsym(g_hmicu_handle, valid_icu_symbol);
 	}
  	return NULL;
