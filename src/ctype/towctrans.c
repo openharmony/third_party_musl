@@ -68,14 +68,41 @@ static int casemap(unsigned c, int dir)
 }
 
 #ifndef __LITEOS__
+#define ICU_UC_SO "libhmicuuc.z.so"
+#define UCASE_TOUPPER "ucase_toupper"
+#define ICU_GET_VERSION_NUM_SYMBOL "GetIcuVersion"
 static void* g_hmicu_handle = NULL;
+static char* g_hmicu_version = NULL;
 static wint_t (*g_hm_ucase_toupper)(wint_t);
+static char* (*f_hmicu_version)(void);
+
+static void get_hmicu_handle(void)
+{
+	if (!g_hmicu_handle) {
+		g_hmicu_handle = dlopen(ICU_UC_SO, RTLD_LOCAL);
+	}
+}
+
+static void get_icu_version_num(void) {
+	get_hmicu_handle();
+	if (g_hmicu_handle) {
+		f_hmicu_version = dlsym(g_hmicu_handle, ICU_GET_VERSION_NUM_SYMBOL);
+	}
+	
+	if (f_hmicu_version) {
+		g_hmicu_version = f_hmicu_version();
+	}
+}
 
 static void* find_hmicu_symbol(const char* symbol_name) {
-  if (!g_hmicu_handle) {
-	g_hmicu_handle = dlopen("libhmicuuc.z.so", RTLD_LOCAL);
-  }
-  return g_hmicu_handle ? dlsym(g_hmicu_handle, symbol_name) : NULL;
+	get_icu_version_num();
+	if (g_hmicu_version) {
+		size_t len = strlen(symbol_name) + strlen(g_hmicu_version) + 2;
+		char valid_icu_symbol[len];
+		snprint(valid_icu_symbol, sizeof(valid_icu_symbol), "%s_%s", symbol_name, g_hmicu_version);
+		return dlsym(g_hmicu_handle, valid_icu_symbol);
+	}
+ 	return  NULL;
 }
 #endif
 
