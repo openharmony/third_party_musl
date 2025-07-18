@@ -75,6 +75,7 @@ static void* g_hmicu_handle = NULL;
 static char* g_hmicu_version = NULL;
 static wint_t (*g_hm_ucase_toupper)(wint_t);
 static char* (*f_hmicu_version)(void);
+static char valid_icu_symbol[64];
 
 static void get_hmicu_handle(void)
 {
@@ -88,7 +89,7 @@ static void get_icu_version_num(void) {
 	if (g_hmicu_handle) {
 		f_hmicu_version = dlsym(g_hmicu_handle, ICU_GET_VERSION_NUM_SYMBOL);
 	}
-	
+
 	if (f_hmicu_version) {
 		g_hmicu_version = f_hmicu_version();
 	}
@@ -97,12 +98,10 @@ static void get_icu_version_num(void) {
 static void* find_hmicu_symbol(const char* symbol_name) {
 	get_icu_version_num();
 	if (g_hmicu_version) {
-		size_t len = strlen(symbol_name) + strlen(g_hmicu_version) + 2;
-		char valid_icu_symbol[len];
 		snprint(valid_icu_symbol, sizeof(valid_icu_symbol), "%s_%s", symbol_name, g_hmicu_version);
 		return dlsym(g_hmicu_handle, valid_icu_symbol);
 	}
- 	return  NULL;
+ 	return NULL;
 }
 #endif
 
@@ -125,8 +124,8 @@ wint_t towupper(wint_t wc)
 		return wc;
 	}
 	if (!g_hm_ucase_toupper) {
-		typedef wint_t (*f)(wint_t);
-		g_hm_ucase_toupper = (f)find_hmicu_symbol("ucase_toupper_72");
+		typedef wint_t (*f)(wint_t); 
+		g_hm_ucase_toupper = (f)find_hmicu_symbol(UCASE_TOUPPER);
 	}
 	return g_hm_ucase_toupper ? g_hm_ucase_toupper(wc) : casemap(wc, 1);
 #else
