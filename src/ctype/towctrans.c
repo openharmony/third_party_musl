@@ -124,7 +124,7 @@ wint_t towupper(wint_t wc)
 		return wc;
 	}
 	if (!g_hm_ucase_toupper) {
-		typedef wint_t (*f)(wint_t); 
+		typedef wint_t (*f)(wint_t);
 		g_hm_ucase_toupper = (f)find_hmicu_symbol(UCASE_TOUPPER);
 	}
 	return g_hm_ucase_toupper ? g_hm_ucase_toupper(wc) : casemap(wc, 1);
