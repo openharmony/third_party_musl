@@ -137,6 +137,20 @@ bool is_gwp_asan_disable()
     return false;
 }
 
+bool is_commercial()
+{
+    char para_name[GWP_ASAN_NAME_LEN] = "const.logsystem.versiontype";
+    static CachedHandle para_handler = NULL;
+    if (para_handler == NULL) {
+        para_handler = CachedParameterCreate(para_name, "none");
+    }
+    const char *para_value = CachedParameterGet(para_handler);
+    if (para_value != NULL && strcmp(para_value, "commercial") == 0) {
+        return true;
+    }
+    return false;
+}
+
 bool force_sample_process_by_env()
 {
     char buf[GWP_ASAN_NAME_LEN];
@@ -210,7 +224,6 @@ const char *get_sample_parameter()
     CachedHandle handle = CachedParameterCreate(para_name, "");
     const char *param_value = CachedParameterGet(handle);
     if (!param_value || strlen(param_value) == 0) {
-        MUSL_LOGE("[gwp_asan]: set default sample_rate and max_slot.");
         return sample_param;
     }
     return param_value;
@@ -272,13 +285,11 @@ int get_min_size_parameter()
     CachedHandle handle = CachedParameterCreate(para_name, "0");
     const char *param_value = CachedParameterGet(handle);
     if (!param_value || strlen(param_value) == 0) {
-        MUSL_LOGE("[gwp_asan]: set default min_sample_size %{public}d.", MIN_SAMPLE_SIZE);
         return MIN_SAMPLE_SIZE;
     }
     char *endPtr = NULL;
     long min_size = strtol(param_value, &endPtr, 10);
     if (*endPtr != '\0' || min_size < 0 || min_size > INT_MAX) {
-        MUSL_LOGE("[gwp_asan]: set default min_sample_size %{public}d.", MIN_SAMPLE_SIZE);
         return MIN_SAMPLE_SIZE;
     }
     return (int)min_size;
@@ -300,7 +311,6 @@ const char *get_library_parameter()
     CachedHandle handle = CachedParameterCreate(para_name, "");
     const char *param_value = CachedParameterGet(handle);
     if (!param_value || strlen(param_value) == 0) {
-        MUSL_LOGE("[gwp_asan]: set default white_list_path %{public}s.", WHITE_LIST_PATH);
         return WHITE_LIST_PATH;
     }
     return param_value;
@@ -322,7 +332,6 @@ uint64_t get_gray_begin_parameter()
     CachedHandle handle = CachedParameterCreate(para_name, "");
     const char *param_value = CachedParameterGet(handle);
     if (!param_value || strlen(param_value) == 0) {
-        MUSL_LOGE("[gwp_asan]: gray_begin not set.");
         return 0;
     }
     char *endPtr = NULL;
@@ -350,7 +359,6 @@ uint64_t get_gray_days_parameter()
     CachedHandle handle = CachedParameterCreate(para_name, "");
     const char *param_value = CachedParameterGet(handle);
     if (!param_value || strlen(param_value) == 0) {
-        MUSL_LOGE("[gwp_asan]: gray_days not set.");
         return 0;
     }
     char *endPtr = NULL;
@@ -565,14 +573,12 @@ void init_gwp_asan_by_telemetry(int *sample_rate, int *max_simultaneous_allocati
     uint64_t gray_days = get_gray_days_parameter();
     uint64_t now = (uint64_t)time(NULL);
     if (gray_begin > 0) {
-        MUSL_LOGI("[gwp_asan]: init_gwp_asan_by_telemetry in thirdparty telemetry.");
         if (now - gray_begin > gray_days) {
-            MUSL_LOGI("[gwp_asan]: init_gwp_asan_by_telemetry thirdparty telemetry expired.");
+            MUSL_LOGE("[gwp_asan]: init_gwp_asan_by_telemetry thirdparty telemetry expired.");
             return;
         }
         gwp_asan_thirdparty_telemetry = true;
     } else {
-        MUSL_LOGI("[gwp_asan]: init_gwp_asan_by_telemetry in inner telemetry.");
         *min_sample_size = get_min_size_parameter();
         *white_list_path = get_library_parameter();
     }
@@ -648,6 +654,11 @@ bool may_init_gwp_asan(bool force_init)
 
 bool init_gwp_asan_by_libc(bool force_init)
 {
+#ifdef OHOS_ENABLE_PARAMETER
+    if (is_commercial()) {
+        return false;
+    }
+#endif
     char buf[GWP_ASAN_NAME_LEN];
     char *path = get_process_short_name(buf, GWP_ASAN_NAME_LEN);
     if (!path) {
