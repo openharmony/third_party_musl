@@ -1,0 +1,66 @@
+# Copyright (C) 2025 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#	http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+import("//build/test.gni")
+import("../../../../test_template.gni")
+import("../adlt_common.gni")
+import("test_src_adlt_ubsan.gni")
+
+group("adlt_ubsan_test") {
+    testonly = true
+    deps = []
+
+    foreach(s, adlt_ubsan_test) {
+        deps += [ ":${s}" ]
+    }
+}
+
+config("post_lib_configs") {
+    cflags_cc = [ "-Wno-integer-overflow", "-Wno-unused-variable", "-fsanitize=undefined", "-O0" ]
+    ldflags = [ "-Wl,--unresolved-symbols=ignore-all" ]
+}
+
+adlt_executable("unittest_adlt_ubsan_index_out_of_bounds") {
+    lib_name = "ubsan_index_out_of_bounds"
+    lib_include_dirs = [ "index-out-of-bounds" ]
+    lib_configs = [
+        {
+            name = "ubsan_index_out_of_bounds_a"
+            sources = ["index-out-of-bounds/a.cpp"]
+        },
+        {
+            name = "ubsan_index_out_of_bounds_b"
+            sources = ["index-out-of-bounds/b.cpp"]
+        },
+    ]
+
+    lib_common_configs = [ ":post_lib_configs" ]
+
+    sources = [ "index-out-of-bounds/main.cpp" ]
+    ldflags = [ "-Wl,$adlt_abs_runtime_clang_path/libclang_rt.ubsan_standalone.a" ]
+}
+
+adlt_executable("unittest_adlt_ubsan_integer_overflow") {
+    lib_name = "ubsan_integer_overflow"
+    lib_include_dirs = [ "integer-overflow" ]
+    lib_configs = [
+        {
+            name = "ubsan_integer_overflow_a"
+            sources = ["integer-overflow/a.cpp"]
+        },
+    ]
+
+    lib_common_configs = [ ":post_lib_configs" ]
+
+    sources = [ "integer-overflow/main.cpp" ]
+    ldflags = [ "-Wl,$adlt_abs_runtime_clang_path/libclang_rt.ubsan_standalone.a" ]
+}
