@@ -658,5 +658,231 @@ HWTEST_F(IsalnumlTest, isalnum_l_test_020, TestSize.Level0)
     m_locale = NULL;
 }
 
+/**
+ * @tc.name: isalnum_l_test_021
+ * @tc.desc: Verify isalnum_l process fail when using the zh_CN.UTF-8 character set.
+ *           Determine the number of letters and numbers in the ascii code table.
+ * @tc.level: FUNC
+ */
+HWTEST_F(IsalnumlTest, isalnum_l_test_021, TestSize.Level0)
+{
+    int ret = RET_FALSE;
+    locale_t m_locale = newlocale(LC_ALL_MASK, "zh_CN.UTF-8", NULL);
+    int total = 0;
+
+    if (!m_locale) {
+        EXPECT_NE(ret, RET_FALSE);
+        return ;
+    }
+
+    for (int i = 0; i < SIZE; i++) {
+        ret = isalnum_l(i, m_locale);
+        if (ret) {
+            total++;
+        }
+    }
+
+    EXPECT_EQ(total, COUNT);
+    freelocale(m_locale);
+    m_locale = NULL;
+}
+
+/**
+ * @tc.name: isalnum_l_2200
+ * @tc.desc: Verify isalnum_l process success when using the zh_CN.UTF-8 character set.
+ *           The parameter c is an wide English character,
+ *           and it is judged that the input wide character is a letter.
+ * @tc.level: FUNC
+ */
+void isalnum_l_2200(void)
+{
+    int ret = RET_FALSE;
+    locale_t m_locale = newlocale(LC_ALL_MASK, "zh_CN.UTF-8", NULL);
+    const wchar_t *str = L"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    const wchar_t *p = str;
+
+    if (!m_locale) {
+        EXPECT_NE(ret, RET_FALSE);
+        return ;
+    }
+
+    while (p && *p != L'\0') {
+        ret = isalnum_l(*p, m_locale);
+        EXPECT_EQ(ret, RET_TRUE);
+        p++;
+    }
+
+    freelocale(m_locale);
+    m_locale = NULL;
+}
+
+/**
+ * @tc.name: isalnum_l_2300
+ * @tc.desc: Verify isalnum_l process success when using the zh_CN.UTF-8 character set.
+ *           The parameter c is an wide English character,
+ *           and it is judged that the input wide character is a number.
+ * @tc.level: FUNC
+ */
+void isalnum_l_2300(void)
+{
+    int ret = RET_FALSE;
+    locale_t m_locale = newlocale(LC_ALL_MASK, "zh_CN.UTF-8", NULL);
+    const wchar_t *str = L"0123456789";
+    const wchar_t *p = str;
+
+    if (!m_locale) {
+        EXPECT_NE(ret, RET_FALSE);
+        return ;
+    }
+
+    while (p && *p != L'\0') {
+        ret = isalnum_l(*p, m_locale);
+        EXPECT_EQ(ret, RET_TRUE);
+        p++;
+    }
+
+    freelocale(m_locale);
+    m_locale = NULL;
+}
+
+/**
+ * @tc.name: isalnum_l_2400
+ * @tc.desc: Verify isalnum_l process fail when using the zh_CN.UTF-8 character set.
+ *           The parameter c is an wide English character,
+ *           and it is judged that the input character is not a letter or a number.
+ * @tc.level: FUNC
+ */
+void isalnum_l_2400(void)
+{
+    int ret = RET_FALSE;
+    locale_t m_locale = newlocale(LC_ALL_MASK, "zh_CN.UTF-8", NULL);
+    const wchar_t *str = L"@#$%^&";
+    const wchar_t *p = str;
+
+    if (!m_locale) {
+        EXPECT_NE(ret, RET_FALSE);
+        return ;
+    }
+
+    while (p && *p != L'\0') {
+        ret = isalnum_l(*p, m_locale);
+        EXPECT_EQ(ret, RET_FALSE);
+        p++;
+    }
+
+    freelocale(m_locale);
+    m_locale = NULL;
+}
+
+/**
+ * @tc.name: isalnum_l_2500
+ * @tc.desc: Verify isalnum_l process success when using the zh_CN.UTF-8 character set.
+ *           The characters are not in the en_US.UTF-8 and zh_CN.UTF-8 character sets,
+ *           and it is judged that the input character is a letter or a number.
+ * @tc.level: FUNC
+ */
+void isalnum_l_2500(void)
+{
+    int ret = RET_FALSE;
+    int i = 0;
+    locale_t m_locale = newlocale(LC_ALL_MASK, "zh_CN.UTF-8", NULL);
+    if (!m_locale) {
+        EXPECT_NE(ret, RET_FALSE);
+        return ;
+    }
+
+    //Arabic characters(U+0660 - U+0669)
+    for (i = 0x0660; i <= 0x0669; i++) {
+        ret = isalnum_l(i, m_locale);
+        EXPECT_EQ(ret, RET_TRUE);
+    }
+
+    //GREEK characters(U+03AC - U+03CE)
+    //GREEK SMALL LETTER
+    for (i = 0x03AC; i <= 0x03CE; i++) {
+        ret = isalnum_l(i, m_locale);
+        EXPECT_EQ(ret, RET_TRUE);
+    }
+
+    //ARMENIAN characters(U+0531 - U+0556)
+    //ARMENIAN CAPITAL LETTER
+    for (i = 0x0531; i <= 0x0556; i++) {
+        ret = isalnum_l(i, m_locale);
+        EXPECT_EQ(ret, RET_TRUE);
+    }
+
+    freelocale(m_locale);
+    m_locale = NULL;
+}
+
+/**
+ * @tc.name: isalnum_l_2600
+ * @tc.desc: Verify isalnum_l process fail when using the zh_CN.UTF-8 character set.
+ *           The characters are not in the en_US.UTF-8 and zh_CN.UTF-8 character sets,
+ *           and it is judged that the input character is not a letter or a number.
+ * @tc.level: FUNC
+ */
+void isalnum_l_2600(void)
+{
+    int ret = RET_FALSE;
+    int i = 0;
+    locale_t m_locale = newlocale(LC_ALL_MASK, "zh_CN.UTF-8", NULL);
+    if (!m_locale) {
+        EXPECT_NE(ret, RET_FALSE);
+        return ;
+    }
+
+    //GREEK TONOS
+    //GREEK DIALYTIKA TONOS
+    for (i = 0x0384; i <= 0x0385; i++) {
+        ret = isalnum_l(i, m_locale);
+        EXPECT_EQ(ret, RET_FALSE);
+    }
+
+    //ARMENIAN APOSTROPHE
+    //ARMENIAN EMPHASIS MARK
+    //ARMENIAN EXCLAMATION MARK
+    //ARMENIAN COMMA
+    //ARMENIAN QUESTION MARK
+    //ARMENIAN ABBREVIATION MARK
+    for (i = 0x055A; i <= 0x055F; i++) {
+        ret = isalnum_l(i, m_locale);
+        EXPECT_EQ(ret, RET_FALSE);
+    }
+
+    freelocale(m_locale);
+    m_locale = NULL;
+}
+
+/**
+ * @tc.name: isalnum_l_2700
+ * @tc.desc: Verify isalnum_l process success when using the zh_CN.UTF-8 character set.
+ *           BOPOMOFO LETTER in the unicode is letter.
+ * @tc.level: FUNC
+ */
+void isalnum_l_2700(void)
+{
+    int ret = RET_FALSE;
+    locale_t m_locale = newlocale(LC_ALL_MASK, "zh_CN.UTF-8", NULL);
+    int total = 0;
+
+    if (!m_locale) {
+        EXPECT_NE(ret, RET_FALSE);
+        return ;
+    }
+
+    //0x3105(BOPOMOFO LETTER B) ~ 0x312f(BOPOMOFO LETTER NN)
+    for (int i = 0x3105; i <= 0x312f; i++) {
+        ret = isalnum_l(i, m_locale);
+        if (ret) {
+            total++;
+        }
+    }
+
+    EXPECT_EQ(total, BPMF_COUNT);
+    freelocale(m_locale);
+    m_locale = NULL;
+}
+
 }
 }

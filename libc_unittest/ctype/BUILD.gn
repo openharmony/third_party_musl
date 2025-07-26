@@ -27,9 +27,14 @@ group(unitTest_isascii) {
     testonly = true
     deps = [
         ":isalnum_l_test",
+        ":isalnum_test",
     ]
 }
 
 libc_ohos_unittest("isalnum_l_test") {
     sources = [ "isalnum_l_test.cpp" ]
+}
+
+libc_ohos_unittest("isalnum_test") {
+    sources = [ "isalnum_test.cpp" ]
 }
