@@ -20,23 +20,6 @@
         extern __typeof(old) new __attribute__((__weak__, __alias__(#old)))
 #endif // !weak_alias
 
-/**
- * @brief callback function of thread infomation when thread crash
- *
- * @param buf buffer for writing thread infomation
- * @param len length of buffer
- * @param ucontext userlevel context
-*/
-typedef void(*ThreadInfoCallBack)(char* buf, size_t len, void* ucontext);
-
-/**
- * @brief set callback function of thread infomation
- *
- * @param func  callback function of thread infomation
-*/
-void __SetThreadInfoCallback(ThreadInfoCallBack func){}
-weak_alias(__SetThreadInfoCallback, SetThreadInfoCallback);
-
 void __SetAsyncStackCallbackFunc(void* func) {}
 weak_alias(__SetAsyncStackCallbackFunc, SetAsyncStackCallbackFunc);
 
