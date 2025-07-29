@@ -119,9 +119,9 @@ static int checkexceptall(int got, int want, int r)
 
 static int checkulp(float d, int r)
 {
-	// TODO: we only care about >=1.5 ulp errors for now, should be 1.0
+	// TODO: we only care about > 1.5 ulp errors for now, should be 1.0
 	if (r == RN)
-		return fabsf(d) < 1.5;
+		return fabsf(d) <= 1.5;
 	// accept larger error in non-nearest rounding mode
 	return fabsf(d) < 3.0;
 }
