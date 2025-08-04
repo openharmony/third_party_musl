@@ -80,9 +80,18 @@ aicachelist *alloc_host(const char *restrict host, const char *restrict serv,
 	}
 	if (host != NULL) {
 		node->ai.host = strdup(host);
+        if (node->ai.host == NULL) {
+            free(node);
+            return NULL;
+        }
 	}
 	if (serv != NULL) {
 		node->ai.serv = strdup(serv);
+        if (node->ai.serv == NULL) {
+            free(node->ai.host);
+            free(node);
+            return NULL;
+        }
 	}
 	if (hint != NULL) {
 		memcpy(&node->ai.hint, hint, sizeof(struct addrinfo));
@@ -102,20 +111,6 @@ void remove_host(aicachelist *node)
 	if (node->next != NULL) {
 		node->next->prev = node->prev;
 	}
-}
-
-void insert_host(aicachelist *node)
-{
-	if (node == NULL) {
-		return;
-	}
-	LOCK(g_dnscachelock);
-	node->prev = &g_dnscachelist;
-	if (g_dnscachelist.next != NULL) {
-		g_dnscachelist.next->prev = node;
-	}
-	g_dnscachelist.next = node;
-	UNLOCK(g_dnscachelock);
 }
 
 struct aibuf *copy_aibuf(struct aibuf *src, int size)
@@ -143,13 +138,14 @@ struct aibuf *copy_aibuf(struct aibuf *src, int size)
 
 void refresh_cache(void)
 {
+	LOCK(g_dnscachelock);
 	if (g_dnscachelist.next == NULL) {
 #ifndef __LITEOS__
 		MUSL_LOGE("%{public}s: %{public}d: %{public}d", __func__, __LINE__, getpid());
 #endif
+		UNLOCK(g_dnscachelock);
 		return;
 	}
-	LOCK(g_dnscachelock);
 	aicachelist *node = NULL;
 	unsigned long currenttime = mtime();
 	for (node = g_dnscachelist.next; node != NULL; node = node->next) {
@@ -204,15 +200,17 @@ aicachelist *find_host(const char *restrict host,
 		return NULL;
 	}
 	aicachelist *node = NULL;
+	LOCK(g_dnscachelock);
 	if (g_dnscachelist.next == NULL) {
 #ifndef __LITEOS__
 		MUSL_LOGE("%{public}s: %{public}d: %{public}d", __func__, __LINE__, getpid());
 #endif
+		UNLOCK(g_dnscachelock);
 		return NULL;
 	}
-	LOCK(g_dnscachelock);
 	for (node = g_dnscachelist.next; node != NULL; node = node->next) {
-		if (netid != node->ai.netid || strcmp(host, node->ai.host) != 0 || compare_serv(serv, node->ai.serv) != 0 || compare_hint(node, hint) != 0 ||
+		if (netid != node->ai.netid || compare_serv(host, node->ai.host) != 0 ||
+			compare_serv(serv, node->ai.serv) != 0 || compare_hint(node, hint) != 0 ||
 			(node->ai.res == NULL && node->obtainingtime != 0)) {
 			continue;
 		}
@@ -261,8 +259,14 @@ int query_addr_info_from_local_cache(const char *restrict host, const char *rest
 		return 0;
 	}
 
+	LOCK(g_dnscachelock);
 	LOCK(node->lock);
-	insert_host(node);
+	node->prev = &g_dnscachelist;
+	if (g_dnscachelist.next != NULL) {
+		g_dnscachelist.next->prev = node;
+	}
+	g_dnscachelist.next = node;
+	UNLOCK(g_dnscachelock);
 	return 0;
 }
 
