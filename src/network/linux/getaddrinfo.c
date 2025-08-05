@@ -33,6 +33,7 @@ struct aicache {
 
 typedef struct aicachelist {
 	struct aicache ai;
+    /* Lock the node that the first thread enters when multi threads are looking up the same host */
 	volatile int lock[1];
 	unsigned long obtainingtime;
 	struct aicachelist *next;
@@ -40,6 +41,7 @@ typedef struct aicachelist {
 } aicachelist;
 
 static aicachelist g_dnscachelist;
+/* Lock the global cache each time it is used. */
 volatile int g_dnscachelock[1];
 
 static unsigned long mtime(void)
@@ -141,7 +143,7 @@ void refresh_cache(void)
 	LOCK(g_dnscachelock);
 	if (g_dnscachelist.next == NULL) {
 #ifndef __LITEOS__
-		MUSL_LOGE("%{public}s: %{public}d: %{public}d", __func__, __LINE__, getpid());
+		MUSL_LOGE("%{public}s: %{public}d", __func__, __LINE__);
 #endif
 		UNLOCK(g_dnscachelock);
 		return;
@@ -203,7 +205,7 @@ aicachelist *find_host(const char *restrict host,
 	LOCK(g_dnscachelock);
 	if (g_dnscachelist.next == NULL) {
 #ifndef __LITEOS__
-		MUSL_LOGE("%{public}s: %{public}d: %{public}d", __func__, __LINE__, getpid());
+		MUSL_LOGE("%{public}s: %{public}d", __func__, __LINE__);
 #endif
 		UNLOCK(g_dnscachelock);
 		return NULL;
@@ -224,7 +226,7 @@ aicachelist *find_host(const char *restrict host,
 		if (node->ai.res == NULL) {
 			UNLOCK(node->lock);
 #ifndef __LITEOS__
-			MUSL_LOGE("%{public}s: %{public}d: %{public}d", __func__, __LINE__, getpid());
+			MUSL_LOGE("%{public}s: %{public}d", __func__, __LINE__);
 #endif
 			return NULL;
 		}
@@ -243,7 +245,7 @@ int query_addr_info_from_local_cache(const char *restrict host, const char *rest
 	aicachelist *node = find_host(host, serv, hint, netid, true);
 	if (node != NULL) {
 #ifndef __LITEOS__
-		MUSL_LOGI("%{public}s: %{public}d: %{public}d, found from cache", __func__, __LINE__, getpid());
+		MUSL_LOGI("%{public}s: %{public}d, found from cache", __func__, __LINE__);
 #endif
 		struct aibuf *out = copy_aibuf(node->ai.res, node->ai.ressize);
 		if (out != NULL) {
@@ -254,7 +256,7 @@ int query_addr_info_from_local_cache(const char *restrict host, const char *rest
 	node = alloc_host(host, serv, hint, netid);
 	if (node == NULL) {
 #ifndef __LITEOS__
-		MUSL_LOGE("%{public}s: %{public}d: %{public}d", __func__, __LINE__, getpid());
+		MUSL_LOGE("%{public}s: %{public}d", __func__, __LINE__);
 #endif
 		return 0;
 	}
@@ -276,13 +278,13 @@ void update_addr_info_cache(const char *restrict host,
 	aicachelist *node = find_host(host, serv, hint, netid, false);
 	if (node == NULL) {
 #ifndef __LITEOS__
-		MUSL_LOGE("%{public}s: %{public}d: %{public}d", __func__, __LINE__, getpid());
+		MUSL_LOGE("%{public}s: %{public}d", __func__, __LINE__);
 #endif
 		return;
 	}
 	if (res == NULL) {
 #ifndef __LITEOS__
-		MUSL_LOGE("%{public}s: %{public}d: %{public}d", __func__, __LINE__, getpid());
+		MUSL_LOGE("%{public}s: %{public}d", __func__, __LINE__);
 #endif
 		node->ai.ressize = 0;
 		node->ai.res = NULL;
