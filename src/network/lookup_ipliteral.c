@@ -17,7 +17,7 @@ int __lookup_ipliteral(struct address buf[static 1], const char *name, int famil
 		 /* wrong family */
 		if (family == AF_INET6) {
 #ifndef __LITEOS__
-			MUSL_LOGE("%{public}s: %{public}d: wrong family AF_INET6: %{public}d", __func__, __LINE__, EAI_NONAME);
+			MUSL_LOGW("%{public}s: %{public}d: wrong family AF_INET6: %{public}d", __func__, __LINE__, EAI_NONAME);
 #endif
 			return EAI_NONAME;
 		}
@@ -40,7 +40,7 @@ int __lookup_ipliteral(struct address buf[static 1], const char *name, int famil
 		return 0;
 	if (family == AF_INET) /* wrong family */ {
 #ifndef __LITEOS__
-		MUSL_LOGE("%{public}s: %{public}d: wrong family AF_INET: %{public}d", __func__, __LINE__, EAI_NONAME);
+		MUSL_LOGW("%{public}s: %{public}d: wrong family AF_INET: %{public}d", __func__, __LINE__, EAI_NONAME);
 #endif
 		return EAI_NONAME;
 	}
@@ -54,21 +54,21 @@ int __lookup_ipliteral(struct address buf[static 1], const char *name, int famil
 			if (!IN6_IS_ADDR_LINKLOCAL(&a6) &&
 			    !IN6_IS_ADDR_MC_LINKLOCAL(&a6)) {
 #ifndef __LITEOS__
-				MUSL_LOGE("%{public}s: %{public}d: illegal ipv6 address: %{public}d", __func__, __LINE__, EAI_NONAME);
+				MUSL_LOGW("%{public}s: %{public}d: illegal ipv6 address: %{public}d", __func__, __LINE__, EAI_NONAME);
 #endif
 				return EAI_NONAME;
 			}
 			scopeid = if_nametoindex(p);
 			if (!scopeid) {
 #ifndef __LITEOS__
-				MUSL_LOGE("%{public}s: %{public}d: scopeid is zero: %{public}d", __func__, __LINE__, EAI_NONAME);
+				MUSL_LOGW("%{public}s: %{public}d: scopeid is zero: %{public}d", __func__, __LINE__, EAI_NONAME);
 #endif
 				return EAI_NONAME;
 			}
 		}
 		if (scopeid > UINT_MAX) {
 #ifndef __LITEOS__
-			MUSL_LOGE("%{public}s: %{public}d: scopeid is over than UINT_MAX: %{public}d", __func__, __LINE__, EAI_NONAME);
+			MUSL_LOGW("%{public}s: %{public}d: scopeid is over than UINT_MAX: %{public}d", __func__, __LINE__, EAI_NONAME);
 #endif
 			return EAI_NONAME;
 		}

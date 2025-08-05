@@ -232,7 +232,7 @@ static int name_from_dns(struct address buf[static MAXADDRS], char canon[static 
 	if (!IsIpv6Enable(netid) || (family == AF_INET)) {
 		if (family == AF_INET6) {
 #ifndef __LITEOS__
-			MUSL_LOGE("%{public}s: %{public}d: Network scenario mismatch: %{public}d", __func__, __LINE__, EAI_SYSTEM);
+			MUSL_LOGW("%{public}s: %{public}d: Network scenario mismatch: %{public}d", __func__, __LINE__, EAI_SYSTEM);
 #endif
 			return DNS_FAIL_REASON_LACK_V6_SUPPORT;
 		}
@@ -254,7 +254,7 @@ static int name_from_dns(struct address buf[static MAXADDRS], char canon[static 
 					0, 0, 0, qbuf[nq], sizeof *qbuf);
 				if (qlens[nq] == -1) {
 #ifndef __LITEOS__
-					MUSL_LOGE("%{public}s: %{public}d: Illegal querys: %{public}d", __func__, __LINE__, EAI_NONAME);
+					MUSL_LOGW("%{public}s: %{public}d: Illegal querys: %{public}d", __func__, __LINE__, EAI_NONAME);
 #endif
 					return 0;
 				}
@@ -276,7 +276,7 @@ static int name_from_dns(struct address buf[static MAXADDRS], char canon[static 
 		if (checkBuf[MIN_ANSWER_TYPE - 1] != VALID_ANSWER &&
 		   (nq < MAX_ANSWER_TYPE || checkBuf[MAX_ANSWER_TYPE - 1] != VALID_ANSWER)) {
 #ifndef __LITEOS__
-			MUSL_LOGE("%{public}s: %{public}d: Illegal answers, errno id: %{public}d",
+			MUSL_LOGW("%{public}s: %{public}d: Illegal answers, errno id: %{public}d",
 				__func__, __LINE__, checkBuf[MIN_ANSWER_TYPE - 1]);
 #endif
 			int ret = checkBuf[MIN_ANSWER_TYPE - 1];
@@ -307,7 +307,7 @@ static int name_from_dns(struct address buf[static MAXADDRS], char canon[static 
 		cname_count++;
 	}
 #ifndef __LITEOS__
-	MUSL_LOGE("%{public}s: %{public}d: failed to parse dns : %{public}d", __func__, __LINE__, cname_count);
+	MUSL_LOGW("%{public}s: %{public}d: failed to parse dns : %{public}d", __func__, __LINE__, cname_count);
 #endif
 	return DNS_FAIL_REASON_FAIL_TO_PARSE_DNS;
 }
@@ -318,7 +318,7 @@ static int name_from_dns_search(struct address buf[static MAXADDRS], char canon[
 	if (is_allow_internet() == 0) {
 		errno = EPERM;
 #ifndef __LITEOS__
-		MUSL_LOGE("%{public}s: %{public}d: internet is not allowed", __func__, __LINE__);
+		MUSL_LOGW("%{public}s: %{public}d: internet is not allowed", __func__, __LINE__);
 #endif
 		return -1;
 	}
@@ -342,7 +342,7 @@ static int name_from_dns_search(struct address buf[static MAXADDRS], char canon[
 	if (name[l-1]=='.') l--;
 	if (!l || name[l-1]=='.') {
 #ifndef __LITEOS__
-		MUSL_LOGE("%{public}s: %{public}d: fail when multiple trailing dots: %{public}d", __func__, __LINE__, EAI_NONAME);
+		MUSL_LOGW("%{public}s: %{public}d: fail when multiple trailing dots: %{public}d", __func__, __LINE__, EAI_NONAME);
 #endif
 		return DNS_FAIL_REASON_HOST_NAME_ILLEGAL;
 	}
@@ -462,7 +462,7 @@ int lookup_name_ext(struct address buf[static MAXADDRS], char canon[static 256],
 		size_t l = strnlen(name, 255);
 		if (l-1 >= 254) {
 #ifndef __LITEOS__
-			MUSL_LOGE("%{public}s: %{public}d: Illegal name length: %{public}zu", __func__, __LINE__, l);
+			MUSL_LOGW("%{public}s: %{public}d: Illegal name length: %{public}zu", __func__, __LINE__, l);
 #endif
 			return DNS_FAIL_REASON_HOST_NAME_ILLEGAL;
 		}
@@ -483,7 +483,7 @@ int lookup_name_ext(struct address buf[static MAXADDRS], char canon[static 256],
 #ifndef __LITEOS__
 	if (!cnt && (flags & AI_NUMERICHOST)) {
 		cnt = DNS_FAIL_REASON_PARAM_INVALID;
-		MUSL_LOGE("%{public}s: %{public}d: flag is AI_NUMERICHOST but host is Illegal", __func__, __LINE__);
+		MUSL_LOGW("%{public}s: %{public}d: flag is AI_NUMERICHOST but host is Illegal", __func__, __LINE__);
 	}
 #endif
 	if (cnt < 0) {
