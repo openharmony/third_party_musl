@@ -215,7 +215,7 @@ static inline void cfi_slowpath_common(uint64_t call_site_type_id, void *func_pt
     }
 
     if (offset > shadow_size) {
-        LD_LOGE("[CFI] set value to sv_invalid because offset(%{public}lx) > shadow_size(%{public}lx), "
+        LD_LOGW("[CFI] set value to sv_invalid because offset(%{public}lx) > shadow_size(%{public}lx), "
                 "addr:%{public}p lr:%{public}p.\n",
                 offset, shadow_size, func_ptr, __builtin_return_address(0));
         value = sv_invalid;
@@ -243,7 +243,7 @@ static inline void cfi_slowpath_common(uint64_t call_site_type_id, void *func_pt
             return;
         }
 
-        LD_LOGE("[CFI] Invalid shadow value of address:%{public}p, lr:%{public}p.\n",
+        LD_LOGW("[CFI] Invalid shadow value of address:%{public}p, lr:%{public}p.\n",
                 func_ptr, __builtin_return_address(0));
 
         dso = (struct dso *)addr2dso((size_t)__builtin_return_address(0));
@@ -278,7 +278,7 @@ int init_cfi_shadow(struct dso *dso_list, struct dso *ldso, struct dso *app, str
     LD_LOGD("[CFI] [%{public}s] start!\n", __FUNCTION__);
 
     if (dso_list == NULL) {
-        LD_LOGW("[CFI] [%{public}s] has null param!\n", __FUNCTION__);
+        LD_LOGI("[CFI] [%{public}s] has null param!\n", __FUNCTION__);
         return CFI_SUCCESS;
     }
 
@@ -296,7 +296,7 @@ int map_dso_to_cfi_shadow(struct dso *dso)
     bool has_cfi_check = false;
 
     if (dso == NULL) {
-        LD_LOGW("[CFI] [%{public}s] has null param!\n", __FUNCTION__);
+        LD_LOGI("[CFI] [%{public}s] has null param!\n", __FUNCTION__);
         return CFI_SUCCESS;
     }
 
@@ -354,7 +354,7 @@ void unmap_dso_from_cfi_shadow(struct dso *dso)
 
     if (((size_t)dso->map & (LIBRARY_ALIGNMENT - 1)) != 0) {
         if (!(dso == pldso || dso == r_app || dso == r_vdso)) {
-            LD_LOGE("[CFI] [warning] %{public}s isn't aligned to %{public}lx"
+            LD_LOGW("[CFI] [warning] %{public}s isn't aligned to %{public}lx"
                     "begin[%{public}p] end[%{public}p] cfi_check[%{public}x] type[%{public}x]!\n",
                     dso->name, LIBRARY_ALIGNMENT, dso->map, dso->map + dso->map_len, 0, sv_invalid);
         }
@@ -395,13 +395,13 @@ static int add_dso_to_cfi_shadow(struct dso *dso)
     for (struct dso *p = dso; p; p = p->next) {
         LD_LOGD("[CFI] [%{public}s] adding %{public}s to cfi shadow!\n", __FUNCTION__, p->name);
         if (p->map == 0 || p->map_len == 0) {
-            LD_LOGW("[CFI] [%{public}s] the dso has no data! map[%{public}p] map_len[0x%{public}lx]\n",
+            LD_LOGI("[CFI] [%{public}s] the dso has no data! map[%{public}p] map_len[0x%{public}lx]\n",
                     __FUNCTION__, p->map, p->map_len);
             continue;
         }
 
         if (p->is_mapped_to_shadow == true) {
-            LD_LOGW("[CFI] [%{public}s] %{public}s is already in shadow!\n", __FUNCTION__, p->name);
+            LD_LOGI("[CFI] [%{public}s] %{public}s is already in shadow!\n", __FUNCTION__, p->name);
             continue;
         }
 
@@ -412,7 +412,7 @@ static int add_dso_to_cfi_shadow(struct dso *dso)
 
             if (((size_t)dso->map & (LIBRARY_ALIGNMENT - 1)) != 0) {
                 if (!(dso == pldso || dso == r_app || dso == r_vdso)) {
-                    LD_LOGE("[CFI] [warning] %{public}s isn't aligned to %{public}lx "
+                    LD_LOGW("[CFI] [warning] %{public}s isn't aligned to %{public}lx "
                             "begin[%{public}p] end[%{public}p] cfi_check[%{public}x] type[%{public}x]!\n",
                             dso->name, LIBRARY_ALIGNMENT, dso->map, dso->map + dso->map_len, 0, sv_uncheck);
                 }
@@ -448,7 +448,7 @@ static int add_dso_to_cfi_shadow(struct dso *dso)
 
             if (((size_t)dso->map & (LIBRARY_ALIGNMENT - 1)) != 0) {
                 if (!(dso == pldso || dso == r_app || dso == r_vdso)) {
-                    LD_LOGE("[CFI] [warning] %{public}s isn't aligned to %{public}lx"
+                    LD_LOGW("[CFI] [warning] %{public}s isn't aligned to %{public}lx"
                             "begin[%{public}p] end[%{public}p] cfi_check[%{public}lx] type[%{public}x]!\n",
                             dso->name, LIBRARY_ALIGNMENT, dso->map, dso->map + dso->map_len, cfi_check, sv_valid_min);
                 }

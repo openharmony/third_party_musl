@@ -88,7 +88,7 @@ static struct FdEntry* get_fd_entry(size_t idx)
 		void* allocation =
 				mmap(NULL, aligned_size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
 		if (allocation == MAP_FAILED) {
-			MUSL_LOGE("fdsan: mmap failed");
+			MUSL_LOGW("fdsan: mmap failed errno=%d", errno);
 		}
 
 		struct FdTableOverflow* new_overflow = (struct FdTableOverflow*)(allocation);
@@ -138,7 +138,7 @@ static struct FdEntry* GetFdEntry(int fd)
 static void save_debug_message(const char *msg)
 {
 	if (msg == NULL) {
-		MUSL_LOGW("debug msg is NULL");
+		MUSL_LOGI("debug msg is NULL");
 		return;
 	}
 
@@ -159,7 +159,7 @@ static void save_debug_message(const char *msg)
 	info.si_code = si_code;
 	info.si_value.sival_ptr = &debug_message;
 	if (syscall(__NR_rt_tgsigqueueinfo, getpid(), __syscall(SYS_gettid), signo, &info) == -1) {
-		MUSL_LOGE("send failed errno=%{public}d", errno);
+		MUSL_LOGW("send failed errno=%{public}d", errno);
 	}
 }
 
@@ -272,7 +272,7 @@ void fdsan_exchange_owner_tag(int fd, uint64_t expected_tag, uint64_t new_tag)
 						fd, fdsan_get_tag_type(tag), fdsan_get_tag_value(tag));
 		} else if (!expected_tag && !tag) {
 			// expected == actual == 0 but cas failed? 
-			MUSL_LOGE("fdsan compare and set failed unexpectedly while exchanging owner tag");
+			MUSL_LOGW("fdsan compare and set failed unexpectedly while exchanging owner tag");
 		}
 	}
 }

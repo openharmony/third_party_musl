@@ -64,7 +64,7 @@ int __pthread_join(pthread_t t, void **res)
 {
 #ifndef __LITEOS__
 	if (t == NULL) {
-		MUSL_LOGE("musl libc: invalid pthread_t (0) passed to pthread_join");
+		MUSL_LOGW("musl libc: invalid pthread_t (0) passed to pthread_join");
 		return ESRCH;
 	}
 #endif

@@ -112,10 +112,10 @@ void trace_marker_begin(uint64_t label, const char *message, const char *value)
     if (len > 0 && len < sizeof(buf)) {
         int ret = MUSL_TEMP_FAILURE_RETRY(write(trace_marker_fd, buf, len));
         if (ret == -1) {
-            MUSL_LOGE("fail to write B. %d", ret);
+            MUSL_LOGW("fail to write B. %d", ret);
         }
     } else {
-        MUSL_LOGE("B length error. %d", len);
+        MUSL_LOGW("B length error. %d", len);
     }
 
     // close file descriptor of trace_marker
@@ -140,10 +140,10 @@ void trace_marker_end(uint64_t label)
     if (len > 0 && len < sizeof(buf)) {
         int ret = MUSL_TEMP_FAILURE_RETRY(write(trace_marker_fd, buf, len));
         if (ret == -1) {
-            MUSL_LOGE("fail to write E. %d", ret);
+            MUSL_LOGW("fail to write E. %d", ret);
         }
     } else {
-        MUSL_LOGE("E length error. %d", len);
+        MUSL_LOGW("E length error. %d", len);
     }
 
     // close file descriptor of trace_marker
@@ -173,10 +173,10 @@ void trace_marker_async_begin(uint64_t label, const char *message, const char *v
     if (len > 0 && len < sizeof(buf)) {
         int ret = MUSL_TEMP_FAILURE_RETRY(write(trace_marker_fd, buf, len));
         if (ret == -1) {
-            MUSL_LOGE("fail to write S. %d", ret);
+            MUSL_LOGW("fail to write S. %d", ret);
         }
     } else {
-        MUSL_LOGE("S length error. %d", len);
+        MUSL_LOGW("S length error. %d", len);
     }
 
     // close file descriptor of trace_marker
@@ -206,10 +206,10 @@ void trace_marker_async_end(uint64_t label, const char *message, const char *val
     if (len > 0 && len < sizeof(buf)) {
         int ret = MUSL_TEMP_FAILURE_RETRY(write(trace_marker_fd, buf, len));
         if (ret == -1) {
-            MUSL_LOGE("fail to write F. %d", ret);
+            MUSL_LOGW("fail to write F. %d", ret);
         }
     } else {
-        MUSL_LOGE("F length error. %d", len);
+        MUSL_LOGW("F length error. %d", len);
     }
 
     // close file descriptor of trace_marker
@@ -233,10 +233,10 @@ void trace_marker_count(uint64_t label, const char *message, int value)
     if (len > 0 && len < sizeof(buf)) {
         int ret = MUSL_TEMP_FAILURE_RETRY(write(trace_marker_fd, buf, len));
         if (ret == -1) {
-            MUSL_LOGE("fail to write C. %d", ret);
+            MUSL_LOGW("fail to write C. %d", ret);
         }
     } else {
-        MUSL_LOGE("C length error. %d", len);
+        MUSL_LOGW("C length error. %d", len);
     }
 
     // close file descriptor of trace_marker

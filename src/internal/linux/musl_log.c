@@ -41,7 +41,7 @@ static void buffer_clean_up(const char *str)
 {
     int unmapRes = munmap(g_buffer, g_end);
     if (unmapRes == -1) {
-        MUSL_LOGE("[ohos_dfx_log] munmap g_buffer failed: %{public}d %{public}s:\n %{public}s\n",
+        MUSL_LOGW("[ohos_dfx_log] munmap g_buffer failed: %{public}d %{public}s:\n %{public}s\n",
             errno, strerror(errno), str);
     }
     g_buffer = NULL;
@@ -54,14 +54,14 @@ bool load_asan_logger()
     if (g_dfxLibHandler == NULL) {
         g_dfxLibHandler = dlopen(DFX_LOG_LIB, RTLD_LAZY);
         if (g_dfxLibHandler == NULL) {
-            MUSL_LOGE("[ohos_dfx_log] dlopen %{public}s failed!\n", DFX_LOG_LIB);
+            MUSL_LOGW("[ohos_dfx_log] dlopen %{public}s failed!\n", DFX_LOG_LIB);
             return false;
         }
     }
     if (g_dfxLogPtr == NULL) {
         *(void **)(&g_dfxLogPtr) = dlsym(g_dfxLibHandler, DFX_LOG_INTERFACE);
         if (g_dfxLogPtr == NULL) {
-            MUSL_LOGE("[ohos_dfx_log] dlsym %{public}s, failed!\n", DFX_LOG_INTERFACE);
+            MUSL_LOGW("[ohos_dfx_log] dlsym %{public}s, failed!\n", DFX_LOG_INTERFACE);
             return false;
         }
     }
@@ -109,7 +109,7 @@ int ohos_dfx_log(const char *str, const char *path)
     if (g_buffer == NULL) {
         g_buffer = mmap(NULL, DEFAULT_STRING_SIZE, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
         if (g_buffer == MAP_FAILED) {
-            MUSL_LOGE("[ohos_dfx_log] mmap g_buffer failed: %{public}d %{public}s:\n %{public}s\n",
+            MUSL_LOGW("[ohos_dfx_log] mmap g_buffer failed: %{public}d %{public}s:\n %{public}s\n",
                 errno, strerror(errno), str);
             pthread_mutex_unlock(&g_muslLogMutex);
             return 0;
@@ -120,14 +120,14 @@ int ohos_dfx_log(const char *str, const char *path)
     if (new_end > g_end) {
         char *new_buffer = mremap(g_buffer, g_end, g_end * 2, MREMAP_MAYMOVE);
         if (new_buffer == MAP_FAILED) {
-            MUSL_LOGE("[ohos_dfx_log] mremap new_buffer failed: %{public}d %{public}s:\n %{public}s\n",
+            MUSL_LOGW("[ohos_dfx_log] mremap new_buffer failed: %{public}d %{public}s:\n %{public}s\n",
                 errno, strerror(errno), str);
             pthread_mutex_unlock(&g_muslLogMutex);
             return 0;
         }
         g_end = g_end * 2;
         g_buffer = new_buffer;
-        MUSL_LOGE("[ohos_dfx_log] g_end expand to %{public}lu\n", g_end);
+        MUSL_LOGW("[ohos_dfx_log] g_end expand to %{public}lu\n", g_end);
     }
 
     strcpy(g_buffer + g_offset, str);

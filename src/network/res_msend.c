@@ -57,7 +57,7 @@ static int start_tcp(struct pollfd *pfd, int family, const void *sa,
 	int fd = socket(family, SOCK_STREAM|SOCK_CLOEXEC|SOCK_NONBLOCK, 0);
 #ifndef __LITEOS__
 	if (fd < 0) {
-		MUSL_LOGE("%{public}s: %{public}d: create TCP socket failed, errno id: %{public}d",
+		MUSL_LOGW("%{public}s: %{public}d: create TCP socket failed, errno id: %{public}d",
 			__func__, __LINE__, errno);
 	}
 	/**
@@ -228,7 +228,7 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 	fd = socket(family, SOCK_DGRAM|SOCK_CLOEXEC|SOCK_NONBLOCK, 0);
 #ifndef __LITEOS__
 	if (fd < 0) {
-		MUSL_LOGE("%{public}s: %{public}d: create UDP socket failed, errno id: %{public}d",
+		MUSL_LOGW("%{public}s: %{public}d: create UDP socket failed, errno id: %{public}d",
 			__func__, __LINE__, errno);
 	}
 #endif
@@ -238,7 +238,7 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 		for (i=0; i<nns && conf->ns[nns].family == AF_INET6; i++);
 		if (i==nns) {
 #ifndef __LITEOS__
-			MUSL_LOGE("%{public}s: %{public}d: system lacks IPv6 support: %{public}d",
+			MUSL_LOGW("%{public}s: %{public}d: system lacks IPv6 support: %{public}d",
 				__func__, __LINE__, errno);
 #endif
 			pthread_setcancelstate(cs, 0);
@@ -276,7 +276,7 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 	sa.sin.sin_family = family;
 	if (fd < 0 || bind(fd, (void *)&sa, sl) < 0) {
 #ifndef __LITEOS__
-		MUSL_LOGE("%{public}s: %{public}d: AF_INET fd failed or bind failed, fd: %{public}d, errno: %{public}d",
+		MUSL_LOGW("%{public}s: %{public}d: AF_INET fd failed or bind failed, fd: %{public}d, errno: %{public}d",
 			__func__, __LINE__, fd, errno);
 #endif
 		if (fd >= 0) close(fd);
@@ -349,7 +349,7 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 							if (sendto(fd, queries[i], qlens[i], MSG_NOSIGNAL, (void *)&ns[try_ns[j]], sl) == -1) {
 								int errno_code = errno;
 #ifndef __LITEOS__
-								MUSL_LOGE("%{public}s: %{public}d: sendto failed, errno id: %{public}d",
+								MUSL_LOGW("%{public}s: %{public}d: sendto failed, errno id: %{public}d",
 									__func__, __LINE__, errno_code);
 #endif
 								if (dns_errno) {
@@ -368,7 +368,7 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 							if (sendto(fd, queries[i], qlens[i], MSG_NOSIGNAL, (void *)&ns[j], sl) == -1) {
 								int errno_code = errno;
 #ifndef __LITEOS__
-								MUSL_LOGE("%{public}s: %{public}d: sendto failed, errno id: %{public}d",
+								MUSL_LOGW("%{public}s: %{public}d: sendto failed, errno id: %{public}d",
 									__func__, __LINE__, errno_code);
 #endif
 								if (dns_errno) {
@@ -382,7 +382,7 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 						if (sendto(fd, queries[i], qlens[i], MSG_NOSIGNAL, (void *)&ns[j], sl) == -1) {
 							int errno_code = errno;
 #ifndef __LITEOS__
-							MUSL_LOGE("%{public}s: %{public}d: sendto failed, errno id: %{public}d",
+							MUSL_LOGW("%{public}s: %{public}d: sendto failed, errno id: %{public}d",
 								__func__, __LINE__, errno_code);
 #endif
 							if (dns_errno) {
@@ -409,7 +409,7 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 					end_query = 1;
 				} else {
 #ifndef __LITEOS__
-					MUSL_LOGE("%{public}s: %{public}d: has v4 addr but large latency.", __func__, __LINE__);
+					MUSL_LOGW("%{public}s: %{public}d: has v4 addr but large latency.", __func__, __LINE__);
 #endif
 					goto out;
 				}
@@ -417,7 +417,7 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 				/* This is not the first time to receive a v4 */
 				if (t2 > t3 + MIN_WAIT_V6) {
 #ifndef __LITEOS__
-					MUSL_LOGE("%{public}s: %{public}d: t2 > t3 + MIN_WAIT_V6 %{public}ld, %{public}ld",
+					MUSL_LOGW("%{public}s: %{public}d: t2 > t3 + MIN_WAIT_V6 %{public}ld, %{public}ld",
 						__func__, __LINE__, t2, t3);
 #endif
 					goto out;
@@ -425,7 +425,7 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 				remaining_time = t3 + MIN_WAIT_V6 - t2;
 				if (remaining_time > MIN_WAIT_V6) {
 #ifndef __LITEOS__
-					MUSL_LOGE("%{public}s: %{public}d: remaining_time error", __func__, __LINE__);
+					MUSL_LOGW("%{public}s: %{public}d: remaining_time error", __func__, __LINE__);
 #endif
 					goto out;
 				}
@@ -451,7 +451,7 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 			if (rlen < 0) {
 #ifndef __LITEOS__
 				if (errno != EAGAIN) {
-					MUSL_LOGE("%{public}s: %{public}d: recvmsg failed, errno id: %{public}d",
+					MUSL_LOGW("%{public}s: %{public}d: recvmsg failed, errno id: %{public}d",
 					__func__, __LINE__, errno);
 				}
 #endif
@@ -490,7 +490,7 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 			}
 			if (j==nns) {
 #ifndef __LITEOS__
-				MUSL_LOGE("%{public}s: %{public}d: replies from wrong addresses, ignore it", __func__, __LINE__);
+				MUSL_LOGW("%{public}s: %{public}d: replies from wrong addresses, ignore it", __func__, __LINE__);
 #endif
 				continue;
 			}
@@ -519,7 +519,7 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 					continue;
 				} else {
 #ifndef __LITEOS__
-					MUSL_LOGE("%{public}s: %{public}d: retry failed for %{public}d nameservers, and get no such name",
+					MUSL_LOGW("%{public}s: %{public}d: retry failed for %{public}d nameservers, and get no such name",
 						__func__, __LINE__, retry[i]);
 #endif
 					break;
@@ -547,7 +547,7 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 			nres_v4 += ctx.count_v4;
 #ifndef __LITEOS__
 			if (ctx.count_v4 == 0 && ctx.count_v6 == 0) {
-				MUSL_LOGE("%{public}s: %{public}d: response have no ip.", __func__, __LINE__);
+				MUSL_LOGW("%{public}s: %{public}d: response have no ip.", __func__, __LINE__);
 			}
 #endif
 
@@ -569,7 +569,7 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 			/* If answer is truncated (TC bit), fallback to TCP */
 			if ((answers[i][2] & 2) || (mh.msg_flags & MSG_TRUNC)) {
 #ifndef __LITEOS__
-				MUSL_LOGE("%{public}s: %{public}d: fallback to TCP, msg_flags: %{public}d",
+				MUSL_LOGW("%{public}s: %{public}d: fallback to TCP, msg_flags: %{public}d",
 					__func__, __LINE__, mh.msg_flags);
 #endif
 				alens[i] = -1;
@@ -640,7 +640,7 @@ out:
 				alens[i] = blens[i];
 				memcpy(answers[i], bp[i], blens[i]);
 #ifndef __LITEOS__
-				MUSL_LOGE("%{public}s: %{public}d: rollback to UDP", __func__, __LINE__);
+				MUSL_LOGW("%{public}s: %{public}d: rollback to UDP", __func__, __LINE__);
 #endif
 			} else {
 				alens[i] = 0;
