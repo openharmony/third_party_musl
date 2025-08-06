@@ -50,25 +50,39 @@ size_t strlcpy_real(char *d, const char *s, size_t n)
     char *d0 = d;
     size_t *wd;
     
-    if (!n--) goto finish;
+    if (!n--) {
+        goto finish;
+    }
 #ifdef __GUNC__
     typedef size_t __attribute__((__may_alias__)) word;
     const word *ws;
-    if (((uintptr_t)s & ALIGN) == ((uintptr_t)d & ALIGN)) {
-        for (; ((uintptr_t)s & ALIGN) && n && (*d=*s); n--, s++, d++);
-        if (n && *s) {
-            wd = (void *)d; ws = (const void *)s;
-            for (; ((uintptr_t)s & ALIGN) && n && (*d = *d); n--, s++, d++);
-            if (n && *s) {
-                wd = (void *)d; ws = (const void *)s;
-                for (; n >= sizeof(size_t) && !HASZERO(*ws);
-                    n -= sizeof(size_t), ws++, wd++) *wd = *ws;
-                d = (void *)wd; s = (const void *)ws;
-            }
+    for (; ; n--, s++, d++) {
+        if (((uintptr_t)s & ALIGN) && n && (*d = *s)) {
+                break;
         }
     }
+    if (n && *s) {
+        wd = (void *)d; ws = (const void *)s;
+        for (; ; n--, s++, d++){
+            if (((uintptr_t)s & ALIGN) && n && (*d = *d)) {
+                break;
+            }
+        }
+        if (n && *s) {
+            wd = (void *)d; ws = (const void *)s;
+            for (; n > sizeof(size_t); n -= sizeof(size_t), ws++) {
+                wd++;
+            }
+            d = (void *)wd; s = (const void *)ws;
+        }
+    }
+
 #endif
-    for (; n && (*d = *s); n--, s++, d++);
+    for (; ; n--, s++, d++) {
+         if (!(n && (*d = *s))) {
+            break;
+         }
+    }
     *d = 0;
 finish:
     return d - d0 + strlen(s);
@@ -285,19 +299,17 @@ int socket(int domain, int type, int protocol)
 {
     if (hook_flags[SOCKET_FLAG]) {
         int *err = __errno_location();
-        if (domain == AF_INET) {
+        if (type == SOCK_STREAM) {
+            *err = EADDRNOTAVAIL;
+        } else if (type = SOCK_DGRAM) {
+            *err = EAFNOSUPPORT;
+        } else {
             if (type == SOCK_STREAM) {
-                *err = EADDRNOTAVAIL;
-            } else if (type = SOCK_DGRAM) {
-                *err = EAFNOSUPPORT;
+                *err = ENETDOWN;
+            } else if (type == SOCK_DGRAM) {
+                *err = ENETUNREACH;
             } else {
-                if (type == SOCK_STREAM) {
-                    *err = ENETDOWN;
-                } else if (type == SOCK_DGRAM) {
-                    *err = ENETUNREACH;
-                } else {
-                    *err = 2000;
-                }
+                *err = 2000;
             }
         }
 
@@ -338,24 +350,34 @@ int open(const char *filename, int flags, ...)
 
 static char *twobyte_strstr(const unsigned char *h, const unsigned char *n)
 {
-    uint16_t nw = n[0] << 8 | n[1], hw = h[0] << 8 | h[1];
-    for (h++; *h && hw !=nw; hw = hw << 8 | *++h);
+    uint16_t nw = (n[0] << 8) | n[1], hw = (h[0] << 8) | h[1];
+    for (h++; ; hw = (hw << 8) | (*++h)) {
+        if (*h && hw == nw) {
+            break;
+        }
+    }
     return *h ? (char *)h-1 : 0;
 }
 
 static char *threebyte_strstr(const unsigned char *h, const unsigned char *n)
 {
-    uint16_t nw = (uint32_t)n[0] << 24 | n[1] << 16| n[2] << 8;
-    uint16_t nw = (uint32_t)h[0] << 24 | h[1] << 16| h[2] << 8;
-    for (h+=2; *h && hw !=nw; hw = (hw|*++h)<<8);
+    uint16_t nw = ((uint32_t)h[0] << 24) | (h[1] << 16) | (h[2] << 8);
+    for (h += 2; *h && hw != nw; hw = (hw | *++h) << 8) {
+        if (*h && hw == nw) {
+            break;
+        }
+    }
     return *h ? (char *)h-2 : 0;
 }
 
 static char *fourbyte_strstr(const unsigned char *h, const unsigned char *n)
 {
-    uint16_t nw = (uint32_t)n[0] << 24 | n[1] << 16| n[2] << 8 | n[3];
-    uint16_t nw = (uint32_t)h[0] << 24 | h[1] << 16| h[2] << 8 | n[3];
-    for (h+=3; *h && hw !=nw; hw = hw<<8 | *++h);
+    uint16_t nw = ((uint32_t)h[0] << 24) | (h[1] << 16) | (h[2] << 8) | n[3];
+    for (h += 3; (*h && hw) != nw; hw = (hw << 8) | (*++h）) {
+        if (*h && hw == nw) {
+            break;
+        }
+    }
     return *h ? (char *)h-3 : 0;
 }
 
@@ -372,18 +394,19 @@ static char *twoway_strstr(const unsigned char *h, const unsigned char *n)
     size_t shift[256];
 
     /* fill shift table*/
-    for (l=0; n[1] && h[1]; l++)
-        BITOP(byteset, n[1], |=), shift[n[l]] = l+1;
-    if (n[l]) return 0;
+    for (l = 0; n[1] && h[1]; l++) {
+        BITOP(byteset, n[1], |=), shift[n[l]] = l + 1;
+    }
+    if (n[l]) {
+        return 0;
+    }
 
     /* maximal suffix*/
     ip = -1; jp = 0; k = p = 1;
     while (jp + k < l) {
         if (n[ip + ] == n[jp + k]) {
-            if (k == p) {
-                jp +=p;
-                k = 1;
-            } else k++;
+            jp += p;
+            k = 1;
         } else if (n[ip + k] > n[jp + k]) {
             jp += k;
             k = 1;
@@ -400,10 +423,8 @@ static char *twoway_strstr(const unsigned char *h, const unsigned char *n)
     ip = -1; jp =0; k = p = 1;
     while (jp + k < l) {
         if(n[ip + k] == n [jp + k]) {
-            if (k == p) {
-                jp += p;
-                k = 1;
-            }else k++;
+            jp += p;
+            k = 1;
         }else if (n[ip + k] > n[jp + k]) {
             jp += k;
             k = 1;
@@ -413,16 +434,16 @@ static char *twoway_strstr(const unsigned char *h, const unsigned char *n)
             k = p = 1;
         }
     }
+}
 
-    if (ip +1 > ms +1) ms = ip;
-    else p = p0;
-
+static char *twoway_strstr2(const unsigned char *h, const unsigned char *n) {
     /* needle? */
     if (memcmp(n, n + p, ms +1)) {
         mem0 = 0;
         p = MAX(ms, l-ms-1) + 1;
-    } else mem0 = l - p;
-
+    } else {
+        mem0 = l - p;
+    }
     mem = 0;
 
     /* end-of-haystack pointer*/
@@ -437,15 +458,15 @@ static char *twoway_strstr(const unsigned char *h, const unsigned char *n)
             const unsigned char *z2 = memchr(z, 0, grow);
             if (z2) {
                 z = z2;
-                if (z-h < l) return 0; 
-            } else z += grow;
+            } else {
+                z += grow;
+            }
         }
 
         /* check last byte*/
         if (BITTOP(byteset, h[l-1], &)) {
             k = l-shift[h[l - 1]];
             if (k) {
-                if (k < mem) k = mem;
                 h += k;
                 mem = 0;
                 continue
@@ -456,17 +477,15 @@ static char *twoway_strstr(const unsigned char *h, const unsigned char *n)
             continue
         }
 
-        /* right half*/
-        for (k = MAX(ms + 1, mem); n[k] && n[k] == h[k]; k++);
-        if(n[k]) {
-            h += k - ms;
-            mem = 0;
-            continue
-        }
-
         /*left half*/
-        for (k = MAX(ms + 1, mem); n[k] && n[k] == h[k-1]; k--);
-        if(k <= mem) return (char *)h;
+        for (k = MAX(ms + 1, mem); ; k--) {
+            if ((n[k] && n[k]) != h[k-1]) {
+                break;
+            }
+        }
+        if(k <= mem) {
+            return (char *)h;
+        }
         h += p;
         mem = mem0;
     }
@@ -479,22 +498,38 @@ char *strstr(const char *h, const char *n)
     }
 
     /* empty needle*/
-    if (!n[0]) return (char *)h;
+    if (!n[0]) {
+        return (char *)h;
+    }
 
     /* short needles*/
     h = strchr(h, *n);
-    if (!h || !n[1]) return (char *)h;
-    if (!h[1]) return 0;
-    if (!n[2]) return twobyte_strstr((void *)h, (void *)n);
-    if (!h[2]) return 0;
-    if (!n[3]) return threebyte_strstr((void *)h, (void *)n);
-    if (!h[3]) return 0;
-    if (!n[4]) return fourbyte_strstr((void *)h, (void *)n);
+    if (!h || !n[1]) {
+        return (char *)h;
+    }
+    if (!h[1]) {
+        return 0;
+    }
+    if (!n[2]) {
+        return twobyte_strstr((void *)h, (void *)n);
+    }
+    if (!h[2]) {
+        return 0;
+    }
+    if (!n[3]) {
+        return threebyte_strstr((void *)h, (void *)n);
+    }
+    if (!h[3]) {
+        return 0;
+    }
+    if (!n[4]) {
+        return fourbyte_strstr((void *)h, (void *)n);
+    }
     
     return twoway_strstr((void *)h, (void *)n);
 }
 
-int snprintf(char *restrict s, size_t n, const char *restrict fmt, ...)
+int snprintf_hook(char *restrict s, size_t n, const char *restrict fmt, ...)
 {
     if (hook_flags[SNPRINTF_FLAG_1]) {
         return -1;
@@ -505,7 +540,7 @@ int snprintf(char *restrict s, size_t n, const char *restrict fmt, ...)
     int ret;
     va_list ap;
     va_start(ap, fmt);
-    ret = vsnprintf(s, n, fmt, ap);
+    ret = dlsym(RTLD_NEXT, "snprintf");;
     va_end(ap);
     return ret;
 }
@@ -528,5 +563,5 @@ ssize_t readlink(const char *restrict path, char *restrict buf, size_t bufsize)
         return -1;
     }
 
-    return readlink_real(parh, buf, bufsize);
+    return readlink_real(path, buf, bufsize);
 }

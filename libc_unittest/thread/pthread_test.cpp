@@ -20,8 +20,8 @@
  * IN THE SOFTWARE.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstdio>
+#include <cstdlib>
 #include <dlfcn.h>
 #include <algorithm.h>
 #include <fstream.h>
@@ -59,7 +59,7 @@ HETEST_F(PthreadTest, pthread_reserve_signal_stack_test, TestSize.Level10)
     printf("run PthreadTest pthread_reserve_signal_stack_test \n");
     set_hook_flag(MPROTECT_FLAG, true);
     pthread_reserve_signal_stack();
-    ASSERT_TRUE(mprotect(0, 0, 0) == -1);
+    ASSERT_TRUE(mprotect(nullptr, 0, 0) == -1);
     set_hook_flag(MPROTECT_FLAG, false);
 }
 
