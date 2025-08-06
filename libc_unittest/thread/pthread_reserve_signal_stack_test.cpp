@@ -20,8 +20,8 @@
  * IN THE SOFTWARE.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstdio>
+#include <cstdlib>
 #include <dlfcn.h>
 #include <algorithm.h>
 #include <fstream.h>
@@ -38,7 +38,7 @@ using namespace std;
 extern "C"{
 void pthread_reserve_signal_stack();
 int mprotect(void *addr, size_t len, int prot);
-void *mmap(void *start, size_t len, int prot, int flags, int fd, off_t off);
+void *mmap_hook(void *start, size_t len);
 }
 
 namespace OHOS {
@@ -63,7 +63,7 @@ HETEST_F(PthreadTest_demo, test_001, TestSize.Level10)
     printf("run PthreadTest_demo test_001 \n");
     set_hook_flag(MPROTECT_FLAG, true);
     pthread_reserve_signal_stack();
-    ASSERT_TRUE(mprotect(0, 0, 0) == -1);
+    ASSERT_TRUE(mprotect(nullptr, 0, 0) == -1);
     set_hook_flag(MPROTECT_FLAG, false);
 }
 
@@ -77,7 +77,7 @@ HETEST_F(PthreadTest_demo, test_002, TestSize.Level10)
     printf("run PthreadTest_demo test_002 \n");
     set_hook_flag(MMAP_FLAG, true);
     pthread_reserve_signal_stack();
-    ASSERT_TRUE(mmap(0, 0, 0, 0, 0, 0) == MAP_FAILED);
+    ASSERT_TRUE(mmap(nullptr, 0, 0, 0, 0, 0) == MAP_FAILED);
     set_hook_flag(MMAP_FLAG, false);
 }
 
@@ -99,7 +99,7 @@ static pthread_t main_tid;
 void *thread_fun(void *arg)
 {
     pthread_gettid_np(main_tid);
-    return NULL;
+    return nullptr;
 }
 
 /**
