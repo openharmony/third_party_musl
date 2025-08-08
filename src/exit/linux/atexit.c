@@ -170,7 +170,7 @@ int __cxa_atexit(void (*func)(void *), void *arg, void *dso)
 			p = addr2dso((size_t)arg);
 			if (p == NULL) {
 				UNLOCK(lock);
-				MUSL_LOGE("call atexit with invalid callback ptr=%{public}p", arg);
+				MUSL_LOGW("call atexit with invalid callback ptr=%{public}p", arg);
 				return -1;
 			}
 		}

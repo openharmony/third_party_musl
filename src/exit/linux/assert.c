@@ -32,13 +32,13 @@ void __assert_fail(const char *expr, const char *file, int line, const char *fun
         assert_status = g_cb(assert_fail);
     }
     if (assert_status == ASSERT_RETRY) {
-        MUSL_LOGE("CallbackFunction return ASSERT_RETRY:\n");
+        MUSL_LOGW("CallbackFunction return ASSERT_RETRY:\n");
         raise(SIGUSR1);
     } else if (assert_status == ASSERT_IGNORE) {
-        MUSL_LOGE("CallbackFunction return ASSERT_IGNORE:\n");
+        MUSL_LOGW("CallbackFunction return ASSERT_IGNORE:\n");
         return;
     } else {
-        MUSL_LOGE("CallbackFunction return ASSERT_ABORT:\n");
+        MUSL_LOGW("CallbackFunction return ASSERT_ABORT:\n");
         fprintf(stderr, "%s\n", assert_fatal_message);
         abort();
     }

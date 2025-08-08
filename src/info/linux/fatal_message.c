@@ -32,7 +32,7 @@ void set_fatal_message(const char *msg)
     }
 
     if (msg == NULL) {
-        MUSL_LOGW("message null");
+        MUSL_LOGI("message null");
         pthread_mutex_unlock(&fatal_msg_lock);
         return;
     }
@@ -45,7 +45,7 @@ void set_fatal_message(const char *msg)
     size_t size = sizeof(fatal_msg_t) + strlen(msg) + 1;
     void *map = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_ANON | MAP_PRIVATE, -1, 0);
     if (map == MAP_FAILED) {
-        MUSL_LOGW("mmap failed");
+        MUSL_LOGI("mmap failed");
         fatal_message = NULL;
         pthread_mutex_unlock(&fatal_msg_lock);
         return;
@@ -53,7 +53,7 @@ void set_fatal_message(const char *msg)
 
     int ret = prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, map, size, "fatal message");
     if (ret < 0) {
-        MUSL_LOGW("prctl set vma failed");
+        MUSL_LOGI("prctl set vma failed");
         munmap(map, size);
         fatal_message = NULL;
         pthread_mutex_unlock(&fatal_msg_lock);

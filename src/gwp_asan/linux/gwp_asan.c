@@ -216,7 +216,7 @@ const char *get_sample_parameter()
     char buf[GWP_ASAN_NAME_LEN];
     char *path = get_process_short_name(buf, GWP_ASAN_NAME_LEN);
     if (!path) {
-        MUSL_LOGE("[gwp_asan]: get_sample_parameter get process_name failed!");
+        MUSL_LOGW("[gwp_asan]: get_sample_parameter get process_name failed!");
         return sample_param;
     }
     char para_name[GWP_ASAN_NAME_LEN] = "gwp_asan.sample.app.";
@@ -238,7 +238,7 @@ void parse_sample_parameter(int *sample_rate, int *max_slot)
     const int PARSE_FULL_PARAM = 2;
     const int PARSE_SINGLE_PARAM = 1;
     if (!sample_rate || !max_slot) {
-        MUSL_LOGE("[gwp_asan]: parse_sample_parameter invalid pointer!");
+        MUSL_LOGW("[gwp_asan]: parse_sample_parameter invalid pointer!");
         return;
     }
     const char *param_value = get_sample_parameter();
@@ -247,25 +247,25 @@ void parse_sample_parameter(int *sample_rate, int *max_slot)
     if (sscanf(param_value, "%d:%d%c", &parsed_rate, &parsed_slot, &extra_char) == PARSE_FULL_PARAM) {
         if (parsed_rate < 0 || parsed_rate > INT_MAX || parsed_slot < 0 ||
             (!gwp_asan_thirdparty_telemetry && parsed_slot > MAX_SLOT_PARAM_SIZE)) {
-            MUSL_LOGE("[gwp_asan]: parse_sample_parameter abnormal rate and slot.");
+            MUSL_LOGW("[gwp_asan]: parse_sample_parameter abnormal rate and slot.");
             return;
         }
         *sample_rate = parsed_rate;
         *max_slot = parsed_slot;
     } else if (sscanf(param_value, "%d:%c", &parsed_rate, &extra_char) == PARSE_SINGLE_PARAM) {
         if (parsed_rate < 0 || parsed_rate > INT_MAX) {
-            MUSL_LOGE("[gwp_asan]: parse_sample_parameter abnormal rate.");
+            MUSL_LOGW("[gwp_asan]: parse_sample_parameter abnormal rate.");
             return;
         }
         *sample_rate = parsed_rate;
     } else if (sscanf(param_value, ":%d%c", &parsed_slot, &extra_char) == PARSE_SINGLE_PARAM) {
         if (parsed_slot < 0 || (!gwp_asan_thirdparty_telemetry && parsed_slot > MAX_SLOT_PARAM_SIZE)) {
-            MUSL_LOGE("[gwp_asan]: parse_sample_parameter abnormal slot.");
+            MUSL_LOGW("[gwp_asan]: parse_sample_parameter abnormal slot.");
             return;
         }
         *max_slot = parsed_slot;
     } else {
-        MUSL_LOGE("[gwp_asan]: parse_sample_parameter invalid format: %{public}s.", param_value);
+        MUSL_LOGW("[gwp_asan]: parse_sample_parameter invalid format: %{public}s.", param_value);
     }
 }
 
@@ -277,7 +277,7 @@ int get_min_size_parameter()
     char buf[GWP_ASAN_NAME_LEN];
     char *path = get_process_short_name(buf, GWP_ASAN_NAME_LEN);
     if (!path) {
-        MUSL_LOGE("[gwp_asan]: get_min_size_parameter get process_name failed!");
+        MUSL_LOGW("[gwp_asan]: get_min_size_parameter get process_name failed!");
         return MIN_SAMPLE_SIZE;
     }
     char para_name[GWP_ASAN_NAME_LEN] = "gwp_asan.app.min_size.";
@@ -303,7 +303,7 @@ const char *get_library_parameter()
     char buf[GWP_ASAN_NAME_LEN];
     char *path = get_process_short_name(buf, GWP_ASAN_NAME_LEN);
     if (!path) {
-        MUSL_LOGE("[gwp_asan]: get_library_parameter get process_name failed!");
+        MUSL_LOGW("[gwp_asan]: get_library_parameter get process_name failed!");
         return WHITE_LIST_PATH;
     }
     char para_name[GWP_ASAN_NAME_LEN] = "gwp_asan.app.library.";
@@ -324,7 +324,7 @@ uint64_t get_gray_begin_parameter()
     char buf[GWP_ASAN_NAME_LEN];
     char *path = get_process_short_name(buf, GWP_ASAN_NAME_LEN);
     if (!path) {
-        MUSL_LOGE("[gwp_asan]: get_gray_begin_parameter get process_name failed!");
+        MUSL_LOGW("[gwp_asan]: get_gray_begin_parameter get process_name failed!");
         return 0;
     }
     char para_name[GWP_ASAN_NAME_LEN] = "gwp_asan.gray_begin.app.";
@@ -337,7 +337,7 @@ uint64_t get_gray_begin_parameter()
     char *endPtr = NULL;
     unsigned long long gray_begin = strtoull(param_value, &endPtr, 10);
     if (*endPtr != '\0' || gray_begin < 0 || gray_begin > ULLONG_MAX) {
-        MUSL_LOGE("[gwp_asan]: invalid gray_begin value: %s", param_value);
+        MUSL_LOGW("[gwp_asan]: invalid gray_begin value: %s", param_value);
         return 0;
     }
     return (uint64_t)gray_begin;
@@ -351,7 +351,7 @@ uint64_t get_gray_days_parameter()
     char buf[GWP_ASAN_NAME_LEN];
     char *path = get_process_short_name(buf, GWP_ASAN_NAME_LEN);
     if (!path) {
-        MUSL_LOGE("[gwp_asan]: get_gray_days_parameter get process_name failed!");
+        MUSL_LOGW("[gwp_asan]: get_gray_days_parameter get process_name failed!");
         return 0;
     }
     char para_name[GWP_ASAN_NAME_LEN] = "gwp_asan.gray_days.app.";
@@ -364,7 +364,7 @@ uint64_t get_gray_days_parameter()
     char *endPtr = NULL;
     unsigned long long gray_days = strtoull(param_value, &endPtr, 10);
     if (*endPtr != '\0' || gray_days < 0 || gray_days > ULLONG_MAX) {
-        MUSL_LOGE("[gwp_asan]: invalid gray_days value: %s", param_value);
+        MUSL_LOGW("[gwp_asan]: invalid gray_days value: %s", param_value);
         return 0;
     }
     return (uint64_t)gray_days * SECONDS_PER_DAY;
@@ -388,17 +388,17 @@ void gwp_asan_printf(const char *fmt, ...)
         char process_short_name[GWP_ASAN_NAME_LEN];
         char *path = get_process_short_name(process_short_name, GWP_ASAN_NAME_LEN);
         if (!path) {
-            MUSL_LOGE("[gwp_asan]: get_process_short_name failed!");
+            MUSL_LOGW("[gwp_asan]: get_process_short_name failed!");
             return;
         }
         char log_path[GWP_ASAN_NAME_LEN];
         snprintf(log_path, GWP_ASAN_NAME_LEN, "%s%s.%s.%d.log", GWP_ASAN_LOG_DIR, GWP_ASAN_LOG_TAG, path, getpid());
         FILE *fp = fopen(log_path, "a+");
         if (!fp) {
-            MUSL_LOGE("[gwp_asan]: %{public}s fopen %{public}s failed!", path, log_path);
+            MUSL_LOGW("[gwp_asan]: %{public}s fopen %{public}s failed!", path, log_path);
             return;
         } else {
-            MUSL_LOGE("[gwp_asan]: %{public}s fopen %{public}s succeed.", path, log_path);
+            MUSL_LOGW("[gwp_asan]: %{public}s fopen %{public}s succeed.", path, log_path);
         }
         va_list ap;
         va_start(ap, fmt);
@@ -406,7 +406,7 @@ void gwp_asan_printf(const char *fmt, ...)
         va_end(ap);
         fclose(fp);
         if (result < 0) {
-            MUSL_LOGE("[gwp_asan] %{public}s write log failed!\n", path);
+            MUSL_LOGW("[gwp_asan] %{public}s write log failed!\n", path);
         }
         return;
     }
@@ -417,7 +417,7 @@ void gwp_asan_printf(const char *fmt, ...)
         int result = vsnprintf(log_buffer, PATH_MAX, fmt, ap);
         va_end(ap);
         if (result < 0) {
-            MUSL_LOGE("[gwp_asan] write log failed!\n");
+            MUSL_LOGW("[gwp_asan] write log failed!\n");
         }
         if (WriteSanitizerLog != NULL) {
             WriteSanitizerLog(log_buffer, strlen(log_buffer), "faultlogger");
@@ -453,7 +453,7 @@ void gwp_asan_printf(const char *fmt, ...)
         int result = vfprintf(stdout, fmt, ap);
         va_end(ap);
         if (result < 0) {
-            MUSL_LOGE("[gwp_asan] write log failed!\n");
+            MUSL_LOGW("[gwp_asan] write log failed!\n");
         }
         return;
     }
@@ -574,7 +574,7 @@ void init_gwp_asan_by_telemetry(int *sample_rate, int *max_simultaneous_allocati
     uint64_t now = (uint64_t)time(NULL);
     if (gray_begin > 0) {
         if (now - gray_begin > gray_days) {
-            MUSL_LOGE("[gwp_asan]: init_gwp_asan_by_telemetry thirdparty telemetry expired.");
+            MUSL_LOGW("[gwp_asan]: init_gwp_asan_by_telemetry thirdparty telemetry expired.");
             return;
         }
         gwp_asan_thirdparty_telemetry = true;
@@ -593,10 +593,10 @@ bool init_gwp_asan_process(gwp_asan_option gwp_asan_option)
         return false;
     }
 
-    MUSL_LOGE("[gwp_asan]: %{public}d %{public}s gwp_asan initializing.\n", getpid(), path);
+    MUSL_LOGW("[gwp_asan]: %{public}d %{public}s gwp_asan initializing.\n", getpid(), path);
     init_gwp_asan((void*)&gwp_asan_option);
     gwp_asan_initialized = true;
-    MUSL_LOGE("[gwp_asan]: %{public}d %{public}s gwp_asan initialized.\n", getpid(), path);
+    MUSL_LOGW("[gwp_asan]: %{public}d %{public}s gwp_asan initialized.\n", getpid(), path);
     return true;
 }
 
@@ -630,7 +630,7 @@ bool may_init_gwp_asan(bool force_init)
     force_sample_alloctor_by_env();
     init_gwp_asan_by_telemetry(&sample_rate, &max_simultaneous_allocations,
         &min_sample_size, &white_list_path);
-    MUSL_LOGE("[gwp_asan]: sample_rate:%{public}d, slot:%{public}d, "\
+    MUSL_LOGW("[gwp_asan]: sample_rate:%{public}d, slot:%{public}d, "\
         "min_sample_size:%{public}d, white_list_path:%{public}s",
         sample_rate, max_simultaneous_allocations, min_sample_size, white_list_path);
 #endif

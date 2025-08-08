@@ -246,7 +246,7 @@ static void get_ifFlag_via_ioctl(struct ifaddrs_ctx *pctx)
 	int fd;
 	if ((fd = socket(AF_INET, SOCK_DGRAM | SOCK_CLOEXEC, 0)) < 0) {
 #ifndef __LITEOS__
-		MUSL_LOGE("%{public}s: %{public}d: create Udp socket failed, errno: %{public}d",
+		MUSL_LOGW("%{public}s: %{public}d: create Udp socket failed, errno: %{public}d",
 			__func__, __LINE__, errno);
 #endif
 		return;
@@ -258,7 +258,7 @@ static void get_ifFlag_via_ioctl(struct ifaddrs_ctx *pctx)
 			addr->ifa_flags = ifr.ifr_flags;
 		} else {
 #ifndef __LITEOS__
-			MUSL_LOGE("%{public}s: %{public}d: ioctl(SIOCGIFFLAGS) failed for %{public}s, errno: %{public}d",
+			MUSL_LOGW("%{public}s: %{public}d: ioctl(SIOCGIFFLAGS) failed for %{public}s, errno: %{public}d",
 				__func__, __LINE__, addr->ifa_name, errno);
 #endif
 		}

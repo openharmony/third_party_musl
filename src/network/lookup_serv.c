@@ -26,7 +26,7 @@ int __lookup_serv(struct service buf[static MAXSERVS], const char *name, int pro
 			break;
 		default:
 #ifndef __LITEOS__
-			MUSL_LOGE("%{public}s: %{public}d: socktype mismatch IPPROTO_TCP: %{public}d", __func__, __LINE__, proto);
+			MUSL_LOGW("%{public}s: %{public}d: socktype mismatch IPPROTO_TCP: %{public}d", __func__, __LINE__, proto);
 #endif
 			return EAI_SERVICE;
 		}
@@ -39,7 +39,7 @@ int __lookup_serv(struct service buf[static MAXSERVS], const char *name, int pro
 			break;
 		default:
 #ifndef __LITEOS__
-			MUSL_LOGE("%{public}s: %{public}d: socktype mismatch IPPROTO_UDP: %{public}d", __func__, __LINE__, proto);
+			MUSL_LOGW("%{public}s: %{public}d: socktype mismatch IPPROTO_UDP: %{public}d", __func__, __LINE__, proto);
 #endif
 			return EAI_SERVICE;
 		}
@@ -48,7 +48,7 @@ int __lookup_serv(struct service buf[static MAXSERVS], const char *name, int pro
 	default:
 		if (name) {
 #ifndef __LITEOS__
-			MUSL_LOGE("%{public}s: %{public}d: socktype mismatch name: %{public}d", __func__, __LINE__, EAI_SERVICE);
+			MUSL_LOGW("%{public}s: %{public}d: socktype mismatch name: %{public}d", __func__, __LINE__, EAI_SERVICE);
 #endif
             return EAI_SERVICE;
 		}
@@ -61,7 +61,7 @@ int __lookup_serv(struct service buf[static MAXSERVS], const char *name, int pro
 	if (name) {
 		if (!*name) {
 #ifndef __LITEOS__
-			MUSL_LOGE("%{public}s: %{public}d: invaild server name: %{public}d", __func__, __LINE__, EAI_SERVICE);
+			MUSL_LOGW("%{public}s: %{public}d: invaild server name: %{public}d", __func__, __LINE__, EAI_SERVICE);
 #endif
 			return EAI_SERVICE;
 		}
@@ -70,7 +70,7 @@ int __lookup_serv(struct service buf[static MAXSERVS], const char *name, int pro
 	if (!*z) {
 		if (port > 65535) {
 #ifndef __LITEOS__
-			MUSL_LOGE("%{public}s: %{public}d: port is larger than 65535: %{public}d", __func__, __LINE__, EAI_SERVICE);
+			MUSL_LOGW("%{public}s: %{public}d: port is larger than 65535: %{public}d", __func__, __LINE__, EAI_SERVICE);
 #endif
 		    return EAI_SERVICE;
 		}
@@ -89,7 +89,7 @@ int __lookup_serv(struct service buf[static MAXSERVS], const char *name, int pro
 
 	if (flags & AI_NUMERICSERV) {
 #ifndef __LITEOS__
-		MUSL_LOGE("%{public}s: %{public}d: flags is AI_NUMERICSERV: %{public}d", __func__, __LINE__, EAI_NONAME);
+		MUSL_LOGW("%{public}s: %{public}d: flags is AI_NUMERICSERV: %{public}d", __func__, __LINE__, EAI_NONAME);
 #endif
         return EAI_NONAME;
 	}
@@ -135,7 +135,7 @@ int __lookup_serv(struct service buf[static MAXSERVS], const char *name, int pro
 		return cnt;
 	} else {
 #ifndef __LITEOS__
-		MUSL_LOGE("%{public}s: %{public}d: wrong server count: %{public}d", __func__, __LINE__, cnt);
+		MUSL_LOGW("%{public}s: %{public}d: wrong server count: %{public}d", __func__, __LINE__, cnt);
 #endif
 		return EAI_SERVICE;
 	}

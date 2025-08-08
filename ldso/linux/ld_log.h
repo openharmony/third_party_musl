@@ -44,9 +44,7 @@ hidden bool is_dlopen_debug_enable();
 #endif
 
 #if ((LD_LOG_LEVEL & LD_LOG_WARNING) && (defined(OHOS_ENABLE_PARAMETER) || defined(ENABLE_MUSL_LOG)))
-#define LD_LOGW(...) if (get_ld_log_enable()) {   \
-    (void)HiLogAdapterPrint(MUSL_LOG_TYPE, LOG_WARN, MUSL_LOG_DOMAIN, LD_LOG_TAG, __VA_ARGS__); \
-}
+#define LD_LOGW(...) (void)HiLogAdapterPrint(MUSL_LOG_TYPE, LOG_WARN, MUSL_LOG_DOMAIN, LD_LOG_TAG, __VA_ARGS__);
 #else
 #define LD_LOGW(...)
 #endif
