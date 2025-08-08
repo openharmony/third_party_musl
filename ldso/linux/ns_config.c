@@ -525,13 +525,13 @@ static int config_parse(const char *file_path, const char *exe_path)
     if (default_lib_paths) {
         g_configor.config_sys_path = default_lib_paths;
     } else {
-        LD_LOGW("config_parse get default lib paths fail! Config namespace default lib paths,please!");
+        LD_LOGI("config_parse get default lib paths fail! Config namespace default lib paths,please!");
     }
     char *default_asan_lib_paths = config_get_asan_lib_paths(ATTR_NS_DEFAULT);
     if (default_asan_lib_paths) {
         g_configor.config_asan_sys_path = default_asan_lib_paths;
     } else {
-        LD_LOGW("config_parse get default asan lib paths fail! Config namespace default asan lib paths,please!");
+        LD_LOGI("config_parse get default asan lib paths fail! Config namespace default asan lib paths,please!");
     }
     return 0;
 }

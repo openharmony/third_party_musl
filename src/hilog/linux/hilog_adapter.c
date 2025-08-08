@@ -57,7 +57,7 @@ static bool musl_log_enable = false;
 static const char *param_name = "musl.log.enable";
 static const char *g_logLevelParam = "musl.log.level";
 #endif
-static int g_logLevel = LOG_ERROR;
+static int g_logLevel = LOG_WARN;
 static volatile int g_socketFd = INVALID_SOCKET;
 
 extern int __close(int fd);
@@ -269,7 +269,7 @@ void resetLogLevel()
 {
     static CachedHandle muslLogLevelHandle = NULL;
     if (muslLogLevelHandle == NULL) {
-        muslLogLevelHandle = CachedParameterCreate(g_logLevelParam, "ERROR");
+        muslLogLevelHandle = CachedParameterCreate(g_logLevelParam, "WARN");
     }
     const char *value = CachedParameterGet(muslLogLevelHandle);
     if (value != NULL) {
@@ -284,10 +284,10 @@ void resetLogLevel()
         } else if (!strcmp(value, "FATAL")) {
             g_logLevel = LOG_FATAL;
         } else {
-            g_logLevel = LOG_ERROR;
+            g_logLevel = LOG_WARN;
         }
     } else {
-        g_logLevel = LOG_ERROR;
+        g_logLevel = LOG_WARN;
     }
 }
 
