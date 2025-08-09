@@ -24,13 +24,13 @@
 #include "gwp_asan_test.h"
 #include "test.h"
 
-void handler()
+void handler(void)
 {
     t_error("Under the condition of memory hooks, GWP_ASan is encountering errors during usage.\n");
     _exit(1);
 }
 
-void install_sigv_handler()
+void install_sigv_handler(void)
 {
     struct sigaction sigv = {
         .sa_handler = handler,
@@ -39,7 +39,7 @@ void install_sigv_handler()
     sigaction(SIGSEGV, &sigv, NULL);
 }
 
-void enable_hook_test()
+void enable_hook_test(void)
 {
     config_gwp_asan_environment(true);
     clear_log(GWP_ASAN_LOG_DIR, GWP_ASAN_LOG_TAG);
@@ -60,7 +60,7 @@ void enable_hook_test()
     free(ptr);
 }
 
-int main()
+int main(void)
 {
     pid_t pid = fork();
     if (pid < 0) {

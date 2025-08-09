@@ -12,16 +12,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-extern "C" {
-    #include "../../common/test.h"
-}
-#include <stdio.h>
-#include <string.h>
+#include <cstdio>
+#include <cstring>
 #include <dirent.h>
 #include <string>
 #include <unistd.h>
+#include "test.h"
 
 constexpr int MAX_BUFFER_SIZE = 128;
+constexpr int LARGE_LOG_LINE_AMOUNT = 5000;
 constexpr const char *FAULTLOG_DIR = "/data/log/faultlog/faultlogger/";
 constexpr const char *LOG_TAG = "ohos_dfx_log";
 constexpr const char *DEFAULT_LOGPATH = "faultlogger";
@@ -33,6 +32,9 @@ static void ClearDfxLogs()
     DIR *dir;
     struct dirent *ptr;
     dir = opendir(FAULTLOG_DIR);
+    if (dir == NULL) {
+        return;
+    }
     while ((ptr = readdir(dir)) != NULL) {
         if (strstr(ptr->d_name, LOG_TAG) != NULL) {
             char tmp[MAX_BUFFER_SIZE];
@@ -84,6 +86,9 @@ static void CheckLog(const char *content)
 {
     sleep(1);
     DIR *faultlogDir = opendir(FAULTLOG_DIR);
+    if (faultlogDir == NULL) {
+        return;
+    }
     struct dirent *ptr;
     while ((ptr = readdir(faultlogDir)) != NULL) {
         if (strstr(ptr->d_name, LOG_TAG) != NULL) {
@@ -96,7 +101,7 @@ static void CheckLog(const char *content)
     closedir(faultlogDir);
 }
 
-void TestAsanLog()
+static void TestAsanLog()
 {
     ClearDfxLogs();
     if (&ohos_dfx_log) {
@@ -108,7 +113,7 @@ void TestAsanLog()
     }
 }
 
-void TestHWAsanLog()
+static void TestHWAsanLog()
 {
     ClearDfxLogs();
     if (&ohos_dfx_log) {
@@ -120,7 +125,7 @@ void TestHWAsanLog()
     }
 }
 
-void TestTsanLog()
+static void TestTsanLog()
 {
     ClearDfxLogs();
     if (&ohos_dfx_log) {
@@ -132,7 +137,7 @@ void TestTsanLog()
     }
 }
 
-void TestUbsanLog()
+static void TestUbsanLog()
 {
     ClearDfxLogs();
     if (&ohos_dfx_log) {
@@ -144,7 +149,7 @@ void TestUbsanLog()
     }
 }
 
-void TestCfiLog()
+static void TestCfiLog()
 {
     ClearDfxLogs();
     if (&ohos_dfx_log) {
@@ -156,12 +161,14 @@ void TestCfiLog()
     }
 }
 
-void TestBufferExpand()
+static void TestBufferExpand()
 {
     ClearDfxLogs();
     if (&ohos_dfx_log) {
-        for (int i = 0; i < 5000; ++i) {
-            ohos_dfx_log("ohos_dfx_log output something to the log path ohos_dfx_log output something to the log path.\n", DEFAULT_LOGPATH);
+        for (int i = 0; i < LARGE_LOG_LINE_AMOUNT; ++i) {
+            ohos_dfx_log(
+                "ohos_dfx_log output something to the log path ohos_dfx_log output something to the log path.\n",
+                DEFAULT_LOGPATH);
         }
         ohos_dfx_log("End Asan report", DEFAULT_LOGPATH);
         CheckLog("End Asan report");
