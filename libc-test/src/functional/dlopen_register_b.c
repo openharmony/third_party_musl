@@ -14,12 +14,12 @@
  */
 #include <stdio.h>
 
-void sayhello(void)
+static void sayhello(void)
 {
     printf("hello world!\n");
 }
 
-void call(void)
+static void call(void)
 {
     sayhello();
 }

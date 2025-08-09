@@ -97,7 +97,7 @@ void fprintf_0500(void)
     }
     int expected_len = strlen("String: Test, Int: 123, Double: 45.67");
     EXPECT_EQ("fprintf_0500", len, expected_len);
-    remove("tempory_testfprintf.txt");
+    (void)remove("tempory_testfprintf.txt");
 }
 
 
@@ -127,7 +127,7 @@ void fprintf_0600(void)
     }
     
     EXPECT_EQ("fprintf_0600", len, strlen(str2));
-    remove("tempory_testfprintf.txt");
+    (void)remove("tempory_testfprintf.txt");
 }
 
 /**

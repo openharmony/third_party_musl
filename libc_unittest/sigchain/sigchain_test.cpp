@@ -20,8 +20,8 @@
  * IN THE SOFTWARE.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstdio>
+#include <cstdlib>
 #include <dlfcn.h>
 #include <algorithm.h>
 #include <fstream>
@@ -30,7 +30,7 @@
 #include <sys/mman.h>
 #include <gtest/gtest.h>
 
-#include <signal.h>
+#include <csignal>
 #include <sigchain.h>
 
 #define SIGNAL_CHAIN_SPECIAL_ACTION_MAX 3
@@ -64,7 +64,8 @@ static bool sigaction_special_handler(int signo, siginfo_t *siginfo, void *ucont
 
 /**
  *@tc.name: sigchain_sigmask_test_001
- *@tc.desc: Test the add_special_handler_at_last function. When the input how - SIG_BLOCK > 2U , the expectation is EINVAL.
+ *@tc.desc: Test the add_special_handler_at_last function.
+            When the input how - SIG_BLOCK > 2U , the expectation is EINVAL.
  *@tc.type: FUNC
  */
 HWTEST_F(SigchainTest, sigchain_sigmask_test_001, TestSize.Level0)
