@@ -21,7 +21,8 @@ static const char* g_originLib = "libprimary_origin.so";
 static const char* g_multipleLib = "libprimary_multiple.so";
 
 static const char* g_dlName = "dlns_rpath_test";
-static const char* g_dlpath = "/data/tests/libc-test/src/rpath_lib:/system/lib:/system/lib64:/system/lib/chipset-sdk-sp";
+static const char* g_dlpath = "/data/tests/libc-test/src/rpath_lib:/system/lib:/system/lib64:"
+                            "/system/lib/chipset-sdk-sp";
 static const char* g_path = "/data/tests/libc-test/src";
 static const char* g_errPath = "/data/tests/libc-test/src/rpath_lib/rpath_support_B";
 
