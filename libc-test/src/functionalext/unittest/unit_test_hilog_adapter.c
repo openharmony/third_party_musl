@@ -29,6 +29,7 @@
 #include <fcntl.h>
 #include <dirent.h>
 #include <securec.h>
+#include <libc.h>
 
 #define MUSL_LOG_TYPE LOG_CORE
 #define MUSL_LOG_DOMAIN 0xD003F00
@@ -179,25 +180,31 @@ static void HilogAdapterPrint_0030(void)
     // 前置条件：校验g_socketFd无效
     EXPECT_EQ("HilogAdapterPrint_0030 CheckHilogInvalid", CheckHilogValid(), ZERO);
     pthread_t threads[THREAD_COUNT];
+    int threadCreateResult = -1;
+    printf("libc.can_do_threads=%d\n", libc.can_do_threads);
     // 创建线程并发打印，每个线程打印的日志都不能丢
     for (int i = ZERO; i < THREAD_COUNT; i++) {
         // 生成一个随机字符串，然后将下标通过值传递给子线程，让子线程拿到全局的数据
         GenerateRandomString(str[i], i);
-        if (pthread_create(&threads[i], NULL, FunctionPrintLog, (void *)i) != 0) {
-            fprintf(stderr, "Failed to create thread %d\n", i);
+        if (libc.can_do_threads) {
+            threadCreateResult = pthread_create(&threads[i], NULL, FunctionPrintLog, (void *)i);
+        }
+        if (threadCreateResult != 0) {
+            fprintf(stderr, "Failed to create thread %d errno=%d\n", i, errno);
+            FunctionPrintLog((void *)i);
         }
     }
+    
     // 检查g_socketFd有效
     EXPECT_NE("HilogAdapterPrint_0030 CheckHilogValid", CheckHilogValid(), ZERO);
     // 等待线程执行完毕
     for (int i = ZERO; i < THREAD_COUNT; i++) {
-        if (pthread_join(threads[i], NULL) != 0) {
+        if (libc.can_do_threads && pthread_join(threads[i], NULL) != 0) {
             fprintf(stderr, "Failed to join thread %d\n", i);
-        } else {
-            // 在这里判断当前日志是否打印成功
-            bool result = CheckHiLogPrint(str[i]);
-            EXPECT_EQ("HilogAdapterPrint_0030_CheckHiLogPrint", result, true);
         }
+        // 在这里判断当前日志是否打印成功
+        bool result = CheckHiLogPrint(str[i]);
+        EXPECT_EQ("HilogAdapterPrint_0030_CheckHiLogPrint", result, true);
     }
 }
 
