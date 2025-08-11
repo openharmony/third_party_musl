@@ -22,6 +22,7 @@
 
 #if OHOS_DNS_PROXY_BY_NETSYS
 #define CACHE_VALID_TIME 2000
+#define CACHE_INFLIGHT_TIMEOUT 4000
 struct aicache {
 	const char *host;
 	const char *serv;
@@ -36,6 +37,7 @@ typedef struct aicachelist {
     /* Lock the node that the first thread enters when multi threads are looking up the same host */
 	volatile int lock[1];
 	unsigned long obtainingtime;
+	unsigned long starttime;
 	struct aicachelist *next;
 	struct aicachelist *prev;
 } aicachelist;
@@ -60,11 +62,11 @@ void free_host(aicachelist* node)
 	}
 
 	if (node->ai.host != NULL) {
-		free(node->ai.host);
+		free((char *)node->ai.host);
 	}
 
 	if (node->ai.serv != NULL) {
-		free(node->ai.serv);
+		free((char *)node->ai.serv);
 	}
 
 	if (node->ai.res != NULL) {
@@ -90,7 +92,7 @@ aicachelist *alloc_host(const char *restrict host, const char *restrict serv,
 	if (serv != NULL) {
 		node->ai.serv = strdup(serv);
         if (node->ai.serv == NULL) {
-            free(node->ai.host);
+            free((char *)node->ai.host);
             free(node);
             return NULL;
         }
@@ -99,6 +101,8 @@ aicachelist *alloc_host(const char *restrict host, const char *restrict serv,
 		memcpy(&node->ai.hint, hint, sizeof(struct addrinfo));
 	}
 	node->ai.netid = netid;
+	node->obtainingtime = 0;
+    node->starttime = 0;
 	return node;
 }
 
@@ -152,6 +156,15 @@ void refresh_cache(void)
 	unsigned long currenttime = mtime();
 	for (node = g_dnscachelist.next; node != NULL; node = node->next) {
 		if (node->obtainingtime == 0) {
+            if (node->starttime != 0 && currenttime - node->starttime > CACHE_INFLIGHT_TIMEOUT) {
+#ifndef __LITEOS__
+                MUSL_LOGE("%{public}s: release inflight timeout node, line %d", __func__, __LINE__);
+#endif
+                node->ai.ressize = 0;
+                node->ai.res = NULL;
+                node->obtainingtime = currenttime;
+                UNLOCK(node->lock);
+            }
 			continue;
 		}
 		if (currenttime - node->obtainingtime > CACHE_VALID_TIME) {
@@ -222,6 +235,20 @@ aicachelist *find_host(const char *restrict host,
 			return node;
 		}
 
+        unsigned long start = mtime();
+        while (node->obtainingtime == 0) {
+            if (mtime() - start > CACHE_INFLIGHT_TIMEOUT) {
+#ifndef __LITEOS__
+                MUSL_LOGE("%{public}s: %{public}d wait inflight timeout", __func__, __LINE__);
+#endif
+                return NULL;
+            }
+            struct timespec ts;
+			ts.tv_sec = 0;
+			ts.tv_nsec = 1000000; // 1 ms
+			nanosleep(&ts, NULL);
+        }
+
 		LOCK(node->lock);
 		if (node->ai.res == NULL) {
 			UNLOCK(node->lock);
@@ -269,6 +296,7 @@ int query_addr_info_from_local_cache(const char *restrict host, const char *rest
 	}
 	g_dnscachelist.next = node;
 	UNLOCK(g_dnscachelock);
+	node->starttime = mtime();
 	return 0;
 }
 
@@ -369,7 +397,12 @@ int getaddrinfo_ext(const char *restrict host, const char *restrict serv, const 
 	int type = 0;
 	struct timeval timeStart, timeEnd;
 
-	if (!host && !serv) return EAI_NONAME;
+	if (!host && !serv) {
+#if OHOS_DNS_PROXY_BY_NETSYS
+		update_addr_info_cache(host, serv, hint, NULL, 0, netid);
+#endif
+		return EAI_NONAME;
+	}
 	if (!param) {
 		netid = 0;
 		type = 0;
@@ -422,7 +455,10 @@ int getaddrinfo_ext(const char *restrict host, const char *restrict serv, const 
 			AI_V4MAPPED | AI_ALL | AI_ADDRCONFIG | AI_NUMERICSERV;
 		if ((flags & mask) != flags) {
 #ifndef __LITEOS__
-			MUSL_LOGW("%{public}s: %{public}d: bad hint ai_flag: %{public}d", __func__, __LINE__, flags);
+			MUSL_LOGE("%{public}s: %{public}d: bad hint ai_flag: %{public}d", __func__, __LINE__, flags);
+#endif
+#if OHOS_DNS_PROXY_BY_NETSYS
+			update_addr_info_cache(host, serv, hint, NULL, 0, netid);
 #endif
 			return EAI_BADFLAGS;
 		}
@@ -434,7 +470,10 @@ int getaddrinfo_ext(const char *restrict host, const char *restrict serv, const 
 			break;
 		default:
 #ifndef __LITEOS__
-			MUSL_LOGW("%{public}s: %{public}d: wrong family in hint: %{public}d", __func__, __LINE__, family);
+			MUSL_LOGE("%{public}s: %{public}d: wrong family in hint: %{public}d", __func__, __LINE__, family);
+#endif
+#if OHOS_DNS_PROXY_BY_NETSYS
+			update_addr_info_cache(host, serv, hint, NULL, 0, netid);
 #endif
 			return EAI_FAMILY;
 		}
@@ -462,7 +501,7 @@ int getaddrinfo_ext(const char *restrict host, const char *restrict serv, const 
 				IPPROTO_UDP);
 #ifndef __LITEOS__
 			if (s < 0) {
-				MUSL_LOGW("%{public}s: %{public}d: create socket failed for family: %{public}d, errno: %{public}d",
+				MUSL_LOGE("%{public}s: %{public}d: create socket failed for family: %{public}d, errno: %{public}d",
 					__func__, __LINE__, tf[i], errno);
 			}
 #endif
@@ -486,14 +525,20 @@ int getaddrinfo_ext(const char *restrict host, const char *restrict serv, const 
 				break;
 			default:
 #ifndef __LITEOS__
-				MUSL_LOGW("%{public}s: %{public}d: connect to local address failed: %{public}d",
+				MUSL_LOGE("%{public}s: %{public}d: connect to local address failed: %{public}d",
 					__func__, __LINE__, errno);
+#endif
+#if OHOS_DNS_PROXY_BY_NETSYS
+				update_addr_info_cache(host, serv, hint, NULL, 0, netid);
 #endif
 				return EAI_SYSTEM;
 			}
 			if (family == tf[i]) {
 #ifndef __LITEOS__
-				MUSL_LOGW("%{public}s: %{public}d: family mismatch: %{public}d", __func__, __LINE__, EAI_NONAME);
+				MUSL_LOGE("%{public}s: %{public}d: family mismatch: %{public}d", __func__, __LINE__, EAI_NONAME);
+#endif
+#if OHOS_DNS_PROXY_BY_NETSYS
+				update_addr_info_cache(host, serv, hint, NULL, 0, netid);
 #endif
                 return EAI_NONAME;
 			}
@@ -527,7 +572,7 @@ int getaddrinfo_ext(const char *restrict host, const char *restrict serv, const 
 	if (naddrs < 0) {
 		reportdnsresult(netid, (char *)host, t_cost, naddrs, NULL, param);
 #ifndef __LITEOS__
-		MUSL_LOGW("%{public}s: %{public}d: reportdnsresult: %{public}d",
+		MUSL_LOGE("%{public}s: %{public}d: reportdnsresult: %{public}d",
 			__func__, __LINE__, naddrs);
 #endif
 #if OHOS_DNS_PROXY_BY_NETSYS
