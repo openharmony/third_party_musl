@@ -525,7 +525,7 @@ int getaddrinfo_ext(const char *restrict host, const char *restrict serv, const 
 				break;
 			default:
 #ifndef __LITEOS__
-				MUSL_LOGE("%{public}s: %{public}d: connect to local address failed: %{public}d",
+				MUSL_LOGW("%{public}s: %{public}d: connect to local address failed: %{public}d",
 					__func__, __LINE__, errno);
 #endif
 #if OHOS_DNS_PROXY_BY_NETSYS
