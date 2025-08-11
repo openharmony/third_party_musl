@@ -19,26 +19,26 @@
 
 namespace testvarargs {
 int simpleSumFunction(int a, int b) {
-  printf("Entering simple SUM function\n");
-  return a + b;
+    printf("Entering simple SUM function\n");
+    return a + b;
 }
 
 // count is the number of following arguments
 // if you want to sum 5 numbers then count should be 5, followed by 5 arguments
 int varargsSumFunction(int count, ...) {
-  printf("Entering variadic arguments SUM function\n");
-  int result = 0;
+    printf("Entering variadic arguments SUM function\n");
+    int result = 0;
 
-  std::va_list list;
-  va_start(list, count);
+    std::va_list list;
+    va_start(list, count);
 
-  for (int arg = 0; arg < count; ++arg) {
-    result += va_arg(list, int);
-  }
+    for (int arg = 0; arg < count; ++arg) {
+        result += va_arg(list, int);
+    }
 
-  va_end(list);
+    va_end(list);
 
-  return result;
+    return result;
 }
 
 } // namespace testvarargs

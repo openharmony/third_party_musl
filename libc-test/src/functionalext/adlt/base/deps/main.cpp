@@ -16,11 +16,11 @@
 #include "common.h"
 
 static void Deps_TestStandardLinking() {
-  int res = fE();
-  EXPECT_EQ(__func__, res, 2);
+    int res = fE();
+    EXPECT_EQ(__func__, res, 2);
 }
 
 int main(int argc, char **argv) {
-  Deps_TestStandardLinking();
-  return t_status;
+    Deps_TestStandardLinking();
+    return t_status;
 }

@@ -17,7 +17,7 @@
 #include "lib2.h"
 
 void f2() noexcept(false) {
-  dprintf(2, "f2() before sending exception\n");
-  throw std::runtime_error("exception from f2()");
-  dprintf(2, "f2() after sending exception\n");
+    dprintf(2, "f2() before sending exception\n");
+    throw std::runtime_error("exception from f2()");
+    dprintf(2, "f2() after sending exception\n");
 }

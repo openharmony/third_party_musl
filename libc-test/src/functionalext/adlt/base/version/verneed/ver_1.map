@@ -14,12 +14,12 @@
 */
 A1.0 {
 global:
-  val;
-  duplicate_1;
+    val;
+    duplicate_1;
 };
 
 general_ver {
 global:
-  duplicate_a;
-  duplicate_2;
+    duplicate_a;
+    duplicate_2;
 };

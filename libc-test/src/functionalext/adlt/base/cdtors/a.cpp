@@ -20,67 +20,67 @@ namespace liba {
 static int next_object_id = 0;
 
 ClassA::ClassA(unsigned value):
-  object_id(next_object_id++),
-  value(value) {
-    Log("ctor");
+    object_id(next_object_id++),
+    value(value) {
+        Log("ctor");
 }
 
 ClassA::~ClassA() {
-  Log("dtor");
+    Log("dtor");
 }
 
 ClassA& ClassA::Instance() {
-  static ClassA instance(0);
-  return instance;
+    static ClassA instance(0);
+    return instance;
 }
 
 void ClassA::Log(const char* message) const {
-  printf("[ClassA::Log] \t[%s] \toid:%d \tvalue:%d\n", message, object_id, value);
+    printf("[ClassA::Log] \t[%s] \toid:%d \tvalue:%d\n", message, object_id, value);
 
 }
 
 unsigned ClassA::Value() const {
-  return value;
+    return value;
 }
 
 void ClassA::SetFlag(unsigned bit) {
-  Log("pre-SetFlag");
-  value |= 1<<bit;
-  Log("post-SetFlag");
+    Log("pre-SetFlag");
+    value |= 1<<bit;
+    Log("post-SetFlag");
 }
 
 bool ClassA::HasFlag(unsigned bit) const {
-  return !!(value & (1<<bit));
+    return !!(value & (1<<bit));
 }
 
 void __attribute__((constructor)) init_a_0() {
-  printf("called liba::init_a_0\n");
-  ClassA::Instance().SetFlag(INIT_0);
+    printf("called liba::init_a_0\n");
+    ClassA::Instance().SetFlag(INIT_0);
 }
 
 void __attribute__((constructor)) init_a_1() {
-  printf("called liba::init_a_1\n");
-  ClassA::Instance().SetFlag(INIT_1);
+    printf("called liba::init_a_1\n");
+    ClassA::Instance().SetFlag(INIT_1);
 }
 
 void __attribute__((destructor)) fini_a_0() {
-  printf("called liba::fini_a_0\n");
-  ClassA::Instance().SetFlag(FINI_0);
+    printf("called liba::fini_a_0\n");
+    ClassA::Instance().SetFlag(FINI_0);
 }
 
 void __attribute__((destructor)) fini_a_1() {
-  printf("called liba::fini_a_1\n");
-  ClassA::Instance().SetFlag(FINI_1);
+    printf("called liba::fini_a_1\n");
+    ClassA::Instance().SetFlag(FINI_1);
 }
 
 void __attribute__((destructor)) fini_a_2() {
-  printf("called liba::fini_a_2\n");
-  ClassA::Instance().SetFlag(FINI_2);
+    printf("called liba::fini_a_2\n");
+    ClassA::Instance().SetFlag(FINI_2);
 }
 
 const ClassA
-    class_a_instance_0(42+0),
-    class_a_instance_1(42+1)
-    ;
+        class_a_instance_0(42+0),
+        class_a_instance_1(42+1)
+        ;
 
 } // namespace liba

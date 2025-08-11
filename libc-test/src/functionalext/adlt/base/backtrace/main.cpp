@@ -19,21 +19,21 @@
 #include "functionalext.h"
 
 static void backtrace_TestGetVer() {
-  EXPECT_STREQ(__func__, "1.0", testbt::testVer("libadlt_base_backtrace_bt_lib.so").c_str());
+    EXPECT_STREQ(__func__, "1.0", testbt::testVer("libadlt_base_backtrace_bt_lib.so").c_str());
   
-  auto ret = testbt::testVerBT("libadlt_base_backtrace_bt_lib.so");
-  EXPECT_TRUE(__func__, ret.find("clibGetVer") != std::string::npos);
+    auto ret = testbt::testVerBT("libadlt_base_backtrace_bt_lib.so");
+    EXPECT_TRUE(__func__, ret.find("clibGetVer") != std::string::npos);
 }
 
 static void backtrace_TestMax() {
-  EXPECT_EQ(__func__, 42, testbt::testMax("libadlt_base_backtrace_bt_lib.so", 42, 1));
+    EXPECT_EQ(__func__, 42, testbt::testMax("libadlt_base_backtrace_bt_lib.so", 42, 1));
   
-  auto ret = testbt::testMaxBT("libadlt_base_backtrace_bt_lib.so");
-  EXPECT_TRUE(__func__, ret.find("clibMax") != std::string::npos);
+    auto ret = testbt::testMaxBT("libadlt_base_backtrace_bt_lib.so");
+    EXPECT_TRUE(__func__, ret.find("clibMax") != std::string::npos);
 }
 
 int main(int argc, char **argv) {
-  backtrace_TestGetVer();
-  backtrace_TestMax();
-  return t_status;
+    backtrace_TestGetVer();
+    backtrace_TestMax();
+    return t_status;
 }

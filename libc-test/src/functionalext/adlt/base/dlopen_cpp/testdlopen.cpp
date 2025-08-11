@@ -24,147 +24,147 @@ const int defaultCtorInitValue = 0;
 
 // open library
 static void *openLib(const char *filename) {
-  printf("\tLoading library %s\n", filename);
-  void *handle = dlopen(filename, RTLD_LAZY);
-  if (!handle) {
-    printf("Error loading library!\n");
-    dlerror();
-  }
+    printf("\tLoading library %s\n", filename);
+    void *handle = dlopen(filename, RTLD_LAZY);
+    if (!handle) {
+        printf("Error loading library!\n");
+        dlerror();
+    }
 
-  return handle;
+    return handle;
 }
 
 // close library
 static void closeLib(void *handle) {
-  printf("\tClosing library\n");
-  dlclose(handle);
+    printf("\tClosing library\n");
+    dlclose(handle);
 }
 
 std::string testVer(const char *filename) {
-  printf("Testing CppDynamicLib::getVersion\n");
-  void *handle = openLib(filename);
-  if (!handle) {
-    printf("Exiting!\n");
-    return "test failure";
-  }
-  
-  printf("\tLoading symbol create\n");
-  create_t* create_class = (create_t*) dlsym(handle, "create");
-  printf("\tLoading symbol destroy\n");
-  destroy_t* destroy_class = (destroy_t*) dlsym(handle, "destroy");
-  if (!create_class || !destroy_class) {
-    printf("Exiting!\n");
-    return "test failure";
-  }
+    printf("Testing CppDynamicLib::getVersion\n");
+    void *handle = openLib(filename);
+    if (!handle) {
+        printf("Exiting!\n");
+        return "test failure";
+    }
+    
+    printf("\tLoading symbol create\n");
+    create_t* create_class = (create_t*) dlsym(handle, "create");
+    printf("\tLoading symbol destroy\n");
+    destroy_t* destroy_class = (destroy_t*) dlsym(handle, "destroy");
+    if (!create_class || !destroy_class) {
+        printf("Exiting!\n");
+        return "test failure";
+    }
 
-  printf("\tInstantiating CppDynamicLib class\n");
-  ICppDynamicLib* testclass = create_class(defaultCtorInitValue);
+    printf("\tInstantiating CppDynamicLib class\n");
+    ICppDynamicLib* testclass = create_class(defaultCtorInitValue);
 
-  printf("\tCalling getVerion\n");
-  std::string ver = testclass->getVersion();
+    printf("\tCalling getVerion\n");
+    std::string ver = testclass->getVersion();
 
-  printf("\tDestroying CppDynamicLib class\n");
-  destroy_class(testclass);
+    printf("\tDestroying CppDynamicLib class\n");
+    destroy_class(testclass);
 
-  closeLib(handle);
+    closeLib(handle);
 
-  printf("Exiting getVersion test\n");
-  return ver;
+    printf("Exiting getVersion test\n");
+    return ver;
 }
 
 int testPrintf(const char *filename, const char *text) {
-  printf("Testing CppDynamicLib testPrintf\n");
-  void *handle = openLib(filename);
-  if (!handle) {
-    printf("Exiting!\n");
-    return -1;
-  }
-  
-  printf("\tLoading symbol create\n");
-  create_t* create_class = (create_t*) dlsym(handle, "create");
-  printf("\tLoading symbol destroy\n");
-  destroy_t* destroy_class = (destroy_t*) dlsym(handle, "destroy");
-  if (!create_class || !destroy_class) {
-    printf("Exiting!\n");
-    return -1;
-  }
+    printf("Testing CppDynamicLib testPrintf\n");
+    void *handle = openLib(filename);
+    if (!handle) {
+        printf("Exiting!\n");
+        return -1;
+    }
+    
+    printf("\tLoading symbol create\n");
+    create_t* create_class = (create_t*) dlsym(handle, "create");
+    printf("\tLoading symbol destroy\n");
+    destroy_t* destroy_class = (destroy_t*) dlsym(handle, "destroy");
+    if (!create_class || !destroy_class) {
+        printf("Exiting!\n");
+        return -1;
+    }
 
-  printf("\tInstantiating CppDynamicLib class\n");
-  ICppDynamicLib* testclass = create_class(defaultCtorInitValue);
+    printf("\tInstantiating CppDynamicLib class\n");
+    ICppDynamicLib* testclass = create_class(defaultCtorInitValue);
 
-  printf("\tCalling testPrintf\n");
-  testclass->testPrintf(text);
+    printf("\tCalling testPrintf\n");
+    testclass->testPrintf(text);
 
-  printf("\tDestroying CppDynamicLib class\n");
-  destroy_class(testclass);
+    printf("\tDestroying CppDynamicLib class\n");
+    destroy_class(testclass);
 
-  closeLib(handle);
+    closeLib(handle);
 
-  printf("Exiting testPrintf test\n");
-  return 0;
+    printf("Exiting testPrintf test\n");
+    return 0;
 }
 
 int testMax(const char *filename, int a, int b) {
-  printf("Testing CppDynamicLib: getMax\n");
-  void *handle = openLib(filename);
-  if (!handle) {
-    printf("Exiting!\n");
-    return -1;
-  }
-  
-  printf("\tLoading symbol create\n");
-  create_t* create_class = (create_t*) dlsym(handle, "create");
-  printf("\tLoading symbol destroy\n");
-  destroy_t* destroy_class = (destroy_t*) dlsym(handle, "destroy");
-  if (!create_class || !destroy_class) {
-    printf("Exiting!\n");
-    return -1;
-  }
+    printf("Testing CppDynamicLib: getMax\n");
+    void *handle = openLib(filename);
+    if (!handle) {
+        printf("Exiting!\n");
+        return -1;
+    }
+    
+    printf("\tLoading symbol create\n");
+    create_t* create_class = (create_t*) dlsym(handle, "create");
+    printf("\tLoading symbol destroy\n");
+    destroy_t* destroy_class = (destroy_t*) dlsym(handle, "destroy");
+    if (!create_class || !destroy_class) {
+        printf("Exiting!\n");
+        return -1;
+    }
 
-  printf("\tInstantiating CppDynamicLib class\n");
-  ICppDynamicLib* testclass = create_class(defaultCtorInitValue);
+    printf("\tInstantiating CppDynamicLib class\n");
+    ICppDynamicLib* testclass = create_class(defaultCtorInitValue);
 
-  printf("\tCalling getMax\n");
-  int max = testclass->getMax(a, b);
+    printf("\tCalling getMax\n");
+    int max = testclass->getMax(a, b);
 
-  printf("\tDestroying CppDynamicLib class\n");
-  destroy_class(testclass);
+    printf("\tDestroying CppDynamicLib class\n");
+    destroy_class(testclass);
 
-  closeLib(handle);
+    closeLib(handle);
 
-  printf("Exiting getMax test\n");
-  return max;
+    printf("Exiting getMax test\n");
+    return max;
 }
 
 int testCtor(const char *filename, int initStorage) {
-  printf("Testing getStorage\n");
-  void *handle = openLib(filename);
-  if (!handle) {
-    printf("Exiting!\n");
-    return initStorage-1;
-  }
-  
-  printf("\tLoading symbol create\n");
-  create_t* create_class = (create_t*) dlsym(handle, "create");
-  printf("\tLoading symbol destroy\n");
-  destroy_t* destroy_class = (destroy_t*) dlsym(handle, "destroy");
-  if (!create_class || !destroy_class) {
-    printf("Exiting!\n");
-    return initStorage-1;
-  }
+    printf("Testing getStorage\n");
+    void *handle = openLib(filename);
+    if (!handle) {
+        printf("Exiting!\n");
+        return initStorage-1;
+    }
+    
+    printf("\tLoading symbol create\n");
+    create_t* create_class = (create_t*) dlsym(handle, "create");
+    printf("\tLoading symbol destroy\n");
+    destroy_t* destroy_class = (destroy_t*) dlsym(handle, "destroy");
+    if (!create_class || !destroy_class) {
+        printf("Exiting!\n");
+        return initStorage-1;
+    }
 
-  printf("\tInstantiating CppDynamicLib class\n");
-  ICppDynamicLib* testclass = create_class(initStorage);
+    printf("\tInstantiating CppDynamicLib class\n");
+    ICppDynamicLib* testclass = create_class(initStorage);
 
-  printf("\tCalling getStorage\n");
-  auto storage = testclass->getStorage();
+    printf("\tCalling getStorage\n");
+    auto storage = testclass->getStorage();
 
-  printf("\tDestroying CppDynamicLib class\n");
-  destroy_class(testclass);
+    printf("\tDestroying CppDynamicLib class\n");
+    destroy_class(testclass);
 
-  closeLib(handle);
+    closeLib(handle);
 
-  printf("Exiting getStorage test\n");
-  return storage;
+    printf("Exiting getStorage test\n");
+    return storage;
 }
 } // namespace testdlopen

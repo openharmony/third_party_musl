@@ -17,7 +17,7 @@
 #include "lib1.h"
 
 void f1() noexcept(false) {
-  dprintf(2, "f1() before sending exception\n");
-  throw std::runtime_error("exception from f1()");
-  dprintf(2, "f1() after sending exception\n");
+    dprintf(2, "f1() before sending exception\n");
+    throw std::runtime_error("exception from f1()");
+    dprintf(2, "f1() after sending exception\n");
 }

@@ -29,12 +29,12 @@ namespace libb {
 
 class Class {
 public:
-  explicit Class(int);
-  ~Class();
-  int Payload(const char *);
+    explicit Class(int);
+    ~Class();
+    int Payload(const char *);
 
 private:
-  int intVar = 0;
+    int intVar = 0;
 };
 
 /***
@@ -43,59 +43,59 @@ private:
 
 class GlobalPoly {
 public:
-  explicit GlobalPoly(int);
-  virtual int VirtualMethod();
-  static GlobalPoly *New(int value);
-  static GlobalPoly *NewDerived(int value);
+    explicit GlobalPoly(int);
+    virtual int VirtualMethod();
+    static GlobalPoly *New(int value);
+    static GlobalPoly *NewDerived(int value);
 
-  virtual ~GlobalPoly();
+    virtual ~GlobalPoly();
 
 protected:
-  int intVar = 0;
+    int intVar = 0;
 };
 
 class GlobalPolyDerived : public GlobalPoly {
 public:
-  explicit GlobalPolyDerived(int);
-  int VirtualMethod() override;
+    explicit GlobalPolyDerived(int);
+    int VirtualMethod() override;
 };
 
 class InlinePoly {
 public:
-  explicit InlinePoly(int value) : intVar(value) {}
-  virtual int VirtualMethod() {
-    puts("InlinePoly" LIB_STRING "::VirtualMethod");
-    return intVar;
-  }
-  static InlinePoly *New(int value);
-  static InlinePoly *NewDerived(int value);
+    explicit InlinePoly(int value) : intVar(value) {}
+    virtual int VirtualMethod() {
+        puts("InlinePoly" LIB_STRING "::VirtualMethod");
+        return intVar;
+    }
+    static InlinePoly *New(int value);
+    static InlinePoly *NewDerived(int value);
 
-  virtual ~InlinePoly() = default;
+    virtual ~InlinePoly() = default;
 
 protected:
-  int intVar = 0;
+    int intVar = 0;
 };
 
 class InlinePolyDerived : public InlinePoly {
 public:
-  explicit InlinePolyDerived(int value) : InlinePoly(value) {}
-  int VirtualMethod() override {
-    puts("InlinePolyDerived" LIB_STRING "::VirtualMethod");
-    return intVar + 20;
-  }
+    explicit InlinePolyDerived(int value) : InlinePoly(value) {}
+    int VirtualMethod() override {
+        puts("InlinePolyDerived" LIB_STRING "::VirtualMethod");
+        return intVar + 20;
+    }
 };
 
 class LocalPoly {
 public:
-  explicit LocalPoly(int value);
-  virtual int VirtualMethod();
-  static LocalPoly *New(int value);
-  static LocalPoly *NewDerived(int value);
+    explicit LocalPoly(int value);
+    virtual int VirtualMethod();
+    static LocalPoly *New(int value);
+    static LocalPoly *NewDerived(int value);
 
-  virtual ~LocalPoly();
+    virtual ~LocalPoly();
 
 protected:
-  int intVar = 0;
+    int intVar = 0;
 };
 
 /***
@@ -104,48 +104,48 @@ protected:
 
 class DiamondRoot {
 public:
-  explicit DiamondRoot(int data);
-  virtual ~DiamondRoot() = default;
+    explicit DiamondRoot(int data);
+    virtual ~DiamondRoot() = default;
 
-  virtual int VirtualMethod();
-  virtual int VirtualMethod1();
-  virtual int VirtualMethod2();
-  virtual int VirtualMethod3();
+    virtual int VirtualMethod();
+    virtual int VirtualMethod1();
+    virtual int VirtualMethod2();
+    virtual int VirtualMethod3();
 
 protected:
-  int rootData;
+    int rootData;
 };
 
 class DiamondLeft : public virtual DiamondRoot {
 public:
-  explicit DiamondLeft(int rootData, int data);
-  ~DiamondLeft() override = default;
+    explicit DiamondLeft(int rootData, int data);
+    ~DiamondLeft() override = default;
 
-  int VirtualMethod1() override;
+    int VirtualMethod1() override;
 
 protected:
-  int leftData;
+    int leftData;
 };
 
 class DiamondRight : public virtual DiamondRoot {
 public:
-  explicit DiamondRight(int rootData, int data);
-  ~DiamondRight() override = default;
+    explicit DiamondRight(int rootData, int data);
+    ~DiamondRight() override = default;
 
-  int VirtualMethod2() override;
+    int VirtualMethod2() override;
 
 protected:
-  int rightData;
+    int rightData;
 };
 
 class DiamondChild : public DiamondLeft, public DiamondRight {
 public:
-  explicit DiamondChild(int rootData, int leftData, int rightData, int data);
+    explicit DiamondChild(int rootData, int leftData, int rightData, int data);
 
-  int VirtualMethod3() override;
+    int VirtualMethod3() override;
 
 protected:
-  int childData;
+    int childData;
 };
 
 #undef STRINGIZE1

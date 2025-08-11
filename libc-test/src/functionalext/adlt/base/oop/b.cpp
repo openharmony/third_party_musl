@@ -26,14 +26,14 @@ using namespace libb;
  ***/
 
 Class::Class(int value) : intVar(value + 2) {
-  printf("This is Class" LIB_STRING " C-tor\n");
+    printf("This is Class" LIB_STRING " C-tor\n");
 }
 
 Class::~Class() { printf("This is Class" LIB_STRING " D-tor\n"); }
 
 int Class::Payload(const char *text) {
-  printf("%s", text);
-  return intVar;
+    printf("%s", text);
+    return intVar;
 }
 
 /***
@@ -42,47 +42,47 @@ int Class::Payload(const char *text) {
 
 GlobalPoly::GlobalPoly(int value) : intVar(value) {}
 int GlobalPoly::VirtualMethod() {
-  puts("GlobalPoly" LIB_STRING "::VirtualMethod");
-  return intVar;
+    puts("GlobalPoly" LIB_STRING "::VirtualMethod");
+    return intVar;
 }
 
 GlobalPoly *GlobalPoly::New(int value) { return new GlobalPoly(value); }
 GlobalPoly *GlobalPoly::NewDerived(int value) {
-  return new GlobalPolyDerived(value);
+    return new GlobalPolyDerived(value);
 }
 GlobalPoly::~GlobalPoly() = default;
 
 GlobalPolyDerived::GlobalPolyDerived(int value) : GlobalPoly(value) {}
 int GlobalPolyDerived::VirtualMethod() {
-  puts("GlobalPolyDerived" LIB_STRING "::VirtualMethod");
-  return intVar + 10;
+    puts("GlobalPolyDerived" LIB_STRING "::VirtualMethod");
+    return intVar + 10;
 }
 
 InlinePoly *InlinePoly::New(int value) { return new InlinePoly(value); }
 InlinePoly *InlinePoly::NewDerived(int value) {
-  return new InlinePolyDerived(value);
+    return new InlinePolyDerived(value);
 }
 
 namespace {
 class LocalPolyDerived : public LocalPoly {
 public:
-  explicit LocalPolyDerived(int value) : LocalPoly(value) {}
-  int VirtualMethod() override {
-    puts("LocalPolyDerived" LIB_STRING "::VirtualMethod");
-    return intVar + 30;
-  }
+    explicit LocalPolyDerived(int value) : LocalPoly(value) {}
+    int VirtualMethod() override {
+        puts("LocalPolyDerived" LIB_STRING "::VirtualMethod");
+        return intVar + 30;
+    }
 };
 } // anonymous namespace
 
 LocalPoly::LocalPoly(int value) : intVar(value) {}
 int LocalPoly::VirtualMethod() {
-  puts("LocalPoly" LIB_STRING "::VirtualMethod");
-  return intVar;
+    puts("LocalPoly" LIB_STRING "::VirtualMethod");
+    return intVar;
 }
 
 LocalPoly *LocalPoly::New(int value) { return new LocalPoly(value); }
 LocalPoly *LocalPoly::NewDerived(int value) {
-  return new LocalPolyDerived(value);
+    return new LocalPolyDerived(value);
 }
 LocalPoly::~LocalPoly() = default;
 
@@ -98,17 +98,17 @@ int DiamondRoot::VirtualMethod2() { return rootData - 1; }
 int DiamondRoot::VirtualMethod3() { return rootData * 2; }
 
 DiamondLeft::DiamondLeft(int rootData, int data)
-    : DiamondRoot(rootData), leftData(data) {}
+        : DiamondRoot(rootData), leftData(data) {}
 int DiamondLeft::VirtualMethod1() { return leftData; }
 
 DiamondRight::DiamondRight(int rootData, int data)
-    : DiamondRoot(rootData), rightData(data) {}
+        : DiamondRoot(rootData), rightData(data) {}
 
 int DiamondRight::VirtualMethod2() { return rightData; }
 
 DiamondChild::DiamondChild(int rootData, int leftData, int rightData, int data)
-    : DiamondRoot(rootData), DiamondLeft(rootData, leftData),
-      DiamondRight(rootData, rightData), childData(data) {}
+        : DiamondRoot(rootData), DiamondLeft(rootData, leftData),
+            DiamondRight(rootData, rightData), childData(data) {}
 
 int DiamondChild::VirtualMethod3() { return childData; }
 

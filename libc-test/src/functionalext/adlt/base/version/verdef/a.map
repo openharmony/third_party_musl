@@ -14,19 +14,19 @@
 */
 A1.0 {
 global:
-  get_valA_fromA;
-  get_valB_fromA;
+    get_valA_fromA;
+    get_valB_fromA;
 local:
-  val;
+    val;
 };
 
 A2.0 {
 global:
-  duplicate_1;
+    duplicate_1;
 };
 
 general_ver {
 global:
-  duplicate_a;
-  duplicate_2;
+    duplicate_a;
+    duplicate_2;
 };

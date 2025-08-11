@@ -16,33 +16,33 @@
 #include "common.h"
 
 #define RESOLVE(handle, symbol) \
-  do {                                                                          \
-    symbol = reinterpret_cast<int(*)()>(dlsym(handle, #symbol));                \
-    if ((symbol) == 0) {                                                        \
-      t_error("RESOLVE: %s not found\n", #symbol);                              \
-    }                                                                           \
-  } while (0)
+    do {                                                                          \
+        symbol = reinterpret_cast<int(*)()>(dlsym(handle, #symbol));                \
+        if ((symbol) == 0) {                                                        \
+            t_error("RESOLVE: %s not found\n", #symbol);                              \
+        }                                                                           \
+    } while (0)
 
 static void Deps_TestDlopen() {
-  const char *libname = "libadlt_base_deps_e.so";
+    const char *libname = "libadlt_base_deps_e.so";
 
-  // init
-  void *handle = dlopen(libname, RTLD_LAZY);
-  if (!handle) {
-    EXPECT_TRUE(__func__, handle);
-    return;
-  }
+    // init
+    void *handle = dlopen(libname, RTLD_LAZY);
+    if (!handle) {
+        EXPECT_TRUE(__func__, handle);
+        return;
+    }
 
-  // check
-  int (*fE)() = nullptr;
-  RESOLVE(handle, fE);
-  int res = fE();
-  EXPECT_EQ(__func__, res, 2);
+    // check
+    int (*fE)() = nullptr;
+    RESOLVE(handle, fE);
+    int res = fE();
+    EXPECT_EQ(__func__, res, 2);
 
-  dlclose(handle);
+    dlclose(handle);
 }
 
 int main(int argc, char **argv) {
-  Deps_TestDlopen();
-  return t_status;
+    Deps_TestDlopen();
+    return t_status;
 }

@@ -14,5 +14,5 @@
 */
 A1.0 {
 global:
-  val;
+    val;
 };

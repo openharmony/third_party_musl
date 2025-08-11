@@ -44,7 +44,7 @@ def build_sym_script(args):
                 f'done\n'
                 f'cd $work_dir\n'
             )
-    
+
     return True
 
 
@@ -52,12 +52,12 @@ def build_sym_links(args):
     if not os.path.exists(args.lib_dir):
         print(f'adlt_tools build_sym_links: input lib dir {args.lib_dir} is not exists')
         return False
-    
+
     with cwd(args.lib_dir):
         if not os.path.exists(args.adlt_lib):
             print(f'adlt_tools build_sym_links: input adlt lib {args.adlt_lib} is not exists')
             return False
-        
+
         orig_libs = []
         for orig_lib in args.orig_lib_list:
             orig_lib = ''.join(orig_lib)
@@ -65,7 +65,7 @@ def build_sym_links(args):
             if not os.path.exists(orig_lib):
                 print(f'adlt_tools build_sym_links: input adlt orig lib {orig_lib} is not exists')
                 return False
-            
+
         orig_lib_dir = 'adlt_orig_libs'
         os.makedirs(orig_lib_dir, exist_ok=True)
 
@@ -82,7 +82,7 @@ def build_sym_links(args):
                 f'done\n'
                 f'cd $work_dir\n'
             )
-    
+
     return True
 
 
@@ -103,7 +103,7 @@ def get_build_id(args):
         for file in files:
             ret = subprocess.run([args.tool_path, '-n', file],
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf-8')
-            
+
             if ret.returncode != 0:
                 print(f'adlt_tools get_build_id: read file {file} failed ret: {ret.returncode}')
                 if ret.stderr:
@@ -114,7 +114,7 @@ def get_build_id(args):
                 if 'Build ID:' in line:
                     f.write(f'{line}\n')
                     break
-    
+
     return True
 
 

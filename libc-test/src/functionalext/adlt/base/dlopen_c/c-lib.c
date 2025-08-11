@@ -18,13 +18,13 @@
 static const int ver = 1;
 
 int clibGetVer(void) {
-  return ver;
+    return ver;
 }
 
 void clibPrintf(const char *text) {
-  printf("%s", text);
+    printf("%s", text);
 }
 
 int clibMax(int a, int b) {
-  return a > b ? a : b;
+    return a > b ? a : b;
 }

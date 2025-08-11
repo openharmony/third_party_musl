@@ -18,13 +18,13 @@
 static const char *ver = "1.0.b";
 
 const char* clibGetVerB(void) {
-  return ver;
+    return ver;
 }
 
 void clibPrintfB(const char *text) {
-  printf("%s", text);
+    printf("%s", text);
 }
 
 int clibMinB(int a, int b) {
-  return a < b ? a : b;
+    return a < b ? a : b;
 }

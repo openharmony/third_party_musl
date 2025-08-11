@@ -18,15 +18,15 @@
 #include "testvarargs.h"
 
 static void VarArgsTests_TestSimpleSum() {
-  EXPECT_EQ(__func__, 1+2, testvarargs::simpleSumFunction(1, 2));
+    EXPECT_EQ(__func__, 1+2, testvarargs::simpleSumFunction(1, 2));
 }
 
 static void VarArgsTests_TestVarArgsSum() {
-  EXPECT_EQ(__func__, 1+2+3, testvarargs::varargsSumFunction(3, 1, 2, 3));
+    EXPECT_EQ(__func__, 1+2+3, testvarargs::varargsSumFunction(3, 1, 2, 3));
 }
 
 int main(int argc, char **argv) {
-  VarArgsTests_TestSimpleSum();
-  VarArgsTests_TestVarArgsSum();
-  return t_status;
+    VarArgsTests_TestSimpleSum();
+    VarArgsTests_TestVarArgsSum();
+    return t_status;
 }

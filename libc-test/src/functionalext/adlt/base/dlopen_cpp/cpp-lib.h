@@ -19,18 +19,18 @@
 
 namespace cpplib {
 class CppDynamicLib : public ICppDynamicLib {
-  private:
-    const int versionMajor = 1;
-    const int versionMinor = 1;
+    private:
+        const int versionMajor = 1;
+        const int versionMinor = 1;
 
-    int storageVar;
+        int storageVar;
 
-    std::string makeVersion() const;
-  public: 
-    explicit CppDynamicLib(int value) : storageVar(value) {};
-    int getStorage() const override;
-    int getMax(int a, int b) const override;
-    std::string getVersion(void) const override;
+        std::string makeVersion() const;
+    public: 
+        explicit CppDynamicLib(int value) : storageVar(value) {};
+        int getStorage() const override;
+        int getMax(int a, int b) const override;
+        std::string getVersion(void) const override;
 };
 }// namesapce cpplib
 

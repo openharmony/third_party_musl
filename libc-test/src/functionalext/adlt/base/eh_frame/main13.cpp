@@ -18,24 +18,24 @@
 #include "lib3.h"
 
 static void EhFrameTests_test13() {
-  int f1_test = 0;
-  int f3_test = 0;
-  try {
-    f1();
-  } catch (...) {
-    f1_test = 1;
-  }
+    int f1_test = 0;
+    int f3_test = 0;
+    try {
+        f1();
+    } catch (...) {
+        f1_test = 1;
+    }
 
-  try {
-    f3();
-  } catch (...) {
-    f3_test = 1;
-  }
-  EXPECT_EQ(__func__, f1_test, 1);
-  EXPECT_EQ(__func__, f3_test, 1);
+    try {
+        f3();
+    } catch (...) {
+        f3_test = 1;
+    }
+    EXPECT_EQ(__func__, f1_test, 1);
+    EXPECT_EQ(__func__, f3_test, 1);
 }
 
 int main(int argc, char **argv) {
-  EhFrameTests_test13();
-  return t_status;
+    EhFrameTests_test13();
+    return t_status;
 }

@@ -18,6 +18,6 @@
 static const char *msgE = "message from lib E!";
 
 int fE(void) {
-  printf("LIB E:\n%s\nCall fA():\n", msgE);
-  return fA();
+    printf("LIB E:\n%s\nCall fA():\n", msgE);
+    return fA();
 }

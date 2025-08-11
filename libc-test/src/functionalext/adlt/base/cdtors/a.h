@@ -18,36 +18,36 @@
 namespace liba {
 
 enum Flags {
-  INIT_0 = 0,
-  INIT_1 = 1,
-  INIT_2 = 2,
-  INIT_3 = 3,
-  FINI_0 = 4,
-  FINI_1 = 5,
-  FINI_2 = 6,
-  FINI_3 = 7,
+    INIT_0 = 0,
+    INIT_1 = 1,
+    INIT_2 = 2,
+    INIT_3 = 3,
+    FINI_0 = 4,
+    FINI_1 = 5,
+    FINI_2 = 6,
+    FINI_3 = 7,
 };
 
 class ClassA {
 public:
-  explicit ClassA(unsigned value);
-  ~ClassA();
+    explicit ClassA(unsigned value);
+    ~ClassA();
 
-  static ClassA& Instance();
-  void Log(const char* message="") const;
+    static ClassA& Instance();
+    void Log(const char* message="") const;
 
-  unsigned Value() const;
-  void SetFlag(unsigned bit);
-  bool HasFlag(unsigned bit) const;
+    unsigned Value() const;
+    void SetFlag(unsigned bit);
+    bool HasFlag(unsigned bit) const;
 
 private:
-  int object_id;
-  unsigned value = 0;
+    int object_id;
+    unsigned value = 0;
 };
 
 extern "C" const ClassA
-    class_a_instance_0,
-    class_a_instance_1;
+        class_a_instance_0,
+        class_a_instance_1;
 
 } // namespace liba
 

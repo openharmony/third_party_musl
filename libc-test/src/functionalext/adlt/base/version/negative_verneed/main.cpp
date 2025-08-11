@@ -16,10 +16,10 @@
 #include "common.h"
 
 static void NegVerneedsTest_testCase1() {
-  EXPECT_EQ(__func__, 1, get_val_fromA());
+    EXPECT_EQ(__func__, 1, get_val_fromA());
 }
 
 int main(int argc, char **argv) {
-  NegVerneedsTest_testCase1();
-  return t_status;
+    NegVerneedsTest_testCase1();
+    return t_status;
 }

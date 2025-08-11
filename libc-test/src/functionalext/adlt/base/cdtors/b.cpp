@@ -20,77 +20,77 @@ namespace libb {
 static int next_object_id = 0;
 
 ClassB::ClassB(unsigned value):
-  object_id(next_object_id++),
-  value(value) {
-    Log("ctor");
+    object_id(next_object_id++),
+    value(value) {
+        Log("ctor");
 }
 
 ClassB::~ClassB() {
-  Log("dtor");
+    Log("dtor");
 }
 
 ClassB& ClassB::Instance() {
-  static ClassB instance(0);
-  return instance;
+    static ClassB instance(0);
+    return instance;
 }
 
 void ClassB::Log(const char* message) const {
-  printf("[ClassB::Log] \t[%s] \toid:%d \tvalue:%d\n", message, object_id, value);
+    printf("[ClassB::Log] \t[%s] \toid:%d \tvalue:%d\n", message, object_id, value);
 
 }
 
 unsigned ClassB::Value() const {
-  return value;
+    return value;
 }
 
 void ClassB::SetFlag(unsigned bit) {
-  Log("pre-SetFlag");
-  value |= 1<<bit;
-  Log("post-SetFlag");
+    Log("pre-SetFlag");
+    value |= 1<<bit;
+    Log("post-SetFlag");
 }
 
 bool ClassB::HasFlag(unsigned bit) const {
-  return !!(value & (1<<bit));
+    return !!(value & (1<<bit));
 }
 
 void __attribute__((constructor)) init_b_0() {
-  printf("called libb::init_b_0\n");
-  ClassB::Instance().SetFlag(INIT_0);
+    printf("called libb::init_b_0\n");
+    ClassB::Instance().SetFlag(INIT_0);
 }
 
 void __attribute__((constructor)) init_b_1() {
-  printf("called libb::init_b_1\n");
-  ClassB::Instance().SetFlag(INIT_1);
+    printf("called libb::init_b_1\n");
+    ClassB::Instance().SetFlag(INIT_1);
 }
 
 void __attribute__((constructor)) init_b_2() {
-  printf("called libb::init_b_2\n");
-  ClassB::Instance().SetFlag(INIT_2);
+    printf("called libb::init_b_2\n");
+    ClassB::Instance().SetFlag(INIT_2);
 }
 
 void __attribute__((destructor)) fini_b_0() {
-  printf("called libb::fini_b_0\n");
-  ClassB::Instance().SetFlag(FINI_0);
+    printf("called libb::fini_b_0\n");
+    ClassB::Instance().SetFlag(FINI_0);
 }
 
 void __attribute__((destructor)) fini_b_1() {
-  printf("called libb::fini_b_1\n");
-  ClassB::Instance().SetFlag(FINI_1);
+    printf("called libb::fini_b_1\n");
+    ClassB::Instance().SetFlag(FINI_1);
 }
 
 void __attribute__((destructor)) fini_b_2() {
-  printf("called libb::fini_b_2\n");
-  ClassB::Instance().SetFlag(FINI_2);
+    printf("called libb::fini_b_2\n");
+    ClassB::Instance().SetFlag(FINI_2);
 }
 
 void __attribute__((destructor)) fini_b_3() {
-  printf("called libb::fini_b_3\n");
-  ClassB::Instance().SetFlag(FINI_3);
+    printf("called libb::fini_b_3\n");
+    ClassB::Instance().SetFlag(FINI_3);
 }
 
 const ClassB
-    class_b_instance_0(42+0),
-    class_b_instance_1(42+1),
-    class_b_instance_2(42+2);
+        class_b_instance_0(42+0),
+        class_b_instance_1(42+1),
+        class_b_instance_2(42+2);
 
 } // namespace libb

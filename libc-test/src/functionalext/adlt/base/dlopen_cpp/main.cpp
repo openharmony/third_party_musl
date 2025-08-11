@@ -18,26 +18,26 @@
 static const char *fileName = "libadlt_base_dlopen_cpp_lib.so";
 
 static void DlopenCPPTests_TestGetStorage() {
-  EXPECT_EQ(__func__, 42, testdlopen::testCtor(fileName, 42));
+    EXPECT_EQ(__func__, 42, testdlopen::testCtor(fileName, 42));
 }
 
 static void DlopenCPPTests_TestGetVer() {
-  char *p = const_cast<char *>(testdlopen::testVer(fileName).c_str());
-  EXPECT_STREQ(__func__, "1.1", p);
+    char *p = const_cast<char *>(testdlopen::testVer(fileName).c_str());
+    EXPECT_STREQ(__func__, "1.1", p);
 }
 
 static void DlopenCPPTests_TestPrintf() {
-  EXPECT_EQ(__func__, 0, testdlopen::testPrintf(fileName, "some text\n"));
+    EXPECT_EQ(__func__, 0, testdlopen::testPrintf(fileName, "some text\n"));
 }
 
 static void DlopenCPPTests_TestMax() {
-  EXPECT_EQ(__func__, 2, testdlopen::testMax(fileName, 1, 2));
+    EXPECT_EQ(__func__, 2, testdlopen::testMax(fileName, 1, 2));
 }
 
 int main(int argc, char **argv) {
-  DlopenCPPTests_TestGetStorage();
-  DlopenCPPTests_TestGetVer();
-  DlopenCPPTests_TestPrintf();
-  DlopenCPPTests_TestMax();
-  return t_status;
+    DlopenCPPTests_TestGetStorage();
+    DlopenCPPTests_TestGetVer();
+    DlopenCPPTests_TestPrintf();
+    DlopenCPPTests_TestMax();
+    return t_status;
 }

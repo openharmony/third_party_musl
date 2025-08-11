@@ -19,27 +19,27 @@
 
 namespace cpplib {
 std::string CppDynamicLib::makeVersion() const {
-  return std::to_string(versionMajor) + "." + std::to_string(versionMinor);
+    return std::to_string(versionMajor) + "." + std::to_string(versionMinor);
 }
 
 int CppDynamicLib::getMax(int a, int b) const {
-  return a > b ? a : b;
+    return a > b ? a : b;
 }
 
 std::string CppDynamicLib::getVersion(void) const {
-  return makeVersion();
+    return makeVersion();
 };
 
 int CppDynamicLib::getStorage(void) const {
-  return storageVar;
+    return storageVar;
 }
 
 extern "C" ICppDynamicLib* create(int value) {
-    return new CppDynamicLib(value);
+        return new CppDynamicLib(value);
 }
 
 extern "C" void destroy(ICppDynamicLib* p) {
-    delete p;
+        delete p;
 }
 
 } //namespace cpplib
