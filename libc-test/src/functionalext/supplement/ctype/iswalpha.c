@@ -163,13 +163,13 @@ void iswalpha_l_0400(void)
  * @tc.desc      : Whether a character in a wide string is not a letter
  * @tc.level     : Level 1
  */
- void iswalpha_l_0500(void)
- {
+void iswalpha_l_0500(void)
+{
     locale_t m_locale = newlocale(LC_CTYPE_MASK, "zh_CN", NULL);
     int ret = iswalpha_l(MAX_VALUE, m_locale);
     freelocale(m_locale);
     EXPECT_EQ("iswalpha_l_0500", ret, CMPFLAG);
- }
+}
 
 /**
 * @tc.name      : iswalpha_l_0600

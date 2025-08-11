@@ -105,11 +105,15 @@ static int type_parse_callback(void *c, int rr, const void *data, int len, const
 
 	switch (rr) {
 	case RR_A:
-		if (len != 4) return -1;
+		if (len != 4) {
+			return -1;
+		}
 		ctx->count_v4++;
 		break;
 	case RR_AAAA:
-		if (len != 16) return -1;
+		if (len != 16) {
+			return -1;
+		}
 		ctx->count_v6++;
 		break;
 	default:
@@ -194,9 +198,8 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 #endif
 		}
 	}
-
 #if OHOS_DNS_PROXY_BY_NETSYS
-	/* If public dns added by netsys, nv4 > 3, else if public dns added by net, nv4 > 2 */
+    /* If public dns added by netsys, nv4 > 3, else if public dns added by net, nv4 > 2 */
 	if ((nv4 > 3 && conf->nns != conf->non_public) || (nv4 > 2 && conf->nns == conf->non_public)) {
 		multiV4 = true;
 	}
@@ -358,23 +361,23 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 							}
 						}
 					} else {
-						/* First time only use non public ns, public ns is used after first query failed */
-						if (retry_count <= 1 && conf->non_public > 0) {
-							retry_limit = conf->non_public;
-						} else {
-							retry_limit = nns;
-						}
-						for (j=0; j<retry_limit; j++) {
-							if (sendto(fd, queries[i], qlens[i], MSG_NOSIGNAL, (void *)&ns[j], sl) == -1) {
-								int errno_code = errno;
+                        /* First time only use non public ns, public ns is used after first query failed */
+                        if (retry_count <= 1 && conf->non_public > 0) {
+						    retry_limit = conf->non_public;
+					    } else {
+						    retry_limit = nns;
+					    }
+					    for (j=0; j<retry_limit; j++) {
+						    if (sendto(fd, queries[i], qlens[i], MSG_NOSIGNAL, (void *)&ns[j], sl) == -1) {
+							    int errno_code = errno;
 #ifndef __LITEOS__
-								MUSL_LOGW("%{public}s: %{public}d: sendto failed, errno id: %{public}d",
-									__func__, __LINE__, errno_code);
+							    MUSL_LOGW("%{public}s: %{public}d: sendto failed, errno id: %{public}d",
+								    __func__, __LINE__, errno_code);
 #endif
-								if (dns_errno) {
-									*dns_errno = errno_code;
-								}
-							}
+							    if (dns_errno) {
+								    *dns_errno = errno_code;
+							    }
+						    }
 						}
 					}
 #else

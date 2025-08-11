@@ -732,14 +732,6 @@ template("musl_libs") {
       ]
     }
 
-    if (use_hwasan) {
-      configs += [ "//build/config/sanitizers:default_sanitizer_flags" ]
-      cflags += [
-        "-mllvm",
-        "-hwasan-instrument-check-enabled=true",
-      ]
-    }
-
     deps = porting_deps
 
     asmflags = cflags
@@ -934,10 +926,12 @@ template("musl_libs") {
     sources = []
     if (musl_arch == "x86_64") {
       sources += [
+        "src/math/ceill.c",
         "src/math/exp2l.c",
         "src/math/fabsl.c",
         "src/math/floorl.c",
         "src/math/sqrtl.c",
+        "src/math/truncl.c",
       ]
     }
 
@@ -1145,6 +1139,7 @@ template("musl_libs") {
     if (musl_ld128_flag) {
       deps += [ ":soft_musl_src_ld128" ]
     }
+
     configs += [ ":stack_config_musl" ]
   }
 

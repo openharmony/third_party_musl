@@ -149,7 +149,7 @@ void fprintf_0700(void)
     }
     
     EXPECT_EQ("fprintf_0700", len, strlen(large_str));
-    remove("tempory_testfprintf.txt");
+    (void)remove("tempory_testfprintf.txt");
 }
 
 /**
@@ -168,7 +168,7 @@ void fprintf_0800(void)
     }
     
     EXPECT_EQ("fprintf_0800", len, strlen(str));
-    remove("tempory_testfprintf.txt");
+    (void)remove("tempory_testfprintf.txt");
 }
 
 int main(void)
