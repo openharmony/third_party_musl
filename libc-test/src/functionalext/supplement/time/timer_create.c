@@ -23,6 +23,7 @@
 
 #include "test.h"
 #define SIGNUM 40
+#define SLEEPTIME 5
 static int count = 0;
 
 void handler(int sig)
@@ -92,7 +93,7 @@ void timer_create_0200(void)
     }
 }
 
-void timer_handler(union sigval sv) 
+void timer_handler(union sigval sv)
 {
     void *data = sv.sival_ptr;
     printf("timer_handler handler: %p \n", data);
@@ -141,7 +142,7 @@ void timer_create_0300(void)
         return;
     }
 
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < SLEEPTIME; i++) {
         printf("main running waiting for callback: %d \n", i);
         sleep(1);
     }
@@ -151,7 +152,6 @@ void timer_create_0300(void)
         t_error("%s timer_delete failed \n", __func__);
         return;
     }
-
 }
 
 int main(int argc, char *argv[])

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2024-2025. All rights reserved.
+ * Copyright (c) 2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -39,10 +39,12 @@ size_t g_end = DEFAULT_STRING_SIZE; // the size of g_buffer
 
 static void buffer_clean_up(const char *str)
 {
-    int unmapRes = munmap(g_buffer, g_end);
-    if (unmapRes == -1) {
-        MUSL_LOGW("[ohos_dfx_log] munmap g_buffer failed: %{public}d %{public}s:\n %{public}s\n",
-            errno, strerror(errno), str);
+    if (g_buffer != NULL) {
+        int unmapRes = munmap(g_buffer, g_end);
+        if (unmapRes == -1) {
+            MUSL_LOGW("[ohos_dfx_log] munmap g_buffer failed: %{public}d %{public}s:\n %{public}s\n",
+                errno, strerror(errno), str);
+        }
     }
     g_buffer = NULL;
     g_offset = 0;
