@@ -16,20 +16,20 @@
 #include "testmalloc.h"
 
 static void MallocTests_TestAllocateInt() {
-  EXPECT_EQ(__func__, 0, testmalloc::allocateInt());
+    EXPECT_EQ(__func__, 0, testmalloc::allocateInt());
 }
 
 static void MallocTests_TestAllocateChar() {
-  EXPECT_EQ(__func__, 0, testmalloc::allocateChar());
+    EXPECT_EQ(__func__, 0, testmalloc::allocateChar());
 }
 
 static void MallocTests_TestAllocateDouble() {
-  EXPECT_EQ(__func__, 0, testmalloc::allocateDouble());
+    EXPECT_EQ(__func__, 0, testmalloc::allocateDouble());
 }
 
 int main(int argc, char **argv) {
-  MallocTests_TestAllocateInt();
-  MallocTests_TestAllocateChar();
-  MallocTests_TestAllocateDouble();
-  return t_status;
+    MallocTests_TestAllocateInt();
+    MallocTests_TestAllocateChar();
+    MallocTests_TestAllocateDouble();
+    return t_status;
 }

@@ -18,6 +18,6 @@
 static const char *msgB = "message from lib B!";
 
 int fB(void) {
-  printf("LIB B:\n%s\n", msgB);
-  return 1;
+    printf("LIB B:\n%s\n", msgB);
+    return 1;
 }

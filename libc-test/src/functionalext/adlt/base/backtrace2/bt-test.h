@@ -19,63 +19,63 @@
 
 namespace testbt {
 struct TestVer {
-  TestVer(std::string &verA, std::string &verB) :
-          verA(verA), verB(verB) {}
+    TestVer(std::string &verA, std::string &verB) :
+                    verA(verA), verB(verB) {}
 
-  const char *symbolNameA;
-  const char *fileNameA;
-  std::string &verA;
-  const char *symbolNameB;
-  const char *fileNameB;
-  std::string &verB;
+    const char *symbolNameA;
+    const char *fileNameA;
+    std::string &verA;
+    const char *symbolNameB;
+    const char *fileNameB;
+    std::string &verB;
 
-  std::string test();
+    std::string test();
 };
 
 struct TestVerBT {
-  TestVerBT(std::string &btA, std::string &btB) :
-            btA(btA), btB(btB) {}
+    TestVerBT(std::string &btA, std::string &btB) :
+                        btA(btA), btB(btB) {}
 
-  const char *symbolNameA;
-  const char *fileNameA;
-  std::string &btA;
-  const char *symbolNameB;
-  const char *fileNameB;
-  std::string &btB;
+    const char *symbolNameA;
+    const char *fileNameA;
+    std::string &btA;
+    const char *symbolNameB;
+    const char *fileNameB;
+    std::string &btB;
 
-  std::string test();
+    std::string test();
 };
 
 struct TestMaxMin {
-  TestMaxMin(int &valA, int &valB) :
-            valA(valA), valB(valB) {}
+    TestMaxMin(int &valA, int &valB) :
+                        valA(valA), valB(valB) {}
 
-  const char *symbolNameA;
-  const char *fileNameA;
-  int aa;
-  int ab;
-  int &valA;
-  const char *symbolNameB;
-  const char *fileNameB;
-  int ba;
-  int bb;
-  int &valB;
+    const char *symbolNameA;
+    const char *fileNameA;
+    int aa;
+    int ab;
+    int &valA;
+    const char *symbolNameB;
+    const char *fileNameB;
+    int ba;
+    int bb;
+    int &valB;
 
-  std::string test();
+    std::string test();
 };
 
 struct TestMaxMinBT {
-  TestMaxMinBT(std::string &btA, std::string &btB) :
-              btA(btA), btB(btB) {}
+    TestMaxMinBT(std::string &btA, std::string &btB) :
+                            btA(btA), btB(btB) {}
 
-  const char *symbolNameA;
-  const char *fileNameA;
-  std::string &btA;
-  const char *symbolNameB;
-  const char *fileNameB;
-  std::string &btB;
+    const char *symbolNameA;
+    const char *fileNameA;
+    std::string &btA;
+    const char *symbolNameB;
+    const char *fileNameB;
+    std::string &btB;
 
-  std::string test();
+    std::string test();
 };
 } // namespace testbt
 

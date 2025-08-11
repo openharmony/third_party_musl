@@ -16,5 +16,5 @@
 #include "a.h"
 
 void testPrintMessagefromA(void) {
-  printf("Hello from lib A!\n");
+    printf("Hello from lib A!\n");
 }

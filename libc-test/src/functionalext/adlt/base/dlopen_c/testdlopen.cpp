@@ -26,79 +26,79 @@ typedef int (*clibMax_t)(int, int);
 
 // open library
 static void *openLib(const char *filename) {
-  printf("\tLoading library %s\n", filename);
-  void *handle = dlopen(filename, RTLD_LAZY);
-  if (!handle) {
-    printf("Error loading library!\n");
-    dlerror();
-  }
+    printf("\tLoading library %s\n", filename);
+    void *handle = dlopen(filename, RTLD_LAZY);
+    if (!handle) {
+        printf("Error loading library!\n");
+        dlerror();
+    }
 
-  return handle;
+    return handle;
 }
 
 // close library
 static void closeLib(void *handle) {
-  printf("\tClosing library\n");
-  dlclose(handle);
+    printf("\tClosing library\n");
+    dlclose(handle);
 }
 
 int testVer(const char *filename) {
-  printf("Testing clibGetVer\n");
-  void *handle = openLib(filename);
-  if (!handle) {
-    printf("Exiting!\n");
-    return -1;
-  }
-  
-  printf("\tLoading symbol clibGetVer\n");
-  clibGetVer_t getVer = (clibGetVer_t) dlsym(handle, "clibGetVer");
+    printf("Testing clibGetVer\n");
+    void *handle = openLib(filename);
+    if (!handle) {
+        printf("Exiting!\n");
+        return -1;
+    }
+    
+    printf("\tLoading symbol clibGetVer\n");
+    clibGetVer_t getVer = (clibGetVer_t) dlsym(handle, "clibGetVer");
 
-  printf("\tCalling clibGetVer\n");
-  int ver = getVer();
+    printf("\tCalling clibGetVer\n");
+    int ver = getVer();
 
-  closeLib(handle);
+    closeLib(handle);
 
-  printf("Exiting clibGetVer test\n");
-  return ver;
+    printf("Exiting clibGetVer test\n");
+    return ver;
 }
 
 int testPrintf(const char *filename, const char *text) {
-  printf("Testing clibPrintf\n");
-  void *handle = openLib(filename);
-  if (!handle) {
-    printf("Exiting!\n");
-    return -1;
-  }
-  
-  printf("\tLoading symbol clibPrintf\n");
-  clibPrintf_t libPrintf = (clibPrintf_t) dlsym(handle, "clibPrintf");
+    printf("Testing clibPrintf\n");
+    void *handle = openLib(filename);
+    if (!handle) {
+        printf("Exiting!\n");
+        return -1;
+    }
+    
+    printf("\tLoading symbol clibPrintf\n");
+    clibPrintf_t libPrintf = (clibPrintf_t) dlsym(handle, "clibPrintf");
 
-  printf("\tCalling clibPrintf\n");
-  libPrintf(text);
+    printf("\tCalling clibPrintf\n");
+    libPrintf(text);
 
-  closeLib(handle);
+    closeLib(handle);
 
-  printf("Exiting clibGetVet test\n");
-  return 0;
+    printf("Exiting clibGetVet test\n");
+    return 0;
 }
 
 int testMax(const char *filename, int a, int b) {
-  printf("Testing clibMax\n");
-  void *handle = openLib(filename);
-  if (!handle) {
-    printf("Exiting!\n");
-    return -1;
-  }
-  
-  printf("\tLoading symbol clibMax\n");
-  clibMax_t libMax = (clibMax_t) dlsym(handle, "clibMax");
+    printf("Testing clibMax\n");
+    void *handle = openLib(filename);
+    if (!handle) {
+        printf("Exiting!\n");
+        return -1;
+    }
+    
+    printf("\tLoading symbol clibMax\n");
+    clibMax_t libMax = (clibMax_t) dlsym(handle, "clibMax");
 
-  printf("\tCalling clibMax\n");
-  int max =  libMax(a, b);
+    printf("\tCalling clibMax\n");
+    int max = libMax(a, b);
 
-  closeLib(handle);
+    closeLib(handle);
 
-  printf("Exiting clibMax test\n");
-  return max;
+    printf("Exiting clibMax test\n");
+    return max;
 }
 } // namespace testdlopen

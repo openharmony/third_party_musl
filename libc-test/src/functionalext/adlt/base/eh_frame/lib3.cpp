@@ -17,7 +17,7 @@
 #include "lib3.h"
 
 void f3() noexcept(false) {
-  dprintf(2, "f3() before sending exception\n");
-  throw std::runtime_error("exception from f3()");
-  dprintf(2, "f3() after sending exception\n");
+    dprintf(2, "f3() before sending exception\n");
+    throw std::runtime_error("exception from f3()");
+    dprintf(2, "f3() after sending exception\n");
 }

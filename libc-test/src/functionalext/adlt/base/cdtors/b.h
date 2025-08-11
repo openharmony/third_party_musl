@@ -18,37 +18,37 @@
 namespace libb {
 
 enum Flags {
-  INIT_0 = 0,
-  INIT_1 = 1,
-  INIT_2 = 2,
-  INIT_3 = 3,
-  FINI_0 = 4,
-  FINI_1 = 5,
-  FINI_2 = 6,
-  FINI_3 = 7,
+    INIT_0 = 0,
+    INIT_1 = 1,
+    INIT_2 = 2,
+    INIT_3 = 3,
+    FINI_0 = 4,
+    FINI_1 = 5,
+    FINI_2 = 6,
+    FINI_3 = 7,
 };
 
 class ClassB {
 public:
-  explicit ClassB(unsigned value);
-  ~ClassB();
+    explicit ClassB(unsigned value);
+    ~ClassB();
 
-  static ClassB& Instance();
-  void Log(const char* message="") const;
+    static ClassB& Instance();
+    void Log(const char* message="") const;
 
-  unsigned Value() const;
-  void SetFlag(unsigned bit);
-  bool HasFlag(unsigned bit) const;
+    unsigned Value() const;
+    void SetFlag(unsigned bit);
+    bool HasFlag(unsigned bit) const;
 
 private:
-  int object_id;
-  unsigned value = 0;
+    int object_id;
+    unsigned value = 0;
 };
 
 extern "C" const ClassB
-    class_b_instance_0,
-    class_b_instance_1,
-    class_b_instance_2;
+        class_b_instance_0,
+        class_b_instance_1,
+        class_b_instance_2;
 
 } // namespace libb
 #endif

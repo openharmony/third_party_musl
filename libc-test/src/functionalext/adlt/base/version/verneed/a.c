@@ -16,6 +16,6 @@
 #include "common.h"
 
 int get_val_fromA() { return val; };
-int get_duplicateA_fromA()  { return duplicate_a; };
-int get_duplicate1_fromA()  { return duplicate_1; };
-int get_duplicate2_fromA()  { return duplicate_2; };
+int get_duplicateA_fromA()    { return duplicate_a; };
+int get_duplicate1_fromA()    { return duplicate_1; };
+int get_duplicate2_fromA()    { return duplicate_2; };

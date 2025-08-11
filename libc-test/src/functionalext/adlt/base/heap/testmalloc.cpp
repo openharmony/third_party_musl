@@ -20,48 +20,48 @@
 
 namespace testmalloc {
 int allocateInt(void) {
-  printf("Trying to allocate %d\n", static_cast<int>(sizeof(int)));
+    printf("Trying to allocate %d\n", static_cast<int>(sizeof(int)));
 
-  int *mem = static_cast<int *>(malloc(sizeof(int)));
-  if (mem == nullptr) {
-    printf("Could not allocate memory\n");
-    return 1;
-  } else {
-    printf("Memory allocated\n");
-    free(mem);
-    printf("Memory freed\n");
-    return 0;
-  }
+    int *mem = static_cast<int *>(malloc(sizeof(int)));
+    if (mem == nullptr) {
+        printf("Could not allocate memory\n");
+        return 1;
+    } else {
+        printf("Memory allocated\n");
+        free(mem);
+        printf("Memory freed\n");
+        return 0;
+    }
 }
 
 int allocateChar(void) {
-  printf("Trying to allocate %d\n", static_cast<int>(sizeof(char)));
+    printf("Trying to allocate %d\n", static_cast<int>(sizeof(char)));
 
-  char *mem = static_cast<char *>(malloc(sizeof(char)));
-  if (mem == nullptr) {
-    printf("Could not allocate memory\n");
-    return 1;
-  } else {
-    printf("Memory allocated\n");
-    free(mem);
-    printf("Memory freed\n");
-    return 0;
-  }
+    char *mem = static_cast<char *>(malloc(sizeof(char)));
+    if (mem == nullptr) {
+        printf("Could not allocate memory\n");
+        return 1;
+    } else {
+        printf("Memory allocated\n");
+        free(mem);
+        printf("Memory freed\n");
+        return 0;
+    }
 }
 
 int allocateDouble(void) {
-  printf("Trying to allocate %d\n", static_cast<int>(sizeof(double)));
+    printf("Trying to allocate %d\n", static_cast<int>(sizeof(double)));
 
-  double *mem = static_cast<double *>(malloc(sizeof(double)));
-  if (mem == nullptr) {
-    printf("Could not allocate memory\n");
-    return 1;
-  } else {
-    printf("Memory allocated\n");
-    free(mem);
-    printf("Memory freed\n");
-    return 0;
-  }
+    double *mem = static_cast<double *>(malloc(sizeof(double)));
+    if (mem == nullptr) {
+        printf("Could not allocate memory\n");
+        return 1;
+    } else {
+        printf("Memory allocated\n");
+        free(mem);
+        printf("Memory freed\n");
+        return 0;
+    }
 }
 
 } // namespace testmalloc

@@ -18,8 +18,8 @@
 static const char *msgA = "message from lib A!";
 
 int fA(void) {
-  printf("LIB A:\n%s\nCall fB():\n", msgA);
-  int res = fB();
-  printf("\n");
-  return 1 + res;
+    printf("LIB A:\n%s\nCall fB():\n", msgA);
+    int res = fB();
+    printf("\n");
+    return 1 + res;
 }

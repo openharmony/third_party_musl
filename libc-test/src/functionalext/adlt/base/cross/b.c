@@ -24,7 +24,7 @@ void testPrintB(void) { printf("this is lib B!\n"); }
 void testPrintMessageBfromB(void) { printf("%s\n", msgB); }
 
 void testPrintMessageAfromB(void) {
-  printf("print msg A from %s: %s\n", strB, msgA);
+    printf("print msg A from %s: %s\n", strB, msgA);
 }
 
 int f2(void) { return f4(); }

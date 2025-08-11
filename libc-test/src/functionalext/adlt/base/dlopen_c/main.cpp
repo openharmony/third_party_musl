@@ -21,21 +21,21 @@
 static const char *fileName = "libadlt_base_dlopen_c_lib.so";
 
 static void DlopenCTests_TestGetVer() {
-  EXPECT_EQ(__func__, 1, testdlopen::testVer(fileName));
+    EXPECT_EQ(__func__, 1, testdlopen::testVer(fileName));
 }
 
 static void DlopenCTests_TestPrintf() {
-  EXPECT_EQ(__func__, 0, testdlopen::testPrintf(fileName, "some text\n"));
+    EXPECT_EQ(__func__, 0, testdlopen::testPrintf(fileName, "some text\n"));
 }
 
 static void DlopenCTests_TestMax() {
-  EXPECT_EQ(__func__, 2, testdlopen::testMax(fileName, 1, 2));
+    EXPECT_EQ(__func__, 2, testdlopen::testMax(fileName, 1, 2));
 }
 
 int main(int argc, char **argv) {
-  DlopenCTests_TestGetVer();
-  DlopenCTests_TestPrintf();
-  DlopenCTests_TestMax();
-  return t_status;
+    DlopenCTests_TestGetVer();
+    DlopenCTests_TestPrintf();
+    DlopenCTests_TestMax();
+    return t_status;
 }
 

@@ -19,6 +19,6 @@ extern "C" int val;
 static void NegVerdefTest_testCase1() { EXPECT_EQ(__func__, 1, val); }
 
 int main(int argc, char **argv) {
-  NegVerdefTest_testCase1();
-  return t_status;
+    NegVerdefTest_testCase1();
+    return t_status;
 }

@@ -17,47 +17,47 @@
 
 
 static void CrossTests_CheckSources() {
-  EXPECT_STREQ(__func__, "a.c", strA);
-  EXPECT_STREQ(__func__, "b.c", strB);
+    EXPECT_STREQ(__func__, "a.c", strA);
+    EXPECT_STREQ(__func__, "b.c", strB);
 }
 
 static void CrossTests_CheckMessages() {
-  EXPECT_STREQ(__func__, "message from lib A!", msgA);
-  EXPECT_STREQ(__func__, "message from lib B!", msgB);
+    EXPECT_STREQ(__func__, "message from lib A!", msgA);
+    EXPECT_STREQ(__func__, "message from lib B!", msgB);
 }
 
 static void CrossTests_TestSumF1F2() {
-  int sum = 0;
-  const int countRuns = 1000000;
-  for (size_t i = 0; i < countRuns; i++)
-    sum += f1();
-  EXPECT_EQ(__func__, 3000000, sum);
+    int sum = 0;
+    const int countRuns = 1000000;
+    for (size_t i = 0; i < countRuns; i++)
+        sum += f1();
+    EXPECT_EQ(__func__, 3000000, sum);
 
-  for (size_t i = 0; i < countRuns; i++)
-    sum += f2();
-  EXPECT_EQ(__func__, 7000000, sum);
+    for (size_t i = 0; i < countRuns; i++)
+        sum += f2();
+    EXPECT_EQ(__func__, 7000000, sum);
 }
 
 int main(int argc, char **argv) {
-  printf("Hello! This test contains libs built from sources: ");
-  const char *sources[] = {strA, strB};
-  const int countSources = sizeof(sources) / sizeof(sources[0]);
-  for (size_t i = 0; i < countSources; i++)
-    printf("%s ", sources[i]);
-  printf("\n");
+    printf("Hello! This test contains libs built from sources: ");
+    const char *sources[] = {strA, strB};
+    const int countSources = sizeof(sources) / sizeof(sources[0]);
+    for (size_t i = 0; i < countSources; i++)
+        printf("%s ", sources[i]);
+    printf("\n");
 
-  printf("Test print calls in libs: \n");
-  testPrintA();
-  testPrintB();
+    printf("Test print calls in libs: \n");
+    testPrintA();
+    testPrintB();
 
-  testPrintMessageAfromA();
-  testPrintMessageBfromB();
+    testPrintMessageAfromA();
+    testPrintMessageBfromB();
 
-  testPrintMessageAfromB();
-  testPrintMessageBfromA();
+    testPrintMessageAfromB();
+    testPrintMessageBfromA();
 
-  CrossTests_CheckSources();
-  CrossTests_CheckMessages();
-  CrossTests_TestSumF1F2();
-  return t_status;
+    CrossTests_CheckSources();
+    CrossTests_CheckMessages();
+    CrossTests_TestSumF1F2();
+    return t_status;
 }

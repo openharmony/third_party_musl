@@ -16,34 +16,34 @@
 #include "common.h"
 
 static void DuplicatesTests_TestGetVal1() {
-  EXPECT_EQ(__func__, 1, get_val_from_A());
-  EXPECT_EQ(__func__, 2, get_val_from_B());
-  EXPECT_EQ(__func__, 3, get_val_from_C());
+    EXPECT_EQ(__func__, 1, get_val_from_A());
+    EXPECT_EQ(__func__, 2, get_val_from_B());
+    EXPECT_EQ(__func__, 3, get_val_from_C());
 }
 
 static void DuplicatesTests_TestGetVal2() {
-  EXPECT_EQ(__func__, 1, get_valA_from_A());
-  EXPECT_EQ(__func__, 2, get_valB_from_A());
-  EXPECT_EQ(__func__, 3, get_valC_from_A());
+    EXPECT_EQ(__func__, 1, get_valA_from_A());
+    EXPECT_EQ(__func__, 2, get_valB_from_A());
+    EXPECT_EQ(__func__, 3, get_valC_from_A());
 
-  EXPECT_EQ(__func__, 1, get_valA_from_B());
-  EXPECT_EQ(__func__, 2, get_valB_from_B());
-  EXPECT_EQ(__func__, 3, get_valC_from_B());
+    EXPECT_EQ(__func__, 1, get_valA_from_B());
+    EXPECT_EQ(__func__, 2, get_valB_from_B());
+    EXPECT_EQ(__func__, 3, get_valC_from_B());
 
-  EXPECT_EQ(__func__, 1, get_valA_from_C());
-  EXPECT_EQ(__func__, 2, get_valB_from_C());
-  EXPECT_EQ(__func__, 3, get_valC_from_C());
+    EXPECT_EQ(__func__, 1, get_valA_from_C());
+    EXPECT_EQ(__func__, 2, get_valB_from_C());
+    EXPECT_EQ(__func__, 3, get_valC_from_C());
 }
 
 // This test used symbols from first lib (A)
 static void DuplicatesTests_TestGetVal3() {
-  EXPECT_EQ(__func__, 1, val);
-  EXPECT_EQ(__func__, 1, get_val());
+    EXPECT_EQ(__func__, 1, val);
+    EXPECT_EQ(__func__, 1, get_val());
 }
 
 int main(int argc, char **argv) {
-  DuplicatesTests_TestGetVal1();
-  DuplicatesTests_TestGetVal2();
-  DuplicatesTests_TestGetVal3();
-  return t_status;
+    DuplicatesTests_TestGetVal1();
+    DuplicatesTests_TestGetVal2();
+    DuplicatesTests_TestGetVal3();
+    return t_status;
 }
