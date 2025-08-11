@@ -455,7 +455,7 @@ int getaddrinfo_ext(const char *restrict host, const char *restrict serv, const 
 			AI_V4MAPPED | AI_ALL | AI_ADDRCONFIG | AI_NUMERICSERV;
 		if ((flags & mask) != flags) {
 #ifndef __LITEOS__
-			MUSL_LOGE("%{public}s: %{public}d: bad hint ai_flag: %{public}d", __func__, __LINE__, flags);
+			MUSL_LOGW("%{public}s: %{public}d: bad hint ai_flag: %{public}d", __func__, __LINE__, flags);
 #endif
 #if OHOS_DNS_PROXY_BY_NETSYS
 			update_addr_info_cache(host, serv, hint, NULL, 0, netid);
@@ -470,7 +470,7 @@ int getaddrinfo_ext(const char *restrict host, const char *restrict serv, const 
 			break;
 		default:
 #ifndef __LITEOS__
-			MUSL_LOGE("%{public}s: %{public}d: wrong family in hint: %{public}d", __func__, __LINE__, family);
+			MUSL_LOGW("%{public}s: %{public}d: wrong family in hint: %{public}d", __func__, __LINE__, family);
 #endif
 #if OHOS_DNS_PROXY_BY_NETSYS
 			update_addr_info_cache(host, serv, hint, NULL, 0, netid);
@@ -501,7 +501,7 @@ int getaddrinfo_ext(const char *restrict host, const char *restrict serv, const 
 				IPPROTO_UDP);
 #ifndef __LITEOS__
 			if (s < 0) {
-				MUSL_LOGE("%{public}s: %{public}d: create socket failed for family: %{public}d, errno: %{public}d",
+				MUSL_LOGW("%{public}s: %{public}d: create socket failed for family: %{public}d, errno: %{public}d",
 					__func__, __LINE__, tf[i], errno);
 			}
 #endif
@@ -535,7 +535,7 @@ int getaddrinfo_ext(const char *restrict host, const char *restrict serv, const 
 			}
 			if (family == tf[i]) {
 #ifndef __LITEOS__
-				MUSL_LOGE("%{public}s: %{public}d: family mismatch: %{public}d", __func__, __LINE__, EAI_NONAME);
+				MUSL_LOGW("%{public}s: %{public}d: family mismatch: %{public}d", __func__, __LINE__, EAI_NONAME);
 #endif
 #if OHOS_DNS_PROXY_BY_NETSYS
 				update_addr_info_cache(host, serv, hint, NULL, 0, netid);
