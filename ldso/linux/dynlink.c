@@ -3851,6 +3851,7 @@ static char *dlopen_permitted_list[] =
 };
 
 #define PERMITIED_TARGET  "nweb_ns"
+#define PERMITIED_TARGET2  "nweb_ns_legacy"
 static bool in_permitted_list(char *caller, char *target)
 {
 	for (int i = 0; i < sizeof(dlopen_permitted_list)/sizeof(char*); i++) {
@@ -3863,6 +3864,9 @@ static bool in_permitted_list(char *caller, char *target)
 		return true;
 	}
 
+	if (strcmp(PERMITIED_TARGET2, target) == 0) {
+		return true;
+	}
 	return false;
 }
 
