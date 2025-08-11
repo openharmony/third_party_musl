@@ -28,6 +28,7 @@
 
 extern int __libc_sigaction(int sig, const struct sigaction *restrict sa,
                             struct sigaction *restrict old);
+/* true is custom hook enabled, otherwise false*/                            
 extern volatile atomic_bool __custom_hook_flag;
 
 
