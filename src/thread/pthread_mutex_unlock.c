@@ -4,9 +4,9 @@
 void __pthread_mutex_unlock_recursive_inner(pthread_mutex_t *m)
 {
 	char *p = (char *)m;
-	for (size_t i = 0;i < sizeof(pthread_mutex_t);i++) {
-		*(p + i) = 0;
-	}
+    for (size_t i = 0; i < sizeof(pthread_mutex_t); i++) {
+        *(p + i) = 0;
+    }
 	m->_m_type = PTHREAD_MUTEX_RECURSIVE; // Set recursive flag
 }
 
