@@ -79,7 +79,7 @@ if (is_lite_system && current_os == "ohos") {
   musl_libs("soft_libs") {
   }
 
-  group("musl_headers") {
+  ohos_shared_headers("musl_headers") {
     deps = [
       ":FreeBSD_copy",
       ":copy_uapi",
@@ -100,6 +100,9 @@ if (is_lite_system && current_os == "ohos") {
       ":musl_copy_inc_trace",
       ":musl_ns_config",
     ]
+    include_dirs = []
+    subsystem_name = "thirdparty"
+    part_name = "musl"
   }
 
   action("create_porting_src") {
