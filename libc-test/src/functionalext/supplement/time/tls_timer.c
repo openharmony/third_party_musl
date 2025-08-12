@@ -14,16 +14,16 @@ struct {
 	unsigned long addr;
 } t[4];
 
-#define entry(i,x) \
+#define entry(i, x) \
 	t[i].name = #x; \
-	t[i].size = sizeof x; \
+	t[i].size = sizeof (x); \
 	t[i].align = __alignof__(x); \
-	t[i].addr = (unsigned long)&x;
+	t[i].addr = (unsigned long)&(x)
 
 __attribute__((constructor)) static void init(void)
 {
-	entry(0, xchar)
-	entry(1, xshort)
-	entry(2, xint)
-	entry(3, xllong)
+	entry(0, xchar);
+	entry(1, xshort);
+	entry(2, xint);
+	entry(3, xllong);
 }

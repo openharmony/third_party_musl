@@ -85,10 +85,10 @@ void remove_directory(const char *path)
     }
 }
 
-void nftw_build_testfile(const char *path)
+void ftw_build_testfile(const char *path)
 {
     // Create directory
-    if (mkdir(path, 0755) == -1) {
+    if (mkdir(path, S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH) == -1) {
         t_error("%s error in mkdir test nftw path! %s \n", __func__, path);
         return;
     }
@@ -99,7 +99,7 @@ void nftw_build_testfile(const char *path)
         t_error("%s error in snprintf! \n", __func__);
     }
     // Create plain file
-    int fd = open(file, O_WRONLY | O_CREAT, 0644);
+    int fd = open(file, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
     if (fd == -1) {
         t_error("%s error in open normal_file.txt! \n", __func__);
         return;
@@ -111,7 +111,7 @@ void nftw_build_testfile(const char *path)
         t_error("%s error in snprintf! \n", __func__);
     }
     // Create non-executable file
-    fd = open(file, O_WRONLY | O_CREAT, 0666);
+    fd = open(file, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR | S_IWGRP | S_IROTH | S_IWOTH);
     if (fd == -1) {
         t_error("%s error in open normal_file.txt! \n", __func__);
         return;
@@ -123,7 +123,7 @@ void nftw_build_testfile(const char *path)
         t_error("%s error in snprintf! \n", __func__);
     }
     // Create unauthorized file
-    fd = open(file, O_WRONLY | O_CREAT, 0000);
+    fd = open(file, O_WRONLY | O_CREAT, 0);
     if (fd == -1) {
         t_error("%s error in open normal_file.txt! \n", __func__);
         return;
@@ -135,7 +135,7 @@ void nftw_build_testfile(const char *path)
         t_error("%s error in snprintf! \n", __func__);
     }
     // Create Hidden Files
-    fd = open(file, O_WRONLY | O_CREAT, 0644);
+    fd = open(file, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
     if (fd == -1) {
         t_error("%s error in open hidden_file.txt! \n", __func__);
         return;
@@ -147,7 +147,7 @@ void nftw_build_testfile(const char *path)
         t_error("%s error in snprintf! \n", __func__);
     }
     //Create Read-only files
-    fd = open(file, O_WRONLY | O_CREAT, 0444);
+    fd = open(file, O_WRONLY | O_CREAT, S_IRUSR | S_IRGRP | S_IROTH);
     if (fd == -1) {
         t_error("%s error in open read_only_file.txt! \n", __func__);
         return;
@@ -165,9 +165,9 @@ void nftw_build_testfile(const char *path)
     }
 }
 
-void nftw_build_testDir()
+void ftw_build_testDir(void)
 {
-    nftw_build_testfile(TEST_FTW_PATH);
+    ftw_build_testfile(TEST_FTW_PATH);
     char path[PATH_MAX];
     int result = snprintf(path, sizeof(path), "%s", TEST_FTW_PATH);
     if (result >= sizeof(path)) {
@@ -178,14 +178,14 @@ void nftw_build_testDir()
         if (result >= sizeof(path)) {
             t_error("%s error in snprintf! \n", __func__);
         }
-        nftw_build_testfile(path);
+        ftw_build_testfile(path);
     }
 }
 
 int main(int argc, char *argv[])
 {
     pthread_mutex_lock(&g_mutex);
-    nftw_build_testDir();
+    ftw_build_testDir();
     ftw_0100();
     remove_directory(TEST_FTW_PATH);
     pthread_mutex_unlock(&g_mutex);

@@ -242,7 +242,7 @@ void set_proc_type(void)
 void assign_encaps(void)
 {
     int fd = open("/dev/encaps", O_RDWR);
-    char str[] = "{\"encaps\":{\"ohos.encaps.count\":1, \"ohos.permission.kernel.DISABLE_GOTPTL_RO_PROTECTION\":1}}";
+    char str[] = "{\"encaps\":{\"ohos.encaps.count\":1, \"ohos.permission.kernel.DISABLE_GOTPLT_RO_PROTECTION\":1}}";
     if (fd < 0) {
         t_error("open /dev/encaps failed, errno: %d\n", errno);
         return;

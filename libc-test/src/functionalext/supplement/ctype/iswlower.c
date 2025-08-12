@@ -208,13 +208,13 @@ void iswlower_l_0400(void)
  * @tc.desc      : Whether a character in a the maximum value of int is not a letter
  * @tc.level     : Level 1
  */
- void iswlower_l_0500(void)
- {
+void iswlower_l_0500(void)
+{
     locale_t m_locale = newlocale(LC_CTYPE_MASK, "zh_CN", NULL);
     int ret = iswlower_l(MAX_VALUE, m_locale);
     freelocale(m_locale);
     EXPECT_EQ("iswlower_l_0500", ret, CMPFLAG);
- }
+}
 
 /**
 * @tc.name      : iswlower_l_0600
