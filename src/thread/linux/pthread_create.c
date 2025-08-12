@@ -177,12 +177,12 @@ struct call_tl_lock *get_tl_lock_caller_count(void)
 	return &tl_lock_caller_count;
 }
 
-int get_register_count()
+int get_register_count(void)
 {
 	return register_count;
 }
 
-void update_register_count()
+void update_register_count(void)
 {
 	register_count++;
 }
@@ -378,7 +378,7 @@ _Noreturn void __pthread_exit(void *result)
 
 		/* The following call unmaps the thread's stack mapping
 		 * and then exits without touching the stack. */
-		if(tl_lock_count != 0) {
+		if (tl_lock_count != 0) {
 			tl_lock_count_fail = tl_lock_count;
 			tl_lock_count = 0;
 		}
@@ -401,7 +401,7 @@ _Noreturn void __pthread_exit(void *result)
 	// If a thread call __tl_lock and call __pthread_exit without
 	// call __tl_unlock, the value of tl_lock_count will appear
 	// non-zero value, here set it to zero.
-	if(tl_lock_count != 0) {
+	if (tl_lock_count != 0) {
 		tl_lock_count_fail = tl_lock_count;
 		tl_lock_count = 0;
 	}
