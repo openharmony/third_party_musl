@@ -2965,7 +2965,7 @@ static void reloc_all(struct dso *p, const dl_extinfo *extinfo)
         if (head != &ldso && p->relro_start != p->relro_end && extinfo == NULL) {
             if (prctl(HM_GOT_RO, 0, laddr(p, p->relro_start), p->relro_end - p->relro_start)) {
                 if (errno != EINVAL && runtime) {
-                    LD_LOGE("Failed to set readonly to relro segment of %{public}s, errno %{public}d", p->name, errno);
+                    LD_LOGW("Failed to set readonly to relro segment of %{public}s, errno %{public}d", p->name, errno);
                 }
             }
         }

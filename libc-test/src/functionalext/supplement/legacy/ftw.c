@@ -111,7 +111,7 @@ void ftw_build_testfile(const char *path)
         t_error("%s error in snprintf! \n", __func__);
     }
     // Create non-executable file
-    fd = open(file, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR | S_IWGRP | S_IROTH | S_IWOTH);
+    fd = open(file, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
     if (fd == -1) {
         t_error("%s error in open normal_file.txt! \n", __func__);
         return;
