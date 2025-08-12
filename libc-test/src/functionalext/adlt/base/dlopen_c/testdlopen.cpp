@@ -49,7 +49,7 @@ int testVer(const char *filename) {
         printf("Exiting!\n");
         return -1;
     }
-    
+
     printf("\tLoading symbol clibGetVer\n");
     clibGetVer_t getVer = (clibGetVer_t) dlsym(handle, "clibGetVer");
 
@@ -69,7 +69,7 @@ int testPrintf(const char *filename, const char *text) {
         printf("Exiting!\n");
         return -1;
     }
-    
+
     printf("\tLoading symbol clibPrintf\n");
     clibPrintf_t libPrintf = (clibPrintf_t) dlsym(handle, "clibPrintf");
 
@@ -89,7 +89,7 @@ int testMax(const char *filename, int a, int b) {
         printf("Exiting!\n");
         return -1;
     }
-    
+
     printf("\tLoading symbol clibMax\n");
     clibMax_t libMax = (clibMax_t) dlsym(handle, "clibMax");
 

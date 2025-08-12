@@ -44,10 +44,10 @@ static void backtrace2_TestGetVer() {
   std::string resBT = test_2.test();
 
   bool okA = (btA.find("clibGetVerA") != std::string::npos) &&
-    (btA.find("backtrace2_lib_a.so") != std::string::npos); 
+    (btA.find("backtrace2_lib_a.so") != std::string::npos);
   bool okB = (btB.find("clibGetVerB") != std::string::npos) &&
-    (btB.find("backtrace2_lib_b.so") != std::string::npos); 
-  
+    (btB.find("backtrace2_lib_b.so") != std::string::npos);
+
   EXPECT_TRUE(__func__, okA && okB);
 }
 
@@ -69,7 +69,7 @@ static void backtrace2_TestMaxMin() {
 
   EXPECT_EQ(__func__, 55, max);
   EXPECT_EQ(__func__, 2, min);
-  
+
   std::string btA("");
   std::string btB("");
   testbt::TestVerBT test_2(btA, btB);
@@ -81,10 +81,10 @@ static void backtrace2_TestMaxMin() {
   std::string resBT = test_2.test();
 
   bool okA = (btA.find("clibMaxA") != std::string::npos) &&
-    (btA.find("backtrace2_lib_a.so") != std::string::npos); 
+    (btA.find("backtrace2_lib_a.so") != std::string::npos);
   bool okB = (btB.find("clibMinB") != std::string::npos) &&
-    (btB.find("backtrace2_lib_b.so") != std::string::npos); 
-  
+    (btB.find("backtrace2_lib_b.so") != std::string::npos);
+
   EXPECT_TRUE(__func__, okA && okB);
 }
 

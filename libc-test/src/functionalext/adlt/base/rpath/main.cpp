@@ -78,7 +78,7 @@ int main(int argc, char **argv) {
     int ret = 0;
 #ifdef WITHOUT_RPATH
     ret = ret || run_self_command("0");
-    ret = ret || run_self_command("1", "LD_LIBRARY_PATH=/data/local/tmp/libc-test-lib"); 
+    ret = ret || run_self_command("1", "LD_LIBRARY_PATH=/data/local/tmp/libc-test-lib");
 #else
     ret = run_self_command("2");
 #endif

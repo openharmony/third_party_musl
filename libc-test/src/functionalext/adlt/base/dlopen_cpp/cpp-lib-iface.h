@@ -21,15 +21,14 @@ class ICppDynamicLib {
     public:
         ICppDynamicLib() {};
         virtual ~ICppDynamicLib() {};
-        
+
         void testPrintf(const char *text) {
             printf("%s", text);
         }
-        
+
         virtual int getStorage(void) const = 0;
         virtual int getMax(int a, int b) const = 0;
         virtual std::string getVersion(void) const = 0;
-        
 };
 
 typedef ICppDynamicLib* create_t(int);
