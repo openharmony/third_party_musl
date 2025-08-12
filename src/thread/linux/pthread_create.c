@@ -119,6 +119,7 @@ static int thread_list_lock_pre_unlock = TID_ERROR_INIT;
 static int thread_list_lock_pthread_exit = TID_ERROR_INIT;
 static int thread_list_lock_tid_overlimit = TID_ERROR_INIT;
 static int register_count = 0;
+static pid_t g_dlcloseLockStatus = TID_ERROR_0, g_dlcloseLockLastExitTid = TID_ERROR_0;
 
 struct call_tl_lock tl_lock_caller_count = { 0 };
 
@@ -185,6 +186,26 @@ int get_register_count()
 void update_register_count()
 {
 	register_count++;
+}
+
+pid_t getDlcloseLockStatus()
+{
+	return g_dlcloseLockStatus;
+}
+
+pid_t getDlcloseLockLastExitTid()
+{
+	return g_dlcloseLockLastExitTid;
+}
+
+void setDlcloseLockStatus(pid_t value)
+{
+	g_dlcloseLockStatus = value;
+}
+
+void setDlcloseLockLastExitTid(pid_t value)
+{
+	g_dlcloseLockLastExitTid = value;
 }
 
 #ifdef ENABLE_HWASAN
