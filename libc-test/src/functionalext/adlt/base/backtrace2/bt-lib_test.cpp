@@ -51,7 +51,7 @@ std::string getSymbol(void *saddr) {
 
     if (info.dli_sname && info.dli_saddr && info.dli_fbase && info.dli_fname) {
         int ret = snprintf_s(str_buffer, STRING_MAX_LEN, STRING_MAX_LEN - 1,
-            "<%s+%#lx>[%#lx] -> %s", info.dli_sname, 
+            "<%s+%#lx>[%#lx] -> %s", info.dli_sname,
             reinterpret_cast<uintptr_t>(saddr) - reinterpret_cast<uintptr_t>(info.dli_saddr),
             reinterpret_cast<uintptr_t>(saddr) - reinterpret_cast<uintptr_t>(info.dli_fbase), info.dli_fname);
         if (ret < 0) {

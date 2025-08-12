@@ -26,7 +26,7 @@ class CppDynamicLib : public ICppDynamicLib {
         int storageVar;
 
         std::string makeVersion() const;
-    public: 
+    public:
         explicit CppDynamicLib(int value) : storageVar(value) {};
         int getStorage() const override;
         int getMax(int a, int b) const override;

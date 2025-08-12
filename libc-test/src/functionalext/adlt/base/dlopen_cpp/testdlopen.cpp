@@ -47,7 +47,7 @@ std::string testVer(const char *filename) {
         printf("Exiting!\n");
         return "test failure";
     }
-    
+
     printf("\tLoading symbol create\n");
     create_t* create_class = (create_t*) dlsym(handle, "create");
     printf("\tLoading symbol destroy\n");
@@ -79,7 +79,7 @@ int testPrintf(const char *filename, const char *text) {
         printf("Exiting!\n");
         return -1;
     }
-    
+
     printf("\tLoading symbol create\n");
     create_t* create_class = (create_t*) dlsym(handle, "create");
     printf("\tLoading symbol destroy\n");
@@ -111,7 +111,7 @@ int testMax(const char *filename, int a, int b) {
         printf("Exiting!\n");
         return -1;
     }
-    
+
     printf("\tLoading symbol create\n");
     create_t* create_class = (create_t*) dlsym(handle, "create");
     printf("\tLoading symbol destroy\n");
@@ -143,7 +143,7 @@ int testCtor(const char *filename, int initStorage) {
         printf("Exiting!\n");
         return initStorage-1;
     }
-    
+
     printf("\tLoading symbol create\n");
     create_t* create_class = (create_t*) dlsym(handle, "create");
     printf("\tLoading symbol destroy\n");
