@@ -53,7 +53,7 @@ static bool musl_log_enable = false;
 static const char *param_name = "musl.log.enable";
 static const char *g_logLevelParam = "musl.log.level";
 #endif
-static int g_logLevel = LOG_ERROR;
+static int g_logLevel = LOG_WARN;
 static pthread_mutex_t g_lock = PTHREAD_MUTEX_INITIALIZER;
 static volatile int g_socketFd = INVALID_SOCKET;
 
@@ -222,10 +222,10 @@ void resetLogLevel()
         } else if (!strcmp(value, "FATAL")) {
             g_logLevel = LOG_FATAL;
         } else {
-            g_logLevel = LOG_ERROR;
+            g_logLevel = LOG_WARN;
         }
     } else {
-        g_logLevel = LOG_ERROR;
+        g_logLevel = LOG_WARN;
     }
 }
 
