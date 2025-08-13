@@ -2571,8 +2571,11 @@ static void load_direct_deps(struct dso *p, ns_t *namespace, struct reserved_add
 	 * Count and include them now to avoid realloc later. */
 	if (p==head) for (struct dso *q=p->next; q; q=q->next)
 		cnt++;
-	for (i=0; p->dynv[i]; i+=2)
-		if (p->dynv[i] == DT_NEEDED) cnt++;
+	for (i=0; p->dynv[i]; i+=2) {
+		if ((p->dynv[i] == DT_NEEDED) || (p->dynv[i] == DT_WEAK_LIBRARY)) {
+			cnt++;
+		}
+	}
 	/* Use builtin buffer for apps with no external deps, to
 	 * preserve property of no runtime failure paths. */
 	p->deps = (p==head && cnt<2) ? builtin_deps :
@@ -2585,13 +2588,19 @@ static void load_direct_deps(struct dso *p, ns_t *namespace, struct reserved_add
 	if (p==head) for (struct dso *q=p->next; q; q=q->next)
 		p->deps[cnt++] = q;
 	for (i=0; p->dynv[i]; i+=2) {
-		if (p->dynv[i] != DT_NEEDED) continue;
+		if ((p->dynv[i] != DT_NEEDED) && (p->dynv[i] != DT_WEAK_LIBRARY)) {
+			continue;
+		}
 		struct dso *dep = load_library(p->strings + p->dynv[i + 1], p, namespace, true, reserved_params);
 		LD_LOGD("loading shared library %{public}s: (needed by %{public}s)", p->strings + p->dynv[i+1], p->name);
 		if (!dep) {
-			error("Error loading shared library %s: %m (needed by %s)",
-				p->strings + p->dynv[i+1], p->name);
-			if (runtime) longjmp(*rtld_fail, 1);
+			if (p->dynv[i] != DT_WEAK_LIBRARY) {
+				error("Error loading shared library %s: %m (needed by %s)",
+					p->strings + p->dynv[i+1], p->name);
+				if (runtime) {
+					longjmp(*rtld_fail, 1);
+				}
+			}
 			continue;
 		}
 		p->deps[cnt++] = dep;
@@ -6263,7 +6272,7 @@ static void preload_direct_deps(struct dso *p, ns_t *namespace, struct loadtasks
 		}
 	}
 	for (i = 0; p->dynv[i]; i += NEXT_DYNAMIC_INDEX) {
-		if (p->dynv[i] == DT_NEEDED) {
+		if ((p->dynv[i] == DT_NEEDED) || (p->dynv[i] == DT_WEAK_LIBRARY)) {
 			cnt++;
 		}
 	}
@@ -6285,7 +6294,7 @@ static void preload_direct_deps(struct dso *p, ns_t *namespace, struct loadtasks
 		}
 	}
 	for (i = 0; p->dynv[i]; i += NEXT_DYNAMIC_INDEX) {
-		if (p->dynv[i] != DT_NEEDED) {
+		if ((p->dynv[i] != DT_NEEDED) && (p->dynv[i] != DT_WEAK_LIBRARY)) {
 			continue;
 		}
 		const char* dtneed_name = p->strings + p->dynv[i + 1];
@@ -6306,10 +6315,12 @@ static void preload_direct_deps(struct dso *p, ns_t *namespace, struct loadtasks
 			LD_LOGW("failed to load %{public}s: (needed by %{public}s)",
 				p->strings + p->dynv[i + 1],
 				p->name);
-			error("Error loading shared library %s: %m (needed by %s)",
-				p->strings + p->dynv[i + 1], p->name);
-			if (runtime) {
-				longjmp(*rtld_fail, 1);
+			if (p->dynv[i] != DT_WEAK_LIBRARY) {
+				error("Error loading shared library %s: %m (needed by %s)",
+					p->strings + p->dynv[i + 1], p->name);
+				if (runtime) {
+					longjmp(*rtld_fail, 1);
+				}
 			}
 			continue;
 		}
