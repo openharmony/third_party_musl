@@ -31,8 +31,10 @@
 extern int __libc_sigaction(int sig, const struct sigaction *restrict sa,
                             struct sigaction *restrict old);
 #ifdef HOOK_ENABLE
-/* true is custom hook enabled, otherwise false*/                            
+/* true is custom hook enabled, otherwise false. It will take effect after the HOOK_ENABLE macro defined */                            
 extern volatile atomic_bool __custom_hook_flag;
+#else
+bool __custom_hook_flag = false;
 #endif
 
 
@@ -246,10 +248,8 @@ static void signal_chain_handler(int signo, siginfo_t* siginfo, void* ucontext_r
                 "set_syscall_hooks_tl_lock=%{public}d "
                 "set_syscall_hooks_linux_tl_lock=%{public}d "
                 "fork_tl_lock=%{public}d "
-#ifdef HOOK_ENABLE
-                "__custom_hook_flag=%{public}d "
-#endif
-                "register_count=%{public}d ",
+                "register_count=%{public}d "
+                "__custom_hook_flag=%{public}d",
                 __func__, idx, signo, (unsigned long long)sig_chains[signo - 1].sca_special_actions[idx].sca_sigaction,
                 noreturn, signo, thread_list_lock_status,
                 get_tl_lock_count(), get_tl_lock_waiters(), get_tl_lock_tid_fail(), get_tl_lock_count_tid(),
@@ -267,10 +267,7 @@ static void signal_chain_handler(int signo, siginfo_t* siginfo, void* ucontext_r
                 call_tl_lock_dump->set_syscall_hooks_tl_lock,
                 call_tl_lock_dump->set_syscall_hooks_linux_tl_lock,
                 call_tl_lock_dump->fork_tl_lock,
-#ifdef HOOK_ENABLE
-                __custom_hook_flag,
-#endif
-                get_register_count());
+                get_register_count(), __custom_hook_flag);
             if (sig_chains[signo - 1].sca_special_actions[idx].sca_sigaction(signo,
                                                             siginfo, ucontext_raw)) {
                 set_handling_signal(previous_value);
