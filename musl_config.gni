@@ -71,6 +71,8 @@ declare_args() {
   musl_linux_kernel_dir = "//kernel/linux/linux-5.10"
   musl_dir = "//third_party/musl"
   musl_porting_dir = "//third_party/musl/porting/linux/user"
+  musl_use_adlt = false
+  musl_adlt_llvm = ""
 
   # if (is_asan) {
   #   musl_linker_asan_name =

@@ -1,0 +1,697 @@
+# Copyright (C) 2025 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#	http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+import("//build/test.gni")
+import("../../../../test_template.gni")
+import("../adlt_common.gni")
+import("test_src_adlt_base.gni")
+
+group("adlt_base_test") {
+    testonly = true
+    deps = []
+
+    foreach(s, adlt_base_test) {
+        deps += [ ":${s}" ]
+    }
+}
+
+config("post_lib_configs") {
+    ldflags = [ "-Wl,--unresolved-symbols=ignore-all" ]
+}
+
+adlt_executable("unittest_adlt_base_backtrace") {
+    lib_name = "base_backtrace"
+    lib_include_dirs = [ "backtrace" ]
+    lib_configs = [
+        {
+            name = "base_backtrace_bt_lib"
+            sources = [ "backtrace/bt-lib.c" ]
+        },
+        {
+            name = "base_backtrace_testbacktrace"
+            sources = [ "backtrace/testbacktrace.cpp" ]
+            external_deps = [ "bounds_checking_function:libsec_shared" ]
+        }
+    ]
+
+    include_dirs = [ "backtrace" ]
+    sources = [ "backtrace/main.cpp" ]
+
+    lib_common_configs = [
+        ":post_lib_configs"
+    ]
+}
+
+adlt_executable("unittest_adlt_base_backtrace2") {
+    lib_name = "base_backtrace2"
+    lib_include_dirs = [ "backtrace2" ]
+    lib_configs = [
+        {
+            name = "base_backtrace2_lib_test"
+            sources = [ "backtrace2/bt-lib_test.cpp" ]
+            external_deps = [ "bounds_checking_function:libsec_shared" ]
+        },
+        {
+            name = "base_backtrace2_lib_a"
+            sources = [ "backtrace2/bt-lib_a.c" ]
+        },
+        {
+            name = "base_backtrace2_lib_b"
+            sources = [ "backtrace2/bt-lib_b.c" ]
+        },
+    ]
+
+    sources = [ "backtrace2/main.cpp" ]
+    include_dirs = [ "backtrace2" ]
+
+    lib_common_configs = [
+        ":post_lib_configs"
+    ]
+}
+
+adlt_executable("unittest_adlt_base_cdtors") {
+    lib_name = "base_cdtors"
+    lib_include_dirs = [ "cdtors" ]
+    lib_configs = [
+        {
+            name = "base_cdtors_a"
+            sources = [ "cdtors/a.cpp" ]
+        },
+        {
+            name = "base_cdtors_b"
+            sources = [ "cdtors/b.cpp" ]
+        },
+    ]
+
+    include_dirs = [ "cdtors" ]
+    sources = [ "cdtors/main.cpp" ]
+
+    lib_common_configs = [
+        ":post_lib_configs"
+    ]
+}
+
+adlt_executable("unittest_adlt_base_cross") {
+    lib_name = "base_cross"
+    lib_include_dirs = [ "cross" ]
+    lib_configs = [
+        {
+            name = "base_cross_a"
+            sources = [ "cross/a.c" ]
+        },
+        {
+            name = "base_cross_b"
+            sources = [ "cross/b.c" ]
+        },
+    ]
+
+    include_dirs = [ "cross" ]
+    sources = [ "cross/main.cpp" ]
+
+    lib_common_configs = [
+        ":post_lib_configs"
+    ]
+}
+
+ohos_shared_library("base_deps_e") {
+    output_name = "libadlt_base_deps_e"
+    output_extension = "so"
+
+    subsystem_name = "musl"
+    part_name = "libc-test-lib"
+    testonly = true
+
+    include_dirs = [ "deps" ]
+    sources = [ "deps/e.c" ]
+    deps = [ "../:adlt_common", ":base_deps_a" ]
+}
+
+adlt_executable("unittest_adlt_base_deps") {
+    lib_name = "base_deps"
+    lib_include_dirs = [ "deps" ]
+    lib_configs = [
+        {
+            name = "base_deps_a"
+            sources = [ "deps/a.c" ]
+            deps = [ ":base_deps_b" ]
+        },
+        {
+            name = "base_deps_b"
+            sources = [ "deps/b.c" ]
+        },
+    ]
+
+    include_dirs = [ "deps" ]
+    sources = [ "deps/main.cpp" ]
+    deps = [ ":base_deps_e" ]
+
+    lib_common_configs = [
+        ":post_lib_configs"
+    ]
+}
+
+adlt_executable("unittest_adlt_base_deps_dlopen") {
+    lib_name = "base_deps_dlopen"
+    lib_include_dirs = [ "deps" ]
+    lib_configs = [
+        {
+            name = "base_deps_dlopen_a"
+            sources = [ "deps/a.c" ]
+            deps = [ ":base_deps_dlopen_b" ]
+        },
+        {
+            name = "base_deps_dlopen_b"
+            sources = [ "deps/b.c" ]
+        },
+    ]
+
+    include_dirs = [ "deps" ]
+    sources = [ "deps/main_with_dlopen.cpp" ]
+
+    lib_common_configs = [
+        ":post_lib_configs"
+    ]
+}
+
+adlt_executable("unittest_adlt_base_dlopen_c") {
+    lib_name = "base_dlopen_c"
+    lib_include_dirs = [ "dlopen_c" ]
+    lib_configs = [
+        {
+            name = "base_dlopen_c_lib"
+            sources = [ "dlopen_c/c-lib.c" ]
+        },
+        {
+            name = "base_dlopen_c_test_dlopen"
+            sources = [ "dlopen_c/testdlopen.cpp" ]
+        },
+    ]
+
+    include_dirs = [ "dlopen_c" ]
+    sources = [ "dlopen_c/main.cpp" ]
+    lib_common_configs = [
+        ":post_lib_configs"
+    ]
+}
+
+adlt_executable("unittest_adlt_base_dlopen_cpp") {
+    lib_name = "base_dlopen_cpp"
+    lib_include_dirs = [ "dlopen_cpp" ]
+    lib_configs = [
+        {
+            name = "base_dlopen_cpp_lib"
+            sources = [ "dlopen_cpp/cpp-lib.cpp" ]
+        },
+        {
+            name = "base_dlopen_cpp_test_dlopen"
+            sources = [ "dlopen_cpp/testdlopen.cpp" ]
+        },
+    ]
+
+    include_dirs = [ "dlopen_cpp" ]
+    sources = [ "dlopen_cpp/main.cpp" ]
+    lib_common_configs = [
+        ":post_lib_configs"
+    ]
+}
+
+adlt_executable("unittest_adlt_base_duplicates") {
+    lib_name = "base_duplicates"
+    lib_include_dirs = [ "duplicates" ]
+    lib_configs = [
+        {
+            name = "base_duplicates_a"
+            sources = [ "duplicates/a.c" ]
+        },
+        {
+            name = "base_duplicates_b"
+            sources = [ "duplicates/b.c" ]
+        },
+        {
+            name = "base_duplicates_c"
+            sources = [ "duplicates/c.c" ]
+        },
+    ]
+
+    include_dirs = [ "duplicates" ]
+    sources = [ "duplicates/main.cpp" ]
+    lib_common_configs = [
+        ":post_lib_configs"
+    ]
+}
+
+adlt_executable("unittest_adlt_base_ehframe13") {
+    lib_name = "base_ehframe13"
+    lib_include_dirs = [ "eh_frame" ]
+    lib_configs = [
+        {
+            name = "eh_frame13_1"
+            sources = [ "eh_frame/lib1.cpp" ]
+        },
+        {
+            name = "eh_frame13_3"
+            sources = [ "eh_frame/lib3.cpp" ]
+        },
+    ]
+
+    include_dirs = [ "eh_frame" ]
+    sources = [ "eh_frame/main13.cpp" ]
+
+    lib_common_configs = [
+        "//build/config/compiler:exceptions",
+    ]
+
+    configs = [
+        "//build/config/compiler:exceptions",
+    ]
+}
+
+adlt_executable("unittest_adlt_base_ehframe123") {
+    lib_name = "base_ehframe123"
+    lib_include_dirs = [ "eh_frame" ]
+    lib_configs = [
+        {
+            name = "eh_frame123_1"
+            sources = [ "eh_frame/lib1.cpp" ]
+        },
+        {
+            name = "eh_frame123_2"
+            sources = [ "eh_frame/lib2.cpp" ]
+        },
+        {
+            name = "eh_frame123_3"
+            sources = [ "eh_frame/lib3.cpp" ]
+        },
+    ]
+
+    include_dirs = [ "eh_frame" ]
+    sources = [ "eh_frame/main123.cpp" ]
+
+    lib_common_configs = [
+        "//build/config/compiler:exceptions",
+    ]
+
+    configs = [
+        "//build/config/compiler:exceptions",
+    ]
+}
+
+adlt_executable("unittest_adlt_base_heap") {
+    lib_name = "base_heap"
+    lib_include_dirs = [ "heap" ]
+    lib_configs = [
+        {
+            name = "base_heap_test_malloc"
+            sources = [ "heap/testmalloc.cpp" ]
+        },
+    ]
+
+    include_dirs = [ "heap" ]
+    sources = [ "heap/main.cpp" ]
+
+    lib_common_configs = [
+        ":post_lib_configs",
+    ]
+}
+
+adlt_executable("unittest_adlt_base_oop") {
+    lib_name = "base_oop"
+    lib_include_dirs = [ "oop" ]
+    lib_configs = [
+        {
+            name = "base_oop_a"
+            sources = [ "oop/a.cpp" ]
+        },
+        {
+            name = "base_oop_b"
+            sources = [ "oop/b.cpp" ]
+        },
+    ]
+
+    include_dirs = [ "oop" ]
+    sources = [ "oop/main.cpp" ]
+
+    lib_common_configs = [
+        ":post_lib_configs",
+    ]
+}
+
+adlt_executable("unittest_adlt_base_relocs") {
+    lib_name = "base_relocs"
+    lib_configs = [
+        {
+            name = "base_relocs_dyn"
+            sources = [ "relocs/dyn_relocs/glob_dat.asm",
+                        "relocs/dyn_relocs/jump_slot.asm",
+                        "relocs/dyn_relocs/relative.asm", ]
+            cflags = [ "-x", "assembler" ]
+        },
+        {
+            name = "base_relocs_abs"
+            sources = [ "relocs/abs_relocs/abs64.asm", ]
+            cflags = [ "-x", "assembler" ]
+        },
+        {
+            name = "base_relocs_plt"
+            sources = [ "relocs/plt_relocs/jump26.asm",
+                        "relocs/plt_relocs/call26.asm",
+                        "relocs/plt_relocs/condbr19.asm",
+                        "relocs/plt_relocs/tstbr14.asm", ]
+            cflags = [ "-x", "assembler" ]
+        },
+        {
+            name = "base_relocs_got"
+            sources = [ "relocs/got_relocs/ld64_got_lo12_nc.asm",
+                        "relocs/got_relocs/ld64_gotpage_lo15.asm", ]
+            cflags = [ "-x", "assembler" ]
+        },
+        {
+            name= "base_relocs_pc_relative"
+            sources = [ "relocs/pc_relative_relocs/adr_prel_pg_hi21.asm",
+                        "relocs/pc_relative_relocs/adr_prel_pg_hi21_nc.asm",
+                        "relocs/pc_relative_relocs/adr_prel_lo21.asm",
+                        "relocs/pc_relative_relocs/ld_prel_lo19.asm", ]
+            cflags = [ "-x", "assembler" ]
+        },
+        {
+            name = "base_relocs_null"
+            sources = [ "relocs/null_relocs/null_relocs.asm", ]
+            cflags = [ "-x", "assembler" ]
+        },
+        {
+            name = "base_relocs_tlsdesc"
+            sources = [ "relocs/tlsdesc_relocs/tlsdesc.asm", ]
+            cflags = [ "-x", "assembler" ]
+        },
+        {
+            name = "base_relocs_tls_dyn"
+            sources = [ "relocs/tls_dyn_relocs/tls_tprel64.asm", ]
+            cflags = [ "-x", "assembler" ]
+        },
+        {
+            name = "base_relocs_tlsie"
+            sources = [ "relocs/tlsie_relocs/tlsie_adr_ld64.asm", ]
+            cflags = [ "-x", "assembler" ]
+        }
+    ]
+
+    sources = [ "relocs/main.cpp" ]
+
+    lib_common_configs = [
+        ":post_lib_configs",
+    ]
+}
+
+adlt_shared_library("base_rpath") {
+    include_dirs = [ "rpath" ]
+    lib_configs = [
+        {
+            name = "base_rpath_a"
+            sources = [ "rpath/a.c" ]
+        },
+    ]
+
+    configs = [
+        ":post_lib_configs"
+    ]
+}
+
+ohos_executable("unittest_adlt_base_rpath_without_rpath") {
+    testonly = true
+    subsystem_name = "musl"
+    part_name = "libc-test"
+    configs = [ "//third_party/musl/libc-test/src/common:config_runtest" ]
+
+    include_dirs = [
+        "//third_party/musl/libc-test/src/functionalext/adlt/common",
+        "//third_party/musl/libc-test/src/functionalext/common",
+        "//third_party/musl/porting/linux/user/include",
+        "//third_party/musl/libc-test/src/common",
+        "rpath"
+    ]
+
+    cflags = [ "-DWITHOUT_RPATH" ]
+    sources = [ "rpath/main.cpp" ]
+    deps = [ "../:adlt_common", ":base_rpath", ":base_rpath_a" ]
+}
+
+ohos_executable("unittest_adlt_base_rpath_with_rpath") {
+    testonly = true
+    subsystem_name = "musl"
+    part_name = "libc-test"
+    configs = [ "//third_party/musl/libc-test/src/common:config_runtest" ]
+
+    include_dirs = [
+        "//third_party/musl/libc-test/src/functionalext/adlt/common",
+        "//third_party/musl/libc-test/src/functionalext/common",
+        "//third_party/musl/porting/linux/user/include",
+        "//third_party/musl/libc-test/src/common",
+        "rpath"
+    ]
+
+    sources = [ "rpath/main.cpp" ]
+    ldflags = [ "-Wl,-rpath=./:/data/local/tmp/libc-test-lib/" ]
+    deps = [ "../:adlt_common", ":base_rpath", ":base_rpath_a" ]
+}
+
+action("unittest_adlt_base_rpath") {
+    testonly = true
+    deps = [
+        ":unittest_adlt_base_rpath_without_rpath",
+        ":unittest_adlt_base_rpath_with_rpath",
+    ]
+
+    script = "../adlt_tools.py"
+    args = [ "build_sym_links",
+        "--lib-dir", rebase_path(adlt_lib_dir, ""),
+        "--target-lib-dir", adlt_target_lib_dir,
+        "--adlt-lib", "libadlt_base_rpath.so",
+        "--orig-lib-list", "libadlt_base_rpath_a.so",
+    ]
+
+    outputs = [
+        "$adlt_lib_dir/adlt_orig_libs/libadlt_base_rpath_a.so",
+    ]
+}
+
+adlt_executable("unittest_adlt_base_soname1_fix_libab") {
+    lib_name = "base_soname1_fix_libab"
+    lib_include_dirs = [ "soname1_fix" ]
+    lib_configs = [
+        {
+            name = "base_soname1_fix_libab_a"
+            sources = [ "soname1_fix/a.cpp" ]
+        },
+        {
+            name = "base_soname1_fix_libab_b"
+            sources = [ "soname1_fix/b.cpp" ]
+        }
+    ]
+
+    include_dirs = [ "soname1_fix" ]
+    sources = [ "soname1_fix/main.cpp" ]
+
+    custom_deps = [ ":base_soname1_fix_libab", ":base_soname1_fix_libab_a" ]
+}
+
+adlt_executable("unittest_adlt_base_soname1_fix_libba") {
+    lib_name = "base_soname1_fix_libba"
+    lib_include_dirs = [ "soname1_fix" ]
+    lib_configs = [
+        {
+            name = "base_soname1_fix_libba_b"
+            sources = [ "soname1_fix/b.cpp" ]
+        },
+        {
+            name = "base_soname1_fix_libba_a"
+            sources = [ "soname1_fix/a.cpp" ]
+        }
+    ]
+
+    include_dirs = [ "soname1_fix" ]
+    sources = [ "soname1_fix/main.cpp" ]
+
+    custom_deps = [ ":base_soname1_fix_libba", ":base_soname1_fix_libba_a" ]
+}
+
+adlt_executable("unittest_adlt_base_varargs") {
+    lib_name = "base_varargs"
+    lib_include_dirs = [ "varargs" ]
+    lib_configs = [
+        {
+            name = "base_varargs_test"
+            sources = [ "varargs/testvarargs.cpp" ]
+        },
+    ]
+
+    include_dirs = [ "varargs" ]
+    sources = [ "varargs/main.cpp" ]
+
+    lib_common_configs = [
+        ":post_lib_configs"
+    ]
+}
+
+ohos_shared_library("base_version_neg_verdef_a_v2") {
+    output_name = "libadlt_base_version_neg_verdef_a_v2"
+    output_extension = "so"
+
+    subsystem_name = "musl"
+    part_name = "libc-test-lib"
+    testonly = true
+
+    include_dirs = [ "version/negative_verdef" ]
+    sources = [ "version/negative_verdef/a_v2.c" ]
+    ldflags = [ "-Wl,--version-script," + rebase_path("version/negative_verdef/a_v2.map", "") ]
+    deps = [ "../:adlt_common", ]
+}
+
+adlt_executable("unittest_adlt_base_negative_verdef") {
+    lib_name = "base_negative_verdef"
+    lib_include_dirs = [ "version/negative_verdef" ]
+    lib_configs = [
+        {
+            name = "base_negative_verdef_a"
+            sources = [ "version/negative_verdef/a.c" ]
+            ldflags = [ "-Wl,--version-script," + rebase_path("version/negative_verdef/a.map", "") ]
+        },
+    ]
+
+    include_dirs = [ "version/negative_verdef" ]
+    sources = [ "version/negative_verdef/main.cpp" ]
+    data_deps = [ ":base_version_neg_verdef_a_v2" ]
+    lib_common_configs = [
+        ":post_lib_configs"
+    ]
+}
+
+ohos_shared_library("base_version_neg_verneed_v1") {
+    output_name = "libadlt_base_version_neg_verneed_v1"
+    output_extension = "so"
+
+    subsystem_name = "musl"
+    part_name = "libc-test-lib"
+    testonly = true
+
+    include_dirs = [ "version/negative_verneed" ]
+    sources = [ "version/negative_verneed/v1.c" ]
+    ldflags = [ "-Wl,--version-script," + rebase_path("version/negative_verneed/v1.map", "") ]
+    deps = [ "../:adlt_common", ]
+}
+
+ohos_shared_library("base_version_neg_verneed_v2") {
+    output_name = "libadlt_base_version_neg_verneed_v2"
+    output_extension = "so"
+
+    subsystem_name = "musl"
+    part_name = "libc-test-lib"
+    testonly = true
+
+    include_dirs = [ "version/negative_verneed" ]
+    sources = [ "version/negative_verneed/v2.c" ]
+    ldflags = [ "-Wl,--version-script," + rebase_path("version/negative_verneed/v2.map", "") ]
+    deps = [ "../:adlt_common", ]
+}
+
+adlt_executable("unittest_adlt_base_negative_verneed") {
+    lib_name = "base_negative_verneed"
+    lib_include_dirs = [ "version/negative_verneed" ]
+    lib_configs = [
+        {
+            name = "base_negative_verneed_a"
+            sources = [ "version/negative_verneed/a.c" ]
+            deps = [ ":base_version_neg_verneed_v1" ]
+        },
+    ]
+
+    include_dirs = [ "version/negative_verneed" ]
+    sources = [ "version/negative_verneed/main.cpp" ]
+    data_deps = [ ":base_version_neg_verneed_v2" ]
+
+    lib_common_configs = [
+        ":post_lib_configs"
+    ]
+}
+
+adlt_executable("unittest_adlt_base_verdef") {
+    lib_name = "base_verdef"
+    lib_include_dirs = [ "version/verdef" ]
+    lib_configs = [
+        {
+            name = "base_verdef_a"
+            sources = [ "version/verdef/a.c" ]
+            ldflags = [ "-Wl,--version-script," + rebase_path("version/verdef/a.map", "") ]
+        },
+        {
+            name = "base_verdef_b"
+            sources = [ "version/verdef/b.c" ]
+            ldflags = [ "-Wl,--version-script," + rebase_path("version/verdef/b.map", "") ]
+        },
+    ]
+
+    include_dirs = [ "version/verdef" ]
+    sources = [ "version/verdef/main.cpp" ]
+    lib_common_configs = [
+        ":post_lib_configs"
+    ]
+}
+
+ohos_shared_library("base_version_verneed_ver_1") {
+    output_name = "libadlt_base_version_verneed_ver_1"
+    output_extension = "so"
+
+    subsystem_name = "musl"
+    part_name = "libc-test-lib"
+    testonly = true
+
+    include_dirs = [ "version/verneed" ]
+    sources = [ "version/verneed/ver_1.c" ]
+    ldflags = [ "-Wl,--version-script," + rebase_path("version/verneed/ver_1.map", "") ]
+    deps = [ "../:adlt_common", ]
+}
+
+ohos_shared_library("base_version_verneed_ver_2") {
+    output_name = "libadlt_base_version_verneed_ver_2"
+    output_extension = "so"
+
+    subsystem_name = "musl"
+    part_name = "libc-test-lib"
+    testonly = true
+
+    include_dirs = [ "version/verneed" ]
+    sources = [ "version/verneed/ver_2.c" ]
+    ldflags = [ "-Wl,--version-script," + rebase_path("version/verneed/ver_2.map", "") ]
+    deps = [ "../:adlt_common", ]
+}
+
+adlt_executable("unittest_adlt_base_verneed") {
+    lib_name = "base_verneed"
+    lib_include_dirs = [ "version/verneed" ]
+    lib_configs = [
+        {
+            name = "base_verneed_a"
+            sources = [ "version/verneed/a.c" ]
+            deps = [ ":base_version_verneed_ver_1" ]
+        },
+        {
+            name = "base_verneed_b"
+            sources = [ "version/verneed/b.c" ]
+            deps = [ ":base_version_verneed_ver_2" ]
+        },
+    ]
+
+    include_dirs = [ "version/verneed" ]
+    sources = [ "version/verneed/main.cpp" ]
+    lib_common_configs = [
+        ":post_lib_configs"
+    ]
+}
