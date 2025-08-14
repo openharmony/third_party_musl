@@ -247,7 +247,7 @@ static void signal_chain_handler(int signo, siginfo_t* siginfo, void* ucontext_r
                 "set_syscall_hooks_linux_tl_lock=%{public}d "
                 "fork_tl_lock=%{public}d "
 #ifdef HOOK_ENABLE
-                "__custom_hook_flag=%{public}d"
+                "__custom_hook_flag=%{public}d "
 #endif
                 "register_count=%{public}d ",
                 __func__, idx, signo, (unsigned long long)sig_chains[signo - 1].sca_special_actions[idx].sca_sigaction,
