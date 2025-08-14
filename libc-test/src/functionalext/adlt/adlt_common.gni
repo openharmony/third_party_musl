@@ -1,0 +1,214 @@
+# Copyright (C) 2025 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#	http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+import("//build/test.gni")
+
+adlt_llvm_bin = "$musl_adlt_llvm/bin"
+adlt_llvm_ld = "$adlt_llvm_bin/ld.lld"
+adlt_llvm_readelf = "$adlt_llvm_bin/llvm-readelf"
+
+adlt_abs_runtime_clang_path = rebase_path(default_runtime_clang_path, "")
+
+adlt_unstripped_lib_dir = "${root_build_dir}/lib.unstripped/musl/libc-test-lib"
+adlt_bin_dir = "${root_build_dir}/musl/libc-test"
+adlt_lib_dir = "${root_build_dir}/musl/libc-test-lib"
+adlt_moved_lib_dir = "$adlt_lib_dir/adlt_orig_libs"
+
+adlt_target_bin_dir = "/data/local/tmp/libc-test"
+adlt_target_lib_dir = "/data/local/tmp/libc-test-lib"
+
+template("adlt_shared_library") {
+    foreach(cfg, invoker.lib_configs) {
+        ohos_shared_library(cfg.name) {
+            output_name = "libadlt_${cfg.name}"
+            output_extension = "so"
+
+            subsystem_name = "musl"
+            part_name = "libc-test-lib"
+            testonly = true
+
+            forward_variables_from(cfg, "*", [ "name", "configs", "include_dirs", "asmflags", "cflags", "ldflags" ])
+
+            if (defined(deps)) {
+                deps += [
+                    "//third_party/musl/libc-test/src/functionalext/adlt:adlt_build_syms",
+                    "//third_party/musl/libc-test/src/functionalext/adlt:adlt_common",
+                ]
+            }
+
+            configs = []
+            if (defined(invoker.configs)) {
+                configs += invoker.configs
+            }
+
+            if (defined(cfg.configs)) {
+                configs += cfg.configs
+            }
+
+            include_dirs = []
+            if (defined(invoker.include_dirs)) {
+                include_dirs += invoker.include_dirs
+            }
+
+            if (defined(cfg.include_dirs)) {
+                include_dirs += cfg.include_dirs
+            }
+
+            asmflags = []
+            if (defined(invoker.asmflags)) {
+                asmflags += invoker.asmflags
+            }
+
+            if (defined(cfg.asmflags)) {
+                asmflags += cfg.asmflags
+            }
+
+            cflags = []
+            if (defined(invoker.cflags)) {
+                cflags += invoker.cflags
+            }
+
+            if (defined(cfg.cflags)) {
+                cflags += cfg.cflags
+            }
+
+            ldflags = [ "-Wl,--emit-relocs", "-Wl,--no-relax" ]
+            if (defined(invoker.ldflags)) {
+                ldflags += invoker.ldflags
+            }
+
+            if (defined(cfg.ldflags)) {
+                ldflags += cfg.ldflags
+            }
+        }
+    }
+
+    action(target_name) {
+        testonly = true
+        deps = []
+        sources = []
+        foreach(cfg, invoker.lib_configs) {
+            deps += [ ":${cfg.name}" ]
+            sources += [ "$adlt_unstripped_lib_dir/libadlt_${cfg.name}.so" ]
+        }
+
+        script = adlt_llvm_ld
+        outputs = [ "$adlt_lib_dir/libadlt_$target_name.so" ]
+        args = [ "--adlt", "-o" ] + rebase_path(outputs, "") + rebase_path(sources, "")
+    }
+}
+
+template("adlt_executable") {
+    adlt_shared_library(invoker.lib_name) {
+        lib_configs = invoker.lib_configs
+
+        if (defined(invoker.lib_include_dirs)) {
+            include_dirs = invoker.lib_include_dirs
+        }
+
+        if (defined(invoker.lib_common_configs)) {
+            configs = invoker.lib_common_configs
+        }
+
+        if (defined(invoker.lib_asmflags)) {
+            asmflags = invoker.lib_asmflags
+        }
+
+        if (defined(invoker.lib_cflags)) {
+            cflags = invoker.lib_cflags
+        }
+
+        if (defined(invoker.lib_ldflags)) {
+            ldflags = invoker.lib_ldflags
+        }
+
+        if (defined(invoker.lib_external_deps)) {
+            external_deps = invoker.lib_external_deps
+        }
+    }
+
+    ohos_executable("execute_$target_name") {
+        testonly = true
+        subsystem_name = "musl"
+        part_name = "libc-test"
+        configs = [ "//third_party/musl/libc-test/src/common:config_runtest" ]
+
+        output_name = string_replace(target_name, "execute_", "")
+        sources = invoker.sources
+        include_dirs = [
+            "//third_party/musl/libc-test/src/functionalext/adlt/common",
+            "//third_party/musl/libc-test/src/functionalext/common",
+            "//third_party/musl/porting/linux/user/include",
+            "//third_party/musl/libc-test/src/common",
+        ]
+
+        if (defined(invoker.configs)) {
+            configs += invoker.configs
+        }
+
+        if (defined(invoker.include_dirs)) {
+            include_dirs += invoker.include_dirs
+        }
+
+        if (defined(invoker.asmflags)) {
+            asmflags = invoker.asmflags
+        }
+
+        if (defined(invoker.cflags)) {
+            cflags = invoker.cflags
+        }
+
+        ldflags = [ "-Wl,-rpath=./:/data/local/tmp/libc-test-lib/" ]
+        if (defined(invoker.ldflags)) {
+            ldflags += invoker.ldflags
+        }
+
+        if (defined(invoker.external_deps)) {
+            external_deps = invoker.external_deps
+        }
+
+        deps = [ "//third_party/musl/libc-test/src/functionalext/adlt:adlt_common" ]
+        if (defined(invoker.custom_deps)) {
+            deps += invoker.custom_deps
+        } else {
+            deps += [ ":${invoker.lib_name}" ]
+            foreach(cfg, invoker.lib_configs) {
+                deps += [ ":${cfg.name}" ]
+            }
+        }
+
+        if (defined(invoker.deps)) {
+            deps += invoker.deps
+        }
+
+        if (defined(invoker.data_deps)) {
+            data_deps = invoker.data_deps
+        }
+    }
+
+    action(target_name) {
+        testonly = true
+        deps = [ ":execute_$target_name" ]
+        script = "//third_party/musl/libc-test/src/functionalext/adlt/adlt_tools.py"
+        args = [ "build_sym_links",
+            "--lib-dir", rebase_path(adlt_lib_dir, ""),
+            "--target-lib-dir", adlt_target_lib_dir,
+            "--adlt-lib", "libadlt_${invoker.lib_name}.so",
+            "--orig-lib-list" ]
+
+        outputs = []
+        foreach(cfg, invoker.lib_configs) {
+            args += [ "libadlt_${cfg.name}.so" ]
+            outputs += [ "$adlt_lib_dir/adlt_orig_libs/libadlt_${cfg.name}.so" ]
+        }
+    }
+}
