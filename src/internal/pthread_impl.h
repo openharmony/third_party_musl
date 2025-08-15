@@ -353,4 +353,9 @@ extern hidden unsigned __default_guardsize;
 hidden int __thread_clone(int (*func)(void *), int flags, struct pthread *thread, unsigned char *sp);
 #endif
 
+extern hidden pid_t getDlcloseLockStatus();
+extern hidden pid_t getDlcloseLockLastExitTid();
+extern hidden void setDlcloseLockStatus(pid_t);
+extern hidden void setDlcloseLockLastExitTid(pid_t);
+
 #endif
