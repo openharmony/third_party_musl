@@ -46,7 +46,6 @@
                 "init",
                 "bounds_checking_function",
                 "FreeBSD",
-                "faultloggerd",
                 "cJSON",
                 "optimized_routines"
             ],
