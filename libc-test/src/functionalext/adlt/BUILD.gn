@@ -13,19 +13,15 @@
 import("//build/test.gni")
 import("../../../test_template.gni")
 import("test_src_functionalext_adlt.gni")
+
+if (defined(musl_use_adlt) && musl_use_adlt == true) {
 import("adlt_common.gni")
+}
 
 foreach(s, functionalext_adlt_test) {
     test_unittest(s) {
         target_dir = "functionalext/adlt"
     }
-}
-
-action("adlt_build_syms") {
-    testonly = true
-    script = "//third_party/musl/libc-test/src/functionalext/adlt/adlt_tools.py"
-    args = [ "build_sym_script", "--lib-dir", rebase_path(adlt_lib_dir, ""), "--target-lib-dir", adlt_target_lib_dir ]
-    outputs = [ "$adlt_lib_dir/adlt_build_syms.sh" ]
 }
 
 group("functionalext_adlt_test") {
@@ -39,17 +35,26 @@ group("functionalext_adlt_test") {
     }
 }
 
-ohos_static_library("adlt_common") {
-    testonly = true
-    subsystem_name = "thirdparty"
-    part_name = "musl"
+if (defined(musl_use_adlt) && musl_use_adlt == true) {
+    action("adlt_build_syms") {
+        testonly = true
+        script = "//third_party/musl/libc-test/src/functionalext/adlt/adlt_tools.py"
+        args = [ "build_sym_script", "--lib-dir", rebase_path(adlt_lib_dir, ""), "--target-lib-dir", adlt_target_lib_dir ]
+        outputs = [ "$adlt_lib_dir/adlt_build_syms.sh" ]
+    }
 
-    include_dirs = [
-        "//third_party/musl/libc-test/src/functionalext/common",
-        "//third_party/musl/porting/linux/user/include",
-        "//third_party/musl/libc-test/src/common",
-        "common"
-    ]
-    configs = [ "//third_party/musl/libc-test/src/common:config_runtest" ]
-    sources = [ "common/adlt_common.cpp" ]
+    ohos_static_library("adlt_common") {
+        testonly = true
+        subsystem_name = "thirdparty"
+        part_name = "musl"
+
+        include_dirs = [
+            "//third_party/musl/libc-test/src/functionalext/common",
+            "//third_party/musl/porting/linux/user/include",
+            "//third_party/musl/libc-test/src/common",
+            "common"
+        ]
+        configs = [ "//third_party/musl/libc-test/src/common:config_runtest" ]
+        sources = [ "common/adlt_common.cpp" ]
+    }
 }
