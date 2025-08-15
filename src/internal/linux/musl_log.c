@@ -39,10 +39,12 @@ size_t g_end = DEFAULT_STRING_SIZE; // the size of g_buffer
 
 static void buffer_clean_up(const char *str)
 {
-    int unmapRes = munmap(g_buffer, g_end);
-    if (unmapRes == -1) {
-        MUSL_LOGW("[ohos_dfx_log] munmap g_buffer failed: %{public}d %{public}s:\n %{public}s\n",
-            errno, strerror(errno), str);
+    if (g_buffer != NULL) {
+        int unmapRes = munmap(g_buffer, g_end);
+        if (unmapRes == -1) {
+            MUSL_LOGW("[ohos_dfx_log] munmap g_buffer failed: %{public}d %{public}s:\n %{public}s\n",
+                errno, strerror(errno), str);
+        }
     }
     g_buffer = NULL;
     g_offset = 0;

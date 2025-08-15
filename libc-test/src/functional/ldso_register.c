@@ -19,6 +19,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <sys/ioctl.h>
 #include <sys/wait.h>
 #include <sys/prctl.h>
@@ -27,6 +28,7 @@
 typedef void(*notify_call)(uintptr_t dso_base, size_t dso_len, const char *dso_path);
 #define MAX_BUF 256
 #define THREAD_NUMBER 3
+#define HEX_TERM 16
 #define SET_PROC_TYPE_CMD _IOW('E', 0x18, uint32_t)
 #define ASSIGN_ENCAPS_CMD _IOW('E', 0x1A, char *)
 
@@ -63,8 +65,8 @@ int check_loaded(const char *so, uintptr_t dso_base, size_t dso_len)
     while (fgets(buffer, MAX_BUF, fp) != NULL) {
         if (strstr(buffer, so) != NULL) {
             char *end_ptr;
-            start = strtoul(buffer, &end_ptr, 16);
-            end = strtoul(end_ptr + 1, &end_ptr, 16);
+            start = strtoul(buffer, &end_ptr, HEX_TERM);
+            end = strtoul(end_ptr + 1, &end_ptr, HEX_TERM);
             size += end - start;
             if (base == 0) {
                 base = start;
@@ -140,7 +142,7 @@ void *add_callback(void *arg)
     return arg;
 }
 
-void add_callback_concurrently()
+void add_callback_concurrently(void)
 {
     pthread_t *threads = (pthread_t *) malloc(sizeof(pthread_t) * THREAD_NUMBER);
     if (threads == NULL) {
@@ -172,7 +174,7 @@ void add_callback_concurrently()
     free(threads);
 }
 
-int do_iterate_check()
+int do_iterate_check(void)
 {
     so_nums = 0;
     if (dl_iterate_phdr(header_handler, NULL)) {
@@ -212,7 +214,7 @@ void *dlopen_thread2(void *arg)
     return arg;
 }
 
-void dlopen_concurrently()
+void dlopen_concurrently(void)
 {
     pthread_t td1, td2, td3;
     struct callback_param arg = {register_ptr, callback4};
@@ -224,7 +226,7 @@ void dlopen_concurrently()
     pthread_join(td3, NULL);
 }
 
-void set_proc_type()
+void set_proc_type(void)
 {
     int fd = open("/dev/encaps", O_RDWR);
     if (fd < 0) {
@@ -237,10 +239,10 @@ void set_proc_type()
     }
 }
 
-void assign_encaps()
+void assign_encaps(void)
 {
     int fd = open("/dev/encaps", O_RDWR);
-    char str[] = "{\"encaps\":{\"ohos.encaps.count\":1, \"ohos.encaps.fork.count\":5}}";
+    char str[] = "{\"encaps\":{\"ohos.encaps.count\":1, \"ohos.permission.kernel.DISABLE_GOTPLT_RO_PROTECTION\":1}}";
     if (fd < 0) {
         t_error("open /dev/encaps failed, errno: %d\n", errno);
         return;

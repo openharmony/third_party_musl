@@ -14,7 +14,7 @@
  */
  #include <stdio.h>
  
- void sayhello(void)
+ static void sayhello(void)
  {
     printf("hello world!\n");
  }
