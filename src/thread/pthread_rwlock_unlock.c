@@ -4,7 +4,7 @@
 void __pthread__rwlock_unlock_inner(pthread_rwlock_t *m)
 {
 	char *p = (char *)m;
-	for (size_t i = 0;i < sizeof(pthread_rwlock_t);i++) {
+	for (size_t i = 0; i < sizeof(pthread_rwlock_t); i++) {
 		*(p + i) = 0;
 	}
 }

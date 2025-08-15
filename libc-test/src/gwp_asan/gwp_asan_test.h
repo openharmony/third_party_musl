@@ -49,12 +49,12 @@ void cancel_gwp_asan_environment(bool logPath)
     system("param set gwp_asan.sample.all false");
 }
 
-void send_sig36()
+void send_sig36(void)
 {
     pid_t pid = getpid();
 
     char command[64];
-    int ret = snprintf(command, sizeof(command), "kill -36 %d", pid);
+    snprintf(command, sizeof(command), "kill -36 %d", pid);
     system(command);
     printf("Exec command: %s .\n", command);
 }

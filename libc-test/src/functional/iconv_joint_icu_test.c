@@ -26,7 +26,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define EXTRA_LARGE_SIZE 30*1024*1024
+#define EXTRA_LARGE_SIZE (30*1024*1024)
 #define BUFFER_SIZE 1024
 #define IGNORE_SIZE 9
 

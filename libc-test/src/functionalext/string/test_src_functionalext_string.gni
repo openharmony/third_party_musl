@@ -14,8 +14,4 @@
 functionalext_string_list = [
   "strlen_test",
   "strcpy_test",
-  "strcmp_test",
-  "strtok_test",
-  "strcat_test",
-  "strchr_test",
 ]

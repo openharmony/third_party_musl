@@ -20,8 +20,8 @@
  */
 
 
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstdio>
+#include <cstdlib>
 #include <dlfcn.h>
 #include <algorithm>
 #include <fstream>
@@ -37,7 +37,7 @@ using namespace testing::ext;
 using namespace std;
 
 extern "C"{
-int getaddrinfo (const char *__restrict, const char *__restrict, const struct addrinfo *__restrict, struct addrinfo **__restrict);
+int getaddrinfo (char *__restrict, char *__restrict, struct addrinfo *__restrict, struct addrinfo **__restrict);
 }
 
 namespace OHOS {
@@ -57,17 +57,17 @@ int CallGetAddrInfo(int family, int sockType)
     set_hook_flag(SOCKET_FLAG, true);
 
     char host[] = "127.0.0.1";
-    struct addrinfo *result = NULL;
+    struct addrinfo *result = nullptr;
     struct addrinfo hint = {0};
     hint.ai_flags = AI_ADDRCONFIG;
     hint.ai_family = family;
     hint.ai_socktype = sockType;
     hint.ai_protocol = 0;
 
-    int ret = getaddrinfo(host, NULL, &hint, &result);
+    int ret = getaddrinfo(host, nullptr, &hint, &result);
 
     freeaddrinfo(result);
-    result = NULL;
+    result = nullptr;
 
     set_hook_flag(SOCKET_FLAG, false);
     return ret;

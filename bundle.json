@@ -34,7 +34,9 @@
             "musl_guard_jemalloc_tsd",
             "musl_malloc_plugin",
             "musl_linux_kernel_dir",
-            "musl_use_mutex_wait_opt"
+            "musl_use_mutex_wait_opt",
+            "musl_use_adlt",
+            "musl_adlt_llvm"
         ],
         "adapted_system_type": ["mini", "small", "standard"],
         "rom": "",
@@ -58,6 +60,9 @@
                 },
                 {
                     "name": "//third_party/musl:soft_libc_musl_shared"
+                },
+                {
+                    "name": "//third_party/musl:musl_headers"
                 }
             ],
             "test": [

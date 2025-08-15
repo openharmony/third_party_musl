@@ -1,0 +1,55 @@
+# Copyright (C) 2025 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#	http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+import("//build/test.gni")
+import("../../../test_template.gni")
+import("test_src_functionalext_adlt.gni")
+import("adlt_common.gni")
+
+foreach(s, functionalext_adlt_test) {
+    test_unittest(s) {
+        target_dir = "functionalext/adlt"
+    }
+}
+
+action("adlt_build_syms") {
+    testonly = true
+    script = "//third_party/musl/libc-test/src/functionalext/adlt/adlt_tools.py"
+    args = [ "build_sym_script", "--lib-dir", rebase_path(adlt_lib_dir, ""), "--target-lib-dir", adlt_target_lib_dir ]
+    outputs = [ "$adlt_lib_dir/adlt_build_syms.sh" ]
+}
+
+group("functionalext_adlt_test") {
+    testonly = true
+    deps = []
+
+    if (defined(musl_use_adlt) && musl_use_adlt == true) {
+        foreach(s, functionalext_adlt_test) {
+            deps += [ "${s}" ]
+        }
+    }
+}
+
+ohos_static_library("adlt_common") {
+    testonly = true
+    subsystem_name = "thirdparty"
+    part_name = "musl"
+
+    include_dirs = [
+        "//third_party/musl/libc-test/src/functionalext/common",
+        "//third_party/musl/porting/linux/user/include",
+        "//third_party/musl/libc-test/src/common",
+        "common"
+    ]
+    configs = [ "//third_party/musl/libc-test/src/common:config_runtest" ]
+    sources = [ "common/adlt_common.cpp" ]
+}

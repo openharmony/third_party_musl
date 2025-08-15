@@ -20,8 +20,8 @@
  * IN THE SOFTWARE.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstdio>
+#include <cstdlib>
 #include <dlfcn.h>
 #include <algorithm.h>
 #include <fstream.h>
@@ -36,8 +36,8 @@ using namespace testing::ext;
 using namespace std;
 
 extern "C"{
-void __tl_lock(void);
-void __tl_unlock(void);
+void tl_lock_hook(void);
+void tl_unlock_hook(void);
 }
 
 namespace OHOS {
@@ -61,10 +61,10 @@ HETEST_F(PthreadtlunlockTest, pthread_tl_unlock_test, TestSize.Level10)
 {
     printf("----x-pthread_tl_unlock_test---x----\n");
     for(int i = 0; i < 4; i++){
-        __tl_lock();
+        tl_lock_hook();
     }
     for(int i = 0; i < 4; i++){
-        __tl_unlock();
+        tl_unlock_hook();
     }
 }
 

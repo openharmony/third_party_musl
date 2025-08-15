@@ -14,12 +14,12 @@
  */
  static int test_val;
 
- int getVal(void)
+ static int getVal(void)
  {
     return test_val;
  }
 
- void setVal(int val)
+ static void setVal(int val)
  {
     test_val = val;
  }

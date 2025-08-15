@@ -107,6 +107,7 @@ static void (*error)(const char *, ...) = error_noop;
 #define NOTIFY_BASE_CAPACITY 8
 #define SEC_CHECK_HAS_ENCAPS 0x1
 #define HM_PR_CHECK_ENCAPS 0x6a6975
+#define HM_GOT_RO 0x70726f74
 #define PAC_MODIFIER_SIZE 4
 #define PAC_TARGET_ADDR_REGISTER 17
 #define PAC_MODIFIER_REGISTER 16
@@ -207,7 +208,7 @@ extern bool init_gwp_asan_by_libc(bool force_init);
 #endif
 
 #ifdef ENABLE_HWASAN
-__attribute__((used,retain)) int __hwasan_check_enabled = 0;
+__attribute__((used, retain)) int __hwasan_check_enabled = 0;
 #endif
 
 weak_alias(__init_array_start, __init_array_end);
@@ -279,52 +280,52 @@ struct gnu_property {
  * If new protection is needed, please add in here */
 static uint32_t parse_elf_property(uint32_t type, const char* data)
 {
-	uint32_t prot = 0;
-	if (type == GNU_PROPERTY_AARCH64_FEATURE_1_AND) {
-		const uint32_t *p = (const uint32_t *)data;
-		if ((*p & GNU_PROPERTY_AARCH64_FEATURE_1_BTI) != 0) {
-			prot |= PROT_BTI;
-		}
-	}
-	return prot;
+    uint32_t prot = 0;
+    if (type == GNU_PROPERTY_AARCH64_FEATURE_1_AND) {
+        const uint32_t *p = (const uint32_t *)data;
+        if ((*p & GNU_PROPERTY_AARCH64_FEATURE_1_BTI) != 0) {
+            prot |= PROT_BTI;
+        }
+    }
+    return prot;
 }
 
 static uint32_t parse_prot(const char *data, ssize_t *off, ssize_t datasz)
 {
-	ssize_t o;
-	const struct gnu_property *pr;
-	uint32_t ret;
-	o = *off;
-	ssize_t sz = datasz - *off;
+    ssize_t o;
+    const struct gnu_property *pr;
+    uint32_t ret;
+    o = *off;
+    ssize_t sz = datasz - *off;
 
-	if (sz < sizeof(*pr))
-		return 0;
-	pr = (const struct gnu_property *)(data + o);
-	o += sizeof(*pr);
-	if (pr->pr_datasz > sz)
-		return 0;
-	ret = parse_elf_property(pr->pr_type, data + o);
-	return ret;
+    if (sz < sizeof(*pr))
+        return 0;
+    pr = (const struct gnu_property *)(data + o);
+    o += sizeof(*pr);
+    if (pr->pr_datasz > sz)
+        return 0;
+    ret = parse_elf_property(pr->pr_type, data + o);
+    return ret;
 }
 
 static unsigned parse_extra_prot_fd(int fd, Phdr *ph)
 {
-	union {
-		Elf64_Nhdr nh;
-		char data[BUF_MAX];
-	} gnu_data;
-	ssize_t sz = ph->p_filesz > BUF_MAX ? BUF_MAX : ph->p_filesz;
-	ssize_t len = pread(fd, gnu_data.data, sz, ph->p_offset);
-	if (len < 0) return 0;
-	if ((gnu_data.nh.n_type != NT_GNU_PROPERTY_TYPE_0) || (gnu_data.nh.n_namesz != NOTE_NAME_SZ)) {
-		return 0;
-	}
+    union {
+        Elf64_Nhdr nh;
+        char data[BUF_MAX];
+    } gnu_data;
+    ssize_t sz = ph->p_filesz > BUF_MAX ? BUF_MAX : ph->p_filesz;
+    ssize_t len = pread(fd, gnu_data.data, sz, ph->p_offset);
+    if (len < 0) return 0;
+    if ((gnu_data.nh.n_type != NT_GNU_PROPERTY_TYPE_0) || (gnu_data.nh.n_namesz != NOTE_NAME_SZ)) {
+        return 0;
+    }
 
-	ssize_t off_gp = (sizeof(gnu_data.nh)) + NOTE_NAME_SZ;
-	off_gp = (off_gp + ELF_GNU_PROPERTY_ALIGN - 1) & (-(ELF_GNU_PROPERTY_ALIGN));
+    ssize_t off_gp = (sizeof(gnu_data.nh)) + NOTE_NAME_SZ;
+    off_gp = (off_gp + ELF_GNU_PROPERTY_ALIGN - 1) & (-(ELF_GNU_PROPERTY_ALIGN));
 	ssize_t datasz_gp = off_gp + gnu_data.nh.n_descsz;
-	datasz_gp = datasz_gp > BUF_MAX ? BUF_MAX : datasz_gp;
-	return parse_prot((char *)gnu_data.data, &off_gp, datasz_gp);
+    datasz_gp = datasz_gp > BUF_MAX ? BUF_MAX : datasz_gp;
+    return parse_prot((char *)gnu_data.data, &off_gp, datasz_gp);
 }
 #endif
 
@@ -603,7 +604,7 @@ struct encaps_for_prctl {
 	unsigned int value;
 };
 
-int check_encaps_for_got()
+int check_encaps_for_got(void)
 {
 	struct encaps_for_prctl encaps_args = {0};
 	char got_key[] = "ohos.permission.kernel.DISABLE_GOTPLT_RO_PROTECTION";
@@ -637,7 +638,7 @@ int register_ldso_func_for_add_dso(notify_call callback)
 	update_register_count();
 	for (p = head; p; p = p->next) {
 		// Skip vdso map.
-		if(!p->map) {
+		if (!p->map) {
 			continue;
 		}
 		callback(p->map, p->map_len, p->name);
@@ -1270,6 +1271,7 @@ static void do_pauth_reloc(size_t *reloc_addr, size_t val)
 	int key = (schema >> 60) & 0x3;
 	size_t modifier = discriminator;
 	if (addr_diversity) {
+        /* modifier[63:48] = discriminator and modifier[47:0] = Place */
 		modifier = (modifier << 48) | ((size_t)reloc_addr & 0xffffffffffff);
 	}
 
@@ -1369,13 +1371,11 @@ static void do_relocs(struct dso *dso, size_t *rel, size_t rel_size, size_t stri
 					dso->lazy_cnt++;
 					continue;
 				}
-				if (dso != &ldso) {
-					LD_LOGW("relocating failed: symbol not found. "
-						"dso=%{public}s s=%{public}s use_vna_hash=%{public}d van_hash=%{public}x",
-						dso->name, name, vinfo.use_vna_hash, vinfo.vna_hash);
-					error("Error relocating %s: %s: symbol not found",
-						dso->name, name);
-				}
+				LD_LOGW("relocating failed: symbol not found. "
+					"dso=%{public}s s=%{public}s use_vna_hash=%{public}d van_hash=%{public}x",
+					dso->name, name, vinfo.use_vna_hash, vinfo.vna_hash);
+				error("Error relocating %s: %s: symbol not found",
+					dso->name, name);
 				if (runtime) longjmp(*rtld_fail, 1);
 				continue;
 			}
@@ -2920,6 +2920,7 @@ static void do_auth_relr_relocs(struct dso *p, size_t dt_name, size_t dt_size)
 					do_pauth_reloc(&auth_reloc_addr[i], val);
 				}
 			}
+            /* 63:1 will be set in bitmap to indicate the address offset and the last bit is a flag bit. */
 			auth_reloc_addr += 8 * sizeof(size_t) - 1;
 		}
 	}
@@ -2959,6 +2960,15 @@ static void reloc_all(struct dso *p, const dl_extinfo *extinfo)
 		}
 		/* Handle serializing/mapping the RELRO segment */
 		handle_relro_sharing(p, extinfo, &relro_fd_offset);
+
+        /* We need to skip dso with shared RELRO*/
+        if (head != &ldso && p->relro_start != p->relro_end && extinfo == NULL) {
+            if (prctl(HM_GOT_RO, 0, laddr(p, p->relro_start), p->relro_end - p->relro_start)) {
+                if (errno != EINVAL && runtime) {
+                    LD_LOGW("Failed to set readonly to relro segment of %{public}s, errno %{public}d", p->name, errno);
+                }
+            }
+        }
 
 		p->relocated = 1;
 		free_reloc_can_search_dso(p);
@@ -3315,6 +3325,7 @@ bool pac_reset_handler(int signo, siginfo_t *siginfo, void *ucontext_raw)
 		return false;
 	}
 	ucontext->uc_mcontext.regs[PAC_TARGET_ADDR_REGISTER] = addr;
+	// if we pass the check, adjust the PC to the next blr command.
 	ucontext->uc_mcontext.pc = ucontext->uc_mcontext.pc + 4;
 	return true;
 }
@@ -3474,8 +3485,8 @@ void __dls3(size_t *sp, size_t *auxv, size_t *aux)
 	InstallPACHandler();
 #endif
 	__init_fdsan();
-	InitDeviceApiVersion(); // do nothing when no define OHOS_ENABLE_PARAMETER
 	InitTimeZoneParam();
+	InitDeviceApiVersion(); // do nothing when no define OHOS_ENABLE_PARAMETER
 	/* If the main program was already loaded by the kernel,
 	 * AT_PHDR will point to some location other than the dynamic
 	 * linker's program headers. */
@@ -3851,6 +3862,7 @@ static char *dlopen_permitted_list[] =
 };
 
 #define PERMITIED_TARGET  "nweb_ns"
+#define PERMITIED_TARGET2  "nweb_ns_legacy"
 static bool in_permitted_list(char *caller, char *target)
 {
 	for (int i = 0; i < sizeof(dlopen_permitted_list)/sizeof(char*); i++) {
@@ -3863,6 +3875,9 @@ static bool in_permitted_list(char *caller, char *target)
 		return true;
 	}
 
+	if (strcmp(PERMITIED_TARGET2, target) == 0) {
+		return true;
+	}
 	return false;
 }
 
@@ -3936,7 +3951,7 @@ void *dlopen_impl(
 
 #ifdef IS_ASAN
 	if (g_is_asan) {
-		for (int i=0; redir_paths[i] != NULL; i++) {
+		for (int i = 0; redir_paths[i] != NULL; i++) {
 			char *place = strstr(file, redir_paths[i]);
 			if (place && asan_file) {
 				int ret = snprintf(asan_file, sizeof asan_file, "%.*s/asan%s", (int)(place - file), file, place);
@@ -4193,9 +4208,9 @@ void *dlopen_impl(
 	p = dlopen_post(p, mode);
 
 #ifdef ENABLE_HWASAN
-    /* The shadow memory corresponding to HWASAN-instrumented global 
-	 * variables of loaded dso should be initialized to prevent 
-	 * tag-mismatch errors when do_init_fini call the initialization 
+    /* The shadow memory corresponding to HWASAN-instrumented global
+	 * variables of loaded dso should be initialized to prevent
+	 * tag-mismatch errors when do_init_fini call the initialization
 	 * interfaces which will modify related global variables. */
     for (struct dso *new = notifier_tail->next; new; new = new->next) {
     	if (new && libc.load_hook) {
@@ -4852,6 +4867,7 @@ int do_dlclose(struct dso *p, bool check_deps_all)
 hidden int __dlclose(void *p)
 {
 	pthread_mutex_lock(&dlclose_lock);
+	setDlcloseLockStatus(gettid());
 	int rc;
 	pthread_rwlock_wrlock(&lock);
 	if (shutting_down) {
@@ -4875,6 +4891,8 @@ hidden int __dlclose(void *p)
 	rc = do_dlclose(p, 0);
 #endif
 	pthread_rwlock_unlock(&lock);
+	setDlcloseLockLastExitTid(gettid());
+	setDlcloseLockStatus(0);
 	pthread_mutex_unlock(&dlclose_lock);
 	return rc;
 }
@@ -5048,6 +5066,7 @@ no_redir:
 int dl_iterate_phdr(int(*callback)(struct dl_phdr_info *info, size_t size, void *data), void *data)
 {
 	pthread_mutex_lock(&dlclose_lock);
+	setDlcloseLockStatus(gettid());
 	struct dso *current;
 	struct dl_phdr_info info;
 	int ret = 0;
@@ -5072,6 +5091,8 @@ int dl_iterate_phdr(int(*callback)(struct dl_phdr_info *info, size_t size, void 
 		current = current->next;
 		pthread_rwlock_unlock(&lock);
 	}
+	setDlcloseLockLastExitTid(gettid());
+	setDlcloseLockStatus(0);
 	pthread_mutex_unlock(&dlclose_lock);
 	return ret;
 }
