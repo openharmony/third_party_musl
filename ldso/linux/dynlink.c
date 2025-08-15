@@ -4867,6 +4867,7 @@ int do_dlclose(struct dso *p, bool check_deps_all)
 hidden int __dlclose(void *p)
 {
 	pthread_mutex_lock(&dlclose_lock);
+	setDlcloseLockStatus(gettid());
 	int rc;
 	pthread_rwlock_wrlock(&lock);
 	if (shutting_down) {
@@ -4890,6 +4891,8 @@ hidden int __dlclose(void *p)
 	rc = do_dlclose(p, 0);
 #endif
 	pthread_rwlock_unlock(&lock);
+	setDlcloseLockLastExitTid(gettid());
+	setDlcloseLockStatus(0);
 	pthread_mutex_unlock(&dlclose_lock);
 	return rc;
 }
@@ -5063,6 +5066,7 @@ no_redir:
 int dl_iterate_phdr(int(*callback)(struct dl_phdr_info *info, size_t size, void *data), void *data)
 {
 	pthread_mutex_lock(&dlclose_lock);
+	setDlcloseLockStatus(gettid());
 	struct dso *current;
 	struct dl_phdr_info info;
 	int ret = 0;
@@ -5087,6 +5091,8 @@ int dl_iterate_phdr(int(*callback)(struct dl_phdr_info *info, size_t size, void 
 		current = current->next;
 		pthread_rwlock_unlock(&lock);
 	}
+	setDlcloseLockLastExitTid(gettid());
+	setDlcloseLockStatus(0);
 	pthread_mutex_unlock(&dlclose_lock);
 	return ret;
 }
