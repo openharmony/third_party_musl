@@ -22,7 +22,7 @@
 
 #define TEST_NAME "gwp_asan_unwind_test"
 
-__attribute__((noinline)) int func1(size_t *frame_buf, size_t max_record_stack, size_t *nums_frame)
+__attribute__((noinline, used)) int func1(size_t *frame_buf, size_t max_record_stack, size_t *nums_frame)
 {
     int res = 1;
     res += res;
@@ -30,14 +30,14 @@ __attribute__((noinline)) int func1(size_t *frame_buf, size_t max_record_stack, 
     return res;
 }
 
-__attribute__((noinline)) int func2(size_t *frame_buf, size_t max_record_stack, size_t *nums_frame)
+__attribute__((noinline, used)) int func2(size_t *frame_buf, size_t max_record_stack, size_t *nums_frame)
 {
     int res = 2;
     res += func1(frame_buf, max_record_stack, nums_frame);
     return res;
 }
 
-__attribute__((noinline)) int func3(size_t *frame_buf, size_t max_record_stack, size_t *nums_frame)
+__attribute__((noinline, used)) int func3(size_t *frame_buf, size_t max_record_stack, size_t *nums_frame)
 {
     int res = 3;
     res += func2(frame_buf, max_record_stack, nums_frame);
