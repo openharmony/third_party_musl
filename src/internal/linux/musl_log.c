@@ -118,7 +118,8 @@ int ohos_dfx_log(const char *str, const char *path)
         }
     }
 
-    size_t new_end = g_offset + strlen(str);
+    size_t str_len = strlen(str);
+    size_t new_end = g_offset + str_len + 1;
     if (new_end > g_end) {
         char *new_buffer = mremap(g_buffer, g_end, g_end * 2, MREMAP_MAYMOVE);
         if (new_buffer == MAP_FAILED) {
@@ -133,7 +134,7 @@ int ohos_dfx_log(const char *str, const char *path)
     }
 
     strcpy(g_buffer + g_offset, str);
-    g_offset += strlen(str);
+    g_offset += str_len;
 
     if (!(strstr(str, "End Hwasan report") || strstr(str, "End Asan report") ||
     strstr(str, "End Tsan report") || strstr(str, "End Ubsan report") ||
