@@ -24,13 +24,19 @@
 #include <pthread_impl.h>
 #include "malloc.h"
 #include "syscall.h"
+#ifdef HOOK_ENABLE
 #include "stdatomic_impl.h"
+#endif
 #include "dynlink.h"
 
 extern int __libc_sigaction(int sig, const struct sigaction *restrict sa,
                             struct sigaction *restrict old);
-/* true is custom hook enabled, otherwise false*/                            
+#ifdef HOOK_ENABLE
+/* true is custom hook enabled, otherwise false. It will take effect after the HOOK_ENABLE macro defined */                            
 extern volatile atomic_bool __custom_hook_flag;
+#else
+bool __custom_hook_flag = false;
+#endif
 
 
 #define SIG_CHAIN_KEY_VALUE_1 1
