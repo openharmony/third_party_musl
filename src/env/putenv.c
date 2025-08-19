@@ -19,6 +19,24 @@ int __putenv(char *s, size_t l, char *r)
 	}
 	static char **oldenv;
 	char **newenv;
+#ifndef __LITEOS__
+    static size_t capacity = 0;
+    if (__environ == oldenv) {
+        if (i+2 <= capacity) {
+            newenv = oldenv;
+        } else {
+            newenv = realloc(oldenv, sizeof *newenv * (i+2));
+            if (!newenv) goto oom;
+            capacity = i+2;
+        }
+    } else {
+        capacity = (i+2 > 40) ? (i+2) : 40;
+        newenv = malloc(sizeof *newenv * capacity);
+        if (!newenv) goto oom;
+        if (i) memcpy(newenv, __environ, sizeof *newenv * i);
+        free(oldenv);
+    }
+#else
 	if (__environ == oldenv) {
 		newenv = realloc(oldenv, sizeof *newenv * (i+2));
 		if (!newenv) goto oom;
@@ -28,6 +46,7 @@ int __putenv(char *s, size_t l, char *r)
 		if (i) memcpy(newenv, __environ, sizeof *newenv * i);
 		free(oldenv);
 	}
+#endif
 	newenv[i] = s;
 	newenv[i+1] = 0;
 	__environ = oldenv = newenv;
