@@ -24,7 +24,10 @@
 #include <stdio.h>
 #include <pthread.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/wait.h>
+#include <link.h>
+
 #include "test.h"
 #include "global.h"
 
@@ -32,6 +35,51 @@
 #define SO_FOR_WEAKLINK_B "/data/local/tmp/libc-test-lib/libdlopen_weaklink_b.so"
 #define SO_FOR_WEAKLINK_C "/data/local/tmp/libc-test-lib/libdlopen_weaklink_c.so"
 #define SO_FOR_WEAKLINK_D "/data/local/tmp/libc-test-lib/libdlopen_weaklink_d.so"
+#define FOO_SO "/data/local/tmp/libc-test-lib/libfoo.so"
+
+static int test_value = 0;
+
+static int callback(struct dl_phdr_info *info, size_t size, void *data)
+{
+    if (strcmp(info->dlpi_name, FOO_SO) != 0) {
+        return 0;
+    }
+    test_value++;
+    return 0;
+}
+
+static int callback_b(struct dl_phdr_info *info, size_t size, void *data)
+{
+    if (strcmp(info->dlpi_name, SO_FOR_WEAKLINK_B) != 0) {
+        return 0;
+    }
+    test_value++;
+    return 0;
+}
+
+static bool check_foo_so()
+{
+    test_value = 0;
+    dl_iterate_phdr(callback, NULL);
+
+    if (test_value != 0) {
+        return true;
+    }
+
+    return false;
+}
+
+static bool check_weaklink_b_so()
+{
+    test_value = 0;
+    dl_iterate_phdr(callback_b, NULL);
+
+    if (test_value != 0) {
+        return true;
+    }
+
+    return false;
+}
 
 void dlopen_weaklink_001()
 {
@@ -40,16 +88,47 @@ void dlopen_weaklink_001()
         t_error("dlopen(name=%s,mode=%d) failed: %s\n", SO_FOR_WEAKLINK_A, RTLD_NOW, dlerror());
         return;
     }
+
+    bool res = check_foo_so();
+
+    if (!res) {
+        t_error("libfoo.so not load \n");
+    }
+
     dlclose(handle);
 }
 
 void dlopen_weaklink_002()
+{
+    void* handle = dlopen(SO_FOR_WEAKLINK_A, RTLD_NOW);
+    if (!handle) {
+        t_error("dlopen(name=%s,mode=%d) failed: %s\n", SO_FOR_WEAKLINK_A, RTLD_NOW, dlerror());
+        return;
+    }
+
+    bool res = check_foo_so();
+
+    if (res) {
+        t_error("libfoo.so is load \n");
+    }
+
+    dlclose(handle);
+}
+
+void dlopen_weaklink_003()
 {
     void* handle = dlopen(SO_FOR_WEAKLINK_B, RTLD_NOW);
     if (!handle) {
         t_error("dlopen(name=%s,mode=%d) failed: %s\n", SO_FOR_WEAKLINK_B, RTLD_NOW, dlerror());
         return;
     }
+
+    bool res = check_foo_so();
+
+    if (!res) {
+        t_error("libfoo.so not load \n");
+    }
+
     dlclose(handle);
 
     void* handle2 = dlopen(SO_FOR_WEAKLINK_C, RTLD_NOW);
@@ -57,10 +136,17 @@ void dlopen_weaklink_002()
         t_error("dlopen(name=%s,mode=%d) failed: %s\n", SO_FOR_WEAKLINK_C, RTLD_NOW, dlerror());
         return;
     }
+
+    res = check_foo_so();
+
+    if (!res) {
+        t_error("libfoo.so not load \n");
+    }
+
     dlclose(handle2);
 }
 
-void dlopen_weaklink_003()
+void dlopen_weaklink_004()
 {
     void* handle = dlopen(SO_FOR_WEAKLINK_C, RTLD_NOW);
     if (handle) {
@@ -69,17 +155,23 @@ void dlopen_weaklink_003()
     }
 }
 
-void dlopen_weaklink_004()
+void dlopen_weaklink_005()
 {
     void* handle = dlopen(SO_FOR_WEAKLINK_D, RTLD_NOW);
     if (!handle) {
         t_error("dlopen(name=%s,mode=%d) failed: %s\n", SO_FOR_WEAKLINK_D, RTLD_NOW, dlerror());
         return;
     }
+
+    bool res = check_foo_so();
+
+    if (!res) {
+        t_error("libfoo.so not load \n");
+    }
     dlclose(handle);
 }
 
-void dlopen_weaklink_005()
+void dlopen_weaklink_006()
 {
     void* handle = dlopen(SO_FOR_WEAKLINK_D, RTLD_NOW);
     if (handle) {
@@ -88,22 +180,38 @@ void dlopen_weaklink_005()
     }
 }
 
+void dlopen_weaklink_007()
+{
+    void* handle = dlopen(SO_FOR_WEAKLINK_D, RTLD_NOW);
+    if (!handle) {
+        t_error("dlopen(name=%s,mode=%d) failed: %s\n", SO_FOR_WEAKLINK_D, RTLD_NOW, dlerror());
+        return;
+    }
+
+    bool res = check_weaklink_b_so();
+
+    if (res) {
+        t_error("weaklink_b_so is load \n");
+    }
+    dlclose(handle);
+}
+
 int main(int argc, char *argv[])
 {
     dlopen_weaklink_001();
-    dlopen_weaklink_002();
-    dlopen_weaklink_004();
-    if (remove("/data/local/tmp/libc-test-lib/libfoo.so") != 0) {
-        t_error("remove /data/local/tmp/libc-test-lib/libfoo.so failed \n");
-    }
-
-    dlopen_weaklink_001();
     dlopen_weaklink_003();
     dlopen_weaklink_005();
+    if (remove(FOO_SO) != 0) {
+        t_error("remove FOO_SO failed \n");
+    }
+
+    dlopen_weaklink_002();
+    dlopen_weaklink_004();
+    dlopen_weaklink_006();
     if (remove(SO_FOR_WEAKLINK_B) != 0) {
         t_error("remove SO_FOR_WEAKLINK_B failed \n");
     }
-    dlopen_weaklink_004();
+    dlopen_weaklink_007();
 
     return t_status;
 }
