@@ -100,7 +100,7 @@ int main(int argc, char *argv[])
     dlopen_weaklink_001();
     dlopen_weaklink_003();
     dlopen_weaklink_005();
-    if (remove("SO_FOR_WEAKLINK_B") != 0) {
+    if (remove(SO_FOR_WEAKLINK_B) != 0) {
         t_error("remove SO_FOR_WEAKLINK_B failed \n");
     }
     dlopen_weaklink_004();
