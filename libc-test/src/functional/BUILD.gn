@@ -1,6 +1,8 @@
 import("../../test_template.gni")
 import("test_src_functional.gni")
 
+out_test_lib_dir = "${root_out_dir}/lib.unstripped/musl/libc-test-lib/"
+
 if (is_standard_system && musl_iterate_and_stats_api) {
   functional_list += malloc_stats_list
 }
@@ -73,6 +75,124 @@ test_sharedlib("dlopen_register_b") {
 test_sharedlib("dlopen_register_c") {
 }
 
+test_sharedlib("foo") {
+}
+
+ohos_shared_library("dlopen_weaklink_a") {
+  sources = [ "dlopen_weaklink_a.c" ]
+
+  output_name = "dlopen_weaklink_a"
+
+  output_extension = "so"
+
+  cflags = [
+    "-fPIC",
+    "-DSHARED",
+    "-Wall",
+  ]
+
+  deps = [ ":foo" ]
+
+  test_dir = rebase_path("${out_test_lib_dir}")
+
+  ldflags = [
+    "-shared",
+    "-nostdlib",
+    "-L${test_dir}",
+    "-Wl,--no-as-needed,-lfoo,--as-needed",
+    "-Wl,-rpath=/data/local/tmp/libc-test-lib/,--ohos-weak-library=libfoo.so",
+  ]
+
+  subsystem_name = "musl"
+
+  part_name = "libc-test-lib"
+}
+
+ohos_shared_library("dlopen_weaklink_b") {
+  sources = [ "dlopen_weaklink_b.c" ]
+
+  output_name = "dlopen_weaklink_b"
+
+  output_extension = "so"
+
+  cflags = [
+    "-fPIC",
+    "-DSHARED",
+    "-Wall",
+  ]
+
+  deps = [ ":foo" ]
+
+  ldflags = [
+    "-shared",
+    "-nostdlib",
+    "-Wl,-rpath=/data/local/tmp/libc-test-lib/",
+  ]
+
+  subsystem_name = "musl"
+
+  part_name = "libc-test-lib"
+}
+
+ohos_shared_library("dlopen_weaklink_c") {
+  sources = [ "dlopen_weaklink_c.c" ]
+
+  output_name = "dlopen_weaklink_c"
+
+  output_extension = "so"
+
+  cflags = [
+    "-fPIC",
+    "-DSHARED",
+    "-Wall",
+  ]
+
+  deps = [ 
+    ":dlopen_weaklink_a",
+    ":dlopen_weaklink_b",
+  ]
+
+  ldflags = [
+    "-shared",
+    "-nostdlib",
+    "-Wl,-rpath=/data/local/tmp/libc-test-lib/",
+  ]
+
+  subsystem_name = "musl"
+
+  part_name = "libc-test-lib"
+}
+
+ohos_shared_library("dlopen_weaklink_d") {
+  sources = [ "dlopen_weaklink_d.c" ]
+
+  output_name = "dlopen_weaklink_d"
+
+  output_extension = "so"
+
+  cflags = [
+    "-fPIC",
+    "-DSHARED",
+    "-Wall",
+  ]
+
+  deps = [ ":dlopen_weaklink_b" ]
+
+  test_dir = rebase_path("${out_test_lib_dir}")
+
+  ldflags = [
+    "-shared",
+    "-nostdlib",
+    "-L${test_dir}",
+    "-Wl,--no-as-needed,-ldlopen_weaklink_b,--as-needed",
+    "-Wl,-rpath=/data/local/tmp/libc-test-lib/,--ohos-weak-library=libdlopen_weaklink_b.so",
+  ]
+
+  subsystem_name = "musl"
+
+  part_name = "libc-test-lib"
+}
+
 group("dso_shared") {
   testonly = true
 
@@ -98,5 +218,10 @@ group("dso_shared") {
     ":dlopen_weak_deps",
     ":tls_align_dso",
     ":tls_init_dso",
+    ":foo",
+    ":dlopen_weaklink_a",
+    ":dlopen_weaklink_b",
+    ":dlopen_weaklink_c",
+    ":dlopen_weaklink_d",
   ]
 }
