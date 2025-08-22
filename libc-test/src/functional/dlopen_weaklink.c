@@ -228,7 +228,7 @@ void dlopen_weaklink_006()
 }
 
 /**
- * @tc.name     : dlopen_weaklink_006
+ * @tc.name     : dlopen_weaklink_007
  * @tc.desc     : Test dlopen libdlopen_weaklink_d.so when libdlopen_weaklink_b.so not exists.
  *                D weaklink B link foo
  * @tc.level    : Level 0
