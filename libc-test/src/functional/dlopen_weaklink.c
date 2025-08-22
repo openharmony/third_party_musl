@@ -81,6 +81,14 @@ static bool check_weaklink_b_so()
     return false;
 }
 
+/**
+ * @tc.name     : dlopen_weaklink_001
+ * @tc.desc     : Test dlopen libdlopen_weaklink_a.so and foo.so is loaded
+ *                when weaklink foo.so exists.
+ *                A weaklink foo
+ * @tc.level    : Level 0
+ */
+
 void dlopen_weaklink_001()
 {
     void* handle = dlopen(SO_FOR_WEAKLINK_A, RTLD_NOW);
@@ -98,6 +106,14 @@ void dlopen_weaklink_001()
     dlclose(handle);
 }
 
+/**
+ * @tc.name     : dlopen_weaklink_002
+ * @tc.desc     : Test dlopen libdlopen_weaklink_a.so and foo.so is not loaded
+ *                when weaklink foo.so not exists.
+ *                A weaklink foo
+ * @tc.level    : Level 0
+ */
+
 void dlopen_weaklink_002()
 {
     void* handle = dlopen(SO_FOR_WEAKLINK_A, RTLD_NOW);
@@ -114,6 +130,15 @@ void dlopen_weaklink_002()
 
     dlclose(handle);
 }
+
+/**
+ * @tc.name     : dlopen_weaklink_003
+ * @tc.desc     : Test dlopen libdlopen_weaklink_c.so and foo.so is loaded
+ *                when weaklink foo.so exists.
+ *                C link A weaklink foo
+ *                C link B link foo
+ * @tc.level    : Level 0
+ */
 
 void dlopen_weaklink_003()
 {
@@ -146,6 +171,14 @@ void dlopen_weaklink_003()
     dlclose(handle2);
 }
 
+/**
+ * @tc.name     : dlopen_weaklink_004
+ * @tc.desc     : Test dlopen libdlopen_weaklink_c.so when foo.so not exists.
+ *                C link A weaklink foo
+ *                C link B link foo
+ * @tc.level    : Level 0
+ */
+
 void dlopen_weaklink_004()
 {
     void* handle = dlopen(SO_FOR_WEAKLINK_C, RTLD_NOW);
@@ -154,6 +187,13 @@ void dlopen_weaklink_004()
         dlclose(handle);
     }
 }
+
+/**
+ * @tc.name     : dlopen_weaklink_005
+ * @tc.desc     : Test dlopen libdlopen_weaklink_d.so when foo.so and libdlopen_weaklink_b exists.
+ *                D weaklink B link foo
+ * @tc.level    : Level 0
+ */
 
 void dlopen_weaklink_005()
 {
@@ -171,6 +211,13 @@ void dlopen_weaklink_005()
     dlclose(handle);
 }
 
+/**
+ * @tc.name     : dlopen_weaklink_006
+ * @tc.desc     : Test dlopen libdlopen_weaklink_d.so when foo.so not exists.
+ *                D weaklink B link foo
+ * @tc.level    : Level 0
+ */
+
 void dlopen_weaklink_006()
 {
     void* handle = dlopen(SO_FOR_WEAKLINK_D, RTLD_NOW);
@@ -179,6 +226,13 @@ void dlopen_weaklink_006()
         dlclose(handle);
     }
 }
+
+/**
+ * @tc.name     : dlopen_weaklink_006
+ * @tc.desc     : Test dlopen libdlopen_weaklink_d.so when libdlopen_weaklink_b.so not exists.
+ *                D weaklink B link foo
+ * @tc.level    : Level 0
+ */
 
 void dlopen_weaklink_007()
 {
