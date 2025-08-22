@@ -87,6 +87,7 @@ functional_list = [
   "fopencookie_test",
   "iconv_test",
   "iconv_joint_icu_test",
+  "dlopen_weaklink",
 ]
 
 if (musl_use_pthread_cancel) {
