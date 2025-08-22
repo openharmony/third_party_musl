@@ -746,6 +746,7 @@ typedef struct {
 #define DT_NULL		0
 #define DT_NEEDED	1
 #define DT_PLTRELSZ	2
+#define DT_WEAK_LIBRARY 0x60000000
 #define DT_PLTGOT	3
 #define DT_HASH		4
 #define DT_STRTAB	5
