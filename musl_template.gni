@@ -890,38 +890,6 @@ template("musl_libs") {
     deps = porting_deps
   }
 
-  source_set("soft_musl_jemalloc") {
-    sources = [ "${musl_malloc_plugin}/src/static.c" ]
-
-    defines = []
-
-    deps = [
-      "//third_party/musl:create_alltypes_h",
-      "//third_party/musl:create_porting_src",
-      "//third_party/musl:create_syscall_h",
-      "//third_party/musl:create_version_h",
-      "//third_party/musl:musl_copy_inc_bits",
-      "//third_party/musl:musl_copy_inc_root",
-      "//third_party/musl:musl_copy_inc_sys",
-    ]
-
-    if (use_musl && !is_llvm_build) {
-      defines += [ "OHOS_ENABLE_PARAMETER" ]
-      external_deps = [ "init:parameterbase" ]
-    }
-
-    if (musl_guard_jemalloc_tsd || is_asan || use_hwasan) {
-      defines += [ "GUARD_JEMALLOC_TSD" ]
-    }
-
-    configs -= musl_inherited_configs
-
-    configs += [
-      ":soft_jemalloc",
-      ":stack_config_musl",
-    ]
-  }
-
   source_set("soft_musl_src_ld128") {
     sources = []
     if (musl_arch == "x86_64") {
