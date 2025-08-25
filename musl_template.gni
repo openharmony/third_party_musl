@@ -989,7 +989,7 @@ template("musl_libs") {
       external_deps += [ "optimized_routines:optimize_math" ]
     }
     if (musl_use_jemalloc) {
-      deps += [ ":soft_musl_jemalloc" ]
+      external_deps += [ "jemalloc:jemalloc" ]
     }
 
     if (musl_ld128_flag) {
@@ -1133,7 +1133,7 @@ template("musl_libs") {
     }
 
     if (musl_use_jemalloc) {
-      deps += [ ":soft_musl_jemalloc" ]
+      external_deps += [ "jemalloc:jemalloc" ]
     }
 
     if (musl_ld128_flag) {
