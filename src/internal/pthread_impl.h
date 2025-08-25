@@ -91,7 +91,7 @@ struct pthread {
 	 * the end of the structure is external and internal ABI. */
 #ifdef TLS_ABOVE_TP
 	/* These two tls_slots pointers are used for graphics code to access TLS directly
-	 * rather than using the pthread API. */
+	 * rather than using the pthread API . */
 	void *tls_slots_opengl;
 	void *tls_slots_opengl_api;
 	/* The hwasan_tls will be used for hwasan compiler time
