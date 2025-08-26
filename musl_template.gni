@@ -130,7 +130,6 @@ template("static_and_shared_libs_template") {
       if (musl_use_jemalloc_recycle_func) {
         defines += [ "USE_JEMALLOC_RECYCLE_FUNC" ]
       }
-      external_deps += [ "jemalloc:jemalloc" ]
     }
 
     configs -= musl_inherited_configs
@@ -404,7 +403,6 @@ template("static_and_shared_libs_template") {
       if (musl_use_jemalloc_recycle_func) {
         defines += [ "USE_JEMALLOC_RECYCLE_FUNC" ]
       }
-      external_deps += [ "jemalloc:jemalloc" ]
     }
 
     if (musl_use_mutex_wait_opt) {
