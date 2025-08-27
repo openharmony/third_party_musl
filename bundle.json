@@ -47,7 +47,8 @@
                 "bounds_checking_function",
                 "FreeBSD",
                 "cJSON",
-                "optimized_routines"
+                "optimized_routines",
+                "jemalloc"
             ],
             "third_party": []
         },
