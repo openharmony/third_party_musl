@@ -10,6 +10,12 @@
 #include <string.h>
 #include <stddef.h>
 #include <stdarg.h>
+#include "assert.h"
+
+#define TLS_OFFSET_HWASAN (-18 * sizeof(void *))
+#define TLS_OFFSET_OPENGL_API (-19 * sizeof(void *))
+#define TLS_OFFSET_OPENGL (-20 * sizeof(void *))
+#define PTHREAD_OFFSET(a) (offsetof(struct pthread, a) - sizeof(struct pthread))
 
 pid_t getpid(void);
 
@@ -520,6 +526,11 @@ __attribute__((no_sanitize("hwaddress")))
 #endif
 int __pthread_create(pthread_t *restrict res, const pthread_attr_t *restrict attrp, void *(*entry)(void *), void *restrict arg)
 {
+#ifdef TLS_ABOVE_TP
+	_Static_assert(PTHREAD_OFFSET(hwasan_tls) == TLS_OFFSET_HWASAN);
+	_Static_assert(PTHREAD_OFFSET(tls_slots_opengl_api) == TLS_OFFSET_OPENGL_API);
+	_Static_assert(PTHREAD_OFFSET(tls_slots_opengl) == TLS_OFFSET_OPENGL);
+#endif
 	int ret, c11 = (attrp == __ATTRP_C11_THREAD);
 	size_t size, guard;
 	struct pthread *self, *new;
