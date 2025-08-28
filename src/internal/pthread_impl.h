@@ -90,12 +90,14 @@ struct pthread {
 	/* Part 3 -- the positions of these fields relative to
 	 * the end of the structure is external and internal ABI. */
 #ifdef TLS_ABOVE_TP
+	/* These two tls_slots pointers are used for graphics code to access TLS directly
+	 * rather than using the pthread API . */
+	void *tls_slots_opengl;
+	void *tls_slots_opengl_api;
 	/* The hwasan_tls will be used for hwasan compiler time
 	 * instrument, compiler will get value ofhwasan_tls from tp
 	 * minus 144, so don't change the position of this. */
-	#ifdef ENABLE_HWASAN
 	uintptr_t hwasan_tls;
-	#endif
 	/* The tls_slots will be accessed by kernel, so don't use it.
 	 * To solve the problem that the kernel isn't synchronized with the musl,
 	 * so make pre/post reserved slots for musl.
