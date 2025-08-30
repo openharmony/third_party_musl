@@ -1,0 +1,414 @@
+# Copyright (C) 2025 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#	http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+import("//build/test.gni")
+import("../../../../test_template.gni")
+import("../adlt_common.gni")
+import("test_src_adlt_ld_musl.gni")
+
+group("adlt_ld_musl_test") {
+    testonly = true
+    deps = []
+
+    foreach(s, adlt_ld_musl_test) {
+        deps += [ ":${s}" ]
+    }
+}
+
+config("post_lib_configs") {
+    ldflags = [ "-Wl,--unresolved-symbols=ignore-all" ]
+}
+
+adlt_executable("unittest_adlt_ld_musl_atexit_c") {
+    lib_name = "ld_musl_atexit_c"
+    lib_include_dirs = [ "atexit-c" ]
+    lib_configs = [
+        {
+            name = "ld_musl_atexit_c_a"
+            sources = [ "atexit-c/liba.c" ]
+        },
+        {
+            name = "ld_musl_atexit_c_b"
+            sources = [ "atexit-c/libb.c" ]
+        },
+    ]
+
+    include_dirs = [ "atexit-c" ]
+    sources = [ "atexit-c/main.cpp" ]
+}
+
+adlt_shared_library("ld_musl_dlopen") {
+    include_dirs = [ "dlopen" ]
+    lib_configs = [
+        {
+            name = "ld_musl_dlopen_foo"
+            sources = [ "dlopen/foo.c" ]
+            external_deps = [ "bounds_checking_function:libsec_shared" ]
+        }
+    ]
+}
+
+ohos_executable("unittest_adlt_ld_musl_dlopen_direct") {
+    testonly = true
+    subsystem_name = "musl"
+    part_name = "libc-test"
+    configs = [ "//third_party/musl/libc-test/src/common:config_runtest" ]
+
+    include_dirs = [
+        "//third_party/musl/libc-test/src/functionalext/adlt/common",
+        "//third_party/musl/libc-test/src/functionalext/common",
+        "//third_party/musl/porting/linux/user/include",
+        "//third_party/musl/libc-test/src/common",
+        "dlopen"
+    ]
+
+    sources = [ "dlopen/test_direct.cpp", "dlopen/sampledata.c", "dlopen/errexit.c" ]
+    ldflags = [ "-Wl,-rpath=./:/data/local/tmp/libc-test-lib/" ]
+    deps = [ "../:adlt_common", ":ld_musl_dlopen", ":ld_musl_dlopen_foo" ]
+}
+
+ohos_executable("unittest_adlt_ld_musl_dlopen_dlopen") {
+    testonly = true
+    subsystem_name = "musl"
+    part_name = "libc-test"
+    configs = [ "//third_party/musl/libc-test/src/common:config_runtest" ]
+
+    include_dirs = [
+        "//third_party/musl/libc-test/src/functionalext/adlt/common",
+        "//third_party/musl/libc-test/src/functionalext/common",
+        "//third_party/musl/porting/linux/user/include",
+        "//third_party/musl/libc-test/src/common",
+        "dlopen"
+    ]
+
+    sources = [ "dlopen/test_dlopen.cpp", "dlopen/sampledata.c", "dlopen/errexit.c" ]
+    ldflags = [ "-Wl,-rpath=./:/data/local/tmp/libc-test-lib/" ]
+
+    deps = [ "../:adlt_common", ":ld_musl_dlopen" ]
+    data_deps = [ ":ld_musl_dlopen_foo" ]
+}
+
+ohos_executable("unittest_adlt_ld_musl_dlopen_doublemap") {
+    testonly = true
+    subsystem_name = "musl"
+    part_name = "libc-test"
+    configs = [ "//third_party/musl/libc-test/src/common:config_runtest" ]
+
+    include_dirs = [
+        "//third_party/musl/libc-test/src/functionalext/adlt/common",
+        "//third_party/musl/libc-test/src/functionalext/common",
+        "//third_party/musl/porting/linux/user/include",
+        "//third_party/musl/libc-test/src/common",
+        "dlopen"
+    ]
+
+    sources = [ "dlopen/test_doublemap.cpp", "dlopen/sampledata.c", "dlopen/errexit.c" ]
+    ldflags = [ "-Wl,-rpath=./:/data/local/tmp/libc-test-lib/" ]
+    deps = [ "../:adlt_common", ":ld_musl_dlopen", ":ld_musl_dlopen_foo" ]
+}
+
+action("unittest_adlt_ld_musl_dlopen") {
+    testonly = true
+    deps = [
+        ":unittest_adlt_ld_musl_dlopen_direct",
+        ":unittest_adlt_ld_musl_dlopen_dlopen",
+        ":unittest_adlt_ld_musl_dlopen_doublemap",
+    ]
+
+    script = "../adlt_tools.py"
+    args = [ "build_sym_links",
+        "--lib-dir", rebase_path(adlt_lib_dir, ""),
+        "--target-lib-dir", adlt_target_lib_dir,
+        "--adlt-lib", "libadlt_ld_musl_dlopen.so",
+        "--orig-lib-list", "libadlt_ld_musl_dlopen_foo.so",
+    ]
+
+    outputs = [
+        "$adlt_lib_dir/adlt_orig_libs/libadlt_ld_musl_dlopen_foo.so",
+    ]
+}
+
+adlt_executable("unittest_adlt_ld_musl_libc_secure") {
+    lib_name = "ld_musl_libc_secure"
+    lib_include_dirs = [ "libc_secure" ]
+    lib_configs = [
+        {
+            name = "ld_musl_libc_secure_test"
+            sources = [ "libc_secure/test.c" ]
+        }
+    ]
+
+    include_dirs = [ "libc_secure" ]
+    sources = [ "libc_secure/main.cpp" ]
+}
+
+adlt_executable("unittest_adlt_ld_musl_other_fs") {
+    lib_name = "ld_musl_other_fs"
+    lib_include_dirs = [ "other_fs" ]
+    lib_configs = [
+        {
+            name = "ld_musl_other_fs_test"
+            sources = [ "other_fs/test.c" ]
+        }
+    ]
+
+    include_dirs = [ "other_fs" ]
+    sources = [ "other_fs/main.cpp" ]
+}
+
+adlt_shared_library("ld_musl_so_mem_share") {
+    include_dirs = [ "so_mem_share" ]
+    lib_configs = [
+        {
+            name = "ld_musl_so_mem_share_a"
+            sources = [ "so_mem_share/a.c" ]
+        },
+        {
+            name = "ld_musl_so_mem_share_b"
+            sources = [ "so_mem_share/b.c" ]
+        },
+        {
+            name = "ld_musl_so_mem_share_common"
+            sources = [ "so_mem_share/common.c" ]
+        }
+    ]
+
+    configs = [ ":post_lib_configs" ]
+}
+
+ohos_executable("unittest_adlt_ld_musl_so_mem_share_hello") {
+    testonly = true
+    subsystem_name = "musl"
+    part_name = "libc-test"
+    configs = [ "//third_party/musl/libc-test/src/common:config_runtest" ]
+
+    include_dirs = [
+        "//third_party/musl/libc-test/src/functionalext/adlt/common",
+        "//third_party/musl/libc-test/src/functionalext/common",
+        "//third_party/musl/porting/linux/user/include",
+        "//third_party/musl/libc-test/src/common",
+        "so_mem_share"
+    ]
+
+    sources = [ "so_mem_share/hello.cpp" ]
+    ldflags = [ "-Wl,-rpath=./:/data/local/tmp/libc-test-lib/" ]
+    deps = [ "../:adlt_common", ":ld_musl_so_mem_share" ]
+    data_deps = [ ":ld_musl_so_mem_share_a", ":ld_musl_so_mem_share_b", ":ld_musl_so_mem_share_common" ]
+}
+
+ohos_executable("unittest_adlt_ld_musl_so_mem_share_chain_a") {
+    testonly = true
+    subsystem_name = "musl"
+    part_name = "libc-test"
+    configs = [ "//third_party/musl/libc-test/src/common:config_runtest" ]
+
+    include_dirs = [
+        "//third_party/musl/libc-test/src/functionalext/adlt/common",
+        "//third_party/musl/libc-test/src/functionalext/common",
+        "//third_party/musl/porting/linux/user/include",
+        "//third_party/musl/libc-test/src/common",
+        "so_mem_share",
+    ]
+
+    sources = [ "so_mem_share/chain_a.cpp" ]
+    ldflags = [ "-Wl,-rpath=./:/data/local/tmp/libc-test-lib/" ]
+    deps = [ "../:adlt_common", ":ld_musl_so_mem_share",
+    ":ld_musl_so_mem_share_a", ":ld_musl_so_mem_share_b", ":ld_musl_so_mem_share_common" ]
+}
+
+ohos_executable("unittest_adlt_ld_musl_so_mem_share_chain_b") {
+    testonly = true
+    subsystem_name = "musl"
+    part_name = "libc-test"
+    configs = [ "//third_party/musl/libc-test/src/common:config_runtest" ]
+
+    include_dirs = [
+        "//third_party/musl/libc-test/src/functionalext/adlt/common",
+        "//third_party/musl/libc-test/src/functionalext/common",
+        "//third_party/musl/porting/linux/user/include",
+        "//third_party/musl/libc-test/src/common",
+        "so_mem_share",
+    ]
+
+    sources = [ "so_mem_share/chain_b.cpp" ]
+    ldflags = [ "-Wl,-rpath=./:/data/local/tmp/libc-test-lib/" ]
+    deps = [ "../:adlt_common", ":ld_musl_so_mem_share",
+    ":ld_musl_so_mem_share_b", ":ld_musl_so_mem_share_b", ":ld_musl_so_mem_share_common" ]
+}
+
+action("unittest_adlt_ld_musl_so_mem_share") {
+    testonly = true
+    deps = [
+        ":unittest_adlt_ld_musl_so_mem_share_hello",
+        ":unittest_adlt_ld_musl_so_mem_share_chain_a",
+        ":unittest_adlt_ld_musl_so_mem_share_chain_b",
+    ]
+
+    script = "../adlt_tools.py"
+    args = [ "build_sym_links",
+        "--lib-dir", rebase_path(adlt_lib_dir, ""),
+        "--target-lib-dir", adlt_target_lib_dir,
+        "--adlt-lib", "libadlt_ld_musl_so_mem_share.so",
+        "--orig-lib-list",
+            "libadlt_ld_musl_so_mem_share_a.so",
+            "libadlt_ld_musl_so_mem_share_b.so",
+            "libadlt_ld_musl_so_mem_share_common.so",
+    ]
+
+    outputs = [
+        "$adlt_lib_dir/adlt_orig_libs/libadlt_ld_musl_so_mem_share_a.so",
+        "$adlt_lib_dir/adlt_orig_libs/libadlt_ld_musl_so_mem_share_b.so",
+        "$adlt_lib_dir/adlt_orig_libs/libadlt_ld_musl_so_mem_share_common.so",
+    ]
+}
+
+adlt_shared_library("ld_musl_unused_lib") {
+    include_dirs = [ "unused_lib" ]
+    lib_configs = [
+        {
+            name = "ld_musl_unused_lib_i"
+            sources = [ "unused_lib/i.c" ]
+        },
+        {
+            name = "ld_musl_unused_lib_j"
+            sources = [ "unused_lib/j.c" ]
+        },
+        {
+            name = "ld_musl_unused_lib_k"
+            sources = [ "unused_lib/k.c" ]
+        },
+    ]
+}
+
+ohos_executable("unittest_adlt_ld_musl_unused_lib_i") {
+    testonly = true
+    subsystem_name = "musl"
+    part_name = "libc-test"
+    configs = [ "//third_party/musl/libc-test/src/common:config_runtest" ]
+
+    include_dirs = [
+        "//third_party/musl/libc-test/src/functionalext/adlt/common",
+        "//third_party/musl/libc-test/src/functionalext/common",
+        "//third_party/musl/porting/linux/user/include",
+        "//third_party/musl/libc-test/src/common",
+        "unused_lib",
+    ]
+
+    sources = [ "unused_lib/main.cpp" ]
+    ldflags = [ "-Wl,-rpath=./:/data/local/tmp/libc-test-lib/" ]
+    deps = [ "../:adlt_common", ":ld_musl_unused_lib", ":ld_musl_unused_lib_i" ]
+}
+
+ohos_executable("unittest_adlt_ld_musl_unused_lib_j") {
+    testonly = true
+    subsystem_name = "musl"
+    part_name = "libc-test"
+    configs = [ "//third_party/musl/libc-test/src/common:config_runtest" ]
+
+    include_dirs = [
+        "//third_party/musl/libc-test/src/functionalext/adlt/common",
+        "//third_party/musl/libc-test/src/functionalext/common",
+        "//third_party/musl/porting/linux/user/include",
+        "//third_party/musl/libc-test/src/common",
+        "unused_lib",
+    ]
+
+    sources = [ "unused_lib/main.cpp" ]
+    ldflags = [ "-Wl,-rpath=./:/data/local/tmp/libc-test-lib/" ]
+    deps = [ "../:adlt_common", ":ld_musl_unused_lib", ":ld_musl_unused_lib_j" ]
+}
+
+ohos_executable("unittest_adlt_ld_musl_unused_lib_i_j_k") {
+    testonly = true
+    subsystem_name = "musl"
+    part_name = "libc-test"
+    configs = [ "//third_party/musl/libc-test/src/common:config_runtest" ]
+
+    include_dirs = [
+        "//third_party/musl/libc-test/src/functionalext/adlt/common",
+        "//third_party/musl/libc-test/src/functionalext/common",
+        "//third_party/musl/porting/linux/user/include",
+        "//third_party/musl/libc-test/src/common",
+        "unused_lib",
+    ]
+
+    sources = [ "unused_lib/main.cpp" ]
+    ldflags = [ "-Wl,-rpath=./:/data/local/tmp/libc-test-lib/" ]
+    deps = [ "../:adlt_common", ":ld_musl_unused_lib", ":ld_musl_unused_lib_i",
+    ":ld_musl_unused_lib_j", ":ld_musl_unused_lib_k" ]
+}
+
+ohos_executable("unittest_adlt_ld_musl_unused_lib_i_j") {
+    testonly = true
+    subsystem_name = "musl"
+    part_name = "libc-test"
+    configs = [ "//third_party/musl/libc-test/src/common:config_runtest" ]
+
+    include_dirs = [
+        "//third_party/musl/libc-test/src/functionalext/adlt/common",
+        "//third_party/musl/libc-test/src/functionalext/common",
+        "//third_party/musl/porting/linux/user/include",
+        "//third_party/musl/libc-test/src/common",
+        "unused_lib",
+    ]
+
+    sources = [ "unused_lib/main.cpp" ]
+    ldflags = [ "-Wl,-rpath=./:/data/local/tmp/libc-test-lib/" ]
+    deps = [ "../:adlt_common", ":ld_musl_unused_lib", ":ld_musl_unused_lib_i", ":ld_musl_unused_lib_j" ]
+}
+
+ohos_executable("unittest_adlt_ld_musl_unused_lib_i_k") {
+    testonly = true
+    subsystem_name = "musl"
+    part_name = "libc-test"
+    configs = [ "//third_party/musl/libc-test/src/common:config_runtest" ]
+
+    include_dirs = [
+        "//third_party/musl/libc-test/src/functionalext/adlt/common",
+        "//third_party/musl/libc-test/src/functionalext/common",
+        "//third_party/musl/porting/linux/user/include",
+        "//third_party/musl/libc-test/src/common",
+        "unused_lib",
+    ]
+
+    sources = [ "unused_lib/main.cpp" ]
+    ldflags = [ "-Wl,-rpath=./:/data/local/tmp/libc-test-lib/" ]
+    deps = [ "../:adlt_common", ":ld_musl_unused_lib", ":ld_musl_unused_lib_i", ":ld_musl_unused_lib_k" ]
+}
+
+action("unittest_adlt_ld_musl_unused_lib") {
+    testonly = true
+    deps = [
+        ":unittest_adlt_ld_musl_unused_lib_i",
+        ":unittest_adlt_ld_musl_unused_lib_j",
+        ":unittest_adlt_ld_musl_unused_lib_i_j_k",
+        ":unittest_adlt_ld_musl_unused_lib_i_j",
+        ":unittest_adlt_ld_musl_unused_lib_i_k",
+    ]
+
+    script = "../adlt_tools.py"
+    args = [ "build_sym_links",
+        "--lib-dir", rebase_path(adlt_lib_dir, ""),
+        "--target-lib-dir", adlt_target_lib_dir,
+        "--adlt-lib", "libadlt_ld_musl_unused_lib.so",
+        "--orig-lib-list",
+            "libadlt_ld_musl_unused_lib_i.so",
+            "libadlt_ld_musl_unused_lib_j.so",
+            "libadlt_ld_musl_unused_lib_k.so",
+    ]
+
+    outputs = [
+        "$adlt_lib_dir/adlt_orig_libs/libadlt_ld_musl_unused_lib_i.so",
+        "$adlt_lib_dir/adlt_orig_libs/libadlt_ld_musl_unused_lib_j.so",
+        "$adlt_lib_dir/adlt_orig_libs/libadlt_ld_musl_unused_lib_k.so",
+    ]
+}
