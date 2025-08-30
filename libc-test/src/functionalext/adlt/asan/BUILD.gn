@@ -1,0 +1,70 @@
+# Copyright (C) 2025 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#	http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+import("//build/test.gni")
+import("../../../../test_template.gni")
+import("../adlt_common.gni")
+import("test_src_adlt_asan.gni")
+
+group("adlt_asan_test") {
+    testonly = true
+    deps = []
+
+    foreach(s, adlt_asan_test) {
+        deps += [ ":${s}" ]
+    }
+}
+
+config("post_lib_configs") {
+    cflags_cc = [ "-fsanitize=address", "-fsanitize-recover=address", "-O0", "-Wno-unused-variable" ]
+    ldflags = [ "-Wl,--unresolved-symbols=ignore-all" ]
+}
+
+adlt_executable("unittest_adlt_asan_double_free") {
+    lib_name = "asan_double_free"
+    lib_include_dirs = [ "double-free" ]
+    lib_configs = [
+        {
+            name = "asan_double_free_a"
+            sources = [ "double-free/a.cpp" ]
+        },
+        {
+            name = "asan_double_free_b"
+            sources = [ "double-free/b.cpp" ]
+        }
+    ]
+
+    lib_common_configs = [
+        ":post_lib_configs"
+    ]
+
+    sources = [ "double-free/main.cpp" ]
+    ldflags = [ "-Wl,$adlt_abs_runtime_clang_path/libclang_rt.asan.a" ]
+}
+
+adlt_executable("unittest_adlt_asan_heap_use_after_free") {
+    lib_name = "asan_heap_use_after_free"
+    lib_include_dirs = [ "heap-use-after-free" ]
+    lib_configs = [
+        {
+            name = "asan_heap_use_after_free_a"
+            sources = [ "heap-use-after-free/a.cpp" ]
+        },
+    ]
+
+    lib_common_configs = [
+        ":post_lib_configs"
+    ]
+
+    sources = [ "heap-use-after-free/main.cpp" ]
+    ldflags = [ "-Wl,$adlt_abs_runtime_clang_path/libclang_rt.asan.a" ]
+}

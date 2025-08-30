@@ -10,14 +10,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-functionalext_adlt_test = [
-    "asan:adlt_asan_test",
-    "base:adlt_base_test",
-    "bugfix:adlt_bugfix_test",
-    "hwasan:adlt_hwasan_test",
-    "cfi:adlt_cfi_test",
-    "ld-musl:adlt_ld_musl_test",
-    "tls:adlt_tls_test",
-    "tsan:adlt_tsan_test",
-    "ubsan:adlt_ubsan_test",
+adlt_asan_test = [
+    "unittest_adlt_asan_double_free",
+    "unittest_adlt_asan_heap_use_after_free",
 ]
