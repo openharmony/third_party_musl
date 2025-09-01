@@ -57,10 +57,94 @@ void memmem_0200(void)
     EXPECT_PTREQ("memmem_0200", ptr, NULL);
 }
 
+/**
+ * @tc.name      : memmem_0300
+ * @tc.desc      : Verify memmem returns NULL when substring not found
+ * @tc.level     : Level 1
+ */
+void memmem_0300(void)
+{
+    const char buffer[] = "test musl";
+    const char needle[] = "notfound";
+    char *ptr = memmem(buffer, sizeof(buffer), needle, sizeof(needle)-1);
+    EXPECT_PTREQ("memmem_0300", ptr, NULL);
+}
+
+/**
+ * @tc.name      : memmem_0400
+ * @tc.desc      : Verify memmem handles empty needle correctly
+ * @tc.level     : Level 1
+ */
+void memmem_0400(void)
+{
+    const char buffer[] = "test musl";
+    const char needle[] = "";
+    char *ptr = memmem(buffer, sizeof(buffer), needle, 0);
+    EXPECT_PTREQ("memmem_0400", ptr, buffer);
+}
+
+/**
+ * @tc.name      : memmem_0500
+ * @tc.desc      : Verify memmem handles binary data correctly
+ * @tc.level     : Level 2
+ */
+void memmem_0500(void)
+{
+    const unsigned char buffer[] = {0x01, 0x02, 0x03, 0x04, 0x05};
+    const unsigned char needle[] = {0x03, 0x04};
+    char *ptr = memmem(buffer, sizeof(buffer), needle, sizeof(needle));
+    EXPECT_PTREQ("memmem_0500", ptr, (char *)buffer + 2);
+}
+
+/**
+ * @tc.name      : memmem_0600
+ * @tc.desc      : Verify memmem returns NULL when needle larger than haystack
+ * @tc.level     : Level 2
+ */
+void memmem_0600(void)
+{
+    const char buffer[] = "test";
+    const char needle[] = "test string";
+    char *ptr = memmem(buffer, sizeof(buffer)-1, needle, sizeof(needle)-1);
+    EXPECT_PTREQ("memmem_0600", ptr, NULL);
+}
+
+/**
+ * @tc.name      : memmem_0700
+ * @tc.desc      : Verify memmem finds partial matches correctly
+ * @tc.level     : Level 2
+ */
+void memmem_0700(void)
+{
+    const char buffer[] = "test musl";
+    const char needle[] = "musx";
+    char *ptr = memmem(buffer, sizeof(buffer), needle, 3); // Only compare first 3 chars
+    EXPECT_PTREQ("memmem_0700", ptr, buffer + 5);
+}
+
+/**
+ * @tc.name      : memmem_0800
+ * @tc.desc      : Verify memmem handles zero-length haystack correctly
+ * @tc.level     : Level 2
+ */
+void memmem_0800(void)
+{
+    const char buffer[] = "";
+    const char needle[] = "test";
+    char *ptr = memmem(buffer, 0, needle, sizeof(needle)-1);
+    EXPECT_PTREQ("memmem_0800", ptr, NULL);
+}
+
 int main(void)
 {
     memmem_0100();
     memmem_0200();
+    memmem_0300();
+    memmem_0400();
+    memmem_0500();
+    memmem_0600();
+    memmem_0700();
+    memmem_0800();
 
     return t_status;
 }
