@@ -46,9 +46,43 @@ void bzero_0200(void)
     }
 }
 
+/**
+ * @tc.name      : bzero_0300
+ * @tc.desc      : Verify that bzero clears partial content of a string
+ * @tc.level     : Level 1
+ */
+void bzero_0300(void)
+{
+    char str[20] = "hello world";
+    bzero(str + 6, 5);  // Clear "world"
+    if (str[0] != 'h' || str[6] != 0) {
+        t_error("%s bzero failed", __func__);
+    }
+}
+
+/**
+ * @tc.name      : bzero_0600
+ * @tc.desc      : Verify that bzero works correctly on the maximum buffer size
+ * @tc.level     : Level 2
+ */
+void bzero_0400(void)
+{
+    #define MAX_SIZE 1024
+    char buffer[MAX_SIZE];
+    memset(buffer, 0xFF, MAX_SIZE);
+    bzero(buffer, MAX_SIZE);
+    for (int i = 0; i < MAX_SIZE; i++) {
+        if (buffer[i] != 0) {
+            t_error("%s bzero failed at position %d", __func__, i);
+        }
+    }
+}
+
 int main(int argc, char *argv[])
 {
     bzero_0100();
     bzero_0200();
+    bzero_0300();
+    bzero_0400();
     return t_status;
 }

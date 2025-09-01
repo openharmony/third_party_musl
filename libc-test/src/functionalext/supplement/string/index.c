@@ -62,10 +62,85 @@ void index_0300(void)
     }
 }
 
+/**
+ * @tc.name      : index_0400
+ * @tc.desc      : Verify index finds null terminator character
+ * @tc.level     : Level 1
+ */
+void index_0400(void)
+{
+    char *str = "hello";
+    char *result = index(str, '\0');
+    if (result != str + 5) {
+        t_error("%s index get result is %s are not want %s\n", __func__, result, str + 5);
+    }
+}
+
+/**
+ * @tc.name      : index_0500
+ * @tc.desc      : Verify index works with empty string
+ * @tc.level     : Level 2
+ */
+void index_0500(void)
+{
+    char *str = "";
+    char *result = index(str, 'h');
+    if (result != NULL) {
+        t_error("%s index get result is %s are not want NULL\n", __func__, result);
+    }
+}
+
+/**
+ * @tc.name      : index_0600
+ * @tc.desc      : Verify index finds first character in string
+ * @tc.level     : Level 1
+ */
+void index_0600(void)
+{
+    char *str = "hello world";
+    char *result = index(str, 'h');
+    if (result != str) {
+        t_error("%s index get result is %s are not want %s\n", __func__, result, str);
+    }
+}
+
+/**
+ * @tc.name      : index_0700
+ * @tc.desc      : Verify index finds last character in string
+ * @tc.level     : Level 1
+ */
+void index_0700(void)
+{
+    char *str = "hello world";
+    char *result = index(str, 'd');
+    if (result != str + 10) {
+        t_error("%s index get result is %s are not want %s\n", __func__, result, str + 10);
+    }
+}
+
+/**
+ * @tc.name      : index_0800
+ * @tc.desc      : Verify index works with binary data containing null bytes
+ * @tc.level     : Level 2
+ */
+void index_0800(void)
+{
+    char data[] = {'a', 'b', '\0', 'c', 'd'};
+    char *result = index(data, 'c');
+    if (result != NULL) { // Expected to return NULL
+        t_error("%s index should stop at '\\0', but got %p\n", __func__, result);
+    }
+}
+
 int main(int argc, char *argv[])
 {
     index_0100();
     index_0200();
     index_0300();
+    index_0400();
+    index_0500();
+    index_0600();
+    index_0700();
+    index_0800();
     return t_status;
 }

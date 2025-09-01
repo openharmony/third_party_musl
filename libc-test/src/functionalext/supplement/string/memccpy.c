@@ -76,10 +76,117 @@ void memccpy_0300(void)
     EXPECT_EQ("memccpy_0300", strlen(dest), 0);
 }
 
+/**
+ * @tc.name      : memccpy_0400
+ * @tc.desc      : Verify memccpy stops at first occurrence of specified character
+ * @tc.level     : Level 1
+ */
+void memccpy_0400(void)
+{
+    const char src[] = "multiple|delimited|values";
+    char dest[32] = {0};
+    void *result = memccpy(dest, src, '|', sizeof(src));
+
+    EXPECT_PTRNE("memccpy_0400", result, NULL);
+    if (result != NULL) {
+        EXPECT_STREQ("memccpy_0400", dest, "multiple|");
+        EXPECT_EQ("memccpy_0400", (char *)result - dest, strlen("multiple") + 1);
+    }
+}
+
+/**
+ * @tc.name      : memccpy_0500
+ * @tc.desc      : Verify memccpy handles binary data with null bytes
+ * @tc.level     : Level 2
+ */
+void memccpy_0500(void)
+{
+    const char src[] = {'a', 'b', '\0', 'c', 'd'};
+    char dest[5] = {0};
+    void *result = memccpy(dest, src, 'd', sizeof(src));
+
+    EXPECT_PTRNE("memccpy_0500", result, NULL);
+    if (result != NULL) {
+        EXPECT_EQ("memccpy_0500", memcmp(dest, src, 5), 0);
+        EXPECT_EQ("memccpy_0500", (char *)result - dest, 5);
+    }
+}
+
+/**
+ * @tc.name      : memccpy_0600
+ * @tc.desc      : Verify memccpy copies full length when stop char not found
+ * @tc.level     : Level 1
+ */
+void memccpy_0600(void)
+{
+    const char src[] = "no_stop_char_here";
+    char dest[32] = {0};
+    void *result = memccpy(dest, src, 'X', strlen(src));
+
+    EXPECT_PTREQ("memccpy_0600", result, NULL);
+    EXPECT_STREQ("memccpy_0600", dest, src);
+}
+
+/**
+ * @tc.name      : memccpy_0700
+ * @tc.desc      : Verify memccpy with stop character at last position
+ * @tc.level     : Level 1
+ */
+void memccpy_0700(void)
+{
+    const char src[] = "stop_at_end$";
+    char dest[32] = {0};
+    void *result = memccpy(dest, src, '$', strlen(src));
+
+    EXPECT_PTRNE("memccpy_0700", result, NULL);
+    if (result != NULL) {
+        EXPECT_STREQ("memccpy_0700", dest, src);
+        EXPECT_EQ("memccpy_0700", (char *)result - dest, strlen(src));
+    }
+}
+
+/**
+ * @tc.name      : memccpy_0900
+ * @tc.desc      : Verify memccpy with maximum copy length before stop char
+ * @tc.level     : Level 2
+ */
+void memccpy_0800(void)
+{
+    const char src[] = "copy|this";
+    char dest[32] = {0};
+    void *result = memccpy(dest, src, '|', 4); // Should stop at length before seeing '|'
+
+    EXPECT_PTREQ("memccpy_0800", result, NULL);
+    EXPECT_EQ("memccpy_0800", memcmp(dest, "copy", 4), 0);
+}
+
+/**
+ * @tc.name      : memccpy_0900
+ * @tc.desc      : Verify memccpy with stop character being the first byte
+ * @tc.level     : Level 1
+ */
+void memccpy_0900(void)
+{
+    const char src[] = "*start*with*star";
+    char dest[32] = {0};
+    void *result = memccpy(dest, src, '*', strlen(src));
+
+    if (result != NULL) {
+        EXPECT_PTREQ("memccpy_0900", result, dest + 1);
+        EXPECT_EQ("memccpy_0900", dest[0], '*');
+    }
+}
+
 int main(void)
 {
     memccpy_0100();
     memccpy_0200();
     memccpy_0300();
+    memccpy_0400();
+    memccpy_0500();
+    memccpy_0600();
+    memccpy_0700();
+    memccpy_0800();
+    memccpy_0900();
     return t_status;
 }
