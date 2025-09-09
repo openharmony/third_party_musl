@@ -529,7 +529,7 @@ int __pthread_create(pthread_t *restrict res, const pthread_attr_t *restrict att
 #ifdef TLS_ABOVE_TP
 	_Static_assert(PTHREAD_OFFSET(hwasan_tls) == TLS_OFFSET_HWASAN, "check hwasan tls offset error.");
 	_Static_assert(PTHREAD_OFFSET(tls_slots_opengl_api) == TLS_OFFSET_OPENGL_API, "check opengl api tls offset error.");
-	_Static_assert(PTHREAD_OFFSET(tls_slots_opengl) == TLS_OFFSET_OPENGL, "check hwasan opengl tls offset error.");
+	_Static_assert(PTHREAD_OFFSET(tls_slots_opengl) == TLS_OFFSET_OPENGL, "check opengl tls offset error.");
 #endif
 	int ret, c11 = (attrp == __ATTRP_C11_THREAD);
 	size_t size, guard;
