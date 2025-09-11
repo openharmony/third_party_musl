@@ -30,6 +30,7 @@ typedef void (*MallocStatsPrintType)(void (*) (void *, const char *), void *, co
 typedef int (*MalloptType)(int, int);
 typedef ssize_t (*MallocBacktraceType)(void*, uintptr_t*, size_t);
 typedef void (*MemTrace)(void*, size_t, const char*, bool);
+typedef void (*ResTrace)(unsigned long long, void*, size_t, const char*, bool);
 
 typedef bool (*GetHookFlagType)();
 typedef bool (*SetHookFlagType)(bool);
@@ -58,6 +59,7 @@ struct MallocDispatchType {
 	GetHookFlagType get_hook_flag;
 	SetHookFlagType set_hook_flag;
 	MemTrace memtrace;
+	ResTrace restrace;
 	MallocPrctlType prctl;
 };
 #ifdef __cplusplus
@@ -65,3 +67,4 @@ struct MallocDispatchType {
 #endif
 
 #endif
+
