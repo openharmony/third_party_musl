@@ -54,6 +54,7 @@ void* ohos_malloc_hook_init_function(size_t bytes);
 void* ohos_aligned_alloc_hook_init_function(size_t alignment, size_t bytes);
 void* ohos_mmap_hook_init_function(void* addr, size_t length, int prot, int flags, int fd, off_t offset);
 void default_memtrace(void* addr, size_t size, const char* tag, bool is_using) {}
+void default_restrace(unsigned long long mask, void* addr, size_t size, const char* tag, bool is_using) {}
 
 #ifdef USE_GWP_ASAN
 extern void* libc_gwp_asan_malloc(size_t bytes);
@@ -73,6 +74,7 @@ static struct MallocDispatchType __ohos_malloc_hook_init_dispatch = {
 	.malloc_usable_size = libc_gwp_asan_malloc_usable_size,
 	.memtrace = default_memtrace,
 	.aligned_alloc = ohos_aligned_alloc_hook_init_function,
+	.restrace = default_restrace,
 };
 #else
 static struct MallocDispatchType __ohos_malloc_hook_init_dispatch = {
@@ -86,6 +88,7 @@ static struct MallocDispatchType __ohos_malloc_hook_init_dispatch = {
 	.malloc_usable_size = MuslMalloc(malloc_usable_size),
 	.memtrace = default_memtrace,
 	.aligned_alloc = ohos_aligned_alloc_hook_init_function,
+	.restrace = default_restrace,
 };
 #endif
 #define MAX_SYM_NAME_SIZE 1000
@@ -267,6 +270,19 @@ static bool init_memtrace_function(void* malloc_shared_library_handler, MemTrace
 	return true;
 }
 
+static bool init_restrace_function(void* malloc_shared_library_handler, ResTrace* func, const char* prefix)
+{
+	char symbol[MAX_SYM_NAME_SIZE];
+	if (snprintf(symbol, sizeof(symbol), "%s_%s", prefix, "restrace") < 0) {
+		return false;
+	}
+	*func = (ResTrace)(dlsym(malloc_shared_library_handler, symbol));
+	if (*func == NULL) {
+		return false;
+	}
+	return true;
+}
+
 static bool init_calloc_function(void* malloc_shared_library_handler, MallocCallocType* func, const char* prefix)
 {
 	char symbol[MAX_SYM_NAME_SIZE];
@@ -365,6 +381,9 @@ static bool init_hook_functions(void* shared_library_handler, struct MallocDispa
 		return false;
 	}
 	if (!init_memtrace_function(shared_library_handler, &table->memtrace, prefix)) {
+		return false;
+	}
+	if (!init_restrace_function(shared_library_handler, &table->restrace, prefix)) {
 		return false;
 	}
 	if (!init_malloc_usable_size_function(shared_library_handler, &table->malloc_usable_size, prefix)) {
