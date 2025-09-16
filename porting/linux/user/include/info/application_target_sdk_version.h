@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -19,6 +19,22 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#define __DISTRIBUTEOS_VERSION(maj, min, patch) maj##min##patch // min必须是两位数字dd(如00,01), patch也必须是两位（如00,01）
+#define __OH_VERSION(maj,min) maj##.##min
+#define __INNER_CONCAT(a,b) a##.##b
+#define __INNER_DEPRECATED(platform, version) __attribute__((__availability__(platform, deprecated=version)))
+#define __INNER_OBSOLETED(platform, version) __attribute__((__availability__(platform, obsoleted=version)))
+#define __INNER_AVAILABILITY(platform, version) __attribute__((__availability__(platform, introduced=version)))
+
+#define __OH_AVAILABILITY(version) __INNER_AVAILABILITY(ohos, version)
+#define __DISTRIBUTEOS_AVAILABILITY(dos_ver, oh_ver) __INNER_AVAILABILITY(ohos, __INNER_CONCAT(oh_ver,dos_ver))
+#define __OH_DEPRECATED(version) __INNER_DEPRECATED(ohos, version)
+#define __DISTRIBUTEOS_DEPRECATED(dos_ver, oh_ver) __INNER_DEPRECATED(ohos, __INNER_CONCAT(oh_ver,dos_ver))
+#define __OH_OBSOLETED(version) __INNER_OBSOLETED(ohos, version)
+#define __DISTRIBUTEOS_OBSOLETED(dos_ver, oh_ver) __INNER_OBSOLETED(ohos, __INNER_CONCAT(oh_ver,dos_ver))
+#define SINCE(api) __builtin_available(ohos api, *)
+#define DISTRIBUTEOS_SINCE(dos_ver, oh_ver) __builtin_available(ohos oh_ver##.##dos_ver, *)
 
 #define SDK_VERSION_FUTURE 9999
 #define SDK_VERSION_7 7
