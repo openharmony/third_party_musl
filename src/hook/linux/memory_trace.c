@@ -14,6 +14,7 @@
  */
 
 #include "memory_trace.h"
+#include "errno.h"
 #ifdef HOOK_ENABLE
 #include "common_def.h"
 #include "musl_preinit_common.h"
@@ -56,4 +57,5 @@ void restrace(unsigned long long mask, void* addr, size_t size, const char* tag,
 	}
     return;
 #endif
+    errno = ENOSYS;
 }
