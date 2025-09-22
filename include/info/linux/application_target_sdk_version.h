@@ -34,7 +34,8 @@ extern "C" {
 #define __OH_OBSOLETED(version) __INNER_OBSOLETED(ohos, version)
 #define __DISTRIBUTEOS_OBSOLETED(dos_ver, oh_ver) __INNER_OBSOLETED(ohos, __INNER_CONCAT(oh_ver,dos_ver))
 #define SINCE(api) __builtin_available(ohos api, *)
-#define DISTRIBUTEOS_SINCE(dos_ver, oh_ver) __builtin_available(ohos oh_ver##.##dos_ver, *)
+#define __INNER_SINCE(ver) __builtin_available(ohos ver, *)
+#define DISTRIBUTEOS_SINCE(dos_ver, oh_ver) __INNER_SINCE(__INNER_CONCAT(oh_ver, dos_ver))
 
 #define SDK_VERSION_FUTURE 9999
 #define SDK_VERSION_7 7
