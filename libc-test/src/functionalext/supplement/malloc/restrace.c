@@ -24,9 +24,9 @@
  */
 void restrace_0100(void)
 {
-    char* mem = new char[1];
+    char* mem = (char *)malloc(1 * sizeof(char));
     restrace(RES_GPU_VK, mem, 1, TAG_RES_GPU_VK, true);
-    delete[] mem;
+    free(mem);
 }
 
 int main(void)
