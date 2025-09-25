@@ -56,10 +56,63 @@ void wctrans_0300(void)
     }
 }
 
+/**
+ * @tc.name : wctrans_0400
+ * @tc.desc : Test that wctrans returns different values for tolower/toupper
+ * @tc.level : Level 1
+ */
+void wctrans_0400(void)
+{
+    if (wctrans("tolower") == wctrans("toupper")) {
+        t_error("%s wctrans error: tolower and toupper should return different values\n", __func__);
+    }
+}
+
+/**
+ * @tc.name : wctrans_0500
+ * @tc.desc : Test that wctrans is case-sensitive for conversion names
+ * @tc.level : Level 2
+ */
+void wctrans_0500(void)
+{
+    if (wctrans("TOLOWER")) {
+        t_error("%s wctrans error: should be case-sensitive\n", __func__);
+    }
+}
+
+/**
+ * @tc.name : wctrans_0600
+ * @tc.desc : Test that wctrans returns NULL for unknown conversion
+ * @tc.level : Level 1
+ */
+void wctrans_0600(void)
+{
+    if (wctrans("unknown")) {
+        t_error("%s wctrans error: should return NULL for unknown conversion\n", __func__);
+    }
+}
+
+/**
+ * @tc.name : wctrans_0700
+ * @tc.desc : Test that wctrans handles long invalid strings correctly
+ * @tc.level : Level 2
+ */
+void wctrans_0700(void)
+{
+    const char *long_str = "this_is_a_very_long_string_that_is_not_a_valid_conversion_type";
+    if (wctrans(long_str)) {
+        t_error("%s wctrans error: should return NULL for long invalid strings\n", __func__);
+    }
+}
+
 int main(int argc, char *argv[])
 {
     wctrans_0100();
     wctrans_0200();
     wctrans_0300();
+    wctrans_0400();
+    wctrans_0500();
+    wctrans_0600();
+    wctrans_0700();
     return t_status;
 }
