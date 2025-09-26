@@ -13,8 +13,8 @@
 #include "assert.h"
 
 #define TLS_OFFSET_HWASAN (-18 * sizeof(void *))
-#define TLS_OFFSET_OPENGL_API (-19 * sizeof(void *))
-#define TLS_OFFSET_OPENGL (-20 * sizeof(void *))
+#define TLS_OFFSET_OPENGL_API (PTHREAD_SLOT_OPENGL_API * sizeof(void *))
+#define TLS_OFFSET_OPENGL (PTHREAD_SLOT_OPENGL * sizeof(void *))
 #define PTHREAD_OFFSET(a) (offsetof(struct pthread, a) - sizeof(struct pthread))
 
 pid_t getpid(void);
