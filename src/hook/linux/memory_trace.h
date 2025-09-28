@@ -38,6 +38,7 @@ extern "C" {
 #define TAG_RES_FD_DUP             "RES_FD_DUP"
 #define TAG_RES_FD_ALL             "RES_FD_ALL"
 #define TAG_RES_THREAD_PTHREAD     "RES_THREAD_PTHREAD"
+#define TAG_RES_THREAD_ALL         "RES_THREAD_ALL"
 #define TAG_RES_GPU_VK             "RES_GPU_VK"
 #define TAG_RES_GPU_GLES_IMAGE     "RES_GPU_GLES_IMAGE"
 #define TAG_RES_GPU_GLES_BUFFER    "RES_GPU_GLES_BUFFER"
