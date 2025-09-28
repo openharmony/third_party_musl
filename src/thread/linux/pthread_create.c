@@ -11,6 +11,9 @@
 #include <stddef.h>
 #include <stdarg.h>
 #include "assert.h"
+#ifdef OHOS_FDTRACK_HOOK_ENABLE
+#include "memory_trace.h"
+#endif
 
 #define TLS_OFFSET_HWASAN (-18 * sizeof(void *))
 #define TLS_OFFSET_OPENGL_API (PTHREAD_SLOT_OPENGL_API * sizeof(void *))
@@ -347,6 +350,11 @@ _Noreturn void __pthread_exit(void *result)
 #endif
 		exit(0);
 	}
+
+	// Hook thread exit
+#ifdef OHOS_FDTRACK_HOOK_ENABLE
+	restrace(RES_THREAD_MASK, self->tid, THREAD_SIZE, TAG_RES_THREAD_ALL, false);
+#endif
 
 	/* At this point we are committed to thread termination. */
 
@@ -706,6 +714,9 @@ int __pthread_create(pthread_t *restrict res, const pthread_attr_t *restrict att
 		return -ret;
 	}
 
+#ifdef OHOS_FDTRACK_HOOK_ENABLE
+	restrace(RES_THREAD_PTHREAD, new->tid, THREAD_SIZE, TAG_RES_THREAD_PTHREAD, true);
+#endif
 	*res = new;
 	return 0;
 fail:

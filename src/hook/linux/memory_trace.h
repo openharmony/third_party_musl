@@ -24,7 +24,7 @@
 #define _MEMORY_TRACE_H
 
 #include <stdbool.h>
-#include <unistd.h>
+#include <stddef.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -74,6 +74,9 @@ extern "C" {
 #define RES_ION_MASK               (0x1F << 22)
 //RESERVED
 #define RES_RESERVED_MASK          (0xFFFFFF << 32)
+
+#define FD_SIZE                     1
+#define THREAD_SIZE                 1
 
 void memtrace(void* addr, size_t size, const char* tag, bool is_using);
 void restrace(unsigned long long mask, void* addr, size_t size, const char* tag, bool is_using);
