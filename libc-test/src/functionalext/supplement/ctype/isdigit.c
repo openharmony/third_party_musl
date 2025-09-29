@@ -47,9 +47,40 @@ void isdigit_0200(void)
     }
 }
 
+/**
+ * @tc.name      : isdigit_0300
+ * @tc.desc      : Verify non-printable characters (e.g., \\0, EOF, negative) return false
+ * @tc.level     : Level 2
+ */
+void isdigit_0300(void)
+{
+    int test_chars[] = {'\0', EOF, -1, 128, 255};
+    for (size_t i = 0; i < sizeof(test_chars)/sizeof(test_chars[0]); i++) {
+        int ret = isdigit(test_chars[i]);
+        EXPECT_EQ("isdigit_0300", ret, CMPFLAG);
+    }
+}
+
+/**
+ * @tc.name      : isdigit_0400
+ * @tc.desc      : Verify mixed numeric and non-numeric characters
+ * @tc.level     : Level 1
+ */
+void isdigit_0400(void)
+{
+    const char str[] = "a1B2c3D4#";
+    const int expected[] = {0, 1, 0, 1, 0, 1, 0, 1, 0};
+    for (size_t i = 0; str[i] != '\0'; i++) {
+        int ret = isdigit(str[i]);
+        EXPECT_EQ("isdigit_0400", ret, expected[i]);
+    }
+}
+
 int main(void)
 {
     isdigit_0100();
     isdigit_0200();
+    isdigit_0300();
+    isdigit_0400();
     return t_status;
 }
