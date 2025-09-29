@@ -79,6 +79,47 @@ void isalpha_0500(void)
     EXPECT_EQ("isalpha_0500", total, 52);
 }
 
+/**
+ * @tc.name      : isalpha_0600
+ * @tc.desc      : Verify all the letters in the ASCII code table
+ * @tc.level     : Level 1
+ */
+void isalpha_0600(void)
+{
+    for (int i = 65; i < 91; i++) {
+        int ret = isalpha((char)i);
+        EXPECT_NE("isalpha_0600", ret, COUNT_ZERO);
+    }
+
+    for (int i = 97; i < 123; i++) {
+        int ret = isalpha((char)i);
+        EXPECT_NE("isalpha_0600", ret, COUNT_ZERO);
+    }
+}
+
+/**
+ * @tc.name      : isalpha_0700
+ * @tc.desc      : Verify all non-alphabetic characters in the ASCII code table
+ * @tc.level     : Level 1
+ */
+void isalpha_0700(void)
+{
+    for (int i = 0; i < 65; i++) {
+        int ret = isalpha((char)i);
+        EXPECT_EQ("isalpha_0700", ret, COUNT_ZERO);
+    }
+
+    for (int i = 91; i < 97; i++) {
+        int ret = isalpha((char)i);
+        EXPECT_EQ("isalpha_0700", ret, COUNT_ZERO);
+    }
+
+    for (int i = 123; i < 128; i++) {
+        int ret = isalpha((char)i);
+        EXPECT_EQ("isalpha_0700", ret, COUNT_ZERO);
+    }
+}
+
 int main(void)
 {
     isalpha_0100();
@@ -86,5 +127,7 @@ int main(void)
     isalpha_0300();
     isalpha_0400();
     isalpha_0500();
+    isalpha_0600();
+    isalpha_0700();
     return t_status;
 }

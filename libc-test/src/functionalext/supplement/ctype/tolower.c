@@ -14,6 +14,7 @@
  */
 
 #include <stdio.h>
+#include <string.h>
 #include <ctype.h>
 #include "test.h"
 
@@ -73,11 +74,89 @@ void tolower_0400(void)
     }
 }
 
+/**
+ * @tc.name      : tolower_0500
+ * @tc.desc      : Test the result of passing whitespace character into tolower
+ * @tc.level     : Level 2
+ */
+void tolower_0500(void)
+{
+    char ch = ' ';
+    char result = tolower(ch);
+    if (result != ch) {
+        t_error("%s tolower get result is %c but want get value %c ", __func__, result, ch);
+    }
+}
+
+/**
+ * @tc.name      : tolower_0600
+ * @tc.desc      : Test the result of passing all lowercase characters into tolower
+ * @tc.level     : Level 2
+ */
+void tolower_0600(void)
+{
+    char str1[] = "helloworld";
+    size_t sizeStr = sizeof(str1);
+    char str2[sizeStr];
+    for (int i = 0; str1[i]; i++) {
+        str2[i] = tolower(str1[i]);
+    }
+    char wantStr[] = "helloworld";
+    int result = strcmp(wantStr, str2);
+    if (result != 0) {
+        t_error("%s tolower get str2 is %s but want get value %s ", __func__, str2, wantStr);
+    }
+}
+
+/**
+ * @tc.name      : tolower_0700
+ * @tc.desc      : Test the result of passing all uppercase characters into tolower
+ * @tc.level     : Level 2
+ */
+void tolower_0700(void)
+{
+    char str1[] = "HELLOWORLD";
+    size_t sizeStr = sizeof(str1);
+    char str2[sizeStr];
+    for (int i = 0; str1[i]; i++) {
+        str2[i] = tolower(str1[i]);
+    }
+    char wantStr[] = "helloworld";
+    int result = strcmp(wantStr, str2);
+    if (result != 0) {
+        t_error("%s tolower get str2 is %s but want get value %s ", __func__, str2, wantStr);
+    }
+}
+
+/**
+ * @tc.name      : tolower_0800
+ * @tc.desc      : Test the result of passing Uncertain characters into tolower
+ * @tc.level     : Level 2
+ */
+void tolower_0800(void)
+{
+    char str1[] = "Hello world!";
+    size_t sizeStr = sizeof(str1);
+    char str2[sizeStr];
+    for (int i = 0; str1[i]; i++) {
+        str2[i] = tolower(str1[i]);
+    }
+    char wantStr[] = "hello world!";
+    int result = strcmp(wantStr, str2);
+    if (result != 0) {
+        t_error("%s tolower get str2 is %s but want get value %s ", __func__, str2, wantStr);
+    }
+}
+
 int main(int argc, char *argv[])
 {
     tolower_0100();
     tolower_0200();
     tolower_0300();
     tolower_0400();
+    tolower_0500();
+    tolower_0600();
+    tolower_0700();
+    tolower_0800();
     return t_status;
 }
