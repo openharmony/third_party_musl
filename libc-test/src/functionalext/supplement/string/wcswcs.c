@@ -89,9 +89,134 @@ void wcswcs_0200(void)
     N(L"_ _ _\x7f_ _ _", L"_\xff_")
 }
 
+/**
+ * @tc.name      : wcswcs_0300
+ * @tc.desc      : Test wcswcs with overlapping patterns and edge cases
+ * @tc.level     : Level 1
+ */
+void wcswcs_0300(void)
+{
+    // Overlapping pattern tests
+    T(L"aaaabaaaa", L"aaa", 0)
+    T(L"mississippi", L"issi", 1)
+    T(L"abcabcabc", L"abcabc", 0)
+    T(L"ababababab", L"ababab", 0)
+
+    // Edge cases
+    T(L"x", L"x", 0)
+    T(L"xy", L"xy", 0)
+    T(L"xyz", L"yz", 1)
+    T(L"a\0b", L"a", 0)  // String containing null character
+}
+
+/**
+ * @tc.name      : wcswcs_0400
+ * @tc.desc      : Test wcswcs with very long strings and patterns
+ * @tc.level     : Level 2
+ */
+void wcswcs_0400(void)
+{
+    wchar_t long_str[100];
+    wchar_t pattern[20];
+
+    // Generate long string "abcabc...abc"
+    for (int i = 0; i < 33; i++) {
+        wcscpy(long_str + i * 3, L"abc");
+    }
+    long_str[99] = L'\0';
+
+    T(long_str, L"abc", 0)
+    T(long_str, L"bca", 1)
+    T(long_str, L"abcabc", 0)
+
+    // Test long pattern
+    wcscpy(pattern, L"abcabcabcabc");
+    T(long_str, pattern, 0)
+}
+
+/**
+ * @tc.name      : wcswcs_0500
+ * @tc.desc      : Test wcswcs with whitespace characters and control characters
+ * @tc.level     : Level 1
+ */
+void wcswcs_0500(void)
+{
+    // Whitespace character tests
+    T(L"hello world", L" ", 5)
+    T(L"tab\ttab", L"\t", 3)
+    T(L"new\nline", L"\n", 3)
+    T(L"carriage\rreturn", L"\r", 8)
+
+    // Mixed whitespace characters
+    T(L"a b c d", L" c ", 3)
+    T(L"test\t\n\rstring", L"\t\n\r", 4)
+}
+
+/**
+ * @tc.name      : wcswcs_0600
+ * @tc.desc      : Test wcswcs with repeated characters and patterns
+ * @tc.level     : Level 0
+ */
+void wcswcs_0600(void)
+{
+    // Repeated character tests
+    T(L"aaaaaaaaaa", L"aaa", 0)
+    T(L"aaaaaaaaaa", L"aaaaa", 0)
+    T(L"ababababab", L"abab", 0)
+    T(L"abcabcabc", L"bcab", 1)
+
+    // Partial matches that ultimately fail
+    N(L"abcdeabcdf", L"abcdg")  // Should not find "abcdg"
+    N(L"xyzxyzx", L"xyzb")
+}
+
+/**
+ * @tc.name      : wcswcs_0700
+ * @tc.desc      : Test wcswcs with case sensitivity and character variations
+ * @tc.level     : Level 1
+ */
+void wcswcs_0700(void)
+{
+    // Case sensitivity tests
+    T(L"Hello World", L"World", 6)
+    N(L"Hello WORLD", L"World")
+
+    // Special character variants
+    T(L"café au lait", L"é", 3)
+    T(L"naïve approach", L"ï", 2)
+    T(L"über", L"ü", 0)
+}
+
+/**
+ * @tc.name      : wcswcs_0800
+ * @tc.desc      : Test wcswcs performance with partial matches and near misses
+ * @tc.level     : Level 2
+ */
+void wcswcs_0800(void)
+{
+    // Partial match tests
+    T(L"abcdefghijklmnopqrstuvwxyz", L"xyz", 23)
+    T(L"abcdeffghijkl", L"ffg", 5)
+    T(L"abracadabra", L"dab", 6)
+
+    // Close but not exact matches
+    N(L"abcdefgh", L"abcdeg")
+    N(L"hello world", L"worlds")
+    N(L"programming", L"programmer")
+
+    // Pattern longer than the string
+    N(L"short", L"this pattern is much longer than the string")
+}
+
 int main(int argc, char *argv[])
 {
     wcswcs_0100();
     wcswcs_0200();
+    wcswcs_0300();
+    wcswcs_0400();
+    wcswcs_0500();
+    wcswcs_0600();
+    wcswcs_0700();
+    wcswcs_0800();
     return t_status;
 }
