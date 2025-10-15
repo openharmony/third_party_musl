@@ -4704,6 +4704,10 @@ static int dlclose_impl(struct dso *p)
 		free(p->deps_all);
 	}
 
+	if (p->rpath) {
+		free(p->rpath);
+	}
+
 	if (p->item != NULL) {
 		clear_pac_info(p);
 	}
