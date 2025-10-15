@@ -160,11 +160,12 @@ bool force_sample_process_by_env()
     }
     char para_name[GWP_ASAN_NAME_LEN] = "gwp_asan.enable.app.";
     strcat(para_name, path);
-    static CachedHandle app_enable_handle = NULL;
+    CachedHandle app_enable_handle = CachedParameterCreate(para_name, "false");
     if (app_enable_handle == NULL) {
-        app_enable_handle = CachedParameterCreate(para_name, "false");
+        return false;
     }
     const char *param_value = CachedParameterGet(app_enable_handle);
+    CachedParameterDestroy(app_enable_handle);
     if (param_value != NULL) {
         if (strcmp(param_value, "true") == 0) {
             return true;
