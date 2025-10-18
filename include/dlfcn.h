@@ -163,6 +163,19 @@ int dlns_set_namespace_permitted_paths(const char *name, const char *permitted_p
   */
 int dlns_set_namespace_allowed_libs(const char *name, const char *allowed_libs);
 
+/**
+  * @brief Set ld permitted_path.
+  * @param path ld permitted_path.
+  * @param ns Set the target namespace for permitted path.
+  * @return Returns 0 on success, other on failure.
+  * @retval
+  *    EINVAL(22) Invalid argument.
+  *    EACCES(13) Caller not permitted.
+  *    ENOMEM(12): Storage space available is insufficient.
+  *    ENOENT(2): The specified namespace was not found.
+  */
+int dlns_set_ld_permitted_path(char *path, Dl_namespace *ns);
+
 #if defined(_GNU_SOURCE) || defined(_BSD_SOURCE)
 typedef struct {
 	const char *dli_fname;
