@@ -544,6 +544,7 @@
     # dlns_set_namespace_lib_path;
     dlns_set_namespace_permitted_paths;
     dlns_set_namespace_separated;
+    dlns_set_ld_permitted_path;
     dlopen;
     # Sanitizer requires this symbol to be exposed.
     dlopen_impl;
@@ -2048,6 +2049,8 @@
     DFX_SetCrashLogConfig;
     __hwasan_check_enabled;
     malloc_check_from_ptr;
+    dlns_add_plugin_default_ld_dictionary;
+    dlns_get_plugin_default_permitted_path;
   local:
     *;
 };
