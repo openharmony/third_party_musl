@@ -37,6 +37,46 @@ HWTEST_F(MathAcosTest, acos_002, TestSize.Level1)
 }
 
 /**
+* @tc.name: acos_003
+* @tc.desc: Test acos with boundary value -1.0
+* @tc.type: FUNC
+*/
+HWTEST_F(MathAcosTest, acos_003, TestSize.Level1)
+{
+    EXPECT_DOUBLE_EQ(M_PI, acos(-1.0));
+}
+
+/**
+* @tc.name: acos_004
+* @tc.desc: Test acos with zero input
+* @tc.type: FUNC
+*/
+HWTEST_F(MathAcosTest, acos_004, TestSize.Level1)
+{
+    EXPECT_DOUBLE_EQ(M_PI_2, acos(0.0));
+}
+
+/**
+* @tc.name: acos_005
+* @tc.desc: Test acos with positive 0.5 input
+* @tc.type: FUNC
+*/
+HWTEST_F(MathAcosTest, acos_005, TestSize.Level1)
+{
+    EXPECT_NEAR(M_PI_3, acos(0.5), 1e-15);
+}
+
+/**
+* @tc.name: acos_006
+* @tc.desc: Test acos with negative 0.5 input
+* @tc.type: FUNC
+*/
+HWTEST_F(MathAcosTest, acos_006, TestSize.Level1)
+{
+    EXPECT_NEAR(2 * M_PI_3, acos(-0.5), 1e-15);
+}
+
+/**
 * @tc.name: acosf_001
 * @tc.desc: Obtain test data in sequence and check if it is within the expected error range of the acosf interface.
 * @tc.type: FUNC
