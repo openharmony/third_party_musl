@@ -139,7 +139,7 @@ int getaddrinfo_ext(const char *restrict host, const char *restrict serv, const 
 			AI_V4MAPPED | AI_ALL | AI_ADDRCONFIG | AI_NUMERICSERV;
 		if ((flags & mask) != flags) {
 #ifndef __LITEOS__
-			MUSL_LOGW("%{public}s: %{public}d: bad hint ai_flag: %{public}d", __func__, __LINE__, flags);
+			MUSL_LOGW("bad hint ai_flag: %{public}d", flags);
 #endif
 			return EAI_BADFLAGS;
 		}
@@ -151,7 +151,7 @@ int getaddrinfo_ext(const char *restrict host, const char *restrict serv, const 
 			break;
 		default:
 #ifndef __LITEOS__
-			MUSL_LOGW("%{public}s: %{public}d: wrong family in hint: %{public}d", __func__, __LINE__, family);
+			MUSL_LOGW("wrong family in hint: %{public}d", family);
 #endif
 			return EAI_FAMILY;
 		}
@@ -179,8 +179,7 @@ int getaddrinfo_ext(const char *restrict host, const char *restrict serv, const 
 				IPPROTO_UDP);
 #ifndef __LITEOS__
 			if (s < 0) {
-				MUSL_LOGW("%{public}s: %{public}d: create socket failed for family: %{public}d, errno: %{public}d",
-					__func__, __LINE__, tf[i], errno);
+				MUSL_LOGW("create socket failed for family: %{public}d, errno: %{public}d", tf[i], errno);
 			}
 #endif
 			if (s >= 0) {
@@ -203,14 +202,13 @@ int getaddrinfo_ext(const char *restrict host, const char *restrict serv, const 
 				break;
 			default:
 #ifndef __LITEOS__
-				MUSL_LOGW("%{public}s: %{public}d: connect to local address failed: %{public}d",
-					__func__, __LINE__, errno);
+				MUSL_LOGW("connect to local address failed: %{public}d", errno);
 #endif
 				return EAI_SYSTEM;
 			}
 			if (family == tf[i]) {
 #ifndef __LITEOS__
-				MUSL_LOGW("%{public}s: %{public}d: family mismatch: %{public}d", __func__, __LINE__, EAI_NONAME);
+				MUSL_LOGW("family mismatch: %{public}d", EAI_NONAME);
 #endif
                 return EAI_NONAME;
 			}
@@ -232,8 +230,7 @@ int getaddrinfo_ext(const char *restrict host, const char *restrict serv, const 
 	if (naddrs < 0) {
 		reportdnsresult(netid, (char *)host, t_cost, naddrs, NULL, param);
 #ifndef __LITEOS__
-		MUSL_LOGW("%{public}s: %{public}d: reportdnsresult: %{public}d",
-			__func__, __LINE__, naddrs);
+		MUSL_LOGW("reportdnsresult: %{public}d", naddrs);
 #endif
 		naddrs = revert_dns_fail_cause(naddrs);
 		return naddrs;
