@@ -9,6 +9,10 @@ https://gitee.com/openharmony/interface_sdk_c/blob/master/third_party/musl/ndk_s
 
 ## 系统侧libc新的变化
 
+2025/11/4 <dlfcn.h>
+- 新增`dlns_set_ld_permitted_path`: 在指定的namespace中设置ld_path的父目录准许路径，该接口存在权限管控
+- 新增`dlns_get_plugin_default_permitted_path`: 在特定的namespace中获取ld_path的父目录准许路径
+- 新增`dlns_add_plugin_default_ld_dictionary`: 在特定的namespace中添加满足特定规则的lib_paths路径
 
 2025/04/24 <malloc.h>
 - 新增`malloc_check_from_ptr`: 判断一个指针指向的内存地址是否由标准C库的内存分配器分配（since API 19）

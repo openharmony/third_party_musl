@@ -3922,6 +3922,196 @@ static const char *redir_paths[] = {
 };
 #endif
 
+static bool check_path_prefix(const char *str, size_t length, const char *prefix)
+{
+	if (!prefix) {
+		LD_LOGW("check_prefix input prefix is NULL");
+		return false;
+	}
+	if (!str) {
+		LD_LOGW("check_prefix input str is NULL");
+		return false;
+	}
+	size_t len = strnlen(prefix, PATH_MAX + 1);
+	if (len == 0 || len > PATH_MAX) {
+		LD_LOGW("check_prefix failed prefix is invalid len=%{public}zu prefix=%{public}s", len, prefix);
+		return false;
+	}
+	if (prefix[len - 1] == '/') {
+		len--;
+	}
+	if (strlen(str) < len) {
+		return false;
+	}
+	for (size_t i = 0; i < len; i++) {
+		if (str[i] != prefix[i]) {
+			return false;
+		}
+	}
+	if (length > len && str[len] != '/') {
+		return false;
+	}
+	return true;
+}
+
+int dlns_set_ld_permitted_path(char *path, Dl_namespace *namespace)
+{
+	if (namespace == NULL || !namespace->name) {
+		LD_LOGE("dlns_set_ld_permitted_path input namespace is NULL");
+		errno = EINVAL;
+		return -1;
+	}
+	if (!path) {
+		LD_LOGE("dlns_set_ld_permitted_path input path is NULL");
+		errno = EINVAL;
+		return -1;
+	}
+	const size_t max_path_len = -1;
+	size_t len = strnlen(path, max_path_len);
+	if (len == 0 || path[len - 1] == ':' || path[0] == ':' || len == max_path_len) {
+		LD_LOGE("dlns_set_ld_permitted_path input path is invalid len=%{public}zu path=%{public}s", len, path);
+		errno = EINVAL;
+		return -1;
+	}
+	pthread_rwlock_wrlock(&lock);
+	struct dso *caller = (struct dso *)addr2dso((size_t)__builtin_return_address(0));
+	if (!caller || !caller->namespace || !caller->namespace->ns_name
+		|| strcmp(caller->namespace->ns_name, "default") != 0) {
+		LD_LOGE("dlns_set_ld_permitted_path must be called by default namespace");
+		pthread_rwlock_unlock(&lock);
+		errno = EACCES;
+		return -1;
+	}
+	ns_t *ns = find_ns_by_name(namespace->name);
+	if (!ns) {
+		LD_LOGE("dlns_set_ld_permitted_path find_ns_by_name failed namespace:%{public}s is NULL",
+			namespace->name ? namespace->name : "NULL");
+		pthread_rwlock_unlock(&lock);
+		errno = ENOENT;
+		return -1;
+	}
+	char *previous_ld_permitted_path = ns->ld_permitted_path;
+	char *p_libs = ld_strdup(path);
+	if (!p_libs) {
+		LD_LOGE("dlns_set_ld_permitted_path ld_strdup failed errno=%{public}d", errno);
+		pthread_rwlock_unlock(&lock);
+		return -1;
+	}
+	ns->ld_permitted_path = p_libs;
+	if (previous_ld_permitted_path) {
+		free(previous_ld_permitted_path);
+	}
+	pthread_rwlock_unlock(&lock);
+	return 0;
+}
+
+static int check_ld_dictionary(char *path, ns_t *ns)
+{
+	if (!path) {
+		LD_LOGE("check_ld_dictionary input path is NULL");
+		errno = EINVAL;
+		return -1;
+	}
+	size_t len = strnlen(path, PATH_MAX + 1);
+	if (len == 0 || len > PATH_MAX || path[len - 1] == '/' || strstr(path, ":")) {
+		LD_LOGE("check_ld_dictionary input path:%{public}s is invalid len=%{public}zu", path, len);
+		errno = EINVAL;
+		return -1;
+	}
+	if (strstr(path, "../") || strstr(path, "//") || strstr(path, "~")) {
+		LD_LOGE("check_ld_dictionary input path:%{public}s contains .. or // or ~ is not permitted", path);
+		errno = EACCES;
+		return -1;
+	}
+	if (!ns->ld_permitted_path) {
+		LD_LOGE("check_ld_dictionary ns->ld_permitted_path is NULL");
+		errno = EAGAIN;
+		return -1;
+	}
+	strlist *list = strsplit(ns->ld_permitted_path, ":");
+	if (!list) {
+		LD_LOGE("check_ld_dictionary strsplit failed errno=%{public}d", errno);
+		return -1;
+	}
+	for (int i = 0; i < list->num; i++) {
+		if (check_path_prefix(path, len, list->strs[i])) {
+			strlist_free(list);
+			return 0;
+		}
+	}
+	strlist_free(list);
+	LD_LOGE("check_ld_dictionary input path:%{public}s is not permitted, permitted_path=%{public}s",
+		path, ns->ld_permitted_path);
+	errno = EACCES;
+	return -1;
+}
+
+char *dlns_get_plugin_default_permitted_path()
+{
+	pthread_rwlock_rdlock(&lock);
+	ns_t *ns = find_ns_by_name("moduleNs_plugin_default_namespace");
+	if (!ns) {
+		LD_LOGE("dlns_get_plugin_default_permitted_path find_ns_by_name failed ns is NULL");
+		pthread_rwlock_unlock(&lock);
+		errno = ENOSYS;
+		return NULL;
+	}
+	if (!ns->ld_permitted_path) {
+		LD_LOGE("dlns_get_plugin_default_permitted_path ns->ld_permitted_path is NULL");
+		pthread_rwlock_unlock(&lock);
+		errno = ENOENT;
+		return NULL;
+	}
+	char *result = strdup(ns->ld_permitted_path);
+	pthread_rwlock_unlock(&lock);
+	if (!result) {
+		LD_LOGE("dlns_get_plugin_default_permitted_path strdup failed errno=%{public}d", errno);
+		errno = ENOMEM;
+		return NULL;
+	}
+	return result;
+}
+
+int dlns_add_plugin_default_ld_dictionary(char *path)
+{
+	pthread_rwlock_wrlock(&lock);
+	ns_t *ns = find_ns_by_name("moduleNs_plugin_default_namespace");
+	if (!ns) {
+		LD_LOGE("dlns_add_plugin_default_ld_dictionary find_ns_by_name failed ns is NULL");
+		pthread_rwlock_unlock(&lock);
+		errno = ENOSYS;
+		return -1;
+	}
+	int result = check_ld_dictionary(path, ns);
+	if (result) {
+		pthread_rwlock_unlock(&lock);
+		return result;
+	}
+	if (!ns->lib_paths) {
+		ns->lib_paths = ld_strdup(path);
+		if (!ns->lib_paths) {
+			pthread_rwlock_unlock(&lock);
+			LD_LOGE("dlns_add_plugin_default_ld_dictionary ld_strdup failed errno=%{public}d", errno);
+			return -1;
+		}
+		pthread_rwlock_unlock(&lock);
+		return 0;
+	}
+	size_t length = strlen(ns->lib_paths);
+	size_t currentLength = strlen(path);
+	char *newStr = (char *)realloc(ns->lib_paths, currentLength + length + 2);
+	if (!newStr) {
+		pthread_rwlock_unlock(&lock);
+		LD_LOGE("dlns_add_plugin_default_ld_dictionary realloc failed errno=%{public}d", errno);
+		return -1;
+	}
+	newStr[length] = ':';
+	strcpy(newStr + length + 1, path);
+	ns->lib_paths = newStr;
+	pthread_rwlock_unlock(&lock);
+	return 0;
+}
+
 void *dlopen_impl(
 	const char *file, int mode, const char *namespace, const void *caller_addr, const dl_extinfo *extinfo)
 {
