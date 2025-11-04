@@ -48,6 +48,7 @@ typedef struct _namespace_t_ {
     dsolist *ns_dsos;         /* dso list in this namespace */
     struct _ns_inherit_list_ *ns_inherits;   /* inherit list in this namespace */
     int flag;
+    char *ld_permitted_path;  /* ld_path's permitted paths splited by ':' */
 } ns_t;
 /* define namespace list */
 typedef struct _namespaces_list_ {
