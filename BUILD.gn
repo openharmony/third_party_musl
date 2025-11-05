@@ -45,10 +45,19 @@ if (is_lite_system && current_os == "ohos") {
       ]
     }
 
+    ohos_prebuilt_etc("ld-musl-namespace-${musl_arch}-flex.ini") {
+      source = "${musl_dir}/config/ld-musl-namespace-${musl_arch}-flex.ini"
+      install_images = [
+        "system",
+        "ramdisk",
+      ]
+    }
+
     group("musl_ns_config") {
       deps = [
         ":ld-musl-namespace-${musl_arch}-test.ini",
         ":ld-musl-namespace-${musl_arch}.ini",
+        ":ld-musl-namespace-${musl_arch}-flex.ini",
       ]
     }
   } else {

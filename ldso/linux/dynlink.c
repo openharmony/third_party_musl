@@ -442,8 +442,15 @@ static void init_namespace(struct dso *app)
 
 	nslist *nsl = nslist_init();
 	ns_configor *conf = configor_init();
-	char file_path[sizeof "/etc/ld-musl-namespace-" + sizeof (LDSO_ARCH) + sizeof ".ini" + 1] = {0};
-	(void)snprintf(file_path, sizeof file_path, "/etc/ld-musl-namespace-%s.ini", LDSO_ARCH);
+
+	struct stat statbuf;
+	char file_path[sizeof "/etc/ld-musl-namespace-" + sizeof (LDSO_ARCH) + sizeof "flex" + sizeof ".ini" + 1] = {0};
+	if (stat("/vendor/lib64/chipset-sdk-sp", &statbuf) != 0) {
+		(void)snprintf(file_path, sizeof file_path, "/etc/ld-musl-namespace-%s.ini", LDSO_ARCH);
+	} else {
+		(void)snprintf(file_path, sizeof file_path, "/etc/ld-musl-namespace-%s-flex.ini", LDSO_ARCH);
+	}
+
 	LD_LOGI("init_namespace file_path:%{public}s", file_path);
 	trace_marker_reset();
 	trace_marker_begin(HITRACE_TAG_MUSL, "parse linker config", file_path);
@@ -3868,6 +3875,12 @@ static char *dlopen_permitted_list[] =
 {
 	"default",
 	"ndk",
+	"system",
+	"chipsetsdk",
+	"chipsetsdk_sp",
+	"vendor",
+	"passthrough",
+	"passthrough_indirect",
 };
 
 #define PERMITIED_TARGET  "nweb_ns"
