@@ -20,7 +20,7 @@
 
 #include "ld_log.h"
 /*---------------------------- Defines -------------------------------------*/
-#define MAX_LINE_SIZE         (1024)
+#define MAX_LINE_SIZE         (2048)
 #define INI_INVALID_KEY     ((char*)-1)
 
 #ifdef UNIT_TEST_STATIC
