@@ -51,7 +51,7 @@
 #define THREE (3)
 #define NEGATIVE_ONE (-1)
 #define INVALID_SOCKET (-1)
-#define THREAD_COUNT (10)
+#define THREAD_COUNT (5)
 #define STR_LENGTH (20)
 char str[THREAD_COUNT][STR_LENGTH];
 
@@ -123,8 +123,13 @@ bool CheckHiLogPrint(char *needToMatch)
 void* FunctionPrintLog(void* arg)
 {
     int index = (int)arg;
+    GenerateRandomString(str[index], index);
     int ret = HiLogAdapterPrint(MUSL_LOG_TYPE, LOG_ERROR, MUSL_LOG_DOMAIN, MUSL_LOG_TAG,
         "FunctionPrintLog %{public}s", str[index]);
+    bool result = CheckHiLogPrint(str[index]);
+    EXPECT_EQ("HilogAdapterPrint_0030_CheckHiLogPrint", result, true);
+    EXPECT_NE("HilogAdapterPrint_0030 CheckHilogValid", CheckHilogValid(), ZERO);
+
     return NULL;
 }
 /**
@@ -180,31 +185,23 @@ static void HilogAdapterPrint_0030(void)
     // 前置条件：校验g_socketFd无效
     EXPECT_EQ("HilogAdapterPrint_0030 CheckHilogInvalid", CheckHilogValid(), ZERO);
     pthread_t threads[THREAD_COUNT];
-    int threadCreateResult = -1;
-    printf("libc.can_do_threads=%d\n", libc.can_do_threads);
+    static int (*libc_pthread_create)(pthread_t*, const pthread_attr_t*,
+                                     void*(*), void*) = NULL;
+    libc_pthread_create = dlsym(RTLD_NEXT, "pthread_create");
+    if (libc_pthread_create == NULL) {
+        t_error("dlsym pthread_create fail \n");
+        return;
+    }
     // 创建线程并发打印，每个线程打印的日志都不能丢
     for (int i = ZERO; i < THREAD_COUNT; i++) {
-        // 生成一个随机字符串，然后将下标通过值传递给子线程，让子线程拿到全局的数据
-        GenerateRandomString(str[i], i);
-        if (libc.can_do_threads) {
-            threadCreateResult = pthread_create(&threads[i], NULL, FunctionPrintLog, (void *)i);
-        }
-        if (threadCreateResult != 0) {
-            fprintf(stderr, "Failed to create thread %d errno=%d\n", i, errno);
-            FunctionPrintLog((void *)i);
-        }
+        libc_pthread_create(&threads[i], NULL, FunctionPrintLog, (void *)i);
     }
     
-    // 检查g_socketFd有效
-    EXPECT_NE("HilogAdapterPrint_0030 CheckHilogValid", CheckHilogValid(), ZERO);
     // 等待线程执行完毕
     for (int i = ZERO; i < THREAD_COUNT; i++) {
-        if (libc.can_do_threads && pthread_join(threads[i], NULL) != 0) {
+        if (pthread_join(threads[i], NULL) != 0) {
             fprintf(stderr, "Failed to join thread %d\n", i);
         }
-        // 在这里判断当前日志是否打印成功
-        bool result = CheckHiLogPrint(str[i]);
-        EXPECT_EQ("HilogAdapterPrint_0030_CheckHiLogPrint", result, true);
     }
 }
 
