@@ -186,7 +186,7 @@ static void HilogAdapterPrint_0030(void)
     EXPECT_EQ("HilogAdapterPrint_0030 CheckHilogInvalid", CheckHilogValid(), ZERO);
     pthread_t threads[THREAD_COUNT];
     static int (*libc_pthread_create)(pthread_t*, const pthread_attr_t*,
-                                     void*(*), void*) = NULL;
+                                     void*(void*), void*) = NULL;
     libc_pthread_create = dlsym(RTLD_NEXT, "pthread_create");
     if (libc_pthread_create == NULL) {
         t_error("dlsym pthread_create fail \n");
