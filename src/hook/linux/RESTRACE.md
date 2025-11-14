@@ -1,5 +1,4 @@
-## MALLOC_CHECK_FROM_PTR &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; OHOS Programmer's Manual   
-
+## RESTRACE &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; OHOS Programmer's Manual   
 
 
 #### **NAME**
@@ -21,10 +20,10 @@
 
 #### ATTRIBUTES
 
-       | Attribute     | Value    |
-       | ------------- | -------- |
-       | Thread safety | MT-safe  |
-       | Signal safety | Not Safe |
+| Attribute     | Value    |
+| ------------- | -------- |
+| Thread safety | MT-safe  |
+| Signal safety | Not Safe |
 
 #### **ERRORS**
 
