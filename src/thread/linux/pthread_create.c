@@ -334,6 +334,10 @@ _Noreturn void __pthread_exit(void *result)
 #ifdef RESERVE_SIGNAL_STACK
 	__pthread_release_signal_stack();
 #endif
+	// Hook thread exit
+#ifdef OHOS_FDTRACK_HOOK_ENABLE
+	restrace(RES_THREAD_MASK, self->tid, THREAD_SIZE, TAG_RES_THREAD_ALL, false);
+#endif
 	/* If this is the only thread in the list, don't proceed with
 	 * termination of the thread, but restore the previous lock and
 	 * signal state to prepare for exit to call atexit handlers. */
@@ -350,11 +354,6 @@ _Noreturn void __pthread_exit(void *result)
 #endif
 		exit(0);
 	}
-
-	// Hook thread exit
-#ifdef OHOS_FDTRACK_HOOK_ENABLE
-	restrace(RES_THREAD_MASK, self->tid, THREAD_SIZE, TAG_RES_THREAD_ALL, false);
-#endif
 
 	/* At this point we are committed to thread termination. */
 
@@ -540,6 +539,7 @@ int __pthread_create(pthread_t *restrict res, const pthread_attr_t *restrict att
 	_Static_assert(PTHREAD_OFFSET(tls_slots_opengl) == TLS_OFFSET_OPENGL, "check opengl tls offset error.");
 #endif
 	int ret, c11 = (attrp == __ATTRP_C11_THREAD);
+	int restraceTid = -1;
 	size_t size, guard;
 	struct pthread *self, *new;
 	unsigned char *map = 0, *stack = 0, *tsd = 0, *stack_limit;
@@ -682,12 +682,15 @@ int __pthread_create(pthread_t *restrict res, const pthread_attr_t *restrict att
 		cloneErrno = ret;
 		ret = -EAGAIN;
 	} else if (attr._a_sched) {
+		restraceTid = new->tid;
 		ret = __syscall(SYS_sched_setscheduler,
 			new->tid, attr._a_policy, &attr._a_prio);
 		if (a_swap(&args->control, ret ? 3 : 0) == 2)
 			__wake(&args->control, 1, 1);
 		if (ret)
 			__wait(&args->control, 0, 3, 0);
+	} else if (!attr._a_detach) {
+		restraceTid = new->tid;
 	}
 
 	if (ret >= 0) {
@@ -715,7 +718,9 @@ int __pthread_create(pthread_t *restrict res, const pthread_attr_t *restrict att
 	}
 
 #ifdef OHOS_FDTRACK_HOOK_ENABLE
-	restrace(RES_THREAD_PTHREAD, new->tid, THREAD_SIZE, TAG_RES_THREAD_PTHREAD, true);
+	if (restraceTid != -1) {
+		restrace(RES_THREAD_PTHREAD, restraceTid, THREAD_SIZE, TAG_RES_THREAD_PTHREAD, true);
+	}
 #endif
 	*res = new;
 	return 0;
