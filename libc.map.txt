@@ -2051,6 +2051,7 @@
     malloc_check_from_ptr;
     dlns_add_plugin_default_ld_dictionary;
     dlns_get_plugin_default_permitted_path;
+    dlopen_config_abs_path_policy;
   local:
     *;
 };
