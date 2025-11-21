@@ -19,7 +19,7 @@
 #include <locale.h>
 #include "functionalext.h"
 
-#define ALPHA_WINT_COUNT 136104
+#define ALPHA_WINT_COUNT 136726
 #define UNICODE_SIZE 1114111
 #define MAX_VALUE 4294967295
 /**
