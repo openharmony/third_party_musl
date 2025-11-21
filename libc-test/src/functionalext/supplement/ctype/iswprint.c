@@ -22,7 +22,7 @@
 #include "functionalext.h"
 #include "test.h"
 
-#define PRINT_WINT_COUNT 149016
+#define PRINT_WINT_COUNT 149643
 #define UNICODE_SIZE 1114111
 #define MAX_VALUE 4294967295
 /**
