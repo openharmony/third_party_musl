@@ -9,6 +9,9 @@ https://gitee.com/openharmony/interface_sdk_c/blob/master/third_party/musl/ndk_s
 
 ## 系统侧libc新的变化
 
+2025/11/20
+- 新增`dlopen_config_abs_path_policy`: 控制dlopen过程中是否针对入参进行绝对路径的校验
+
 2025/11/4 <dlfcn.h>
 - 新增`dlns_set_ld_permitted_path`: 在指定的namespace中设置ld_path的父目录准许路径，该接口存在权限管控
 - 新增`dlns_get_plugin_default_permitted_path`: 在特定的namespace中获取ld_path的父目录准许路径

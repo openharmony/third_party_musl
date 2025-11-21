@@ -192,6 +192,7 @@ static struct dso **main_ctor_queue;
 static struct fdpic_loadmap *app_loadmap;
 static struct fdpic_dummy_loadmap app_dummy_loadmap;
 static struct icall_item pac_items[PAC_MODIFIER_SIZE] = {0};
+static bool check_abs_path = true;
 
 struct debug *_dl_debug_addr = &debug;
 
@@ -257,6 +258,34 @@ static void remove_dso_info_from_debug_map(struct dso *p);
 /* add namespace function */
 static void get_sys_path(ns_configor *conf);
 static void dlclose_ns(struct dso *p);
+
+void dlopen_config_abs_path_policy(bool flag)
+{
+	pthread_rwlock_wrlock(&lock);
+	if (!flag) {
+		check_abs_path = false;
+	}
+	pthread_rwlock_unlock(&lock);
+}
+
+__attribute__((always_inline))
+static bool check_acceptable(ns_inherit *inherit, const char *lib_name)
+{
+	char *current = strchr(lib_name, '/');
+	if (check_abs_path) {
+		return current || is_sharable(inherit, lib_name);
+	}
+	if (current == NULL) {
+		return is_sharable(inherit, lib_name);
+	}
+	char *last_slash = NULL;
+	while (current != NULL) {
+		last_slash = current;
+		current = strchr(current + 1, '/');
+	}
+	last_slash++;
+	return is_sharable(inherit, last_slash);
+}
 
 #if defined(BTI_SUPPORT) && (!defined(__LITEOS__))
 struct gnu_property {
@@ -3500,6 +3529,7 @@ void __dls3(size_t *sp, size_t *auxv, size_t *aux)
 #if defined(__aarch64__) && (!defined(__LITEOS__))
 	InstallPACHandler();
 #endif
+	check_abs_path = true;
 	__init_fdsan();
 	InitTimeZoneParam();
 	InitDeviceApiVersion(); // do nothing when no define OHOS_ENABLE_PARAMETER
@@ -6306,7 +6336,7 @@ static bool load_library_header(struct loadtask *task)
 		/* Load lib in inherited namespace. Do not check inherited again.*/
 		for (size_t i = 0; i < namespace->ns_inherits->num; i++) {
 			ns_inherit *inherit = namespace->ns_inherits->inherits[i];
-			if (strchr(name, '/') == 0 && !is_sharable(inherit, name)) {
+			if (!check_acceptable(inherit, name)) {
 				continue;
 			}
 			task->namespace = inherit->inherited_ns;
