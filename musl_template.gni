@@ -149,7 +149,6 @@ template("static_and_shared_libs_template") {
     configs += [
       "//build/config/compiler:compiler",
       ":$cur_soft_hook_config",
-      ":stack_config_musl",
     ]
 
     cflags = [
@@ -166,6 +165,12 @@ template("static_and_shared_libs_template") {
         "-mllvm",
         "-hwasan-instrument-check-enabled=true",
       ]
+    }
+
+    if (target_name == "soft_musl_hook_shared_sp") {
+      cflags += [ "-fstack-protector-strong" ]
+    } else {
+      configs += [ ":stack_config_musl" ]
     }
 
     if (!__use_flto) {
@@ -413,7 +418,6 @@ template("static_and_shared_libs_template") {
     configs += [
       "//build/config/components/musl:soft_musl_config",
       ":$cur_gwp_asan_config",
-      ":stack_config_musl",
     ]
 
     if (use_hwasan) {
@@ -423,6 +427,10 @@ template("static_and_shared_libs_template") {
         "-mllvm",
         "-hwasan-instrument-check-enabled=true",
       ]
+    }
+
+    if (target_name == "soft_musl_src_shared") {
+      configs += [ ":stack_config_musl" ]
     }
 
     if (!defined(defines)) {
@@ -460,7 +468,6 @@ template("static_and_shared_libs_template") {
     configs += [
       "//build/config/components/musl:soft_musl_config",
       ":$cur_gwp_asan_config",
-      ":stack_config_musl",
     ]
     cflags = [
       "-fPIC",
@@ -468,6 +475,10 @@ template("static_and_shared_libs_template") {
       "-fno-stack-protector",
       "-O3",
     ]
+
+    if (target_name == "soft_musl_ldso_shared") {
+      configs += [ ":stack_config_musl" ]
+    }
 
     if (use_hwasan) {
       configs += [ "//build/config/sanitizers:default_sanitizer_flags" ]
@@ -530,6 +541,12 @@ template("musl_libs") {
       ":soft_libc_musl_static",
       ":soft_musl_crt_libs",
     ]
+    if (musl_arch == "aarch64") {
+      deps += [
+        ":soft_create_linker_sp",
+        ":soft_libc_musl_shared_sp",
+      ]
+    }
   }
 
   group("soft_musl_libs") {
@@ -547,6 +564,11 @@ template("musl_libs") {
       ":soft_libxnet",
       ":soft_musl_crt_libs",
     ]
+    if (musl_arch == "aarch64") {
+      deps += [
+        ":soft_libc_musl_shared_sp",
+      ]
+    }
   }
 
   group("soft_shared_libs") {
@@ -563,6 +585,11 @@ template("musl_libs") {
       ":soft_libxnet",
       ":soft_musl_crt_libs",
     ]
+    if (musl_arch == "aarch64") {
+      deps += [
+        ":soft_libc_musl_shared_sp",
+      ]
+    }
   }
 
   group("soft_static_libs") {
@@ -660,6 +687,31 @@ template("musl_libs") {
     deps = porting_deps
   }
 
+  source_set("soft_musl_src_strncpy_sp") {
+    sources = []
+    sources += [ "third_party/openbsd/lib/libc/string/strncpy.c" ]
+    configs -= musl_inherited_configs
+    configs += [
+      "//build/config/components/musl:soft_musl_config",
+      ":gwp_asan_config_shared",
+    ]
+    cflags = [
+      "-O2",
+      "-fPIC",
+      "-fstack-protector-strong",
+    ]
+
+    if (use_hwasan) {
+      configs += [ "//build/config/sanitizers:default_sanitizer_flags" ]
+      cflags += [
+        "-mllvm",
+        "-hwasan-instrument-check-enabled=true",
+      ]
+    }
+
+    deps = porting_deps
+  }
+
   source_set("soft_musl_src_optimize") {
     sources = []
     sources_orig = []
@@ -701,6 +753,67 @@ template("musl_libs") {
       "//build/config/components/musl:soft_musl_config",
       ":gwp_asan_config_shared",
       ":stack_config_musl",
+    ]
+    cflags = [
+      "-mllvm",
+      "-instcombine-max-iterations=0",
+      "-ffp-contract=fast",
+      "-O3",
+      "-fPIC",
+      "-fstack-protector-strong",
+    ]
+
+    if (use_hwasan) {
+      configs += [ "//build/config/sanitizers:default_sanitizer_flags" ]
+      cflags += [
+        "-mllvm",
+        "-hwasan-instrument-check-enabled=true",
+      ]
+    }
+
+    deps = porting_deps
+  }
+
+  source_set("soft_musl_src_optimize_sp") {
+    sources = []
+    sources_orig = []
+
+    if (musl_arch == "aarch64") {
+      sources_orig += [
+        "src/math/cos.c",
+        "src/math/exp.c",
+        "src/math/exp2.c",
+        "src/math/exp2f.c",
+        "src/math/expf.c",
+        "src/math/log.c",
+        "src/math/log10.c",
+        "src/math/log2.c",
+        "src/math/log2f.c",
+        "src/math/logb.c",
+        "src/math/logf.c",
+        "src/math/sin.c",
+        "src/math/sincos.c",
+        "src/math/pow.c",
+        "src/math/powf.c",
+      ]
+
+      if (is_llvm_build) {
+        sources_orig += [
+          "src/math/cosf.c",
+          "src/math/sincosf.c",
+          "src/math/sinf.c",
+        ]
+      }
+    }
+
+    foreach(s, sources_orig) {
+      sources += [ "${target_out_dir}/${musl_ported_dir}/${s}" ]
+    }
+
+    configs -= musl_inherited_configs
+    configs += [
+      "//build/config/components/musl:soft_musl_config",
+      ":gwp_asan_config_shared",
     ]
     cflags = [
       "-mllvm",
@@ -768,6 +881,70 @@ template("musl_libs") {
       "//build/config/components/musl:soft_musl_config",
       ":gwp_asan_config_shared",
       ":stack_config_musl",
+    ]
+    cflags = [
+      "-O3",
+      "-fPIC",
+      "-ffreestanding",
+      "-fno-stack-protector",
+    ]
+
+    if (use_hwasan) {
+      configs += [ "//build/config/sanitizers:default_sanitizer_flags" ]
+      cflags += [
+        "-mllvm",
+        "-hwasan-instrument-check-enabled=true",
+      ]
+    }
+
+    deps = porting_deps
+  }
+
+  source_set("soft_musl_src_nossp_sp") {
+    sources = []
+    sources_orig = [
+      "src/string/mempcpy.c",
+      "src/env/__init_tls.c",
+      "src/env/__libc_start_main.c",
+      "src/env/__stack_chk_fail.c",
+    ]
+
+    defines = []
+    if (musl_iterate_and_stats_api) {
+      defines += [ "MUSL_ITERATE_AND_STATS_API" ]
+    }
+
+    if (musl_arch == "arm") {
+      sources_orig += [ "src/thread/${musl_arch}/__set_thread_area.c" ]
+    } else if (musl_arch == "aarch64") {
+      sources_orig += [ "src/thread/${musl_arch}/__set_thread_area.s" ]
+    } else if (musl_arch == "x86_64") {
+      sources_orig += [
+        "src/thread/${musl_arch}/__set_thread_area.s",
+        "src/string/memset.c",
+      ]
+    } else if (musl_arch == "mips") {
+      sources_orig += [ "src/string/memset.c" ]
+    } else if (musl_arch == "riscv64") {
+      sources_orig += [
+        "src/thread/${musl_arch}/__set_thread_area.s",
+        "src/string/memset.c",
+      ]
+    } else if (musl_arch == "loongarch64") {
+      sources_orig += [
+        "src/thread/${musl_arch}/__set_thread_area.s",
+        "src/string/memset.c",
+      ]
+    }
+
+    foreach(s, sources_orig) {
+      sources += [ "${target_out_dir}/${musl_ported_dir}/${s}" ]
+    }
+
+    configs -= musl_inherited_configs
+    configs += [
+      "//build/config/components/musl:soft_musl_config",
+      ":gwp_asan_config_shared",
     ]
     cflags = [
       "-O3",
@@ -1008,6 +1185,83 @@ template("musl_libs") {
     configs += [ ":stack_config_musl" ]
   }
 
+  shared_library("soft_libc_musl_shared_sp") {
+    output_dir = "${target_out_dir}/${_libs_out_dir}/sp"
+    output_name = "libc"
+    output_extension = "so"
+
+    if (musl_is_legacy) {
+      libclang_rt_path = rebase_path(
+              "${runtime_lib_path}/${musl_target_triple}/nanlegacy/${_libs_path_prefix}")
+    } else {
+      libclang_rt_path = rebase_path(
+              "${runtime_lib_path}/${musl_target_triple}/${_libs_path_prefix}")
+    }
+
+    musl_lib_path = rebase_path("${target_out_dir}/${_libs_out_dir}")
+
+    ldflags = []
+    if (!musl_unit_test_flag) {
+      libc_map_path =
+          rebase_path("${target_out_dir}/${musl_ported_dir}/libc.map.txt")
+      ldflags += [ "-Wl,--version-script=${libc_map_path}" ]
+    }
+
+    ldflags += [
+      "-nostdlib",
+      "-Wl,-e,_dlstart",
+      "-L${libclang_rt_path}",
+      "-lclang_rt.builtins",
+      "-L${musl_lib_path}",
+      "-ldl",
+      "-lpthread",
+    ]
+
+    if (!is_llvm_build) {
+      ldflags += [ "-lunwind" ]
+    }
+
+    configs -= musl_inherited_configs
+    configs -= [ "//build/config:default_libs" ]
+    configs += [
+      "//build/config/components/musl:soft_musl_config",
+      ":gwp_asan_config_shared",
+    ]
+
+    deps = [
+      ":soft_libdl",
+      ":soft_libpthread",
+      ":soft_musl_crt_install_action",
+      ":soft_musl_hook_shared_sp",
+      ":soft_musl_ldso_shared_sp",
+      ":soft_musl_src_nossp_sp",
+      ":soft_musl_src_optimize_sp",
+      ":soft_musl_src_shared_sp",
+      ":soft_musl_src_strncpy_sp",
+    ]
+
+    external_deps = []
+    if (use_musl && !is_llvm_build) {
+      external_deps += [ "init:parameterbase" ]
+    }
+
+    if (!is_llvm_build) {
+      external_deps += [ "optimized_routines:optimized_static" ]
+    }
+
+    if (musl_arch == "aarch64" && !is_llvm_build) {
+      external_deps += [ "optimized_routines:optimize_math" ]
+    }
+
+    if (musl_use_jemalloc) {
+      external_deps += [ "jemalloc:jemalloc" ]
+    }
+
+    if (musl_ld128_flag) {
+      deps += [ ":soft_musl_src_ld128" ]
+    }
+  }
+
   action_foreach("soft_musl_crt_install_action") {
     redir = "${root_out_dir}/obj"
     script = "${target_out_dir}/${musl_ported_dir}/scripts/install.py"
@@ -1072,7 +1326,32 @@ template("musl_libs") {
     } else {
       asan = ""
     }
-    _muls_linker_so = "${root_out_dir}/common/common/libc/${_libs_path_prefix}/ld-musl-${musl_arch}${asan}.so.1"
+    if (musl_arch == "aarch64") {
+      _muls_linker_so = "${root_out_dir}/common/common/libc/arm64e/${_libs_path_prefix}/ld-musl-${musl_arch}${asan}.so.1"
+    } else {
+      _muls_linker_so = "${root_out_dir}/common/common/libc/${_libs_path_prefix}/ld-musl-${musl_arch}${asan}.so.1"
+    }
     outputs = [ _muls_linker_so ]
+  }
+
+
+  if (musl_arch == "aarch64") {
+    copy("soft_create_linker_sp") {
+      deps = [ ":soft_libc_musl_shared_sp" ]
+
+      # _libc_shared_outputs = get_target_outputs(":soft_libc_musl_shared")
+      _libc_shared_so = "${target_out_dir}/${_libs_out_dir}/sp/libc.so"
+
+      # Note that build framework puts the "tsan" lib in the "asan" directory(like /system/asan/lib64).
+      # We need to take advantage of the ability of the asan version of libc to find the lib from the asan directory.
+      sources = [ _libc_shared_so ]
+      if (is_asan || is_tsan) {
+        asan = "-asan"
+      } else {
+        asan = ""
+      }
+      _muls_linker_so = "${root_out_dir}/common/common/libc/${_libs_path_prefix}/ld-musl-${musl_arch}${asan}.so.1"
+      outputs = [ _muls_linker_so ]
+    }
   }
 }
