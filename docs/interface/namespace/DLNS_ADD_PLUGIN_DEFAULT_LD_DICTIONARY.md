@@ -21,7 +21,7 @@ For parameter `path`:
 4. It is also restricted by [dlns_set_ld_permitted_path](./DLNS_SET_LD_PERMITTED_PATH.md).
 5. `path`'s length is restricted by [PATH_MAX](https://pubs.opengroup.org/onlinepubs/9799919799/functions/fpathconf.html).
 
-Note: This function is MT-Safe(multi-thread safe) and not signal-safe. This function is mutually exclusive with other namespaces and linker operations
+Note: This function is MT-Safe(multi-thread safe) and not signal-safe. This function is mutually exclusive with other namespaces and linker operations.
 
 #### **RETURN VALUE**
 
@@ -49,7 +49,7 @@ The following error codes may be set in errno:
 
 #### NOTES
 
-​      Refers to [dlns_set_ld_permitted_path](./DLNS_SET_LD_PERMITTED_PATH.md)
+​      Refers to [dlns_set_ld_permitted_path](./DLNS_SET_LD_PERMITTED_PATH.md).
 
 #### CONFORMING TO
 
@@ -60,6 +60,7 @@ The following error codes may be set in errno:
 ```c
 #include <dlfcn.h>
 #include <stdio.h>
+#include <errno.h>
 typedef int (test_func)(char *path);
 
 int test()
@@ -82,7 +83,7 @@ int main()
 ```
 
 
-#### COLOPHTON
+#### COLOPHON
 
 ​      this page is part of the C library user-space interface documentation.
-​      Information about the project can be found at (https://gitcode.com/openharmony/third_party_musl/blob/master/docs/)
+​      Information about the project can be found at (https://gitcode.com/openharmony/third_party_musl/blob/master/docs/).
