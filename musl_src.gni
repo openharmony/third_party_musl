@@ -1627,6 +1627,7 @@ musl_src_file = [
   "ldso/cfi.h",
   "ldso/ld_log.h",
   "ldso/dynlink_rand.h",
+  "src/internal/log_base.h",
   "src/internal/vdso.c",
   "src/internal/emulate_wait4.c",
   "src/internal/malloc_config.h",
@@ -2511,6 +2512,7 @@ if (musl_arch == "arm") {
 }
 
 musl_inc_hook_files = [
+  "src/internal/log_base.h",
   "src/internal/hilog_adapter.h",
   "src/internal/linux/musl_log.h",
   "src/hook/linux/memory_trace.h",
