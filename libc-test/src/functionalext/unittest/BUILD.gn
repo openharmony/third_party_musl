@@ -163,6 +163,36 @@ ohos_executable("unittest_hilog_adapter") {
   test_output_dir = "${root_out_dir}/musl/libc-test"
 }
 
+ohos_executable("unittest_hilog_base") {
+  subsystem_name = "thirdparty"
+  part_name = "musl"
+
+  sources = [ "unit_test_hilog_base.c" ]
+
+  include_dirs = [
+    "//${test_dir}/src/functionalext/common",
+    "//${test_dir}/src/common",
+    "${musl_src_base}/src/internal",
+    "${musl_src_base}/src/hilog/linux",
+  ]
+
+  configs = [ "//third_party/musl/libc-test/src/common:config_unittest" ]
+
+  deps = [ "//third_party/musl:create_porting_src" ]
+
+  external_deps = [ "bounds_checking_function:libsec_shared" ]
+
+  cflags = [
+    "-Wno-int-to-void-pointer-cast",
+    "-Wno-void-pointer-to-int-cast",
+  ]
+
+  libs = [ "${musl_lib_dir}/libc.a" ]
+
+  ohos_test = true
+  test_output_dir = "${root_out_dir}/musl/libc-test"
+}
+
 ohos_executable("unittest_ldso_strops") {
   subsystem_name = "musl"
   part_name = "libc-test"
@@ -237,6 +267,7 @@ group("functionalext_unittest_test") {
     ":unittest_fatal_message_assert_fail",
     ":unittest_fatal_message_assert_fail_dialog",
     ":unittest_hilog_adapter",
+    ":unittest_hilog_base",
     ":unittest_hilog_vsnprint",
     ":unittest_ldso_dynlink",
     ":unittest_ldso_ld_log",
