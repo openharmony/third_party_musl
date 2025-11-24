@@ -473,6 +473,17 @@ static char *config_get_asan_lib_paths(const char *ns_name)
     return config_get_value(key);
 }
 
+static int compare_prefix(const char *str, const char *prefix)
+{
+    size_t prefix_len = strlen(prefix);
+
+    if (prefix_len == 0) {
+        return 0;
+    }
+
+    return strncmp(str, prefix, prefix_len);
+}
+
 /* parse config, success 0, failure <0 */
 static int config_parse(const char *file_path, const char *exe_path)
 {
@@ -504,7 +515,7 @@ static int config_parse(const char *file_path, const char *exe_path)
        if (paths) {
            size_t j;
            for (j = 0; j < paths->num; j++) {
-               if (!strcmp(paths->strs[j], exe_path)) break;
+               if (!compare_prefix(exe_path, paths->strs[j])) break;
            }
            if (j < paths->num) sname = dirkvs->key[i];
         }
