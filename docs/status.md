@@ -2,10 +2,10 @@
 
 ## libc
 当前libc.so符号列表：
-https://gitee.com/openharmony/third_party_musl/blob/master/libc.map.txt
+https://gitcode.com/openharmony/third_party_musl/blob/master/libc.map.txt
 
 ## musl-libc面向应用开发者的C-API
-https://gitee.com/openharmony/interface_sdk_c/blob/master/third_party/musl/ndk_script/adapter/libc.ndk.json
+https://gitcode.com/openharmony/interface_sdk_c/blob/master/third_party/musl/ndk_script/adapter/libc.ndk.json
 
 ## 系统侧libc新的变化
 
@@ -62,7 +62,7 @@ https://gitee.com/openharmony/interface_sdk_c/blob/master/third_party/musl/ndk_s
 
 
 2023/10/26 <netdb.h>
-- `getaddrinfo_ext`：扩展版本的 getaddrinfo 函数，用于获取指定主机名或服务名的网络地址信息
+- `getaddrinfo_ext`: 扩展版本的 getaddrinfo 函数，用于获取指定主机名或服务名的网络地址信息
 
 2023/5/29
 - 隐藏`InitParameterClient`、`InitSharedMem`、`SystemReadParam`、`SystemFindParameter`、`SystemGetParameterCommitId`、`SystemGetParameterValue`、`GetSystemCommitId`、`TestParameterReaderPerformance`符号
@@ -96,10 +96,10 @@ https://gitee.com/openharmony/third_party_musl/pulls/886
 - libc去除符号版本信息
 
 2022/10/27
-- 去掉隐藏符号 `pthread_cancel`
+- 去掉隐藏符号`pthread_cancel`
 
 2022/10/12
-- 去掉隐藏符号 `pthread_setcancelstate`
+- 去掉隐藏符号`pthread_setcancelstate`
 
 
 
@@ -141,43 +141,43 @@ https://gitee.com/openharmony/third_party_musl/pulls/886
 
 ### 应用开发功能限制
 - <shm.h> 共享内存: 在进程退出时不能被回收，有安全风险
-    - shmget 函数用于创建或获取共享内存段的标识符。
-    - shmat 函数用于将共享内存段附加到进程的地址空间中。
-    - shmdt 函数用于将共享内存段从进程的地址空间中分离。
-    - shmctl 函数用于对共享内存段进行控制操作，如获取/设置共享内存的状态信息、删除共享内存段等。
+    - shmget: 用于创建或获取共享内存段的标识符。
+    - shmat: 用于将共享内存段附加到进程的地址空间中。
+    - shmdt: 用于将共享内存段从进程的地址空间中分离。
+    - shmctl: 用于对共享内存段进行控制操作，如获取/设置共享内存的状态信息、删除共享内存段等。
 - <sem.h> 共享内存: 在进程退出时不能被回收，有安全风险
-    - semget 函数用于创建或获取信号量集的标识符。
-    - semctl 函数用于对信号量集进行控制操作，如获取/设置信号量的状态信息、删除信号量集等。
-    - semop 函数用于对信号量进行原子化操作，如增加或减少信号量的值。
-    - semtimedop 函数用于在指定的时间范围内进行对信号量的原子化操作，支持超时功能。
+    - semget: 用于创建或获取信号量集的标识符。
+    - semctl: 用于对信号量集进行控制操作，如获取/设置信号量的状态信息、删除信号量集等。
+    - semop: 用于对信号量进行原子化操作，如增加或减少信号量的值。
+    - semtimedop: 用于在指定的时间范围内进行对信号量的原子化操作，支持超时功能。
 - <fsuid.h> 文件系统用户标识和文件系统组标识: 会导致进程获取不该获取的权限，导致系统具有安全风险
-    - setfsgid 函数用于设置进程的文件系统组标识（File System Group Identifier）。
-    - setfsuid 函数用于设置进程的文件系统用户标识（File System User Identifier）。
+    - setfsgid: 用于设置进程的文件系统组标识（File System Group Identifier）。
+    - setfsuid: 用于设置进程的文件系统用户标识（File System User Identifier）。
 - 设置关于进程、文件系统的用户、组标识: 会导致进程获取不该获取的权限，导致系统具有安全风险
-    - setuid、setgid：用于设置进程的实际用户标识和实际组标识，以及有效用户标识和有效组标识。这些标识决定了进程对系统资源的访问权限。
-    - seteuid、setegid：用于设置进程的有效用户标识和有效组标识。这些标识用于权限检查和访问控制。
-    - setreuid、setregid：用于设置进程的实际用户标识和有效用户标识，或实际组标识和有效组标识。这些函数可以将实际标识和有效标识设置为不同的值。
-    - setfsgid、setfsuid：用于设置进程的文件系统组标识和文件系统用户标识。这些标识用于对文件系统资源的访问控制。
-    - setresgid：用于设置进程的实际组标识、有效组标识和保存的组标识。
+    - setuid、setgid: 用于设置进程的实际用户标识和实际组标识，以及有效用户标识和有效组标识。这些标识决定了进程对系统资源的访问权限。
+    - seteuid、setegid: 用于设置进程的有效用户标识和有效组标识。这些标识用于权限检查和访问控制。
+    - setreuid、setregid: 用于设置进程的实际用户标识和有效用户标识，或实际组标识和有效组标识。这些函数可以将实际标识和有效标识设置为不同的值。
+    - setfsgid、setfsuid: 用于设置进程的文件系统组标识和文件系统用户标识。这些标识用于对文件系统资源的访问控制。
+    - setresgid: 用于设置进程的实际组标识、有效组标识和保存的组标识。
     - setresgid: 用于同时设置进程的实际用户标识、有效用户标识和保存的用户标识。
     - setgroups: 用于设置进程的附加组标识列表。
 - 设置系统的主机名和域名: 修改主机名和域名，具有安全风险
-    - sethostname: 设置主机名
-    - setdomainname: 设置域名
+    - sethostname: 用于设置主机名。
+    - setdomainname: 用于设置域名。
 - 用于设置文件或目录的扩展属性: 写入文件系统的属性，具有安全风险
-    - setxattr
+    - setxattr: 用于设置文件扩展属性。
 - 文件句柄操作: 访问任意文件
-    - name_to_handle_at 函数用于将指定路径的文件名转换为持有文件句柄（file handle）的文件描述符。
-    - open_by_handle_at 函数用于根据给定的文件句柄（file handle）打开文件，并返回相应的文件描述符。
+    - name_to_handle_at: 用于将指定路径的文件名转换为持有文件句柄（file handle）的文件描述符。
+    - open_by_handle_at: 用于根据给定的文件句柄（file handle）打开文件，并返回相应的文件描述符。
 - 系统时钟: 修改系统时间
-    - clock_settime 用于设置指定的系统时钟（clock）的时间值
+    - clock_settime: 用于设置指定的系统时钟（clock）的时间值。
 - 进程根路径: 当前进程访问到不该访问的文件路径
-    - chroot 设置当前进程执行的根路径
+    - chroot: 用于设置当前进程执行的根路径。
 - <quota.h> 管理磁盘配额相关函数
-    - quotactl: 管理磁盘配额（disk quota）的相关操作，包括获取、设置和检查磁盘配额信息
+    - quotactl: 用于管理磁盘配额（disk quota）的相关操作，包括获取、设置和检查磁盘配额信息。
 - <stat.h> 
-    - mknod: 创建一个特殊文件节点（special file node），可以用于创建设备文件、管道文件等
-    - mknodat: 类似于 mknod 的系统调用函数，但相对于指定的文件描述符所在的目录进行操作，可以更灵活地控制文件的创建位置
+    - mknod: 用于创建一个特殊文件节点（special file node），可以用于创建设备文件、管道文件等。
+    - mknodat: 类似于 mknod 的系统调用函数，但相对于指定的文件描述符所在的目录进行操作，可以更灵活地控制文件的创建位置。
 
 ### 不同设备形态可能会导致内核特性的使能方式有所不同
 这些接口需要 /dev/shm 路径
