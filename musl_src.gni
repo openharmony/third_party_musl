@@ -1292,6 +1292,7 @@ musl_src_file = [
   "src/string/mempcpy.c",
   "src/string/memrchr.c",
   "src/string/memset.c",
+  "src/string/rawmemchr.c",
   "src/string/rindex.c",
   "src/string/stpcpy.c",
   "src/string/stpncpy.c",

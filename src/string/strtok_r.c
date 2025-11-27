@@ -10,3 +10,8 @@ char *strtok_r(char *restrict s, const char *restrict sep, char **restrict p)
 	else *p = 0;
 	return s;
 }
+
+char *__strtok_r(char *restrict s, const char *restrict sep, char **restrict p)
+{
+	return strtok_r(s, sep, p);
+}

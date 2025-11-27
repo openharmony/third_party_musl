@@ -24,6 +24,9 @@ extern "C" {
 
 #include <bits/alltypes.h>
 
+void *__rawmemchr (const void *, int);
+char *__strndup (const char *, size_t);
+
 void *memcpy (void *__restrict, const void *__restrict, size_t);
 void *memmove (void *, const void *, size_t);
 void *memset (void *, int, size_t);
@@ -62,6 +65,7 @@ char *strerror (int);
 #if defined(_POSIX_SOURCE) || defined(_POSIX_C_SOURCE) \
  || defined(_XOPEN_SOURCE) || defined(_GNU_SOURCE) \
  || defined(_BSD_SOURCE)
+char *__strtok_r (char *__restrict, const char *__restrict, char **__restrict);
 char *strtok_r (char *__restrict, const char *__restrict, char **__restrict);
 int strerror_r (int, char *, size_t);
 char *stpcpy(char *__restrict, const char *__restrict);

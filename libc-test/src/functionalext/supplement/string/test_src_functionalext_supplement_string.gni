@@ -63,4 +63,5 @@ functionalext_supplement_string_test = [
   "memmem",
   "memmove",
   "memrchr",
+  "__rawmemchr",
 ]
