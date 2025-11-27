@@ -73,6 +73,7 @@ void resTraceMove(unsigned long long mask, void* oldAddr, void* newAddr, size_t 
 		}
 		return dispatch_table->resTraceMove(mask, oldAddr, newAddr, newSize);
 	}
+	return;
 #endif
 	errno = ENOSYS;
 }
@@ -90,6 +91,7 @@ void resTraceFreeRegion(unsigned long long mask, void* addr, size_t size){
 		}
 		return dispatch_table->resTraceFreeRegion(mask, addr, size);
 	}
+	return;
 #endif
 	errno = ENOSYS;
 }
