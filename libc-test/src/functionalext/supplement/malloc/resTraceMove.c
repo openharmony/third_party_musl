@@ -26,7 +26,7 @@ void resTraceMove_0100(void)
 {
     char* oldMem = (char *)malloc(1 * sizeof(char));
     char* newMem = (char *)malloc(1 * sizeof(char));
-    ohos_malloc_hook_resTraceMove(RES_ARKTS_HEAP_MASK, oldMem, newMem, 1);
+    resTraceMove(RES_ARKTS_HEAP_MASK, oldMem, newMem, 1);
     free(oldMem);
     free(newMem);
 }
