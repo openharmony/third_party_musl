@@ -19,7 +19,7 @@
 
 /**
  * @tc.name      : resTraceFreeRegion_0100
- * @tc.desc      : Verify that memory allocation is successful (parameters are valid)
+ * @tc.desc      : Verify that memory free region is successful (parameters are valid)
  * @tc.level     : Level 0
  */
 void resTraceFreeRegion_0100(void)
