@@ -18,19 +18,19 @@
 #include "memory_trace.h"
 
 /**
- * @tc.name      : restrace_0100
+ * @tc.name      : resTraceFreeRegion_0100
  * @tc.desc      : Verify that memory allocation is successful (parameters are valid)
  * @tc.level     : Level 0
  */
-void restrace_0100(void)
+void resTraceFreeRegion_0100(void)
 {
     char* mem = (char *)malloc(1 * sizeof(char));
-    restrace(RES_GPU_VK, mem, 1, TAG_RES_GPU_VK, true);
+    resTraceFreeRegion(RES_ARKTS_HEAP_MASK, mem, 1);
     free(mem);
 }
 
 int main(void)
 {
-    restrace_0100();
+    resTraceFreeRegion_0100();
     return t_status;
 }
