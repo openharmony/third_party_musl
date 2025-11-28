@@ -18,19 +18,21 @@
 #include "memory_trace.h"
 
 /**
- * @tc.name      : restrace_0100
- * @tc.desc      : Verify that memory allocation is successful (parameters are valid)
+ * @tc.name      : resTraceMove_0100
+ * @tc.desc      : Verify that memory move is successful (parameters are valid)
  * @tc.level     : Level 0
  */
-void restrace_0100(void)
+void resTraceMove_0100(void)
 {
-    char* mem = (char *)malloc(1 * sizeof(char));
-    restrace(RES_GPU_VK, mem, 1, TAG_RES_GPU_VK, true);
-    free(mem);
+    char* oldMem = (char *)malloc(1 * sizeof(char));
+    char* newMem = (char *)malloc(1 * sizeof(char));
+    ohos_malloc_hook_resTraceMove(RES_ARKTS_HEAP_MASK, oldMem, newMem, 1);
+    free(oldMem);
+    free(newMem);
 }
 
 int main(void)
 {
-    restrace_0100();
+    resTraceMove_0100();
     return t_status;
 }
