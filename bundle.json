@@ -62,6 +62,9 @@
                     "name": "//third_party/musl:soft_libc_musl_shared"
                 },
                 {
+                    "name": "//third_party/musl:soft_libc_musl_shared_sp"
+                },
+                {
                     "name": "//third_party/musl:musl_headers"
                 }
             ],

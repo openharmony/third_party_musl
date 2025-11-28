@@ -496,6 +496,10 @@ if (is_lite_system && current_os == "ohos") {
     musl_use_flto = true
   }
 
+  static_and_shared_libs_template("shared_sp") {
+    musl_use_flto = true
+  }
+
   config("stack_config_musl") {
     cflags = []
     cflags_c = []
