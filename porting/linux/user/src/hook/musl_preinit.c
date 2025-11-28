@@ -40,6 +40,8 @@ void* ohos_aligned_alloc_hook_init_function(size_t alignment, size_t bytes);
 void* ohos_mmap_hook_init_function(void* addr, size_t length, int prot, int flags, int fd, off_t offset);
 void default_memtrace(void* addr, size_t size, const char* tag, bool is_using) {}
 void default_restrace(unsigned long long mask, void* addr, size_t size, const char* tag, bool is_using) {}
+void default_resTraceMove(unsigned long long mask, void* oldAddr, void* newAddr, size_t newSize) {}
+void default_resTraceFreeRegion(unsigned long long mask, void* addr, size_t size) {}
 
 static struct MallocDispatchType __ohos_malloc_hook_init_dispatch = {
 	.malloc = ohos_malloc_hook_init_function,
@@ -53,6 +55,8 @@ static struct MallocDispatchType __ohos_malloc_hook_init_dispatch = {
 	.memtrace = default_memtrace,
 	.aligned_alloc = ohos_aligned_alloc_hook_init_function,
 	.restrace = default_restrace,
+	.resTraceMove = default_resTraceMove,
+	.resTraceFreeRegion = default_resTraceFreeRegion,
 };
 #define MAX_SYM_NAME_SIZE 1000
 #define MAX_PROC_NAME_SIZE 256
@@ -246,6 +250,32 @@ static bool init_restrace_function(void* malloc_shared_library_handler, ResTrace
 	return true;
 }
 
+static bool init_resTraceMove_function(void* malloc_shared_library_handler, ResTraceMove* func, const char* prefix)
+{
+	char symbol[MAX_SYM_NAME_SIZE];
+	if (snprintf(symbol, sizeof(symbol), "%s_%s", prefix, "resTraceMove") < 0) {
+		return false;
+	}
+	*func = (ResTraceMove)(dlsym(malloc_shared_library_handler, symbol));
+	if (*func == NULL) {
+		return false;
+	}
+	return true;
+}
+
+static bool init_resTraceFreeRegion_function(void* malloc_shared_library_handler, ResTraceFreeRegion* func, const char* prefix)
+{
+	char symbol[MAX_SYM_NAME_SIZE];
+	if (snprintf(symbol, sizeof(symbol), "%s_%s", prefix, "resTraceFreeRegion") < 0) {
+		return false;
+	}
+	*func = (ResTraceFreeRegion)(dlsym(malloc_shared_library_handler, symbol));
+	if (*func == NULL) {
+		return false;
+	}
+	return true;
+}
+
 static bool init_calloc_function(void* malloc_shared_library_handler, MallocCallocType* func, const char* prefix)
 {
 	char symbol[MAX_SYM_NAME_SIZE];
@@ -348,6 +378,12 @@ static bool init_hook_functions(void* shared_library_handler, struct MallocDispa
 		return false;
 	}
 	if (!init_restrace_function(shared_library_handler, &table->restrace, prefix)) {
+		return false;
+	}
+	if (!init_resTraceMove_function(shared_library_handler, &table->resTraceMove, prefix)) {
+		return false;
+	}
+	if (!init_resTraceFreeRegion_function(shared_library_handler, &table->resTraceFreeRegion, prefix)) {
 		return false;
 	}
 	if (!init_malloc_usable_size_function(shared_library_handler, &table->malloc_usable_size, prefix)) {

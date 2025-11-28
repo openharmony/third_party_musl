@@ -1,3 +1,4 @@
+#include "errno.h"
 #include "memory_trace.h"
 #ifdef HOOK_ENABLE
 #include "common_def.h"
@@ -41,4 +42,40 @@ void restrace(unsigned long long mask, void* addr, size_t size, const char* tag,
 	}
     return;
 #endif
+}
+
+void resTraceMove(unsigned long long mask, void* oldAddr, void* newAddr, size_t newSize){
+#ifdef HOOK_ENABLE
+	volatile const struct MallocDispatchType* dispatch_table = (struct MallocDispatchType *)atomic_load_explicit(
+		&__musl_libc_globals.current_dispatch_table, memory_order_acquire);
+	if (__predict_false(dispatch_table != NULL)) {
+		if (!__get_global_hook_flag()) {
+			return;
+		}
+		else if (!__get_hook_flag()) {
+			return;
+		}
+		return dispatch_table->resTraceMove(mask, oldAddr, newAddr, newSize);
+	}
+	return;
+#endif
+	errno = ENOSYS;
+}
+
+void resTraceFreeRegion(unsigned long long mask, void* addr, size_t size){
+#ifdef HOOK_ENABLE
+	volatile const struct MallocDispatchType* dispatch_table = (struct MallocDispatchType *)atomic_load_explicit(
+		&__musl_libc_globals.current_dispatch_table, memory_order_acquire);
+	if (__predict_false(dispatch_table != NULL)) {
+		if (!__get_global_hook_flag()) {
+			return;
+		}
+		else if (!__get_hook_flag()) {
+			return;
+		}
+		return dispatch_table->resTraceFreeRegion(mask, addr, size);
+	}
+	return;
+#endif
+	errno = ENOSYS;
 }
