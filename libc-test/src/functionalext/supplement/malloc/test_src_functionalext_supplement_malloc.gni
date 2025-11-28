@@ -14,6 +14,8 @@
 functionalext_supplement_malloc_test = [
   "realloc",
   "restrace",
+  "resTraceFreeRegion",
+  "resTraceMove",
   "posix_memalign",
   "memalign",
   "aligned_alloc",
