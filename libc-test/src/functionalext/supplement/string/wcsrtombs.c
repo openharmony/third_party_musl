@@ -272,6 +272,557 @@ void wcsrtombs_1000(void)
     }
 }
 
+/**
+ * @tc.name      : wcsrtombs_1100
+ * @tc.desc      : Test wcsrtombs with accented characters (UTF-8 locale required)
+ * @tc.level     : Level 2
+ */
+void wcsrtombs_1100(void)
+{
+    const wchar_t *src = L"café résumé";  
+    char dst[32] = {0};  
+    mbstate_t state = {0};
+    const wchar_t *src_ptr = src;
+    
+    char *old_locale = setlocale(LC_ALL, NULL);
+    if (old_locale == NULL) {
+        t_error("%s: failed to get current locale (setlocale return NULL)", __func__);
+        return;
+    }
+    
+    char *new_locale = setlocale(LC_ALL, "UTF-8");
+    if (new_locale == NULL) {
+        t_error("%s: failed to set UTF-8 locale (setlocale return NULL)", __func__);
+        return;  
+    }
+    
+    size_t result = wcsrtombs(dst, &src_ptr, sizeof(dst), &state);
+    if (result == (size_t)-1) {
+        t_error("%s: wcsrtombs conversion failed for accented characters (errno=%d)", __func__, errno);
+        setlocale(LC_ALL, old_locale);
+        return;
+    }
+    
+    if (strcmp(dst, "café résumé") != 0) {
+        t_error("%s: wcsrtombs get result is '%s' (want 'café résumé')", __func__, dst);
+    }
+    
+    if (setlocale(LC_ALL, old_locale) == NULL) {
+        t_error("%s: failed to restore original locale (%s)", __func__, old_locale);
+    }
+}
+
+/**
+ * @tc.name      : wcsrtombs_1200
+ * @tc.desc      : Test wcsrtombs with buffer size exactly equal to required length (no extra null terminator)
+ * @tc.level     : Level 2
+ */
+void wcsrtombs_1200(void)
+{
+    const wchar_t *src = L"ExactSize";  
+    mbstate_t state = {0};
+    const wchar_t *src_ptr = src;  
+    
+    size_t required_len = wcsrtombs(NULL, &src_ptr, 0, &state);
+    if (required_len == (size_t)-1) {
+        t_error("%s: wcsrtombs failed to calculate required length (errno=%d)", __func__, errno);
+        return;
+    }
+    
+    if (required_len == 0 || required_len > 1024) {  
+        t_error("%s: invalid required length %zu (out of valid range)", __func__, required_len);
+        return;
+    }
+    
+    char dst[required_len];
+    src_ptr = src;  
+    
+    if (memset_s(&state, sizeof(mbstate_t), 0, sizeof(mbstate_t)) != 0) {
+        t_error("%s: memset_s failed to reset mbstate_t", __func__);
+        return;  
+    }
+    
+    size_t result = wcsrtombs(dst, &src_ptr, sizeof(dst), &state);
+    if (result == (size_t)-1) {
+        t_error("%s: wcsrtombs conversion failed with exact buffer size (errno=%d)", __func__, errno);
+        return;
+    }
+    
+    if (result != sizeof(dst)) {
+        t_error("%s: wcsrtombs get result length %zu (want %zu)", __func__, result, sizeof(dst));
+    }
+    
+    if (src_ptr == NULL || src_ptr != src + wcslen(src)) {
+        t_error("%s: src_ptr should point to end of source (src+%zu), but got %p", 
+                __func__, wcslen(src), (void*)src_ptr);
+    }
+}
+
+/**
+ * @tc.name      : wcsrtombs_1300
+ * @tc.desc      : Test wcsrtombs with Japanese characters (UTF-8 locale required)
+ * @tc.level     : Level 2
+ */
+void wcsrtombs_1300(void)
+{
+    const wchar_t *src = L"りんご バナナ";  
+    char dst[64] = {0};  
+    mbstate_t state = {0};
+    const wchar_t *src_ptr = src;
+    
+    char *old_locale = setlocale(LC_ALL, NULL);
+    if (old_locale == NULL) {
+        t_error("%s: failed to get current locale (setlocale return NULL)", __func__);
+        return;
+    }
+    
+    char *utf8_locales[] = {"UTF-8", "C.UTF-8", "en_US.UTF-8", "ja_JP.UTF-8", NULL};
+    char *new_locale = NULL;
+    for (int i = 0; utf8_locales[i] != NULL; i++) {
+        new_locale = setlocale(LC_ALL, utf8_locales[i]);
+        if (new_locale != NULL) {
+            break;
+        }
+    }
+    if (new_locale == NULL) {
+        t_error("%s: failed to set UTF-8 compatible locale (required for Japanese conversion)", __func__);
+        return;
+    }
+    
+    size_t result = wcsrtombs(dst, &src_ptr, sizeof(dst), &state);
+    if (result == (size_t)-1) {
+        t_error("%s: wcsrtombs conversion failed for Japanese characters (errno=%d)", __func__, errno);
+        setlocale(LC_ALL, old_locale);
+        return;
+    }
+    
+    if (src_ptr != NULL) {
+        t_error("%s: wcsrtombs did not complete conversion for Japanese characters (src_ptr=%p)", 
+                __func__, (void*)src_ptr);
+    }
+    
+    if (setlocale(LC_ALL, old_locale) == NULL) {
+        t_error("%s: failed to restore original locale (%s)", __func__, old_locale);
+    }
+}
+
+/**
+ * @tc.name      : wcsrtombs_1400
+ * @tc.desc      : Test wcsrtombs with NULL source string
+ * @tc.level     : Level 3
+ */
+void wcsrtombs_1400(void)
+{
+    const wchar_t *src = NULL;
+    char dst[32];
+    mbstate_t state = {0};
+    const wchar_t *src_ptr = src;
+    
+    size_t result = wcsrtombs(dst, &src_ptr, sizeof(dst), &state);
+    if (result != 0) {
+        t_error("%s wcsrtombs get result length %zu (want 0) for NULL source\n", __func__, result);
+    }
+    
+    if (src_ptr != NULL) {
+        t_error("%s wcsrtombs src_ptr should be NULL for NULL source\n", __func__);
+    }
+}
+
+/**
+ * @tc.name      : wcsrtombs_1500
+ * @tc.desc      : Test wcsrtombs with large buffer (exceeding required size)
+ * @tc.level     : Level 1
+ */
+void wcsrtombs_1500(void)
+{
+    const wchar_t *src = L"Large buffer test: 1234567890";
+    char dst[1024];  
+    mbstate_t state = {0};
+    const wchar_t *src_ptr = src;
+    
+    size_t result = wcsrtombs(dst, &src_ptr, sizeof(dst), &state);
+    if (result == (size_t)-1) {
+        t_error("%s wcsrtombs conversion failed with large buffer\n", __func__);
+        return;
+    }
+    
+    if (strcmp(dst, "Large buffer test: 1234567890") != 0) {
+        t_error("%s wcsrtombs get result '%s' (want 'Large buffer test: 1234567890')\n", __func__, dst);
+    }
+    
+    if (src_ptr != NULL) {
+        t_error("%s wcsrtombs src_ptr should be NULL with large buffer\n", __func__);
+    }
+}
+
+/**
+ * @tc.name      : wcsrtombs_1600
+ * @tc.desc      : Test wcsrtombs with non-UTF-8 locale (e.g., GBK for Chinese)
+ * @tc.level     : Level 3
+ */
+void wcsrtombs_1600(void)
+{
+    const wchar_t *src = L"中文测试";
+    char dst[32] = {0};  
+    mbstate_t state = {0};
+    const wchar_t *src_ptr = src;
+    
+    char *old_locale = setlocale(LC_ALL, NULL);
+    if (old_locale == NULL) {
+        t_error("%s: failed to get current locale (setlocale return NULL)", __func__);
+        return;
+    }
+    
+    char *gbk_locales[] = {"zh_CN.GBK", "GBK", "zh_CN", "zh_CN.gbk", NULL};
+    char *new_locale = NULL;
+    for (int i = 0; gbk_locales[i] != NULL; i++) {
+        new_locale = setlocale(LC_ALL, gbk_locales[i]);
+        if (new_locale != NULL) {
+            break;
+        }
+    }
+    
+    if (new_locale == NULL) {
+        printf("%s: GBK compatible locale not available, skip test\n", __func__);
+        return;  
+    }
+    
+    size_t result = wcsrtombs(dst, &src_ptr, sizeof(dst), &state);
+    if (result == (size_t)-1) {
+        t_error("%s: wcsrtombs conversion failed with GBK locale (errno=%d)", __func__, errno);
+        if (setlocale(LC_ALL, old_locale) == NULL) {
+            t_error("%s: failed to restore original locale after conversion failure", __func__);
+        }
+        return;
+    }
+    
+    if (result != 8) {
+        t_error("%s: wcsrtombs get length %zu (want 8) with GBK locale", __func__, result);
+    }
+    
+    if (src_ptr != NULL) {
+        t_error("%s: wcsrtombs did not complete conversion with GBK locale (src_ptr=%p)", 
+                __func__, (void*)src_ptr);
+    }
+    
+    if (setlocale(LC_ALL, old_locale) == NULL) {
+        t_error("%s: failed to restore original locale (%s)", __func__, old_locale);
+    }
+}
+
+/**
+ * @tc.name      : wcsrtombs_1700
+ * @tc.desc      : Test wcsrtombs with state reset between calls
+ * @tc.level     : Level 2
+ */
+void wcsrtombs_1700(void)
+{
+    const wchar_t *src1 = L"Partial1";
+    const wchar_t *src2 = L"FullString";
+    char dst[32];
+    mbstate_t state = {0};
+    const wchar_t *src_ptr = src1;
+
+    size_t result1 = wcsrtombs(dst, &src_ptr, 5, &state);
+    if (result1 == (size_t)-1) {
+        t_error("%s wcsrtombs first conversion failed\n", __func__);
+        return;
+    }
+
+    if (memset_s(&state, sizeof(mbstate_t), 0, sizeof(mbstate_t)) != 0) {
+        t_error("%s: memset_s failed to reset mbstate_t", __func__);
+        return;  
+    }
+
+    src_ptr = src2;
+    size_t result2 = wcsrtombs(dst, &src_ptr, sizeof(dst), &state);
+    if (result2 == (size_t)-1) {
+        t_error("%s wcsrtombs second conversion failed after state reset\n", __func__);
+        return;
+    }
+
+    if (strcmp(dst, "FullString") != 0) {
+        t_error("%s wcsrtombs get result '%s' (want 'FullString') after state reset\n", __func__, dst);
+    }
+}
+
+/**
+ * @tc.name      : wcsrtombs_1800
+ * @tc.desc      : Test wcsrtombs with symbols and punctuation (mixed with letters)
+ * @tc.level     : Level 1
+ */
+void wcsrtombs_1800(void)
+{
+    const wchar_t *src = L"Hello!@#$%^&*()_+-=[]{}|;':\",./<>?";
+    char dst[128];
+    mbstate_t state = {0};
+    const wchar_t *src_ptr = src;
+    
+    size_t result = wcsrtombs(dst, &src_ptr, sizeof(dst), &state);
+    if (result == (size_t)-1) {
+        t_error("%s wcsrtombs conversion failed for symbols\n", __func__);
+        return;
+    }
+    
+    if (strcmp(dst, "Hello!@#$%^&*()_+-=[]{}|;':\",./<>?") != 0) {
+        t_error("%s wcsrtombs get result '%s' (want mixed symbols)\n", __func__, dst);
+    }
+}
+
+/**
+ * @tc.name      : wcsrtombs_1900
+ * @tc.desc      : Test wcsrtombs with non-BMP characters (emoji, UTF-8 locale required)
+ * @tc.level     : Level 3
+ */
+void wcsrtombs_1900(void)
+{
+    const wchar_t *src = NULL;
+    #ifdef _WIN32
+    static wchar_t emoji_src[] = {0xD83D, 0xDE00, 0xD83D, 0xDE01, L'\0'};  
+    src = emoji_src;
+    #else
+    src = L"😀😁";  
+    #endif
+    
+    char dst[32] = {0};  
+    mbstate_t state = {0};
+    const wchar_t *src_ptr = src;
+    
+    char *old_locale = setlocale(LC_ALL, NULL);
+    if (old_locale == NULL) {
+        t_error("%s: failed to get current locale (setlocale return NULL)", __func__);
+        return;
+    }
+    
+    char *utf8_locales[] = {"UTF-8", "C.UTF-8", "en_US.UTF-8", NULL};
+    char *new_locale = NULL;
+    for (int i = 0; utf8_locales[i] != NULL; i++) {
+        new_locale = setlocale(LC_ALL, utf8_locales[i]);
+        if (new_locale != NULL) {
+            break;
+        }
+    }
+    if (new_locale == NULL) {
+        t_error("%s: failed to set UTF-8 compatible locale (required for emoji conversion)", __func__);
+        return;
+    }
+    
+    size_t result = wcsrtombs(dst, &src_ptr, sizeof(dst), &state);
+    if (result == (size_t)-1) {
+        t_error("%s: wcsrtombs conversion failed for emoji (errno=%d)", __func__, errno);
+        if (setlocale(LC_ALL, old_locale) == NULL) {
+            t_error("%s: failed to restore original locale after conversion failure", __func__);
+        }
+        return;
+    }
+    
+    if (result != 8) {
+        t_error("%s: wcsrtombs get length %zu (want 8) for emoji", __func__, result);
+    }
+    
+    if (src_ptr != NULL) {
+        t_error("%s: wcsrtombs did not complete conversion for emoji (src_ptr=%p)", 
+                __func__, (void*)src_ptr);
+    }
+    
+    if (setlocale(LC_ALL, old_locale) == NULL) {
+        t_error("%s: failed to restore original locale (%s)", __func__, old_locale);
+    }
+}
+
+/**
+ * @tc.name      : wcsrtombs_2000
+ * @tc.desc      : Test wcsrtombs with zero buffer size (only calculate length)
+ * @tc.level     : Level 1
+ */
+void wcsrtombs_2000(void)
+{
+    const wchar_t *src = L"ZeroBufferSizeTest";
+    mbstate_t state = {0};
+    const wchar_t *src_ptr = src;
+    
+    size_t result = wcsrtombs(NULL, &src_ptr, 0, &state);
+    if (result == (size_t)-1) {
+        t_error("%s wcsrtombs size calculation failed with zero buffer\n", __func__);
+        return;
+    }
+    
+    if (result != 18) {
+        t_error("%s wcsrtombs get length %zu (want 18) with zero buffer\n", __func__, result);
+    }
+    
+    if (src_ptr != src) {
+        t_error("%s wcsrtombs src_ptr should not advance with zero buffer\n", __func__);
+    }
+}
+
+/**
+ * @tc.name      : wcsrtombs_2100
+ * @tc.desc      : Test wcsrtombs with trailing null characters in source
+ * @tc.level     : Level 1
+ */
+void wcsrtombs_2100(void)
+{
+    const wchar_t src[] = {L'a', L'b', L'c', L'\0', L'\0', L'd', L'\0'};
+    char dst[32];
+    mbstate_t state = {0};
+    const wchar_t *src_ptr = src;
+    
+    size_t result = wcsrtombs(dst, &src_ptr, sizeof(dst), &state);
+    if (result == (size_t)-1) {
+        t_error("%s wcsrtombs conversion failed with trailing nulls\n", __func__);
+        return;
+    }
+    
+    if (strcmp(dst, "abc") != 0) {
+        t_error("%s wcsrtombs get result '%s' (want 'abc') with trailing nulls\n", __func__, dst);
+    }
+    
+    if (src_ptr != &src[3]) {  
+        t_error("%s wcsrtombs src_ptr not pointing to first null terminator\n", __func__);
+    }
+}
+
+/**
+ * @tc.name      : wcsrtombs_2200
+ * @tc.desc      : Test wcsrtombs with invalid mbstate_t (corrupted state)
+ * @tc.level     : Level 3
+ */
+void wcsrtombs_2200(void)
+{
+    const wchar_t *src = L"ValidString";
+    char dst[32] = {0};  
+    mbstate_t state;
+    const wchar_t *src_ptr = src;
+    
+    if (memset_s(&state, sizeof(mbstate_t), 0xAA, sizeof(mbstate_t)) != 0) {
+        t_error("%s: memset_s failed to corrupt mbstate_t", __func__);
+        return;  
+    }  
+    
+    size_t result = wcsrtombs(dst, &src_ptr, sizeof(dst), &state);
+    
+    if (result == (size_t)-1) {
+        printf("%s: test completed without crash (invalid state, conversion failed, errno=%d)\n", 
+                __func__, errno);
+    } else {
+        printf("%s: test completed without crash (invalid state, conversion succeeded, result length=%zu)\n", 
+                __func__, result);
+    }
+    
+    (void)dst;
+    (void)src_ptr;
+}
+/**
+ * @tc.name      : wcsrtombs_2300
+ * @tc.desc      : Test wcsrtombs with mixed ASCII and non-ASCII characters
+ * @tc.level     : Level 2
+ */
+void wcsrtombs_2300(void)
+{
+    const wchar_t *src = L"Mix: 中文 123 café 😀";  
+    char dst[128] = {0};  
+    mbstate_t state = {0};
+    const wchar_t *src_ptr = src;
+    
+    char *old_locale = setlocale(LC_ALL, NULL);
+    if (old_locale == NULL) {
+        t_error("%s: failed to get current locale (setlocale return NULL)", __func__);
+        return;
+    }
+    
+    char *utf8_locales[] = {"UTF-8", "C.UTF-8", "en_US.UTF-8", NULL};
+    char *new_locale = NULL;
+    for (int i = 0; utf8_locales[i] != NULL; i++) {
+        new_locale = setlocale(LC_ALL, utf8_locales[i]);
+        if (new_locale != NULL) {
+            break;
+        }
+    }
+    if (new_locale == NULL) {
+        t_error("%s: failed to set UTF-8 compatible locale (required for mixed characters conversion)", __func__);
+        return;
+    }
+    
+    size_t result = wcsrtombs(dst, &src_ptr, sizeof(dst), &state);
+    if (result == (size_t)-1) {
+        t_error("%s: wcsrtombs conversion failed for mixed characters (errno=%d)", __func__, errno);
+        if (setlocale(LC_ALL, old_locale) == NULL) {
+            t_error("%s: failed to restore original locale after conversion failure", __func__);
+        }
+        return;
+    }
+    
+    if (strcmp(dst, "Mix: 中文 123 café 😀") != 0) {
+        t_error("%s: wcsrtombs get result '%s' (want 'Mix: 中文 123 café 😀')", __func__, dst);
+    }
+    
+    if (src_ptr != NULL) {
+        t_error("%s: wcsrtombs did not complete conversion for mixed characters (src_ptr=%p)", 
+                __func__, (void*)src_ptr);
+    }
+    
+    if (setlocale(LC_ALL, old_locale) == NULL) {
+        t_error("%s: failed to restore original locale (%s)", __func__, old_locale);
+    }
+}
+/**
+ * @tc.name      : wcsrtombs_2400
+ * @tc.desc      : Test wcsrtombs with buffer size 1 (only null terminator)
+ * @tc.level     : Level 2
+ */
+void wcsrtombs_2400(void)
+{
+    const wchar_t *src = L"LongString";
+    char dst[1];  
+    mbstate_t state = {0};
+    const wchar_t *src_ptr = src;
+    
+    size_t result = wcsrtombs(dst, &src_ptr, sizeof(dst), &state);
+    if (result == (size_t)-1) {
+        t_error("%s wcsrtombs conversion failed with buffer size 1\n", __func__);
+        return;
+    }
+    
+    if (result != 0) {
+        t_error("%s wcsrtombs get length %zu (want 0) with buffer size 1\n", __func__, result);
+    }
+    
+    if (dst[0] != '\0') {
+        t_error("%s wcsrtombs dst should be null terminator with buffer size 1\n", __func__);
+    }
+}
+
+/**
+ * @tc.name      : wcsrtombs_2500
+ * @tc.desc      : Test wcsrtombs with repeated conversions using same state
+ * @tc.level     : Level 2
+ */
+void wcsrtombs_2500(void)
+{
+    const wchar_t *src_part1 = L"FirstPart";
+    const wchar_t *src_part2 = L"SecondPart";
+    char dst[64] = {0};
+    mbstate_t state = {0};
+    const wchar_t *src_ptr = src_part1;
+    
+    size_t result1 = wcsrtombs(dst, &src_ptr, sizeof(dst), &state);
+    if (result1 == (size_t)-1 || src_ptr != NULL) {
+        t_error("%s wcsrtombs first part conversion failed\n", __func__);
+        return;
+    }
+    
+    src_ptr = src_part2;
+    size_t result2 = wcsrtombs(dst + result1, &src_ptr, sizeof(dst) - result1, &state);
+    if (result2 == (size_t)-1 || src_ptr != NULL) {
+        t_error("%s wcsrtombs second part conversion failed\n", __func__);
+        return;
+    }
+    
+    if (strcmp(dst, "FirstPartSecondPart") != 0) {
+        t_error("%s wcsrtombs get result '%s' (want 'FirstPartSecondPart')\n", __func__, dst);
+    }
+}
 int main(int argc, char *argv[])
 {
     wcsrtombs_0100();
@@ -284,5 +835,20 @@ int main(int argc, char *argv[])
     wcsrtombs_0800();
     wcsrtombs_0900();
     wcsrtombs_1000();
+    wcsrtombs_1100();
+    wcsrtombs_1200();
+    wcsrtombs_1300();
+    wcsrtombs_1400();
+    wcsrtombs_1500();
+    wcsrtombs_1600();
+    wcsrtombs_1700();
+    wcsrtombs_1800();
+    wcsrtombs_1900();
+    wcsrtombs_2000();
+    wcsrtombs_2100();
+    wcsrtombs_2200();
+    wcsrtombs_2300();
+    wcsrtombs_2400();
+    wcsrtombs_2500();
     return t_status;
 }

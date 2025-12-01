@@ -16,6 +16,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <wchar.h>
+#include <stdlib.h>
 #include <locale.h>
 #include "test.h"
 
@@ -156,9 +157,19 @@ void wcscoll_0800(void)
 {
     // Save current locale
     char *old_locale = setlocale(LC_ALL, NULL);
+    if (old_locale == NULL) {
+        t_error("%s setlocale failed to get current locale\n", __func__);
+        return;
+    }
     
     // Test with C locale
-    setlocale(LC_ALL, "C");
+    if (setlocale(LC_ALL, "C") == NULL) {
+        t_error("%s setlocale failed to set C locale\n", __func__);
+        if (setlocale(LC_ALL, old_locale) == NULL) {
+            t_error("%s setlocale failed to restore original locale\n", __func__);
+        }
+        return;
+    }
     
     wchar_t *str1 = L"Apple";
     wchar_t *str2 = L"apple";
@@ -171,10 +182,14 @@ void wcscoll_0800(void)
         
         // Results might differ between locales, which is normal
         // We just verify both calls complete successfully
+    } else {
+        t_error("%s setlocale failed to set en_US.UTF-8 locale\n", __func__);
     }
     
     // Restore original locale
-    setlocale(LC_ALL, old_locale);
+    if (setlocale(LC_ALL, old_locale) == NULL) {
+        t_error("%s setlocale failed to restore original locale\n", __func__);
+    }
 }
 
 /**
@@ -213,6 +228,306 @@ void wcscoll_1000(void)
     }
 }
 
+/**
+ * @tc.name      : wcscoll_1100
+ * @tc.desc      : Test wcscoll with NULL pointer 
+ * @tc.level     : Level 3
+ */
+void wcscoll_1100(void)
+{
+    wchar_t *str1 = NULL;
+    wchar_t *str2 = L"test";
+    
+    int result = wcscoll(str1, str2);
+    (void)result;  
+    printf("%s: called wcscoll with NULL pointer, no crash (system-dependent)\n", __func__);
+}
+
+/**
+ * @tc.name      : wcscoll_1200
+ * @tc.desc      : Test wcscoll with one empty string and one long string 
+ * @tc.level     : Level 2
+ */
+void wcscoll_1200(void)
+{
+    wchar_t *str1 = L"";
+    wchar_t str2[101];
+    
+    if (memset_s(str2, sizeof(str2), (int)L'a', 100 * sizeof(wchar_t)) != 0) {
+        t_error("%s: memset_s failed to fill wide string", __func__);
+        return;  
+    }
+    
+    str2[100] = L'\0';
+    
+    int result = wcscoll(str1, str2);
+    if (result >= 0) {
+        t_error("%s: wcscoll returns %d (expected negative for empty vs long string)", __func__, result);
+    }
+}
+
+/**
+ * @tc.name      : wcscoll_1300
+ * @tc.desc      : Test wcscoll with Chinese characters 
+ * @tc.level     : Level 2
+ */
+void wcscoll_1300(void)
+{
+    wchar_t *str1 = L"苹果";  
+    wchar_t *str2 = L"香蕉";  
+    
+    int result = wcscoll(str1, str2);
+    int result2 = wcscoll(str2, str1);
+    
+    if (!((result < 0 && result2 > 0) || (result > 0 && result2 < 0))) {
+        t_error("%s: inconsistent results (result1=%d, result2=%d) for Chinese characters", __func__, result, result2);
+    }
+}
+
+/**
+ * @tc.name      : wcscoll_1400
+ * @tc.desc      : Test wcscoll with strings of different lengths 
+ * @tc.level     : Level 1
+ */
+void wcscoll_1400(void)
+{
+    wchar_t *str1 = L"abc";
+    wchar_t *str2 = L"abcd";  
+    
+    int result = wcscoll(str1, str2);
+    if (result >= 0) {
+        t_error("%s: wcscoll returns %d (expected negative for 'abc' < 'abcd')", __func__, result);
+    }
+}
+
+/**
+ * @tc.name      : wcscoll_1500
+ * @tc.desc      : Test wcscoll with control characters 
+ * @tc.level     : Level 3
+ */
+void wcscoll_1500(void)
+{
+    wchar_t *str1 = L"\ttest";  
+    wchar_t *str2 = L"\ntest";  
+    
+    int result = wcscoll(str1, str2);
+    int result2 = wcscoll(str2, str1);
+    
+    if (!((result < 0 && result2 > 0) || (result > 0 && result2 < 0))) {
+        t_error("%s: inconsistent results (result1=%d, result2=%d) for control characters", __func__, result, result2);
+    }
+}
+
+/**
+ * @tc.name      : wcscoll_1600
+ * @tc.desc      : Test wcscoll with mixed case and numbers 
+ * @tc.level     : Level 1
+ */
+void wcscoll_1600(void)
+{
+    wchar_t *str1 = L"Test123";
+    wchar_t *str2 = L"test456";
+    
+    int result = wcscoll(str1, str2);
+    int result2 = wcscoll(str2, str1);
+    
+    if (!((result < 0 && result2 > 0) || (result > 0 && result2 < 0))) {
+        t_error("%s: inconsistent results (result1=%d, result2=%d) for mixed case+numbers", __func__, result, result2);
+    }
+}
+
+/**
+ * @tc.name      : wcscoll_1700
+ * @tc.desc      : Test wcscoll with right-to-left (RTL) characters 
+ * @tc.level     : Level 3
+ */
+void wcscoll_1700(void)
+{
+    wchar_t *str1 = L"السلام";  
+    wchar_t *str2 = L"العمر";  
+    
+    int result = wcscoll(str1, str2);
+    int result2 = wcscoll(str2, str1);
+    
+    if (!((result < 0 && result2 > 0) || (result > 0 && result2 < 0) || (result == 0 && result2 == 0))) {
+        t_error("%s: inconsistent results (result1=%d, result2=%d) for RTL characters", __func__, result, result2);
+    }
+}
+
+/**
+ * @tc.name      : wcscoll_1800
+ * @tc.desc      : Test wcscoll with strings containing spaces 
+ * @tc.level     : Level 1
+ */
+void wcscoll_1800(void)
+{
+    wchar_t *str1 = L"hello world";  
+    wchar_t *str2 = L"helloworld";   
+    
+    int result = wcscoll(str1, str2);
+
+    if (result >= 0) {
+        t_error("%s: wcscoll returns %d (expected negative for 'hello world' < 'helloworld')", __func__, result);
+    }
+}
+
+/**
+ * @tc.name      : wcscoll_1900
+ * @tc.desc      : Test wcscoll with maximum wchar_t value 
+ * @tc.level     : Level 3
+ */
+void wcscoll_1900(void)
+{
+    wchar_t str1[] = {0xFFFF, L'\0'};  
+    wchar_t str2[] = {0xFFFE, L'\0'};  
+    
+    int result = wcscoll(str1, str2);
+    if (result <= 0) {
+        t_error("%s: wcscoll returns %d (expected positive for 0xFFFF > 0xFFFE)", __func__, result);
+    }
+}
+
+/**
+ * @tc.name      : wcscoll_2000
+ * @tc.desc      : Test wcscoll with strings that differ in leading spaces 
+ * @tc.level     : Level 1
+ */
+void wcscoll_2000(void)
+{
+    wchar_t *str1 = L"  test";  
+    wchar_t *str2 = L" test";  
+    
+    int result = wcscoll(str1, str2);
+    
+    if (result <= 0) {
+        t_error("%s: wcscoll returns %d (expected positive for '  test' > ' test')", __func__, result);
+    }
+}
+
+/**
+ * @tc.name      : wcscoll_2100
+ * @tc.desc      : Test wcscoll with Japanese characters 
+ * @tc.level     : Level 2
+ */
+void wcscoll_2100(void)
+{
+    wchar_t *str1 = L"りんご";  
+    wchar_t *str2 = L"バナナ";  
+    
+    int result = wcscoll(str1, str2);
+    int result2 = wcscoll(str2, str1);
+    
+    if (!((result < 0 && result2 > 0) || (result > 0 && result2 < 0))) {
+        t_error("%s: inconsistent results (result1=%d, result2=%d) for Japanese characters", __func__, result, result2);
+    }
+}
+
+/**
+ * @tc.name      : wcscoll_2200
+ * @tc.desc      : Test wcscoll with strings of all identical characters 
+ * @tc.level     : Level 1
+ */
+void wcscoll_2200(void)
+{
+    wchar_t *str1 = L"aaaaa";  
+    wchar_t *str2 = L"aaaaaa"; 
+    
+    int result = wcscoll(str1, str2);
+    if (result >= 0) {
+        t_error("%s: wcscoll returns %d (expected negative for shorter identical string)", __func__, result);
+    }
+}
+
+/**
+ * @tc.name      : wcscoll_2300
+ * @tc.desc      : Test wcscoll with symbols and punctuation 
+ * @tc.level     : Level 2
+ */
+void wcscoll_2300(void)
+{
+    wchar_t *str1 = L"!@#$";
+    wchar_t *str2 = L"$#@!";
+    
+    int result = wcscoll(str1, str2);
+    int result2 = wcscoll(str2, str1);
+    
+    if (!((result < 0 && result2 > 0) || (result > 0 && result2 < 0))) {
+        t_error("%s: inconsistent results (result1=%d, result2=%d) for symbols+punctuation", __func__, result, result2);
+    }
+}
+
+/**
+ * @tc.name      : wcscoll_2400
+ * @tc.desc      : Test wcscoll with non-BMP characters 
+ * @tc.level     : Level 3
+ */
+void wcscoll_2400(void)
+{
+ 
+    #ifdef _WIN32
+    wchar_t str1[] = {0xD83D, 0xDE00, L'\0'};  
+    wchar_t str2[] = {0xD83D, 0xDE01, L'\0'}; 
+    #else
+    wchar_t *str1 = L"😀";  
+    wchar_t *str2 = L"😁"; 
+    #endif
+    
+    int result = wcscoll(str1, str2);
+    int result2 = wcscoll(str2, str1);
+    
+    if (!((result < 0 && result2 > 0) || (result > 0 && result2 < 0))) {
+        t_error("%s: inconsistent results (result1=%d, result2=%d) for non-BMP characters", __func__, result, result2);
+    }
+}
+
+/**
+ * @tc.name      : wcscoll_2500
+ * @tc.desc      : Test wcscoll with case-insensitive locale 
+ * @tc.level     : Level 2
+ */
+void wcscoll_2500(void)
+{
+
+    char *old_locale = setlocale(LC_ALL, NULL);
+    if (old_locale == NULL) {
+        t_error("%s: failed to get current locale (setlocale return NULL)", __func__);
+        return;
+    }
+    
+    char *dup_locale = strdup(old_locale);
+    if (dup_locale == NULL) {
+        t_error("%s: strdup failed to allocate memory for old locale", __func__);
+        return;
+    }
+    
+    int success = 0;
+    char *locale1 = setlocale(LC_ALL, "en_US.UTF-8@ignorecase");
+    char *locale2 = NULL;
+    if (locale1 == NULL) {
+        locale2 = setlocale(LC_ALL, "C.UTF-8@ignorecase");
+    }
+    
+    if (locale1 != NULL || locale2 != NULL) {
+        success = 1;
+        wchar_t *str1 = L"Apple";
+        wchar_t *str2 = L"apple";
+        
+        int result = wcscoll(str1, str2);
+        if (result != 0) {
+            t_error("%s: wcscoll returns %d (expected 0 for case-insensitive locale)", __func__, result);
+        }
+    }
+    
+    if (!success) {
+        printf("%s: case-insensitive locale not available, skip test\n", __func__);
+    }
+    
+    if (setlocale(LC_ALL, dup_locale) == NULL) {
+        t_error("%s: failed to restore original locale (%s)", __func__, dup_locale);
+    }
+    
+    free(dup_locale);
+}
 int main(int argc, char *argv[])
 {
     wcscoll_0100();
@@ -225,5 +540,21 @@ int main(int argc, char *argv[])
     wcscoll_0800();
     wcscoll_0900();
     wcscoll_1000();
+    wcscoll_1100();
+    wcscoll_1200();
+    wcscoll_1300();
+    wcscoll_1400();
+    wcscoll_1500();
+    wcscoll_1600();
+    wcscoll_1700();
+    wcscoll_1800();
+    wcscoll_1900();
+    wcscoll_2000();
+    wcscoll_2100();
+    wcscoll_2200();
+    wcscoll_2300();
+    wcscoll_2400();
+    wcscoll_2500();
     return t_status;
 }
+
