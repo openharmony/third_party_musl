@@ -120,7 +120,7 @@ entry.
 ```
 
 
-#### COLOPHTON
+#### COLOPHON
 
 ​      this page is part of the C library user-space interface documentation.
 ​      Information about the project can be found at (https://gitee.com/openharmony/third_party_musl/blob/master/docs/)

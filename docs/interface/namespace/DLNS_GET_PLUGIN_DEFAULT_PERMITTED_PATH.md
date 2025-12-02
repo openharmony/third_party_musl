@@ -10,13 +10,13 @@
 
 ​       #include <dlfcn.h>
 
-       char *dlns_get_plugin_default_permitted_path();
+       char *dlns_get_plugin_default_permitted_path(void);
 
 #### **DESCRIPTION**
 
-Get **moduleNs_plugin_default_namespace** permitted_path
+Get **moduleNs_plugin_default_namespace** permitted_path.
 
-Note: This function is MT-Safe(multi-thread safe) but not signal-safe. This function returns a copy of **moduleNs_plugin_default_namespace** permitted_path. Therefore, when the caller does not use the content of this string, they should release it using [free](https://pubs.opengroup.org/onlinepubs/9799919799/functions/free.html). This function is mutually exclusive with other namespaces and linker **write logic** operations
+Note: This function is MT-Safe(multi-thread safe) but not signal-safe. This function returns a copy of **moduleNs_plugin_default_namespace** permitted_path. Therefore, when the caller does not use the content of this string, they should release it using [free](https://pubs.opengroup.org/onlinepubs/9799919799/functions/free.html). This function is mutually exclusive with other namespaces and linker **write logic** operations.
 
 #### **RETURN VALUE**
 
@@ -54,6 +54,7 @@ The following error codes may be set in errno:
 #include <stdio.h>
 #include <dlfcn.h>
 #include <stdlib.h>
+#include <errno.h>
 
 typedef char*(func_t)(void);
 
@@ -75,7 +76,7 @@ int main()
 ```
 
 
-#### COLOPHTON
+#### COLOPHON
 
 ​      this page is part of the C library user-space interface documentation.
-​      Information about the project can be found at (https://gitcode.com/openharmony/third_party_musl/blob/master/docs/)
+​      Information about the project can be found at (https://gitcode.com/openharmony/third_party_musl/blob/master/docs/).
