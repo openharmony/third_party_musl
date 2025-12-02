@@ -19,6 +19,8 @@
 #endif
 #endif
 
+#include "ADLTSection.h"
+
 #if UINTPTR_MAX == 0xffffffff
 typedef Elf32_Ehdr Ehdr;
 typedef Elf32_Phdr Phdr;
@@ -104,6 +106,89 @@ struct icall_item {
 	size_t modifier_end;
 };
 
+struct unpack_reloc {
+	void *map;            // map address
+	size_t map_len;       // map length
+	size_t unpack_num;    // unpacking reloc count
+	off_t unpack_offset;  // unpacking procedure address offset
+};
+ 
+struct adlt_got_entry{
+	unsigned char *entry_addr;        // .got section start address
+	size_t entry_len;                 // .got section size
+	uint32_t *record_entry;           // Whether the entry in the got table has been relocated
+	size_t  got_map_len;
+	uint8_t *got_map;                // got/got.plt map
+	size_t *got_entry;                // initial got/got.plt entry
+};
+ 
+struct bolt_remap_data{
+    size_t new_addr;
+    size_t old_addr; 
+};
+ 
+struct adlt {
+	unsigned char *base;
+	char *name;                       // real path
+	uint64_t file_offset;             // > 0 when opening library from zip file; PAGE_SIZE aligned
+	bool partly_load;                 // true when nDSOs are loaded separately
+	unsigned char *map;               // map address
+	size_t map_len;                   // map length
+	size_t addr_min;                  // min address (mapping result)
+	bool hugepage_enabled;            // hugepage (mapping result)
+	uint32_t npsod_load;
+	unsigned char *sa_map;            // .adlt section map address
+	size_t sa_map_len;                // .adlt section map size
+	unsigned char *sa_addr;           // .adlt section address
+	struct adlt_got_entry gotEntry;
+	struct adlt_got_entry gotPltEntry;
+	unsigned char *strtab_map;        // .adlt.strtab section map address
+	size_t strtab_map_len;            // .adlt.strtab section map size
+	unsigned char *strtab_addr;       // .adlt.strtab section address
+	unsigned char *bolt_remap;        // .bolt.remap section map address
+	size_t bolt_remap_len;            // .bolt.remap section map size
+	unsigned char *bolt_remap_addr;       // .bolt.remap section address
+	dev_t dev;                        //
+	ino_t ino;                        //   
+	off_t file_size;                  //
+	Phdr *phdr;                       // PH table address 
+	int phnum;                        // PH count
+	size_t phentsize;                 // PH size
+	struct unpack_reloc android_rel;  // unpacked android rel relocs (SHT_ANDROID_REL type section)
+	struct unpack_reloc android_rela; // unpacked android rela relocs (SHT_ANDROID_RELA type section)
+	struct unpack_reloc relr_rel;     // unpacked relr relocs (SHT_RELR type section)
+	size_t relro_start, relro_end;    // remove
+	uint8_t *sym_dso_Idx_map;         // symbol index map to adlt_ndso_index 
+	uint32_t nsym;                    // symbol count
+	/* symbol section (.symtab) mapping for backtrace symbol lookup */
+	unsigned char *bsl_syms_map;      // map address
+	size_t bsl_syms_map_len;          // map size
+	Sym *bsl_syms;                    // section address (symbols)
+	/* string section (.strtab) mapping for backtrace symbol lookup */
+	unsigned char *bsl_strings_map;   // map address
+	size_t bsl_strings_map_len;       // map size
+	char *bsl_strings;                // section address (strings)
+	size_t bsl_strings_sec_index;     // section index
+	uint64_t pgbo_addr_start;         // pgbo text section sh_addr
+	uint64_t pgbo_addr_end;           // pgbo text section end sh_addr
+	struct adlt *next;				  // next adlt
+	struct adlt *prev;                // prev adlt
+};
+ 
+struct adlt_phdr_info {
+    char *map;
+    size_t map_len;
+    char *map_ph_addr;
+    struct adlt *map_adlt;
+    size_t ph_ndso_index;
+    int map_prot;
+};
+ 
+struct adlt_dso_sym_index {
+	uint32_t *idx;
+	uint64_t size;
+};
+
 struct dso {
 #if DL_FDPIC
 	struct fdpic_loadmap *loadmap;
@@ -172,6 +257,18 @@ struct dso {
 	/* mark the dso status */
 	uint32_t flags;
 	uint32_t nr_dlopen;
+
+	struct adlt *adlt;
+	ssize_t adlt_ndso_index;
+	char *phdr_map;
+	uint32_t phdr_count;
+	size_t init_array_off;
+	size_t fini_array_off;
+	dev_t ldev; // lstat() dev 
+	ino_t lino; // lstat() ino
+	char* adlt_ndso_name;
+	struct adlt_dso_sym_index sym_idx;
+
 	bool is_global;
 	bool is_preload;
 	bool is_reloc_head_so_dep;
@@ -327,6 +424,10 @@ struct symdef find_sym_impl(
 hidden void *__dlsym(void *restrict, const char *restrict, void *restrict);
 hidden void *__dlvsym(void *restrict, const char *restrict, const char *restrict, void *restrict);
 hidden int __dlclose(void *p);
+
+hidden ssize_t get_adlt_library_ph(struct adlt *adlt, ssize_t library_index, adlt_phindex_t **ph_indexes);
+hidden ssize_t get_adlt_common_ph(struct adlt *adlt, adlt_phindex_t **ph_indexes);
+
 #else
 #define DYN_CNT 37
 
