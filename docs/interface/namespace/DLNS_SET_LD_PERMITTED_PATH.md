@@ -20,7 +20,7 @@ For parameter `path`: If there are multiple paths, you need to use `:` to separa
 
 When the parameter `ns` points to **moduleNs_plugin_default_namespace**, this function can restrict the behavior of `dlns_add_plugin_default_ld_dictionary`.
 
-Note: This function is MT-Safe(multi-thread safe) and not signal-safe. This function is used in permission management. This function is mutually exclusive with other namespaces and linker operations
+Note: This function is MT-Safe(multi-thread safe) and not signal-safe. This function is used in permission management. This function is mutually exclusive with other namespaces and linker operations.
 
 #### **RETURN VALUE**
 
@@ -94,7 +94,7 @@ bool test()
 ```
 
 
-#### COLOPHTON
+#### COLOPHON
 
 ​      this page is part of the C library user-space interface documentation.
-​      Information about the project can be found at (https://gitcode.com/openharmony/third_party_musl/blob/master/docs/)
+​      Information about the project can be found at (https://gitcode.com/openharmony/third_party_musl/blob/master/docs/).
