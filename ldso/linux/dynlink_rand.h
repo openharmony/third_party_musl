@@ -36,6 +36,14 @@ struct dso;
 struct loadtask {
     // parameters
     const char *name;
+    // Necessity of fullname:
+    //    task->name may be short - without env->path so we
+    // cannot use it for opening symlink
+    //    task->pathname sometimes keeps path of ADLT library
+    // file and can not be used for finding nDSO in adlt
+    //    So we need additional task->fullname (env->path + task->name)
+    // to open a symlink
+    const char *fullname;
     struct dso *needed_by;
     ns_t *namespace;
     bool check_inherited;
@@ -47,7 +55,10 @@ struct loadtask {
     struct dso *p;
     int fd;
     uint64_t file_offset; /* Used to read an uncompress library from a zip file, file_offset is relative offset of start of zip file. */
-
+    struct adlt *adlt;
+    ssize_t adlt_ndso_index;
+    size_t init_array_off;
+    size_t fini_array_off;
     // variables for map library
     Ehdr ehdr_buf[(READ_ELF_LENGTH + sizeof(Ehdr)) / sizeof(Ehdr)];
     void *allocated_buf;

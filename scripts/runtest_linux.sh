@@ -15,7 +15,7 @@
 
 LOCAL="unknown_dir"
 OUTDIR=out/rk3568
-CMD=hdc_std
+CMD="${HDC_CMD:-hdc_std}"
 ARCH=arm
 
 function usage {
@@ -43,7 +43,7 @@ done
 TESTDIR=${LOCAL}/${OUTDIR}/musl/libc-test
 DYNLIB=${LOCAL}/${OUTDIR}/musl/libc-test-lib
 SHDIR=${LOCAL}/third_party/musl/scripts
-REMOTE=/data/tests/libc-test
+REMOTE="${TARGET_DIR:-/data/tests}/libc-test"
 REMOTELOCAL=/data/local/tmp
 REMOTESYSTEM=/system/lib
 
@@ -83,7 +83,7 @@ fi
 
 echo now mkdir
 ${CMD} shell rm -rf ${REMOTE}
-${CMD} shell mkdir /data/tests
+${CMD} shell mkdir -p ${REMOTE}
 ${CMD} shell mkdir ${REMOTE}
 
 #mk temp directory
@@ -150,7 +150,7 @@ ${CMD} shell mv ${REMOTE}/src/zh_CN /tmp/zh_CN
 
 ${CMD} file send ${SHDIR}/runtest.sh ${REMOTE}/runtest.sh
 ${CMD} shell chmod +x ${REMOTE}/runtest.sh
-${CMD} shell ${REMOTE}/runtest.sh
+${CMD} shell ${REMOTE}/runtest.sh ${ARCH} ${REMOTE}
 
 
 echo hdc file recv ${REMOTE}/REPORT ${SHDIR}/REPORT
@@ -190,3 +190,7 @@ $(cat -t ${SHDIR}/REPORT | grep 'FAIL ')
 echo "[Skip List]:  " | tee -a Summary.txt
 
 cat ${SHDIR}/SkipList.txt | tee -a Summary.txt
+
+if [ "fail" -ne 0 ]; then
+    exit 1
+fi
