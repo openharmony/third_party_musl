@@ -1,18 +1,18 @@
 # Local storage directory of dynamic link library
-LOCAL_DYNLIB="your_local_dir"
+LOCAL_DYNLIB="${SOURCE_DIR}"
 
 # Remote transmission target directory
-REMOTE_ROOT=/data/tmp/libcgtest
-REMOTE=/data/tmp/libcgtest/libs
-RPATH_TEST_DIR=${REMOTE}/rpath-test
-NS_LIB_ONE_DIR=${REMOTE}/namespace_one_libs
-NS_LIB_TWO_DIR=${REMOTE}/namespace_two_libs
-NS_LIB_TWO_IMPL_DIR=${REMOTE}/namespace_two_impl_libs
+REMOTE_ROOT="${TARGET_DIR:-/data/tmp/libcgtest}"
+REMOTE="${REMOTE_ROOT}/libs"
+RPATH_TEST_DIR=${REMOTE_ROOT}/libs/rpath-test
+NS_LIB_ONE_DIR=${REMOTE_ROOT}/libs/namespace_one_libs
+NS_LIB_TWO_DIR=${REMOTE_ROOT}/libs/namespace_two_libs
+NS_LIB_TWO_IMPL_DIR=${REMOTE_ROOT}/libs/namespace_two_impl_libs
 
-CMD=hdc
+CMD="${HDC_CMD:-hdc}"
 
 ${CMD} shell mount -o remount,rw /
-${CMD} shell mkdir data/tmp
+${CMD} shell mkdir /data/tmp
 ${CMD} shell rm -rf ${REMOTE_ROOT}
 ${CMD} shell mkdir ${REMOTE_ROOT}
 ${CMD} shell mkdir ${REMOTE}

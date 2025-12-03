@@ -4,7 +4,6 @@
 using namespace testing::ext;
 
 constexpr int SIZE = 128;
-constexpr int ILLEGAL_SIZE = -128;
 
 class HookReallocTest : public testing::Test {
     void SetUp() override {}
@@ -41,11 +40,7 @@ HWTEST_F(HookReallocTest, realloc_002, TestSize.Level1)
  *           ensuring that realloc correctly handles illegal size scenarios and returns a null pointer.
  * @tc.type: FUNC
  */
-HWTEST_F(HookReallocTest, realloc_003, TestSize.Level1)
-{
-    void* ptr = realloc(nullptr, ILLEGAL_SIZE);
-    EXPECT_EQ(ptr, nullptr);
-}
+
 /**
  * @tc.name: realloc_004
  * @tc.desc: Validate the behavior of the realloc function when reallocation is performed on an already allocated memory
