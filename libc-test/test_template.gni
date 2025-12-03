@@ -93,6 +93,11 @@ template("test_unittest") {
 
     ldflags = [ "-nostdlib" ]
 
+    if (is_llvm_build) {
+      ldflags +=
+          [ "-Wl,--dynamic-linker=/data/tests/ld-musl-${musl_arch}.so.1" ]
+    }
+
     libs = [ "//${out_test_dir}/src/common/libtest.a" ]
     if (!musl_unit_test_flag) {
       libs += [ "${musl_lib_dir}/libc.a" ]
