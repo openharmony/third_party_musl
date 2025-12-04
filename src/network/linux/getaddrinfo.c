@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include <endian.h>
 #include <errno.h>
+#include <threads.h>
 #include "lookup.h"
 
 #define COST_FOR_MS 1000
@@ -30,8 +31,7 @@ int reportdnsresult(int netid, char* name, int usedtime, int queryret, struct ad
 }
 
 static custom_dns_resolver g_customdnsresolvehook;
-static pthread_key_t g_recursiveKey;
-static int* g_recursive;
+thread_local int recursive = 0;
 
 int setdnsresolvehook(custom_dns_resolver hookfunc)
 {
@@ -41,7 +41,6 @@ int setdnsresolvehook(custom_dns_resolver hookfunc)
 	}
 	if (hookfunc) {
 		g_customdnsresolvehook = hookfunc;
-		pthread_key_create(&g_recursiveKey, NULL);
 		ret = 0;
 	}
 	return ret;
@@ -50,14 +49,6 @@ int setdnsresolvehook(custom_dns_resolver hookfunc)
 int removednsresolvehook()
 {
 	g_customdnsresolvehook = NULL;
-	if (g_recursive) {
-		free(g_recursive);
-		g_recursive = NULL;
-	}
-	if (g_recursiveKey) {
-		pthread_key_delete(g_recursiveKey);
-		g_recursiveKey = NULL;
-	}
 	return 0;
 }
 
@@ -96,17 +87,10 @@ int getaddrinfo_ext(const char *restrict host, const char *restrict serv, const 
 	}
 
 	if (g_customdnsresolvehook) {
-		g_recursive = pthread_getspecific(g_recursiveKey);
-		if (g_recursive == NULL) {
-			int *newRecursive = malloc(sizeof(int));
-			*newRecursive = 0;
-			pthread_setspecific(g_recursiveKey, newRecursive);
-			g_recursive = newRecursive;
-		}
-		if (*g_recursive == 0) {
-			++(*g_recursive);
+		if (recursive == 0) {
+			++recursive;
 			int ret = g_customdnsresolvehook(host, serv, hint, res);
-			--(*g_recursive);
+			--recursive;
 			return ret;
 		}
 	}
