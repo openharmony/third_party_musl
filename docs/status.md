@@ -9,6 +9,10 @@ https://gitcode.com/openharmony/interface_sdk_c/blob/master/third_party/musl/ndk
 
 ## 系统侧libc新的变化
 
+2025/12/8 <log_base.h>
+- 新增`HiLogBasePrint`: HilogBase日志打印接口
+- 新增`HiLogBaseIsLoggable`: 在打印日志前调用该接口，用于检查指定领域标识、日志标识和级别的日志是否可以打印
+
 2025/11/20
 - 新增`dlopen_config_abs_path_policy`: 控制dlopen过程中是否针对入参进行绝对路径的校验
 

@@ -223,6 +223,20 @@ int HiLogAdapterPrint(LogType type, LogLevel level, unsigned int domain, const c
     return ret;
 }
 
+int HiLogBasePrint(LogType type, LogLevel level, unsigned int domain, const char *tag, const char *fmt, ...)
+{
+    if (!HiLogBaseIsLoggable(domain, tag, level)) {
+        return -1;
+    }
+
+    int ret;
+    va_list ap;
+    va_start(ap, fmt);
+    ret = HiLogAdapterPrintArgs(type, level, domain, tag, fmt, ap);
+    va_end(ap);
+    return ret;
+}
+
 HILOG_LOCAL_API
 int HiLogAdapterVaList(LogType type, LogLevel level, unsigned int domain, const char *tag, const char *fmt, va_list ap)
 {
@@ -250,6 +264,14 @@ bool HiLogAdapterIsLoggable(unsigned int domain, const char *tag, LogLevel level
         return false;
     }
 
+    return true;
+}
+
+bool HiLogBaseIsLoggable(unsigned int domain, const char *tag, LogLevel level)
+{
+    if (level <= LOG_LEVEL_MIN || level >= LOG_LEVEL_MAX || tag == NULL) {
+        return false;
+    }
     return true;
 }
 
