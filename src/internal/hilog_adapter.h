@@ -24,35 +24,13 @@
 #define MUSL_HILOG_ADAPTER_H
 
 #include <features.h>
+#include <log_base.h>
 #include <stdarg.h>
 #include <stdbool.h>
 
 #ifndef hidden
 #define hidden __attribute__((visibility("hidden")))
 #endif
-
-// Log type
-typedef enum {
-    LOG_TYPE_MIN = 0,
-    LOG_APP = 0,
-    // Log to kmsg, only used by init phase.
-    LOG_INIT = 1,
-    // Used by core service, framework.
-    LOG_CORE = 3,
-    LOG_KMSG = 4,
-    LOG_TYPE_MAX
-} LogType;
-
-// Log level
-typedef enum {
-    LOG_LEVEL_MIN = 0,
-    LOG_DEBUG = 3,
-    LOG_INFO = 4,
-    LOG_WARN = 5,
-    LOG_ERROR = 6,
-    LOG_FATAL = 7,
-    LOG_LEVEL_MAX = 8,
-} LogLevel;
 
 hidden bool CheckHilogValid();
 // Dangerous operation, please do not use in normal business
