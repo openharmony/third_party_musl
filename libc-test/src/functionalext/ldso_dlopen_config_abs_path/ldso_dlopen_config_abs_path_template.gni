@@ -1,0 +1,66 @@
+# Copyright (c) 2025 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+import("../../../test_template.gni")
+
+template("abs_path_test_case") {
+  assert(defined(invoker.target_name),
+         "file name is required in target ${target_name}")
+  target_name = invoker.target_name
+  target("ohos_executable", "${target_name}") {
+    subsystem_name = "musl"
+    part_name = "libc-test"
+    if (target_cpu == "arm64") {
+      defines = [ "_ARM64_" ]
+    }
+    cflags = []
+    sources = [
+      "ldso_dlopen_config_abs_path.c",
+      target_name + ".c",
+    ]
+    include_dirs = [
+      "//${test_dir}/src/common",
+      "//${musl_include_dir}",
+      "//${test_dir}/src/functionalext/common",
+      "//${musl_base_dir}/include/arpa",
+      "//${musl_base_dir}/src/process",
+    ]
+    cflags_c = [
+      "-pipe",
+      "-std=c99",
+      "-D_POSIX_C_SOURCE=200809L",
+      "-Wall",
+      "-Wno-unused",
+      "-Wno-unused-function",
+      "-Wno-missing-braces",
+      "-Wno-overflow",
+      "-Wno-unknown-pragmas",
+      "-Wno-unsupported-floating-point-opt",
+      "-Wno-ignored-pragmas",
+      "-fno-builtin",
+      "-frounding-math",
+      "-Werror=implicit-function-declaration",
+      "-Werror=implicit-int",
+      "-Werror=pointer-sign",
+      "-Werror=pointer-arith",
+      "-g",
+      "-D_FILE_OFFSET_BITS=64",
+      "-c",
+      "-o",
+    ]
+    if (musl_use_pthread_cancel) {
+      cflags += [ "-DFEATURE_PTHREAD_CANCEL" ]
+    }
+    ldflags = [ "-nostdlib" ]
+    libs = [ "//${out_test_dir}/src/common/libtest.a" ]
+  }
+}
