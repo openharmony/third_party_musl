@@ -1655,7 +1655,8 @@ musl_src_file = [
   "src/thread/pthread_rwlock_timedrdlock_monotonic_np.c",
   "src/thread/pthread_rwlock_clockwrlock.c",
   "src/thread/pthread_rwlock_timedwrlock_monotonic_np.c",
-  "src/dfx/dfx_signal_handler_stub.c"
+  "src/dfx/dfx_signal_handler_stub.c",
+  "src/version/musl_version.c"
 ]
 
 if (musl_arch == "arm") {
@@ -2242,6 +2243,7 @@ musl_inc_root_files = [
   "include/mntent.h",
   "include/monetary.h",
   "include/mqueue.h",
+  "include/musl_version.h",
   "include/netdb.h",
   "include/nl_types.h",
   "include/paths.h",
