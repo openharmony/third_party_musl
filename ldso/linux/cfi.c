@@ -124,7 +124,8 @@ static int add_dso_to_cfi_shadow(struct dso *dso);
 
 /* dsos / cfi shadow for ADLT */
 static int fill_dso_to_cfi_shadow(struct dso *p, uintptr_t cfi_check, uint16_t type);
-static int fill_shadow_value_to_shadow(uintptr_t begin, uintptr_t end, uintptr_t cfi_check, uint16_t type, bool force_fill);
+static int fill_shadow_value_to_shadow(
+    uintptr_t begin, uintptr_t end, uintptr_t cfi_check, uint16_t type, bool force_fill);
 
 /* Find the __cfi_check() of target dso and call it */
 void __cfi_slowpath(uint64_t call_site_type_id, void *func_ptr);
@@ -551,7 +552,8 @@ static int fill_dso_to_cfi_shadow(struct dso *p, uintptr_t cfi_check, uint16_t t
     return CFI_SUCCESS;
 }
  
-static int fill_shadow_value_to_shadow(uintptr_t begin, uintptr_t end, uintptr_t cfi_check, uint16_t type, bool force_fill)
+static int fill_shadow_value_to_shadow(
+    uintptr_t begin, uintptr_t end, uintptr_t cfi_check, uint16_t type, bool force_fill)
 {
     LD_LOGD("[CFI] [%{public}s] begin[%{public}x] end[%{public}x] cfi_check[%{public}x] type[%{public}x]!\n",
             __FUNCTION__, begin, end, cfi_check, type);
