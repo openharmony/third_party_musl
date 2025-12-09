@@ -1,3 +1,18 @@
+/*
+* Copyright (c) 2025 Huawei Device Co., Ltd.
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
+
 // feature ADLT segment type
 #define PT_ADLT                  0x6788FC61
 
@@ -71,7 +86,8 @@ static struct adlt* find_adlt_by_fstat(struct stat* st);
 static char *create_realpath_from_fd(int fd);
 
 
-static struct dso *search_dso_by_adlt_lstat(const struct stat *st, const ns_t *ns, uint64_t file_offset)
+static struct dso *search_dso_by_adlt_lstat(
+	const struct stat *st, const ns_t *ns, uint64_t file_offset)
 {
 	LD_LOGD("search_dso_by_adlt_lstat ns_name:%{public}s", ns ? ns->ns_name : "NULL");
 	for (size_t i = 0; i < ns->ns_dsos->num; i++){
@@ -86,7 +102,8 @@ static struct dso *search_dso_by_adlt_lstat(const struct stat *st, const ns_t *n
 }
 
 
-static struct dso *find_library_by_adlt_lstat(const struct stat *st, const ns_t *ns, bool check_inherited, uint64_t file_offset)
+static struct dso *find_library_by_adlt_lstat(
+	const struct stat *st, const ns_t *ns, bool check_inherited, uint64_t file_offset)
 {
 	LD_LOGD("find_library_by_adlt_lstat ns_name:%{public}s, check_inherited:%{public}d",
 		ns ? ns->ns_name : "NULL",
@@ -209,16 +226,13 @@ static void free_adlt(struct adlt *adlt)
 
 static void unmap_adlt_library(struct dso *dso)
 {
-	if (!dso) {
-		return;
-	}
+	if (!dso) {return;}
+
 	struct adlt *adlt = dso->adlt;
 	adlt_clean_gotentry(dso, adlt);
 	adlt->npsod_load--;
 	dso->adlt = NULL;
-	if (adlt->npsod_load > 0) {
-		return;
-	}
+	if (adlt->npsod_load > 0) {return;}
 
 	if (!is_dlclose_debug_enable()) {
 		free_adlt(adlt);
@@ -473,7 +487,7 @@ static bool replace_to_adlt_duplicate(struct dso *dso, Sym **sym, const char **n
         }
 
         // Get name with postfix: name + __ + hex(order index)
-	    (void)sprintf(name_idx, "%s__%x", *name, idx);
+	    (void)snprintf(name_idx, "%s__%x", *name, idx);
 		sym_idx = find_sym(p, name_idx, 1).sym;
 		if (sym_idx) {
 			*sym = sym_idx;
@@ -553,13 +567,16 @@ static void adlt_reclaim_gaps(struct dso *dso)
 		return;
 	}
 	size_t entsz = dso->phentsize;
-	adlt_phindex_t *ph_indexes, *phc_indexes, *phl_indexes;
+	adlt_phindex_t *ph_indexes;
+	adlt_phindex_t *phc_indexes;
+	adlt_phindex_t *phl_indexes;
 	ssize_t phl_count = get_adlt_library_ph(dso->adlt, dso->adlt_ndso_index, &phl_indexes);
 	ssize_t phc_count = get_adlt_common_ph(dso->adlt, &phc_indexes);
 	int loop = 2;
 	Phdr *ph;
 	ssize_t ph_num;
-	size_t i, q;
+	size_t i;
+	size_t q;
 	while(loop--) {
 		if (loop) {
 			if (phc_count <= 0 || !phc_indexes) {
@@ -584,7 +601,7 @@ static void adlt_reclaim_gaps(struct dso *dso)
 			if ((ph->p_flags & (PF_R | PF_W)) != (PF_R | PF_W)) continue;
 			reclaim(dso, ph->p_vaddr & -PAGE_SIZE, ph->p_vaddr);
 			reclaim(dso, ph->p_vaddr + ph->p_memsz,
-			  ph->p_vaddr + ph->p_memsz + PAGE_SIZE - 1 & -PAGE_SIZE);
+			  (ph->p_vaddr + ph->p_memsz + PAGE_SIZE - 1) & (-PAGE_SIZE));
 		}
 	}
 }
@@ -685,8 +702,8 @@ static bool is_same_adlt(struct adlt* adlt, struct stat* st)
  
 static struct adlt* find_adlt_by_fstat(struct stat* st)
 {
-	struct adlt* adlt;
-	for (adlt = g_adlt_ptr; adlt; adlt = adlt->next) {
+	struct adlt* adlt = g_adlt_ptr;
+	for (; adlt; adlt = adlt->next) {
 		if (is_same_adlt(adlt, st)) {
 			return adlt;
 		}
@@ -707,8 +724,7 @@ static Relocated_Flag check_and_set_bit(struct adlt_got_entry *et, size_t reloc_
 	size_t *reloc_va = (size_t*)laddr(dso, reloc_addr);
 	if ((reloc_ptr >= got_start) && (reloc_ptr < got_end))
 	{
-		size_t index;
-		index = (reloc_ptr - (uintptr_t)et->entry_addr) / sizeof(size_t);
+		size_t index = (reloc_ptr - (uintptr_t)et->entry_addr) / sizeof(size_t);
 		if (et->record_entry[index] == 0) {
 			et->record_entry[index] |= (1UL << ndso_index);
 			*reloc_va = et->got_entry[index];
@@ -739,7 +755,9 @@ static bool has_relocation(struct dso *dso, size_t reloc_addr)
 
 static void adlt_do_relocs(struct dso *dso, size_t *rel, size_t rel_size, size_t stride, adlt_relindex_t *rel_index)
 {
-	int skip_relative = 0, reuse_addends = 0, save_slot = 0;
+	int skip_relative = 0;
+	int reuse_addends = 0;
+	int save_slot = 0;
 	int type;
 	size_t addend;
 	size_t *reloc_addr;
@@ -813,8 +831,10 @@ static void adlt_reloc(struct dso *p, size_t dyn[],const dl_extinfo *extinfo, ss
 {
 	size_t plt_stride;
 	// OHOS_LOCAL ADLT begin
-	adlt_relindex_t *adlt_rel_dyn, *adlt_rel_plt;
-	size_t rel_dyn_cnt, rel_plt_sz;
+	adlt_relindex_t *adlt_rel_dyn;
+	adlt_relindex_t *adlt_rel_plt;
+	size_t rel_dyn_cnt;
+	size_t rel_plt_sz;
 
 	if (head != &ldso && p->relro_start != p->relro_end) {
 		if (mprotect(laddr(p, p->relro_start), p->relro_end-p->relro_start, PROT_READ | PROT_WRITE)
@@ -896,8 +916,8 @@ static size_t bolt_remap_addr_func(size_t in_addr, struct adlt *adlt) {
 
 void *bolt_remap_addr_func_adlt(size_t a)
 {
-	struct adlt* adlt;
-	for (adlt = g_adlt_ptr; adlt; adlt = adlt->next) {
+	struct adlt* adlt = g_adlt_ptr;
+	for (; adlt; adlt = adlt->next) {
 		if (adlt->pgbo_addr_start == 0 || adlt->pgbo_addr_end == 0) {
 			continue;
 		}
@@ -922,7 +942,8 @@ void *bolt_remap_addr_func_adlt(size_t a)
 static bool adlt_find_in_dso(struct dso *p, Phdr *phdr, struct adlt *adlt, size_t entsz, size_t addr)
 {
 	Phdr *ph;
-	adlt_phindex_t *phc_indexes, *phl_indexes;
+	adlt_phindex_t *phc_indexes;
+	adlt_phindex_t *phl_indexes;
 	ssize_t phl_count = get_adlt_library_ph(p->adlt, p->adlt_ndso_index, &phl_indexes);
 	ssize_t phc_count = get_adlt_common_ph(p->adlt, &phc_indexes);
 
@@ -948,18 +969,52 @@ static bool adlt_find_in_dso(struct dso *p, Phdr *phdr, struct adlt *adlt, size_
 	return false;
 }
 
+static int relloc_adlt_phdr(struct dso *current, struct dl_phdr_info *info, size_t adlt_ndso, size_t entsz)
+{
+	char *ph_addr;
+    adlt_phindex_t *ph_indexes_common;
+	adlt_phindex_t *ph_indexes_library;
+    ssize_t ph_count = 0;
+    ssize_t ph_count_common = get_adlt_common_ph(current->adlt, &ph_indexes_common);
+	if (ph_count_common > 0 && ph_indexes_common) {
+		ph_count = ph_count_common;
+    }
+	ssize_t ph_count_library = get_adlt_library_ph(current->adlt, current->adlt_ndso_index, &ph_indexes_library);
+	if (ph_count_library > 0 && ph_indexes_library) {
+		ph_count += ph_count_library;
+    }
+	char* temp = realloc(current->phdr_map, entsz * (adlt_ndso + ph_count));
+	if (temp == NULL) {
+		LD_LOGW("realloc error at adlt_cpy_ph ! dso name: %{public}s.", current->name);
+		return -1;
+	}
+	current->phdr_map = temp;
+	info->dlpi_phdr = current->phdr_map;
+	info->dlpi_phnum = adlt_ndso + (size_t)ph_count;
+	current->phdr_count = info->dlpi_phnum;
+	if (ph_count > 0) {
+		ph_addr = current->phdr_map + (adlt_ndso) * entsz;
+		while (ph_count_common--) {
+			memcpy(ph_addr, (char *)current->phdr + (*ph_indexes_common) * entsz, entsz);
+			ph_addr += entsz;
+			++ph_indexes_common;
+		}
+		while (ph_count_library--) {
+			memcpy(ph_addr, (char *)current->phdr + (*ph_indexes_library) * entsz, entsz);
+			ph_addr += entsz;
+			++ph_indexes_library;
+		}
+	}
+    return 0;
+}
 static int handle_adlt_phdr(struct dso *current, struct dl_phdr_info *info)
 {
     Phdr *ph;
     char *ph_addr;
-    ssize_t ph_count = 0, ph_count_common = 0, ph_count_library = 0;
-    adlt_phindex_t *ph_indexes_common, *ph_indexes_library;
     size_t entsz = current->phentsize;
     Phdr *phdr = current->phdr;
 	current->phdr_map = NULL;
 	size_t adlt_ndso = 0;
-	int adlt_cpy_ret = 0;
-	char *temp;
 
 	if (!phdr) {
 		return -1;
@@ -985,53 +1040,21 @@ static int handle_adlt_phdr(struct dso *current, struct dl_phdr_info *info)
         ph_addr += entsz;
         ++adlt_ndso;
     }
-
-    ph_count_common = get_adlt_common_ph(current->adlt, &ph_indexes_common);
-	if (ph_count_common > 0 && ph_indexes_common) {
-		ph_count = ph_count_common;
-    }
-
-	ph_count_library = get_adlt_library_ph(current->adlt, current->adlt_ndso_index, &ph_indexes_library);
-	if (ph_count_library > 0 && ph_indexes_library) {
-		ph_count += ph_count_library;
-    }
-
-	temp = realloc(current->phdr_map, entsz * (adlt_ndso + ph_count));
-	if (temp == NULL) {
-		LD_LOGW("realloc error at adlt_cpy_ph ! dso name: %{public}s.", current->name);
-		return -1;
-	}
-	current->phdr_map = temp;
-	info->dlpi_phdr = current->phdr_map;
-	info->dlpi_phnum = adlt_ndso + (size_t)ph_count;
-	current->phdr_count = info->dlpi_phnum;
-	if (ph_count > 0) {
-		ph_addr = current->phdr_map + (adlt_ndso) * entsz;
-		while (ph_count_common--) {
-			memcpy(ph_addr, (char *)current->phdr + (*ph_indexes_common) * entsz, entsz);
-			ph_addr += entsz;
-			++ph_indexes_common;
-		}
-		while (ph_count_library--) {
-			memcpy(ph_addr, (char *)current->phdr + (*ph_indexes_library) * entsz, entsz);
-			ph_addr += entsz;
-			++ph_indexes_library;
-		}
-	}
-    return 0;
+	return relloc_adlt_phdr(current, info, adlt_ndso, entsz);
 }
+
 
 void init_entry(struct adlt_got_entry *entry, Shdr *sh, struct loadtask *task)
 {
 	entry->entry_addr = sh->sh_addr;
 	entry->entry_len = sh->sh_size;
-	entry->record_entry = (uint8_t *)calloc(ADLT_UPALIGN(sh->sh_size, sizeof(uint64_t)) * ADLT_UPALIGN(ADLT_MAX_NSO, BITS_IN_BYTE), sizeof(uint8_t));
+	entry->record_entry = (uint8_t *)calloc(
+		ADLT_UPALIGN(sh->sh_size, sizeof(uint64_t)) * ADLT_UPALIGN(ADLT_MAX_NSO, BITS_IN_BYTE), sizeof(uint8_t));
 	if (!entry->record_entry) {
 		LD_LOGE("Error mapping header : failed to allocate gotEntry");
 		return;
 	}
-	off_t off_start;
-	off_start = sh->sh_offset;
+	off_t off_start = sh->sh_offset;
 	off_start &= -PAGE_SIZE;
 	entry->got_map_len = sh->sh_size + (sh->sh_offset - off_start);
 	entry->got_map = mmap(0, entry->got_map_len, PROT_READ, MAP_PRIVATE, task->fd, off_start + task->file_offset);
@@ -1310,7 +1333,9 @@ static void lookup_tls(struct loadtask *task, bool tls_appeared)
 	task->tls.len = 0;
 	task->tls.size = 0;
 
-	adlt_phindex_t *ph_indexes, *phc_indexes, *phl_indexes;
+	adlt_phindex_t *ph_indexes;
+	adlt_phindex_t *phc_indexes;
+	adlt_phindex_t *phl_indexes;
 	ssize_t phl_count = get_adlt_library_ph(task->adlt, task->adlt_ndso_index, &phl_indexes);
 	ssize_t phc_count = get_adlt_common_ph(task->adlt, &phc_indexes);
 	ssize_t ph_count;
@@ -1422,12 +1447,15 @@ static char *create_realpath_from_fd(int fd)
 static void adlt_find_and_set_bss_name(struct dso *p, Phdr *phdr)
 {
 	size_t entsz = p->phentsize;
-	adlt_phindex_t *ph_indexes, *phc_indexes, *phl_indexes;
+	adlt_phindex_t *ph_indexes;
+	adlt_phindex_t *phc_indexes;
+	adlt_phindex_t *phl_indexes;
 	ssize_t phl_count = get_adlt_library_ph(p->adlt, p->adlt_ndso_index, &phl_indexes);
 	ssize_t phc_count = get_adlt_common_ph(p->adlt, &phc_indexes);
 	int loop = 2;
 	ssize_t ph_num;
-	size_t i, q;
+	size_t i;
+	size_t q;
 	Phdr *ph;
 	while(loop--) {
 		if (loop) {
@@ -1451,8 +1479,8 @@ static void adlt_find_and_set_bss_name(struct dso *p, Phdr *phdr)
 	  	  ph_num--, i = ph_indexes ? (size_t)ph_indexes[++q] : i + 1, ph = (void *)((char *)phdr + i * entsz)) {
 			if (ph->p_type != PT_LOAD) continue;
 			size_t seg_start = p->base + ph->p_vaddr;
-			size_t seg_file_end = seg_start + ph->p_filesz + PAGE_SIZE - 1 & -PAGE_SIZE;
-			size_t seg_max_addr = seg_start + ph->p_memsz + PAGE_SIZE - 1 & -PAGE_SIZE;
+			size_t seg_file_end = (seg_start + ph->p_filesz + PAGE_SIZE - 1) & (-PAGE_SIZE);
+			size_t seg_max_addr = (seg_start + ph->p_memsz + PAGE_SIZE - 1) & (-PAGE_SIZE);
 			size_t zeromap_size = seg_max_addr - seg_file_end;
 			if (zeromap_size > 0 && (ph->p_flags & PF_W)) {
 				set_bss_vma_name(p->name, (void *)seg_file_end, zeromap_size);
@@ -1461,7 +1489,7 @@ static void adlt_find_and_set_bss_name(struct dso *p, Phdr *phdr)
 	}
 }
 
-static inline Sym *adlt_lookup_unique_sym(struct dso *dso, struct verinfo *verinfo)
+static Sym *adlt_lookup_unique_sym(struct dso *dso, struct verinfo *verinfo)
 {
 	char *name = verinfo->s;
 	Sym *sym = NULL;
@@ -1476,13 +1504,15 @@ static inline Sym *adlt_lookup_unique_sym(struct dso *dso, struct verinfo *verin
 		return NULL;
 	}
 	// Get name with postfix: name + __ + hex(order index)
-	(void)sprintf(name_idx, "%s__%x", name, idx);
+	(void)snprintf(name_idx, "%s__%x", name, idx);
 	verinfo->s = name_idx;
 	do {
 		struct sym_info_pair s_info_g = gnu_hash(verinfo->s);
 		struct sym_info_pair s_info_s = {0, 0};
-		uint32_t gh = s_info_g.sym_h, gho = gh / (8 * sizeof(size_t)), *ght;
-		size_t ghm = 1ul << gh % (8 * sizeof(size_t));
+		uint32_t gh = s_info_g.sym_h;
+		uint32_t gho = gh / (8 * sizeof(size_t));
+		uint32_t *ght;
+		size_t ghm = 1ul << (gh % (8 * sizeof(size_t)));
 		if ((ght = dso->ghashtab)) {
 			if (gnu_hash_filter(ght, ghm, gho, gh)) {
 				sym = gnu_lookup(s_info_g, ght, dso, verinfo);
@@ -1508,15 +1538,20 @@ static void free_adlt(struct adlt *adlt) {return; };
 static void init_adlt(struct adlt *adlt){return ;};
 static void unmap_adlt_library(struct dso *dso) {return ;};
 ssize_t get_adlt_common_ph(struct adlt *adlt, adlt_phindex_t **ph_indexes) {return 0;};
-static ssize_t get_adlt_library_index(unsigned char *strtab_addr, unsigned char *sa_addr, const char *pathname) {return 0;};
+static ssize_t get_adlt_library_index(
+	unsigned char *strtab_addr, unsigned char *sa_addr, const char *pathname) {return 0;};
 static ssize_t get_adlt_library_index2(struct adlt *adlt, const char *pathname) {return 0;};
 static adlt_psod_t *get_adlt_library_entry(struct adlt *adlt, ssize_t library_index, char **blob) {return NULL;};
 ssize_t get_adlt_library_ph(struct adlt *adlt, ssize_t library_index, adlt_phindex_t **ph_indexes) {return 0;};
 ssize_t get_adlt_sym_dso_map(struct adlt *adlt, uint8_t **sym_dso_idx_map) {return 0;};
-static ssize_t get_adlt_library_dt_needed(struct adlt *adlt, ssize_t library_index, adlt_dt_needed_index_t **dt_needed) {return 0;};
-static ssize_t get_adlt_library_rela_dyn(struct adlt *adlt, ssize_t library_index, adlt_relindex_t **rela_dyn) {return 0;};
-static ssize_t get_adlt_library_rela_plt(struct adlt *adlt, ssize_t library_index, adlt_relindex_t **rela_plt) {return 0;};
-static ssize_t get_adlt_library_relr_dyn(struct adlt *adlt, ssize_t library_index, adlt_relindex_t **relr_dyn) {return 0;};
+static ssize_t get_adlt_library_dt_needed(
+	struct adlt *adlt, ssize_t library_index, adlt_dt_needed_index_t **dt_needed) {return 0;};
+static ssize_t get_adlt_library_rela_dyn(
+	struct adlt *adlt, ssize_t library_index, adlt_relindex_t **rela_dyn) {return 0;};
+static ssize_t get_adlt_library_rela_plt(
+	struct adlt *adlt, ssize_t library_index, adlt_relindex_t **rela_plt) {return 0;};
+static ssize_t get_adlt_library_relr_dyn(
+	struct adlt *adlt, ssize_t library_index, adlt_relindex_t **relr_dyn) {return 0;};
 static size_t get_adlt_library_init_array(
     struct adlt *adlt, ssize_t library_index, adlt_cross_section_array_t **init_cross) {return 0;};
 
@@ -1546,13 +1581,16 @@ void *bolt_remap_addr_func_adlt(size_t a) {return a;};
 static bool adlt_find_in_dso(struct dso *p, Phdr *phdr, struct adlt *adlt, size_t entsz, size_t addr) {return false;};
 static int handle_adlt_phdr(struct dso *current, struct dl_phdr_info *info){return 0;};
 static struct dso *search_dso_by_adlt_lstat(const struct stat *st, const ns_t *ns, uint64_t file_offset) {return NULL;};
-static struct dso *search_dso_by_adlt_index(const struct adlt *adlt, const ns_t *ns, ssize_t library_index) {return NULL;};
+static struct dso *search_dso_by_adlt_index(
+	const struct adlt *adlt, const ns_t *ns, ssize_t library_index) {return NULL;};
 static void free_record_entry(struct adlt_got_entry *entry) {return;};
 char *next_link_name(char **fullpath, char *buf, ssize_t bufsize) {return NULL;};
 static void set_adlt_symindex_map_to_library(struct dso *p) {return;};
-static Relocated_Flag check_and_set_bit(struct adlt_got_entry *et, size_t *reloc_addr , ssize_t ndso_index) {return NOT_GOT;};
+static Relocated_Flag check_and_set_bit(
+	struct adlt_got_entry *et, size_t *reloc_addr , ssize_t ndso_index) {return NOT_GOT;};
 static bool has_relocation(struct dso *dso, size_t *reloc_addr) {return false;};
-static void adlt_do_relocs(struct dso *dso, size_t *rel, size_t rel_size, size_t stride, adlt_relindex_t *rel_index) {return;};
+static void adlt_do_relocs(
+	struct dso *dso, size_t *rel, size_t rel_size, size_t stride, adlt_relindex_t *rel_index) {return;};
 static void adlt_do_android_relocs( 
     struct dso *p, size_t dt_name, size_t dt_size, size_t rel_cnt, adlt_relindex_t *rel_index) {return;};
 
@@ -1566,7 +1604,8 @@ static void adlt_clean_dso_flag(struct adlt_got_entry *entry, ssize_t ndso_index
 #ifdef LOAD_ORDER_RANDOMIZATION
 static bool parse_adlt_library_header(struct loadtask *task, Phdr *ph) {return true;};
 static void set_start_end_addr(struct loadtask *task, Shdr *sh) {return;};
-static bool map_remap_strtab(struct loadtask *task, Shdr *sh2, size_t bsl_bolt_remap_index, size_t strtab_sec_index) {return true;};
+static bool map_remap_strtab(
+	struct loadtask *task, Shdr *sh2, size_t bsl_bolt_remap_index, size_t strtab_sec_index) {return true;};
 static bool lookup_strtab_map(struct loadtask *task, Shdr *sh2) {return true;};
 static bool lookup_ndso(struct loadtask *task, Shdr *sh2) {return true;};
 static void lookup_tls(struct loadtask *task, bool tls_appeared) {return;};
