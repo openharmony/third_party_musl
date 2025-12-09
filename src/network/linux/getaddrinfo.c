@@ -88,10 +88,6 @@ static SharedResult *get_shared_result(const QueryKey *key) {
 			pthread_mutex_lock(&res->mutex);
 			res->waiters++;
 			pthread_mutex_unlock(&res->mutex);
-			// if (res->is_done) {
-            //     pthread_mutex_unlock(&g_cache_mutex);
-            //     return res;
-            // }
             pthread_mutex_unlock(&g_cache_mutex);
             return res;
         }
