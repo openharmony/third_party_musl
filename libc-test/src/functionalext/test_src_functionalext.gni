@@ -33,6 +33,7 @@ functionalext_list = [
   "sigchain:functionalext_sigchain_test",
   "queue:functionalext_queue_test",
   "crypt:functionalext_crypt_test",
+  "backtrace:functionalext_backtrace_test",
   "ldso_debug:functionalext_ldso_debug_test",
   "ldso_same_name_symbol:ldso_same_symbol_name_with_different_version",
   "dl_different_hash:dl_different_hash",
@@ -41,9 +42,3 @@ functionalext_list = [
   "string:functionalext_string_test",
   "adlt:functionalext_adlt_test",
 ]
-
-if (!is_llvm_build) {
-  functionalext_list += [
-    "backtrace:functionalext_backtrace_test",
-  ]
-}

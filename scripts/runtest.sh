@@ -1,15 +1,15 @@
 
-ARCH="$1"
-REMOTE="$2"
- 
-cd "${REMOTE}/src"
-rm ../REPORT
-rm ../FileList.txt
-rm ../SkipList.txt
-touch ../REPORT
-touch ../FileList.txt
-touch ../SkipList.txt
-echo 'root:This.is.a.test:18997:0:99999:7:::'>/etc/shadow
+cd /data/tests/libc-test/src
+rm /data/tests/libc-test/REPORT
+rm /data/tests/libc-test/FileList.txt
+rm /data/tests/libc-test/SkipList.txt
+touch /data/tests/libc-test/REPORT
+touch /data/tests/libc-test/FileList.txt
+touch /data/tests/libc-test/SkipList.txt
+param set debug.hitrace.tags.enableflags 1
+
+ARCH=arm
+ABILIST=$(param get const.product.cpu.abilist)
 if [ $ABILIST == "arm64-v8a" ]; then
     ARCH=aarch64
 fi
@@ -43,7 +43,7 @@ if [ $ARCH == "aarch64" ]; then
 fi
 
 for skiped in ${ShieldedList[*]};do
-    echo $skiped >> "${REMOTE}/SkipList.txt"
+    echo $skiped >> /data/tests/libc-test/SkipList.txt
 done
 
 function ShieldedCases() {
@@ -88,18 +88,18 @@ do
 		continue
 	elif [ -x $file ] && [ -s $file ]
 	then
-		echo $file >> "${REMOTE}/FileList.txt"
-		./runtest -w '' -t 30 $file >> "${REMOTE}/REPORT"
+		echo $file >> /data/tests/libc-test/FileList.txt
+		./runtest -w '' -t 30 $file >> /data/tests/libc-test/REPORT
 	fi
 done
 
-echo "--- gwp_asan test running --- " >> "${REMOTE}/REPORT"
+echo "--- gwp_asan test running --- " >> /data/tests/libc-test/REPORT
 # gwp_asan test need to be executed at last.
 for file in `ls *`
 do
 	if [ "$(IsGwpasanTest ${file})" = "yes" ]
 	then
-		echo $file >> "${REMOTE}/FileList.txt"
+		echo $file >> /data/tests/libc-test/FileList.txt
 
 		param set gwp_asan.log.path file
 		param set gwp_asan.enable.app.${file} true
@@ -108,9 +108,9 @@ do
 			param set gwp_asan.sample.all true
 		fi
 
-		echo "*** ${file} running ***" >> "${REMOTE}/REPORT"
-		./${file} >> "${REMOTE}/REPORT"
-		echo "*** ${file} done *** " >> "${REMOTE}/REPORT"
+		echo "*** ${file} running ***" >> /data/tests/libc-test/REPORT
+		./${file} >> /data/tests/libc-test/REPORT
+		echo "*** ${file} done *** " >> /data/tests/libc-test/REPORT
 		param set gwp_asan.log.path default
 		param set gwp_asan.enable.app.${file} false
 		if [ "${file}" != "gwp_asan_random_sample_test" ]
@@ -119,4 +119,4 @@ do
 		fi
 	fi
 done
-echo "--- gwp_asan test done ---" >> "${REMOTE}/REPORT"
+echo "--- gwp_asan test done ---" >> /data/tests/libc-test/REPORT

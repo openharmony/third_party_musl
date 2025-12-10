@@ -113,9 +113,5 @@ config("config_unittest") {
 
   ldflags = [ "-nostdlib" ]
 
-  if (is_llvm_build) {
-    ldflags += [ "-Wl,--dynamic-linker=/data/tests/ld-musl-${musl_arch}.so.1" ]
-  }
-
   libs = [ "//${target_out_dir}/libtest.a" ]
 }
