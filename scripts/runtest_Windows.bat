@@ -130,7 +130,7 @@ hdc shell mv %REMOTE%/src/zh_CN /tmp/zh_CN
 
 hdc file send %SHDIR%\runtest.sh %REMOTE%/runtest.sh
 hdc shell chmod +x %REMOTE%/runtest.sh
-hdc shell %REMOTE%/runtest.sh %ARCH% %REMOTE%
+hdc shell %REMOTE%/runtest.sh
 
 
 :Summary

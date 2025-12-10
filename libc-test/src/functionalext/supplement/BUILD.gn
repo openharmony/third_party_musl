@@ -360,10 +360,6 @@ ohos_executable("musl_unittest") {
     "-Wl,-rpath=/data/tmp/libcgtest/libs:/data/tmp/libcgtest/libs/rpath-test/",
   ]
 
-  if (is_llvm_build) {
-    ldflags += [ "-Wl,--dynamic-linker=/data/tests/ld-musl-${musl_arch}.so.1" ]
-  }
-
   include_dirs = [ "//third_party/musl" ]
   configs = [ ":module_private_config" ]
 
