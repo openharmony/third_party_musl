@@ -13,6 +13,9 @@
 * limitations under the License.
 */
 
+#ifndef DYNLINK_ADLT_H 
+#define DYNLINK_ADLT_H
+
 // feature ADLT segment type
 #define PT_ADLT                  0x6788FC61
 
@@ -1043,7 +1046,6 @@ static int handle_adlt_phdr(struct dso *current, struct dl_phdr_info *info)
 	return relloc_adlt_phdr(current, info, adlt_ndso, entsz);
 }
 
-
 void init_entry(struct adlt_got_entry *entry, Shdr *sh, struct loadtask *task)
 {
 	entry->entry_addr = sh->sh_addr;
@@ -1613,6 +1615,8 @@ static bool lookup_adlt_library(struct loadtask *task, Shdr *sh2, bool tls_appea
 static bool adlt_init_rw_seg(struct loadtask *task) {return true;};
 static bool is_adlt_plus_merge_so(const char *so_name){return false;};
 static bool adlt_load_library_header_extra(struct loadtask *task, ns_t *namespace){return false;};
+#endif
+
 #endif
 
 #endif

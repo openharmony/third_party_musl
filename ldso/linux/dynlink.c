@@ -728,7 +728,7 @@ static int search_vec(size_t *v, size_t *r, size_t key)
 	return 1;
 }
 
-#include "dynlink_adlt.inc"
+#include "dynlink_adlt.h"
 
 UT_STATIC int check_vna_hash(Verdef *def, int16_t vsym, uint32_t vna_hash)
 {
