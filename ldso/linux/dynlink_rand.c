@@ -160,6 +160,10 @@ void free_task(struct loadtask *task)
         __libc_free((void *)task->name);
         task->name = NULL;
     }
+    if (task->fullname) {
+        __libc_free(task->fullname);
+        task->fullname = NULL;
+    }
     if (task->allocated_buf) {
         __libc_free(task->allocated_buf);
         task->allocated_buf = NULL;
@@ -245,6 +249,11 @@ struct loadtask *create_loadtask(const char *name, struct dso *needed_by, ns_t *
     task->needed_by = needed_by;
     task->namespace = ns;
     task->check_inherited = check_inherited;
+    task->fd = -1;
     task->shdr_allocated_buf = MAP_FAILED;
+    task->adlt = NULL;
+    task->adlt_ndso_index = -1;
+    task->init_array_off = 0;
+    task->fini_array_off = 0;
     return task;
 }
