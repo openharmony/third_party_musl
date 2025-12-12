@@ -368,6 +368,7 @@ static ns_configor g_configor;
 #define ATTR_ADDED_NSLIST "added.nslist"      /* all namespace names except default */
 #define ATTR_NS_DEFAULT "default"           /* default namespace name */
 #define ATTR_NS_ACQUIESCENCE "acquiescence"           /* acquiescence section name */
+#define ATTR_NS_SYSTEMSCENCE "systemscence"           /* systemscence section name */
 #define ATTR_NS_ALLOWED_LIBS "allowed.libs"      /* when separated, allowed library names */
 #define ATTR_NS_INHERIT_SHARED_LIBS "shared.libs"      /* when inherited, shared library names */
 #define SECTION_DIR_MAP_SYSTEM "system"      /* system path */
@@ -524,7 +525,7 @@ static int config_parse(const char *file_path, const char *exe_path)
     }
     if (!sname) {
         /* No matched section found, use the default section. */
-        sname = ATTR_NS_ACQUIESCENCE;
+        sname = ATTR_NS_SYSTEMSCENCE;
         LD_LOGD("config_parse no section found!");
     }
     if (!(g_configor.kvs = config_get_kvs(sname))) {
