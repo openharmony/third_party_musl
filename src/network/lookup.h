@@ -95,6 +95,7 @@ hidden int revert_dns_fail_cause(int cause);
 #define OHOS_GET_CACHE_FUNC_NAME "NetSysGetResolvCache"
 #define OHOS_SET_CACHE_FUNC_NAME "NetSysSetResolvCache"
 #define OHOS_JUDGE_IPV6_FUNC_NAME "NetSysIsIpv6Enable"
+#define OHOS_JUDGE_IPV4_FUNC_NAME "NetSysIsIpv4Enable"
 #define OHOS_POST_DNS_RESULT_FUNC_NAME "NetSysPostDnsResult"
 #define OHOS_GET_DEFAULT_NET_FUNC_NAME "NetSysGetDefaultNetwork"
 #define MAX_RESULTS 32
@@ -140,6 +141,7 @@ typedef int32_t (*GetCache)(uint16_t netId, struct param_wrapper param,
 typedef int32_t (*SetCache)(uint16_t netId, struct param_wrapper param, struct addrinfo *res);
 
 typedef int (*JudgeIpv6)(uint16_t netId);
+typedef int (*JudgeIpv4)(uint16_t netId);
 
 typedef int (*PostDnsResult)(int netid, char* name, int usedtime, int queryfail,
 							 struct addrinfo *res, struct queryparam *param);
@@ -200,6 +202,7 @@ enum DNS_FAIL_REASON {
 	// -11
 	DNS_FAIL_REASON_LACK_V6_SUPPORT = -1501,
 	DNS_FAIL_REASON_CREATE_UDP_SOCKET_FAILED = -1502,
+	DNS_FAIL_REASON_LACK_V4_SUPPORT = -1503,
 };
  
 #define FALLBACK_TCP_QUERY 200
