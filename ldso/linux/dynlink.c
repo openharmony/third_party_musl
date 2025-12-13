@@ -476,7 +476,7 @@ static void init_namespace(struct dso *app)
 	char file_path[sizeof "/etc/ld-musl-namespace-" + sizeof (LDSO_ARCH) + sizeof "flex" + sizeof ".ini" + 1] = {0};
 	if (stat("/vendor/lib64/chipset-sdk-sp", &statbuf) == 0) {
 		(void)snprintf(file_path, sizeof file_path, "/etc/ld-musl-namespace-%s-flex.ini", LDSO_ARCH);
-	} else if ((stat("/data/local/tmp/namespace_not_use_SGT", &statbuf) != 0) && (stat("/sys_prod/etc/musl", &statbuf) == 0)) {
+	} else if ( false && (stat("/data/local/tmp/namespace_not_use_SGT", &statbuf) != 0) && (stat("/sys_prod/etc/musl", &statbuf) == 0)) {
 		(void)snprintf(file_path, sizeof file_path, "/etc/ld-musl-namespace-%s-New.ini", LDSO_ARCH);
 	} else {
 		(void)snprintf(file_path, sizeof file_path, "/etc/ld-musl-namespace-%s.ini", LDSO_ARCH);
