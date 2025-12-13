@@ -53,6 +53,13 @@ if (is_lite_system && current_os == "ohos") {
           "ramdisk",
         ]
       }
+      ohos_prebuilt_etc("ld-musl-namespace-${musl_arch}-New.ini") {
+        source = "${musl_dir}/config/ld-musl-namespace-${musl_arch}-New.ini"
+        install_images = [
+          "system",
+          "ramdisk",
+        ]
+      }
     }
 
     group("musl_ns_config") {
@@ -61,7 +68,9 @@ if (is_lite_system && current_os == "ohos") {
         ":ld-musl-namespace-${musl_arch}.ini",
       ]
       if (musl_arch == "aarch64") {
-        deps += [ ":ld-musl-namespace-${musl_arch}-flex.ini", ]
+        deps += [ ":ld-musl-namespace-${musl_arch}-flex.ini",
+                  ":ld-musl-namespace-${musl_arch}-New.ini",
+        ]
       }
     }
   } else {
