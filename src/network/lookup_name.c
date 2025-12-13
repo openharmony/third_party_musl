@@ -180,6 +180,13 @@ static JudgeIpv6 load_ipv6_judger(void)
 	resolve_dns_sym((void **) &ipv6_judger, OHOS_JUDGE_IPV6_FUNC_NAME);
 	return ipv6_judger;
 }
+
+static JudgeIpv4 load_ipv4_judger(void)
+{
+	static JudgeIpv4 ipv4_judger = NULL;
+	resolve_dns_sym((void **) &ipv4_judger, OHOS_JUDGE_IPV4_FUNC_NAME);
+	return ipv4_judger;
+}
 #endif
 
 static int IsIpv6Enable(int netid)
@@ -187,6 +194,23 @@ static int IsIpv6Enable(int netid)
     int ret = 0;
 #if OHOS_DNS_PROXY_BY_NETSYS
     JudgeIpv6 func = load_ipv6_judger();
+	if (!func) {
+		return -1;
+	}
+
+	ret = func(netid);
+	if (ret < 0) {
+		return -1;
+	}
+#endif
+    return ret;
+}
+
+static int IsIpv4Enable(int netid)
+{
+    int ret = 1;
+#if OHOS_DNS_PROXY_BY_NETSYS
+    JudgeIpv4 func = load_ipv4_judger();
 	if (!func) {
 		return -1;
 	}
@@ -227,9 +251,12 @@ static int name_from_dns(struct address buf[static MAXADDRS], char canon[static 
 	static const struct { int af; int rr; } afrr_ipv4_only[1] = {
 		{ .af = AF_INET6, .rr = RR_A },
 	};
+	static const struct { int af; int rr; } afrr_ipv6_only[1] = {
+		{ .af = AF_INET, .rr = RR_AAAA },
+	};
 	struct {int af; int rr;} *afrr = afrr_ipv6_enable;
 
-	if (!IsIpv6Enable(netid) || (family == AF_INET)) {
+	if ((!IsIpv6Enable(netid) && IsIpv4Enable(netid)) || (family == AF_INET)) {
 		if (family == AF_INET6) {
 #ifndef __LITEOS__
 			MUSL_LOGW("Network scenario mismatch: %{public}d", EAI_SYSTEM);
@@ -238,6 +265,15 @@ static int name_from_dns(struct address buf[static MAXADDRS], char canon[static 
 		}
 		queryNum = 1;
 		afrr = afrr_ipv4_only;
+	} else if ((!IsIpv4Enable(netid) && IsIpv6Enable(netid)) || (family == AF_INET6)) {
+		if (family == AF_INET) {
+#ifndef __LITEOS__
+			MUSL_LOGW("Network scenario mismatch: %{public}d", EAI_SYSTEM);
+#endif
+			return DNS_FAIL_REASON_LACK_V4_SUPPORT;
+		}
+		queryNum = 1;
+		afrr = afrr_ipv6_only;
 	} else {
 		queryNum = 2;
 		afrr = afrr_ipv6_enable;
