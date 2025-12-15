@@ -42,7 +42,7 @@ declare_args() {
 
 declare_args() {
   if (is_llvm_build) {
-    runtime_lib_path = "//out/llvm-install/lib/clang/15.0.4/lib"
+    runtime_lib_path = "//out/llvm-install/lib/clang/16/lib"
   } else {
     if (host_cpu == "arm64") {
       runtime_lib_path =
