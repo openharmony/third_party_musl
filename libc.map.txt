@@ -2103,6 +2103,10 @@
     timelocal;
     ynl;
     __cmsg_nxthdr;
+    pthread_attr_extension_init;
+    pthread_attr_extension_destroy;
+    set_pthread_extended_function_policy;
+    get_pthread_extended_function_policy;
   local:
     *;
 };

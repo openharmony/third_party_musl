@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2011-2026 Huawei Device Co., Ltd.
+* Copyright (C) 2026 Huawei Device Co., Ltd.
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
 * You may obtain a copy of the License at
@@ -15,14 +15,14 @@
 #define _GNU_SOURCE
 #include "pthread_impl.h"
 
-int pthread_attr_destroy(pthread_attr_t *a)
-{
 #ifdef MUSL_EXTERNAL_FUNCTION
-#ifndef __LITEOS_A__
-    if (a != NULL) {
-        pthread_attr_extension_destroy(a);
-    }
-#endif
-#endif
-    return 0;
+
+// flag: non-zero - enable, 0 - disable
+void set_pthread_extended_function_policy(int flag) {
+	musl_pc_module = flag;
 }
+
+int get_pthread_extended_function_policy(void) {
+    return musl_pc_module;
+}
+#endif

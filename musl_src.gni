@@ -2519,6 +2519,10 @@ if (musl_arch == "arm") {
       "src/string/rawmemchr.c",
       "src/time/timelocal.c",
       "src/version/musl_version.c",
+      "src/thread/pthread_attr_extension.c",
+      "src/thread/pthread_attr_getaffinity_np.c",
+      "src/thread/pthread_attr_setaffinity_np.c",
+      "src/thread/pthread_extended_function_policy.c",
     ]
   }
 } else if (musl_arch == "loongarch64") {
