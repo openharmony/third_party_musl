@@ -490,7 +490,7 @@ static bool replace_to_adlt_duplicate(struct dso *dso, Sym **sym, const char **n
         }
 
         // Get name with postfix: name + __ + hex(order index)
-	    (void)snprintf(name_idx, "%s__%x", *name, idx);
+	    (void)sprintf(name_idx, "%s__%x", *name, idx);
 		sym_idx = find_sym(p, name_idx, 1).sym;
 		if (sym_idx) {
 			*sym = sym_idx;
@@ -1506,7 +1506,7 @@ static Sym *adlt_lookup_unique_sym(struct dso *dso, struct verinfo *verinfo)
 		return NULL;
 	}
 	// Get name with postfix: name + __ + hex(order index)
-	(void)snprintf(name_idx, "%s__%x", name, idx);
+	(void)sprintf(name_idx, "%s__%x", name, idx);
 	verinfo->s = name_idx;
 	do {
 		struct sym_info_pair s_info_g = gnu_hash(verinfo->s);
