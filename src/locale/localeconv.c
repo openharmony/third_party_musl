@@ -56,7 +56,7 @@ static const struct lconv posix_lconv = {
 	} while (0)
 
 static struct lconv g_lconv_icures;
-static int g_localeconv_initialize = 1;
+static volatile int g_localeconv_initialize = 0;
 
 typedef enum {
 	ICU_DECIMAL_POINT = 0,
@@ -86,8 +86,30 @@ static void update_lconv_member(u_char *icu_symbol, void *fmt, char *lconv_membe
 // refresh the lconv_icures, fills with the default value
 static void refresh_lconv_icures(void)
 {
-	if (g_localeconv_initialize == 1) {
-		memcpy(&g_lconv_icures, &posix_lconv, sizeof(struct lconv));
+	int status = -1;
+#ifdef a_ll
+	status = a_ll(&g_localeconv_initialize);
+#else
+	status = g_localeconv_initialize;
+#endif
+	if (status == 0) {
+		g_lconv_icures.grouping = posix_lconv.grouping;
+		g_lconv_icures.mon_grouping = posix_lconv.mon_grouping;
+		g_lconv_icures.frac_digits = posix_lconv.frac_digits;
+		g_lconv_icures.int_frac_digits = posix_lconv.int_frac_digits;
+		g_lconv_icures.p_cs_precedes = posix_lconv.p_cs_precedes;
+		g_lconv_icures.p_sep_by_space = posix_lconv.p_sep_by_space;
+		g_lconv_icures.n_cs_precedes = posix_lconv.n_cs_precedes;
+		g_lconv_icures.n_sep_by_space = posix_lconv.n_sep_by_space;
+		g_lconv_icures.p_sign_posn = posix_lconv.p_sign_posn;
+		g_lconv_icures.n_sign_posn = posix_lconv.n_sign_posn;
+		g_lconv_icures.int_p_cs_precedes = posix_lconv.int_p_cs_precedes;
+		g_lconv_icures.int_p_sep_by_space = posix_lconv.int_p_sep_by_space;
+		g_lconv_icures.int_n_cs_precedes = posix_lconv.int_n_cs_precedes;
+		g_lconv_icures.int_n_sep_by_space = posix_lconv.int_n_sep_by_space;
+		g_lconv_icures.int_p_sign_posn = posix_lconv.int_p_sign_posn;
+		g_lconv_icures.int_n_sign_posn = posix_lconv.int_n_sign_posn;
+
 		g_lconv_icures.decimal_point = (char *)malloc(ICU_BUFFER_SIZE);
 		g_lconv_icures.thousands_sep = (char *)malloc(ICU_BUFFER_SIZE);
 		g_lconv_icures.int_curr_symbol = (char *)malloc(ICU_BUFFER_SIZE);
@@ -96,9 +118,11 @@ static void refresh_lconv_icures(void)
 		g_lconv_icures.mon_thousands_sep = (char *)malloc(ICU_BUFFER_SIZE);
 		g_lconv_icures.positive_sign = (char *)malloc(ICU_BUFFER_SIZE);
 		g_lconv_icures.negative_sign = (char *)malloc(ICU_BUFFER_SIZE);
-		g_localeconv_initialize = 0;
+		// ignore cas result to avoid interrupted by signal or fork
+		(void)a_cas(&g_localeconv_initialize, 0, 1);
+		a_barrier();
 	}
-
+	a_barrier();
 	INITIALIZE_ICURES_PTR(posix_lconv.decimal_point, g_lconv_icures.decimal_point, ICU_BUFFER_SIZE);
 	INITIALIZE_ICURES_PTR(posix_lconv.thousands_sep, g_lconv_icures.thousands_sep, ICU_BUFFER_SIZE);
 	INITIALIZE_ICURES_PTR(posix_lconv.int_curr_symbol, g_lconv_icures.int_curr_symbol, ICU_BUFFER_SIZE);
