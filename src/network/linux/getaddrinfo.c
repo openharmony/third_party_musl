@@ -19,8 +19,8 @@
 #define DNS_FAIL_REASON3_ROUND 299
 #define DNS_FAIL_REASON11_ROUND 99
 #define KEY_MAX 512
+#define KEY_SAME_MAX_TIME 2100000000LL
 
-// 查询键：用于标识相同查询请求
 typedef struct {
     char host[KEY_MAX];
     char serv[KEY_MAX];
@@ -28,29 +28,27 @@ typedef struct {
     int socktype;
     int protocol;
     int flags;
+    struct timespec ts;
 } QueryKey;
 
-// 共享查询结果：存储查询结果和同步信息
 typedef struct SharedResult {
     QueryKey key;
-    int is_done;          // 查询是否完成
-    int rc;               // 查询结果码
+    int is_done;
+    int rc; // res code
 	struct service ports[MAXSERVS];
 	struct address addrs[MAXADDRS];
 	char canon[256];
 	int nservs;
 	int naddrs;
-    int waiters;          // 等待的线程数
+    int waiters;
     pthread_mutex_t mutex;
     pthread_cond_t cond;
     struct SharedResult *next;
 } SharedResult;
 
-// 全局查询缓存（链表）
 static SharedResult *g_result_cache = NULL;
 static pthread_mutex_t g_cache_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-// 生成查询键（唯一标识查询请求）
 static void gen_query_key(QueryKey *key, const char *host, const char *serv, const struct addrinfo *hints) {
     memset(key, 0, sizeof(QueryKey));
     if (host) {
@@ -65,23 +63,22 @@ static void gen_query_key(QueryKey *key, const char *host, const char *serv, con
     key->socktype = hints ? hints->ai_socktype : 0;
     key->protocol = hints ? hints->ai_protocol : 0;
     key->flags = hints ? hints->ai_flags : 0;
+    clock_gettime(CLOCK_REALTIME, &key->ts);
 }
 
-// 比较查询键（判断是否为相同查询）
 static int query_key_equal(const QueryKey *a, const QueryKey *b) {
+    int64_t diff = llabs((int64_t)a->ts.tv_sec * 1e9 + a->ts.tv_nsec - ((int64_t)b->ts.tv_sec * 1e9 + b->ts.tv_nsec));
     return strcmp(a->host, b->host) == 0 &&
            strcmp(a->serv, b->serv) == 0 &&
            a->family == b->family &&
            a->socktype == b->socktype &&
            a->protocol == b->protocol &&
-           a->flags == b->flags;
+           a->flags == b->flags &&
+           diff <= KEY_SAME_MAX_TIME; // if a query does not finish in 2s100ms, new incoming query do a new dns search
 }
 
-// 获取共享查询结果（创建或复用）
 static SharedResult *get_shared_result(const QueryKey *key) {
     pthread_mutex_lock(&g_cache_mutex);
-
-    // 查找现有结果
     SharedResult *res = NULL;
     for (res = g_result_cache; res; res = res->next) {
         if (query_key_equal(&res->key, key)) {
@@ -93,7 +90,7 @@ static SharedResult *get_shared_result(const QueryKey *key) {
         }
     }
 
-    // 创建新结果节点
+    // create new node if there is no same key in global cache
     res = calloc(1, sizeof(SharedResult));
     if (!res) {
         pthread_mutex_unlock(&g_cache_mutex);
@@ -108,7 +105,6 @@ static SharedResult *get_shared_result(const QueryKey *key) {
     pthread_mutex_init(&res->mutex, NULL);
     pthread_cond_init(&res->cond, NULL);
 
-    // 添加到缓存链表
     res->next = g_result_cache;
     g_result_cache = res;
 
@@ -116,9 +112,10 @@ static SharedResult *get_shared_result(const QueryKey *key) {
     return res;
 }
 
-// 释放共享结果引用（最后一个引用时清理）
 static void release_shared_result(SharedResult *res) {
-	if (!res) return;
+	if (!res) {
+		return;
+	}
     pthread_mutex_lock(&g_cache_mutex);
 	pthread_mutex_lock(&res->mutex);
     res->waiters--;
@@ -126,7 +123,6 @@ static void release_shared_result(SharedResult *res) {
 	pthread_mutex_unlock(&res->mutex);
     
     if (last_ref) {
-        // 从缓存移除
         SharedResult **prev = &g_result_cache;
         while (*prev && *prev != res) {
             prev = &(*prev)->next;
@@ -134,8 +130,7 @@ static void release_shared_result(SharedResult *res) {
         if (*prev) {
             *prev = res->next;
         }
-        
-        // 确保mutex解锁后销毁
+
         pthread_mutex_lock(&res->mutex);
         pthread_mutex_unlock(&res->mutex);
         pthread_mutex_destroy(&res->mutex);
@@ -342,11 +337,9 @@ int getaddrinfo_ext(const char *restrict host, const char *restrict serv, const 
 		}
 	}
 
-    // 生成查询键
     QueryKey key;
     gen_query_key(&key, host, serv, hint);
-    
-    // 获取共享结果（复用或新建）
+
     SharedResult *shared_res = get_shared_result(&key);
     if (!shared_res) return EAI_MEMORY;
 
@@ -356,12 +349,15 @@ int getaddrinfo_ext(const char *restrict host, const char *restrict serv, const 
 	int timeStartRet = gettimeofday(&timeStart, NULL);
 	int t_cost = 0;
     if (is_leader) {
-		// 首线程执行实际查询
+		// first thread do the dns search
         nservs = __lookup_serv(ports, serv, proto, socktype, flags);
         if (nservs < 0) {
             pthread_mutex_lock(&shared_res->mutex);
             shared_res->rc = nservs;
             shared_res->is_done = 1;
+            if (shared_res->waiters > 1) {
+                pthread_cond_broadcast(&shared_res->cond);
+            }
             pthread_mutex_unlock(&shared_res->mutex);
             release_shared_result(shared_res);
             return nservs;
@@ -380,6 +376,9 @@ int getaddrinfo_ext(const char *restrict host, const char *restrict serv, const 
             pthread_mutex_lock(&shared_res->mutex);
             shared_res->rc = naddrs;
             shared_res->is_done = 1;
+            if (shared_res->waiters > 1) {
+                pthread_cond_broadcast(&shared_res->cond);
+            }
             pthread_mutex_unlock(&shared_res->mutex);
             release_shared_result(shared_res);
             return naddrs;
@@ -399,7 +398,7 @@ int getaddrinfo_ext(const char *restrict host, const char *restrict serv, const 
         }
         pthread_mutex_unlock(&shared_res->mutex);
     } else {
-        // 后续线程等待结果
+        // other threads wait for the result
         pthread_mutex_lock(&shared_res->mutex);
 		while (shared_res->is_done == 0) {
 			pthread_cond_wait(&shared_res->cond, &shared_res->mutex);
