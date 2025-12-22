@@ -23,7 +23,7 @@
 #include <netinet/in.h>
 
 #if 1
-#define SIGCHAIN_LOG_DOMAIN 0xD003F00
+#define SIGCHAIN_LOG_DOMAIN 0xD003F07
 #define SIGCHAIN_LOG_TAG "ressolvconf"
 #define GETADDRINFO_PRINT_DEBUG(...) ((void)HiLogAdapterPrint(LOG_CORE, LOG_INFO, \
 	SIGCHAIN_LOG_DOMAIN, SIGCHAIN_LOG_TAG, __VA_ARGS__))
