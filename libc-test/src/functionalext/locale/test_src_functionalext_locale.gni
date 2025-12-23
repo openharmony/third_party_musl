@@ -22,4 +22,5 @@ functionalext_locale_test = [
   "strtod_l",
   "wcstod_l",
   "iconv",
+  "localeconv_multithread",
 ]
