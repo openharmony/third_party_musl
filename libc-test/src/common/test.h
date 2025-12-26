@@ -37,6 +37,7 @@ void check_log(const char *file, const char *pattern, bool regex_match);
 void clear_log(const char *log_dir, const char *file_tag);
 // Use the file_tag to match all the files in log_dir, and then check if the file contain pattern.
 void find_and_check_file(const char *log_dir, const char *file_tag, const char *pattern, bool regex_match);
+void check_no_consecutive_errors(const char *log_dir, const char *file_tag, const char *error_pattern);
 
 #ifndef __arm__
 #define __clock_gettime64 clock_gettime
