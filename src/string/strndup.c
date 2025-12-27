@@ -10,3 +10,8 @@ char *strndup(const char *s, size_t n)
 	d[l] = 0;
 	return d;
 }
+
+char *__strndup(const char *s, size_t n)
+{
+	return strndup(s, n);
+}
