@@ -20,6 +20,8 @@ functionalext_locale_test = [
   "setlocale",
   "uselocale",
   "strtod_l",
+  "strtoll_l",
+  "strtoull_l",
   "wcstod_l",
   "iconv",
   "localeconv_multithread",
