@@ -1,12 +1,13 @@
 #ifndef _STDLIB_H
 #define _STDLIB_H
 
+#include <locale.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 #include <features.h>
-#include <locale.h>
 
 #if __cplusplus >= 201103L
 #define NULL nullptr
