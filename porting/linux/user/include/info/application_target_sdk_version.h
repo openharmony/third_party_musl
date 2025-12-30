@@ -20,22 +20,25 @@
 extern "C" {
 #endif
 
-#define __DISTRIBUTEOS_VERSION(maj, min, patch) maj##min##patch // min必须是两位数字dd(如00,01), patch也必须是两位（如00,01）
-#define __OH_VERSION(maj,min) maj##.##min
 #define __INNER_CONCAT(a,b) a##.##b
+#define __API_VERSION(maj, min, patch) __INNER_CONCAT(__INNER_CONCAT(maj, min), patch)
+
+#define __INNER_AVAILABILITY(platform, version) __attribute__((__availability__(platform, introduced=version)))
 #define __INNER_DEPRECATED(platform, version) __attribute__((__availability__(platform, deprecated=version)))
 #define __INNER_OBSOLETED(platform, version) __attribute__((__availability__(platform, obsoleted=version)))
-#define __INNER_AVAILABILITY(platform, version) __attribute__((__availability__(platform, introduced=version)))
 
-#define __OH_AVAILABILITY(version) __INNER_AVAILABILITY(ohos, version)
-#define __DISTRIBUTEOS_AVAILABILITY(dos_ver, oh_ver) __INNER_AVAILABILITY(ohos, __INNER_CONCAT(oh_ver,dos_ver))
-#define __OH_DEPRECATED(version) __INNER_DEPRECATED(ohos, version)
-#define __DISTRIBUTEOS_DEPRECATED(dos_ver, oh_ver) __INNER_DEPRECATED(ohos, __INNER_CONCAT(oh_ver,dos_ver))
-#define __OH_OBSOLETED(version) __INNER_OBSOLETED(ohos, version)
-#define __DISTRIBUTEOS_OBSOLETED(dos_ver, oh_ver) __INNER_OBSOLETED(ohos, __INNER_CONCAT(oh_ver,dos_ver))
-#define SINCE(api) __builtin_available(ohos api, *)
-#define __INNER_SINCE(ver) __builtin_available(ohos ver, *)
-#define DISTRIBUTEOS_SINCE(dos_ver, oh_ver) __INNER_SINCE(__INNER_CONCAT(oh_ver, dos_ver))
+// version: ohos的版本号,23或者是26.0.0等，最多支持三位小数
+#define __API_AVAILABILITY(version) __INNER_AVAILABILITY(ohos, version)
+// 指定废弃的ohos版本号
+#define __API_DEPRECATED(version) __INNER_DEPRECATED(ohos, version)
+// 指定废弃的ohos版本号
+#define __API_OBSOLETED(version) __INNER_OBSOLETED(ohos, version)
+
+// 编码时候用来隔离接口代码的宏
+#define APIAVAILABLE(...)  _APIAVAILABLE(__VA_ARGS__, 3, 2, 1, 0)
+#define _APIAVAILABLE(_1, _2, _3, N, ...)  __APIAVAILABLE_##N(_1, _2, _3)
+#define __APIAVAILABLE_1(maj, ...)  __builtin_available(ohos maj, *)
+#define __APIAVAILABLE_3(maj, min, patch)  __builtin_available(ohos __API_VERSION(maj, min, patch), *)
 
 #define SDK_VERSION_FUTURE 9999
 #define SDK_VERSION_7 7
