@@ -1526,6 +1526,7 @@ musl_src_file = [
   "src/time/strftime.c",
   "src/time/strptime.c",
   "src/time/time.c",
+  "src/time/timelocal.c",
   "src/time/timegm.c",
   "src/time/timer_create.c",
   "src/time/timer_delete.c",
