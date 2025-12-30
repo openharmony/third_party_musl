@@ -188,6 +188,7 @@ static struct fdpic_loadmap *app_loadmap;
 static struct fdpic_dummy_loadmap app_dummy_loadmap;
 static struct icall_item pac_items[PAC_MODIFIER_SIZE] = {0};
 static bool check_abs_path = true;
+static struct dso *libc_dso = NULL;
 
 struct debug *_dl_debug_addr = &debug;
 
@@ -1410,7 +1411,8 @@ static void do_one_reloc(struct dso *dso, size_t *rel, size_t stride, size_t add
 		if (!vinfo.use_vna_hash && dso->versym && (dso->versym[sym_index] & 0x7fff) >= 0) {
 			get_verinfo(dso, sym_index, &vinfo);
 		}
-		if (dso->cache_sym_index == sym_index) {
+		// temporary solution for libc.so relocation cache problem
+		if (dso->cache_sym_index == sym_index && dso != libc_dso) {
 			def = (struct symdef){ .dso = dso->cache_dso, .sym = dso->cache_sym };
 		} else {
 			def = (sym->st_info>>4) == STB_LOCAL
@@ -7047,8 +7049,20 @@ static void unmap_preloaded_sections(struct loadtasks *tasks)
 
 static void preload_deps(struct dso *p, struct loadtasks *tasks)
 {
+	static bool inited = false;
 	if (p->deps) {
 		return;
+	}
+	// temporary solution to avoid libc relocation cache.
+	if (!inited) {
+		for (; p; p = p->next) {
+			if (strstr(p->name, "libc.so") || strstr(p->name, "ld-musl")) {
+				libc_dso = p;
+				inited = true;
+				break;
+			}
+			preload_direct_deps(p, p->namespace, tasks);
+		}
 	}
 	for (; p; p = p->next) {
 		preload_direct_deps(p, p->namespace, tasks);
