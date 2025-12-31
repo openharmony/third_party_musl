@@ -73,6 +73,7 @@ declare_args() {
   musl_porting_dir = "//third_party/musl/porting/linux/user"
   musl_use_adlt = false
   musl_adlt_llvm = ""
+  musl_external_function = false
 
   # if (is_asan) {
   #   musl_linker_asan_name =
