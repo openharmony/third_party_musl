@@ -2085,6 +2085,7 @@
     strtoull_l;
     timelocal;
     ynl;
+    __cmsg_nxthdr;
   local:
     *;
 };
