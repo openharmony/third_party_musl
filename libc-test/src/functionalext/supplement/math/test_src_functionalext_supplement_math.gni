@@ -26,4 +26,8 @@ functionalext_supplement_math_test = [
   "nanf",
   "__fpclassifyf",
   "functionalext_pow10",
+  "__finitef",
+  "__isinf",
+  "__isinff",
+  "__isnanf",
 ]
