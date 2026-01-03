@@ -34,6 +34,7 @@ struct flock {
 
 int creat(const char *, mode_t);
 int fcntl(int, int, ...);
+int fcntl64(int, int, ...);
 int open(const char *, int, ...);
 int openat(int, const char *, int, ...);
 int posix_fadvise(int, off_t, off_t, int);
