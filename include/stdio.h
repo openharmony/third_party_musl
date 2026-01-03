@@ -107,6 +107,12 @@ char *gets(char *);
 int fputs(const char *__restrict, FILE *__restrict);
 int puts(const char *);
 
+int __asprintf_chk(char**, int, const char*, ...);
+int __fprintf_chk(FILE*, int, const char*, ...);
+int __printf_chk(int, const char*, ...);
+int __vasprintf_chk(char**, int, const char*, __isoc_va_list);
+int __vfprintf_chk(FILE*, int, const char*, va_list);
+int __vfprintf(FILE *__restrict, int, const char *__restrict, __isoc_va_list);
 int printf(const char *__restrict, ...);
 int fprintf(FILE *__restrict, const char *__restrict, ...);
 int sprintf(char *__restrict, const char *__restrict, ...);

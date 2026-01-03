@@ -15,10 +15,12 @@
 #define _GNU_SOURCE
 #define _BSD_SOURCE
 
+#include <errno.h>
 #include <fortify/fortify.h>
 #include <fcntl.h>
 #include <limits.h>
 #include <poll.h>
+#include <setjmp.h>
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -31,6 +33,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <stdio_ext.h>
 
 #define FILE_MODE_ALL (0777)
 
@@ -416,6 +419,71 @@ int __sprintf_chk(char* dest, int flags, size_t dst_len_from_compiler, const cha
     va_list va;
     va_start(va, format);
     int result = __vsprintf_chk(dest, flags, dst_len_from_compiler, format, va);
+    va_end(va);
+    return result;
+}
+
+int __vfprintf_chk(FILE* fp, int flags, const char* format, va_list va)
+{
+    if (fp == NULL) {
+        __fortify_error("the file point is NULL\n");
+    }
+
+    if (!__fwritable(fp)) {
+        errno = EBADF;
+        return -1;
+    }
+
+    if (format == NULL) {
+        errno = EINVAL;
+        return -1;
+    }
+    return __DIAGNOSE_CALL_BYPASSING_FORTIFY(__vfprintf)(fp, flags, format, va);
+}
+
+int __fprintf_chk(FILE* fp, int flags, const char* format, ...)
+{
+    va_list va;
+    va_start(va, format);
+    int result = __vfprintf_chk(fp, flags, format, va);
+    va_end(va);
+    return result;
+}
+
+int __printf_chk(int flags, const char* format, ...)
+{
+    va_list va;
+    va_start(va, format);
+    int result = __vfprintf_chk(stdout, flags, format, va);
+    va_end(va);
+    return result;
+}
+
+_Noreturn void __longjmp_chk(jmp_buf env, int val)
+{
+    longjmp(env, val);
+}
+
+int __vasprintf_chk(char** strp, int flags, const char* format, va_list va)
+{
+    if (strp == NULL) {
+        errno = EINVAL;
+        return -1;
+    }
+
+    if (format == NULL) {
+        *strp = NULL;
+        errno = EINVAL;
+        return -1;
+    }
+    return __DIAGNOSE_CALL_BYPASSING_FORTIFY(vasprintf)(strp, format, va);
+}
+
+int __asprintf_chk(char** strp, int flags, const char* format, ...)
+{
+    va_list va;
+    va_start(va, format);
+    int result = __vasprintf_chk(strp, flags, format, va);
     va_end(va);
     return result;
 }
