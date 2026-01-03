@@ -27,4 +27,5 @@ functionalext_time_test = [
   "strptime_ext",
   "time_ext",
   "timegm",
+  "timelocal",
 ]
