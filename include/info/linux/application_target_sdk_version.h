@@ -27,16 +27,22 @@ extern "C" {
 #define __CHECK_RANGE(val) ((void)sizeof(char[(val) >= 0 && (val) <= 99 ? 1 : -1]))
 
 /**
-  * @brief determine whether the current operating system version is greater than or equal to the given value.
+  * @brief To ensure compatibility and stability of an application across different versions.
+  * Prevent crashes caused by invoking non-existent APIs on older systems through compile-time
+  * and runtime conditional checks.
+  * Whenever using APIs that are newer than the distribution target version,
+  * it is essential to protect them with the APIAVAILABLE method and provide a reasonable fallback solution.
+  *
   * @param maj, int value 0 - 99.
   * @param min, int value 0 - 99.
   * @param patch, int value 0 - 99.
+  * @since 22
   */
 #define APIAVAILABLE(maj, min, patch) \
-  __CHECK_RANGE(maj), \
-  __CHECK_RANGE(min), \
-  __CHECK_RANGE(patch), \
-  __INNER_APIAVAILABLE(__INNER_CONCAT(maj, min##.##patch))
+    __CHECK_RANGE(maj), \
+    __CHECK_RANGE(min), \
+    __CHECK_RANGE(patch), \
+    __INNER_APIAVAILABLE(__INNER_CONCAT(maj, min##.##patch))
 
 #define SDK_VERSION_FUTURE 9999
 #define SDK_VERSION_7 7
