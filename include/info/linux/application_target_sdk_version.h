@@ -20,10 +20,9 @@
 extern "C" {
 #endif
 
-#define __INNER_CONCAT(a,b) a##.##b
-
-// 编码时候用来隔离接口代码的宏
-#define APIAVAILABLE(maj, min, patch)  __builtin_available(ohos maj##.##min##.##patch, *)
+#define __INNER_CONCAT(a, b) a##.##b
+#define __INNER_APIAVAILABLE(ver) __builtin_available(ohos ver, *)
+#define APIAVAILABLE(maj, min, patch) __INNER_APIAVAILABLE(__INNER_CONCAT(maj, min##.##patch))
 
 #define SDK_VERSION_FUTURE 9999
 #define SDK_VERSION_7 7
