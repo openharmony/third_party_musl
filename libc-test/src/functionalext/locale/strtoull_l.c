@@ -31,12 +31,12 @@
 **/
 
 #define TEST(r, f, x, m) ( \
-	errno = 0, msg = #f, ((r) = (f)) == (x) || \
+	errno = 0, ((r) = (f)) == (x) || \
 	(t_error("%s failed (" m ")\n", #f, r, x), 0) )
 
 #define TEST2(r, f, x, m) ( \
 	((r) = (f)) == (x) || \
-	(t_error("%s failed (" m ")\n", msg, r, x), 0) )
+	(t_error("%s failed (" m ")\n", #f, r, x), 0) )
 
 struct testNum{
     char *s;
@@ -155,13 +155,13 @@ void strtoull_l_0500(void)
     char *p;
     unsigned long long ull;
     char *s;
-    char *msg="";
     locale_t loc = newlocale(LC_ALL_MASK, "zh_CN.UTF-8", NULL);
     if (loc == NULL) {
         perror("newlocale failed");
         return;
     }
-    TEST(ull, strtoull_l(s="9223372036854775808", &p, 0, loc), 9223372036854775808ULL, "uncaught overflow %llu != %llu");
+    TEST(ull, strtoull_l(s="9223372036854775808", &p, 0, loc), 9223372036854775808ULL,
+        "uncaught overflow %llu != %llu");
     TEST2(i, p-s, 19, "wrong final position %d != %d");
     freelocale(loc);
 }
@@ -261,13 +261,13 @@ void strtoull_l_01000(void)
     char *p;
     unsigned long long ull;
     char *s;
-    char *msg="";
     locale_t loc = newlocale(LC_ALL_MASK, "en_US.UTF-8", NULL);
     if (loc == NULL) {
         perror("newlocale failed");
         return;
     }
-    TEST(ull, strtoull_l(s="9223372036854775808", &p, 0, loc), 9223372036854775808ULL, "uncaught overflow %llu != %llu");
+    TEST(ull, strtoull_l(s="9223372036854775808", &p, 0, loc), 9223372036854775808ULL,
+        "uncaught overflow %llu != %llu");
     TEST2(i, p-s, 19, "wrong final position %d != %d");
 	TEST2(i, errno, 0, "errno %d != %d");
 
@@ -290,7 +290,6 @@ void strtoull_l_01100(void)
     char *p;
     unsigned long long ull;
     char *s;
-    char *msg="";
     locale_t loc = newlocale(LC_ALL_MASK, "en_US.UTF-8", NULL);
     if (loc == NULL) {
         perror("newlocale failed");
@@ -314,7 +313,6 @@ void strtoull_l_01200(void)
     char *p;
     unsigned long long ull;
     char *s;
-    char *msg="";
     locale_t loc = newlocale(LC_ALL_MASK, "en_US.UTF-8", NULL);
     if (loc == NULL) {
         perror("newlocale failed");
@@ -424,18 +422,21 @@ void strtoull_l_01700(void)
     char *p;
     unsigned long long ull;
     char *s;
-    char *msg="";
     locale_t loc = newlocale(LC_ALL_MASK, "zh_CN", NULL);
     if (loc == NULL) {
         perror("newlocale failed");
         return;
     }
-    TEST(ull, strtoull_l(s="9223372036854775808", &p, 0, loc), 9223372036854775808ULL, "uncaught overflow %llu != %llu");
-    TEST(ull, strtoull_l(s="18446744073709551615", &p, 0, loc), 18446744073709551615ULL, "uncaught overflow %llu != %llu");
+    TEST(ull, strtoull_l(s="9223372036854775808", &p, 0, loc), 9223372036854775808ULL,
+        "uncaught overflow %llu != %llu");
+    TEST(ull, strtoull_l(s="18446744073709551615", &p, 0, loc), 18446744073709551615ULL,
+        "uncaught overflow %llu != %llu");
     TEST2(i, errno, 0, "errno %d != %d");
-    TEST(ull, strtoull_l(s="18446744073709551616", &p, 0, loc), 18446744073709551615ULL, "uncaught overflow %llu != %llu");
+    TEST(ull, strtoull_l(s="18446744073709551616", &p, 0, loc), 18446744073709551615ULL,
+        "uncaught overflow %llu != %llu");
     TEST2(i, errno, ERANGE, "errno %d != %d");
-    TEST(ull, strtoull_l(s="-18446744073709551616", &p, 0, loc), 18446744073709551615ULL, "uncaught overflow %llu != %llu");
+    TEST(ull, strtoull_l(s="-18446744073709551616", &p, 0, loc), 18446744073709551615ULL,
+        "uncaught overflow %llu != %llu");
     TEST2(i, errno, ERANGE, "errno %d != %d");
     freelocale(loc);
 }
@@ -451,7 +452,6 @@ void strtoull_l_01800(void)
     char *p;
     unsigned long long ull;
     char *s;
-    char *msg="";
     locale_t loc = newlocale(LC_ALL_MASK, "zh_CN", NULL);
     if (loc == NULL) {
         perror("newlocale failed");
@@ -477,10 +477,10 @@ static const struct ltest tests[] = {
     /* Then unsigned.  */
     {"  0", 0, 0, 0, 0},
     {"0xffffffffg", 0xffffffff, 0, 'g', 0},
-    {"0xffffffffffffffffg", 0xffffffffffffffffull, 0, 'g', 0},
-    {"-0xfedcba987654321", 0xf0123456789abcdfull, 0, 0, 0},
-    {"0xf1f2f3f4f5f6f7f8f9", 0xffffffffffffffffull, 0, 0, ERANGE},
-    {"-0x123456789abcdef01", 0xffffffffffffffffull, 0, 0, ERANGE},
+    {"0xffffffffffffffffg", 0xffffffffffffffffULL, 0, 'g', 0},
+    {"-0xfedcba987654321", 0xf0123456789abcdfULL, 0, 0, 0},
+    {"0xf1f2f3f4f5f6f7f8f9", 0xffffffffffffffffULL, 0, 0, ERANGE},
+    {"-0x123456789abcdef01", 0xffffffffffffffffULL, 0, 0, ERANGE},
     {"1111111111111111111111111111111111111111111111111111111111111111", 0xffffffffffffffff, 2, 0, 0},
     {"10000000000000000000000000000000000000000000000000000000000000000", 0xffffffffffffffff, 2, 0, ERANGE},
     {"11112220022122120101211020120210210211220", 0xffffffffffffffff, 3, 0, 0},
@@ -564,7 +564,6 @@ void strtoull_l_01900(void)
     char *p;
     unsigned long long ull;
     char *s;
-    char *msg="";
     locale_t loc = newlocale(LC_ALL_MASK, "zh_CN", NULL);
     if (loc == NULL) {
         perror("newlocale failed");
