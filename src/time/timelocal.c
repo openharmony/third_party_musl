@@ -13,15 +13,9 @@
  * limitations under the License.
  */
 
-#include <wchar.h>
+#include "time_impl.h"
 
-size_t mbrlen(const char *restrict s, size_t n, mbstate_t *restrict st)
+time_t timelocal(struct tm *tm)
 {
-	static unsigned internal;
-	return mbrtowc(0, s, n, st ? st : (mbstate_t *)&internal);
-}
-
-size_t __mbrlen(const char *restrict s, size_t n, mbstate_t *restrict st)
-{
-	return mbrlen(s, n, st);
+	return mktime(tm);
 }
