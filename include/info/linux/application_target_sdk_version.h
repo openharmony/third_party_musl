@@ -22,7 +22,21 @@ extern "C" {
 
 #define __INNER_CONCAT(a, b) a##.##b
 #define __INNER_APIAVAILABLE(ver) __builtin_available(ohos ver, *)
-#define APIAVAILABLE(maj, min, patch) __INNER_APIAVAILABLE(__INNER_CONCAT(maj, min##.##patch))
+
+// check the val between 0-99
+#define __CHECK_RANGE(val) ((void)sizeof(char[(val) >= 0 && (val) <= 99 ? 1 : -1]))
+
+/**
+  * @brief determine whether the current operating system version is greater than or equal to the given value.
+  * @param maj, int value 0 - 99.
+  * @param min, int value 0 - 99.
+  * @param patch, int value 0 - 99.
+  */
+#define APIAVAILABLE(maj, min, patch) \
+  __CHECK_RANGE(maj), \
+  __CHECK_RANGE(min), \
+  __CHECK_RANGE(patch), \
+  __INNER_APIAVAILABLE(__INNER_CONCAT(maj, min##.##patch))
 
 #define SDK_VERSION_FUTURE 9999
 #define SDK_VERSION_7 7
