@@ -51,6 +51,10 @@ extern "C" {
 int __fpclassify(double);
 int __fpclassifyf(float);
 int __fpclassifyl(long double);
+int __finitef(float);
+int __isinf(double);
+int __isinff(float);
+int __isnanf(float);
 
 static __inline unsigned __FLOAT_BITS(float __f)
 {
