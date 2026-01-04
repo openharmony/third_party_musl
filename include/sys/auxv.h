@@ -9,6 +9,7 @@ extern "C" {
 #include <bits/hwcap.h>
 
 unsigned long getauxval(unsigned long);
+unsigned long __getauxval(unsigned long);
 
 #ifdef __cplusplus
 }

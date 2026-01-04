@@ -97,6 +97,7 @@ static __inline unsigned long long __DOUBLE_BITS(double __f)
 int __signbit(double);
 int __signbitf(float);
 int __signbitl(long double);
+int __isnan(double);
 
 #define signbit(x) ( \
 	sizeof(x) == sizeof(float) ? (int)(__FLOAT_BITS(x)>>31) : \
@@ -403,6 +404,7 @@ double      drem(double, double);
 float       dremf(float, float);
 
 int         finite(double);
+int         __finite(double);
 int         finitef(float);
 
 double      scalb(double, double);
