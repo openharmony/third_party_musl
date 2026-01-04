@@ -93,6 +93,7 @@ math_list = [
   "j1",
   "jn",
   "jnf",
+  "jnl",
   "ldexp",
   "ldexpf",
   "ldexpl",
@@ -197,4 +198,5 @@ math_list = [
   "y1f",
   "yn",
   "ynf",
+  "ynl",
 ]
