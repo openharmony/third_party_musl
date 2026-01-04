@@ -413,6 +413,10 @@ template("static_and_shared_libs_template") {
     if (musl_use_mutex_wait_opt) {
       defines += [ "USE_MUTEX_WAIT_OPT" ]
     }
+  
+    if (musl_external_function) {
+      defines += [ "MUSL_EXTERNAL_FUNCTION" ]
+    }
 
     configs -= musl_inherited_configs
     configs += [
