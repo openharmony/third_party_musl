@@ -72,3 +72,8 @@ int pthread_atfork(void (*prepare)(void), void (*parent)(void), void (*child)(vo
 	UNLOCK(lock);
 	return 0;
 }
+
+int __register_atfork(void (*prepare) (void), void (*parent) (void), void (*child) (void), void *dso_handle)
+{
+	return pthread_atfork(prepare, parent, child);
+}
