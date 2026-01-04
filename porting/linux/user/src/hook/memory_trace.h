@@ -31,6 +31,7 @@ extern "C" {
 #define TAG_RES_ASHMEM             "RES_ASHMEM"
 #define TAG_RES_RN_HEAP_MASK       "RES_RN_HEAP_MASK"
 #define TAG_RES_DMABUF_MASK        "RES_DMABUF_MASK"
+#define TAG_RES_ARK_GLOBAL_HANDLE  "RES_ARK_GLOBAL_HANDLE"
 
 /* each bit represents resource hook point.
  * |63 ... 32|31 ... 22|21 ... 12|11 - 10|9 ... 0|
@@ -65,12 +66,14 @@ extern "C" {
 #define RES_SO_MASK                (1 << 20)
 #define RES_RN_HEAP_MASK           (1 << 21)
 #define RES_DMABUF_MASK            (1 << 22)
+#define RES_ARK_GLOBAL_HANDLE      (1 << 23)
 
 #define FD_SIZE                     1
 #define THREAD_SIZE                 1
 
 void memtrace(void* addr, size_t size, const char* tag, bool is_using);
 void restrace(unsigned long long mask, void* addr, size_t size, const char* tag, bool is_using);
+void restraceExt(unsigned long long mask, void* addr, size_t size, const char* tag, bool is_using, bool isWeakRef);
 void resTraceMove(unsigned long long mask, void* oldAddr, void* newAddr, size_t newSize);
 void resTraceFreeRegion(unsigned long long mask, void* addr, size_t size);
 #ifdef __cplusplus
