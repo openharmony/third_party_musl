@@ -8,3 +8,8 @@ char *strdup(const char *s)
 	if (!d) return NULL;
 	return memcpy(d, s, l+1);
 }
+
+char *__strdup (const char *s)
+{
+	return strdup(s);
+}
