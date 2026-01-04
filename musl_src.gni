@@ -724,6 +724,8 @@ musl_src_file = [
   "src/math/j1f.c",
   "src/math/jn.c",
   "src/math/jnf.c",
+  "src/math/jnl.c",
+  "src/math/ynl.c",
   "src/math/ldexp.c",
   "src/math/ldexpf.c",
   "src/math/ldexpl.c",
