@@ -386,10 +386,12 @@ extern int signgam;
 double      j0(double);
 double      j1(double);
 double      jn(int, double);
+long double jnl(int, long double);
 
 double      y0(double);
 double      y1(double);
 double      yn(int, double);
+long double ynl(int, long double);
 #endif
 
 #if defined(_GNU_SOURCE) || defined(_BSD_SOURCE)
