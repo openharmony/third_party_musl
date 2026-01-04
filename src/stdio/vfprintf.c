@@ -436,7 +436,8 @@ static int getint(char **s) {
 	return i;
 }
 
-static int printf_core(FILE *f, const char *fmt, va_list *ap, union arg *nl_arg, int *nl_type, char nl_arg_filled)
+static int printf_core(FILE *f, const char *fmt, va_list *ap,
+                       union arg *nl_arg, int *nl_type, char nl_arg_filled, int flags)
 {
 	char *a, *z, *s=(char *)fmt;
 	unsigned l10n=0, fl;
@@ -473,7 +474,7 @@ static int printf_core(FILE *f, const char *fmt, va_list *ap, union arg *nl_arg,
 			if (!nl_arg_filled) {
 				va_list ap_copy;
 				va_copy(ap_copy, *ap);
-				if (printf_core(0, fmt, &ap_copy, nl_arg, nl_type, 1) < 0) {
+				if (printf_core(0, fmt, &ap_copy, nl_arg, nl_type, 1, flags) < 0) {
 					return -1;
 				}
 				va_end(ap_copy);
@@ -503,7 +504,6 @@ static int printf_core(FILE *f, const char *fmt, va_list *ap, union arg *nl_arg,
 			} else goto inval;
 			if (w<0) fl|=LEFT_ADJ, w=-w;
 		} else if ((w=getint(&s))<0) goto overflow;
-
 		/* Read precision */
 		if (*s=='.' && s[1]=='*') {
 			if (isdigit(s[2]) && s[3]=='$') {
@@ -670,7 +670,13 @@ static int printf_core(FILE *f, const char *fmt, va_list *ap, union arg *nl_arg,
 	for (i=1; i<=NL_ARGMAX && nl_type[i]; i++)
 		pop_arg(nl_arg+i, nl_type[i], ap);
 	for (; i<=NL_ARGMAX && !nl_type[i]; i++);
-	if (i<=NL_ARGMAX) goto inval;
+	if (i<=NL_ARGMAX) {
+		if (flags != 0) {
+			fprintf(stderr, "Musl Fortify runtime error: invalid specified parameter\n");
+			abort();
+		}
+		goto inval;
+	}
 	return 1;
 
 inval:
@@ -681,7 +687,7 @@ overflow:
 	return -1;
 }
 
-int vfprintf(FILE *restrict f, const char *restrict fmt, va_list ap)
+int __vfprintf(FILE *restrict f, int flags, const char *restrict fmt, va_list ap)
 {
 	va_list ap2;
 	int nl_type[NL_ARGMAX+1] = {0};
@@ -705,7 +711,7 @@ int vfprintf(FILE *restrict f, const char *restrict fmt, va_list ap)
 	}
 	if (!f->wend && __towrite(f)) ret = -1;
 	else {
-		ret = printf_core(f, fmt, &ap2, nl_arg, nl_type, 0);
+		ret = printf_core(f, fmt, &ap2, nl_arg, nl_type, 0, flags);
 	}
 	if (saved_buf) {
 		if (!(f->flags & F_PBUF)) {
@@ -727,4 +733,9 @@ int vfprintf(FILE *restrict f, const char *restrict fmt, va_list ap)
 	FUNLOCK(f);
 	va_end(ap2);
 	return ret;
+}
+
+int vfprintf(FILE *restrict f, const char *restrict fmt, va_list ap)
+{
+    return __vfprintf(f, 0, fmt, ap);
 }
