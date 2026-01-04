@@ -38,6 +38,8 @@ _Noreturn void _longjmp (jmp_buf, int);
 int setjmp (jmp_buf) __setjmp_attr;
 _Noreturn void longjmp (jmp_buf, int);
 
+_Noreturn void __longjmp_chk(jmp_buf, int);
+
 #define setjmp setjmp
 
 #undef __setjmp_attr

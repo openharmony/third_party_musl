@@ -12,6 +12,7 @@
 # limitations under the License.
 
 functionalext_supplement_stdio_test = [
+  "__asprintf_chk",
   "fflush",
   "fopen",
   "fprintf",
@@ -29,6 +30,7 @@ functionalext_supplement_stdio_test = [
   "tmpnam",
   "ungetwc",
   "vasprintf",
+  "__vasprintf_chk",
   "vfprintf",
   "vfscanf",
   "tempnam",
@@ -75,6 +77,9 @@ functionalext_supplement_stdio_test = [
   "__freading",
   "clearerr",
   "__fwritable",
+  "__fprintf_chk",
+  "__vfprintf_chk",
+  "__printf_chk",
   "__fwriting",
   "_flushlbf",
   "fgetws",
