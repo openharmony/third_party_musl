@@ -24,6 +24,7 @@
 #define _MEMORY_TRACE_H
 
 #include <stdbool.h>
+#include <stdint.h>
 #include <stddef.h>
 
 #ifdef __cplusplus
@@ -97,8 +98,8 @@ void memtrace(void* addr, size_t size, const char* tag, bool is_using);
 void restrace(unsigned long long mask, void* addr, size_t size, const char* tag, bool is_using);
 void resTraceMove(unsigned long long mask, void* oldAddr, void* newAddr, size_t newSize);
 void resTraceFreeRegion(unsigned long long mask, void* addr, size_t size);
-void setResTraceId(int newTraceType, int newTraceID, void *pOldTraceType, void *pOldTraceID);
-
+void setResTraceId(uint32_t newTraceType, uint64_t newTraceID, uint32_t* pOldTraceType, uint64_t* pOldTraceID);
+bool getResTraceId(uint32_t* pTraceType, uint64_t* pTraceID);
 #ifdef __cplusplus
 }
 #endif
