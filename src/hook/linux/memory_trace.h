@@ -97,6 +97,8 @@ void memtrace(void* addr, size_t size, const char* tag, bool is_using);
 void restrace(unsigned long long mask, void* addr, size_t size, const char* tag, bool is_using);
 void resTraceMove(unsigned long long mask, void* oldAddr, void* newAddr, size_t newSize);
 void resTraceFreeRegion(unsigned long long mask, void* addr, size_t size);
+void setResTraceId(int newTraceType, int newTraceID, void *pOldTraceType, void *pOldTraceID);
+
 #ifdef __cplusplus
 }
 #endif
