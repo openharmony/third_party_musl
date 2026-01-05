@@ -414,7 +414,7 @@ template("static_and_shared_libs_template") {
       defines += [ "USE_MUTEX_WAIT_OPT" ]
     }
   
-    if (musl_external_function) {
+    if (musl_extended_function) {
       defines += [ "MUSL_EXTERNAL_FUNCTION" ]
     }
 
