@@ -2056,7 +2056,13 @@
     dlopen_config_abs_path_policy;
     HiLogBasePrint;
     HiLogBaseIsLoggable;
+    __acosf_finite;
     __asprintf_chk;
+    __atan2_finite;
+    __cmsg_nxthdr;
+    __exp_finite;
+    __exp2_finite;
+    __exp2f_finite;
     __finite;
     __finitef;
     __fprintf_chk;
@@ -2065,11 +2071,18 @@
     __isinff;
     __isnan;
     __isnanf;
+    __log_finite;
+    __log2_finite;
+    __log2f_finite;
+    __log10_finite;
     __longjmp_chk;
     __mbrlen;
+    __pow_finite;
+    __powf_finite;
     __printf_chk;
     __pthread_key_create;
     __rawmemchr;
+    __realpath_chk;
     __register_atfork;
     __strdup;
     __strndup;
@@ -2083,6 +2096,7 @@
     pthread_attr_setaffinity_np;
     strtoll_l;
     strtoull_l;
+    __syslog_chk;
     timelocal;
     ynl;
   local:
