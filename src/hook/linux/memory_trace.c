@@ -51,7 +51,6 @@ static struct ResTraceTls* getOrCreateResTraceTls(void)
     
     struct ResTraceTls* tls = (struct ResTraceTls*)pthread_getspecific(g_resTraceKey);
     if (tls == NULL) {
-        // 使用calloc确保内存清零
         tls = (struct ResTraceTls*)calloc(1, sizeof(struct ResTraceTls));
         if (tls == NULL) {
             return NULL;
