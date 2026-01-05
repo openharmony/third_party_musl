@@ -1,4 +1,4 @@
-## __isinf &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; OHOS Programmer's Manual   
+## __isinf &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; OHOS Programmer's Manual
 
 
 
@@ -34,6 +34,10 @@
 #### HISTORY
 
 ​       -- 2026
+
+#### NOTES
+
+​       This function is ‌exclusively designed for PC environments‌.
 
 #### CONFORMING TO
 

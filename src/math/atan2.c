@@ -105,3 +105,10 @@ double atan2(double y, double x)
 		return (z-pi_lo) - pi; /* atan(-,-) */
 	}
 }
+
+#ifdef MUSL_EXTERNAL_FUNCTION
+double __atan2_finite(double y, double x)
+{
+    return atan2(y, x);
+}
+#endif

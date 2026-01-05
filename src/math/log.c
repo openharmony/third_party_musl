@@ -110,3 +110,10 @@ double log(double x)
 	    r * r2 * (A[1] + r * A[2] + r2 * (A[3] + r * A[4])) + hi;
 	return eval_as_double(y);
 }
+
+#ifdef MUSL_EXTERNAL_FUNCTION
+double __log_finite(double x)
+{
+    return log(x);
+}
+#endif
