@@ -37,7 +37,7 @@
             "musl_use_mutex_wait_opt",
             "musl_use_adlt",
             "musl_adlt_llvm",
-            "musl_external_function"
+            "musl_extended_function"
         ],
         "adapted_system_type": ["mini", "small", "standard"],
         "rom": "",
