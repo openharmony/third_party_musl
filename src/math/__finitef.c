@@ -13,9 +13,11 @@
  * limitations under the License.
  */
 
+#ifdef MUSL_EXTERNAL_FUNCTION
 #include <math.h>
 
 int __finitef(float x)
 {
     return isfinite(x);
 }
+#endif

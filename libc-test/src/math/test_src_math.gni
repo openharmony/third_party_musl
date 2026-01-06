@@ -1,3 +1,5 @@
+import("../../../musl_config.gni")
+
 math_list = [
   "acos",
   "acosf",
@@ -93,7 +95,6 @@ math_list = [
   "j1",
   "jn",
   "jnf",
-  "jnl",
   "ldexp",
   "ldexpf",
   "ldexpl",
@@ -198,5 +199,11 @@ math_list = [
   "y1f",
   "yn",
   "ynf",
-  "ynl",
 ]
+
+if (musl_extended_function) {
+  math_list += [
+    "jnl",
+    "ynl",
+  ]
+}

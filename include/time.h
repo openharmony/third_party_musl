@@ -58,7 +58,9 @@ time_t mktime (struct tm *);
 size_t strftime (char *__restrict, size_t, const char *__restrict, const struct tm *__restrict);
 struct tm *gmtime (const time_t *);
 struct tm *localtime (const time_t *);
+#ifdef MUSL_EXTERNAL_FUNCTION
 time_t timelocal (struct tm *);
+#endif
 char *asctime (const struct tm *);
 char *ctime (const time_t *);
 int timespec_get(struct timespec *, int);

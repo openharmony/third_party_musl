@@ -46,6 +46,8 @@
 
 ​      The behavior of __mbrlen() depends on the LC_CTYPE category of the current locale.
 
+​       This function is ‌exclusively designed for PC environments‌.
+
 #### CONFORMING TO
 
 ​      POSIX.1-2001, POSIX.1-2008, C99.

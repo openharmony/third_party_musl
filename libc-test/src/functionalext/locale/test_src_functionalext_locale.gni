@@ -11,6 +11,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import("../../../../musl_config.gni")
+
 functionalext_locale_test = [
   "dcngettext",
   "duplocale",
@@ -20,9 +22,14 @@ functionalext_locale_test = [
   "setlocale",
   "uselocale",
   "strtod_l",
-  "strtoll_l",
-  "strtoull_l",
   "wcstod_l",
   "iconv",
   "localeconv_multithread",
 ]
+
+if (musl_extended_function) {
+  functionalext_locale_test += [
+    "strtoll_l",
+    "strtoull_l",
+  ]
+}

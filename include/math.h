@@ -51,10 +51,14 @@ extern "C" {
 int __fpclassify(double);
 int __fpclassifyf(float);
 int __fpclassifyl(long double);
+
+#ifdef MUSL_EXTERNAL_FUNCTION
 int __finitef(float);
 int __isinf(double);
 int __isinff(float);
 int __isnanf(float);
+int __isnan(double);
+#endif
 
 static __inline unsigned __FLOAT_BITS(float __f)
 {
@@ -97,7 +101,6 @@ static __inline unsigned long long __DOUBLE_BITS(double __f)
 int __signbit(double);
 int __signbitf(float);
 int __signbitl(long double);
-int __isnan(double);
 
 #define signbit(x) ( \
 	sizeof(x) == sizeof(float) ? (int)(__FLOAT_BITS(x)>>31) : \
@@ -391,12 +394,16 @@ extern int signgam;
 double      j0(double);
 double      j1(double);
 double      jn(int, double);
+#ifdef MUSL_EXTERNAL_FUNCTION
 long double jnl(int, long double);
+#endif
 
 double      y0(double);
 double      y1(double);
 double      yn(int, double);
+#ifdef MUSL_EXTERNAL_FUNCTION
 long double ynl(int, long double);
+#endif
 #endif
 
 #if defined(_GNU_SOURCE) || defined(_BSD_SOURCE)
@@ -406,7 +413,9 @@ double      drem(double, double);
 float       dremf(float, float);
 
 int         finite(double);
+#ifdef MUSL_EXTERNAL_FUNCTION
 int         __finite(double);
+#endif
 int         finitef(float);
 
 double      scalb(double, double);

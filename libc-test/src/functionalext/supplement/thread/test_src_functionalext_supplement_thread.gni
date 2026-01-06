@@ -11,6 +11,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import("../../../../../musl_config.gni")
+
 functionalext_supplement_thread_test = [
   "mtx_init",
   "mtx_lock",
@@ -79,6 +81,11 @@ functionalext_supplement_thread_test = [
   "pthread_equal",
   "pthread_rwlock_rdlock_sup",
   "cnd_broadcast",
-  "__pthread_key_create",
-  "__register_atfork",
 ]
+
+if (musl_extended_function) {
+  functionalext_supplement_thread_test += [
+    "__pthread_key_create",
+    "__register_atfork",
+  ]
+}

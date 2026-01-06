@@ -13,9 +13,11 @@
  * limitations under the License.
  */
 
+#ifdef MUSL_EXTERNAL_FUNCTION
 #include "time_impl.h"
 
 time_t timelocal(struct tm *tm)
 {
 	return mktime(tm);
 }
+#endif

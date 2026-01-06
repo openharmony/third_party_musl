@@ -37,9 +37,9 @@ _Noreturn void _longjmp (jmp_buf, int);
 
 int setjmp (jmp_buf) __setjmp_attr;
 _Noreturn void longjmp (jmp_buf, int);
-
+#ifdef MUSL_EXTERNAL_FUNCTION
 _Noreturn void __longjmp_chk(jmp_buf, int);
-
+#endif
 #define setjmp setjmp
 
 #undef __setjmp_attr

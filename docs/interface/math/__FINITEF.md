@@ -35,6 +35,9 @@
 
 ​       -- 2026
 
+#### NOTES
+
+​       This function is ‌exclusively designed for PC environments‌.
 
 #### CONFORMING TO
 

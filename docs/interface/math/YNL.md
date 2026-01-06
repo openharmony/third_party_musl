@@ -57,6 +57,10 @@
 
 ​       -- 2026 
 
+#### NOTES
+
+​       This function is ‌exclusively designed for PC environments‌.
+
 #### CONFORMING TO
 
 ​             The functions returning double conform to SVr4, 4.3BSD, POSIX.1-2001, POSIX.1-2008.  The others are nonstandard functions that also exist on the BSDs.

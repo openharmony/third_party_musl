@@ -11,7 +11,9 @@ char *strtok_r(char *restrict s, const char *restrict sep, char **restrict p)
 	return s;
 }
 
+#ifdef MUSL_EXTERNAL_FUNCTION
 char *__strtok_r(char *restrict s, const char *restrict sep, char **restrict p)
 {
 	return strtok_r(s, sep, p);
 }
+#endif

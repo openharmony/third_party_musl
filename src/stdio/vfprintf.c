@@ -671,10 +671,12 @@ static int printf_core(FILE *f, const char *fmt, va_list *ap,
 		pop_arg(nl_arg+i, nl_type[i], ap);
 	for (; i<=NL_ARGMAX && !nl_type[i]; i++);
 	if (i<=NL_ARGMAX) {
+#ifdef MUSL_EXTERNAL_FUNCTION
 		if (flags != 0) {
 			fprintf(stderr, "Musl Fortify runtime error: invalid specified parameter\n");
 			abort();
 		}
+#endif
 		goto inval;
 	}
 	return 1;

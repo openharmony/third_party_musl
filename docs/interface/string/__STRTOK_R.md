@@ -37,6 +37,8 @@
 
 ​       On some implementations, *saveptr is required to be NULL on the first call to __strtok_r() that is being used to parse str.
 
+​       This function is ‌exclusively designed for PC environments‌.
+
 #### CONFORMING TO
 
 ​      The __strtok_r() conforms to POSIX.1-2001, POSIX.1-2008.
