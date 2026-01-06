@@ -407,6 +407,9 @@ int getsockopt (int, int, int, void *__restrict, socklen_t *__restrict);
 int setsockopt (int, int, int, const void *, socklen_t);
 
 int sockatmark (int);
+#ifdef MUSL_EXTERNAL_FUNCTION
+struct cmsghdr *__cmsg_nxthdr (struct msghdr *mhdr, struct cmsghdr *cmsg);
+#endif
 
 #if _REDIR_TIME64
 #ifdef _GNU_SOURCE

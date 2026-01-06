@@ -2515,6 +2515,12 @@ if (musl_arch == "arm") {
     "src/misc/aarch64/syscall.s",
     "src/ldso/aarch64/dlvsym.s",
   ]
+
+  if (musl_extended_function) { 
+    musl_src_file += [
+      "src/network/__cmsg_nxthdr.c",
+    ]
+  }
 } else if (musl_arch == "loongarch64") {
   musl_src_file += [ "arch/loongarch64/syscall_arch.h" ]
 } else if (musl_arch == "x86_64") {
