@@ -19,7 +19,6 @@
 #include <string.h>
 #include <test.h>
 #include <regex.h>
-#include <stdlib.h>
 
 #define NAME_BUFFER_SIZE 512
 
@@ -128,64 +127,6 @@ void clear_log(const char *log_dir, const char *file_tag)
             snprintf(target_file, NAME_BUFFER_SIZE, "%s%s", log_dir, ptr->d_name);
             remove(target_file);
         }
-    }
-    closedir(dir);
-}
-
-void check_no_consecutive_errors(const char *log_dir, const char *file_tag, const char *error_pattern)
-{
-    struct dirent *ptr;
-    int found = 0;
-    DIR *dir = opendir(log_dir);
-    if (!dir) {
-        t_error("FAIL can't open log dir: %s\n", log_dir);
-        return;
-    }
-
-    while ((ptr = readdir(dir)) != NULL) {
-        if (strstr(ptr->d_name, file_tag) != NULL) {
-            found = 1;
-            char target_file[512];
-            snprintf(target_file, 512, "%s%s", log_dir, ptr->d_name);
-
-            FILE *fp = fopen(target_file, "r");
-            if (!fp) continue;
-
-            char buffer[4096];
-            size_t len = fread(buffer, 1, sizeof(buffer) - 1, fp);
-            buffer[len] = '\0';
-            fclose(fp);
-
-            // Check for consecutive error reports
-            char *pos = buffer;
-            int consecutive_count = 0;
-
-            while ((pos = strstr(pos, error_pattern)) != NULL) {
-                consecutive_count++;
-                if (consecutive_count >= 2) {
-                    t_error("FAIL found consecutive error reports in %s\n", target_file);
-                    return;
-                }
-
-                // Move to the next position to continue checking.
-                pos += strlen(error_pattern);
-
-                // Check if the next line is also an error report.
-                char *next_line = strchr(pos, '\n');
-                if (next_line) {
-                    pos = next_line + 1;
-                    if (strncmp(pos, error_pattern, strlen(error_pattern)) == 0) {
-                        consecutive_count++;
-                    } else {
-                        consecutive_count = 0;
-                    }
-                }
-            }
-        }
-    }
-
-    if (!found) {
-        t_error("FAIL can't find matched file, log_dir:%s file_tag:%s.\n", log_dir, file_tag);
     }
     closedir(dir);
 }
