@@ -132,3 +132,10 @@ double exp(double x)
 	   is no spurious underflow here even without fma.  */
 	return eval_as_double(scale + scale * tmp);
 }
+
+#ifdef MUSL_EXTERNAL_FUNCTION
+double __exp_finite(double x)
+{
+    return exp(x);
+}
+#endif

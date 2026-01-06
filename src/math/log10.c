@@ -99,3 +99,10 @@ double log10(double x)
 
 	return val_lo + val_hi;
 }
+
+#ifdef MUSL_EXTERNAL_FUNCTION
+double __log10_finite(double x)
+{
+    return log10(x);
+}
+#endif

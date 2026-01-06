@@ -70,3 +70,10 @@ float log2f(float x)
 	y = y * r2 + p;
 	return eval_as_float(y);
 }
+
+#ifdef MUSL_EXTERNAL_FUNCTION
+float __log2f_finite(float x)
+{
+    return log2f(x);
+}
+#endif
