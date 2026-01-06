@@ -16,9 +16,96 @@
 #include "memory_trace.h"
 #include "errno.h"
 #ifdef HOOK_ENABLE
+#include <pthread.h>
+#include <stdatomic.h>
+#include <stdlib.h>
 #include "common_def.h"
 #include "musl_preinit_common.h"
+
+struct ResTraceTls {
+    uint32_t traceType;
+    uint64_t traceId;
+};
+static pthread_key_t g_resTraceKey;
+static pthread_once_t g_resTraceOnce = PTHREAD_ONCE_INIT;
+static atomic_bool g_resTraceKeyReady = ATOMIC_VAR_INIT(false);
+
+static void initResTraceKey(void)
+{
+    int result = pthread_key_create(&g_resTraceKey, NULL);
+    if (result == 0) {
+        atomic_store_explicit(&g_resTraceKeyReady, true, memory_order_release);
+        (void)pthread_setspecific(g_resTraceKey, NULL);
+    } else {
+        atomic_store_explicit(&g_resTraceKeyReady, false, memory_order_release);
+    }
+}
+
+static struct ResTraceTls* getOrCreateResTraceTls(void)
+{
+    (void)pthread_once(&g_resTraceOnce, initResTraceKey);
+    
+    if (!atomic_load_explicit(&g_resTraceKeyReady, memory_order_acquire)) {
+        return NULL;
+    }
+    
+    struct ResTraceTls* tls = (struct ResTraceTls*)pthread_getspecific(g_resTraceKey);
+    if (tls == NULL) {
+        tls = (struct ResTraceTls*)calloc(1, sizeof(struct ResTraceTls));
+        if (tls == NULL) {
+            return NULL;
+        }
+		tls->traceType = 0;
+        tls->traceId = 0;
+        (void)pthread_setspecific(g_resTraceKey, tls);
+    }
+    return tls;
+}
 #endif
+
+void setResTraceId(uint32_t newTraceType, uint64_t newTraceID, uint32_t* pOldTraceType, uint64_t* pOldTraceID)
+{
+#ifdef HOOK_ENABLE
+    if (!pOldTraceType || !pOldTraceID) {
+        return;
+    }
+    struct ResTraceTls* tls = getOrCreateResTraceTls();
+    if (tls == NULL) {
+        *pOldTraceType = 0;
+        *pOldTraceID = 0;
+        return;
+    }
+    *pOldTraceType = tls->traceType;
+    *pOldTraceID = tls->traceId;
+
+    tls->traceType = newTraceType;
+    tls->traceId = newTraceID;
+#endif
+	errno = ENOSYS;
+	return;
+}
+
+bool getResTraceId(uint32_t* pTraceType, uint64_t* pTraceID)
+{
+#ifdef HOOK_ENABLE
+    if (!atomic_load_explicit(&g_resTraceKeyReady, memory_order_acquire)) {
+        return false;
+    }
+    if (!pTraceType || !pTraceID) {
+        return false;
+    }
+    // Don't create key/tls on Get.
+    struct ResTraceTls* tls = (struct ResTraceTls*)pthread_getspecific(g_resTraceKey);
+    if (tls == NULL) {
+        return false;
+    }
+    *pTraceType = tls->traceType;
+    *pTraceID = tls->traceId;
+    return true;
+#endif
+	errno = ENOSYS;
+	return false;
+}
 
 void memtrace(void* addr, size_t size, const char* tag, bool is_using)
 {
