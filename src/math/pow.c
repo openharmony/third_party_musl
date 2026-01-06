@@ -341,3 +341,10 @@ double pow(double x, double y)
 #endif
 	return exp_inline(ehi, elo, sign_bias);
 }
+
+#ifdef MUSL_EXTERNAL_FUNCTION
+double __pow_finite(double x, double y)
+{
+    return pow(x, y);
+}
+#endif

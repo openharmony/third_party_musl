@@ -1,4 +1,4 @@
-## __finitef &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; OHOS Programmer's Manual   
+## __finitef &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; OHOS Programmer's Manual
 
 
 
@@ -35,6 +35,9 @@
 
 ​       -- 2026
 
+#### NOTES
+
+​       This function is ‌exclusively designed for PC environments‌.
 
 #### CONFORMING TO
 
