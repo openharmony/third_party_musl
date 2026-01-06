@@ -1151,6 +1151,7 @@
     memset;
     memtrace;
     restrace;
+    restraceExt;
     resTraceMove;
     resTraceFreeRegion;
     setResTraceId;
