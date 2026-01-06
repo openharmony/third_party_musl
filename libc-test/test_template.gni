@@ -42,8 +42,13 @@ template("test_unittest") {
     subsystem_name = "musl"
     part_name = "libc-test"
 
+    defines = []
     if (target_cpu == "arm64") {
-      defines = [ "_ARM64_" ]
+      defines += [ "_ARM64_" ]
+    }
+
+    if (musl_extended_function) {
+      defines += [ "MUSL_EXTERNAL_FUNCTION" ]
     }
 
     cflags = []
