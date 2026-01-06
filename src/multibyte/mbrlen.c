@@ -21,7 +21,9 @@ size_t mbrlen(const char *restrict s, size_t n, mbstate_t *restrict st)
 	return mbrtowc(0, s, n, st ? st : (mbstate_t *)&internal);
 }
 
+#ifdef MUSL_EXTERNAL_FUNCTION
 size_t __mbrlen(const char *restrict s, size_t n, mbstate_t *restrict st)
 {
 	return mbrlen(s, n, st);
 }
+#endif

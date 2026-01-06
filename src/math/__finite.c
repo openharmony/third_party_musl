@@ -13,6 +13,7 @@
  * limitations under the License.
  */
 
+#ifdef MUSL_EXTERNAL_FUNCTION
 #define _GNU_SOURCE
 #include <math.h>
 
@@ -20,3 +21,4 @@ int __finite(double x)
 {
 	return finite(x);
 }
+#endif

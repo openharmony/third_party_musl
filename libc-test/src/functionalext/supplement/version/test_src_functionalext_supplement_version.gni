@@ -11,6 +11,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-functionalext_supplement_version_test = [
-  "musl_version",
-]
+import("../../../../../musl_config.gni")
+
+functionalext_supplement_version_test = []
+
+if (musl_extended_function) {
+  functionalext_supplement_version_test += [ "musl_version" ]
+}

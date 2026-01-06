@@ -11,8 +11,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-functionalext_supplement_mbrlen_test = [
-    "mbrlen",
-    "__mbrlen",
-]
+import("../../../../../musl_config.gni")
 
+functionalext_supplement_mbrlen_test = [ "mbrlen" ]
+
+if (musl_extended_function) {
+  functionalext_supplement_mbrlen_test += [ "__mbrlen" ]
+}

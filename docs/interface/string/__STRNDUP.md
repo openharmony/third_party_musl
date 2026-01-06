@@ -37,6 +37,10 @@ The following error codes may be set in errno:
 
 ​       -- 2025
 
+#### NOTES
+
+​       This function is ‌exclusively designed for PC environments‌.
+
 #### CONFORMING TO
 
 ​      The __strndup() conforms to POSIX.1-2008.

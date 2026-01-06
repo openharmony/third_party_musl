@@ -50,6 +50,10 @@
 
 ​      -- 2025 
 
+#### NOTES
+
+​       This function is ‌exclusively designed for PC environments‌.
+
 #### CONFORMING TO
 
 ​      POSIX.1-2001, POSIX.1-2008, C99.

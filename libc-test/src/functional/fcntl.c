@@ -23,8 +23,10 @@
 
 #define TEST(c, ...) ((c) ? 1 : (t_error(#c" failed: " __VA_ARGS__),0))
 #define TESTE(c) (errno=0, TEST(c, "errno = %s\n", strerror(errno)))
+#ifdef MUSL_EXTERNAL_FUNCTION
 #define TEST_FILE "test_fcntl64.tmp"
-#define LARGE_FILE_SIZE (2LL * 1024 * 1024 * 1024) // 2GB
+#define LARGE_FILE_SIZE (2LL * 1024 * 1024 * 1024)
+#endif
 
 /**
  * @tc.name      : fcntl_0100
@@ -72,6 +74,7 @@ void fcntl_0100(void)
     fclose(f);
 }
 
+#ifdef MUSL_EXTERNAL_FUNCTION
 /**
  * @tc.name      : fcntl64_0100
  * @tc.desc      : Test basic functionality  of fcntl64
@@ -145,12 +148,15 @@ void fcntl64_0300(void)
     close(fd);
     unlink(TEST_FILE);
 }
+#endif
 
 int main(void)
 {
 	fcntl_0100();
+#ifdef MUSL_EXTERNAL_FUNCTION
 	fcntl64_0100();
 	fcntl64_0200();
 	fcntl64_0300();
+#endif
 	return t_status;
 }

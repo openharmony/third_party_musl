@@ -11,6 +11,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import("../../../../../musl_config.gni")
+
 functionalext_supplement_math_test = [
   "__signbit",
   "__signbitl",
@@ -26,10 +28,17 @@ functionalext_supplement_math_test = [
   "nanf",
   "__fpclassifyf",
   "functionalext_pow10",
-  "__finite",
-  "__finitef",
-  "__isnan",
-  "__isinf",
-  "__isinff",
-  "__isnanf",
 ]
+
+if (musl_extended_function) {
+  functionalext_supplement_math_test += [
+    "__finite",
+    "__finitef",
+    "__isnan",
+    "__isinf",
+    "__isinff",
+    "__isnanf",
+  ]
+}
+
+

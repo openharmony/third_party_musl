@@ -60,6 +60,10 @@
 
 ​       -- 2026
 
+#### NOTES
+
+​       This function is ‌exclusively designed for PC environments‌.
+
 #### EXAMPLES
 
 ```c

@@ -9,7 +9,9 @@ char *strdup(const char *s)
 	return memcpy(d, s, l+1);
 }
 
+#ifdef MUSL_EXTERNAL_FUNCTION
 char *__strdup (const char *s)
 {
 	return strdup(s);
 }
+#endif

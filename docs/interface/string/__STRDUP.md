@@ -35,6 +35,10 @@
 
 ​       -- 2026 
 
+#### NOTES
+
+​       This function is ‌exclusively designed for PC environments‌.
+
 #### CONFORMING TO
 
 ​      This is a platform-specific extension and is not part of any POSIX standard. 
