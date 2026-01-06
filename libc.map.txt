@@ -1153,6 +1153,8 @@
     restrace;
     resTraceMove;
     resTraceFreeRegion;
+    setResTraceId;
+    getResTraceId;
     mincore;
     mkdir;
     mkdirat;
