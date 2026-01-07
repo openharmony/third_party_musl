@@ -21,5 +21,21 @@ int pthread_getattr_np(pthread_t t, pthread_attr_t *a)
 			l += PAGE_SIZE;
 		a->_a_stacksize = l;
 	}
-	return 0;
+#ifdef MUSL_EXTERNAL_FUNCTION
+#ifndef __LITEOS_A__
+    if (get_pthread_extended_function_policy()) {
+        cpu_set_t cpuset;
+        CPU_ZERO(&cpuset);
+        int ret = pthread_getaffinity_np(t, sizeof(cpu_set_t), &cpuset);
+        if (ret != 0) {
+            return ESRCH;
+        }
+        ret = pthread_attr_setaffinity_np(a, sizeof(cpu_set_t), &cpuset);
+        if (ret != 0) {
+            return ESRCH;
+        }
+    }
+#endif
+#endif
+    return 0;
 }

@@ -178,6 +178,11 @@ foreach(s, functionalext_supplement_thread_test) {
   }
 }
 
+test_unittest("pthread_attr_setaffinity_np") {
+  target_dir = "functionalext/supplement/thread"
+  musl_unit_test_flag = true
+}
+
 group("functionalext_supplement_thread_test") {
   testonly = true
   deps = [
@@ -201,6 +206,11 @@ group("functionalext_supplement_thread_test") {
     ":pthread_setspecific_test",
     ":pthread_sigmask_test",
   ]
+
+  if (musl_extended_function) {
+    deps += [ ":pthread_attr_setaffinity_np" ]
+  }
+
   foreach(s, functionalext_supplement_thread_test) {
     deps += [ ":${s}" ]
   }
