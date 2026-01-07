@@ -89,7 +89,9 @@ size_t mbrtowc (wchar_t *__restrict, const char *__restrict, size_t, mbstate_t *
 size_t wcrtomb (char *__restrict, wchar_t, mbstate_t *__restrict);
 
 size_t mbrlen (const char *__restrict, size_t, mbstate_t *__restrict);
+#ifdef MUSL_EXTERNAL_FUNCTION
 size_t __mbrlen (const char *__restrict, size_t, mbstate_t *__restrict);
+#endif
 
 size_t mbsrtowcs (wchar_t *__restrict, const char **__restrict, size_t, mbstate_t *__restrict);
 size_t wcsrtombs (char *__restrict, const wchar_t **__restrict, size_t, mbstate_t *__restrict);

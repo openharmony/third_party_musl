@@ -54,6 +54,7 @@ void strtok_r_0200(void)
     }
 }
 
+#ifdef MUSL_EXTERNAL_FUNCTION
 /**
  * @tc.name      : __strtok_r_0100
  * @tc.desc      : Test strtok_r function to intercept string according to input characters
@@ -259,11 +260,13 @@ void __strtok_r_0800(void)
         return;
     }
 }
+#endif
 
 int main(int argc, char *argv[])
 {
     strtok_r_0100();
     strtok_r_0200();
+#ifdef MUSL_EXTERNAL_FUNCTION
     __strtok_r_0100();
     __strtok_r_0200();
     __strtok_r_0300();
@@ -272,5 +275,6 @@ int main(int argc, char *argv[])
     __strtok_r_0600();
     __strtok_r_0700();
     __strtok_r_0800();
+#endif
     return t_status;
 }

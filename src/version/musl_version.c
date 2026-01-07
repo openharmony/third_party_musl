@@ -12,6 +12,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+#ifdef MUSL_EXTERNAL_FUNCTION
 #include "version.h"
 #include <musl_version.h>
 
@@ -19,3 +21,4 @@ const char *get_musl_version (void)
 {
   return VERSION;
 }
+#endif

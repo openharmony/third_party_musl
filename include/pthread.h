@@ -296,10 +296,14 @@ int pthread_barrier_destroy(pthread_barrier_t *);
 int pthread_barrier_wait(pthread_barrier_t *);
 
 int pthread_key_create(pthread_key_t *, void (*)(void *));
-int __pthread_key_create(pthread_key_t *, void (*)(void *));
 int pthread_key_delete(pthread_key_t);
 void *pthread_getspecific(pthread_key_t);
 int pthread_setspecific(pthread_key_t, const void *);
+
+#ifdef MUSL_EXTERNAL_FUNCTION
+int __pthread_key_create(pthread_key_t *, void (*)(void *));
+int __register_atfork(void (*) (void), void (*) (void), void (*) (void), void *);
+#endif
 
 int pthread_attr_init(pthread_attr_t *);
 int pthread_attr_destroy(pthread_attr_t *);
@@ -352,7 +356,6 @@ int pthread_barrierattr_init(pthread_barrierattr_t *);
 int pthread_barrierattr_setpshared(pthread_barrierattr_t *, int);
 
 int pthread_atfork(void (*)(void), void (*)(void), void (*)(void));
-int __register_atfork(void (*) (void), void (*) (void), void (*) (void), void *);
 int pthread_atfork_for_gwpasan(void (*)(void), void (*)(void), void (*)(void));
 
 int pthread_getconcurrency(void);

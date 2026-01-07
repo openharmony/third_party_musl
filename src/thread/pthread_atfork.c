@@ -73,7 +73,9 @@ int pthread_atfork(void (*prepare)(void), void (*parent)(void), void (*child)(vo
 	return 0;
 }
 
+#ifdef MUSL_EXTERNAL_FUNCTION
 int __register_atfork(void (*prepare) (void), void (*parent) (void), void (*child) (void), void *dso_handle)
 {
 	return pthread_atfork(prepare, parent, child);
 }
+#endif

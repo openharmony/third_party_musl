@@ -13,9 +13,11 @@
  * limitations under the License.
  */
 
+#ifdef MUSL_EXTERNAL_FUNCTION
 #include <math.h>
 
 int __isnan(double x)
 {
     return isnan(x);
 }
+#endif

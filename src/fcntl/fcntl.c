@@ -49,4 +49,6 @@ int fcntl(int fd, int cmd, ...)
 	}
 }
 
+#ifdef MUSL_EXTERNAL_FUNCTION
 weak_alias(fcntl, fcntl64);
+#endif

@@ -11,6 +11,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import("../../../../../musl_config.gni")
+
 functionalext_supplement_string_test = [
   "bzero",
   "memchr",
@@ -63,6 +65,11 @@ functionalext_supplement_string_test = [
   "memmem",
   "memmove",
   "memrchr",
-  "__strdup",
-  "__rawmemchr",
 ]
+
+if (musl_extended_function) {
+  functionalext_supplement_string_test += [
+    "__strdup",
+    "__rawmemchr",
+  ]
+}
