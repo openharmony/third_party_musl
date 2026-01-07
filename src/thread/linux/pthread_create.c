@@ -528,6 +528,34 @@ static void init_file_lock(FILE *f)
 	if (f && f->lock<0) f->lock = 0;
 }
 
+static int set_thread_affinity(struct pthread *new, const pthread_attr_t *attr, struct start_args *args)
+{
+    int result = 0;
+#ifdef MUSL_EXTERNAL_FUNCTION
+#ifndef __LITEOS_A__
+    if (get_pthread_extended_function_policy()) {
+        struct pthread_attr_ext *target_ext = (struct pthread_attr_ext *)attr->_a_extension;
+        if (target_ext && target_ext->cpuset && target_ext->cpusetsize != 0) {
+            int ret = __syscall(SYS_sched_setaffinity, new->tid, target_ext->cpusetsize,
+                                (const cpu_set_t *)target_ext->cpuset);
+
+            if (a_swap(&args->control, ret ? 4 : 0) == 2) {
+                __wake(&args->control, 1, 1);
+            }
+
+            if (ret) {
+                MUSL_LOGW("pthread_create: sched_setaffinity failed, ret: %{public}d, err: %{public}s",
+                          ret, strerror(errno));
+                __wait(&args->control, 0, 4, 0);
+                result = ret;
+            }
+        }
+    }
+#endif
+#endif
+    return result;
+}
+
 #ifdef ENABLE_HWASAN
 __attribute__((no_sanitize("hwaddress")))
 #endif
@@ -681,17 +709,22 @@ int __pthread_create(pthread_t *restrict res, const pthread_attr_t *restrict att
 	if (ret < 0) {
 		cloneErrno = ret;
 		ret = -EAGAIN;
-	} else if (attr._a_sched) {
-		restraceTid = new->tid;
-		ret = __syscall(SYS_sched_setscheduler,
-			new->tid, attr._a_policy, &attr._a_prio);
-		if (a_swap(&args->control, ret ? 3 : 0) == 2)
-			__wake(&args->control, 1, 1);
-		if (ret)
-			__wait(&args->control, 0, 3, 0);
-	} else if (!attr._a_detach) {
-		restraceTid = new->tid;
-	}
+    } else {
+        set_thread_affinity(new, &attr, args);
+    }
+	if (ret >= 0) {
+        if (attr._a_sched) {
+            restraceTid = new->tid;
+            ret = __syscall(SYS_sched_setscheduler,
+                            new->tid, attr._a_policy, &attr._a_prio);
+            if (a_swap(&args->control, ret ? 3 : 0) == 2)
+                __wake(&args->control, 1, 1);
+            if (ret)
+                __wait(&args->control, 0, 3, 0);
+        } else if (!attr._a_detach) {
+            restraceTid = new->tid;
+        }
+    }
 
 	if (ret >= 0) {
 		stack_naming(new);

@@ -54,7 +54,7 @@ void *threadfuncC(void *arg)
     EXPECT_EQ("pthread_key_create_0300_threadfuncC", ret, 0);
 
     int32_t *keyRet = (int32_t *)pthread_getspecific(g_key);
-    EXPECT_NE("__pthread_key_create_0300_threadfuncC", keyRet, NULL);
+    EXPECT_PTRNE("__pthread_key_create_0300_threadfuncC", keyRet, NULL);
     EXPECT_EQ("__pthread_key_create_0300_threadfuncC", *keyRet, value);
     return arg;
 }

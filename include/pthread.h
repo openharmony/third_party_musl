@@ -386,6 +386,16 @@ int pthread_getattr_default_np(pthread_attr_t *);
 int pthread_setattr_default_np(const pthread_attr_t *);
 int pthread_tryjoin_np(pthread_t, void **);
 int pthread_timedjoin_np(pthread_t, void **, const struct timespec *);
+#ifdef MUSL_EXTERNAL_FUNCTION
+struct pthread_attr_ext;
+static int musl_pc_module = 0;
+void set_pthread_extended_function_policy(int flag);
+int get_pthread_extended_function_policy(void);
+int pthread_attr_extension_init(pthread_attr_t *attr);
+int pthread_attr_extension_destroy(pthread_attr_t *attr);
+int pthread_attr_getaffinity_np(pthread_attr_t *, size_t, cpu_set_t *);
+int pthread_attr_setaffinity_np(pthread_attr_t *, size_t, const cpu_set_t *);
+#endif
 #endif
 
 #if _REDIR_TIME64

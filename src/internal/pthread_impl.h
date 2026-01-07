@@ -130,6 +130,10 @@ enum {
 #define _a_runtime __u.__i[3*__SU+3]
 #define _a_deadline __u.__i[3*__SU+4]
 #define _a_period __u.__i[3*__SU+5]
+#else
+#ifdef MUSL_EXTERNAL_FUNCTION
+#define _a_extension __u.__s[sizeof(long) == 8 ? 5 : 7]
+#endif
 #endif
 #define _m_type __u.__i[0]
 #define _m_lock __u.__vi[1]
@@ -360,4 +364,12 @@ extern hidden pid_t getDlcloseLockLastExitTid();
 extern hidden void setDlcloseLockStatus(pid_t);
 extern hidden void setDlcloseLockLastExitTid(pid_t);
 
+#ifdef _GNU_SOURCE
+#ifdef MUSL_EXTERNAL_FUNCTION
+typedef struct pthread_attr_ext {
+    cpu_set_t *cpuset;
+    size_t cpusetsize;
+} pthread_attr_ext;
+#endif
+#endif
 #endif
