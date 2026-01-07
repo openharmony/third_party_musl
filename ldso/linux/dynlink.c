@@ -3017,21 +3017,6 @@ static size_t decode_android_relocs(
 	save_decode_relocs(*reloc_cache, relocs_num, dt_name, android_rel_curr, android_rel_end);
 	return reloc_sz;
 }
- 
-static void do_android_relocs(struct dso *p, size_t dt_name, size_t dt_size)
-{
-	size_t *reloc_cache = MAP_FAILED;
-	size_t map_len = 0;
-	size_t reloc_sz = decode_android_relocs(p, dt_name, dt_size, &reloc_cache, &map_len);
-    if (reloc_cache != MAP_FAILED) {
-        if (dt_name == DT_ANDROID_REL) {
-			do_relocs(p, reloc_cache, reloc_sz, 2);
-		} else {
-			do_relocs(p, reloc_cache, reloc_sz, 3);
-		}
-		munmap((void*)reloc_cache, map_len);
-	}
-}
 
 static void do_relr_relocs(struct dso *dso, size_t *relr, size_t relr_size, size_t rel_cnt, adlt_relindex_t *rel_index)
 {
@@ -3153,6 +3138,82 @@ static void do_auth_relr_relocs(struct dso *p, size_t dt_name, size_t dt_size)
             /* 63:1 will be set in bitmap to indicate the address offset and the last bit is a flag bit. */
 			auth_reloc_addr += 8 * sizeof(size_t) - 1;
 		}
+	}
+}
+
+static void do_android_relocs(struct dso *p, size_t dt_name, size_t dt_size)
+{
+	size_t android_rel_addr = 0, android_rel_size = 0;
+	uint8_t *android_rel_curr, *android_rel_end;
+
+	search_vec(p->dynv, &android_rel_addr, dt_name);
+	search_vec(p->dynv, &android_rel_size, dt_size);
+
+	if (!android_rel_addr || (android_rel_size < 4)) {
+		return;
+	}
+	android_rel_curr = laddr(p, android_rel_addr);
+	if (memcmp(android_rel_curr, "APS2", ANDROID_REL_SIGN_SIZE)) {
+		return;
+	}
+	android_rel_curr += ANDROID_REL_SIGN_SIZE;
+	android_rel_size -= ANDROID_REL_SIGN_SIZE;
+	android_rel_end = android_rel_curr + android_rel_size;
+
+	size_t relocs_num;
+	size_t rel[3] = {0};
+
+	android_rel_curr = sleb128_decoder(android_rel_curr, android_rel_end, &relocs_num);
+	android_rel_curr = sleb128_decoder(android_rel_curr, android_rel_end, &rel[0]);
+
+	for (size_t i = 0; i < relocs_num;) {
+		size_t group_size, group_flags;
+
+		android_rel_curr = sleb128_decoder(android_rel_curr, android_rel_end, &group_size);
+		android_rel_curr = sleb128_decoder(android_rel_curr, android_rel_end, &group_flags);
+		size_t group_r_offset_delta = 0;
+		if (group_flags & RELOCATION_GROUPED_BY_OFFSET_DELTA_FLAG) {
+			android_rel_curr = sleb128_decoder(android_rel_curr, android_rel_end, &group_r_offset_delta);
+		}
+
+		if (group_flags & RELOCATION_GROUPED_BY_INFO_FLAG) {
+			android_rel_curr = sleb128_decoder(android_rel_curr, android_rel_end, &rel[1]);
+		}
+		const size_t addend_flags = group_flags & (RELOCATION_GROUP_HAS_ADDEND_FLAG | RELOCATION_GROUPED_BY_ADDEND_FLAG);
+
+		if (addend_flags == RELOCATION_GROUP_HAS_ADDEND_FLAG) {
+		} else if (addend_flags == (RELOCATION_GROUP_HAS_ADDEND_FLAG | RELOCATION_GROUPED_BY_ADDEND_FLAG)) {
+			size_t addend;
+			android_rel_curr = sleb128_decoder(android_rel_curr, android_rel_end, &addend);
+			rel[2] += addend;
+		} else {
+			rel[2] = 0;
+		}
+		for (size_t j = 0; j < group_size; j++) {
+			if (group_flags & RELOCATION_GROUPED_BY_OFFSET_DELTA_FLAG) {
+				rel[0] += group_r_offset_delta;
+			} else {
+				size_t offset_detla;
+				android_rel_curr = sleb128_decoder(android_rel_curr, android_rel_end, &offset_detla);
+				rel[0] += offset_detla;
+			}
+
+			if ((group_flags & RELOCATION_GROUPED_BY_INFO_FLAG) == 0) {
+				android_rel_curr = sleb128_decoder(android_rel_curr, android_rel_end, &rel[1]);
+			}
+
+			if (addend_flags == RELOCATION_GROUP_HAS_ADDEND_FLAG) {
+				size_t addend;
+				android_rel_curr = sleb128_decoder(android_rel_curr, android_rel_end, &addend);
+				rel[2] += addend;
+			}
+			if (dt_name == DT_ANDROID_REL) {
+				do_relocs(p, rel, sizeof(size_t) * 2, 2);
+			} else {
+				do_relocs(p, rel, sizeof(size_t) * 3, 3);
+			}
+		}
+		i += group_size;
 	}
 }
 
