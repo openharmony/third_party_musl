@@ -17,6 +17,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+#include <sys/wait.h>
+#include <signal.h>
 
 const int ERROR_RET = -1;
 const int UNUSED_PLACEHOLDER_PARAM = 123;
@@ -126,6 +129,42 @@ void  __asprintf_chk_0700(void)
     free(buf);
 }
 
+/**
+ * @tc.name      : __asprintf_chk_0800
+ * @tc.desc      : Verify invalid %N$
+ * @tc.level     : Level 0
+ */
+void __asprintf_chk_0800(void)
+{
+    char *buf = NULL;
+    pid_t pid = fork();
+    if (pid < 0) {
+        t_error("fork failed\n");
+    } else if (pid == 0) {
+        (void)__asprintf_chk(&buf, 2, "%3$d\n", 0);
+    } else {
+        int status;
+        waitpid(pid, &status, WUNTRACED);
+        EXPECT_TRUE("__asprintf_chk_0800", WIFSIGNALED(status));
+        EXPECT_EQ("__asprintf_chk_0800", WTERMSIG(status), SIGABRT);
+    }
+}
+
+/**
+ * @tc.name      : __asprintf_chk_0900
+ * @tc.desc      : Verify specified parameters
+ * @tc.level     : Level 0
+ */
+void __asprintf_chk_0900(void)
+{
+    char *buf = NULL;
+    int result = __asprintf_chk(&buf, 2, "%2$s, %3$s, %1$s\n", "test", "this", "is");
+    EXPECT_TRUE("__asprintf_chk_0900", result > 0);
+    int expected_len = strlen("this, is, test\n");
+    EXPECT_EQ("__asprintf_chk_0900", result, expected_len);
+    free(buf);
+}
+
 int main(int argc, char *argv[])
 {
     __asprintf_chk_0100();
@@ -135,5 +174,8 @@ int main(int argc, char *argv[])
     __asprintf_chk_0500();
     __asprintf_chk_0600();
     __asprintf_chk_0700();
+    __asprintf_chk_0800();
+    __asprintf_chk_0900();
+    
     return t_status;
 }

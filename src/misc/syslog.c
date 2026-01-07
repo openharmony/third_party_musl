@@ -86,7 +86,7 @@ static int is_lost_conn(int e)
 	return e==ECONNREFUSED || e==ECONNRESET || e==ENOTCONN || e==EPIPE;
 }
 
-static void _vsyslog(int priority, const char *message, va_list ap)
+static void _vsyslog_inter(int priority, const char *message, va_list ap, unsigned int mode_flags)
 {
 	char timebuf[16];
 	time_t now;
@@ -110,7 +110,7 @@ static void _vsyslog(int priority, const char *message, va_list ap)
 	l = snprintf(buf, sizeof buf, "<%d>%s %n%s%s%.0d%s: ",
 		priority, timebuf, &hlen, log_ident, "["+!pid, pid, "]"+!pid);
 	errno = errno_save;
-	l2 = vsnprintf(buf+l, sizeof buf - l, message, ap);
+	l2 = __vsnprintf(buf+l, sizeof buf - l, message, ap, mode_flags);
 	if (l2 >= 0) {
 		if (l2 >= sizeof buf - l) l = sizeof buf - 1;
 		else l += l2;
@@ -129,23 +129,41 @@ static void _vsyslog(int priority, const char *message, va_list ap)
 	}
 }
 
-static void __vsyslog(int priority, const char *message, va_list ap)
+static void _vsyslog(int priority, const char *message, va_list ap)
+{
+	_vsyslog_inter(priority, message, ap, 0);
+}
+
+static void __vsyslog_inter(int priority, const char *message, va_list ap, unsigned int mode_flags)
 {
 	int cs;
 	if (!(log_mask & LOG_MASK(priority&7)) || (priority&~0x3ff)) return;
 	pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &cs);
 	LOCK(lock);
-	_vsyslog(priority, message, ap);
+	_vsyslog_inter(priority, message, ap, mode_flags);
 	UNLOCK(lock);
 	pthread_setcancelstate(cs, 0);
 }
 
-void syslog(int priority, const char *message, ...)
+static void __vsyslog(int priority, const char *message, va_list ap) 
+{
+	__vsyslog_inter(priority, message, ap, 0);
+}
+
+void __syslog_inter(int priority, unsigned int mode_flags, const char *message, ...)
 {
 	UNSUPPORTED_API_VOID(LITEOS_A);
 	va_list ap;
 	va_start(ap, message);
-	__vsyslog(priority, message, ap);
+	__vsyslog_inter(priority, message, ap, mode_flags);
+	va_end(ap);
+}
+
+void syslog(int priority, const char *message, ...)
+{
+	va_list ap;
+	va_start(ap, message);
+	return __syslog_inter(priority, 0, message, ap);
 	va_end(ap);
 }
 
