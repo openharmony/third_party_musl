@@ -11,7 +11,9 @@ char *strndup(const char *s, size_t n)
 	return d;
 }
 
+#ifdef MUSL_EXTERNAL_FUNCTION
 char *__strndup(const char *s, size_t n)
 {
 	return strndup(s, n);
 }
+#endif

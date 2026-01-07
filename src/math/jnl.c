@@ -13,9 +13,11 @@
  * limitations under the License.
  */
 
+#ifdef MUSL_EXTERNAL_FUNCTION
 #include <math.h>
 
 long double jnl(int n, long double x)
 {
     return jn(n, x);
 }
+#endif

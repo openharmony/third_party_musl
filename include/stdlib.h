@@ -158,8 +158,10 @@ void *reallocarray (void *, size_t, size_t);
 void qsort_r (void *, size_t, size_t, int (*)(const void *, const void *, void *), void *);
 #endif
 
+#ifdef MUSL_EXTERNAL_FUNCTION
 #ifndef _LIBCPP_HIDE_FROM_ABI
     #define _LIBCPP_HIDE_FROM_ABI
+#endif
 #endif
 
 #ifdef _GNU_SOURCE
@@ -172,8 +174,10 @@ struct __locale_struct;
 float strtof_l(const char *__restrict, char **__restrict, struct __locale_struct *);
 double strtod_l(const char *__restrict, char **__restrict, struct __locale_struct *);
 long double strtold_l(const char *__restrict, char **__restrict, struct __locale_struct *);
+#ifdef MUSL_EXTERNAL_FUNCTION
 _LIBCPP_HIDE_FROM_ABI long long strtoll_l(const char *nptr, char **endptr, int base, locale_t loc);
 _LIBCPP_HIDE_FROM_ABI unsigned long long strtoull_l(const char *nptr, char **endptr, int base, locale_t loc);
+#endif
 #endif
 
 #if defined(_LARGEFILE64_SOURCE) || defined(_GNU_SOURCE)

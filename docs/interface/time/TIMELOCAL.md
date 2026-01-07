@@ -43,6 +43,8 @@
 
 ​      The timelocal() function is equivalent to the POSIX standard function mktime(). There is no reason to ever use it.
 
+​      This function is ‌exclusively designed for PC environments‌.
+
 #### CONFORMING TO
 
 ​      These functions are nonstandard GNU extensions that are also present on the BSDs. Avoid their use.

@@ -9,7 +9,9 @@ extern "C" {
 #include <bits/hwcap.h>
 
 unsigned long getauxval(unsigned long);
+#ifdef MUSL_EXTERNAL_FUNCTION
 unsigned long __getauxval(unsigned long);
+#endif
 
 #ifdef __cplusplus
 }

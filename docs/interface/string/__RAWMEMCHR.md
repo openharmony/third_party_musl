@@ -36,6 +36,10 @@
 
 ​       -- 2025
 
+#### NOTES
+
+​       This function is ‌exclusively designed for PC environments‌.
+
 #### CONFORMING TO
 
 ​      The __rawmemchr() function is a GNU extension.

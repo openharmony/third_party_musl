@@ -11,6 +11,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import("../../../../../musl_config.gni")
+
 functionalext_supplement_misc_test = [
   "getrlimit",
   "getresgid",
@@ -51,5 +53,8 @@ functionalext_supplement_misc_test = [
   "ioctl",
   "functionalext_wordfree",
   "a64l",
-  "__getauxval",
 ]
+
+if (musl_extended_function) {
+  functionalext_supplement_misc_test += [ "__getauxval" ]
+}

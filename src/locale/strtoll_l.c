@@ -13,6 +13,7 @@
  * limitations under the License.
  */
 
+#ifdef MUSL_EXTERNAL_FUNCTION
 #define _GNU_SOURCE
 #include <stdlib.h>
 #include <locale.h>
@@ -26,3 +27,4 @@ unsigned long long strtoull_l(const char *nptr, char **endptr, int base, locale_
 {
 	return strtoull(nptr, endptr, base);
 }
+#endif

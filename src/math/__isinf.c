@@ -13,6 +13,7 @@
  * limitations under the License.
  */
 
+#ifdef MUSL_EXTERNAL_FUNCTION
 #include <math.h>
 #include <stdbool.h>
 #include <stdint.h>
@@ -24,3 +25,4 @@ int __isinf(double x)
     bool ret = (u.i & -1ULL>>1) == 0x7ffULL<<52;
     return (bool)sign ? -ret : ret;
 }
+#endif

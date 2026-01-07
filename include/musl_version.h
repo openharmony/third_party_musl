@@ -12,6 +12,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+#ifdef MUSL_EXTERNAL_FUNCTION
 #ifndef MUSL_VERSION_H
 #define MUSL_VERSION_H
 
@@ -25,4 +26,5 @@ const char *get_musl_version (void);
 }
 #endif
 
+#endif
 #endif

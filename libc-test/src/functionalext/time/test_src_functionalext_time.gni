@@ -11,6 +11,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import("../../../../musl_config.gni")
+
 functionalext_time_test = [
   "asctime_r",
   "asctime",
@@ -27,5 +29,8 @@ functionalext_time_test = [
   "strptime_ext",
   "time_ext",
   "timegm",
-  "timelocal",
 ]
+
+if (musl_extended_function) {
+  functionalext_time_test += [ "timelocal" ]
+}

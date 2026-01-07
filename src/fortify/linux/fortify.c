@@ -423,6 +423,7 @@ int __sprintf_chk(char* dest, int flags, size_t dst_len_from_compiler, const cha
     return result;
 }
 
+#ifdef MUSL_EXTERNAL_FUNCTION
 int __vfprintf_chk(FILE* fp, int flags, const char* format, va_list va)
 {
     if (fp == NULL) {
@@ -487,3 +488,4 @@ int __asprintf_chk(char** strp, int flags, const char* format, ...)
     va_end(va);
     return result;
 }
+#endif

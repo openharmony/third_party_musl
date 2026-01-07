@@ -61,6 +61,7 @@ void strndup_0300(void)
     free(result);
 }
 
+#ifdef MUSL_EXTERNAL_FUNCTION
 /**
  * @tc.name      : __strndup_0100
  * @tc.desc      : The return value of __strndup when the number of test copies is different with the size of string
@@ -120,13 +121,16 @@ void __strndup_0200(void)
     EXPECT_EQ("__strndup_0200", result[12], '\0');
     free(result);
 }
+#endif
 
 int main(int argc, char *argv[])
 {
     strndup_0100();
     strndup_0200();
     strndup_0300();
+#ifdef MUSL_EXTERNAL_FUNCTION
     __strndup_0100();
     __strndup_0200();
+#endif
     return t_status;
 }

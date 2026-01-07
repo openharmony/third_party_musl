@@ -569,7 +569,6 @@ musl_src_file = [
   "src/locale/setlocale.c",
   "src/locale/strcoll.c",
   "src/locale/strtod_l.c",
-  "src/locale/strtoll_l.c",
   "src/locale/wcstod_l.c",
   "src/locale/strfmon.c",
   "src/locale/strxfrm.c",
@@ -598,15 +597,10 @@ musl_src_file = [
   "src/math/__cosl.c",
   "src/math/__expo2.c",
   "src/math/__expo2f.c",
-  "src/math/__finitef.c",
   "src/math/__fpclassify.c",
   "src/math/__fpclassifyf.c",
   "src/math/__fpclassifyl.c",
   "src/math/__invtrigl.c",
-  "src/math/__isnan.c",
-  "src/math/__isnanf.c",
-  "src/math/__isinf.c",
-  "src/math/__isinff.c",
   "src/math/__math_divzero.c",
   "src/math/__math_divzerof.c",
   "src/math/__math_invalid.c",
@@ -632,7 +626,6 @@ musl_src_file = [
   "src/math/__tan.c",
   "src/math/__tandf.c",
   "src/math/__tanl.c",
-  "src/math/__finite.c",
   "src/math/acos.c",
   "src/math/acosf.c",
   "src/math/acosh.c",
@@ -724,8 +717,6 @@ musl_src_file = [
   "src/math/j1f.c",
   "src/math/jn.c",
   "src/math/jnf.c",
-  "src/math/jnl.c",
-  "src/math/ynl.c",
   "src/math/ldexp.c",
   "src/math/ldexpf.c",
   "src/math/ldexpl.c",
@@ -1301,7 +1292,6 @@ musl_src_file = [
   "src/string/mempcpy.c",
   "src/string/memrchr.c",
   "src/string/memset.c",
-  "src/string/rawmemchr.c",
   "src/string/rindex.c",
   "src/string/stpcpy.c",
   "src/string/stpncpy.c",
@@ -1536,7 +1526,6 @@ musl_src_file = [
   "src/time/strftime.c",
   "src/time/strptime.c",
   "src/time/time.c",
-  "src/time/timelocal.c",
   "src/time/timegm.c",
   "src/time/timer_create.c",
   "src/time/timer_delete.c",
@@ -1664,8 +1653,7 @@ musl_src_file = [
   "src/thread/pthread_rwlock_timedrdlock_monotonic_np.c",
   "src/thread/pthread_rwlock_clockwrlock.c",
   "src/thread/pthread_rwlock_timedwrlock_monotonic_np.c",
-  "src/dfx/dfx_signal_handler_stub.c",
-  "src/version/musl_version.c"
+  "src/dfx/dfx_signal_handler_stub.c"
 ]
 
 if (musl_arch == "arm") {
@@ -2252,7 +2240,6 @@ musl_inc_root_files = [
   "include/mntent.h",
   "include/monetary.h",
   "include/mqueue.h",
-  "include/musl_version.h",
   "include/netdb.h",
   "include/nl_types.h",
   "include/paths.h",
@@ -2516,9 +2503,22 @@ if (musl_arch == "arm") {
     "src/ldso/aarch64/dlvsym.s",
   ]
 
-  if (musl_extended_function) { 
+  if (musl_extended_function) {
     musl_src_file += [
+      "include/musl_version.h",
+      "src/math/__finite.c",
+      "src/math/__finitef.c",
+      "src/math/__isnan.c",
+      "src/math/__isnanf.c",
+      "src/math/__isinf.c",
+      "src/math/__isinff.c",
+      "src/math/jnl.c",
+      "src/math/ynl.c",
       "src/network/__cmsg_nxthdr.c",
+      "src/locale/strtoll_l.c",
+      "src/string/rawmemchr.c",
+      "src/time/timelocal.c",
+      "src/version/musl_version.c",
     ]
   }
 } else if (musl_arch == "loongarch64") {
