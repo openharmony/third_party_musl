@@ -34,6 +34,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <stdio_ext.h>
+#include <syslog.h>
 
 #define FILE_MODE_ALL (0777)
 
@@ -426,6 +427,7 @@ int __sprintf_chk(char* dest, int flags, size_t dst_len_from_compiler, const cha
 #ifdef MUSL_EXTERNAL_FUNCTION
 int __vfprintf_chk(FILE* fp, int flags, const char* format, va_list va)
 {
+    unsigned int mode = (flags > 0) ? PRINTF_FORTIFY : 0;
     if (fp == NULL) {
         __fortify_error("the file point is NULL\n");
     }
@@ -439,23 +441,25 @@ int __vfprintf_chk(FILE* fp, int flags, const char* format, va_list va)
         errno = EINVAL;
         return -1;
     }
-    return __DIAGNOSE_CALL_BYPASSING_FORTIFY(__vfprintf)(fp, flags, format, va);
+    return __DIAGNOSE_CALL_BYPASSING_FORTIFY(__vfprintf)(fp, format, va, mode);
 }
 
 int __fprintf_chk(FILE* fp, int flags, const char* format, ...)
 {
+    unsigned int mode = (flags > 0) ? PRINTF_FORTIFY : 0;
     va_list va;
     va_start(va, format);
-    int result = __vfprintf_chk(fp, flags, format, va);
+    int result = __vfprintf_chk(fp, mode, format, va);
     va_end(va);
     return result;
 }
 
 int __printf_chk(int flags, const char* format, ...)
 {
+    unsigned int mode = (flags > 0) ? PRINTF_FORTIFY : 0;
     va_list va;
     va_start(va, format);
-    int result = __vfprintf_chk(stdout, flags, format, va);
+    int result = __vfprintf_chk(stdout, mode, format, va);
     va_end(va);
     return result;
 }
@@ -467,6 +471,7 @@ _Noreturn void __longjmp_chk(jmp_buf env, int val)
 
 int __vasprintf_chk(char** strp, int flags, const char* format, va_list va)
 {
+    unsigned int mode = (flags > 0) ? PRINTF_FORTIFY : 0;
     if (strp == NULL) {
         errno = EINVAL;
         return -1;
@@ -477,15 +482,47 @@ int __vasprintf_chk(char** strp, int flags, const char* format, va_list va)
         errno = EINVAL;
         return -1;
     }
-    return __DIAGNOSE_CALL_BYPASSING_FORTIFY(vasprintf)(strp, format, va);
+
+    return __DIAGNOSE_CALL_BYPASSING_FORTIFY(__vasprintf)(strp, format, va, mode);
 }
 
 int __asprintf_chk(char** strp, int flags, const char* format, ...)
 {
+    unsigned int mode = (flags > 0) ? PRINTF_FORTIFY : 0;
     va_list va;
     va_start(va, format);
-    int result = __vasprintf_chk(strp, flags, format, va);
+    int result = __vasprintf_chk(strp, mode, format, va);
     va_end(va);
     return result;
+}
+#endif
+
+#ifdef MUSL_EXTERNAL_FUNCTION
+void __syslog_chk(int priority, int flags, const char *message, ...)
+{
+    unsigned int mode = (flags > 0) ? PRINTF_FORTIFY : 0;
+    if (message == NULL) {
+        errno = EINVAL;
+        return;
+    }
+
+    va_list ap;
+    va_start(ap, message);
+    __DIAGNOSE_CALL_BYPASSING_FORTIFY(__syslog_inter)(priority, mode, message, ap);
+    va_end(ap);
+}
+
+char *__realpath_chk(const char *path, char *resolved, size_t resolvedlen)
+{
+    long int pathmax;
+    pathmax = pathconf(path, _PC_PATH_MAX);
+    if (pathmax != -1) {
+        if (__DIAGNOSE_PREDICT_FALSE(resolvedlen < pathmax))
+        {
+            __fortify_error("realpath buffer too small\n");
+        }
+    }
+
+    return __DIAGNOSE_CALL_BYPASSING_FORTIFY(realpath)(path, resolved);
 }
 #endif
