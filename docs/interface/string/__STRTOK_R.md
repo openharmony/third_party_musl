@@ -37,7 +37,7 @@
 
 ​       On some implementations, *saveptr is required to be NULL on the first call to __strtok_r() that is being used to parse str.
 
-​       This function is ‌exclusively designed for PC environments‌.
+​       This feature is designed specifically for when musl_extended_function is true.
 
 #### CONFORMING TO
 
