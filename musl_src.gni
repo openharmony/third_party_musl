@@ -100,6 +100,9 @@ if (musl_arch == "arm") {
 } else if (musl_arch == "aarch64") {
   musl_src_arch_file = [
     "src/fenv/aarch64/fenv.s",
+    "OpenFAST_musl/fenv/aarch64/fegetexcept.c",
+    "OpenFAST_musl/fenv/aarch64/feenableexcept.c",
+    "OpenFAST_musl/fenv/aarch64/fedisableexcept.c",
     "src/ldso/aarch64/dlsym.s",
     "src/ldso/aarch64/tlsdesc.s",
     "src/math/aarch64/ceil.c",
