@@ -34,9 +34,12 @@ template("test_unittest") {
   } else {
     cpp_file = false
   }
-
+  include_dirs = []
   if (defined(invoker.musl_unit_test_flag)) {
     musl_unit_test_flag = invoker.musl_unit_test_flag
+  }
+  if (defined(invoker.include_dirs)) {
+    include_dirs = invoker.include_dirs
   }
   target("ohos_executable", "${target_name}") {
     subsystem_name = "musl"
@@ -60,7 +63,7 @@ template("test_unittest") {
       sources = [ "${target_name}.c" ]
     }
 
-    include_dirs = [
+    include_dirs += [
       "//${test_dir}/src/common",
       "//${musl_include_dir}",
       "//${test_dir}/src/functionalext/common",

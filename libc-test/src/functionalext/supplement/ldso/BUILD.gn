@@ -20,10 +20,18 @@ foreach(s, functionalext_supplement_ldso_test) {
   }
 }
 
+test_unittest("dladdr1_test") {
+  target_dir = "functionalext/supplement/ldso"
+  musl_unit_test_flag = true
+}
+
 group("functionalext_supplement_ldso_test") {
   testonly = true
   deps = []
   foreach(s, functionalext_supplement_ldso_test) {
     deps += [ ":${s}" ]
+  }
+  if (musl_extended_function) {
+    deps += [ ":dladdr1_test" ]
   }
 }

@@ -1387,7 +1387,7 @@
     pthread_barrierattr_getpshared;
     pthread_barrierattr_init;
     pthread_barrierattr_setpshared;
-    # pthread_cancel;
+    pthread_cancel;
     pthread_cond_broadcast;
     pthread_cond_clockwait;
     pthread_cond_destroy;
@@ -1479,7 +1479,7 @@
     pthread_spin_lock;
     pthread_spin_trylock;
     pthread_spin_unlock;
-    # pthread_testcancel;
+    pthread_testcancel;
     # pthread_timedjoin_np;
     # pthread_tryjoin_np;
     ptrace;
@@ -2107,6 +2107,7 @@
     pthread_attr_extension_destroy;
     set_pthread_extended_function_policy;
     get_pthread_extended_function_policy;
+    dladdr1;
   local:
     *;
 };

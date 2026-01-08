@@ -1,3 +1,4 @@
+#define _GNU_SOURCE
 #include "pthread_impl.h"
 #include "syscall.h"
 
@@ -16,5 +17,10 @@ long (__syscall_cp)(syscall_arg_t nr,
                     syscall_arg_t u, syscall_arg_t v, syscall_arg_t w,
                     syscall_arg_t x, syscall_arg_t y, syscall_arg_t z)
 {
+#if defined(MUSL_EXTERNAL_FUNCTION)
+    if (get_pthread_extended_function_policy() == 0) {
+        return __syscall(nr, u, v, w, x, y, z);
+    }
+#endif
 	return __syscall_cp_c(nr, u, v, w, x, y, z);
 }

@@ -395,6 +395,7 @@ int pthread_attr_extension_init(pthread_attr_t *attr);
 int pthread_attr_extension_destroy(pthread_attr_t *attr);
 int pthread_attr_getaffinity_np(pthread_attr_t *, size_t, cpu_set_t *);
 int pthread_attr_setaffinity_np(pthread_attr_t *, size_t, const cpu_set_t *);
+int pthread_cancel(pthread_t);
 #endif
 #endif
 
