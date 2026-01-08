@@ -51,6 +51,7 @@ extern "C" {
 #define TAG_RES_ARKTS_HEAP_MASK    "RES_ARKTS_HEAP_MASK"
 #define TAG_RES_JS_HEAP_MASK       "RES_JS_HEAP_MASK"
 #define TAG_RES_KMP_HEAP_MASK      "RES_KMP_HEAP_MASK"
+#define TAG_RES_SO_MASK            "RES_SO_MASK"
 #define TAG_RES_ASHMEM             "RES_ASHMEM"
 #define TAG_RES_RN_HEAP_MASK       "RES_RN_HEAP_MASK"
 #define TAG_RES_DMABUF_MASK        "RES_DMABUF_MASK"
