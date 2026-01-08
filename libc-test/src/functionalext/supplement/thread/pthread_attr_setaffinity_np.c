@@ -324,7 +324,7 @@ void pthread_attr_setaffinity_np_0800(void)
     set_pthread_extended_function_policy(0);
     EXPECT_EQ("pthread_attr_setaffinity_np_0100", get_pthread_extended_function_policy(), 0);
     pthread_attr_t attr;
-    cpu_set_t cpuset, cpuset_get;
+    cpu_set_t cpuset;
     int ncpus = get_cpu_count();
     EXPECT_GT("pthread_attr_setaffinity_np_0800", ncpus, 0);
 
