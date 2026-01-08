@@ -19,6 +19,8 @@
 ​       It expects as input the pointer to a FILE that was returned by fopen, an int-type flags is used to specify the security check level, a "format string" ​       that specifies what to print, and va_list type variable parameter list. The format string can optionally contain "conversion specifications",
 ​       placeholders that begin with % that specify how to format the function’s subsequent arguments, if any.
 
+​       If flags is set to 0, verification is not enabled; if greater than 0, verification is enabled.  
+
 #### **RETURN VALUE**
 
 ​       Upon successful return, this function return the number of bytes printed (excluding the null byte used to end output to strings).

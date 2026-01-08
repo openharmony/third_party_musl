@@ -60,6 +60,10 @@ void closelog (void);
 void openlog (const char *, int, int);
 int setlogmask (int);
 void syslog (int, const char *, ...);
+void __syslog_inter(int, unsigned int, const char *, ...);
+#ifdef MUSL_EXTERNAL_FUNCTION
+void __syslog_chk(int, int, const char *, ...);
+#endif
 
 #if defined(_GNU_SOURCE) || defined(_BSD_SOURCE)
 #define _PATH_LOG "/dev/log"

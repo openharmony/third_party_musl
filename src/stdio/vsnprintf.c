@@ -24,7 +24,7 @@ static size_t sn_write(FILE *f, const unsigned char *s, size_t l)
 	return l;
 }
 
-int vsnprintf(char *restrict s, size_t n, const char *restrict fmt, va_list ap)
+int __vsnprintf(char *restrict s, size_t n, const char *restrict fmt, va_list ap, unsigned int mode_flags)
 {
 	unsigned char dummy[1];
 	struct cookie c = { .s = n ? s : dummy, .n = n ? n-1 : 0 };
@@ -38,5 +38,10 @@ int vsnprintf(char *restrict s, size_t n, const char *restrict fmt, va_list ap)
 		.write = sn_write,
 	};
 
-	return vfprintf(&f, fmt, ap);
+	return __vfprintf(&f, fmt, ap, mode_flags);
+}
+
+int vsnprintf(char *restrict s, size_t n, const char *restrict fmt, va_list ap)
+{
+	return __vsnprintf(s, n, fmt, ap, 0);
 }

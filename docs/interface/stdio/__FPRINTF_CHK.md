@@ -20,6 +20,8 @@
 
        __fprintf_chk(file, 0, "%c\n", c);
 
+​       If flags is set to 0, verification is not enabled; if greater than 0, verification is enabled.  
+
 #### **RETURN VALUE**
 
 ​​       Upon successful return, this function return the number of bytes printed (excluding the null byte used to end output to strings).
