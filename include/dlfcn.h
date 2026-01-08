@@ -185,6 +185,13 @@ typedef struct {
 } Dl_info;
 int dladdr(const void *, Dl_info *);
 int dlinfo(void *, int, void *);
+#ifdef MUSL_EXTERNAL_FUNCTION
+enum {
+  RTLD_DL_SYMENT = 1
+};
+int dladdr1(const void *, Dl_info *, void **, int);
+#endif
+
 #endif
 
 #if _REDIR_TIME64
