@@ -30,7 +30,7 @@ extern "C" {
 #endif
 
 #define MUSL_LOG_TYPE LOG_CORE
-#define MUSL_LOG_DOMAIN 0xD003F00
+#define MUSL_LOG_DOMAIN 0xD003F07
 #define MUSL_LOG_TAG "MUSL"
 
 #if (defined(OHOS_ENABLE_PARAMETER) || defined(ENABLE_MUSL_LOG))
