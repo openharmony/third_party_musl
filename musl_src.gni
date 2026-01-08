@@ -830,6 +830,7 @@ musl_src_file = [
   "src/misc/a64l.c",
   "src/misc/basename.c",
   "src/misc/dirname.c",
+  "OpenFAST_musl/finite/fast_finite.c",
   "src/misc/ffs.c",
   "src/misc/ffsl.c",
   "src/misc/ffsll.c",
