@@ -120,6 +120,9 @@ int rand_r (unsigned *);
 #if defined(_XOPEN_SOURCE) || defined(_GNU_SOURCE) \
  || defined(_BSD_SOURCE)
 char *realpath (const char *__restrict, char *__restrict);
+#ifdef MUSL_EXTERNAL_FUNCTION
+char *__realpath_chk(const char *path, char *resolved, size_t resolvedlen);
+#endif
 long int random (void);
 void srandom (unsigned int);
 char *initstate (unsigned int, char *, size_t);

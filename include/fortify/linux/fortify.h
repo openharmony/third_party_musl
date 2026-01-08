@@ -60,7 +60,9 @@ extern "C" {
 #ifndef	FORTIFY_PATH_MAX
 #define FORTIFY_PATH_MAX 4096
 #endif
-
+#ifdef MUSL_EXTERNAL_FUNCTION
+#define PRINTF_FORTIFY 0x2
+#endif
 #define __DIAGNOSE_ALWAYS_INLINE __attribute__((__always_inline__))
 #define	__DIAGNOSE_PREDICT_TRUE(exp)	__builtin_expect((exp) != 0, 1)
 #define	__DIAGNOSE_PREDICT_FALSE(exp)	__builtin_expect((exp) != 0, 0)

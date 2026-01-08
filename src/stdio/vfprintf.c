@@ -672,7 +672,7 @@ static int printf_core(FILE *f, const char *fmt, va_list *ap,
 	for (; i<=NL_ARGMAX && !nl_type[i]; i++);
 	if (i<=NL_ARGMAX) {
 #ifdef MUSL_EXTERNAL_FUNCTION
-		if (flags != 0) {
+		if ((flags & PRINTF_FORTIFY) != 0) {
 			fprintf(stderr, "Musl Fortify runtime error: invalid specified parameter\n");
 			abort();
 		}
@@ -689,7 +689,7 @@ overflow:
 	return -1;
 }
 
-int __vfprintf(FILE *restrict f, int flags, const char *restrict fmt, va_list ap)
+int __vfprintf(FILE *restrict f, const char *restrict fmt, va_list ap, int flags)
 {
 	va_list ap2;
 	int nl_type[NL_ARGMAX+1] = {0};
@@ -739,5 +739,5 @@ int __vfprintf(FILE *restrict f, int flags, const char *restrict fmt, va_list ap
 
 int vfprintf(FILE *restrict f, const char *restrict fmt, va_list ap)
 {
-    return __vfprintf(f, 0, fmt, ap);
+    return __vfprintf(f, fmt, ap, 0);
 }
