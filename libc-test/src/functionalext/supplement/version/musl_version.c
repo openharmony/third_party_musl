@@ -42,7 +42,7 @@ void get_musl_version_0200(void)
     EXPECT_MT("get_musl_version_0200", count, 0);
     EXPECT_MT("get_musl_version_0200", major, 0);
     EXPECT_MT("get_musl_version_0200", minor, 0);
-    if(count == 2) {
+    if (count == 2) {
         EXPECT_TRUE("get_musl_version_0200", patch == 0);
     } else {
         EXPECT_MT("get_musl_version_0200", patch, 0);

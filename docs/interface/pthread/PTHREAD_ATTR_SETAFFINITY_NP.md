@@ -54,7 +54,7 @@ The following error codes may be set in errno:
 
 #### NOTES
 
-​       These functions are ‌exclusively designed for PC environments‌.
+​      These feature are designed specifically for when musl_extended_function is true.
 
 #### EXAMPLES
 

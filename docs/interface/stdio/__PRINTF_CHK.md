@@ -46,7 +46,7 @@
 
 #### NOTES
 
-​       This function is ‌exclusively designed for PC environments‌.
+​       This feature is designed specifically for when musl_extended_function is true.
 
 #### CONFORMING TO
 
