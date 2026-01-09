@@ -20,12 +20,13 @@ int fegetenv(fenv_t *);
 int feholdexcept(fenv_t *);
 int fesetenv(const fenv_t *);
 int feupdateenv(const fenv_t *);
-
+#ifdef MUSL_EXTERNAL_FUNCTION
 #if defined(__aarch64__)
 // musl supports for Python-related components
 int fegetexcept(void);
 int feenableexcept(int);
 int fedisableexcept(int);
+#endif
 #endif
 
 #ifdef __cplusplus
