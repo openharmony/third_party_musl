@@ -18,7 +18,10 @@ int system(const char *cmd)
 	posix_spawnattr_t attr;
 
 	UNSUPPORTED_API_VOID(LITEOS_A);
+#if defined(MUSL_EXTERNAL_FUNCTION) || defined(PTHREAD_CANCEL_IN_STATIC_LIB) || \
+	defined(__LITEOS__) || defined(__HISPARK_LINUX__)
 	pthread_testcancel();
+#endif
 
 	if (!cmd) return 1;
 
