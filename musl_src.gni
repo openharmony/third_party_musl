@@ -2508,8 +2508,10 @@ if (musl_arch == "arm") {
   ]
 
   if (musl_extended_function) {
-    musl_src_file += [
+    musl_inc_root_files += [
       "include/musl_version.h",
+    ]
+    musl_src_file += [
       "src/math/__finite.c",
       "src/math/__finitef.c",
       "src/math/__isnan.c",

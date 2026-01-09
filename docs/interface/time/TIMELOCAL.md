@@ -43,7 +43,7 @@
 
 ​      The timelocal() function is equivalent to the POSIX standard function mktime(). There is no reason to ever use it.
 
-​      This function is ‌exclusively designed for PC environments‌.
+​       This feature is designed specifically for when musl_extended_function is true.
 
 #### CONFORMING TO
 
