@@ -266,6 +266,7 @@ static void test_bad(void)
 }
 
 // Tests for fegetexcept/feenableexcept/fedisableexcept.
+#ifdef MUSL_EXTERNAL_FUNCTION
 #if defined(__aarch64__)
 static void test_enable(void) {
 	int excepts, num_excepts, res;
@@ -305,6 +306,7 @@ static void test_enable(void) {
 	}
 }
 #endif
+#endif
 
 int main(void)
 {
@@ -312,8 +314,11 @@ int main(void)
 	test_round();
 	test_round_add();
 	test_bad();
+#ifdef MUSL_EXTERNAL_FUNCTION
 #if defined(__aarch64__)
 	test_enable();
 #endif
+#endif
 	return test_status;
 }
+
