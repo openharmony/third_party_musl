@@ -99,6 +99,11 @@ static void init_cancellation()
 
 int pthread_cancel(pthread_t t)
 {
+#ifdef MUSL_EXTERNAL_FUNCTION
+	if (get_pthread_extended_function_policy() == 0) {
+		return ENOSYS;
+	}
+#endif
 	static int init;
 	if (!init) {
 		init_cancellation();
@@ -112,7 +117,8 @@ int pthread_cancel(pthread_t t)
 	}
 	return pthread_kill(t, SIGCANCEL);
 }
-#else
+#elif defined(PTHREAD_CANCEL_IN_STATIC_LIB) || defined(__LITEOS__) || \
+	defined(__HISPARK_LINUX__)
 hidden long __cancel()
 {
 }
