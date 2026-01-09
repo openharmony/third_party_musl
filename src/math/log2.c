@@ -120,10 +120,3 @@ double log2(double x)
 	y = lo + r2 * p + hi;
 	return eval_as_double(y);
 }
-
-#ifdef MUSL_EXTERNAL_FUNCTION
-double __log2_finite(double x)
-{
-    return log2(x);
-}
-#endif

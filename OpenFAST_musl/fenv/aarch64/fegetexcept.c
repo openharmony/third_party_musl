@@ -20,7 +20,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
+#ifdef MUSL_EXTERNAL_FUNCTION
 #if defined(__aarch64__)
 
 int fegetexcept(void)
@@ -31,7 +31,7 @@ int fegetexcept(void)
 }
 
 #endif // __aarch64__
-
+#endif
 #ifdef __cplusplus
 }
 #endif

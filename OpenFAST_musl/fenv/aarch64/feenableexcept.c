@@ -22,7 +22,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
+#ifdef MUSL_EXTERNAL_FUNCTION
 #if defined(__aarch64__)
 
 int feenableexcept(int excepts)
@@ -40,7 +40,7 @@ int feenableexcept(int excepts)
 }
 
 #endif // __aarch64__
-
+#endif
 #ifdef __cplusplus
 }
 #endif
