@@ -2122,6 +2122,7 @@
     set_pthread_extended_function_policy;
     get_pthread_extended_function_policy;
     dladdr1;
+    __sched_cpufree;
   local:
     *;
 };
