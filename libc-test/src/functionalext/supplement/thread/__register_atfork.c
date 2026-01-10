@@ -20,6 +20,9 @@
 #include "functionalext.h"
 
 #define TEST_THREAD_SLEEP 3
+#ifdef FEATURE_PTHREAD_CANCEL
+#undef FEATURE_PTHREAD_CANCEL
+#endif
 
 pthread_mutex_t glock = PTHREAD_MUTEX_INITIALIZER;
 static int gprepare_flag = 0;

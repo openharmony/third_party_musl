@@ -16,14 +16,15 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <pthread.h>
+#include "functionalext.h"
 
 static void* worker_thread(void* arg)
 {
     printf("Worker thread started...\n");
 
-    for (int i = 0; i < 10; ++i) {
+    for (int i = 0; i < 1000; ++i) {
         printf("Worker thread: loop %d\n", i);
-        usleep(200000);  // 200 ms
+        usleep(3000);  // 3 ms
         pthread_testcancel();  // explicit cancellation point
     }
 
@@ -33,27 +34,27 @@ static void* worker_thread(void* arg)
 
 int main() {
     pthread_t tid;
-
+    set_pthread_extended_function_policy(1);
     if (pthread_create(&tid, NULL, worker_thread, NULL) != 0) {
-        perror("pthread_create failed");
-        exit(EXIT_FAILURE);
+        t_error("pthread_create failed errno=%d\n", errno);
+        return t_status;
     }
 
-    usleep(600000);  // 600 ms — cancel after ~3 loops
     printf("Main thread: sending cancellation request...\n");
     pthread_cancel(tid);
 
     void* result;
     if (pthread_join(tid, &result) != 0) {
-        perror("pthread_join failed");
-        exit(EXIT_FAILURE);
+        t_error("pthread_join failed errno=%d\n", errno);
+        return t_status;
     }
 
     if (result == PTHREAD_CANCELED) {
         printf("Worker thread was successfully canceled!\n");
     } else {
         printf("Worker thread was NOT canceled.\n");
+        t_error("Expected PTHREAD_CANCELED but got %p\n", result);
     }
 
-    return 0;
+    return t_status;
 }
