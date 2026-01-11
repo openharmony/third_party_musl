@@ -2529,6 +2529,7 @@ if (musl_arch == "arm") {
       "src/thread/pthread_attr_getaffinity_np.c",
       "src/thread/pthread_attr_setaffinity_np.c",
       "src/thread/pthread_extended_function_policy.c",
+      "src/sched/sched_cpufree.c",
     ]
   }
 } else if (musl_arch == "loongarch64") {
