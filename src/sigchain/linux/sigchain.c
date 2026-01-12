@@ -40,7 +40,7 @@ bool __custom_hook_flag = false;
 
 
 #define SIG_CHAIN_KEY_VALUE_1 1
-#define SIGNAL_CHAIN_SPECIAL_ACTION_MAX 4
+#define SIGNAL_CHAIN_SPECIAL_ACTION_MAX 3
 
 #define SIGCHAIN_LOG_TAG "MUSL-SIGCHAIN"
 
