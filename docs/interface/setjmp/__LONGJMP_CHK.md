@@ -10,7 +10,7 @@
 
        #include <setjmp.h>
 
-       void __longjmp_chk(jmp_buf env, int val)
+       void __longjmp_chk(jmp_buf env, int val);
 
 #### **DESCRIPTION**
 
@@ -29,7 +29,7 @@
 | Interface               | Attribute     | Value    |
 | ----------------------- | ------------- | -------- |
 | __longjmp_chk() | Thread safety | MT-Safe |
-|                         | Signal safety | MT-Safe |
+|                         | Signal safety | Safe |
 
 #### HISTORY
 
@@ -38,6 +38,9 @@
 #### NOTES
 
 ​       This feature is designed specifically for when musl_extended_function is true.
+
+​       If a signal handler interrupts the execution of an unsafe function, and the handler terminates via a call to __longjmp_chk and the program 
+subsequently calls an unsafe function, then the behavior of the program is undefined.
 
 #### CONFORMING TO
 
@@ -60,7 +63,7 @@ int main(void)
     int value = setjmp(jb);
     if (value == 0) {
         __longjmp_chk(jb, 456);
-        handle();
+        handle(); // This line of code will never execute
     } else {
         if (value != 456) {
             printf("__longjmp_chk failed\n"); // Cannot print
@@ -71,7 +74,7 @@ int main(void)
 }
 ```
 
-#### COLOPHTON
+#### COLOPHON
 
 ​       this page is part of the C library user-space interface documentation.
-​       Information about the project can be found at (https://gitcode.com/openharmony/third_party_musl/blob/master/docs/)
+​       Information about the project can be found at (https://gitcode.com/openharmony/third_party_musl/blob/master/docs/).

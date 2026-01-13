@@ -4,7 +4,7 @@
 
 #### **NAME**
 
-​       __vasprintf_chk - print to allocated string
+​       __vasprintf_chk - print to allocated string.
 
 #### **SYNOPSIS**
 
@@ -14,22 +14,28 @@
 
 #### **DESCRIPTION**
 
-​       Write output to stdout and perform parameter checking. 
+​       Write output to a dynamically allocated string and perform parameter checking.
 
 ​       The __vasprintf_chk() function allocates a sufficiently large string to store the output, including the terminating null byte ('0'), and returns a pointer to this string through the first argument. When it is no longer needed, this pointer should be passed to free to release the allocated memory.
 
-​       If flag is set to 0, verification is not enabled; if greater than 0, verification is enabled.  
+​       If flag is set to 0, verification is not enabled; if greater than 0, verification is enabled.
 
 #### **RETURN VALUE**
 
 
-​       When  successful,  these functions return the number of bytes printed, just like sprintf.  If memory allocation wasn't possible, or some other error occurs, these functions will return -1, and the contents of strp are undefined.
+​       When successful, these functions return the number of characters printed (excluding the null byte used to end output to strings), just like sprintf.
+
+​       If memory allocation wasn't possible, or some other error occurs, these functions will return -1, and the contents of strp are undefined.
 
 #### **ERRORS**
 
 ​       The following error codes may be set in errno:
 
 ​       **EINVAL**: point is invalid.
+
+​       **ENOMEM**: Insufficient memory.
+
+​       **EOVERFLOW**: Calculate buffer overflow.
 
 #### ATTRIBUTES
 
@@ -58,11 +64,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-static int VasprintfHelper(char** strp, const char* format, ...)
+static int VasprintfHelper(char** strp, int flags, const char* format, ...)
 {
     va_list args;
     va_start(args, format);
-    int result = __vasprintf_chk(strp, 0, format, args);
+    int result = __vasprintf_chk(strp, flags, format, args);
     va_end(args);
     return result;
 }
@@ -70,19 +76,29 @@ static int VasprintfHelper(char** strp, const char* format, ...)
 int main(void)
 {
     char *s = "This is test";
-    int i = 50;
-    float f = 50.0f;
     char *buf = NULL;
     int ret = 0;
 
-    ret = VasprintfHelper(&buf, "%s\n", s);
+    ret = VasprintfHelper(&buf, 0, "%s\n", s);
     if (ret > 0) {
         printf("Test output: %s", buf);
         free(buf);
         buf = NULL;
     }
 
-    ret = VasprintfHelper(&buf, NULL, s);
+    ret = VasprintfHelper(&buf, 1, "%s\n", s);
+    if (ret > 0) {
+        printf("Test output: %s", buf);
+        free(buf);
+        buf = NULL;
+    }
+
+    ret = VasprintfHelper(&buf, 0, NULL);
+    if (ret == -1) {
+        printf("Test (error case): format=NULL, ret=%d (expected -1)\n", ret);
+    }
+
+    ret = VasprintfHelper(&buf, 1, NULL);
     if (ret == -1) {
         printf("Test (error case): format=NULL, ret=%d (expected -1)\n", ret);
     }
@@ -91,7 +107,7 @@ int main(void)
 ```
 
 
-#### COLOPHTON
+#### COLOPHON
 
 ​       this page is part of the C library user-space interface documentation.
-​       Information about the project can be found at (https://gitcode.com/openharmony/third_party_musl/blob/master/docs/)
+​       Information about the project can be found at (https://gitcode.com/openharmony/third_party_musl/blob/master/docs/).
