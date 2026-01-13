@@ -20,7 +20,7 @@
 
 ​      The remainder of the string is converted to a long long value in the obvious manner, stopping at the first character which is not a valid digit in the given base. (In bases above 10, the letter 'A' in either uppercase or lowercase represents 10, 'B' represents 11, and so forth, with 'Z' representing 35.)
 
-​      If endptr is not NULL, strtoll_l() stores the address of the first invalid character in *endptr. If there were no digits at all, strtoll_l() stores the original value of nptr in *endptr (and returns 0). In particular, if *nptr is not '\0' but **endptr is '\0' on return, the entire string is valid.
+​      If endptr is not NULL, strtoll_l() stores the address of the first invalid character in *endptr. If there were no digits at all, strtoll_l() stores the original value of nptr in *endptr (and returns 0). In particular, if *nptr is not '\0' but **endptr is '\0' on return, the entire string is valid. If endptr is NULL, the function does not store the address of the first invalid character.
 
 ​      Locale object (locale_t) specifying the locale for parsing (e.g., handling localized thousands separators like , or .).    
 
@@ -28,7 +28,7 @@
 
 ​      On success, returns the converted long long value.
 
-​      If no valid conversion is possible, returns 0 and sets errno to EINVAL.
+​      If nptr is NULL, the behavior is undefined. If no valid conversion is possible (e.g. no digits were found), returns 0 and sets errno to EINVAL.
 
 ​      If the value overflows LLONG_MAX/LLONG_MIN, returns LLONG_MAX/LLONG_MIN and sets errno to ERANGE.
 
@@ -45,18 +45,19 @@
 | Interface   | Attribute     | Value          |
 | ----------- | ------------- | -------------- |
 | strtoll_l() | Thread safety | MT-Safe locale |
+|             | Signal safety | Not Safe       |
 
 #### HISTORY
 
-​      -- 2025 
+​      -- 2026
 
 #### NOTES
 
-​       This feature is designed specifically for when musl_extended_function is true.
+​      This feature is designed specifically for when musl_extended_function is true.
 
 #### CONFORMING TO
 
-​      POSIX.1-2001, POSIX.1-2008, C99.
+​      This function is a POSIX extension (locale-specific version of strtoll) and is not part of the C99 standard, It is available in POSIX.1-2001 and POSIX.1-2008.
 
 #### EXAMPLES
 
@@ -85,7 +86,7 @@ int main() {
 }
 ```
 
-#### COLOPHTON
+#### COLOPHON
 
 ​      this page is part of the C library user-space interface documentation.
-​      Information about the project can be found at (https://gitcode.com/openharmony/third_party_musl/blob/master/docs/)
+​      Information about the project can be found at (https://gitcode.com/openharmony/third_party_musl/blob/master/docs/).

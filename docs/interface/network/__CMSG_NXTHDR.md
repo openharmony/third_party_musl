@@ -18,6 +18,14 @@
 ​      Ancillary data is a sequence of cmsghdr structures with appended data. See the specific protocol man pages for the available control message types. The maximum ancillary
  buffer size allowed per socket can be set using /proc/sys/net/core/optmem_max; see socket().
 
+​      The struct msghdr *mhdr parameter points to the msghdr structure containing the control message buffer. Key Fields:
+
+​      msg_control: Pointer to the buffer storing control messages (e.g., ancillary data like IP_ECN, IP_PKTINFO).
+
+​      msg_controllen: Length of the control message buffer in bytes.
+
+​      The struct cmsghdr *cmsg parameter specifies the current control message being processed. If cmsg is NULL, the function returns the first control message (CMSG_FIRSTHDR(mhdr)). Otherwise, it returns the next control message after cmsg in the buffer.
+
 #### **RETURN VALUE**
 
 ​      Returns a pointer to the next control message header in the buffer.
@@ -26,10 +34,10 @@
 
 #### ATTRIBUTES
 
-| Interface       | Attribute     | Value   |
-| --------------- | ------------- | ------- |
-| __cmsg_nxthdr() | Thread safety | MT-safe |
-|                 | Signal safety | Safe    |
+| Interface       | Attribute     | Value    |
+| --------------- | ------------- | -------- |
+| __cmsg_nxthdr() | Thread safety | MT-safe  |
+|                 | Signal safety | Not Safe |
 
 #### HISTORY
 
@@ -40,7 +48,9 @@
 ​      Commonly used for advanced socket operations (e.g., sending/receiving file descriptors, credentials, or network parameters).
 Platform-specific behavior may vary in non-Linux systems.
 
-​       This feature is designed specifically for when musl_extended_function is true.
+​      This feature is designed specifically for when musl_extended_function is true.
+
+​      The function itself is thread-safe (no global state), but the msghdr buffer must be accessed exclusively.
 
 #### CONFORMING TO
 
@@ -85,7 +95,7 @@ int main(int argc, char *argv[])
 }
 ```
 
-#### COLOPHTON
+#### COLOPHON
 
 ​      this page is part of the C library user-space interface documentation.
-​      Information about the project can be found at (https://gitcode.com/openharmony/third_party_musl/blob/master/docs/)
+​      Information about the project can be found at (https://gitcode.com/openharmony/third_party_musl/blob/master/docs/).
