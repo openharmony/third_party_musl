@@ -57,14 +57,14 @@ int main(void)
     printf("The result is : %d\n", __isinff(HUGE_VALF)); // The result is : 1
     printf("The result is : %d\n", __isinff(-HUGE_VALF)); // The result is : -1
     printf("The result is : %d\n", __isinff(NAN)); // The result is : 0
-    printf("The result is : %d\n", __isinff(0)); // The result is : 0
+    printf("The result is : %d\n", __isinff(0.0f)); // The result is : 0
     printf("The result is : %d\n", __isinff(f)); // The result is : 0
 
     return 0;
 }
 ```
 
-#### COLOPHTON
+#### COLOPHON
 
 ​       this page is part of the C library user-space interface documentation.
-​       Information about the project can be found at (https://gitcode.com/openharmony/third_party_musl/blob/master/docs/)
+​       Information about the project can be found at (https://gitcode.com/openharmony/third_party_musl/blob/master/docs/).

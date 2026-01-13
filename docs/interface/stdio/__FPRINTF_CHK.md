@@ -16,7 +16,7 @@
 
 ​       Write the output to the specified output stream and perform parameter checking. 
 
-​​       It expects as input the pointer to a FILE that was returned by fopen, an int-type flags is used to specify the security check level, a "format string" ​​       that specifies what to print, and zero or more subsequent arguments. The format string can optionally contain "conversion specifications",placeholders ​​       that begin with % that specify how to format the function’s subsequent arguments, if any. For instance, if file is a pointer to a FILE and c is a ​       char, ​​this function can print the latter to the former as follows using %c:
+​​       It expects as input the pointer to a FILE that was returned by fopen, an int-type flags is used to specify the security check level, a "format string" that specifies what to print, and zero or more subsequent arguments. The format string can optionally contain "conversion specifications",placeholders that begin with % that specify how to format the function’s subsequent arguments, if any. For instance, if file is a pointer to a FILE and c is a char, ​​this function can print the latter to the former as follows using %c:
 
        __fprintf_chk(file, 0, "%c\n", c);
 
@@ -24,7 +24,7 @@
 
 #### **RETURN VALUE**
 
-​​       Upon successful return, this function return the number of bytes printed (excluding the null byte used to end output to strings).
+​​       Upon successful return, this function return the number of characters printed (excluding the null byte used to end output to strings).
 
 ​​       If an output error is encountered, a negative value is returned.
 
@@ -32,9 +32,11 @@
 
 ​       The following error codes may be set in errno:  
 
-​       EINVAL: point is invalid.
+​       **EINVAL**: point is invalid.
 
-​       EBADF: Bad file descriptor.
+​       **EBADF**: Bad file descriptor.
+
+​       **EOVERFLOW**: Calculate buffer overflow.
 
 #### ATTRIBUTES
 
@@ -63,16 +65,25 @@
 int main(void)
 {
     char *s = "This is test";
-    int i = 50;
-    float f = 50.0f;
+    int ret = 0;
     FILE *file = fopen("test.txt", "w");
     if (file == NULL) {
-        return 0;
+        return -1;
     }
 
-    __fprintf_chk(file, 0, "%s\n", s);
-    __fprintf_chk(file, 0, "This is test %d\n", i);
-    __fprintf_chk(file, 0, "This is test %.0f\n", f);
+    ret = __fprintf_chk(file, 0, "%s\n", s);
+    if (ret < 0) {
+        perror("__fprintf_chk failed.");
+        fclose(file);
+        return -1;
+    }
+
+    ret = __fprintf_chk(file, 1, "%s\n", s);
+    if (ret < 0) {
+        perror("__fprintf_chk failed.");
+        fclose(file);
+        return -1;
+    }
 
     fclose(file);
     return 0;
@@ -80,7 +91,7 @@ int main(void)
 ```
 
 
-#### COLOPHTON
+#### COLOPHON
 
 ​​       this page is part of the C library user-space interface documentation.
-​​       Information about the project can be found at (https://gitcode.com/openharmony/third_party_musl/blob/master/docs/)
+​​       Information about the project can be found at (https://gitcode.com/openharmony/third_party_musl/blob/master/docs/).

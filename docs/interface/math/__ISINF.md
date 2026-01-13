@@ -52,19 +52,19 @@
 
 int main(void)
 {
-    float f = 50.0f;
+    double d = 50.0;
 
-    printf("The result is : %d\n", __isinf(HUGE_VALF)); // The result is : 1
-    printf("The result is : %d\n", __isinf(-HUGE_VALF)); // The result is : -1
+    printf("The result is : %d\n", __isinf(HUGE_VAL)); // The result is : 1
+    printf("The result is : %d\n", __isinf(-HUGE_VAL)); // The result is : -1
     printf("The result is : %d\n", __isinf(NAN)); // The result is : 0
-    printf("The result is : %d\n", __isinf(0)); // The result is : 0
-    printf("The result is : %d\n", __isinf(f)); // The result is : 0
+    printf("The result is : %d\n", __isinf(0.0)); // The result is : 0
+    printf("The result is : %d\n", __isinf(d)); // The result is : 0
 
     return 0;
 }
 ```
 
-#### COLOPHTON
+#### COLOPHON
 
 ​       this page is part of the C library user-space interface documentation.
-​       Information about the project can be found at (https://gitcode.com/openharmony/third_party_musl/blob/master/docs/)
+​       Information about the project can be found at (https://gitcode.com/openharmony/third_party_musl/blob/master/docs/).
