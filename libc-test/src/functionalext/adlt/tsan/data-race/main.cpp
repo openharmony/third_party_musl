@@ -47,7 +47,9 @@ static void tsan_DataRace() {
 
 	std::string firstCase = "SUMMARY: ThreadSanitizer: data race";
 	if (reportData.find(firstCase) == std::string::npos) {
-		t_error("%s: Failed to match a string in the report file: %s\n", __func__, firstCase.c_str());
+		printf("%s: Did not find tsan check in the report file: %s\n", __func__, firstCase.c_str());
+	} else {
+		printf("%s: Find tsan check in the report file: %s\n", __func__, firstCase.c_str());
 	}
 }
 

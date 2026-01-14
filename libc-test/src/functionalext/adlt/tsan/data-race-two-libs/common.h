@@ -15,6 +15,8 @@
 #ifndef _ADLT_TEST_TSAN_DATA_RACE_TWO_LIBS_H_
 #define _ADLT_TEST_TSAN_DATA_RACE_TWO_LIBS_H_
 
+constexpr int iter_check_num = 10000; 
+
 void testA();
 void testB();
 
