@@ -26,6 +26,7 @@ void __strdup_0100(void)
 {
     char *ret = __strdup("strduptest");
     EXPECT_STREQ("__strdup_0100", ret, "strduptest");
+    free(ret);
 }
 
 /**
@@ -37,6 +38,7 @@ void __strdup_0200(void)
 {
     char *ret = __strdup("");
     EXPECT_STREQ("__strdup_0200", ret, "");
+    free(ret);
 }
 
 /**

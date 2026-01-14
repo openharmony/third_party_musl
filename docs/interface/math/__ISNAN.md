@@ -4,7 +4,7 @@
 
 #### **NAME**
 
-​       __isnan - BSD floating-point classification functions.
+​       __isnan - Determine whether a number is a "not-a-number" (NaN) value.
 
 #### **SYNOPSIS**
        
@@ -54,7 +54,7 @@ int main(void)
 {
     float data = 0.0f / 0.0f;
     int ret = __isnan(data);
-    if (ret == 1) {
+    if (ret != 0) {
         printf("data is NaN, ret: %d\n", ret);
     } else {
         printf("data is not NaN");
@@ -64,7 +64,7 @@ int main(void)
 ```
 
 
-#### COLOPHTON
+#### COLOPHON
 
 ​      this page is part of the C library user-space interface documentation.
-​      Information about the project can be found at (https://gitcode.com/openharmony/third_party_musl/blob/master/docs/)
+​      Information about the project can be found at (https://gitcode.com/openharmony/third_party_musl/blob/master/docs/).

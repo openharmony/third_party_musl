@@ -4,7 +4,7 @@
 
 #### **NAME**
 
-​       __finite - BSD floating-point classification functions.
+​       __finite - Determine whether a number is a finite value.
 
 #### **SYNOPSIS**
        
@@ -54,13 +54,13 @@ int main(void) {
     double a = 0.0;
     double b = INFINITY;
     int result = __finite(a);
-    if(result == 1) {
+    if(result != 0) {
         printf("a is a finite value\n");
     } else {
         printf("a is not a finite value\n");
     }
     int result1 = __finite(b);
-    if(result1 == 1) {
+    if(result1 != 0) {
         printf("b is a finite value\n");
     } else {
         printf("b is not a finite value\n");
@@ -70,7 +70,7 @@ int main(void) {
 ```
 
 
-#### COLOPHTON
+#### COLOPHON
 
 ​      this page is part of the C library user-space interface documentation.
-​      Information about the project can be found at (https://gitcode.com/openharmony/third_party_musl/blob/master/docs/)
+​      Information about the project can be found at (https://gitcode.com/openharmony/third_party_musl/blob/master/docs/).

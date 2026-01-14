@@ -54,46 +54,66 @@
 
 static pthread_key_t g_key;
 
-void *threadfuncB(void *arg)
-{
+void destructor(void *arg) {
+    if (arg != NULL) {
+        free(arg);
+    }
+}
+
+void *threadfuncB(void *arg) {
     (void)arg;
-    int32_t value = 0;
-    int32_t ret = pthread_setspecific(g_key, &value);
+    
+    int32_t *value = malloc(sizeof(int32_t));
+    if (value == NULL) {
+        perror("malloc failed");
+        return NULL;
+    }
+    *value = 0;
+    
+    int32_t ret = pthread_setspecific(g_key, value);
     if (ret == 0) {
         printf("pthread_setspecific success : ret = %d\n", ret);
     } else {
         printf("pthread_setspecific fail : ret = %d\n", ret);
+        free(value);
+        return NULL;
     }
+    
     int32_t *keyRet = (int32_t *)pthread_getspecific(g_key);
     if (keyRet != NULL && *keyRet == 0) {
         printf("pthread_getspecific success : value = %d\n", *keyRet);
     } else {
-        printf("pthread_getspecific fail : value = %d\n", (keyRet ? *keyRet : -1));
+        printf("pthread_getspecific fail\n");
     }
+    
     return arg;
-}
-
-void testfunc(void *arg)
-{
-    (void)arg;
 }
 
 int main(void) {
     pthread_t tid2;
-    int32_t ret = __pthread_key_create(&g_key, testfunc);
+    int32_t ret = __pthread_key_create(&g_key, destructor);
     if (ret == 0) {
         printf("__pthread_key_create success : ret = %d\n", ret);
     } else {
         printf("__pthread_key_create fail : ret = %d\n", ret);
+        return EXIT_FAILURE;
     }
-    pthread_create(&tid2, NULL, threadfuncB, NULL);
+
+    ret = pthread_create(&tid2, NULL, threadfuncB, NULL);
+    if (ret != 0) {
+        printf("pthread_create failed: %d\n", ret);
+        pthread_key_delete(g_key);
+        return EXIT_FAILURE;
+    }
+    
     pthread_join(tid2, NULL);
-    return 0;
+    pthread_key_delete(g_key);
+    return EXIT_SUCCESS;
 }
 ```
 
 
-#### COLOPHTON
+#### COLOPHON
 
 ​      this page is part of the C library user-space interface documentation.
-​      Information about the project can be found at (https://gitcode.com/openharmony/third_party_musl/blob/master/docs/)
+​      Information about the project can be found at (https://gitcode.com/openharmony/third_party_musl/blob/master/docs/).
