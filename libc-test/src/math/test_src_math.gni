@@ -203,8 +203,6 @@ math_list = [
 
 if (musl_extended_function) {
   math_list += [
-    "jnl",
-    "ynl",
     "__log_finite",
     "__log2_finite",
     "__atan2_finite",
