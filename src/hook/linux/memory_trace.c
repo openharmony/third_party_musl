@@ -94,12 +94,6 @@ void setResTraceId(uint32_t newTraceType, uint64_t newTraceID, uint32_t* pOldTra
 bool getResTraceId(uint32_t* pTraceType, uint64_t* pTraceID)
 {
 #ifdef HOOK_ENABLE
-	if (!__get_global_hook_flag()) {
-		return false;
-	}
-	else if (!__get_hook_flag()) {
-		return false;
-	}
     if (!atomic_load_explicit(&g_resTraceKeyReady, memory_order_acquire)) {
         return false;
     }
