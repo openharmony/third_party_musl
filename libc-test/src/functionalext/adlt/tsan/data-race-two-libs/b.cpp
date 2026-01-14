@@ -20,14 +20,18 @@ static pthread_mutex_t lock;
 
 void *b1(void *p) {
 	pthread_mutex_lock(&lock);
-	globalB++;
+	for (int i = 0; i < iter_check_num; ++i) {
+		globalB++;
+	}
 	pthread_mutex_unlock(&lock);
 	return nullptr;
 }
 
 void *b2(void *p) {
 	pthread_mutex_lock(&lock);
-	globalB--;
+	for (int i = 0; i < iter_check_num; ++i) {
+		globalB--;
+	}
 	pthread_mutex_unlock(&lock);
 	return nullptr;
 }

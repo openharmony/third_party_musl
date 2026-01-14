@@ -18,12 +18,16 @@
 static int globalA = 0;
 
 void *a1(void *p) {
-	globalA++;
+	for (int i = 0; i < iter_check_num; ++i) {
+		globalA++;
+	}
 	return nullptr;
 }
 
 void *a2(void *p) {
-	globalA--;
+	for (int i = 0; i < iter_check_num; ++i) {
+		globalA--;
+	}
 	return nullptr;
 }
 
