@@ -102,6 +102,9 @@ int __sched_cpucount(size_t, const cpu_set_t *);
 int sched_getcpu(void);
 int sched_getaffinity(pid_t, size_t, cpu_set_t *);
 int sched_setaffinity(pid_t, size_t, const cpu_set_t *);
+#ifdef MUSL_EXTERNAL_FUNCTION
+void __sched_cpufree(cpu_set_t *);
+#endif
 
 #define __CPU_op_S(i, size, set, op) ( (i)/8U >= (size) ? 0 : \
 	(((unsigned long *)(set))[(i)/8/sizeof(long)] op (1UL<<((i)%(8*sizeof(long))))) )
