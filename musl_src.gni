@@ -2518,8 +2518,6 @@ if (musl_arch == "arm") {
       "src/math/__isnanf.c",
       "src/math/__isinf.c",
       "src/math/__isinff.c",
-      "src/math/jnl.c",
-      "src/math/ynl.c",
       "src/network/__cmsg_nxthdr.c",
       "src/locale/strtoll_l.c",
       "src/string/rawmemchr.c",
