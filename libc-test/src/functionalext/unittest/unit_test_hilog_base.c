@@ -31,7 +31,7 @@
 #include <securec.h>
 
 #undef LOG_DOMAIN
-#define LOG_DOMAIN 0xD003F00
+#define LOG_DOMAIN 0xD003F07
 
 #undef LOG_TAG
 #define LOG_TAG "HILOGBASETEST"

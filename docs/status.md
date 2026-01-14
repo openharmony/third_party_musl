@@ -8,6 +8,91 @@ https://gitcode.com/openharmony/third_party_musl/blob/master/libc.map.txt
 https://gitcode.com/openharmony/interface_sdk_c/blob/master/third_party/musl/ndk_script/adapter/libc.ndk.json
 
 ## 系统侧libc新的变化
+2026/1/7 <math.h>  
+新增以下接口专为musl_extended_function为true设计使用：
+- 新增`__acosf_finite`: 计算有限单精度浮点数值的反余弦函数值
+- 新增`__atan2_finite`: 计算有限数值的反正切函数atan2值
+- 新增`__exp_finite`: 计算有限数值的自然指数函数值
+- 新增`__exp2_finite`: 计算有限数值的以2为底的指数函数值
+- 新增`__exp2f_finite`: 计算有限单精度浮点数值的以2为底的指数函数值
+- 新增`__finite`: 判断一个浮点数是否为有限值，检查该数值是否既不是无穷大（inf）也不是NaN（非数字）
+- 新增`__finitef`: 判断一个单精度浮点数float 类型是否为有限值
+- 新增`__isinf`: 判断一个双精度浮点数是否为无穷大（正无穷或负无穷）
+- 新增`__isinff`: 判断一个单精度浮点数float 类型是否为无穷大（正无穷或负无穷）
+- 新增`__isnan`: 判断一个浮点数的值是否为NaN
+- 新增`__isnanf`: 判断一个单精度浮点数是否为NaN
+- 新增`__log_finite`: 计算有限数值的自然对数
+- 新增`__log10_finite`: 计算有限数值的以10为底的对数
+- 新增`__log2_finite`: 计算有限数值的以2为底的对数
+- 新增`__log2f_finite`: 计算有限单精度浮点数值的以2为底的对数（log₂）值
+- 新增`__pow_finite`: 计算有限数值的幂运算结果
+- 新增`__powf_finite`: 计算有限单精度浮点数值的幂运算结果
+- 新增`jnl`: 用于计算第一类贝塞尔函数
+- 新增`ynl`: 用于计算第二类贝塞尔函数
+
+2026/1/7 <musl_version.h>  
+新增以下接口专为musl_extended_function为true设计使用：
+- 新增`get_musl_version`: 用于获取当前系统中所使用的musl库的版本字符串
+
+2026/1/7 <pthread.h>  
+新增以下接口专为musl_extended_function为true设计使用：
+- 新增`__register_atfork`: 用于注册在fork()系统调用发生时需要执行的钩子函数（hook）
+- 新增`__pthread_key_create`: 用于创建线程特定数据键的函数
+- 新增`pthread_attr_getaffinity_np`: 用于获取线程属性里CPU亲和性的函数
+- 新增`pthread_attr_setaffinity_np`: 用于设置线程属性里CPU亲和性的函数
+- 新增`pthread_attr_extension_init`: 线程扩展属性初始化
+- 新增`pthread_attr_extension_destroy`: 销毁线程扩展属性分配的内存
+- 新增`set_pthread_extended_function_policy`: 设置运行时PC隔离开关musl_pc_module值
+- 新增`get_pthread_extended_function_policy`: 获取运行时PC隔离开关musl_pc_module值
+
+2026/1/7 <setjmp.h>  
+新增以下接口专为musl_extended_function为true设计使用：
+- 新增`__longjmp_chk`: 进行参数检查的longjmp函数
+
+2026/1/7 <stdio.h>  
+新增以下接口专为musl_extended_function为true设计使用：
+- 新增`__asprintf_chk`: 进行参数检查的asprintf函数
+- 新增`__fprintf_chk`: 进行参数检查的fprintf函数
+- 新增`__printf_chk`: 进行参数检查的printf函数
+- 新增`__vasprintf_chk`: 进行参数检查的vasprintf函数
+- 新增`__vfprintf_chk`: 进行参数检查的vfprintf函数
+
+2026/1/7 <stdlib.h>  
+新增以下接口专为musl_extended_function为true设计使用：
+- 新增`__realpath_chk`: 进行参数检查的realpath函数
+- 新增`strtoll_l`: 将字符串转换为long long值
+- 新增`strtoull_l`: 将字符串转换为unsigned long long数值
+
+2026/1/7 <string.h>  
+新增以下接口专为musl_extended_function为true设计使用：
+- 新增`__rawmemchr`: 用于在内存中搜索一个特定字节的首次出现位置
+- 新增`__strdup`: 创建一个新的字符串，这个字符串是原始字符串的副本，并为这个副本分配新的内存空间
+- 新增`__strndup`: 用于安全地复制一个字符串的前若干个字符，并自动在末尾添加空字符以构成合法C字符串
+- 新增`__strtok_r`: 可重入（线程安全）的字符串分割函数
+
+2026/1/7 <syslog.h>  
+新增以下接口专为musl_extended_function为true设计使用：
+- 新增`__syslog_chk`: 进行参数检查的syslog函数
+
+2026/1/7 <sys/auxv.h>  
+新增以下接口专为musl_extended_function为true设计使用：
+- 新增`__getauxval`: 用于获取ELF辅助向量中的条目
+
+2026/1/7 <sys/socket.h>  
+新增以下接口专为musl_extended_function为true设计使用：
+- 新增`__cmsg_nxthdr`: 获取下一个控制消息头指针
+
+2026/1/7 <time.h>  
+新增以下接口专为musl_extended_function为true设计使用：
+- 新增`timelocal`: 使用timer的值来填充tm结构，timer的值被分解为tm结构，并用本地时区表示
+
+2026/1/7 <unistd.h>、<fcntl.h>  
+新增以下接口专为musl_extended_function为true设计使用：
+- 新增`fcntl64`: 用于执行文件控制操作的系统调用封装函数
+
+2026/1/7 <wchar.h>  
+新增以下接口专为musl_extended_function为true设计使用：
+- 新增`__mbrlen`: 计算多字节字符的长度，同时可跟踪转换状态
 
 2025/12/8 <log_base.h>
 - 新增`HiLogBasePrint`: HilogBase日志打印接口

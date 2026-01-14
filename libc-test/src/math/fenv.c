@@ -265,11 +265,60 @@ static void test_bad(void)
 		error("fesetexceptflag returned non-zero fir non-supported exceptions: %d\n", r);
 }
 
+// Tests for fegetexcept/feenableexcept/fedisableexcept.
+#ifdef MUSL_EXTERNAL_FUNCTION
+#if defined(__aarch64__)
+static void test_enable(void) {
+	int excepts, num_excepts, res;
+	num_excepts = 5; // FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW | FE_UNDERFLOW | FE_INEXACT
+	// disable all excepts, expect FPCR to be 0
+	excepts = 0b11111;
+	res = fedisableexcept(excepts);
+	res = fegetexcept();
+	if (res != 0) {
+		error("fegetexcept() should return 0 after disabling all exceptions, got %d\n.", res);
+	}
+
+	// enable each except individually
+	excepts = 0;
+	for (int i = 0; i < num_excepts; ++i) {
+		excepts |= (1 << i);
+		res = feenableexcept(excepts);
+		res = fegetexcept();
+		if (res == 0) {
+			printf("Trap mechamism seems not enabled. Attempts to write the register may not work properly.\n");
+		} else if (res != excepts) {
+			error("fegetexcept() should return %d after enabling, got %d.", excepts, res);
+		}
+	}
+
+	// disable each except individually
+	excepts = 0;
+	for (int i = 0; i < num_excepts; ++i) {
+		excepts |= (1 << i);
+		res = fedisableexcept(excepts);
+		res = fegetexcept();
+		if (res == 0) {
+			printf("Trap mechamism seems not enabled. Attempts to write the register may not work properly.\n");
+		} else if ((res & excepts) != 0) {
+			error("fegetexcept() should return %d after disabling, got %d.", excepts, res);
+		}
+	}
+}
+#endif
+#endif
+
 int main(void)
 {
 	test_except();
 	test_round();
 	test_round_add();
 	test_bad();
+#ifdef MUSL_EXTERNAL_FUNCTION
+#if defined(__aarch64__)
+	test_enable();
+#endif
+#endif
 	return test_status;
 }
+

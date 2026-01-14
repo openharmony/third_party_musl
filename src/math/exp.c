@@ -133,9 +133,3 @@ double exp(double x)
 	return eval_as_double(scale + scale * tmp);
 }
 
-#ifdef MUSL_EXTERNAL_FUNCTION
-double __exp_finite(double x)
-{
-    return exp(x);
-}
-#endif

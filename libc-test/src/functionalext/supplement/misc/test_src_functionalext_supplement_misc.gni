@@ -56,5 +56,9 @@ functionalext_supplement_misc_test = [
 ]
 
 if (musl_extended_function) {
-  functionalext_supplement_misc_test += [ "__getauxval" ]
+  functionalext_supplement_misc_test += [
+    "__getauxval",
+    "__realpath_chk",
+    "__syslog_chk",
+  ]
 }

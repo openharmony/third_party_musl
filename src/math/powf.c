@@ -183,10 +183,3 @@ float powf(float x, float y)
 	}
 	return exp2_inline(ylogx, sign_bias);
 }
-
-#ifdef MUSL_EXTERNAL_FUNCTION
-float __powf_finite(float x, float y)
-{
-    return powf(x, y);
-}
-#endif

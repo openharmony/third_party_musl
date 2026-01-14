@@ -30,7 +30,10 @@ int __sem_timedwait(sem_t *restrict sem, const struct timespec *restrict at)
 
 int sem_timedwait(sem_t *restrict sem, const struct timespec *restrict at)
 {
+#if defined(MUSL_EXTERNAL_FUNCTION) || defined(PTHREAD_CANCEL_IN_STATIC_LIB) || \
+	defined(__LITEOS__) || defined(__HISPARK_LINUX__)
 	pthread_testcancel();
+#endif
 
 	if (!sem_trywait(sem)) return 0;
 

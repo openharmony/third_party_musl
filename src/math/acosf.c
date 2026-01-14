@@ -69,10 +69,3 @@ float acosf(float x)
 	w = R(z)*s+c;
 	return 2*(df+w);
 }
-
-#ifdef MUSL_EXTERNAL_FUNCTION
-float __acosf_finite(float x) 
-{
-    return acosf(x);
-}
-#endif

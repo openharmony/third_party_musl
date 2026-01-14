@@ -5584,6 +5584,52 @@ int dladdr(const void *addr_arg, Dl_info *info)
 	info->dli_saddr = 0;
 	return 1;
 }
+#ifdef MUSL_EXTERNAL_FUNCTION
+int dladdr1(const void *addr_arg, Dl_info *info,
+		void **extra_info, int flags)
+{
+	size_t addr = (size_t)addr_arg;
+	struct dso *p;
+	Sym *match_sym = NULL;
+
+	pthread_rwlock_rdlock(&lock);
+	p = addr2dso(addr);
+	pthread_rwlock_unlock(&lock);
+
+	if (!p) return 0;
+
+	size_t addr_offset_so = addr - (size_t)p->base;
+
+	if (__predict_false(p->adlt)) {
+		info->dli_fname = p->adlt_ndso_name;
+	} else {
+		info->dli_fname = p->name;
+	}
+	info->dli_fbase = p->map;
+
+	if (p->ghashtab) {
+		match_sym = find_addr_by_gnu(addr_offset_so, p);
+
+	} else {
+		match_sym = find_addr_by_elf(addr_offset_so, p);
+	}
+
+	if (match_sym) {
+		info->dli_sname = p->strings + match_sym->st_name;
+		info->dli_saddr = (void *)laddr(p, match_sym->st_value);
+		if (extra_info && flags == RTLD_DL_SYMENT) {
+			*extra_info = (void *)match_sym;
+		}
+		return 1;
+	}
+	if (extra_info && flags == RTLD_DL_SYMENT) {
+		*extra_info = NULL;
+	}
+	info->dli_sname = 0;
+	info->dli_saddr = 0;
+	return 1;
+}
+#endif
 
 hidden void *__dlsym(void *restrict p, const char *restrict s, void *restrict ra)
 {

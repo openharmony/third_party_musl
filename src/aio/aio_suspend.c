@@ -15,7 +15,10 @@ int aio_suspend(const struct aiocb *const cbs[], int cnt, const struct timespec 
 	const struct aiocb *cb = 0;
 
 	UNSUPPORTED_API_VOID(LITEOS_A);
+#if defined(FEATURE_PTHREAD_CANCEL) || defined(PTHREAD_CANCEL_IN_STATIC_LIB) || \
+	defined(__LITEOS__) || defined(__HISPARK_LINUX__)
 	pthread_testcancel();
+#endif
 
 	if (cnt<0) {
 		errno = EINVAL;

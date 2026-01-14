@@ -94,6 +94,9 @@ int mq_notify(mqd_t mqd, const struct sigevent *sev)
 
 	if (args.err) {
 #ifdef FEATURE_PTHREAD_CANCEL
+#ifdef MUSL_EXTERNAL_FUNCTION
+		__syscall(SYS_tkill, td->tid, SIGCANCEL);
+#endif
 #else
 		__syscall(SYS_tkill, td->tid, SIGCANCEL);
 #endif

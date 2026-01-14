@@ -18,6 +18,8 @@
 
 ​       The __asprintf_chk() function allocates a sufficiently large string to store the output, including the terminating null byte ('0'), and returns a pointer to this string through the first argument. When it is no longer needed, this pointer should be passed to free to release the allocated memory.
 
+​       If flag is set to 0, verification is not enabled; if greater than 0, verification is enabled.  
+
 #### **RETURN VALUE**
 
 
@@ -42,7 +44,7 @@
 
 #### NOTES
 
-​       This function is ‌exclusively designed for PC environments‌.
+​       This feature is designed specifically for when musl_extended_function is true.
 
 #### CONFORMING TO
 

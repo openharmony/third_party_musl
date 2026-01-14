@@ -663,6 +663,9 @@
     feclearexcept;
     fegetenv;
     fegetexceptflag;
+    fegetexcept;
+    feenableexcept;
+    fedisableexcept;
     fegetround;
     feholdexcept;
     feof;
@@ -1106,6 +1109,17 @@
     logf;
     login_tty;
     logl;
+    __log_finite;
+    __log2_finite;
+    __atan2_finite;
+    __pow_finite;
+    __log10_finite;
+    __exp_finite;
+    __exp2_finite;
+    __acosf_finite;
+    __powf_finite;
+    __log2f_finite;
+    exp2f_finite;
     longjmp;
     lrand48;
     lremovexattr;
@@ -1387,7 +1401,7 @@
     pthread_barrierattr_getpshared;
     pthread_barrierattr_init;
     pthread_barrierattr_setpshared;
-    # pthread_cancel;
+    pthread_cancel;
     pthread_cond_broadcast;
     pthread_cond_clockwait;
     pthread_cond_destroy;
@@ -1479,7 +1493,7 @@
     pthread_spin_lock;
     pthread_spin_trylock;
     pthread_spin_unlock;
-    # pthread_testcancel;
+    pthread_testcancel;
     # pthread_timedjoin_np;
     # pthread_tryjoin_np;
     ptrace;
@@ -2107,6 +2121,8 @@
     pthread_attr_extension_destroy;
     set_pthread_extended_function_policy;
     get_pthread_extended_function_policy;
+    dladdr1;
+    __sched_cpufree;
   local:
     *;
 };
