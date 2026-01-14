@@ -17,6 +17,7 @@
 
 #define pthread __pthread
 #define TLS_RESERVE_SLOT 15
+#define RESERVED_SLOTS_SIZE (2)
 
 struct pthread {
 	/* Part 1 -- these fields may be external or
@@ -41,10 +42,6 @@ struct pthread {
 	int errno_val;
 	int by_vfork;
 	volatile int detach_state;
-#ifdef FEATURE_PTHREAD_CANCEL
-	volatile int cancel;
-	volatile unsigned char canceldisable, cancelasync;
-#endif
 	unsigned char tsd_used:1;
 	unsigned char dlerror_flag:1;
 	unsigned char *map_base;
@@ -87,6 +84,9 @@ struct pthread {
 	} *thread_local_dtors;
 	#endif
 
+	volatile int cancel;
+	volatile unsigned char canceldisable, cancelasync;
+	void *reserved_slots[RESERVED_SLOTS_SIZE];
 	/* Part 3 -- the positions of these fields relative to
 	 * the end of the structure is external and internal ABI. */
 #ifdef TLS_ABOVE_TP

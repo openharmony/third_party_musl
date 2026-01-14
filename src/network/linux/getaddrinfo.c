@@ -19,6 +19,127 @@
 #define DNS_FAIL_REASON2_ROUND 99
 #define DNS_FAIL_REASON3_ROUND 299
 #define DNS_FAIL_REASON11_ROUND 99
+#define KEY_MAX 512
+#define KEY_SAME_MAX_TIME 2100000000LL
+
+typedef struct {
+    char host[KEY_MAX];
+    char serv[KEY_MAX];
+    int family;
+    int socktype;
+    int protocol;
+    int flags;
+    struct timespec ts;
+} QueryKey;
+
+typedef struct SharedResult {
+    QueryKey key;
+    int is_done;
+    int rc; // res code
+	struct service ports[MAXSERVS];
+	struct address addrs[MAXADDRS];
+	char canon[256];
+	int nservs;
+	int naddrs;
+    int waiters;
+    pthread_mutex_t mutex;
+    pthread_cond_t cond;
+    struct SharedResult *next;
+} SharedResult;
+
+static SharedResult *g_result_cache = NULL;
+static pthread_mutex_t g_cache_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+static void gen_query_key(QueryKey *key, const char *host, const char *serv, const struct addrinfo *hints) {
+    memset(key, 0, sizeof(QueryKey));
+    if (host) {
+        strncpy(key->host, host, KEY_MAX - 1);
+        key->host[KEY_MAX - 1] = '\0';
+    }
+    if (serv) {
+        strncpy(key->serv, serv, KEY_MAX - 1);
+        key->serv[KEY_MAX - 1] = '\0';
+    }
+    key->family = hints ? hints->ai_family : AF_UNSPEC;
+    key->socktype = hints ? hints->ai_socktype : 0;
+    key->protocol = hints ? hints->ai_protocol : 0;
+    key->flags = hints ? hints->ai_flags : 0;
+    clock_gettime(CLOCK_REALTIME, &key->ts);
+}
+
+static int query_key_equal(const QueryKey *a, const QueryKey *b) {
+    int64_t diff = llabs((int64_t)a->ts.tv_sec * 1e9 + a->ts.tv_nsec - ((int64_t)b->ts.tv_sec * 1e9 + b->ts.tv_nsec));
+    return strcmp(a->host, b->host) == 0 &&
+           strcmp(a->serv, b->serv) == 0 &&
+           a->family == b->family &&
+           a->socktype == b->socktype &&
+           a->protocol == b->protocol &&
+           a->flags == b->flags &&
+           diff <= KEY_SAME_MAX_TIME; // if a query does not finish in 2s100ms, new incoming query do a new dns search
+}
+
+static SharedResult *get_shared_result(const QueryKey *key) {
+    pthread_mutex_lock(&g_cache_mutex);
+    SharedResult *res = NULL;
+    for (res = g_result_cache; res; res = res->next) {
+        if (query_key_equal(&res->key, key)) {
+			pthread_mutex_lock(&res->mutex);
+			res->waiters++;
+			pthread_mutex_unlock(&res->mutex);
+            pthread_mutex_unlock(&g_cache_mutex);
+            return res;
+        }
+    }
+
+    // create new node if there is no same key in global cache
+    res = calloc(1, sizeof(SharedResult));
+    if (!res) {
+        pthread_mutex_unlock(&g_cache_mutex);
+        return NULL;
+    }
+    res->key = *key;
+    res->is_done = 0;
+    res->rc = EAI_AGAIN;
+	res->nservs = 0;
+	res->naddrs = 0;
+    res->waiters = 1;
+    pthread_mutex_init(&res->mutex, NULL);
+    pthread_cond_init(&res->cond, NULL);
+
+    res->next = g_result_cache;
+    g_result_cache = res;
+
+    pthread_mutex_unlock(&g_cache_mutex);
+    return res;
+}
+
+static void release_shared_result(SharedResult *res) {
+	if (!res) {
+		return;
+	}
+    pthread_mutex_lock(&g_cache_mutex);
+	pthread_mutex_lock(&res->mutex);
+    res->waiters--;
+    int last_ref = (res->waiters == 0 && res->is_done);
+	pthread_mutex_unlock(&res->mutex);
+    
+    if (last_ref) {
+        SharedResult **prev = &g_result_cache;
+        while (*prev && *prev != res) {
+            prev = &(*prev)->next;
+        }
+        if (*prev) {
+            *prev = res->next;
+        }
+
+        pthread_mutex_lock(&res->mutex);
+        pthread_mutex_unlock(&res->mutex);
+        pthread_mutex_destroy(&res->mutex);
+        pthread_cond_destroy(&res->cond);
+        free(res);
+    }
+    pthread_mutex_unlock(&g_cache_mutex);
+}
 
 int reportdnsresult(int netid, char* name, int usedtime, int queryret, struct addrinfo *res, struct queryparam *param)
 {
@@ -200,68 +321,132 @@ int getaddrinfo_ext(const char *restrict host, const char *restrict serv, const 
 		}
 	}
 
+    QueryKey key;
+    gen_query_key(&key, host, serv, hint);
+
+    SharedResult *shared_res = get_shared_result(&key);
+    if (!shared_res) return EAI_MEMORY;
+
+	pthread_mutex_lock(&shared_res->mutex);
+    int is_leader = (shared_res->waiters == 1);
+	pthread_mutex_unlock(&shared_res->mutex);
 	int timeStartRet = gettimeofday(&timeStart, NULL);
-	nservs = __lookup_serv(ports, serv, proto, socktype, flags);
-	if (nservs < 0) return nservs;
-
-	naddrs = lookup_name_ext(addrs, canon, host, family, flags, netid);
-	int timeEndRet = gettimeofday(&timeEnd, NULL);
 	int t_cost = 0;
-	if (timeStartRet == 0 && timeEndRet == 0) {
-		t_cost = COST_FOR_NANOSEC * (timeEnd.tv_sec - timeStart.tv_sec) + (timeEnd.tv_usec - timeStart.tv_usec);
-		t_cost /= COST_FOR_MS;
-	}
-	if (naddrs < 0) {
-		reportdnsresult(netid, (char *)host, t_cost, naddrs, NULL, param);
-#ifndef __LITEOS__
-		MUSL_LOGW("reportdnsresult: %{public}d", naddrs);
-#endif
-		naddrs = revert_dns_fail_cause(naddrs);
-		return naddrs;
+    if (is_leader) {
+		// first thread do the dns search
+        nservs = __lookup_serv(ports, serv, proto, socktype, flags);
+        if (nservs < 0) {
+            pthread_mutex_lock(&shared_res->mutex);
+            shared_res->rc = nservs;
+            shared_res->is_done = 1;
+            if (shared_res->waiters > 1) {
+                pthread_cond_broadcast(&shared_res->cond);
+            }
+            pthread_mutex_unlock(&shared_res->mutex);
+            release_shared_result(shared_res);
+            return nservs;
+        }
+
+        naddrs = lookup_name_ext(addrs, canon, host, family, flags, netid);
+		int timeEndRet = gettimeofday(&timeEnd, NULL);
+		if (timeStartRet == 0 && timeEndRet == 0) {
+			t_cost = COST_FOR_NANOSEC * (timeEnd.tv_sec - timeStart.tv_sec) + (timeEnd.tv_usec - timeStart.tv_usec);
+			t_cost /= COST_FOR_MS;
+		}
+
+        if (naddrs < 0) {
+			reportdnsresult(netid, (char *)host, t_cost, naddrs, NULL, param);
+            naddrs = revert_dns_fail_cause(naddrs);
+            pthread_mutex_lock(&shared_res->mutex);
+            shared_res->rc = naddrs;
+            shared_res->is_done = 1;
+            if (shared_res->waiters > 1) {
+                pthread_cond_broadcast(&shared_res->cond);
+            }
+            pthread_mutex_unlock(&shared_res->mutex);
+            release_shared_result(shared_res);
+            return naddrs;
+        }
+
+		pthread_mutex_lock(&shared_res->mutex);
+        shared_res->rc = 0;
+		memcpy(shared_res->ports, ports, sizeof(shared_res->ports));
+		memcpy(shared_res->addrs, addrs, sizeof(shared_res->addrs));
+		strncpy(shared_res->canon, canon, sizeof(shared_res->canon) - 1);
+		shared_res->canon[sizeof(shared_res->canon) - 1] = '\0';
+		shared_res->nservs = nservs;
+		shared_res->naddrs = naddrs;
+        shared_res->is_done = 1;
+        if (shared_res->waiters > 1) {
+            pthread_cond_broadcast(&shared_res->cond);
+        }
+        pthread_mutex_unlock(&shared_res->mutex);
+    } else {
+        // other threads wait for the result
+        pthread_mutex_lock(&shared_res->mutex);
+		while (shared_res->is_done == 0) {
+			pthread_cond_wait(&shared_res->cond, &shared_res->mutex);
+		}
+		int timeEndRet = gettimeofday(&timeEnd, NULL);
+		if (timeStartRet == 0 && timeEndRet == 0) {
+			t_cost = COST_FOR_NANOSEC * (timeEnd.tv_sec - timeStart.tv_sec) + (timeEnd.tv_usec - timeStart.tv_usec);
+			t_cost /= COST_FOR_MS;
+		}
+        pthread_mutex_unlock(&shared_res->mutex);
+    }
+
+	pthread_mutex_lock(&shared_res->mutex);
+	if (shared_res->rc != 0) {
+		int rc = shared_res->rc;
+		pthread_mutex_unlock(&shared_res->mutex);
+		release_shared_result(shared_res);
+		return rc;
 	}
 
-	nais = nservs * naddrs;
-	canon_len = strlen(canon);
+	nais = shared_res->nservs * shared_res->naddrs;
+	canon_len = strlen(shared_res->canon);
 	out = calloc(1, nais * sizeof(*out) + canon_len + 1);
 	if (!out) return EAI_MEMORY;
 
 	if (canon_len) {
 		outcanon = (void *)&out[nais];
-		memcpy(outcanon, canon, canon_len + 1);
+		memcpy(outcanon, shared_res->canon, canon_len + 1);
 	} else {
 		outcanon = 0;
 	}
 
-	for (k = i = 0; i < naddrs; i++) for (j = 0; j < nservs; j++, k++) {
+	for (k = i = 0; i < shared_res->naddrs; i++) for (j = 0; j < shared_res->nservs; j++, k++) {
 		out[k].slot = k;
 		out[k].ai = (struct addrinfo) {
-			.ai_family = addrs[i].family,
-			.ai_socktype = ports[j].socktype,
-			.ai_protocol = ports[j].proto,
-			.ai_addrlen = addrs[i].family == AF_INET
+			.ai_family = shared_res->addrs[i].family,
+			.ai_socktype = shared_res->ports[j].socktype,
+			.ai_protocol = shared_res->ports[j].proto,
+			.ai_addrlen = shared_res->addrs[i].family == AF_INET
 				? sizeof(struct sockaddr_in)
 				: sizeof(struct sockaddr_in6),
 			.ai_addr = (void *)&out[k].sa,
 			.ai_canonname = outcanon };
 		if (k) out[k-1].ai.ai_next = &out[k].ai;
-		switch (addrs[i].family) {
+		switch (shared_res->addrs[i].family) {
 		case AF_INET:
 			out[k].sa.sin.sin_family = AF_INET;
-			out[k].sa.sin.sin_port = htons(ports[j].port);
-			memcpy(&out[k].sa.sin.sin_addr, &addrs[i].addr, 4);
+			out[k].sa.sin.sin_port = htons(shared_res->ports[j].port);
+			memcpy(&out[k].sa.sin.sin_addr, &shared_res->addrs[i].addr, 4);
 			break;
 		case AF_INET6:
 			out[k].sa.sin6.sin6_family = AF_INET6;
-			out[k].sa.sin6.sin6_port = htons(ports[j].port);
-			out[k].sa.sin6.sin6_scope_id = addrs[i].scopeid;
-			memcpy(&out[k].sa.sin6.sin6_addr, &addrs[i].addr, 16);
+			out[k].sa.sin6.sin6_port = htons(shared_res->ports[j].port);
+			out[k].sa.sin6.sin6_scope_id = shared_res->addrs[i].scopeid;
+			memcpy(&out[k].sa.sin6.sin6_addr, &shared_res->addrs[i].addr, 16);
 			break;
 		}
 	}
 	out[0].ref = nais;
 	*res = &out->ai;
-
+	pthread_mutex_unlock(&shared_res->mutex);
 	reportdnsresult(netid, (char *)host, t_cost, DNS_QUERY_SUCCESS, *res, param);
+	release_shared_result(shared_res);
+
 	int cnt = predefined_host_is_contain_host(host);
 #if OHOS_DNS_PROXY_BY_NETSYS
 	if (type == QEURY_TYPE_NORMAL && cnt == 0) {

@@ -114,7 +114,7 @@ int __printf_chk(int, const char*, ...);
 int __vasprintf_chk(char**, int, const char*, __isoc_va_list);
 int __vfprintf_chk(FILE*, int, const char*, va_list);
 #endif
-int __vfprintf(FILE *__restrict, int, const char *__restrict, __isoc_va_list);
+int __vfprintf(FILE *__restrict, const char *__restrict, __isoc_va_list, int);
 
 int printf(const char *__restrict, ...);
 int fprintf(FILE *__restrict, const char *__restrict, ...);
@@ -125,6 +125,7 @@ int vprintf(const char *__restrict, __isoc_va_list);
 int vfprintf(FILE *__restrict, const char *__restrict, __isoc_va_list);
 int vsprintf(char *__restrict, const char *__restrict, __isoc_va_list);
 int vsnprintf(char *__restrict, size_t, const char *__restrict, __isoc_va_list);
+int __vsnprintf(char *__restrict, size_t, const char *__restrict, va_list, unsigned int);
 
 int scanf(const char *__restrict, ...);
 int fscanf(FILE *__restrict, const char *__restrict, ...);
@@ -198,6 +199,7 @@ int putw(int, FILE *);
 char *fgetln(FILE *, size_t *);
 int asprintf(char **, const char *, ...);
 int vasprintf(char **, const char *, __isoc_va_list);
+int __vasprintf(char **, const char *, __isoc_va_list, unsigned int);
 #endif
 
 #ifdef _GNU_SOURCE

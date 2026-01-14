@@ -100,6 +100,9 @@ if (musl_arch == "arm") {
 } else if (musl_arch == "aarch64") {
   musl_src_arch_file = [
     "src/fenv/aarch64/fenv.s",
+    "OpenFAST_musl/fenv/aarch64/fegetexcept.c",
+    "OpenFAST_musl/fenv/aarch64/feenableexcept.c",
+    "OpenFAST_musl/fenv/aarch64/fedisableexcept.c",
     "src/ldso/aarch64/dlsym.s",
     "src/ldso/aarch64/tlsdesc.s",
     "src/math/aarch64/ceil.c",
@@ -827,6 +830,7 @@ musl_src_file = [
   "src/misc/a64l.c",
   "src/misc/basename.c",
   "src/misc/dirname.c",
+  "OpenFAST_musl/finite/fast_finite.c",
   "src/misc/ffs.c",
   "src/misc/ffsl.c",
   "src/misc/ffsll.c",
@@ -2504,8 +2508,10 @@ if (musl_arch == "arm") {
   ]
 
   if (musl_extended_function) {
-    musl_src_file += [
+    musl_inc_root_files += [
       "include/musl_version.h",
+    ]
+    musl_src_file += [
       "src/math/__finite.c",
       "src/math/__finitef.c",
       "src/math/__isnan.c",
@@ -2523,6 +2529,7 @@ if (musl_arch == "arm") {
       "src/thread/pthread_attr_getaffinity_np.c",
       "src/thread/pthread_attr_setaffinity_np.c",
       "src/thread/pthread_extended_function_policy.c",
+      "src/sched/sched_cpufree.c",
     ]
   }
 } else if (musl_arch == "loongarch64") {

@@ -166,7 +166,7 @@ int timer_create(clockid_t clk, struct sigevent *restrict evp, timer_t *restrict
 		ksev.sigev_tid = td->tid;
 		if (syscall(SYS_timer_create, clk, &ksev, &timerid) < 0) {
 			timerid = -1;
-#ifdef FEATURE_PTHREAD_CANCEL
+#if defined(FEATURE_PTHREAD_CANCEL) && !defined(MUSL_EXTERNAL_FUNCTION)
 			td->cancel = 1;
 #endif
 		}

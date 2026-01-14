@@ -51,7 +51,8 @@ extern "C" {
 #define TAG_RES_ARKTS_HEAP_MASK    "RES_ARKTS_HEAP_MASK"
 #define TAG_RES_JS_HEAP_MASK       "RES_JS_HEAP_MASK"
 #define TAG_RES_KMP_HEAP_MASK      "RES_KMP_HEAP_MASK"
-#define TAG_RES_ASHMEM             "RES_ASHMEM"
+#define TAG_RES_SO_MASK            "RES_SO_MASK"
+#define TAG_RES_ASHMEM_MASK        "RES_ASHMEM_MASK"
 #define TAG_RES_RN_HEAP_MASK       "RES_RN_HEAP_MASK"
 #define TAG_RES_DMABUF_MASK        "RES_DMABUF_MASK"
 #define TAG_RES_ARK_GLOBAL_HANDLE  "RES_ARK_GLOBAL_HANDLE"
@@ -90,6 +91,7 @@ extern "C" {
 #define RES_RN_HEAP_MASK           (1 << 21)
 #define RES_DMABUF_MASK            (1 << 22)
 #define RES_ARK_GLOBAL_HANDLE      (1 << 23)
+#define RES_ASHMEM_MASK            (1 << 24)
 
 #define FD_SIZE                     1
 #define THREAD_SIZE                 1

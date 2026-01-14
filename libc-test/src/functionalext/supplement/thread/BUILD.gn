@@ -183,6 +183,45 @@ test_unittest("pthread_attr_setaffinity_np") {
   musl_unit_test_flag = true
 }
 
+test_unittest("pthread_cancel_testcase1_basic_cancel") {
+  target_dir = "functionalext/supplement/thread"
+  musl_unit_test_flag = true
+}
+
+test_unittest("pthread_cancel_testcase2_invalid_tid") {
+  target_dir = "functionalext/supplement/thread"
+  musl_unit_test_flag = true
+}
+
+test_unittest("pthread_cancel_testcase3_disabled_cancel") {
+  target_dir = "functionalext/supplement/thread"
+  musl_unit_test_flag = true
+  include_dirs = [
+    "${musl_src_base}/src/internal",
+    "${musl_src_base}/arch/${musl_arch}",
+  ]
+}
+
+test_unittest("pthread_cancel_testcase4_cancel_after_exit") {
+  target_dir = "functionalext/supplement/thread"
+  musl_unit_test_flag = true
+}
+
+test_unittest("pthread_cancel_testcase5_multiple_cancel") {
+  target_dir = "functionalext/supplement/thread"
+  musl_unit_test_flag = true
+}
+
+test_unittest("pthread_cancel_testcase6_join_returns_canceled") {
+  target_dir = "functionalext/supplement/thread"
+  musl_unit_test_flag = true
+}
+
+test_unittest("pthread_testcancel") {
+  target_dir = "functionalext/supplement/thread"
+  musl_unit_test_flag = true
+}
+
 group("functionalext_supplement_thread_test") {
   testonly = true
   deps = [
@@ -208,7 +247,14 @@ group("functionalext_supplement_thread_test") {
   ]
 
   if (musl_extended_function) {
-    deps += [ ":pthread_attr_setaffinity_np" ]
+    deps += [
+      ":pthread_attr_setaffinity_np",
+      ":pthread_cancel_testcase1_basic_cancel",
+      ":pthread_cancel_testcase2_invalid_tid",
+      ":pthread_cancel_testcase4_cancel_after_exit",
+      ":pthread_cancel_testcase5_multiple_cancel",
+      ":pthread_cancel_testcase6_join_returns_canceled",
+    ]
   }
 
   foreach(s, functionalext_supplement_thread_test) {

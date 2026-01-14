@@ -40,7 +40,7 @@
 ​      Commonly used for advanced socket operations (e.g., sending/receiving file descriptors, credentials, or network parameters).
 Platform-specific behavior may vary in non-Linux systems.
 
-​      This function is ‌exclusively designed for PC environments‌.
+​       This feature is designed specifically for when musl_extended_function is true.
 
 #### CONFORMING TO
 

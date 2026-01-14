@@ -194,7 +194,6 @@ static void* affinity_test_thread(void* arg) {
 
 void ThreadPthreadAffinityTest::transform(const int index)
 {
-    int cpu_count = get_cpu_count();
     init_stats(&stats);
     struct timespec start;
     struct timespec end;
@@ -220,9 +219,6 @@ void ThreadPthreadAffinityTest::transform(const int index)
 
     // Record end time and calculate elapsed time
     clock_gettime(CLOCK_MONOTONIC, &end);
-    double elapsed_time = (end.tv_sec - start.tv_sec) +
-                          (end.tv_nsec - start.tv_nsec) / 1e9;
-
     pthread_mutex_destroy(&stats.mutex);
     EXPECT_GT(stats.total_calls, 0) << "Total calls should be greater than 0";
     EXPECT_GT(stats.success_calls, 0) << "Successful calls should be greater than 0";
@@ -237,10 +233,12 @@ void ThreadPthreadAffinityTest::transform(const int index)
  * */
 HWTEST_F(ThreadPthreadAffinityTest, pthread_attr_setaffinity_np_001, TestSize.Level1)
 {
+    set_pthread_extended_function_policy(1);
     int loopNum = 100;
     for (int i = 1; i <= loopNum; i++) {
         transform(i);
     }
+    set_pthread_extended_function_policy(0);
 }
 #endif
 #endif

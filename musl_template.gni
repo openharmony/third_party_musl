@@ -413,9 +413,16 @@ template("static_and_shared_libs_template") {
     if (musl_use_mutex_wait_opt) {
       defines += [ "USE_MUTEX_WAIT_OPT" ]
     }
-  
+
     if (musl_extended_function) {
-      defines += [ "MUSL_EXTERNAL_FUNCTION" ]
+      defines += [
+        "MUSL_EXTERNAL_FUNCTION",
+        "FEATURE_PTHREAD_CANCEL"
+      ]
+    } else {
+      if (target_name == "soft_musl_src_static") {
+        defines += [ "PTHREAD_CANCEL_IN_STATIC_LIB" ]
+      }
     }
 
     configs -= musl_inherited_configs
@@ -509,6 +516,17 @@ template("static_and_shared_libs_template") {
         "HANDLE_RANDOMIZATION",
         "LOAD_ORDER_RANDOMIZATION",
       ]
+    }
+
+    if (musl_extended_function) {
+      defines += [
+        "MUSL_EXTERNAL_FUNCTION",
+        "FEATURE_PTHREAD_CANCEL"
+      ]
+    } else {
+      if (target_name == "soft_musl_src_static") {
+        defines += [ "PTHREAD_CANCEL_IN_STATIC_LIB" ]
+      }
     }
 
     if (musl_arch == "aarch64") {

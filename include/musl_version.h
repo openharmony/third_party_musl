@@ -12,10 +12,10 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifdef MUSL_EXTERNAL_FUNCTION
 #ifndef MUSL_VERSION_H
 #define MUSL_VERSION_H
 
+#ifdef MUSL_EXTERNAL_FUNCTION
 #ifdef __cplusplus
 extern "C" {
 #endif

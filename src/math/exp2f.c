@@ -67,10 +67,3 @@ float exp2f(float x)
 	y = y * s;
 	return eval_as_float(y);
 }
-
-#ifdef MUSL_EXTERNAL_FUNCTION
-float __exp2f_finite(float x)
-{
-    return exp2f(x);
-}
-#endif

@@ -33,7 +33,7 @@
 #include <csignal>
 #include <sigchain.h>
 
-#define SIGNAL_CHAIN_SPECIAL_ACTION_MAX 3
+#define SIGNAL_CHAIN_SPECIAL_ACTION_MAX 4
 
 extern "C"{
     bool intercept_sigchain(int signo, const struct sigaction *__restrict sa, struct sigaction *__restrict old);

@@ -46,7 +46,7 @@
 
 ​      The behavior of __mbrlen() depends on the LC_CTYPE category of the current locale.
 
-​       This function is ‌exclusively designed for PC environments‌.
+​       This feature is designed specifically for when musl_extended_function is true.
 
 #### CONFORMING TO
 

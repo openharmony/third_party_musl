@@ -19,6 +19,8 @@
 
 ​       It expects as input an int-type flags is used to specify the security check level, a "format string" that specifies what to print, and zero or more ​       subsequent arguments. The format string can optionally contain "conversion specifications", placeholders that begin with % that specify how to format ​       the function’s subsequent arguments, if any.
 
+​       If flags is set to 0, verification is not enabled; if greater than 0, verification is enabled.  
+
 #### **RETURN VALUE**
 
 ​       Upon successful return, this function return the number of bytes printed (excluding the null byte used to end output to strings).
@@ -44,7 +46,7 @@
 
 #### NOTES
 
-​       This function is ‌exclusively designed for PC environments‌.
+​       This feature is designed specifically for when musl_extended_function is true.
 
 #### CONFORMING TO
 

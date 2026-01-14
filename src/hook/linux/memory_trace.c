@@ -66,6 +66,12 @@ static struct ResTraceTls* getOrCreateResTraceTls(void)
 void setResTraceId(uint32_t newTraceType, uint64_t newTraceID, uint32_t* pOldTraceType, uint64_t* pOldTraceID)
 {
 #ifdef HOOK_ENABLE
+	if (!__get_global_hook_flag()) {
+		return;
+	}
+	else if (!__get_hook_flag()) {
+		return;
+	}
     if (!pOldTraceType || !pOldTraceID) {
         return;
     }

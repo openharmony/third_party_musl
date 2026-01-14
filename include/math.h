@@ -60,20 +60,6 @@ int __isnanf(float);
 int __isnan(double);
 #endif
 
-#ifdef MUSL_EXTERNAL_FUNCTION
-float __acosf_finite(float);
-float __exp2f_finite(float);
-float __log2f_finite(float);
-float __powf_finite(float, float);
-double __atan2_finite(double, double);
-double __exp_finite(double);
-double __exp2_finite(double);
-double __log_finite(double);
-double __log10_finite(double);
-double __log2_finite(double);
-double __pow_finite(double, double);
-#endif
-
 static __inline unsigned __FLOAT_BITS(float __f)
 {
 	union {float __f; unsigned __i;} __u;
@@ -297,6 +283,21 @@ long double log2l(long double);
 double      logb(double);
 float       logbf(float);
 long double logbl(long double);
+
+#ifdef MUSL_EXTERNAL_FUNCTION
+//musl support for Python-related components
+double __log_finite(double);
+double __log2_finite(double);
+double __atan2_finite(double, double);
+double __pow_finite(double, double);
+double __log10_finite(double);
+double __exp_finite(double);
+double __exp2_finite(double);
+float __acosf_finite(float);
+float __powf_finite(float, float);
+float __log2f_finite(float);
+float exp2f_finite(float);
+#endif
 
 long        lrint(double);
 long        lrintf(float);
