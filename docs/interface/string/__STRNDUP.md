@@ -4,7 +4,7 @@
 
 #### **NAME**
 
-​       __strndup - search for a character in the specified memory block.
+​       __strndup - copy the first n characters of the string and add a terminator.
 
 #### **SYNOPSIS**
 
@@ -15,7 +15,7 @@
 
 #### **DESCRIPTION**
 
-​       The __strndup() function is similar to strdup, but copies at most n bytes.  If s is longer than n, only n bytes are copied, and a terminating null byte ('\0') is added.
+​       The __strndup() function is similar to strdup, but copies at most n bytes.  If s is longer than n, only n bytes are copied, and a terminating null byte ('\0') is added. If the input parameter s is NULL, the indirectly called interface will report a segment error.
 
 #### **RETURN VALUE**
 
@@ -35,7 +35,7 @@ The following error codes may be set in errno:
 
 #### HISTORY
 
-​       -- 2025
+​       -- 2026
 
 #### NOTES
 
@@ -51,16 +51,23 @@ The following error codes may be set in errno:
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <errno.h>
 
 int main() {
-    char *str = __strndup("hello world", 5); // Copy the first 5 characters
-    printf("Copied string: %s\n", str);
+    const char *original = "hello world";
+    size_t copy_length = 5;
+    char *str = __strndup(original, copy_length);
+    if (!str) {
+        printf("Failed to execute __strndup(): %s\n", strerror(errno));
+        return 1;
+    }
+
     free(str);
     return 0;
 }
 ```
 
-#### COLOPHTON
+#### COLOPHON
 
 ​      this page is part of the C library user-space interface documentation.
-​      Information about the project can be found at (https://gitcode.com/openharmony/third_party_musl/blob/master/docs/)
+​      Information about the project can be found at (https://gitcode.com/openharmony/third_party_musl/blob/master/docs/).

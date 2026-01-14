@@ -65,14 +65,14 @@ int main(void) {
         test_passed = 0;
     }
 
-    set_pthread_extended_function_policy(1);
+    set_pthread_extended_function_policy(1); // non-zero
     current_policy = get_pthread_extended_function_policy();
     if (current_policy != 1) {
         printf("Policy should be 1 after set_pthread_extended_function_policy(1), actually got %d\n", current_policy);
         test_passed = 0;
     }
 
-    if (current_policy == 1) {
+    if (current_policy != 0) {
         pthread_attr_t attr;
         cpu_set_t cpuset;
 
@@ -110,4 +110,4 @@ int main(void) {
 #### COLOPHON
 
 ​       this page is part of the C library user-space interface documentation.
-​       Information about the project can be found at (https://gitcode.com/openharmony/third_party_musl/blob/master/docs/)
+​       Information about the project can be found at (https://gitcode.com/openharmony/third_party_musl/blob/master/docs/).

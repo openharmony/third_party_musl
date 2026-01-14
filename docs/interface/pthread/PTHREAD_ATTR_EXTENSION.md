@@ -20,9 +20,9 @@
 
 #### **DESCRIPTION**
 
-​       The  pthread_attr_extension_init() function initializes thread extension attributes object.
+​       The  pthread_attr_extension_init() function initializes thread extension attributes object. When the parameter attr is set to NULL, it will cause an EINVAL error.
 
-​       The pthread_attr_extension_destroy() function destroys the memory requested by the extension.
+​       The pthread_attr_extension_destroy() function destroys the memory requested by the extension. When the parameter attr is set to NULL, it will cause an EINVAL error.
 
 #### **RETURN VALUE**
 
@@ -51,7 +51,7 @@ The following error codes may be set in errno:
 
 #### NOTES
 
-​      These feature are designed specifically for when musl_extended_function is true.
+​      These feature are designed specifically for when musl_extended_function is true. These interfaces can only be used when the runtime switch must_pc_module is turned on.
 
 #### EXAMPLES
 
@@ -105,4 +105,4 @@ int main() {
 #### COLOPHON
 
 ​       this page is part of the C library user-space interface documentation.
-​       Information about the project can be found at (https://gitcode.com/openharmony/third_party_musl/blob/master/docs/)
+​       Information about the project can be found at (https://gitcode.com/openharmony/third_party_musl/blob/master/docs/).
