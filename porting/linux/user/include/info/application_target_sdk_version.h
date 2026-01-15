@@ -38,11 +38,7 @@ extern "C" {
   * @param patch, int value 0 - 99.
   * @since 22
   */
-#define APIAVAILABLE(maj, min, patch) \
-    __CHECK_RANGE(maj), \
-    __CHECK_RANGE(min), \
-    __CHECK_RANGE(patch), \
-    __INNER_APIAVAILABLE(__INNER_CONCAT(maj, min##.##patch))
+#define APIAVAILABLE(maj, min, patch) __INNER_APIAVAILABLE(__INNER_CONCAT(maj, min##.##patch))
 
 #define SDK_VERSION_FUTURE 9999
 #define SDK_VERSION_7 7
