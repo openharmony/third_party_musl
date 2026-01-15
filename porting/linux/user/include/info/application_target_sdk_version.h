@@ -23,9 +23,6 @@ extern "C" {
 #define __INNER_CONCAT(a, b) a##.##b
 #define __INNER_APIAVAILABLE(ver) __builtin_available(ohos ver, *)
 
-// check the val between 0-99
-#define __CHECK_RANGE(val) ((void)sizeof(char[(val) >= 0 && (val) <= 99 ? 1 : -1]))
-
 /**
   * @brief To ensure compatibility and stability of an application across different versions.
   * Prevent crashes caused by invoking non-existent APIs on older systems through compile-time
