@@ -15,15 +15,23 @@
 #include <pthread.h>
 #include "common.h"
 
+static constexpr int iter_check_num = 10000; 
+
 void *testThread(void *x) {
-	global = 42;
+	for (int i = 0; i < iter_check_num; ++i) {
+		global = 42;
+	}
 	return x;
 }
 
 int testDataRace() {
 	pthread_t t;
 	pthread_create(&t, nullptr, testThread, nullptr);
-	global = 43;
+
+	for (int i = 0; i < iter_check_num; ++i) {
+		global = 43;
+	}
+
 	pthread_join(t, nullptr);
 	return global;
 }
