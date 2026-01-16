@@ -12,9 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+import("../../../../musl_config.gni")
 
 functionalext_sched_list = [
   "sched_setparam",
   "sched_getparam",
   "sched_scheduler",
 ]
+
+if (musl_extended_function) {
+  functionalext_sched_list += [
+    "sched_cpufree",
+  ]
+}
