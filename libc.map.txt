@@ -2108,14 +2108,12 @@
     __vfprintf_chk;
     fcntl64;
     get_musl_version;
-    jnl;
     pthread_attr_getaffinity_np;
     pthread_attr_setaffinity_np;
     strtoll_l;
     strtoull_l;
     __syslog_chk;
     timelocal;
-    ynl;
     __cmsg_nxthdr;
     pthread_attr_extension_init;
     pthread_attr_extension_destroy;
