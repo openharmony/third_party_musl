@@ -2,7 +2,7 @@
 
 #### **NAME**
 
-​      __mbrlen - determine number of bytes in next multibyte character
+​      __mbrlen - determine number of bytes in next multibyte character.
 
 #### **SYNOPSIS**
 
@@ -37,6 +37,7 @@
 | Interface  | Attribute     | Value        |
 | ---------- | ------------- | ------------ |
 | __mbrlen() | Thread safety | MT-Unsafe    |
+|            | Signal safety | Not Safe     |
 
 #### HISTORY
 
@@ -44,9 +45,9 @@
 
 #### NOTES
 
-​      The behavior of __mbrlen() depends on the LC_CTYPE category of the current locale.
+​      The behavior of __mbrlen() depends on the LC_CTYPE category of the current locale. Ensure that the multibyte string's encoding matches the current locale's LC_CTYPE setting (e.g. UTF-8 for en_US.UTF-8).
 
-​       This feature is designed specifically for when musl_extended_function is true.
+​      This feature is designed specifically for when musl_extended_function is true.
 
 #### CONFORMING TO
 
@@ -61,16 +62,23 @@
 #include <stdlib.h>
 
 int main() {
-    setlocale(LC_ALL, "en_US.UTF-8");
-    char mb_str[] = {0xE4, 0xB8, 0xAD};
+    char mb_str[] = {0xE4, 0xB8, 0xAD}; // UTF-8 encoding of '中'
     mbstate_t state = {0};
-    size_t len = __mbrlen(mb_str, MB_CUR_MAX, &state);
-    printf("len: %zu\n", len);
+    size_t len = 0;
+    /* Ensure that the multibyte string's encoding matches the current locale's
+     LC_CTYPE setting (e.g. UTF-8 for en_US.UTF-8). */
+    char *loc = setlocale(LC_ALL, "en_US.UTF-8");
+    if (loc == NULL) {
+        printf("setlocale fail\n");
+        return -1;
+    }
+    len = __mbrlen(mb_str, MB_CUR_MAX, &state);
+    printf("len: %zu\n", len); // Output: len: 3
     return 0;
 }
 ```
 
-#### COLOPHTON
+#### COLOPHON
 
 ​      this page is part of the C library user-space interface documentation.
-​      Information about the project can be found at (https://gitcode.com/openharmony/third_party_musl/blob/master/docs/)
+​      Information about the project can be found at (https://gitcode.com/openharmony/third_party_musl/blob/master/docs/).
