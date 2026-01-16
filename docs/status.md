@@ -27,8 +27,6 @@ https://gitcode.com/openharmony/interface_sdk_c/blob/master/third_party/musl/ndk
 - 新增`__log2f_finite`: 计算有限单精度浮点数值的以2为底的对数（log₂）值
 - 新增`__pow_finite`: 计算有限数值的幂运算结果
 - 新增`__powf_finite`: 计算有限单精度浮点数值的幂运算结果
-- 新增`jnl`: 用于计算第一类贝塞尔函数
-- 新增`ynl`: 用于计算第二类贝塞尔函数
 
 2026/1/7 <musl_version.h>  
 新增以下接口专为musl_extended_function为true设计使用：
