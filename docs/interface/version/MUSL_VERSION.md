@@ -18,14 +18,14 @@
 
 #### **RETURN VALUE**
 
-​       The get_musl_version() function returns a string that identifies the musl version available on the system.
+​       The get_musl_version() function returns a string that identifies the musl runtime version in the format x.x.x(e.g., 1.2.5).
 
 #### ATTRIBUTES
 
 | Interface               | Attribute     | Value    |
 | ----------------------- | ------------- | -------- |
 | get_musl_version()      | Thread safety | MT-safe  |
-|                         | Signal safety | Not safe |
+|                         | Signal safety | Safe     |
 
 #### HISTORY
 
@@ -43,13 +43,17 @@
 
 ```c
 #include <musl_version.h>
-#include <stdlib.h>
 #include <stdio.h>
 
 int main(int argc, char *argv[])
 {
-    printf("musl version: %s\n", get_musl_version());
-    exit(EXIT_SUCCESS);
+    const char *version = get_musl_version();  // version is 1.2.5
+    if (version == NULL) {
+        printf("Failed to get musl version.\n");
+        return 1;
+    }
+
+    return 0;
 }
 ```
 
