@@ -13,13 +13,14 @@
  * limitations under the License.
  */
 
-#include "functionalext.h"
+#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 #include <sys/wait.h>
 #include <signal.h>
+#include <unistd.h>
+#include "functionalext.h"
 
 const int ERROR_RET = -1;
 const int UNUSED_PLACEHOLDER_PARAM = 123;
@@ -165,6 +166,199 @@ void __asprintf_chk_0900(void)
     free(buf);
 }
 
+/**
+ * @tc.name      : __asprintf_chk_1000
+ * @tc.desc      : Test core functions
+ * @tc.level     : Level 0
+ */
+void __asprintf_chk_1000(void)
+{
+    char *buf = NULL;
+    int ret_val = 0;
+
+    ret_val = __asprintf_chk(&buf, 0, "%d, 0x%X, %o", 12345, 0xABCDEF, 0755);
+    EXPECT_TRUE(__FUNCTION__, ret_val > 0);
+    EXPECT_STREQ(__FUNCTION__, "12345, 0xABCDEF, 755", buf);
+    EXPECT_EQ(__FUNCTION__, ret_val, strlen(buf));
+    free(buf);
+    buf = NULL;
+
+    ret_val = __asprintf_chk(&buf, 1, "%d, 0x%X, %o", 12345, 0xABCDEF, 0755);
+    EXPECT_TRUE(__FUNCTION__, ret_val > 0);
+    EXPECT_STREQ(__FUNCTION__, "12345, 0xABCDEF, 755", buf);
+    EXPECT_EQ(__FUNCTION__, ret_val, strlen(buf));
+    free(buf);
+    buf = NULL;
+
+    ret_val = __asprintf_chk(&buf, 0, "%.6f, %.2f, %c", 3.1415926, 3.1415926, 'H');
+    EXPECT_TRUE(__FUNCTION__, ret_val > 0);
+    EXPECT_STREQ(__FUNCTION__, "3.141593, 3.14, H", buf);
+    EXPECT_EQ(__FUNCTION__, ret_val, strlen(buf));
+    free(buf);
+    buf = NULL;
+
+    ret_val = __asprintf_chk(&buf, 1, "%.6f, %.2f, %c", 3.1415926, 3.1415926, 'H');
+    EXPECT_TRUE(__FUNCTION__, ret_val > 0);
+    EXPECT_STREQ(__FUNCTION__, "3.141593, 3.14, H", buf);
+    EXPECT_EQ(__FUNCTION__, ret_val, strlen(buf));
+    free(buf);
+    buf = NULL;
+
+    ret_val = __asprintf_chk(&buf, 0, "");
+    EXPECT_TRUE(__FUNCTION__, ret_val == 0);
+
+    ret_val = __asprintf_chk(&buf, 1, "");
+    EXPECT_TRUE(__FUNCTION__, ret_val == 0);
+}
+
+/**
+ * @tc.name      : __asprintf_chk_1100
+ * @tc.desc      : Safety Feature Testing
+ * @tc.level     : Level 0
+ */
+void __asprintf_chk_1100(void)
+{
+    char *buf = NULL;
+    int ret_val = 0;
+
+    ret_val = __asprintf_chk(&buf, 0, "%d, %s", 67890, "vasprintf_compatible");
+    EXPECT_TRUE(__FUNCTION__, ret_val > 0);
+    EXPECT_STREQ(__FUNCTION__, "67890, vasprintf_compatible", buf);
+    EXPECT_EQ(__FUNCTION__, ret_val, strlen(buf));
+    free(buf);
+    buf = NULL;
+
+    ret_val = __asprintf_chk(&buf, 1, "%.3f, %x", 9.876, 0x123456);
+    EXPECT_TRUE(__FUNCTION__, ret_val > 0);
+    EXPECT_STREQ(__FUNCTION__, "9.876, 123456", buf);
+    EXPECT_EQ(__FUNCTION__, ret_val, strlen(buf));
+    free(buf);
+    buf = NULL;
+
+    ret_val = __asprintf_chk(&buf, 2, "%o, %s", 0777, "security_level_2");
+    EXPECT_TRUE(__FUNCTION__, ret_val > 0);
+    EXPECT_STREQ(__FUNCTION__, "777, security_level_2", buf);
+    EXPECT_EQ(__FUNCTION__, ret_val, strlen(buf));
+    free(buf);
+    buf = NULL;
+}
+
+/**
+ * @tc.name      : __asprintf_chk_1200
+ * @tc.desc      : Boundary and Compatibility Testing
+ * @tc.level     : Level 0
+ */
+void __asprintf_chk_1200(void)
+{
+    char *buf = NULL;
+    int ret_val = 0;
+
+    ret_val = __asprintf_chk(&buf, 0, "\\n\\t\\r\\\"\\'\\\\\\a");
+    EXPECT_TRUE(__FUNCTION__, ret_val > 0);
+    EXPECT_STREQ(__FUNCTION__, "\\n\\t\\r\\\"\\'\\\\\\a", buf);
+    EXPECT_EQ(__FUNCTION__, ret_val, strlen(buf));
+    free(buf);
+    buf = NULL;
+    ret_val = __asprintf_chk(&buf, 1, "\\n\\t\\r\\\"\\'\\\\\\a");
+    EXPECT_TRUE(__FUNCTION__, ret_val > 0);
+    EXPECT_STREQ(__FUNCTION__, "\\n\\t\\r\\\"\\'\\\\\\a", buf);
+    EXPECT_EQ(__FUNCTION__, ret_val, strlen(buf));
+    free(buf);
+    buf = NULL;
+
+    ret_val = __asprintf_chk(&buf, 0, "%z %q %k", 123, 456);
+    EXPECT_TRUE(__FUNCTION__, ret_val < 0);
+    ret_val = __asprintf_chk(&buf, 1, "%z %q %k", 123, 456);
+    EXPECT_TRUE(__FUNCTION__, ret_val < 0);
+
+    char long_src[2048] = {0};
+    for (int i = 0; i < 2047; i++) {
+        long_src[i] = 'a' + (i % 26);
+    }
+    long_src[2047] = '\0';
+    ret_val = __asprintf_chk(&buf, 0, "%s", long_src);
+    EXPECT_TRUE(__FUNCTION__, ret_val > 0);
+    EXPECT_STREQ(__FUNCTION__, long_src, buf);
+    EXPECT_EQ(__FUNCTION__, ret_val, strlen(buf));
+    free(buf);
+    buf = NULL;
+
+    ret_val = __asprintf_chk(&buf, 1, "%s", long_src);
+    EXPECT_TRUE(__FUNCTION__, ret_val > 0);
+    EXPECT_STREQ(__FUNCTION__, long_src, buf);
+    EXPECT_EQ(__FUNCTION__, ret_val, strlen(buf));
+    free(buf);
+    buf = NULL;
+
+    ret_val = __asprintf_chk(&buf, 0, NULL, 123);
+    EXPECT_TRUE(__FUNCTION__, ret_val < 0);
+    EXPECT_TRUE(__FUNCTION__, buf == NULL);
+    ret_val = __asprintf_chk(&buf, 1, NULL, 123);
+    EXPECT_TRUE(__FUNCTION__, ret_val < 0);
+    EXPECT_TRUE(__FUNCTION__, buf == NULL);
+}
+
+/**
+ * @tc.name      : __asprintf_chk_1300
+ * @tc.desc      : Memory Management Test
+ * @tc.level     : Level 0
+ */
+void __asprintf_chk_1300(void)
+{
+    char *buf1 = NULL, *buf2 = NULL, *buf3 = NULL;
+    int ret1 = 0;
+    int ret2 = 0;
+    int ret3 = 0;
+
+    ret1 = __asprintf_chk(&buf1, 0, "%d, %s", 11111, "mem_alloc_1");
+    EXPECT_TRUE(__FUNCTION__, ret1 > 0);
+    EXPECT_TRUE(__FUNCTION__, buf1 != NULL);
+
+    ret2 = __asprintf_chk(&buf2, 1, "%.2f, %x", 99.99, 0xABCDEF);
+    EXPECT_TRUE(__FUNCTION__, ret2 > 0);
+    EXPECT_TRUE(__FUNCTION__, buf2 != NULL);
+
+    ret3 = __asprintf_chk(&buf3, 2, "%o, %s", 0777, "mem_alloc_3");
+    EXPECT_TRUE(__FUNCTION__, ret3 > 0);
+    EXPECT_TRUE(__FUNCTION__, buf3 != NULL);
+
+    if (buf1) {
+        free(buf1);
+        buf1 = NULL;
+    }
+    if (buf2) {
+        free(buf2);
+        buf2 = NULL;
+    }
+    if (buf3) {
+        free(buf3);
+        buf3 = NULL;
+    }
+}
+
+void* mt_worker(void* arg)
+{
+    __asprintf_chk_0200();
+    return NULL;
+}
+
+/**
+ * @tc.name      : __asprintf_chk_1400
+ * @tc.desc      : Stability Testing.
+ * @tc.level     : Level 0
+ */
+void __asprintf_chk_1400(void)
+{
+    const int N = 8;
+    pthread_t tids[N];
+    for (int i = 0; i < N; i++) {
+        EXPECT_EQ(__FUNCTION__, pthread_create(&tids[i], NULL, mt_worker, NULL), 0);
+    }
+    for (int i = 0; i < N; i++) {
+        pthread_join(tids[i], NULL);
+    }
+}
+
 int main(int argc, char *argv[])
 {
     __asprintf_chk_0100();
@@ -176,6 +370,11 @@ int main(int argc, char *argv[])
     __asprintf_chk_0700();
     __asprintf_chk_0800();
     __asprintf_chk_0900();
-    
+    __asprintf_chk_1000();
+    __asprintf_chk_1100();
+    __asprintf_chk_1200();
+    __asprintf_chk_1300();
+    __asprintf_chk_1400();
+
     return t_status;
 }

@@ -14,6 +14,7 @@
  */
 
 #include <errno.h>
+#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/wait.h>
@@ -34,6 +35,15 @@ static int VfprintfHelper(FILE* fp, const char* format, ...)
     int result = __vfprintf_chk(fp, FORTITY_LEVEL, format, args);
     va_end(args);
     return result;
+}
+
+int __vfprintf_chk_wrapper(FILE *stream, int flag, const char *format, ...)
+{
+    va_list ap;
+    va_start(ap, format);
+    int ret = __vfprintf_chk(stream, flag, format, ap);
+    va_end(ap);
+    return ret;
 }
 
 /**
@@ -220,6 +230,154 @@ void __vfprintf_chk_1000(void)
     (void)remove("tempory_testfprintfchk.txt");
 }
 
+/**
+ * @tc.name:      __vfprintf_chk_1100
+ * @tc.desc:      Basic functionality test.
+ * @tc.level:     level 0.
+ */
+void __vfprintf_chk_1100(void)
+{
+    int ret = 0;
+    const char *test_file = "tempory_testvfprintfchk.txt";
+    FILE *fp = NULL;
+
+    ret = __vfprintf_chk_wrapper(stdout, 0, "%s, %d, 0x%X, %o\n", "Clang", 12345, 0xABCDEF, 0755);
+    EXPECT_TRUE(__FUNCTION__, ret > 0);
+
+    ret = __vfprintf_chk_wrapper(stdout, 2, "%s, %d, 0x%X, %o\n", "Clang", 12345, 0xABCDEF, 0755);
+    EXPECT_TRUE(__FUNCTION__, ret > 0);
+
+    fp = fopen(test_file, "w");
+    EXPECT_TRUE(__FUNCTION__, fp != NULL);
+
+    ret = __vfprintf_chk_wrapper(fp, 2, "%.6f, %.2f, %c", 3.1415926, 3.1415926, 'H');
+    EXPECT_TRUE(__FUNCTION__, ret > 0);
+    (void)fclose(fp);
+
+    fp = fopen(test_file, "r");
+    EXPECT_TRUE(__FUNCTION__, fp != NULL);
+
+    char buf[256] = {0};
+    (void)fread(buf, 1, sizeof(buf) - 1, fp);
+    EXPECT_STREQ(__FUNCTION__, "3.141593, 3.14, H", buf);
+    (void)fclose(fp);
+
+    (void)remove(test_file);
+
+    ret = __vfprintf_chk_wrapper(stdout, 0, "");
+    EXPECT_TRUE(__FUNCTION__, ret == 0);
+
+    ret = __vfprintf_chk_wrapper(stdout, 2, "");
+    EXPECT_TRUE(__FUNCTION__, ret == 0);
+}
+
+/**
+ * @tc.name:      __vfprintf_chk_1200
+ * @tc.desc:      Safety Feature Testing.
+ * @tc.level:     level 0.
+ */
+void __vfprintf_chk_1200(void)
+{
+    int ret = 0;
+
+    ret = __vfprintf_chk_wrapper(stdout, 0, "%d, %s\n", 67890, "vfprintf_compatible");
+    EXPECT_TRUE(__FUNCTION__, ret > 0);
+
+    ret = __vfprintf_chk_wrapper(stdout, 1, "%d, %s\n", 67890, "vfprintf_compatible");
+    EXPECT_TRUE(__FUNCTION__, ret > 0);
+
+    ret = __vfprintf_chk_wrapper(stdout, 0, "%.3f, %x\n", 9.876, 0x123456);
+    EXPECT_TRUE(__FUNCTION__, ret > 0);
+
+    ret = __vfprintf_chk_wrapper(stdout, 1, "%.3f, %x\n", 9.876, 0x123456);
+    EXPECT_TRUE(__FUNCTION__, ret > 0);
+}
+
+/**
+ * @tc.name:      __vfprintf_chk_1300
+ * @tc.desc:      Boundary scenario testing.
+ * @tc.level:     level 0.
+ */
+void __vfprintf_chk_1300(void)
+{
+    int ret;
+    FILE *invalid_fp = NULL;
+
+    ret = __vfprintf_chk_wrapper(stdout, 0, "\\n\\t\\r\\\"\\'\\\\\n");
+    EXPECT_TRUE(__FUNCTION__, ret > 0);
+
+    ret = __vfprintf_chk_wrapper(stdout, 1, "\\n\\t\\r\\\"\\'\\\\\n");
+    EXPECT_TRUE(__FUNCTION__, ret > 0);
+
+    ret = __vfprintf_chk_wrapper(stdout, 0, "%z %q\n", 123);
+    EXPECT_TRUE(__FUNCTION__, ret < 0);
+
+    ret = __vfprintf_chk_wrapper(stdout, 1, "%z %q\n", 123);
+    EXPECT_TRUE(__FUNCTION__, ret < 0);
+
+    char long_format[1024] = {0};
+    for (int i = 0; i < 1024 - 1; i++) {
+        strncat(long_format, "a", 1);
+    }
+
+    ret = __vfprintf_chk_wrapper(stdout, 0, long_format, 9999);
+    EXPECT_TRUE(__FUNCTION__, ret > 0);
+
+    ret = __vfprintf_chk_wrapper(stdout, 1, long_format, 9999);
+    EXPECT_TRUE(__FUNCTION__, ret > 0);
+}
+
+/**
+ * @tc.name:      __vfprintf_chk_1400
+ * @tc.desc:      Error Recovery Test.
+ * @tc.level:     level 0.
+ */
+void __vfprintf_chk_1400(void)
+{
+    int ret = 0;
+    FILE *fp = NULL;
+    const char *test_file = "tempory_testvfprintfchk.txt";
+
+    ret = __vfprintf_chk_wrapper(stdout, 0, "%s, %d\n", "recovery_success", 123456);
+    EXPECT_TRUE(__FUNCTION__, ret > 0);
+
+    ret = __vfprintf_chk_wrapper(stdout, 1, "%s, %d\n", "recovery_success", 123456);
+    EXPECT_TRUE(__FUNCTION__, ret > 0);
+
+    fp = fopen(test_file, "w");
+    if (fp != NULL) {
+        ret = __vfprintf_chk_wrapper(fp, 0, "%.2f\n", 66.88);
+        EXPECT_TRUE(__FUNCTION__, ret > 0);
+        ret = __vfprintf_chk_wrapper(fp, 1, "%.2f\n", 66.88);
+        EXPECT_TRUE(__FUNCTION__, ret > 0);
+        (void)fclose(fp);
+        (void)remove(test_file);
+    }
+}
+
+void* mt_worker(void* arg)
+{
+    __vfprintf_chk_0500();
+    return NULL;
+}
+
+/**
+ * @tc.name      : __vfprintf_chk_1500
+ * @tc.desc      : Stability Testing.
+ * @tc.level     : Level 0
+ */
+void __vfprintf_chk_1500(void)
+{
+    const int N = 8;
+    pthread_t tids[N];
+    for (int i = 0; i < N; i++) {
+        EXPECT_EQ(__FUNCTION__, pthread_create(&tids[i], NULL, mt_worker, NULL), 0);
+    }
+    for (int i = 0; i < N; i++) {
+        pthread_join(tids[i], NULL);
+    }
+}
+
 int main(void)
 {
     __vfprintf_chk_0100();
@@ -232,5 +390,11 @@ int main(void)
     __vfprintf_chk_0800();
     __vfprintf_chk_0900();
     __vfprintf_chk_1000();
+    __vfprintf_chk_1100();
+    __vfprintf_chk_1200();
+    __vfprintf_chk_1300();
+    __vfprintf_chk_1400();
+    __vfprintf_chk_1500();
+
     return t_status;
 }
