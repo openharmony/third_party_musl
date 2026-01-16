@@ -15,7 +15,7 @@
 
 #### **DESCRIPTION**
 
-​       The   __strtok_r() function is same to strtok_r function.
+​       The   __strtok_r() function is same to strtok_r function. The s parameter can be NULL. When both s and *p are NULL, this interface will return NULL. The sep parameter cannot be NULL, otherwise it will cause segment errors in the strcspn function it calls.
 
 #### **RETURN VALUE**
 
@@ -31,11 +31,11 @@
 
 #### HISTORY
 
-​       -- 2025
+​       -- 2026
 
 #### NOTES
 
-​       On some implementations, *saveptr is required to be NULL on the first call to __strtok_r() that is being used to parse str.
+​       The first call to _strtok_r() should pass the string s and a NULL saveptr. Subsequent calls should pass NULL for sand the same saveptr to continue tokenization.
 
 ​       This feature is designed specifically for when musl_extended_function is true.
 
@@ -66,7 +66,7 @@ int main()
 }
 ```
 
-#### COLOPHTON
+#### COLOPHON
 
 ​      this page is part of the C library user-space interface documentation.
-​      Information about the project can be found at (https://gitcode.com/openharmony/third_party_musl/blob/master/docs/)
+​      Information about the project can be found at (https://gitcode.com/openharmony/third_party_musl/blob/master/docs/).

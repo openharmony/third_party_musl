@@ -15,7 +15,7 @@
 
 #### **DESCRIPTION**
 
-​       The __rawmemchr() function is similar to memchr(): it assumes (i.e., the programmer knows for certain) that an instance of c lies somewhere in the memory area starting at the location  pointed to by s, and so performs an optimized search for c (i.e., no use of a count argument to limit the range of the search).  If an instance of c is not found, the results are unpredictable.  The following call is a fast means of locating a string's terminating null byte:
+​       The __rawmemchr() function is similar to memchr(): it assumes (i.e., the programmer knows for certain) that an instance of c lies somewhere in the memory area starting at the location  pointed to by s, and so performs an optimized search for c (i.e., no use of a count argument to limit the range of the search). If the input parameter s is NULL, the indirectly called interface will report a segment error. If an instance of c is not found, the results are unpredictable. The following call is a fast means of locating a string's terminating null byte:
 
        char *p = __rawmemchr(s, '\0');
 
@@ -34,11 +34,11 @@
 
 #### HISTORY
 
-​       -- 2025
+​       -- 2026
 
 #### NOTES
 
-​       This feature is designed specifically for when musl_extended_function is true.
+​       This feature is designed specifically for when musl_extended_function is true. The premise of this interface design is that characters must exist.
 
 #### CONFORMING TO
 
@@ -54,16 +54,20 @@ int main(void) {
     char *src = "hello world";
     char target = 'w';
     char *ret = __rawmemchr(src, target);
-    if (ret > src + strlen(src) + 1) {
-        printf("'%c' not found in '%s'.\n", target, src);
+    if (ret == NULL) {
+        printf("Fail to carry out __rawmemchr().\n");
+        return 1;
     } else {
-        printf("Found '%c' at position: %td\n", target, ret - src);
+        if (ret > src + strlen(src) + 1) {
+            printf("'Invalid search results.\n");
+            return 1;
+        }
     }
     return 0;
 }
 ```
 
-#### COLOPHTON
+#### COLOPHON
 
 ​      this page is part of the C library user-space interface documentation.
-​      Information about the project can be found at (https://gitcode.com/openharmony/third_party_musl/blob/master/docs/)
+​      Information about the project can be found at (https://gitcode.com/openharmony/third_party_musl/blob/master/docs/).
