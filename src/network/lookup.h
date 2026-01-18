@@ -78,7 +78,7 @@ hidden int __res_msend_rc(int, const unsigned char *const *, const int *, unsign
 hidden int res_msend_rc_ext(int, int, const unsigned char *const *, const int *, unsigned char *const *,
 							int *, int, const struct resolvconf *, int *);
 
-hidden int __dns_parse(const unsigned char *, int, int (*)(void *, int, const void *, int, const void *, int), void *);
+hidden int __dns_parse(const unsigned char *, int, int (*)(void *, int, const void *, int, const void *, int, int), void *);
 hidden int predefined_host_name_from_hosts(struct address buf[static MAXADDRS],
 	char canon[static 256], const char *name, int family);
 hidden int predefined_host_is_contain_host(const char *host);
@@ -138,7 +138,7 @@ typedef int32_t (*GetCache)(uint16_t netId, struct param_wrapper param,
 							struct addr_info_wrapper addr_info[static MAX_RESULTS],
 							uint32_t *num);
 
-typedef int32_t (*SetCache)(uint16_t netId, struct param_wrapper param, struct addrinfo *res);
+typedef int32_t (*SetCache)(uint16_t netId, struct param_wrapper param, struct addrinfo *res, int *ttl);
 
 typedef int (*JudgeIpv6)(uint16_t netId);
 typedef int (*JudgeIpv4)(uint16_t netId);
@@ -155,10 +155,10 @@ hidden void resolve_dns_sym(void **holder, const char *symbol);
 void
 dns_set_addr_info_to_netsys_cache(const char *__restrict host, const char *__restrict serv,
 								  const struct addrinfo *__restrict
-								  hint, struct addrinfo *res);
+								  hint, struct addrinfo *res, int *ttl);
 
 void dns_set_addr_info_to_netsys_cache2(const int netid, const char *__restrict host, const char *__restrict serv,
-										const struct addrinfo *__restrict hint, struct addrinfo *res);
+										const struct addrinfo *__restrict hint, struct addrinfo *res, int *ttl);
 
 int dns_get_addr_info_from_netsys_cache(const char *__restrict host, const char *__restrict serv,
 										const struct addrinfo *__restrict hint, struct addrinfo **__restrict res);

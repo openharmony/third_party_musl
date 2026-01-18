@@ -99,7 +99,7 @@ static void step_mh(struct msghdr *mh, size_t n)
 // equal to answer buffer size
 #define BPBUF_SIZE 4800
 
-static int type_parse_callback(void *c, int rr, const void *data, int len, const void *packet, int plen)
+static int type_parse_callback(void *c, int rr, const void *data, int len, const void *packet, int plen, int ttl)
 {
 	struct type_ctx *ctx = c;
 
