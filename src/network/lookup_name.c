@@ -144,7 +144,7 @@ struct dpc_ctx {
 #define MAX_NAME_LENGTH 256
 #define ABUF_SIZE 4800
 
-static int dns_parse_callback(void *c, int rr, const void *data, int len, const void *packet, int plen)
+static int dns_parse_callback(void *c, int rr, const void *data, int len, const void *packet, int plen, int ttl)
 {
 	char tmp[256];
 	int family;
@@ -169,6 +169,7 @@ static int dns_parse_callback(void *c, int rr, const void *data, int len, const 
 	}
 	ctx->addrs[ctx->cnt].family = family;
 	ctx->addrs[ctx->cnt].scopeid = 0;
+	ctx->addrs[ctx->cnt].ttl = ttl;
 	memcpy(ctx->addrs[ctx->cnt++].addr, data, len);
 	return 0;
 }

@@ -24,6 +24,7 @@ int getaddrinfo(const char *restrict host, const char *restrict serv, const stru
 	int nservs, naddrs, nais, canon_len, i, j, k;
 	int family = AF_UNSPEC, flags = 0, proto = 0, socktype = 0;
 	struct aibuf *out;
+	int *ttlList;
 
 	if (!host && !serv) return EAI_NONAME;
 
@@ -105,6 +106,12 @@ int getaddrinfo(const char *restrict host, const char *restrict serv, const stru
 	out = calloc(1, nais * sizeof(*out) + canon_len + 1);
 	if (!out) return EAI_MEMORY;
 
+	ttlList = calloc(1, nais * sizeof(int));
+	if (!ttlList) {
+		free(out);
+		return EAI_MEMORY;
+	}
+
 	if (canon_len) {
 		outcanon = (void *)&out[nais];
 		memcpy(outcanon, canon, canon_len+1);
@@ -137,11 +144,13 @@ int getaddrinfo(const char *restrict host, const char *restrict serv, const stru
 			memcpy(&out[k].sa.sin6.sin6_addr, &addrs[i].addr, 16);
 			break;			
 		}
+		ttlList[k] = addrs[i].ttl;
 	}
 	out[0].ref = nais;
 	*res = &out->ai;
 #if OHOS_DNS_PROXY_BY_NETSYS
-	dns_set_addr_info_to_netsys_cache(host, serv, hint, *res);
+	dns_set_addr_info_to_netsys_cache(host, serv, hint, *res, nais, ttlList);
 #endif
+	free(ttlList);
 	return 0;
 }
