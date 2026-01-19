@@ -104,6 +104,7 @@ template("adlt_shared_library") {
         script = adlt_llvm_ld
         outputs = [ "$adlt_lib_dir/libadlt_$target_name.so" ]
         args = [ "--adlt", "-o" ] + rebase_path(outputs, "") + rebase_path(sources, "")
+        sources = []
     }
 }
 
