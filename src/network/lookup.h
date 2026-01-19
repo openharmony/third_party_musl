@@ -38,6 +38,7 @@ struct address {
 	unsigned scopeid;
 	uint8_t addr[16];
 	int sortkey;
+	int ttl;
 };
 
 struct service {
