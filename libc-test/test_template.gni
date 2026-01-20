@@ -51,7 +51,10 @@ template("test_unittest") {
     }
 
     if (musl_extended_function) {
-      defines += [ "MUSL_EXTERNAL_FUNCTION" ]
+      defines += [
+        "MUSL_EXTERNAL_FUNCTION",
+        "FEATURE_PTHREAD_CANCEL"
+      ]
     }
 
     cflags = []

@@ -18,6 +18,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <pthread.h>
+#include <errno.h>
 
 void* thread_func(void* arg) {
     for (int i = 0; i < 2000; i++) {
@@ -30,7 +31,11 @@ int main()
 {
     set_pthread_extended_function_policy(1);
     pthread_t tid;
-    pthread_create(&tid, NULL, thread_func, NULL);
+    int res = pthread_create(&tid, NULL, thread_func, NULL);
+    if (res != 0) {
+        printf("FAIL: pthread_create returned %d errno=%d\n", res, errno);
+        return 1;
+    }
     int r = pthread_cancel(tid);
     if (r != 0) {
         printf("FAIL: pthread_cancel returned %d\n", r);

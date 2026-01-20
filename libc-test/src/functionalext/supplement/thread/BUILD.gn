@@ -217,6 +217,36 @@ test_unittest("pthread_cancel_testcase6_join_returns_canceled") {
   musl_unit_test_flag = true
 }
 
+test_unittest("pthread_cancel_testcase7_join") {
+  target_dir = "functionalext/supplement/thread"
+  musl_unit_test_flag = true
+}
+
+test_unittest("pthread_cancel_testcase8_not_join") {
+  target_dir = "functionalext/supplement/thread"
+  musl_unit_test_flag = true
+}
+
+test_unittest("pthread_cancel_testcase9_detach") {
+  target_dir = "functionalext/supplement/thread"
+  musl_unit_test_flag = true
+}
+
+test_unittest("pthread_cancel_testcase10_no_cancel_point") {
+  target_dir = "functionalext/supplement/thread"
+  musl_unit_test_flag = true
+}
+
+test_unittest("pthread_cancel_testcase11_tsd") {
+  target_dir = "functionalext/supplement/thread"
+  musl_unit_test_flag = true
+}
+
+test_unittest("pthread_cancel_testcase12_multithread") {
+  target_dir = "functionalext/supplement/thread"
+  musl_unit_test_flag = true
+}
+
 test_unittest("pthread_testcancel") {
   target_dir = "functionalext/supplement/thread"
   musl_unit_test_flag = true
@@ -254,6 +284,13 @@ group("functionalext_supplement_thread_test") {
       ":pthread_cancel_testcase4_cancel_after_exit",
       ":pthread_cancel_testcase5_multiple_cancel",
       ":pthread_cancel_testcase6_join_returns_canceled",
+      ":pthread_cancel_testcase7_join",
+      ":pthread_cancel_testcase8_not_join",
+      ":pthread_cancel_testcase9_detach",
+      ":pthread_cancel_testcase10_no_cancel_point",
+      ":pthread_cancel_testcase11_tsd",
+      ":pthread_cancel_testcase12_multithread",
+      ":pthread_testcancel",
     ]
   }
 
