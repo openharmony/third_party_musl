@@ -8,23 +8,25 @@
 
 ```
     #include <sys/socket.h>
+
     struct cmsghdr *__cmsg_nxthdr(struct msghdr *mhdr, struct cmsghdr *cmsg);
 ```
 
 #### **DESCRIPTION**
 
-​      The __cmsg_nxthdr() function used to create and access control messages (also called ancillary data) that are not a part of the socket payload. This control information may include the interface the packet was received on, various rarely used header fields, an extended error description, a set of file descriptors, or UNIX credentials. For instance, control messages can be used to send additional header fields such as IP options. Ancillary data is sent by calling sendmsg() and received by calling recvmsg(). See their manual pages for more information.
+​      The __cmsg_nxthdr() function returns the next valid cmsghdr after the passed cmsghdr. It returns NULL when there isn't enough space left in the buffer.
 
-​      Ancillary data is a sequence of cmsghdr structures with appended data. See the specific protocol man pages for the available control message types. The maximum ancillary
- buffer size allowed per socket can be set using /proc/sys/net/core/optmem_max; see socket().
+​      When initializing a buffer that will contain a series of cmsghdr structures, that buffer should first be zero-initialized to ensure the correct operation of __cmsg_nxthdr().
 
-​      The struct msghdr *mhdr parameter points to the msghdr structure containing the control message buffer. Key Fields:
+#### **PARAMETERS**
 
-​      msg_control: Pointer to the buffer storing control messages (e.g., ancillary data like IP_ECN, IP_PKTINFO).
+​      **mhdr**: Points to the msghdr structure containing the control message buffer. Which includes:
 
-​      msg_controllen: Length of the control message buffer in bytes.
+​     msg_control: Pointer to the buffer storing control messages.
 
-​      The struct cmsghdr *cmsg parameter specifies the current control message being processed. If cmsg is NULL, the function returns the first control message (CMSG_FIRSTHDR(mhdr)). Otherwise, it returns the next control message after cmsg in the buffer.
+​     msg_controllen: Length of the control message buffer in bytes.
+
+​      **cmsg**: Pointer to the current control message being processed. it returns the next control message after cmsg in the buffer. Note: cmsg can not be NULL, to retrieve the first control message, use the CMSG_FIRSTHDR(mhdr) macro, which returns a pointer to the message header.
 
 #### **RETURN VALUE**
 
