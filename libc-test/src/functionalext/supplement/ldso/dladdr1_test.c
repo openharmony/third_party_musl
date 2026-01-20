@@ -89,7 +89,7 @@ bool run_test(const void* addr, bool extra_info_valid, int flags, bool expected_
     return actual_success;
 }
 
-// ---------- 24 个独立测试用例 ----------
+// ---------- 26 个独立测试用例 ----------
 static const void* get_addr(int type)
 {
     switch (type) {
@@ -99,6 +99,7 @@ static const void* get_addr(int type)
         case 4: return offset_plus_N(static_internal_func);  // A4: 有效偏移内部函数
         case 5: return NULL;                                  // A5: 空指针
         case 6: return INVALID_ADDR;                          // A6: 无效非法地址
+        case 7: return (void *)(-1);                           // A7: 高地址
         default: return NULL;
     }
 }
@@ -200,28 +201,47 @@ bool test_case_24(void)
 {
     return run_test(get_addr(6), true,  RTLD_DL_SYMENT,  false, false);
 }
+bool test_case_25(void)
+{
+    return run_test(get_addr(6), true,  RTLD_DL_SYMENT,  false, false);
+}
+bool test_case_26(void)
+{
+    return run_test(get_addr(6), false,  RTLD_DL_SYMENT,  false, false);
+}
 
 // 函数指针数组（索引 0 对应 test_case_1）
-bool (*test_funcs[24])(void) = {
+bool (*test_funcs[26])(void) = {
     test_case_1,  test_case_2,  test_case_3,  test_case_4,
     test_case_5,  test_case_6,  test_case_7,  test_case_8,
     test_case_9,  test_case_10, test_case_11, test_case_12,
     test_case_13, test_case_14, test_case_15, test_case_16,
     test_case_17, test_case_18, test_case_19, test_case_20,
-    test_case_21, test_case_22, test_case_23, test_case_24
+    test_case_21, test_case_22, test_case_23, test_case_24,
+    test_case_25, test_case_26
 };
 
 // ---------- 多线程测试（第25个）----------
 void* mt_worker(void* arg)
 {
     Dl_info info;
-    dladdr1((void*)static_internal_func, &info, NULL, RTLD_DL_LINKMAP);
+    return (void *)run_test(get_addr(1), true,  RTLD_DL_SYMENT,  true, true);
+}
+
+void* mt_worker2(void* arg)
+{
+    Dl_info info;
+    for (int i = 0; i < 20; i++) {
+        dladdr1((void*)static_internal_func, &info, NULL, RTLD_DL_SYMENT);
+    }
+    
     return NULL;
 }
 
-bool test_multithread(void)
+bool test_multithread_1(void)
 {
-    const int N = 8;
+    const int N = 10;
+    bool res = true;
     pthread_t tids[N];
     for (int i = 0; i < N; i++) {
         if (pthread_create(&tids[i], NULL, mt_worker, NULL) != 0) {
@@ -229,27 +249,58 @@ bool test_multithread(void)
             return false;
         }
     }
+    void *result = NULL;
+    for (int i = 0; i < N; i++) {
+        pthread_join(tids[i], &result);
+        if (result != (void*)true) {
+            printf("mt_worker %d failed\n", i);
+            res = false;
+        }
+    }
+    return res;
+}
+
+bool test_multithread_2(void)
+{
+    const int N = 10;
+    pthread_t tids[N];
+    for (int i = 0; i < N; i++) {
+        if (pthread_create(&tids[i], NULL, mt_worker2, NULL) != 0) {
+            printf("pthread_create failed errno=%d\n", errno);
+            return false;
+        }
+    }
     for (int i = 0; i < N; i++) {
         pthread_join(tids[i], NULL);
     }
-    return true; // 假设无崩溃即通过
+    return true;
 }
 
 int main(void)
 {
-    printf("Running 24 functional test cases...\n");
+    printf("Running 26 functional test cases...\n");
     int passed = 0;
-    for (int i = 0; i < 24; i++) {
+    for (int i = 0; i < 26; i++) {
         bool ok = test_funcs[i]();
         printf("Test %02d: %s\n", i + 1, ok ? "PASS" : "FAIL");
         EXPECT_EQ("Test failed", ok, true);
+        if (ok) {
+            passed++;
+        }
     }
 
-    printf("\nRunning multi-thread safety test (Test 25)...\n");
-    bool mt_ok = test_multithread();
-    printf("Test 25: %s\n", mt_ok ? "PASS" : "FAIL");
-    EXPECT_EQ("Test failed", ok, true);
-
-    printf("\n=== Summary: %d / 25 tests passed ===\n", passed);
+    printf("\nRunning multi-thread safety test (Test 27)...\n");
+    bool mt_ok = test_multithread_1();
+    printf("Test 27: %s\n", mt_ok ? "PASS" : "FAIL");
+    if (mt_ok) {
+        passed++;
+    }
+    mt_ok = test_multithread_2();
+    printf("Test 28: %s\n", mt_ok ? "PASS" : "FAIL");
+    if (mt_ok) {
+        passed++;
+    }
+    printf("\n=== Summary: %d / 28 tests passed ===\n", passed);
+    EXPECT_EQ("Some tests failed", passed, 28);
     return t_status;
 }
