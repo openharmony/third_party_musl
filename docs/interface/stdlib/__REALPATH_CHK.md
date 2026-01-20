@@ -59,8 +59,6 @@
 #### **EXAMPLES**
 
 ```c
-#define __FORTIFY_COMPILATION
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <limits.h>
@@ -69,7 +67,7 @@
 int main(void) {
     char path[PATH_MAX];
     
-    char* result = __realpath_chk("/etc/passwd", path, PATH_MAX);
+    char* result = __realpath_chk(".", path, PATH_MAX);
     if (result) {
         printf("Path: %s\n", path);
     }
@@ -78,7 +76,7 @@ int main(void) {
 }
 ```
 
-#### **COLOPHTON**
+#### **COLOPHON**
 
 ​       this page is part of the C library user-space interface documentation.
-​       Information about the project can be found at (https://gitcode.com/openharmony/third_party_musl/blob/master/docs/)
+​       Information about the project can be found at (https://gitcode.com/openharmony/third_party_musl/blob/master/docs/).
