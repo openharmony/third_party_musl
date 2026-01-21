@@ -60,6 +60,10 @@ if (is_lite_system && current_os == "ohos") {
           "ramdisk",
         ]
       }
+      ohos_prebuilt_etc("musl_init.cfg") {
+        source = "${musl_dir}/etc/musl_init.cfg"
+        relative_install_dir = "init"
+      }
     }
 
     group("musl_ns_config") {
@@ -70,6 +74,7 @@ if (is_lite_system && current_os == "ohos") {
       if (musl_arch == "aarch64") {
         deps += [ ":ld-musl-namespace-${musl_arch}-flex.ini",
                   ":ld-musl-namespace-${musl_arch}-New.ini",
+                  ":musl_init.cfg",
         ]
       }
     }
