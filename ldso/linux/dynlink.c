@@ -506,8 +506,8 @@ static void init_namespace(struct dso *app)
 #else
 	if (stat("/vendor/lib64/chipset-sdk-sp", &statbuf) == 0) {
 		(void)snprintf(file_path, sizeof file_path, "/etc/ld-musl-namespace-%s-flex.ini", LDSO_ARCH);
-	} else if (((stat("/sys_prod/etc/musl", &statbuf) == 0) 
-		&& (stat("/data/local/tmp/namespace_not_use_by_ALN", &statbuf) != 0))
+	} else if (((stat("/sys_prod/etc/musl", &statbuf) == 0)
+		&& (stat("/data/service/el0/public/musl_namespace_config/musl_namespace_config", &statbuf) != 0))
 		|| (stat("/data/local/tmp/namespace_use_by_ALL", &statbuf) == 0)) {
 		(void)snprintf(file_path, sizeof file_path, "/etc/ld-musl-namespace-%s-New.ini", LDSO_ARCH);
 	} else {
