@@ -61,9 +61,18 @@
 #include <syslog.h>
 
 int main(void) {
+    // Example 1: flags=0 (no fortify protection)
     const char* module = "network";
     int error_code = 1001;
     __syslog_chk(LOG_ERR, 0, "Error in %s module: code %d", module, error_code);
+    
+    // Example 2: flags=2 (fortify protection enabled, expected: validation passes)
+    const char* service = "webserver";
+    int port = 8080;
+    __syslog_chk(LOG_INFO, 2, "Service %s started on port %d", service, port);
+    
+    // Example 3: flags=2 with invalid parameters (expected: Musl Fortify runtime error: invalid specified parameter)
+     __syslog_chk(LOG_INFO, 2, "%3$d", 0);
     
     return 0;
 }

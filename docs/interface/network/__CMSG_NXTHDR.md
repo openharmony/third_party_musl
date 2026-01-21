@@ -67,7 +67,7 @@ Platform-specific behavior may vary in non-Linux systems.
 #include <stdlib.h>
 #include <sys/types.h>
 
-void fill_control_buffer(char *control_buf, size_t control_len) {
+void fill_control_buffer(char *control_buf) {
     struct cmsghdr *cmsg;
     int *data;
     cmsg = (struct cmsghdr *)control_buf;
@@ -84,7 +84,8 @@ int main(int argc, char *argv[])
     struct msghdr msg = {0};
     struct cmsghdr *cmsg;
 
-    fill_control_buffer(control_buf, sizeof(control_buf));
+    memset(control_buf, 0, sizeof(control_buf));
+    fill_control_buffer(control_buf);
     msg.msg_control = control_buf;
     msg.msg_controllen = CMSG_SPACE(sizeof(int));
 

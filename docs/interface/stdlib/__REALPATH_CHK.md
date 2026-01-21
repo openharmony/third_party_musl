@@ -34,8 +34,8 @@
 
 ​       The function may set errno to the following values:
 
-​         **EINVAL**:    The resolved buffer is NULL, or if pathconf() returns a valid
-​                       path length and resolvedlen is less than that value.
+​         **EINVAL**:    The resolved buffer is NULL, or if the system determines that
+​                       the resolved buffer size is insufficient for the canonicalized path.
 
 #### **ATTRIBUTES**
 
@@ -65,12 +65,20 @@
 #include <unistd.h>
 
 int main(void) {
+    // Example 1: Sufficient buffer size
     char path[PATH_MAX];
-    
     char* result = __realpath_chk(".", path, PATH_MAX);
     if (result) {
+        // Expected: Success, print canonicalized path
         printf("Path: %s\n", path);
+    } else {
+        // Expected: Failure, print error
+        printf("__realpath_chk failed");
     }
+    
+    // Example 2: Insufficient buffer size (Expected: Musl Fortify runtime error: realpath buffer too small)
+    char small_buffer[10];
+    result = __realpath_chk(".", small_buffer, sizeof(small_buffer));
     
     return 0;
 }
