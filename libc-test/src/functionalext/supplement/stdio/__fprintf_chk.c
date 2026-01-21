@@ -14,6 +14,7 @@
  */
 
 #include <errno.h>
+#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/wait.h>
@@ -211,6 +212,110 @@ void __fprintf_chk_1000(void)
     (void)remove("tempory_testfprintfchk.txt");
 }
 
+/**
+ * @tc.name:      __fprintf_chk_1100
+ * @tc.desc:      Basic functionality test.
+ * @tc.level:     level 0.
+ */
+void __fprintf_chk_1100(void)
+{
+    int ret = 0;
+
+    ret = __fprintf_chk(stdout, 0, "%d, %.2f, %s\n", 123, 3.1415, "Hello __fprintf_chk");
+    EXPECT_TRUE(__FUNCTION__, ret > 0);
+    ret = __fprintf_chk(stdout, 1, "%d, %.2f, %s\n", 123, 3.1415, "Hello __fprintf_chk");
+    EXPECT_TRUE(__FUNCTION__, ret > 0);
+
+    ret = __fprintf_chk(stderr, 0, "%d\n", 999);
+    EXPECT_TRUE(__FUNCTION__, ret > 0);
+    ret = __fprintf_chk(stderr, 1, "%d\n", 999);
+    EXPECT_TRUE(__FUNCTION__, ret > 0);
+
+    ret = __fprintf_chk(stdout, 0, "\\n \\t \"%s\"\n", "");
+    EXPECT_TRUE(__FUNCTION__, ret > 0);
+    ret = __fprintf_chk(stdout, 1, "\\n \\t \"%s\"\n", "");
+    EXPECT_TRUE(__FUNCTION__, ret > 0);
+}
+
+/**
+ * @tc.name:      __fprintf_chk_1200
+ * @tc.desc:      File stream output.
+ * @tc.level:     level 0.
+ */
+void __fprintf_chk_1200(void)
+{
+    const char *filename = "tempory_testfprintfchk.txt";
+    FILE *fp = NULL;
+    int ret = 0;
+
+    fp = fopen(filename, "w");
+    EXPECT_TRUE(__FUNCTION__, fp != NULL);
+
+    ret = __fprintf_chk(fp, 1, "__fprintf_chk test\n");
+    EXPECT_TRUE(__FUNCTION__, ret > 0);
+
+    ret = __fprintf_chk(fp, 1, "%d, %ld, %s\n", 1, 123456789L, "true");
+    EXPECT_TRUE(__FUNCTION__, ret > 0);
+
+    (void)fclose(fp);
+    fp = NULL;
+
+    fp = fopen(filename, "r");
+    EXPECT_TRUE(__FUNCTION__, fp != NULL);
+
+    char buf[256] = {0};
+    char expected_content[256] = "__fprintf_chk test\n1, 123456789, true\n";
+    (void)fread(buf, 1, sizeof(buf) - 1, fp);
+    EXPECT_STREQ(__FUNCTION__, expected_content, buf);
+
+    (void)fclose(fp);
+    fp = NULL;
+    (void)remove(filename);
+}
+
+/**
+ * @tc.name:      __fprintf_chk_1300
+ * @tc.desc:      Boundary scenario testing.
+ * @tc.level:     level 0.
+ */
+void __fprintf_chk_1300(void)
+{
+    int ret = 0;
+
+    ret = __fprintf_chk(stdout, 0, "%d\n", 123);
+    EXPECT_TRUE(__FUNCTION__, ret > 0);
+    ret = __fprintf_chk(stdout, 1, "%d\n", 123);
+    EXPECT_TRUE(__FUNCTION__, ret > 0);
+
+    ret = __fprintf_chk(stdout, 0, "");
+    EXPECT_TRUE(__FUNCTION__, ret == 0);
+    ret = __fprintf_chk(stdout, 1, "");
+    EXPECT_TRUE(__FUNCTION__, ret == 0);
+}
+
+void* mt_worker(void* arg)
+{
+    __fprintf_chk_0500();
+    return NULL;
+}
+
+/**
+ * @tc.name      : __fprintf_chk_1400
+ * @tc.desc      : Stability Testing.
+ * @tc.level     : Level 0
+ */
+void __fprintf_chk_1400(void)
+{
+    const int N = 8;
+    pthread_t tids[N];
+    for (int i = 0; i < N; i++) {
+        EXPECT_EQ(__FUNCTION__, pthread_create(&tids[i], NULL, mt_worker, NULL), 0);
+    }
+    for (int i = 0; i < N; i++) {
+        pthread_join(tids[i], NULL);
+    }
+}
+
 int main(void)
 {
     __fprintf_chk_0100();
@@ -223,5 +328,10 @@ int main(void)
     __fprintf_chk_0800();
     __fprintf_chk_0900();
     __fprintf_chk_1000();
+    __fprintf_chk_1100();
+    __fprintf_chk_1200();
+    __fprintf_chk_1300();
+    __fprintf_chk_1400();
+
     return t_status;
 }

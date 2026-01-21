@@ -14,6 +14,8 @@
  */
 
 #include <errno.h>
+#include <limits.h>
+#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/wait.h>
@@ -180,6 +182,114 @@ void __printf_chk_1200(void)
     EXPECT_EQ("__printf_chk_1200", result, expected_len);
 }
 
+/**
+ * @tc.name      : __printf_chk_1300
+ * @tc.desc      : Test core functions
+ * @tc.level     : Level 0
+ */
+void __printf_chk_1300(void)
+{
+    int ret = 0;
+
+    ret = __printf_chk(1, "%d, %x, %ld, %u\n", 123, 0xFF, LONG_MAX, UINT_MAX);
+    EXPECT_TRUE(__FUNCTION__, ret > 0);
+
+    ret = __printf_chk(0, "%d, %x, %ld, %u\n", 123, 0xFF, LONG_MAX, UINT_MAX);
+    EXPECT_TRUE(__FUNCTION__, ret > 0);
+
+    ret = __printf_chk(1, "%.f, %.2f, %e\n", 3.14159, 3.14159, 123.456);
+    EXPECT_TRUE(__FUNCTION__, ret > 0);
+
+    ret = __printf_chk(0, "%.f, %.2f, %e\n", 3.14159, 3.14159, 123.456);
+    EXPECT_TRUE(__FUNCTION__, ret > 0);
+
+    ret = __printf_chk(1, "\"%s\", \"%s\", (\\n\\t)\n", "Hello __printf_chk", "");
+    EXPECT_TRUE(__FUNCTION__, ret > 0);
+
+    ret = __printf_chk(0, "\"%s\", \"%s\", (\\n\\t)\n", "Hello __printf_chk", "");
+    EXPECT_TRUE(__FUNCTION__, ret > 0);
+}
+
+/**
+ * @tc.name      : __printf_chk_1400
+ * @tc.desc      : Boundary and Compatibility Testing
+ * @tc.level     : Level 0
+ */
+void __printf_chk_1400(void)
+{
+    int ret = 0;
+
+    ret = __printf_chk(1, "%d, %d\n", INT_MAX, INT_MIN);
+    EXPECT_TRUE(__FUNCTION__, ret > 0);
+
+    ret = __printf_chk(0, "%d, %d\n", INT_MAX, INT_MIN);
+    EXPECT_TRUE(__FUNCTION__, ret > 0);
+
+    ret = __printf_chk(1, "");
+    EXPECT_TRUE(__FUNCTION__, ret == 0);
+
+    ret = __printf_chk(0, "");
+    EXPECT_TRUE(__FUNCTION__, ret == 0);
+
+    ret = __printf_chk(1, "Hello World\\n\\t\n");
+    EXPECT_TRUE(__FUNCTION__, ret > 0);
+
+    ret = __printf_chk(0, "Hello World\\n\\t\n");
+    EXPECT_TRUE(__FUNCTION__, ret > 0);
+}
+
+/**
+ * @tc.name      : __printf_chk_1500
+ * @tc.desc      : Test error scenario
+ * @tc.level     : Level 0
+ */
+void __printf_chk_1500(void)
+{
+    int ret = 0;
+
+    ret = __printf_chk(1, "%d\n", 456);
+    EXPECT_TRUE(__FUNCTION__, ret > 0);
+
+    ret = __printf_chk(0, "%d\n", 456);
+    EXPECT_TRUE(__FUNCTION__, ret > 0);
+
+    char dangerous_format[32] = "%d";
+    ret = __printf_chk(1, dangerous_format, 789);
+    EXPECT_TRUE(__FUNCTION__, ret > 0);
+
+    ret = __printf_chk(0, dangerous_format, 789);
+    EXPECT_TRUE(__FUNCTION__, ret > 0);
+
+    ret = __printf_chk(1, "%d\n", 1000);
+    EXPECT_TRUE(__FUNCTION__, ret > 0);
+
+    ret = __printf_chk(0, "%d\n", 1000);
+    EXPECT_TRUE(__FUNCTION__, ret > 0);
+}
+
+void* mt_worker(void* arg)
+{
+    __printf_chk_0200();
+    return NULL;
+}
+
+/**
+ * @tc.name      : __printf_chk_1600
+ * @tc.desc      : Stability Testing.
+ * @tc.level     : Level 0
+ */
+void __printf_chk_1600(void)
+{
+    const int N = 8;
+    pthread_t tids[N];
+    for (int i = 0; i < N; i++) {
+        EXPECT_EQ(__FUNCTION__, pthread_create(&tids[i], NULL, mt_worker, NULL), 0);
+    }
+    for (int i = 0; i < N; i++) {
+        pthread_join(tids[i], NULL);
+    }
+}
+
 int main(int argc, char *argv[])
 {
     __printf_chk_0100();
@@ -194,5 +304,10 @@ int main(int argc, char *argv[])
     __printf_chk_1000();
     __printf_chk_1100();
     __printf_chk_1200();
+    __printf_chk_1300();
+    __printf_chk_1400();
+    __printf_chk_1500();
+    __printf_chk_1600();
+
     return t_status;
 }
