@@ -66,7 +66,7 @@ void __mbrlen_0200(void)
 
 /**
  * @tc.name      : __mbrlen_0300
- * @tc.desc      : Verify that the length return value of the incoming exception is not an illegal value
+ * @tc.desc      : Verify that the obtained character length is 3 byte
  * @tc.level     : Level 2
  */
 void __mbrlen_0300(void)
@@ -82,7 +82,7 @@ void __mbrlen_0300(void)
 
 /**
  * @tc.name      : __mbrlen_0400
- * @tc.desc      : Verify that the length return value of the incoming exception is not an illegal value
+ * @tc.desc      : Verify that the obtained character length is 4 byte
  * @tc.level     : Level 2
  */
 void __mbrlen_0400(void)
@@ -98,7 +98,7 @@ void __mbrlen_0400(void)
 
 /**
  * @tc.name      : __mbrlen_0500
- * @tc.desc      : Verify that the length return value of the incoming exception is not an illegal value
+ * @tc.desc      :  Verify that the obtained character length is 4 byte, truncated
  * @tc.level     : Level 2
  */
 void __mbrlen_0500(void)
@@ -183,7 +183,7 @@ static char *loc_t[] = {
 
 /**
  * @tc.name      : __mbrlen_0700
- * @tc.desc      : Verify that the length return value of the incoming exception is not an illegal value
+ * @tc.desc      : basic test
  * @tc.level     : Level 2
  */
 void __mbrlen_0700(void)
@@ -196,6 +196,144 @@ void __mbrlen_0700(void)
     }
 }
 
+/**
+ * @tc.name      : __mbrlen_0800
+ * @tc.desc      : basic test, zh_CN.UTF-8
+ * @tc.level     : Level 2
+ */
+void __mbrlen_0800(void)
+{
+    char *loc = setlocale(LC_CTYPE, "zh_CN.UTF-8");
+    if (loc == NULL) {
+        return;
+    }
+
+    const char utf8_single[] = "A1@#";
+    mbstate_t state1 = {0};
+    for (int i = 0; utf8_single[i] != '\0'; i++) {
+        size_t len = __mbrlen(&utf8_single[i], 1, &state1);
+        EXPECT_EQ("__mbrlen_0800", len, (size_t)1);
+        memset(&state1, 0, sizeof(mbstate_t));
+    }
+
+    const char utf8_multi[] = "鸿蒙系统Clang";
+    mbstate_t state2 = {0};
+    int idx = 0;
+    int count = 0;
+    while (utf8_multi[idx] != '\0') {
+        size_t len = __mbrlen(&utf8_multi[idx], 4, &state2); // UTF-8最多4字节
+        if (len == (size_t)-1 || len == (size_t)-2) {
+            printf("err, call __mbrlen fail\n");
+            break;
+        }
+        if (count < 4) {
+            EXPECT_EQ("__mbrlen_0800", len, (size_t)3);
+        } else {
+            EXPECT_EQ("__mbrlen_0800", len, (size_t)1);
+        }
+        count++;
+        idx += len;
+    }
+}
+
+/**
+ * @tc.name      : __mbrlen_0900
+ * @tc.desc      : basic test, reentrant
+ * @tc.level     : Level 2
+ */
+void __mbrlen_0900(void)
+{
+    char *loc = setlocale(LC_CTYPE, "zh_CN.UTF-8");
+    if (loc == NULL) {
+        return;
+    }
+    const char str1[] = "测试用例123";
+    mbstate_t state1 = {0};
+    const char str2[] = "Hello鸿蒙World";
+    mbstate_t state2 = {0};
+
+    int idx1 = 0;
+    int idx2 = 0;
+    int round = 1;
+    int count = 0;
+    while (str1[idx1] != '\0' || str2[idx2] != '\0') {
+        if (str1[idx1] != '\0') {
+            size_t len1 = __mbrlen(&str1[idx1], 4, &state1);
+            if (count < 4) {
+                EXPECT_EQ("__mbrlen_0900", len1, (size_t)3);
+            } else {
+                EXPECT_EQ("__mbrlen_0900", len1, (size_t)1);
+            }
+            idx1 += len1;
+        }
+        if (str2[idx2] != '\0') {
+            size_t len2 = __mbrlen(&str2[idx2], 4, &state2);
+            idx2 += len2;
+            if (count == 5 || count == 6) {
+                EXPECT_EQ("__mbrlen_0900", len2, (size_t)3);
+            } else {
+                EXPECT_EQ("__mbrlen_0900", len2, (size_t)1);
+            }
+        }
+        count++;
+    }
+}
+
+/**
+ * @tc.name      : __mbrlen_01000
+ * @tc.desc      : edge case
+ * @tc.level     : Level 2
+ */
+void __mbrlen_01000(void)
+{
+    char *loc = setlocale(LC_CTYPE, "zh_CN.UTF-8");
+    if (loc == NULL) {
+        return;
+    }
+    mbstate_t state = {0};
+
+    const char incomplete_utf8[] = {0xE6, 0xB1};
+    size_t len1 = __mbrlen(incomplete_utf8, 2, &state);
+    EXPECT_EQ("incomplete_utf8", len1, (size_t)-2);
+
+    const char empty_str[] = "";
+    size_t len2 = __mbrlen(empty_str, 1, &state);
+    EXPECT_EQ("empty_str", len2, (size_t)-1);
+
+    const char invalid_utf8[] = {0xFF, 0xFE, 0x00}; // invalid utf8
+    size_t len3 = __mbrlen(invalid_utf8, 3, &state);
+    EXPECT_EQ("invalid_utf8", len3, (size_t)-1);
+
+    mbstate_t state4 = {0};
+    const char full_char[] = "蒙"; // UTF-8
+    len1 = __mbrlen(full_char, 2, &state4);
+    EXPECT_EQ("incomplete_utf8", len1, (size_t)-2);
+
+    len2 = __mbrlen(&full_char[2], 1, &state4);
+    EXPECT_EQ("incomplete_utf8", len2, (size_t)1);
+}
+
+/**
+ * @tc.name      : __mbrlen_01100
+ * @tc.desc      : compat case
+ * @tc.level     : Level 2
+ */
+void __mbrlen_01100(void)
+{
+    if (setlocale(LC_CTYPE, "zh_CN.GBK") == NULL) {
+        // The current environment does not support GBK encoding
+        return;
+    }
+    const char gbk_chars[] = "鸿蒙系统";
+    mbstate_t state = {0};
+    int idx = 0;
+    while (gbk_chars[idx] != '\0') {
+        size_t len = __mbrlen(&gbk_chars[idx], 2, &state);
+        EXPECT_EQ("gbk_chars", len, (size_t)2);
+        idx += len;
+    }
+}
+
 int main(void)
 {
     __mbrlen_0100();
@@ -205,5 +343,9 @@ int main(void)
     __mbrlen_0500();
     __mbrlen_0600();
     __mbrlen_0700();
+    __mbrlen_0800();
+    __mbrlen_0900();
+    __mbrlen_01000();
+    __mbrlen_01100();
     return t_status;
 }
