@@ -19,6 +19,7 @@
 #include <string.h>
 #include "functionalext.h"
 #include <errno.h>
+#include <pthread.h>
 
 #define TEST_BASE_MIN 1
 #define TEST_BASE_MAX 37
@@ -465,6 +466,217 @@ void strtoull_l_01800(void)
     freelocale(loc);
 }
 
+/**
+ * @tc.name      : strtoull_l_01900
+ * @tc.desc      : basic
+ * @tc.level     : Level 0
+ */
+void strtoull_l_01900(void)
+{
+    int a;
+    locale_t c_locale = newlocale(LC_NUMERIC_MASK, "C", (locale_t)0);
+    if (c_locale == NULL) {
+        perror("newlocale failed");
+        return;
+    }
+    struct {
+        const char *str;
+        int base;
+        const char *desc;
+        unsigned long long expect;
+    } test_cases[] = {
+        {"1234567890123456789", 10, "decimal", 1234567890123456789ULL},
+        {"0xFFFFFFFFFFFFFFFF", 16, "hexadecimal", 18446744073709551615ULL},
+        {"0777777777777777777777", 8, "octal", 9223372036854775807ULL},
+        {"1111111111111111111111111111111111111111111111111111111111111111",
+            2, "binary", 18446744073709551615ULL},
+        {"ABCDEF1234567890", 16, "hexadecimal capital", 12379813812177893520ULL},
+        {"abcdef0123456789", 16, "hexadecimal lowercase", 12379813738877118345ULL},
+        {"ZYXWVU", 36, "hexatrigesimal capital", 2175005370ULL},
+        {"zyxwvu", 36, "hexatrigesimal lowercase", 2175005370ULL},
+    };
+
+    for (unsigned int i = 0; i < sizeof(test_cases) / sizeof(test_cases[0]); i++) {
+        char *endptr = NULL;
+        errno = 0;
+        unsigned long long val = strtoull_l(test_cases[i].str, &endptr, test_cases[i].base, c_locale);
+
+        EXPECT_LONGLONGEQ(test_cases[i].desc, val, test_cases[i].expect);
+	    TEST2(a, errno, 0, "errno %d != %d");
+    }
+    freelocale(c_locale);
+}
+
+/**
+ * @tc.name      : strtoull_l_02000
+ * @tc.desc      : Thousands grouping character
+ * @tc.level     : Level 0
+ */
+void strtoull_l_02000(void)
+{
+    int a;
+    char *p;
+    unsigned long long ull;
+    char *s;
+    locale_t c_loc = newlocale(LC_NUMERIC_MASK, "C", (locale_t)0);
+    if (c_loc == NULL) {
+        perror("newlocale failed");
+        return;
+    }
+    locale_t en_loc = newlocale(LC_NUMERIC_MASK, "en_US.UTF-8", (locale_t)0);
+    if (en_loc == NULL) {
+        perror("newlocale failed");
+        freelocale(c_loc);
+        return;
+    }
+    errno = 0;
+    ull = strtoull_l(s="9,876,543,210,987,654", &p, 0, c_loc);
+    EXPECT_LONGLONGEQ("thousands grouping character number", ull, 9ULL);
+	TEST2(a, errno, 0, "errno %d != %d");
+    TEST2(a, *p, ',', "wrong final position %d != %d");
+
+    ull = strtoull_l(s="9,876,543,210,987,654", &p, 0, en_loc);
+    EXPECT_LONGLONGEQ("thousands grouping character number", ull, 9ULL);
+	TEST2(a, errno, 0, "errno %d != %d");
+    TEST2(a, *p, ',', "wrong final position %d != %d");
+    freelocale(c_loc);
+    freelocale(en_loc);
+}
+
+struct test_edge{
+    char *s;
+    int base;
+    unsigned long long f;
+    int err;
+};
+
+static struct test_edge g_edge[] = {
+    {"18446744073709551616", 10, 18446744073709551615ULL, ERANGE},
+    {"-123456789", 10, 18446744073586094827ULL, ERANGE},
+    {"xyz987654", 10, 0ULL, EINVAL},
+    {"98765abc12345", 10, 98765ULL, EINVAL},
+    {"0x1a2b3c", 0, 1715004ULL, EINVAL},
+    {"", 10, 0ULL, EINVAL},
+};
+
+/**
+ * @tc.name      : strtoull_l_02100
+ * @tc.desc      : set locale as C, edge
+ * @tc.level     : Level 0
+ */
+void strtoull_l_02100(void)
+{
+    unsigned long long ull;
+    char *p;
+    int a;
+    locale_t loc = newlocale(LC_ALL_MASK, "C", NULL);
+    if (loc == NULL) {
+        perror("newlocale failed");
+        return;
+    }
+    for (unsigned int i = 0; i < LENGTH(g_edge); i++) {
+        ull = strtoull_l(g_edge[i].s, &p, 0, loc);
+        EXPECT_LONGLONGEQ("number", ull, g_edge[i].f);
+        TEST2(a, errno, g_edge[i].err, "errno %d != %d");
+    }
+    freelocale(loc);
+}
+
+/**
+ * @tc.name      : strtoull_l_02200
+ * @tc.desc      : set locale as C and en_US.UTF-8, reentrant
+ * @tc.level     : Level 0
+ */
+void strtoull_l_02200(void)
+{
+    locale_t c_loc = newlocale(LC_NUMERIC_MASK, "C", (locale_t)0);
+    if (c_loc == NULL) {
+        perror("newlocale failed");
+        return;
+    }
+    locale_t en_loc = newlocale(LC_NUMERIC_MASK, "en_US.UTF-8", (locale_t)0);
+    if (en_loc == NULL) {
+        perror("newlocale failed");
+        freelocale(c_loc);
+        return;
+    }
+
+    const char *str1 = "4294967296123456";
+    char *endptr1 = NULL;
+    const char *str2 = "1,234,567,890,123,456";
+    char *endptr2 = NULL;
+
+    int round = 1;
+    long long val1 = 0, val2 = 0;
+    while (round <= 3) {
+        errno = 0;
+        val1 = strtoull_l(str1, &endptr1, 10, c_loc);
+        EXPECT_LONGLONGEQ("c_loc reentrant", val1, 4294967296123456ULL);
+        errno = 0;
+        val2 = strtoull_l(str2, &endptr2, 10, en_loc);
+        EXPECT_LONGLONGEQ("en_loc reentrant", val2, 1ULL);
+        round++;
+    }
+    freelocale(c_loc);
+    freelocale(en_loc);
+}
+
+void *thread_func(void *arg)
+{
+    unsigned long long ull;
+    char *p;
+    int a;
+    locale_t loc = (locale_t)arg;
+    for (unsigned int i = 0; i < LENGTH(g_edge); i++) {
+        ull = strtoull_l(g_edge[i].s, &p, 0, loc);
+        EXPECT_LONGLONGEQ("number", ull, g_edge[i].f);
+        TEST2(a, errno, g_edge[i].err, "errno %d != %d");
+    }
+ 	return NULL;
+}
+
+#define NUM_THREADS 5
+void test_work(locale_t loc)
+{
+ 	pthread_t *threads = (pthread_t *) malloc(sizeof(pthread_t) * NUM_THREADS);
+ 	if (threads == NULL) {
+ 	    t_error("Failed to allocate memory: %s\n", strerror(errno));
+ 	    return;
+ 	}
+ 	 
+ 	size_t last = 0;
+ 	while (last < NUM_THREADS) {
+ 	    if (pthread_create(&(threads[last]), NULL, thread_func, loc)) {
+ 	        t_error("Failed to create thread: %s\n", strerror(errno));
+ 	        break;
+ 	    }
+ 	    last++;
+ 	}
+ 	 
+ 	for (size_t i = 0; i < last; i++) {
+ 	    if (pthread_join(threads[i], NULL)) {
+ 	        t_error("Failed to join thread: %s\n", strerror(errno));
+ 	    }
+ 	} 	 
+ 	free(threads);
+}
+
+/**
+ * @tc.name      : strtoull_l_02300
+ * @tc.desc      : set locale as C, multithreading
+ * @tc.level     : Level 0
+ */
+void strtoull_l_02300(void)
+{
+    locale_t loc = newlocale(LC_ALL_MASK, "C", NULL);
+    if (loc == NULL) {
+        perror("newlocale failed");
+        return;
+    }
+    test_work(loc);
+    freelocale(loc);
+}
+
 int main(void)
 {
     strtoull_l_0100();
@@ -485,5 +697,10 @@ int main(void)
     strtoull_l_01600();
     strtoull_l_01700();
     strtoull_l_01800();
+    strtoull_l_01900();
+    strtoull_l_02000();
+    strtoull_l_02100();
+    strtoull_l_02200();
+    strtoull_l_02300();
     return t_status;
 }
