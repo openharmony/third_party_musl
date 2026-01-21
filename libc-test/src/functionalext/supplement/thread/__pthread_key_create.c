@@ -47,6 +47,11 @@ void *threadfuncB(void *arg)
 void testfunc(void *arg)
 {}
 
+void thread_destructor(void *arg)
+{
+    free(arg);
+}
+
 void *threadfuncC(void *arg)
 {
     int32_t value = (int32_t)(uintptr_t)arg;
@@ -157,11 +162,122 @@ void __pthread_key_create_0400(void)
     pthread_join(tid, NULL);
 }
 
+/**
+ * @tc.name:      __pthread_key_create_0500
+ * @tc.desc:      Verify __pthread_key_create when key ptr is NULL
+ * @tc.desc:      level 1
+ */
+void __pthread_key_create_0500(void)
+{
+    pthread_key_t temp_key;
+    int32_t ret = __pthread_key_create(&temp_key, testfunc);
+    EXPECT_EQ("__pthread_key_create_0500", ret, 0);
+    pthread_key_delete(temp_key);
+}
+
+/**
+ * @tc.name:      __pthread_key_create_0600
+ * @tc.desc:      Verify repeated delete tsd key
+ * @tc.desc:      level 1
+ */
+void __pthread_key_create_0600(void)
+{
+    pthread_key_t temp_key;
+    int32_t ret = __pthread_key_create(&temp_key, NULL);
+    EXPECT_EQ("__pthread_key_create_0600_create", ret, 0);
+    ret = pthread_key_delete(temp_key);
+    EXPECT_EQ("__pthread_key_create_0600_delete_first", ret, 0);
+    ret = pthread_key_delete(temp_key);
+    EXPECT_EQ("__pthread_key_create_0600_delete_second", ret, 0);
+}
+
+/**
+ * @tc.name:      __pthread_key_create_0700
+ * @tc.desc:      Verify create key exceed system limit (1024)
+ * @tc.desc:      level 1
+ */
+void __pthread_key_create_0700(void)
+{
+    pthread_key_t keys[1025];
+    int32_t create_count = 0;
+    int32_t ret = 0;
+
+    for (int i = 0; i < 1025; i++) {
+        ret = __pthread_key_create(&keys[i], NULL);
+        if (ret != 0) {
+            break;
+        }
+        create_count++;
+    }
+    EXPECT_TRUE("__pthread_key_create_0700_count", create_count <= 1024);
+    EXPECT_NE("__pthread_key_create_0700_fail", ret, 0);
+
+    for (int i = 0; i < create_count; i++) {
+        pthread_key_delete(keys[i]);
+    }
+}
+
+/**
+ * @tc.name:      __pthread_key_create_0800
+ * @tc.desc:      Verify main thread use TSD normally
+ * @tc.desc:      level 1
+ */
+void __pthread_key_create_0800(void)
+{
+    int32_t ret = __pthread_key_create(&g_key, thread_destructor);
+    EXPECT_EQ("__pthread_key_create_0800_create", ret, 0);
+    EXPECT_NE("__pthread_key_create_0800_key_nonzero", g_key, 0);
+
+    int32_t *main_data = malloc(sizeof(int32_t));
+    if (main_data == NULL) {
+        return;
+    }
+    *main_data = 100;
+
+    ret = pthread_setspecific(g_key, main_data);
+    EXPECT_EQ("__pthread_key_create_0800_setspecific", ret, 0);
+
+    int32_t *get_data = (int32_t *)pthread_getspecific(g_key);
+    EXPECT_PTRNE("__pthread_key_create_0800_getspecific_ptr", get_data, NULL);
+    EXPECT_EQ("__pthread_key_create_0800_getspecific_value", *get_data, 100);
+
+    ret = pthread_key_delete(g_key);
+    EXPECT_EQ("__pthread_key_create_0800_delete", ret, 0);
+}
+
+void* mt_worker(void* arg)
+{
+    __pthread_key_create_0100();
+    return NULL;
+}
+
+/**
+ * @tc.name      : __pthread_key_create_0900
+ * @tc.desc      : Stability Testing.
+ * @tc.level     : Level 0
+ */
+void __pthread_key_create_0900(void)
+{
+    const int N = 8;
+    pthread_t tids[N];
+    for (int i = 0; i < N; i++) {
+        EXPECT_EQ("__pthread_key_create_0900", pthread_create(&tids[i], NULL, mt_worker, NULL), 0);
+    }
+    for (int i = 0; i < N; i++) {
+        pthread_join(tids[i], NULL);
+    }
+}
+
 int main(void)
 {
     __pthread_key_create_0100();
     __pthread_key_create_0200();
     __pthread_key_create_0300();
     __pthread_key_create_0400();
+    __pthread_key_create_0500();
+    __pthread_key_create_0600();
+    __pthread_key_create_0700();
+    __pthread_key_create_0800();
+    __pthread_key_create_0900();
     return t_status;
 }
