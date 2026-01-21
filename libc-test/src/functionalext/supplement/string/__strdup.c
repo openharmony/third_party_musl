@@ -15,6 +15,7 @@
 
 #include <fcntl.h>
 #include <stdlib.h>
+#include <pthread.h>
 #include "functionalext.h"
 
 /**
@@ -69,11 +70,35 @@ void __strdup_0400(void)
     free(ret);
 }
 
+void* mt_worker(void* arg)
+{
+    __strdup_0400();
+    return NULL;
+}
+
+/**
+ * @tc.name      : __strdup_0500
+ * @tc.desc      : Stability Testing.
+ * @tc.level     : Level 0
+ */
+void __strdup_0500(void)
+{
+    const int N = 8;
+    pthread_t tids[N];
+    for (int i = 0; i < N; i++) {
+        EXPECT_EQ("__strdup_0500", pthread_create(&tids[i], NULL, mt_worker, NULL), 0);
+    }
+    for (int i = 0; i < N; i++) {
+        pthread_join(tids[i], NULL);
+    }
+}
+
 int main(void)
 {
     __strdup_0100();
     __strdup_0200();
     __strdup_0300();
     __strdup_0400();
+    __strdup_0500();
     return t_status;
 }
