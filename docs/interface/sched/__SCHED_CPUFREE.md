@@ -23,7 +23,7 @@
 
 #### **RETURN VALUE**
 
-​       The __sched_cpufree() functions do not return.
+​       The __sched_cpufree() function do not return.
 
 #### **ERRORS**
 
@@ -71,7 +71,7 @@ int main(void)
 
 ```
 
-#### COLOPHTON
+#### COLOPHON
 
-​       this page is part of the C library user-space interface documentation.
+​       This page is part of the C library user-space interface documentation.
 ​       Information about the project can be found at (https://gitcode.com/openharmony/third_party_musl/blob/master/docs/)
