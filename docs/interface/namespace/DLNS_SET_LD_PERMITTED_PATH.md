@@ -8,9 +8,10 @@
 
 #### **SYNOPSIS**
 
+```c
 ​       #include <dlfcn.h>
-
        int dlns_set_ld_permitted_path(char *path, Dl_namespace *ns);
+```
 
 #### **DESCRIPTION**
 
