@@ -78,9 +78,10 @@ static int query_key_equal(const QueryKey *a, const QueryKey *b) {
            diff <= KEY_SAME_MAX_TIME; // if a query does not finish in 2s100ms, new incoming query do a new dns search
 }
 
-static SharedResult *get_shared_result(const QueryKey *key) {
+static SharedResult *get_shared_result(const QueryKey *key, int *is_leader) {
     pthread_mutex_lock(&g_cache_mutex);
     SharedResult *res = NULL;
+	*is_leader = 0;
     for (res = g_result_cache; res; res = res->next) {
         if (query_key_equal(&res->key, key)) {
 			pthread_mutex_lock(&res->mutex);
@@ -108,6 +109,7 @@ static SharedResult *get_shared_result(const QueryKey *key) {
 
     res->next = g_result_cache;
     g_result_cache = res;
+	*is_leader = 1;
 
     pthread_mutex_unlock(&g_cache_mutex);
     return res;
@@ -324,12 +326,10 @@ int getaddrinfo_ext(const char *restrict host, const char *restrict serv, const 
     QueryKey key;
     gen_query_key(&key, host, serv, hint);
 
-    SharedResult *shared_res = get_shared_result(&key);
+	int is_leader = 0;
+    SharedResult *shared_res = get_shared_result(&key, &is_leader);
     if (!shared_res) return EAI_MEMORY;
 
-	pthread_mutex_lock(&shared_res->mutex);
-    int is_leader = (shared_res->waiters == 1);
-	pthread_mutex_unlock(&shared_res->mutex);
 	int timeStartRet = gettimeofday(&timeStart, NULL);
 	int t_cost = 0;
     if (is_leader) {
