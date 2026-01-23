@@ -40,8 +40,8 @@ https://gitcode.com/openharmony/interface_sdk_c/blob/master/third_party/musl/ndk
 - 新增`pthread_attr_setaffinity_np`: 用于设置线程属性里CPU亲和性的函数
 - 新增`pthread_attr_extension_init`: 线程扩展属性初始化
 - 新增`pthread_attr_extension_destroy`: 销毁线程扩展属性分配的内存
-- 新增`set_pthread_extended_function_policy`: 设置运行时PC隔离开关musl_pc_module值
-- 新增`get_pthread_extended_function_policy`: 获取运行时PC隔离开关musl_pc_module值
+- 新增`set_pthread_extended_function_policy`: 设置是否启用线程亲和性系列接口标记
+- 新增`get_pthread_extended_function_policy`: 获取是否启用线程亲和性系列接口标记
 
 2026/1/7 <setjmp.h>  
 新增以下接口专为musl_extended_function为true设计使用：

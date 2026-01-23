@@ -31,7 +31,7 @@
 #### **ERRORS**
 The following error codes may be set in errno:
 
-​       **EINVAL**:  parameter exception, **musl_pc_module** is zero or the  `__LITEOS_A__` macro is defined.
+​       **EINVAL**:  parameter exception. Thread affinity series interface not enabled or the  `__LITEOS_A__` macro is defined.
 
 ​       **ENOMEM**: (pthread_attr_extension_init()) Could not allocate memory.
 
@@ -51,7 +51,7 @@ The following error codes may be set in errno:
 
 #### NOTES
 
-​      These feature are designed specifically for when musl_extended_function is true. These interfaces can only be used when the runtime switch must_pc_module is turned on.
+​      These feature are designed specifically for when musl_extended_function is true. These interfaces can only be used when the flag for controlling thread affinity series interfaces at runtime is turned on.
 
 #### EXAMPLES
 
@@ -64,7 +64,7 @@ int main() {
 #ifndef __LITEOS_A__
     set_pthread_extended_function_policy(1);
     if (!get_pthread_extended_function_policy()) {
-        printf("musl_pc_module is zero.\n");
+        printf("does not support enabling thread affinity series interfaces.\n");
         return -1;
     }
 
