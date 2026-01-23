@@ -59,7 +59,7 @@ dns_set_addr_info_to_netsys_cache2(const int netid, const char *restrict host, c
 	}
 
 	struct param_wrapper param = {(char *) host, (char *) serv, (struct addrinfo *) hint};
-	int ret = func(netid, param, res, NULL);
+	int ret = func(netid, param, res);
 	if (ret < 0) {
 		GETADDRINFO_PRINT_DEBUG("dns_set_addr_info_to_netsys_cache OHOS_SET_CACHE_FUNC_NAME err %d\n", ret);
 		return;

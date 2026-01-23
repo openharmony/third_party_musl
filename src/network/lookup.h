@@ -33,6 +33,11 @@ struct aibuf {
 	short slot, ref;
 };
 
+struct dns_ans {
+	struct addrinfo *ai;
+	unsigned int ttl;
+}
+
 struct address {
 	int family;
 	unsigned scopeid;
@@ -157,10 +162,10 @@ hidden void resolve_dns_sym(void **holder, const char *symbol);
 void
 dns_set_addr_info_to_netsys_cache(const char *__restrict host, const char *__restrict serv,
 								  const struct addrinfo *__restrict
-								  hint, struct addrinfo *res, int *ttl);
+								  hint, struct dns_ans *res, int num);
 
 void dns_set_addr_info_to_netsys_cache2(const int netid, const char *__restrict host, const char *__restrict serv,
-										const struct addrinfo *__restrict hint, struct addrinfo *res, int *ttl);
+										const struct addrinfo *__restrict hint, struct dns_ans *res, int num);
 
 int dns_get_addr_info_from_netsys_cache(const char *__restrict host, const char *__restrict serv,
 										const struct addrinfo *__restrict hint, struct addrinfo **__restrict res);
