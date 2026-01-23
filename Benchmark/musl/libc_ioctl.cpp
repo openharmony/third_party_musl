@@ -22,15 +22,43 @@
 #include <termios.h>
 #include "util.h"
 
-#define DEVICE_FILE "/dev/tty"
+#define DEVICE_FILE_TTY "/dev/tty"
+#define DEVICE_FILE "/dev/null_ioctl"
+
+#define NULL_IOCTL _IO('N', 0x01)
+
+// Used to perform control operations on device files
+static void Bm_function_Ioctl_baudrate(benchmark::State &state)
+{
+    int ret;
+    int fd = open(DEVICE_FILE, O_RDWR, OPEN_MODE);
+    if (fd == -1) {
+        perror("open ioctl failed");
+    }
+
+    for (auto _ : state) {
+        ret = ioctl(fd, NULL_IOCTL, NULL);
+        if (ret < 0) {
+            perror("ioctl");
+        }
+        benchmark::DoNotOptimize(ret);
+    }
+
+    ret = ioctl(fd, NULL_IOCTL, NULL);
+    if (ret == -1) {
+        perror("Failed to restore baud rate");
+    }
+    close(fd);
+}
+
 
 // Used to perform control operations on device files
 // set baud rate
-static void Bm_function_Ioctl_baudrate(benchmark::State &state)
+static void Bm_function_Ioctl_baudrate_TTY(benchmark::State &state)
 {
     struct termios ttydev;
     int ret;
-    int fd = open(DEVICE_FILE, O_RDWR, OPEN_MODE);
+    int fd = open(DEVICE_FILE_TTY, O_RDWR, OPEN_MODE);
     if (fd == -1) {
         perror("open ioctl");
     }
@@ -58,3 +86,4 @@ static void Bm_function_Ioctl_baudrate(benchmark::State &state)
 }
 
 MUSL_BENCHMARK(Bm_function_Ioctl_baudrate);
+MUSL_BENCHMARK(Bm_function_Ioctl_baudrate_TTY);
