@@ -3,9 +3,9 @@
 
 #### **NAME**
 
-​       set_pthread_extended_function_policy - set the pc isolation runtime switch variable musl_pc_module.
+​       set_pthread_extended_function_policy - set whether to enable the flag for controlling thread affinity series interfaces at runtime.
 
-​       get_pthread_extended_function_policy - get the pc isolation runtime switch variable musl_pc_module.
+​       get_pthread_extended_function_policy - get the flag indicating whether the control thread affinity series interfaces are enabled at runtime.
 
 
 #### **SYNOPSIS**
@@ -20,20 +20,18 @@
 
 #### **DESCRIPTION**
 
-​       must_pc_module is a variable used to control whether the PC interface is enabled at runtime. This variable is not directly exposed to developers and is controlled through the set/get interfaces.
-​       The  set_pthread_extended_function_policy() function sets the pc isolation runtime switch variable. When the parameter flag is not 0, it indicates that the PC isolation runtime switch is enabled. On the contrary, it is cancellation.
-​       The get_pthread_extended_function_policy() function gets the pc isolation runtime switch variable.
+​       When the parameter flag of the set_pthread_extended_function_policy() function is non-zero, it indicates that the thread affinity series interfaces are enabled. On the contrary, it means cancellation. After enabling this tag setting, please make sure to disable it promptly when not in use.
 
 #### **RETURN VALUE**
 
 ​       set_pthread_extended_function_policy() has no return value.
-​       get_musl_pc_madule_policy() returns 0 or non-zero.
+​       get_pthread_extended_function_policy() returns 0 or non-zero.
 
 #### ATTRIBUTES
 
 | Interface                                                    | Attribute     | Value    |
 | ------------------------------------------------------------ | ------------- | -------- |
-| set_pthread_extended_function_policy(), <br> get_musl_pc_madule_policy()| Thread safety | MT-safe  |
+| set_pthread_extended_function_policy(), <br> get_pthread_extended_function_policy()| Thread safety | MT-unsafe  |
 |                                                              | Signal safety | Not Safe |
 
 
