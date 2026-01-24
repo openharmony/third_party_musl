@@ -36,7 +36,7 @@ struct aibuf {
 struct dns_ans {
 	struct addrinfo *ai;
 	unsigned int ttl;
-}
+};
 
 struct address {
 	int family;
