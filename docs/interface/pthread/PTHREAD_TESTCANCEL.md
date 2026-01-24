@@ -2,25 +2,27 @@
 
 
 
-#### **NAME**
+### NAME
 
-​       pthread_testcancel - request delivery of any pending cancelation request
+​       pthread_testcancel - request delivery of any pending cancelation request.
 
-#### **SYNOPSIS**
+### SYNOPSIS
 
        void pthread_testcancel(void);
 
-#### **DESCRIPTION**
+### DESCRIPTION
         
-This interface is differentiated at compile time, only enabled on specific devices, and requires explicit enabling to fully utilize the functionality. For further information, please refer to the documentation:
-        
-Refer to [pthread_testcancel](https://man7.org/linux/man-pages/man3/pthread_testcancel.3.html).
+The pthread_testcancel() function shall create a cancellation point in the calling thread. The pthread_testcancel() function shall have no effect if cancelability is disabled.
 
-#### **REFER TO**
+### ERRORS
 
-​       [pthread_testcancel](https://man7.org/linux/man-pages/man3/pthread_testcancel.3.html).
+This function shall not return an error code of **EINTR**.
 
-#### EXAMPLES
+### REFERS
+
+Refer to [pthread_testcancel](https://pubs.opengroup.org/onlinepubs/9699919799/functions/pthread_testcancel.html).
+
+### EXAMPLES
 
 ```c
 #include <pthread.h>
@@ -30,6 +32,7 @@ Refer to [pthread_testcancel](https://man7.org/linux/man-pages/man3/pthread_test
 
 typedef void (*PTHREAD_TESTCANCEL_FUNC_TYPE)(void);
 typedef int (*PTHREAD_CANCEL_FUNC_TYPE)(pthread_t thread);
+typedef int (*PTHREAD_EXTENDED_FUNC_POLICY)(int policy);
 
 PTHREAD_TESTCANCEL_FUNC_TYPE pthread_testcancel_func;
 PTHREAD_CANCEL_FUNC_TYPE pthread_cancel_func;
@@ -41,7 +44,7 @@ void* worker_thread(void* arg) {
         printf("Working... %d\n", i);
         sleep(1);
         
-        // 手动设置取消点
+        // set cancel-point manually
         pthread_testcancel_func();
     }
     
@@ -50,19 +53,32 @@ void* worker_thread(void* arg) {
 }
 
 int main() {
+    // get pthread_testcancel symbol.
     pthread_testcancel_func = (PTHREAD_TESTCANCEL_FUNC_TYPE)dlsym(RTLD_DEFAULT, "pthread_testcancel");
     if (!pthread_testcancel_func) {
+        // find symbol failed.
         return -1;
     }
+    // get pthread_cancel symbol.
     pthread_cancel_func = (PTHREAD_CANCEL_FUNC_TYPE)dlsym(RTLD_DEFAULT, "pthread_cancel");
     if (!pthread_cancel_func) {
+        // find symbol failed.
         return -1;
     }
+    // get set_pthread_extended_function_policy symbol.
+    PTHREAD_EXTENDED_FUNC_POLICY set_policy
+        = (PTHREAD_EXTENDED_FUNC_POLICY)dlsym(RTLD_DEFAULT, "set_pthread_extended_function_policy");
+    if (!set_policy) {
+        // find symbol failed.
+        return -1;
+    }
+    // enable extended pthread function.
+    set_policy(1);
 
     pthread_t thread;
     
     pthread_create(&thread, NULL, worker_thread, NULL);
-    sleep(3); // 让线程运行3秒
+    sleep(3); // let main thread sleep 3 seconds.
     
     printf("Main thread calling pthread_cancel\n");
     pthread_cancel_func(thread);
@@ -70,7 +86,7 @@ int main() {
     void* result;
     pthread_join(thread, &result);
     
-    // 检查线程是否被取消
+    // check sub-thread -s canceled
     if (result == PTHREAD_CANCELED) {
         printf("Thread was canceled\n");
     }
@@ -80,8 +96,11 @@ int main() {
 }
 ```
 
+### NOTE
 
-#### COLOPHON
+This interface is differentiated at compile time, only enabled when `musl_extended_function` is true, and requires explicit enabling to fully utilize the functionality using [set_pthread_extended_function_policy](./PTHREAD_EXTENDED_FUNCTION_POLICY.md).
 
-​      this page is part of the C library user-space interface documentation.
+### COLOPHON
+
+​      This page is part of the C library user-space interface documentation.
 ​      Information about the project can be found at (https://gitcode.com/openharmony/third_party_musl/blob/master/docs/).

@@ -8,10 +8,10 @@
 
 #### **SYNOPSIS**
 
+```c
 ​       #include <dlfcn.h>
-
        char *dlns_get_plugin_default_permitted_path(void);
-
+```
 #### **DESCRIPTION**
 
 Get **moduleNs_plugin_default_namespace** permitted_path.
