@@ -51,6 +51,7 @@ if (is_lite_system && current_os == "ohos") {
         install_images = [
           "system",
           "ramdisk",
+          "updater",
         ]
       }
       ohos_prebuilt_etc("ld-musl-namespace-${musl_arch}-New.ini") {
