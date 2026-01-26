@@ -867,9 +867,6 @@ static Sym *sysv_lookup(struct verinfo *verinfo,  struct sym_info_pair s_info_p,
 			if (!check_verinfo(dso->verdef, dso->versym, i, verinfo, dso->strings)) {
 				continue;
 			}
-			if (!is_adlt_dso_sym(dso, i)) {
-				continue;
-			}
 			return syms+i;
 		}
 
@@ -899,9 +896,6 @@ static Sym *gnu_lookup(struct sym_info_pair s_info_p, uint32_t *hashtab, struct 
 		if ((h1 == (h2|1)) && (!dso->versym || (dso->versym[i] & 0x7fff) >= 0)
 			&& !memcmp(verinfo->s, dso->strings + dso->syms[i].st_name, s_info_p.sym_l)) {
 			if (!check_verinfo(dso->verdef, dso->versym, i, verinfo, dso->strings)) {
-				continue;
-			}
-			if (!is_adlt_dso_sym(dso, i)) {
 				continue;
 			}
 			return dso->syms+i;
@@ -1130,6 +1124,45 @@ struct symdef find_sym_impl(
 	return def;
 }
 
+static inline Sym *__find_sym(struct dso *dso, struct verinfo *verinfo, int need_def, struct symdef *def,
+                                struct sym_info_pair *s_info_g, struct sym_info_pair *s_info_s,
+                                uint32_t* ght, size_t ghm, uint32_t gho, uint32_t gh)
+{
+	Sym *sym = NULL;
+	do {
+		if (!dso->adlt) {
+			if ((ght = dso->ghashtab)) {
+				if (gnu_hash_filter(ght, ghm, gho, gh)) {
+					sym = gnu_lookup(*s_info_g, ght, dso, verinfo);
+				}
+			} else {
+				if (!s_info_s->sym_h) *s_info_s = sysv_hash(verinfo->s);
+				sym = sysv_lookup(verinfo, *s_info_s, dso);
+			}
+		} else {
+			sym = adlt_find_sym(dso, verinfo, s_info_g, s_info_s, ght, ghm, gho, gh);
+		}
+		if (!sym) {
+			continue;
+		}
+		if (!sym->st_shndx)
+			if (need_def || (sym->st_info&0xf) == STT_TLS
+				|| ARCH_SYM_REJECT_UND(sym))
+				continue;
+		if (!sym->st_value)
+			if ((sym->st_info&0xf) != STT_TLS)
+				continue;
+		if (!(1<<(sym->st_info&0xf) & OK_TYPES)) continue;
+		if (!(1<<(sym->st_info>>4) & OK_BINDS)) continue;
+		def->sym = sym;
+		def->dso = dso;
+		return sym;
+	} while(0);
+
+	return NULL;
+
+}
+
 static inline struct symdef find_sym2(struct dso *dso, struct verinfo *verinfo, int need_def, int use_deps, ns_t *ns)
 {
 	struct sym_info_pair s_info_g = gnu_hash(verinfo->s);
@@ -1144,33 +1177,12 @@ static inline struct symdef find_sym2(struct dso *dso, struct verinfo *verinfo, 
 		if (!dso->is_preload && ns && !check_sym_accessible(dso, ns)) {
 			continue;
 		}
-		if ((ght = dso->ghashtab)) {
-			if (gnu_hash_filter(ght, ghm, gho, gh)) {
-				sym = gnu_lookup(s_info_g, ght, dso, verinfo);
-			}
-		} else {
-			if (!s_info_s.sym_h) s_info_s = sysv_hash(verinfo->s);
-			sym = sysv_lookup(verinfo, s_info_s, dso);
+		sym = __find_sym(dso, verinfo, need_def, &def, &s_info_g, &s_info_s, ght, ghm, gho, gh);
+		if (sym) {
+			break;
 		}
-
-		if (!sym) {
-			if (!dso->adlt) continue;
-			sym = adlt_lookup_unique_sym(dso, verinfo);
-			if (!sym) continue;
-		}
-		if (!sym->st_shndx)
-			if (need_def || (sym->st_info&0xf) == STT_TLS
-				|| ARCH_SYM_REJECT_UND(sym))
-				continue;
-		if (!sym->st_value)
-			if ((sym->st_info&0xf) != STT_TLS)
-				continue;
-		if (!(1<<(sym->st_info&0xf) & OK_TYPES)) continue;
-		if (!(1<<(sym->st_info>>4) & OK_BINDS)) continue;
-		def.sym = sym;
-		def.dso = dso;
-		break;
 	}
+	adlt_sym_cache_clean();
 	return def;
 }
 
@@ -1187,33 +1199,12 @@ static inline struct symdef find_sym_by_deps(struct dso *dso, struct verinfo *ve
 		if (!is_dso_accessible(dso, ns)) {
 			continue;
 		}
-		if ((ght = dso->ghashtab)) {
-			if (gnu_hash_filter(ght, ghm, gho, gh)){
-				sym = gnu_lookup(s_info_g, ght, dso, verinfo);
-			}
-		} else {
-			if (!s_info_s.sym_h) s_info_s = sysv_hash(verinfo->s);
-			sym = sysv_lookup(verinfo, s_info_s, dso);
+		sym = __find_sym(dso, verinfo, need_def, &def, &s_info_g, &s_info_s, ght, ghm, gho, gh);
+		if (sym) {
+			break;
 		}
-
-		if (!sym) {
-			if (!dso->adlt) continue;
-			sym = adlt_lookup_unique_sym(dso, verinfo);
-			if (!sym) continue;
-		}
-		if (!sym->st_shndx)
-			if (need_def || (sym->st_info&0xf) == STT_TLS
-				|| ARCH_SYM_REJECT_UND(sym))
-				continue;
-		if (!sym->st_value)
-			if ((sym->st_info&0xf) != STT_TLS)
-				continue;
-		if (!(1<<(sym->st_info&0xf) & OK_TYPES)) continue;
-		if (!(1<<(sym->st_info>>4) & OK_BINDS)) continue;
-		def.sym = sym;
-		def.dso = dso;
-		break;
 	}
+	adlt_sym_cache_clean();
 	return def;
 }
 
@@ -1231,32 +1222,12 @@ static inline struct symdef find_sym_by_saved_so_list(
 	for (int i = start_search_index; i < dso_relocating->reloc_can_search_dso_count; i++) {
 		dso_searching = dso_relocating->reloc_can_search_dso_list[i];
 		Sym *sym = NULL;
-		if ((ght = dso_searching->ghashtab)) {
-			if (gnu_hash_filter(ght, ghm, gho, gh)){
-				sym = gnu_lookup(s_info_g, ght, dso_searching, verinfo);
-			}
-		} else {
-			if (!s_info_s.sym_h) s_info_s = sysv_hash(verinfo->s);
-			sym = sysv_lookup(verinfo, s_info_s, dso_searching);
+		sym = __find_sym(dso_searching, verinfo, need_def, &def, &s_info_g, &s_info_s, ght, ghm, gho, gh);
+		if (sym) {
+			break;
 		}
-		if (!sym) {
-			if (!dso_searching->adlt) continue;
-			sym = adlt_lookup_unique_sym(dso_searching, verinfo);
-			if (!sym) continue;
-		}
-		if (!sym->st_shndx)
-			if (need_def || (sym->st_info&0xf) == STT_TLS
-				|| ARCH_SYM_REJECT_UND(sym))
-				continue;
-		if (!sym->st_value)
-			if ((sym->st_info&0xf) != STT_TLS)
-				continue;
-		if (!(1<<(sym->st_info&0xf) & OK_TYPES)) continue;
-		if (!(1<<(sym->st_info>>4) & OK_BINDS)) continue;
-		def.sym = sym;
-		def.dso = dso_searching;
-		break;
 	}
+	adlt_sym_cache_clean();
 	return def;
 }
 
