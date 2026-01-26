@@ -40,6 +40,12 @@ typedef enum {
 	NOT_GOT
 } Relocated_Flag;
 
+typedef enum {
+    SYM_CACHE_INIT,  
+    NO_SYM_CACHE,
+	SYM_CACHE_EXIST
+} Symbol_Cache_Status;
+
 static struct adlt *g_adlt_ptr = NULL;
 
 #if defined(__aarch64__)
@@ -173,6 +179,7 @@ static void init_adlt(struct adlt *adlt)
 		adlt->name = NULL;
 		adlt->npsod_load = 0;
 		adlt->sym_dso_Idx_map = NULL;
+		adlt->sym_cache_status = SYM_CACHE_INIT;
 	}
 }
 
@@ -1528,6 +1535,53 @@ static Sym *adlt_lookup_unique_sym(struct dso *dso, struct verinfo *verinfo)
 	verinfo->s = name;
 	free(name_idx);
 	return sym;
+}
+
+static inline void adlt_sym_cache_clean(void)
+{
+	struct adlt* adlt = g_adlt_ptr;
+	for (; adlt; adlt = adlt->next) {
+		adlt->sym_cache_status = SYM_CACHE_INIT;
+	}
+}
+
+static Sym *adlt_find_sym(struct dso *dso, struct verinfo *verinfo, 
+                                struct sym_info_pair *s_info_g, struct sym_info_pair *s_info_s,
+                                uint32_t* ght, size_t ghm, uint32_t gho, uint32_t gh)
+{
+	Sym* sym = NULL;
+	struct adlt *adlt = dso->adlt;
+	switch (adlt->sym_cache_status) {
+		case NO_SYM_CACHE:
+			break;
+		case SYM_CACHE_INIT:
+			if ((ght = dso->ghashtab)) {
+				if (gnu_hash_filter(ght, ghm, gho, gh)){
+					sym = gnu_lookup(*s_info_g, ght, dso, verinfo);
+				}
+			} else {
+				if (!s_info_s->sym_h) *s_info_s = sysv_hash(verinfo->s);
+				sym = sysv_lookup(verinfo, *s_info_s, dso);
+			};
+			if (sym) {
+				dso->adlt->sym_cache_status = SYM_CACHE_EXIST;
+				dso->adlt->sym_cache_idx = sym - dso->syms;
+				if (is_adlt_dso_sym(dso, dso->adlt->sym_cache_idx)) {
+					return sym;
+				}
+				return NULL;
+			}
+			dso->adlt->sym_cache_status = NO_SYM_CACHE;
+			break;
+		case SYM_CACHE_EXIST:
+			if (is_adlt_dso_sym(dso, adlt->sym_cache_idx)) {
+				return dso->syms + adlt->sym_cache_idx;
+			}
+			return NULL;
+		default:
+			break;
+	}
+	return adlt_lookup_unique_sym(dso, verinfo);
 }
 
 #else
