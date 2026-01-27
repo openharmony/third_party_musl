@@ -27,6 +27,9 @@
 using namespace std;
 constexpr int TEN = 10;
 constexpr int HUNDRED = 100;
+
+#define _clock_gettime 113
+
 // Used to put the current thread to sleep for the specified time
 static void Bm_function_Nanosleep_0ns(benchmark::State &state)
 {
@@ -361,6 +364,71 @@ static void Bm_function_Strptime(benchmark::State &state)
     }
 }
 
+// test realtime
+static void Bm_function_gettime_realtime(benchmark::State& state) {
+  timespec t;
+  while (state.KeepRunning()) {
+     benchmark::DoNotOptimize(clock_gettime(CLOCK_REALTIME, &t));
+  }
+}
+
+// test realtime_coarse
+static void Bm_function_gettime_realtime_coarse(benchmark::State& state) {
+
+  timespec t;
+  while (state.KeepRunning()) {
+    benchmark::DoNotOptimize(clock_gettime(CLOCK_REALTIME_COARSE, &t));
+  }
+}
+
+// test localtime
+void Bm_function_gettime_localtime(benchmark::State& state) {
+  time_t t = time(nullptr);
+  while (state.KeepRunning()) {
+    benchmark::DoNotOptimize(localtime(&t));
+  }
+}
+
+// test localtime_r
+void Bm_function_gettime_localtime_r(benchmark::State& state) {
+  time_t t = time(nullptr);
+  while (state.KeepRunning()) {
+    struct tm tm;
+    benchmark::DoNotOptimize(localtime_r(&t, &tm));
+  }
+}
+
+// test monotonic_coarse
+static void Bm_function_gettime_monotonic_coarse(benchmark::State& state) {
+
+  timespec t;
+  for (auto _ : state) {
+      benchmark::DoNotOptimize(clock_gettime(CLOCK_MONOTONIC_COARSE, &t));
+  }
+
+}
+
+// test monotonic_raw
+static void Bm_function_gettime_monotonic_raw(benchmark::State& state) {
+
+  timespec t;
+  for (auto _ : state) {
+      benchmark::DoNotOptimize(clock_gettime(CLOCK_MONOTONIC_RAW, &t));
+  }    
+  
+}
+
+// test syscall
+static void Bm_function_gettime_syscall(benchmark::State& state) {
+
+  timespec t;
+  for (auto _ : state) {
+    benchmark::DoNotOptimize(syscall(_clock_gettime, CLOCK_MONOTONIC, &t));
+  }    
+
+}
+
+
 MUSL_BENCHMARK(Bm_function_Nanosleep_0ns);
 MUSL_BENCHMARK(Bm_function_Nanosleep_10ns);
 MUSL_BENCHMARK(Bm_function_Nanosleep_100ns);
@@ -385,4 +453,10 @@ MUSL_BENCHMARK(Bm_function_Asctime);
 MUSL_BENCHMARK(Bm_function_Gmtime_r);
 MUSL_BENCHMARK(Bm_function_Timegm);
 MUSL_BENCHMARK_WITH_ARG(Bm_function_Strptime, "BENCHMARK_22");
-
+MUSL_BENCHMARK(Bm_function_gettime_realtime);
+MUSL_BENCHMARK(Bm_function_gettime_realtime_coarse);
+MUSL_BENCHMARK(Bm_function_gettime_localtime);
+MUSL_BENCHMARK(Bm_function_gettime_localtime_r);
+MUSL_BENCHMARK(Bm_function_gettime_monotonic_coarse);
+MUSL_BENCHMARK(Bm_function_gettime_monotonic_raw);
+MUSL_BENCHMARK(Bm_function_gettime_syscall);

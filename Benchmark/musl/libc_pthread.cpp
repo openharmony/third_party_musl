@@ -751,6 +751,15 @@ static void Bm_function_pthread_clean_push_and_pop(benchmark::State &state)
     }
 }
 
+static void Bm_function_pthread_create_one(benchmark::State &state)
+{
+    pthread_t tid;
+    while (state.KeepRunning()) {
+        pthread_create(&tid, nullptr, GetThreadId, &state);
+        pthread_join(tid, nullptr);
+    }
+}
+
 MUSL_BENCHMARK(Bm_function_Sigaddset);
 MUSL_BENCHMARK(Bm_function_pthread_cond_signal);
 MUSL_BENCHMARK(Bm_function_pthread_cond_signal_wait);
@@ -797,3 +806,4 @@ MUSL_BENCHMARK(Bm_function_pthread_condattr_setclock);
 MUSL_BENCHMARK(Bm_function_Tgkill);
 MUSL_BENCHMARK(Bm_function_pthread_attr_setschedparam);
 MUSL_BENCHMARK(Bm_function_pthread_clean_push_and_pop);
+MUSL_BENCHMARK(Bm_function_pthread_create_one);
