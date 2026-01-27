@@ -482,7 +482,7 @@ void wcscoll_2400(void)
 
 /**
  * @tc.name      : wcscoll_2500
- * @tc.desc      : Test wcscoll with case-insensitive locale 
+ * @tc.desc      : Test wcscoll with case-insensitive locale
  * @tc.level     : Level 2
  */
 void wcscoll_2500(void)
@@ -493,41 +493,118 @@ void wcscoll_2500(void)
         t_error("%s: failed to get current locale (setlocale return NULL)", __func__);
         return;
     }
-    
+
     char *dup_locale = strdup(old_locale);
     if (dup_locale == NULL) {
         t_error("%s: strdup failed to allocate memory for old locale", __func__);
         return;
     }
-    
+
     int success = 0;
     char *locale1 = setlocale(LC_ALL, "en_US.UTF-8@ignorecase");
     char *locale2 = NULL;
     if (locale1 == NULL) {
         locale2 = setlocale(LC_ALL, "C.UTF-8@ignorecase");
     }
-    
+
     if (locale1 != NULL || locale2 != NULL) {
         success = 1;
         wchar_t *str1 = L"Apple";
         wchar_t *str2 = L"apple";
-        
+
         int result = wcscoll(str1, str2);
         if (result != 0) {
             t_error("%s: wcscoll returns %d (expected 0 for case-insensitive locale)", __func__, result);
         }
     }
-    
+
     if (!success) {
         printf("%s: case-insensitive locale not available, skip test\n", __func__);
     }
-    
+
     if (setlocale(LC_ALL, dup_locale) == NULL) {
         t_error("%s: failed to restore original locale (%s)", __func__, dup_locale);
     }
-    
+
     free(dup_locale);
 }
+
+/**
+ * @tc.name      : wcscoll_2600
+ * @tc.desc      : Test wcscoll with Korean characters
+ * @tc.level     : Level 2
+ */
+void wcscoll_2600(void)
+{
+    wchar_t *str1 = L"사과";
+    wchar_t *str2 = L"바나나";
+
+    int result = wcscoll(str1, str2);
+    int result2 = wcscoll(str2, str1);
+
+    if (!((result < 0 && result2 > 0) || (result > 0 && result2 < 0))) {
+        t_error("%s: inconsistent results (result1=%d, result2=%d) for Korean characters", __func__, result, result2);
+    }
+}
+
+/**
+ * @tc.name      : wcscoll_2700
+ * @tc.desc      : Test wcscoll with strings containing tab characters
+ * @tc.level     : Level 2
+ */
+void wcscoll_2700(void)
+{
+    wchar_t *str1 = L"test\tvalue";
+    wchar_t *str2 = L"test value";
+
+    int result = wcscoll(str1, str2);
+    int result2 = wcscoll(str2, str1);
+
+    if (!((result < 0 && result2 > 0) || (result > 0 && result2 < 0) || (result == 0 && result2 == 0))) {
+        t_error("%s: inconsistent results (result1=%d, result2=%d) for tab vs space", __func__, result, result2);
+    }
+}
+
+/**
+ * @tc.name      : wcscoll_2800
+ * @tc.desc      : Test wcscoll with numeric ordering vs lexicographic
+ * @tc.level     : Level 1
+ */
+void wcscoll_2800(void)
+{
+    wchar_t *str1 = L"item9";
+    wchar_t *str2 = L"item10";
+
+    int result = wcscoll(str1, str2);
+    int result2 = wcscoll(str2, str1);
+
+    if (!((result < 0 && result2 > 0) || (result > 0 && result2 < 0))) {
+        t_error("%s: inconsistent results (result1=%d, result2=%d) for numeric strings", __func__, result, result2);
+    }
+}
+
+/**
+ * @tc.name      : wcscoll_2900
+ * @tc.desc      : Test wcscoll with strings containing only digits
+ * @tc.level     : Level 1
+ */
+void wcscoll_2900(void)
+{
+    wchar_t *str1 = L"123";
+    wchar_t *str2 = L"456";
+    wchar_t *str3 = L"123";
+
+    int result1 = wcscoll(str1, str2);
+    if (result1 >= 0) {
+        t_error("%s: wcscoll returns %d (expected negative for '123' < '456')", __func__, result1);
+    }
+
+    int result2 = wcscoll(str1, str3);
+    if (result2 != 0) {
+        t_error("%s: wcscoll returns %d (expected 0 for equal digit strings)", __func__, result2);
+    }
+}
+
 int main(int argc, char *argv[])
 {
     wcscoll_0100();
@@ -555,6 +632,10 @@ int main(int argc, char *argv[])
     wcscoll_2300();
     wcscoll_2400();
     wcscoll_2500();
+    wcscoll_2600();
+    wcscoll_2700();
+    wcscoll_2800();
+    wcscoll_2900();
     return t_status;
 }
 
