@@ -805,24 +805,842 @@ void wcsrtombs_2500(void)
     char dst[64] = {0};
     mbstate_t state = {0};
     const wchar_t *src_ptr = src_part1;
-    
+
     size_t result1 = wcsrtombs(dst, &src_ptr, sizeof(dst), &state);
     if (result1 == (size_t)-1 || src_ptr != NULL) {
         t_error("%s wcsrtombs first part conversion failed\n", __func__);
         return;
     }
-    
+
     src_ptr = src_part2;
     size_t result2 = wcsrtombs(dst + result1, &src_ptr, sizeof(dst) - result1, &state);
     if (result2 == (size_t)-1 || src_ptr != NULL) {
         t_error("%s wcsrtombs second part conversion failed\n", __func__);
         return;
     }
-    
+
     if (strcmp(dst, "FirstPartSecondPart") != 0) {
         t_error("%s wcsrtombs get result '%s' (want 'FirstPartSecondPart')\n", __func__, dst);
     }
 }
+
+/**
+ * @tc.name      : wcsrtombs_2600
+ * @tc.desc      : Test wcsrtombs with Greek characters (UTF-8 locale required)
+ * @tc.level     : Level 2
+ */
+void wcsrtombs_2600(void)
+{
+    const wchar_t *src = L"Γεια σας";
+    char dst[64] = {0};
+    mbstate_t state = {0};
+    const wchar_t *src_ptr = src;
+
+    char *old_locale = setlocale(LC_ALL, NULL);
+    if (old_locale == NULL) {
+        t_error("%s: failed to get current locale (setlocale return NULL)", __func__);
+        return;
+    }
+
+    char *utf8_locales[] = {"UTF-8", "C.UTF-8", "en_US.UTF-8", "el_GR.UTF-8", NULL};
+    char *new_locale = NULL;
+    for (int i = 0; utf8_locales[i] != NULL; i++) {
+        new_locale = setlocale(LC_ALL, utf8_locales[i]);
+        if (new_locale != NULL) {
+            break;
+        }
+    }
+    if (new_locale == NULL) {
+        t_error("%s: failed to set UTF-8 compatible locale (required for Greek conversion)", __func__);
+        return;
+    }
+
+    size_t result = wcsrtombs(dst, &src_ptr, sizeof(dst), &state);
+    if (result == (size_t)-1) {
+        t_error("%s: wcsrtombs conversion failed for Greek characters (errno=%d)", __func__, errno);
+        setlocale(LC_ALL, old_locale);
+        return;
+    }
+
+    if (src_ptr != NULL) {
+        t_error("%s: wcsrtombs did not complete conversion for Greek characters (src_ptr=%p)",
+                __func__, (void*)src_ptr);
+    }
+
+    if (setlocale(LC_ALL, old_locale) == NULL) {
+        t_error("%s: failed to restore original locale (%s)", __func__, old_locale);
+    }
+}
+
+/**
+ * @tc.name      : wcsrtombs_2700
+ * @tc.desc      : Test wcsrtombs with Cyrillic characters (UTF-8 locale required)
+ * @tc.level     : Level 2
+ */
+void wcsrtombs_2700(void)
+{
+    const wchar_t *src = L"Привет";
+    char dst[64] = {0};
+    mbstate_t state = {0};
+    const wchar_t *src_ptr = src;
+
+    char *old_locale = setlocale(LC_ALL, NULL);
+    if (old_locale == NULL) {
+        t_error("%s: failed to get current locale (setlocale return NULL)", __func__);
+        return;
+    }
+
+    char *utf8_locales[] = {"UTF-8", "C.UTF-8", "en_US.UTF-8", "ru_RU.UTF-8", NULL};
+    char *new_locale = NULL;
+    for (int i = 0; utf8_locales[i] != NULL; i++) {
+        new_locale = setlocale(LC_ALL, utf8_locales[i]);
+        if (new_locale != NULL) {
+            break;
+        }
+    }
+    if (new_locale == NULL) {
+        t_error("%s: failed to set UTF-8 compatible locale (required for Cyrillic conversion)", __func__);
+        return;
+    }
+
+    size_t result = wcsrtombs(dst, &src_ptr, sizeof(dst), &state);
+    if (result == (size_t)-1) {
+        t_error("%s: wcsrtombs conversion failed for Cyrillic characters (errno=%d)", __func__, errno);
+        setlocale(LC_ALL, old_locale);
+        return;
+    }
+
+    if (src_ptr != NULL) {
+        t_error("%s: wcsrtombs did not complete conversion for Cyrillic characters (src_ptr=%p)",
+                __func__, (void*)src_ptr);
+    }
+
+    if (setlocale(LC_ALL, old_locale) == NULL) {
+        t_error("%s: failed to restore original locale (%s)", __func__, old_locale);
+    }
+}
+
+/**
+ * @tc.name      : wcsrtombs_2800
+ * @tc.desc      : Test wcsrtombs with buffer size exactly 1 byte
+ * @tc.level     : Level 2
+ */
+void wcsrtombs_2800(void)
+{
+    const wchar_t *src = L"Test";
+    char dst[1];
+    mbstate_t state = {0};
+    const wchar_t *src_ptr = src;
+
+    size_t result = wcsrtombs(dst, &src_ptr, sizeof(dst), &state);
+    if (result == (size_t)-1) {
+        t_error("%s wcsrtombs conversion failed with buffer size 1\n", __func__);
+        return;
+    }
+
+    if (result > 0) {
+        t_error("%s wcsrtombs should return 0 when buffer only fits null terminator\n", __func__);
+    }
+
+    if (dst[0] != '\0') {
+        t_error("%s wcsrtombs dst should contain null terminator\n", __func__);
+    }
+}
+
+/**
+ * @tc.name      : wcsrtombs_2900
+ * @tc.desc      : Test wcsrtombs with NULL destination and non-zero buffer size
+ * @tc.level     : Level 3
+ */
+void wcsrtombs_2900(void)
+{
+    const wchar_t *src = L"TestString";
+    mbstate_t state = {0};
+    const wchar_t *src_ptr = src;
+
+    size_t result = wcsrtombs(NULL, &src_ptr, 10, &state);
+
+    if (result != 0 && result != (size_t)-1) {
+        t_error("%s wcsrtombs with NULL dst should return 0 or -1, got %zu\n", __func__, result);
+    }
+}
+
+/**
+ * @tc.name      : wcsrtombs_3000
+ * @tc.desc      : Test wcsrtombs with very long wide string
+ * @tc.level     : Level 2
+ */
+void wcsrtombs_3000(void)
+{
+    wchar_t long_src[256];
+    for (int i = 0; i < 255; i++) {
+        long_src[i] = L'A' + (i % 26);
+    }
+    long_src[255] = L'\0';
+
+    char dst[1024];
+    mbstate_t state = {0};
+    const wchar_t *src_ptr = long_src;
+
+    size_t result = wcsrtombs(dst, &src_ptr, sizeof(dst), &state);
+    if (result == (size_t)-1) {
+        t_error("%s wcsrtombs conversion failed for long string\n", __func__);
+        return;
+    }
+
+    if (src_ptr != NULL) {
+        t_error("%s wcsrtombs src_ptr should be NULL after full conversion\n", __func__);
+    }
+
+    if (result != 255) {
+        t_error("%s wcsrtombs get length %zu (want 255) for long string\n", __func__, result);
+    }
+}
+
+/**
+ * @tc.name      : wcsrtombs_3100
+ * @tc.desc      : Test wcsrtombs with Arabic characters (UTF-8 locale required)
+ * @tc.level     : Level 2
+ */
+void wcsrtombs_3100(void)
+{
+    const wchar_t *src = L"مرحبا";
+    char dst[64] = {0};
+    mbstate_t state = {0};
+    const wchar_t *src_ptr = src;
+
+    char *old_locale = setlocale(LC_ALL, NULL);
+    if (old_locale == NULL) {
+        t_error("%s: failed to get current locale (setlocale return NULL)", __func__);
+        return;
+    }
+
+    char *utf8_locales[] = {"UTF-8", "C.UTF-8", "en_US.UTF-8", "ar_SA.UTF-8", NULL};
+    char *new_locale = NULL;
+    for (int i = 0; utf8_locales[i] != NULL; i++) {
+        new_locale = setlocale(LC_ALL, utf8_locales[i]);
+        if (new_locale != NULL) {
+            break;
+        }
+    }
+    if (new_locale == NULL) {
+        t_error("%s: failed to set UTF-8 compatible locale (required for Arabic conversion)", __func__);
+        return;
+    }
+
+    size_t result = wcsrtombs(dst, &src_ptr, sizeof(dst), &state);
+    if (result == (size_t)-1) {
+        t_error("%s: wcsrtombs conversion failed for Arabic characters (errno=%d)", __func__, errno);
+        setlocale(LC_ALL, old_locale);
+        return;
+    }
+
+    if (src_ptr != NULL) {
+        t_error("%s: wcsrtombs did not complete conversion for Arabic characters (src_ptr=%p)",
+                __func__, (void*)src_ptr);
+    }
+
+    if (setlocale(LC_ALL, old_locale) == NULL) {
+        t_error("%s: failed to restore original locale (%s)", __func__, old_locale);
+    }
+}
+
+/**
+ * @tc.name      : wcsrtombs_3200
+ * @tc.desc      : Test wcsrtombs with Thai characters (UTF-8 locale required)
+ * @tc.level     : Level 2
+ */
+void wcsrtombs_3200(void)
+{
+    const wchar_t *src = L"สวัสดี";
+    char dst[64] = {0};
+    mbstate_t state = {0};
+    const wchar_t *src_ptr = src;
+
+    char *old_locale = setlocale(LC_ALL, NULL);
+    if (old_locale == NULL) {
+        t_error("%s: failed to get current locale (setlocale return NULL)", __func__);
+        return;
+    }
+
+    char *utf8_locales[] = {"UTF-8", "C.UTF-8", "en_US.UTF-8", "th_TH.UTF-8", NULL};
+    char *new_locale = NULL;
+    for (int i = 0; utf8_locales[i] != NULL; i++) {
+        new_locale = setlocale(LC_ALL, utf8_locales[i]);
+        if (new_locale != NULL) {
+            break;
+        }
+    }
+    if (new_locale == NULL) {
+        t_error("%s: failed to set UTF-8 compatible locale (required for Thai conversion)", __func__);
+        return;
+    }
+
+    size_t result = wcsrtombs(dst, &src_ptr, sizeof(dst), &state);
+    if (result == (size_t)-1) {
+        t_error("%s: wcsrtombs conversion failed for Thai characters (errno=%d)", __func__, errno);
+        setlocale(LC_ALL, old_locale);
+        return;
+    }
+
+    if (src_ptr != NULL) {
+        t_error("%s: wcsrtombs did not complete conversion for Thai characters (src_ptr=%p)",
+                __func__, (void*)src_ptr);
+    }
+
+    if (setlocale(LC_ALL, old_locale) == NULL) {
+        t_error("%s: failed to restore original locale (%s)", __func__, old_locale);
+    }
+}
+
+/**
+ * @tc.name      : wcsrtombs_3300
+ * @tc.desc      : Test wcsrtombs with Hebrew characters (UTF-8 locale required)
+ * @tc.level     : Level 2
+ */
+void wcsrtombs_3300(void)
+{
+    const wchar_t *src = L"שלום";
+    char dst[64] = {0};
+    mbstate_t state = {0};
+    const wchar_t *src_ptr = src;
+
+    char *old_locale = setlocale(LC_ALL, NULL);
+    if (old_locale == NULL) {
+        t_error("%s: failed to get current locale (setlocale return NULL)", __func__);
+        return;
+    }
+
+    char *utf8_locales[] = {"UTF-8", "C.UTF-8", "en_US.UTF-8", "he_IL.UTF-8", NULL};
+    char *new_locale = NULL;
+    for (int i = 0; utf8_locales[i] != NULL; i++) {
+        new_locale = setlocale(LC_ALL, utf8_locales[i]);
+        if (new_locale != NULL) {
+            break;
+        }
+    }
+    if (new_locale == NULL) {
+        t_error("%s: failed to set UTF-8 compatible locale (required for Hebrew conversion)", __func__);
+        return;
+    }
+
+    size_t result = wcsrtombs(dst, &src_ptr, sizeof(dst), &state);
+    if (result == (size_t)-1) {
+        t_error("%s: wcsrtombs conversion failed for Hebrew characters (errno=%d)", __func__, errno);
+        setlocale(LC_ALL, old_locale);
+        return;
+    }
+
+    if (src_ptr != NULL) {
+        t_error("%s: wcsrtombs did not complete conversion for Hebrew characters (src_ptr=%p)",
+                __func__, (void*)src_ptr);
+    }
+
+    if (setlocale(LC_ALL, old_locale) == NULL) {
+        t_error("%s: failed to restore original locale (%s)", __func__, old_locale);
+    }
+}
+
+/**
+ * @tc.name      : wcsrtombs_3400
+ * @tc.desc      : Test wcsrtombs with mixed direction text (Arabic and English)
+ * @tc.level     : Level 3
+ */
+void wcsrtombs_3400(void)
+{
+    const wchar_t *src = L"Hello مرحبا World";
+    char dst[128] = {0};
+    mbstate_t state = {0};
+    const wchar_t *src_ptr = src;
+
+    char *old_locale = setlocale(LC_ALL, NULL);
+    if (old_locale == NULL) {
+        t_error("%s: failed to get current locale (setlocale return NULL)", __func__);
+        return;
+    }
+
+    char *utf8_locales[] = {"UTF-8", "C.UTF-8", "en_US.UTF-8", NULL};
+    char *new_locale = NULL;
+    for (int i = 0; utf8_locales[i] != NULL; i++) {
+        new_locale = setlocale(LC_ALL, utf8_locales[i]);
+        if (new_locale != NULL) {
+            break;
+        }
+    }
+    if (new_locale == NULL) {
+        t_error("%s: failed to set UTF-8 compatible locale (required for mixed direction text)", __func__);
+        return;
+    }
+
+    size_t result = wcsrtombs(dst, &src_ptr, sizeof(dst), &state);
+    if (result == (size_t)-1) {
+        t_error("%s: wcsrtombs conversion failed for mixed direction text (errno=%d)", __func__, errno);
+        setlocale(LC_ALL, old_locale);
+        return;
+    }
+
+    if (src_ptr != NULL) {
+        t_error("%s: wcsrtombs did not complete conversion for mixed direction text (src_ptr=%p)",
+                __func__, (void*)src_ptr);
+    }
+
+    if (setlocale(LC_ALL, old_locale) == NULL) {
+        t_error("%s: failed to restore original locale (%s)", __func__, old_locale);
+    }
+}
+
+/**
+ * @tc.name      : wcsrtombs_3500
+ * @tc.desc      : Test wcsrtombs with Vietnamese characters (UTF-8 locale required)
+ * @tc.level     : Level 2
+ */
+void wcsrtombs_3500(void)
+{
+    const wchar_t *src = L"Xin chào";
+    char dst[64] = {0};
+    mbstate_t state = {0};
+    const wchar_t *src_ptr = src;
+
+    char *old_locale = setlocale(LC_ALL, NULL);
+    if (old_locale == NULL) {
+        t_error("%s: failed to get current locale (setlocale return NULL)", __func__);
+        return;
+    }
+
+    char *utf8_locales[] = {"UTF-8", "C.UTF-8", "en_US.UTF-8", "vi_VN.UTF-8", NULL};
+    char *new_locale = NULL;
+    for (int i = 0; utf8_locales[i] != NULL; i++) {
+        new_locale = setlocale(LC_ALL, utf8_locales[i]);
+        if (new_locale != NULL) {
+            break;
+        }
+    }
+    if (new_locale == NULL) {
+        t_error("%s: failed to set UTF-8 compatible locale (required for Vietnamese conversion)", __func__);
+        return;
+    }
+
+    size_t result = wcsrtombs(dst, &src_ptr, sizeof(dst), &state);
+    if (result == (size_t)-1) {
+        t_error("%s: wcsrtombs conversion failed for Vietnamese characters (errno=%d)", __func__, errno);
+        setlocale(LC_ALL, old_locale);
+        return;
+    }
+
+    if (src_ptr != NULL) {
+        t_error("%s: wcsrtombs did not complete conversion for Vietnamese characters (src_ptr=%p)",
+                __func__, (void*)src_ptr);
+    }
+
+    if (setlocale(LC_ALL, old_locale) == NULL) {
+        t_error("%s: failed to restore original locale (%s)", __func__, old_locale);
+    }
+}
+
+/**
+ * @tc.name      : wcsrtombs_3600
+ * @tc.desc      : Test wcsrtombs with Indic characters - Hindi (UTF-8 locale required)
+ * @tc.level     : Level 2
+ */
+void wcsrtombs_3600(void)
+{
+    const wchar_t *src = L"नमस्ते";
+    char dst[64] = {0};
+    mbstate_t state = {0};
+    const wchar_t *src_ptr = src;
+
+    char *old_locale = setlocale(LC_ALL, NULL);
+    if (old_locale == NULL) {
+        t_error("%s: failed to get current locale (setlocale return NULL)", __func__);
+        return;
+    }
+
+    char *utf8_locales[] = {"UTF-8", "C.UTF-8", "en_US.UTF-8", "hi_IN.UTF-8", NULL};
+    char *new_locale = NULL;
+    for (int i = 0; utf8_locales[i] != NULL; i++) {
+        new_locale = setlocale(LC_ALL, utf8_locales[i]);
+        if (new_locale != NULL) {
+            break;
+        }
+    }
+    if (new_locale == NULL) {
+        t_error("%s: failed to set UTF-8 compatible locale (required for Hindi conversion)", __func__);
+        return;
+    }
+
+    size_t result = wcsrtombs(dst, &src_ptr, sizeof(dst), &state);
+    if (result == (size_t)-1) {
+        t_error("%s: wcsrtombs conversion failed for Hindi characters (errno=%d)", __func__, errno);
+        setlocale(LC_ALL, old_locale);
+        return;
+    }
+
+    if (src_ptr != NULL) {
+        t_error("%s: wcsrtombs did not complete conversion for Hindi characters (src_ptr=%p)",
+                __func__, (void*)src_ptr);
+    }
+
+    if (setlocale(LC_ALL, old_locale) == NULL) {
+        t_error("%s: failed to restore original locale (%s)", __func__, old_locale);
+    }
+}
+
+/**
+ * @tc.name      : wcsrtombs_3700
+ * @tc.desc      : Test wcsrtombs with buffer size limiting output
+ * @tc.level     : Level 2
+ */
+void wcsrtombs_3700(void)
+{
+    const wchar_t *src = L"0123456789ABCDEFGHIJ";
+    char dst[15];
+    mbstate_t state = {0};
+    const wchar_t *src_ptr = src;
+
+    size_t result = wcsrtombs(dst, &src_ptr, sizeof(dst), &state);
+    if (result == (size_t)-1) {
+        t_error("%s wcsrtombs conversion failed with limited buffer\n", __func__);
+        return;
+    }
+
+    if (result >= sizeof(dst)) {
+        t_error("%s wcsrtombs result %zu should not exceed buffer size %zu\n", __func__, result, sizeof(dst));
+    }
+
+    if (src_ptr == NULL) {
+        t_error("%s wcsrtombs src_ptr should not be NULL with limited buffer\n", __func__);
+    }
+
+    if (result > 0 && dst[0] == '\0') {
+        t_error("%s wcsrtombs dst should not start with null terminator when conversion occurs\n", __func__);
+    }
+}
+
+/**
+ * @tc.name      : wcsrtombs_3800
+ * @tc.desc      : Test wcsrtombs with single character conversion
+ * @tc.level     : Level 1
+ */
+void wcsrtombs_3800(void)
+{
+    const wchar_t *src = L"A";
+    char dst[16];
+    mbstate_t state = {0};
+    const wchar_t *src_ptr = src;
+
+    size_t result = wcsrtombs(dst, &src_ptr, sizeof(dst), &state);
+    if (result == (size_t)-1) {
+        t_error("%s wcsrtombs conversion failed for single character\n", __func__);
+        return;
+    }
+
+    if (result != 1) {
+        t_error("%s wcsrtombs get length %zu (want 1) for single character\n", __func__, result);
+    }
+
+    if (strcmp(dst, "A") != 0) {
+        t_error("%s wcsrtombs get result '%s' (want 'A')\n", __func__, dst);
+    }
+
+    if (src_ptr != NULL) {
+        t_error("%s wcsrtombs src_ptr should be NULL after single char conversion\n", __func__);
+    }
+}
+
+/**
+ * @tc.name      : wcsrtombs_3900
+ * @tc.desc      : Test wcsrtombs with spaces and whitespace variations
+ * @tc.level     : Level 1
+ */
+void wcsrtombs_3900(void)
+{
+    const wchar_t *src = L"  \t\n\r  ";
+    char dst[32];
+    mbstate_t state = {0};
+    const wchar_t *src_ptr = src;
+
+    size_t result = wcsrtombs(dst, &src_ptr, sizeof(dst), &state);
+    if (result == (size_t)-1) {
+        t_error("%s wcsrtombs conversion failed for whitespace\n", __func__);
+        return;
+    }
+
+    if (strcmp(dst, "  \t\n\r  ") != 0) {
+        t_error("%s wcsrtombs get result '%s' (want '  \\t\\n\\r  ')\n", __func__, dst);
+    }
+
+    if (src_ptr != NULL) {
+        t_error("%s wcsrtombs src_ptr should be NULL after whitespace conversion\n", __func__);
+    }
+}
+
+/**
+ * @tc.name      : wcsrtombs_4000
+ * @tc.desc      : Test wcsrtombs with Portuguese characters (UTF-8 locale required)
+ * @tc.level     : Level 2
+ */
+void wcsrtombs_4000(void)
+{
+    const wchar_t *src = L"Olá, como está?";
+    char dst[64] = {0};
+    mbstate_t state = {0};
+    const wchar_t *src_ptr = src;
+
+    char *old_locale = setlocale(LC_ALL, NULL);
+    if (old_locale == NULL) {
+        t_error("%s: failed to get current locale (setlocale return NULL)", __func__);
+        return;
+    }
+
+    char *utf8_locales[] = {"UTF-8", "C.UTF-8", "en_US.UTF-8", "pt_BR.UTF-8", NULL};
+    char *new_locale = NULL;
+    for (int i = 0; utf8_locales[i] != NULL; i++) {
+        new_locale = setlocale(LC_ALL, utf8_locales[i]);
+        if (new_locale != NULL) {
+            break;
+        }
+    }
+    if (new_locale == NULL) {
+        t_error("%s: failed to set UTF-8 compatible locale (required for Portuguese conversion)", __func__);
+        return;
+    }
+
+    size_t result = wcsrtombs(dst, &src_ptr, sizeof(dst), &state);
+    if (result == (size_t)-1) {
+        t_error("%s: wcsrtombs conversion failed for Portuguese characters (errno=%d)", __func__, errno);
+        setlocale(LC_ALL, old_locale);
+        return;
+    }
+
+    if (src_ptr != NULL) {
+        t_error("%s: wcsrtombs did not complete conversion for Portuguese characters (src_ptr=%p)",
+                __func__, (void*)src_ptr);
+    }
+
+    if (setlocale(LC_ALL, old_locale) == NULL) {
+        t_error("%s: failed to restore original locale (%s)", __func__, old_locale);
+    }
+}
+
+/**
+ * @tc.name      : wcsrtombs_4100
+ * @tc.desc      : Test wcsrtombs with multiple null terminators in source
+ * @tc.level     : Level 3
+ */
+void wcsrtombs_4100(void)
+{
+    wchar_t src[] = {L'T', L'e', L's', L't', L'\0', L'\0', L'\0'};
+    char dst[32];
+    mbstate_t state = {0};
+    const wchar_t *src_ptr = src;
+
+    size_t result = wcsrtombs(dst, &src_ptr, sizeof(dst), &state);
+    if (result == (size_t)-1) {
+        t_error("%s wcsrtombs conversion failed with multiple nulls\n", __func__);
+        return;
+    }
+
+    if (strcmp(dst, "Test") != 0) {
+        t_error("%s wcsrtombs get result '%s' (want 'Test')\n", __func__, dst);
+    }
+
+    if (src_ptr != &src[4]) {
+        t_error("%s wcsrtombs src_ptr should point to first null terminator\n", __func__);
+    }
+}
+
+/**
+ * @tc.name      : wcsrtombs_4200
+ * @tc.desc      : Test wcsrtombs with German characters (UTF-8 locale required)
+ * @tc.level     : Level 2
+ */
+void wcsrtombs_4200(void)
+{
+    const wchar_t *src = L"ÄäÖöÜüß";
+    char dst[32] = {0};
+    mbstate_t state = {0};
+    const wchar_t *src_ptr = src;
+
+    char *old_locale = setlocale(LC_ALL, NULL);
+    if (old_locale == NULL) {
+        t_error("%s: failed to get current locale (setlocale return NULL)", __func__);
+        return;
+    }
+
+    char *utf8_locales[] = {"UTF-8", "C.UTF-8", "en_US.UTF-8", "de_DE.UTF-8", NULL};
+    char *new_locale = NULL;
+    for (int i = 0; utf8_locales[i] != NULL; i++) {
+        new_locale = setlocale(LC_ALL, utf8_locales[i]);
+        if (new_locale != NULL) {
+            break;
+        }
+    }
+    if (new_locale == NULL) {
+        t_error("%s: failed to set UTF-8 compatible locale (required for German conversion)", __func__);
+        return;
+    }
+
+    size_t result = wcsrtombs(dst, &src_ptr, sizeof(dst), &state);
+    if (result == (size_t)-1) {
+        t_error("%s: wcsrtombs conversion failed for German characters (errno=%d)", __func__, errno);
+        setlocale(LC_ALL, old_locale);
+        return;
+    }
+
+    if (src_ptr != NULL) {
+        t_error("%s: wcsrtombs did not complete conversion for German characters (src_ptr=%p)",
+                __func__, (void*)src_ptr);
+    }
+
+    if (setlocale(LC_ALL, old_locale) == NULL) {
+        t_error("%s: failed to restore original locale (%s)", __func__, old_locale);
+    }
+}
+
+/**
+ * @tc.name      : wcsrtombs_4300
+ * @tc.desc      : Test wcsrtombs with Nordic characters (UTF-8 locale required)
+ * @tc.level     : Level 2
+ */
+void wcsrtombs_4300(void)
+{
+    const wchar_t *src = L"ÅåÄäÖö";
+    char dst[32] = {0};
+    mbstate_t state = {0};
+    const wchar_t *src_ptr = src;
+
+    char *old_locale = setlocale(LC_ALL, NULL);
+    if (old_locale == NULL) {
+        t_error("%s: failed to get current locale (setlocale return NULL)", __func__);
+        return;
+    }
+
+    char *utf8_locales[] = {"UTF-8", "C.UTF-8", "en_US.UTF-8", "sv_SE.UTF-8", NULL};
+    char *new_locale = NULL;
+    for (int i = 0; utf8_locales[i] != NULL; i++) {
+        new_locale = setlocale(LC_ALL, utf8_locales[i]);
+        if (new_locale != NULL) {
+            break;
+        }
+    }
+    if (new_locale == NULL) {
+        t_error("%s: failed to set UTF-8 compatible locale (required for Nordic conversion)", __func__);
+        return;
+    }
+
+    size_t result = wcsrtombs(dst, &src_ptr, sizeof(dst), &state);
+    if (result == (size_t)-1) {
+        t_error("%s: wcsrtombs conversion failed for Nordic characters (errno=%d)", __func__, errno);
+        setlocale(LC_ALL, old_locale);
+        return;
+    }
+
+    if (src_ptr != NULL) {
+        t_error("%s: wcsrtombs did not complete conversion for Nordic characters (src_ptr=%p)",
+                __func__, (void*)src_ptr);
+    }
+
+    if (setlocale(LC_ALL, old_locale) == NULL) {
+        t_error("%s: failed to restore original locale (%s)", __func__, old_locale);
+    }
+}
+
+/**
+ * @tc.name      : wcsrtombs_4400
+ * @tc.desc      : Test wcsrtombs with Polish characters (UTF-8 locale required)
+ * @tc.level     : Level 2
+ */
+void wcsrtombs_4400(void)
+{
+    const wchar_t *src = L"ĄąĆćĘęŁłŃńÓóŚśŹźŻż";
+    char dst[64] = {0};
+    mbstate_t state = {0};
+    const wchar_t *src_ptr = src;
+
+    char *old_locale = setlocale(LC_ALL, NULL);
+    if (old_locale == NULL) {
+        t_error("%s: failed to get current locale (setlocale return NULL)", __func__);
+        return;
+    }
+
+    char *utf8_locales[] = {"UTF-8", "C.UTF-8", "en_US.UTF-8", "pl_PL.UTF-8", NULL};
+    char *new_locale = NULL;
+    for (int i = 0; utf8_locales[i] != NULL; i++) {
+        new_locale = setlocale(LC_ALL, utf8_locales[i]);
+        if (new_locale != NULL) {
+            break;
+        }
+    }
+    if (new_locale == NULL) {
+        t_error("%s: failed to set UTF-8 compatible locale (required for Polish conversion)", __func__);
+        return;
+    }
+
+    size_t result = wcsrtombs(dst, &src_ptr, sizeof(dst), &state);
+    if (result == (size_t)-1) {
+        t_error("%s: wcsrtombs conversion failed for Polish characters (errno=%d)", __func__, errno);
+        setlocale(LC_ALL, old_locale);
+        return;
+    }
+
+    if (src_ptr != NULL) {
+        t_error("%s: wcsrtombs did not complete conversion for Polish characters (src_ptr=%p)",
+                __func__, (void*)src_ptr);
+    }
+
+    if (setlocale(LC_ALL, old_locale) == NULL) {
+        t_error("%s: failed to restore original locale (%s)", __func__, old_locale);
+    }
+}
+
+/**
+ * @tc.name      : wcsrtombs_4500
+ * @tc.desc      : Test wcsrtombs with Turkish characters (UTF-8 locale required)
+ * @tc.level     : Level 2
+ */
+void wcsrtombs_4500(void)
+{
+    const wchar_t *src = L"Merhaba İstanbul";
+    char dst[64] = {0};
+    mbstate_t state = {0};
+    const wchar_t *src_ptr = src;
+
+    char *old_locale = setlocale(LC_ALL, NULL);
+    if (old_locale == NULL) {
+        t_error("%s: failed to get current locale (setlocale return NULL)", __func__);
+        return;
+    }
+
+    char *utf8_locales[] = {"UTF-8", "C.UTF-8", "en_US.UTF-8", "tr_TR.UTF-8", NULL};
+    char *new_locale = NULL;
+    for (int i = 0; utf8_locales[i] != NULL; i++) {
+        new_locale = setlocale(LC_ALL, utf8_locales[i]);
+        if (new_locale != NULL) {
+            break;
+        }
+    }
+    if (new_locale == NULL) {
+        t_error("%s: failed to set UTF-8 compatible locale (required for Turkish conversion)", __func__);
+        return;
+    }
+
+    size_t result = wcsrtombs(dst, &src_ptr, sizeof(dst), &state);
+    if (result == (size_t)-1) {
+        t_error("%s: wcsrtombs conversion failed for Turkish characters (errno=%d)", __func__, errno);
+        setlocale(LC_ALL, old_locale);
+        return;
+    }
+
+    if (src_ptr != NULL) {
+        t_error("%s: wcsrtombs did not complete conversion for Turkish characters (src_ptr=%p)",
+                __func__, (void*)src_ptr);
+    }
+
+    if (setlocale(LC_ALL, old_locale) == NULL) {
+        t_error("%s: failed to restore original locale (%s)", __func__, old_locale);
+    }
+}
+
 int main(int argc, char *argv[])
 {
     wcsrtombs_0100();
@@ -850,5 +1668,25 @@ int main(int argc, char *argv[])
     wcsrtombs_2300();
     wcsrtombs_2400();
     wcsrtombs_2500();
+    wcsrtombs_2600();
+    wcsrtombs_2700();
+    wcsrtombs_2800();
+    wcsrtombs_2900();
+    wcsrtombs_3000();
+    wcsrtombs_3100();
+    wcsrtombs_3200();
+    wcsrtombs_3300();
+    wcsrtombs_3400();
+    wcsrtombs_3500();
+    wcsrtombs_3600();
+    wcsrtombs_3700();
+    wcsrtombs_3800();
+    wcsrtombs_3900();
+    wcsrtombs_4000();
+    wcsrtombs_4100();
+    wcsrtombs_4200();
+    wcsrtombs_4300();
+    wcsrtombs_4400();
+    wcsrtombs_4500();
     return t_status;
 }
