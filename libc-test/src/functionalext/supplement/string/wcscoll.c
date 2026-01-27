@@ -583,6 +583,28 @@ void wcscoll_2800(void)
     }
 }
 
+/**
+ * @tc.name      : wcscoll_2900
+ * @tc.desc      : Test wcscoll with strings containing only digits
+ * @tc.level     : Level 1
+ */
+void wcscoll_2900(void)
+{
+    wchar_t *str1 = L"123";
+    wchar_t *str2 = L"456";
+    wchar_t *str3 = L"123";
+
+    int result1 = wcscoll(str1, str2);
+    if (result1 >= 0) {
+        t_error("%s: wcscoll returns %d (expected negative for '123' < '456')", __func__, result1);
+    }
+
+    int result2 = wcscoll(str1, str3);
+    if (result2 != 0) {
+        t_error("%s: wcscoll returns %d (expected 0 for equal digit strings)", __func__, result2);
+    }
+}
+
 int main(int argc, char *argv[])
 {
     wcscoll_0100();
@@ -613,6 +635,7 @@ int main(int argc, char *argv[])
     wcscoll_2600();
     wcscoll_2700();
     wcscoll_2800();
+    wcscoll_2900();
     return t_status;
 }
 
