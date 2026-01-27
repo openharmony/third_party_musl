@@ -46,6 +46,35 @@ static void PrepareCallocArgs(benchmark::internal::Benchmark* b)
     }
 }
 
+static void malloc_free(benchmark::State& state) {
+  const size_t bytes = state.range(0);
+  OpenTcache();
+  for (auto _ : state) {
+    void* ptr = NULL;
+    benchmark::DoNotOptimize(ptr = malloc(bytes));
+    if (ptr) {
+      free(ptr);
+    }
+  }
+
+}
+
+static void malloc_multiple(benchmark::State& state, size_t bytes) {
+  void* ptrs[MALLOC_SIZE];
+  OpenTcache();
+  for (auto _ : state) {
+    for (size_t i = 0; i < MALLOC_SIZE; i++) {
+      benchmark::DoNotOptimize(ptrs[i] = malloc(bytes));
+    }
+    for (size_t i = 0; i < MALLOC_SIZE; i++) {
+      if (ptrs[i]) {
+        free(ptrs[i]);
+      }
+    }
+  }
+
+}
+
 static void Bm_function_Calloc(benchmark::State& state)
 {
     int m = state.range(0);
@@ -135,8 +164,32 @@ static void Bm_function_malloc_usable_size(benchmark::State &state)
     state.SetItemsProcessed(state.iterations());
 }
 
+static void Bm_function_malloc_multiple(benchmark::State &state)
+{
+    const size_t bytes = state.range(0);
+
+    OpenTcache();
+    for (auto _ : state) {
+        malloc_multiple(state, bytes);
+    }
+
+}
+
+static void Bm_function_malloc_free(benchmark::State &state)
+{
+
+    OpenTcache();
+    for (auto _ : state) {
+        malloc_free(state);
+    }
+
+}
+
+
 MUSL_BENCHMARK(Bm_function_realloc_twice);
 MUSL_BENCHMARK(Bm_function_realloc_half);
 MUSL_BENCHMARK(Bm_function_realloc_equal);
 MUSL_BENCHMARK(Bm_function_malloc_usable_size);
 MUSL_BENCHMARK_WITH_APPLY(Bm_function_Calloc, PrepareCallocArgs);
+MUSL_BENCHMARK_WITH_APPLY(Bm_function_malloc_multiple, PrepareCallocArgs);
+MUSL_BENCHMARK_WITH_APPLY(Bm_function_malloc_free, PrepareCallocArgs);
