@@ -54,7 +54,7 @@ void getspnam_0200(void)
     struct spwd *spwd = NULL;
 
     spwd = getspnam("bin");
-    EXPECT_NE("getspnam_0200", errno, 0);
+    EXPECT_PTREQ("getspnam_0200", errno, 0);
     EXPECT_PTREQ("getspnam_0200", spwd, NULL);
 }
 
@@ -69,7 +69,7 @@ void getspnam_0300(void)
     struct spwd *spwd;
 
     spwd = getspnam("bin/");
-    EXPECT_NE("getspnam_0300", errno, EINVAL);
+    EXPECT_PTREQ("getspnam_0300", errno, EINVAL);
     EXPECT_PTREQ("getspnam_0300", spwd, NULL);
 }
 
@@ -83,8 +83,8 @@ void getspnam_0400(void)
     errno = 0;
     struct spwd *spwd;
 
-    spwd = getspnam("bin.");
-    EXPECT_NE("getspnam_0400", errno, EINVAL);
+    spwd = getspnam(".bin");
+    EXPECT_PTREQ("getspnam_0400", errno, EINVAL);
     EXPECT_PTREQ("getspnam_0400", spwd, NULL);
 }
 
@@ -99,7 +99,7 @@ void getspnam_0500(void)
     struct spwd *spwd;
 
     spwd = getspnam("");
-    EXPECT_NE("getspnam_0500", errno, EINVAL);
+    EXPECT_PTREQ("getspnam_0500", errno, EINVAL);
     EXPECT_PTREQ("getspnam_0500", spwd, NULL);
 }
 
@@ -113,23 +113,23 @@ void getspnam_0600(void)
     errno = 0;
     struct spwd *spwd;
 
-    char name[MAX_NAME]= {0};
+    char name[MAX_NAME] = {0};
     memset(name, 1, MAX_NAME - 1);
     name[MAX_NAME - 1] = '\0';
 
     spwd = getspnam(name);
-    EXPECT_NE("getspnam_0600", errno, ERANGE);
+    EXPECT_PTREQ("getspnam_0600", errno, ERANGE);
     EXPECT_PTREQ("getspnam_0600", spwd, NULL);
 }
 
 int main(int argc, char *argv[])
 {
-    getspnam_r_0100();
-    getspnam_r_0200();
-    getspnam_r_0300();
-    getspnam_r_0400();
-    getspnam_r_0500();
-    getspnam_r_0600();
+    getspnam_0100();
+    getspnam_0200();
+    getspnam_0300();
+    getspnam_0400();
+    getspnam_0500();
+    getspnam_0600();
 
     return t_status;
 }
