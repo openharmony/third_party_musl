@@ -154,24 +154,27 @@ bool is_commercial()
 bool force_sample_process_by_env()
 {
     char buf[GWP_ASAN_NAME_LEN];
+    bool app_gwp_asan_enabled = false;
     char *path = get_process_short_name(buf, GWP_ASAN_NAME_LEN);
     if (!path) {
-        return false;
+        return app_gwp_asan_enabled;
     }
     char para_name[GWP_ASAN_NAME_LEN] = "gwp_asan.enable.app.";
     strcat(para_name, path);
     CachedHandle app_enable_handle = CachedParameterCreate(para_name, "false");
     if (app_enable_handle == NULL) {
-        return false;
+        return app_gwp_asan_enabled;
     }
     const char *param_value = CachedParameterGet(app_enable_handle);
-    CachedParameterDestroy(app_enable_handle);
     if (param_value != NULL) {
         if (strcmp(param_value, "true") == 0) {
-            return true;
+            app_gwp_asan_enabled = true;
         }
     }
-    return false;
+
+    CachedParameterDestroy(app_enable_handle);
+
+    return app_gwp_asan_enabled;
 }
 
 bool force_sample_alloctor_by_env()
