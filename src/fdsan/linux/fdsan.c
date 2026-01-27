@@ -153,7 +153,7 @@ static void save_debug_message(const char *msg)
 	debug_message.msg = msg;
 
 	const int signo = 42; // Custom stack capture signal and leak reuse
-	const int si_code = 1; // When si_signo = 42, use si_code = 1 mark the event as fdsan
+	const int si_code = -1; // When si_signo = 42, use si_code = -1 mark the event as fdsan
 	siginfo_t info;
 	info.si_signo = signo;
 	info.si_code = si_code;
