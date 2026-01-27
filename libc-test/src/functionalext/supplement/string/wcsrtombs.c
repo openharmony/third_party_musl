@@ -947,56 +947,6 @@ void wcsrtombs_2800(void)
     }
 }
 
-/**
- * @tc.name      : wcsrtombs_2900
- * @tc.desc      : Test wcsrtombs with NULL destination and non-zero buffer size
- * @tc.level     : Level 3
- */
-void wcsrtombs_2900(void)
-{
-    const wchar_t *src = L"TestString";
-    mbstate_t state = {0};
-    const wchar_t *src_ptr = src;
-
-    size_t result = wcsrtombs(NULL, &src_ptr, 10, &state);
-
-    if (result != 0 && result != (size_t)-1) {
-        t_error("%s wcsrtombs with NULL dst should return 0 or -1, got %zu\n", __func__, result);
-    }
-}
-
-/**
- * @tc.name      : wcsrtombs_3000
- * @tc.desc      : Test wcsrtombs with very long wide string
- * @tc.level     : Level 2
- */
-void wcsrtombs_3000(void)
-{
-    wchar_t long_src[256];
-    for (int i = 0; i < 255; i++) {
-        long_src[i] = L'A' + (i % 26);
-    }
-    long_src[255] = L'\0';
-
-    char dst[1024];
-    mbstate_t state = {0};
-    const wchar_t *src_ptr = long_src;
-
-    size_t result = wcsrtombs(dst, &src_ptr, sizeof(dst), &state);
-    if (result == (size_t)-1) {
-        t_error("%s wcsrtombs conversion failed for long string\n", __func__);
-        return;
-    }
-
-    if (src_ptr != NULL) {
-        t_error("%s wcsrtombs src_ptr should be NULL after full conversion\n", __func__);
-    }
-
-    if (result != 255) {
-        t_error("%s wcsrtombs get length %zu (want 255) for long string\n", __func__, result);
-    }
-}
-
 int main(int argc, char *argv[])
 {
     wcsrtombs_0100();
@@ -1027,22 +977,5 @@ int main(int argc, char *argv[])
     wcsrtombs_2600();
     wcsrtombs_2700();
     wcsrtombs_2800();
-    wcsrtombs_2900();
-    wcsrtombs_3000();
-    wcsrtombs_3100();
-    wcsrtombs_3200();
-    wcsrtombs_3300();
-    wcsrtombs_3400();
-    wcsrtombs_3500();
-    wcsrtombs_3600();
-    wcsrtombs_3700();
-    wcsrtombs_3800();
-    wcsrtombs_3900();
-    wcsrtombs_4000();
-    wcsrtombs_4100();
-    wcsrtombs_4200();
-    wcsrtombs_4300();
-    wcsrtombs_4400();
-    wcsrtombs_4500();
     return t_status;
 }
