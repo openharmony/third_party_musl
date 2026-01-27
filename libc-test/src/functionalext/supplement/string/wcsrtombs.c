@@ -947,6 +947,24 @@ void wcsrtombs_2800(void)
     }
 }
 
+/**
+ * @tc.name      : wcsrtombs_2900
+ * @tc.desc      : Test wcsrtombs with NULL destination and non-zero buffer size
+ * @tc.level     : Level 3
+ */
+void wcsrtombs_2900(void)
+{
+    const wchar_t *src = L"TestString";
+    mbstate_t state = {0};
+    const wchar_t *src_ptr = src;
+
+    size_t result = wcsrtombs(NULL, &src_ptr, 10, &state);
+
+    if (result != 0 && result != (size_t)-1) {
+        t_error("%s wcsrtombs with NULL dst should return 0 or -1, got %zu\n", __func__, result);
+    }
+}
+
 int main(int argc, char *argv[])
 {
     wcsrtombs_0100();
@@ -977,5 +995,6 @@ int main(int argc, char *argv[])
     wcsrtombs_2600();
     wcsrtombs_2700();
     wcsrtombs_2800();
+    wcsrtombs_2900();
     return t_status;
 }
