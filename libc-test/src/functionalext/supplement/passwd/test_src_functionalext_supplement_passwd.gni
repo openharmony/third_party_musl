@@ -15,6 +15,7 @@ functionalext_supplement_passwd_test = [
   "getgrnam",
   "getgrgid",
   "getpwent",
+  "getspnam",
   "setgrent",
   "setpwent",
   "getpw_r",
