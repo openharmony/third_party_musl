@@ -150,20 +150,17 @@ static void __vsyslog(int priority, const char *message, va_list ap)
 	__vsyslog_inter(priority, message, ap, 0);
 }
 
-void __syslog_inter(int priority, unsigned int mode_flags, const char *message, ...)
+void __syslog_inter(int priority, const char *message, va_list ap, unsigned int mode_flags)
 {
 	UNSUPPORTED_API_VOID(LITEOS_A);
-	va_list ap;
-	va_start(ap, message);
 	__vsyslog_inter(priority, message, ap, mode_flags);
-	va_end(ap);
 }
 
 void syslog(int priority, const char *message, ...)
 {
 	va_list ap;
 	va_start(ap, message);
-	return __syslog_inter(priority, 0, message, ap);
+	__syslog_inter(priority, message, ap, 0);
 	va_end(ap);
 }
 

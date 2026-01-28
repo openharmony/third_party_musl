@@ -19,11 +19,28 @@
 #include <unistd.h>
 #include <sys/wait.h>
 #include <signal.h>
+#include <pthread.h>
+#include <stdint.h>
 
 #include "functionalext.h"
 
 #define FORTIFY_FLAG 2
 
+static void *__syslog_chk_thread_func(void *arg)
+{
+    (void)arg;
+    for (int i = 0; i < 100; i++) {
+        errno = 0;
+        __syslog_chk(LOG_INFO, 0, "ok");
+        __syslog_chk(LOG_INFO, FORTIFY_FLAG, "ok");
+        
+        if (errno && errno != ENOENT) {
+            return (void*)(long)1;
+        }
+    }
+    
+    return NULL;
+}
 /**
  * @tc.name      : __syslog_chk_0100
  * @tc.desc      : Test normal branch - valid parameters with format string
@@ -170,8 +187,8 @@ void __syslog_chk_0800(void)
     } else {
         int status;
         waitpid(pid, &status, WUNTRACED);
-        EXPECT_TRUE("__syslog_chk_0800", WIFSIGNALED(status));
-        EXPECT_EQ("__syslog_chk_0800", WTERMSIG(status), SIGABRT);
+        EXPECT_TRUE(__func__, WIFSIGNALED(status));
+        EXPECT_EQ(__func__, WTERMSIG(status), SIGABRT);
     }
 }
 
@@ -211,6 +228,155 @@ void __syslog_chk_1000(void)
     }
 }
 
+/**
+ * @tc.name      : __syslog_chk_1100
+ * @tc.desc      : Verify valid priority values with different flags
+ * @tc.level     : Level 0
+ */
+void __syslog_chk_1100(void)
+{
+    errno = 0;
+    __syslog_chk(LOG_USER | LOG_INFO, 0, "Valid priority test: %s", "normal execution");
+    __syslog_chk(LOG_USER | LOG_INFO, FORTIFY_FLAG, "Valid priority test: %s", "normal execution");
+    if (errno && errno != ENOENT) {
+        t_error("%s failed: errno = %d\n", __func__, errno);
+    }
+}
+
+/**
+ * @tc.name      : __syslog_chk_1200
+ * @tc.desc      : Verify behavior with undefined priority values
+ * @tc.level     : Level 2
+ */
+void __syslog_chk_1200(void)
+{
+
+    errno = 0;
+    (void)__syslog_chk(0x7fffffff, 0, "Undefined priority test");
+     if (errno && errno != ENOENT) {
+        t_error("%s failed: errno = %d\n", __func__, errno);
+    }
+    errno = 0;
+    __syslog_chk(0x7fffffff, FORTIFY_FLAG, "Undefined priority test");
+     if (errno && errno != ENOENT) {
+        t_error("%s failed: errno = %d\n", __func__, errno);
+    }
+}
+
+/**
+ * @tc.name      : __syslog_chk_1300
+ * @tc.desc      : Verify behavior when flags > 0 (validation enabled)
+ * @tc.level     : Level 1
+ */
+void __syslog_chk_1300(void)
+{
+    errno = 0;
+    __syslog_chk(LOG_INFO, FORTIFY_FLAG, "flags>0 test: %s", "normal execution");
+    if (errno && errno != ENOENT) {
+        t_error("%s failed: errno = %d\n", __func__, errno);
+    }
+}
+
+/**
+ * @tc.name      : __syslog_chk_1400
+ * @tc.desc      : NULL message parameter
+ * @tc.level     : Level 2
+ */
+void __syslog_chk_1400(void)
+{
+    errno = 0;
+    __syslog_chk(LOG_INFO, 0, NULL);
+    if (errno != EINVAL) {
+        t_error("%s failed: errno = %d\n", __func__, errno);
+    }
+    errno = 0;
+    __syslog_chk(LOG_INFO, FORTIFY_FLAG, NULL);
+    if (errno != EINVAL) {
+        t_error("%s failed: errno = %d\n", __func__, errno);
+    }
+}
+
+/**
+ * @tc.name      : __syslog_chk_1500
+ * @tc.desc      : Verify format string with integer parameter
+ * @tc.level     : Level 0
+ */
+void __syslog_chk_1500(void)
+{
+    errno = 0;
+     __syslog_chk(LOG_INFO, 0, "value=%d", 10);
+    __syslog_chk(LOG_INFO, FORTIFY_FLAG, "value=%d", 10);
+    if (errno && errno != ENOENT) {
+        t_error("%s failed: errno = %d\n", __func__, errno);
+    }
+}
+
+/**
+ * @tc.name      : __syslog_chk_1600
+ * @tc.desc      : errno preservation behavior
+ * @tc.level     : Level 1
+ */
+void __syslog_chk_1600(void)
+{
+    errno = EAGAIN;
+    __syslog_chk(LOG_INFO, 0, "ok");
+    __syslog_chk(LOG_INFO, FORTIFY_FLAG, "ok");
+    if (errno != EAGAIN && errno != ENOENT) {
+        t_error("%s failed: errno = %d\n", __func__, errno);
+    }
+}
+
+/**
+ * @tc.name      : __syslog_chk_1700
+ * @tc.desc      : Test comprehensive boundary conditions
+ * @tc.level     : Level 1
+ */
+void __syslog_chk_1700(void)
+{
+    errno = 0;
+    
+    __syslog_chk(LOG_INFO, 0, "Short message");
+    __syslog_chk(LOG_INFO, FORTIFY_FLAG, "Short message");
+    
+    char long_string[256];
+    memset(long_string, 'A', 255);
+    long_string[255] = '\0';
+    
+    __syslog_chk(LOG_NOTICE, 0, "Long string test: %s (length: %zu)", 
+                long_string, strlen(long_string));
+    __syslog_chk(LOG_NOTICE, FORTIFY_FLAG, "Long string test: %s (length: %zu)", 
+                long_string, strlen(long_string));
+    
+    __syslog_chk(LOG_INFO, 0, "Special characters: newline\n tab\t percent%%");
+    __syslog_chk(LOG_INFO, FORTIFY_FLAG, "Special characters: newline\n tab\t percent%%");
+    
+    __syslog_chk(LOG_INFO, 0, "Multiple formats: integer %d, float %.2f, string %s", 
+                100, 3.14159, "test");
+    __syslog_chk(LOG_INFO, FORTIFY_FLAG, "Multiple formats: integer %d, float %.2f, string %s", 
+                100, 3.14159, "test");
+    
+    if (errno && errno != ENOENT) {
+        t_error("%s failed: errno = %d\n", __func__, errno);
+    }
+}
+
+/**
+ * @tc.name      : __syslog_chk_1800
+ * @tc.desc      : Multi-threaded concurrent execution
+ * @tc.level     : Level 2
+ */
+void __syslog_chk_1800(void)
+{
+    const int N = 8;
+    pthread_t tids[N];
+    for (int i = 0; i < N; i++) {
+        EXPECT_EQ(__FUNCTION__, pthread_create(&tids[i], NULL, __syslog_chk_thread_func, NULL), 0);
+    }
+    for (int i = 0; i < N; i++) {
+        pthread_join(tids[i], NULL);
+    }
+}
+
 int main(void)
 {
     __syslog_chk_0100();
@@ -223,6 +389,14 @@ int main(void)
     __syslog_chk_0800();
     __syslog_chk_0900();
     __syslog_chk_1000();
+    __syslog_chk_1100();
+    __syslog_chk_1200();
+    __syslog_chk_1300();
+    __syslog_chk_1400();
+    __syslog_chk_1500();
+    __syslog_chk_1600();
+    __syslog_chk_1700();
+    __syslog_chk_1800();
 
     return t_status;
 }
