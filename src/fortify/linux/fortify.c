@@ -508,7 +508,7 @@ void __syslog_chk(int priority, int flags, const char *message, ...)
 
     va_list ap;
     va_start(ap, message);
-    __DIAGNOSE_CALL_BYPASSING_FORTIFY(__syslog_inter)(priority, mode, message, ap);
+    __DIAGNOSE_CALL_BYPASSING_FORTIFY(__syslog_inter)(priority, message, ap, mode);
     va_end(ap);
 }
 
