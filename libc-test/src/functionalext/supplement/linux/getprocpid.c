@@ -1,16 +1,23 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Copyright (c) 2023 - 2026 Huawei Device Co., Ltd.
  *
- *   http://www.apache.org/licenses/LICENSE-2.0
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
  */
 
 #include <malloc.h>
@@ -21,6 +28,8 @@
 #include <stdlib.h>
 #include <sys/wait.h>
 #include "functionalext.h"
+
+const int STACK_SIZE = 1024 * 1024 *4;
 
 /**
  * @tc.name      : getprocpid_0100
@@ -86,13 +95,20 @@ void getprocpid_0300(void)
     pid_t pid1 = getprocpid();
     EXPECT_EQ("getprocpid_0300", pid1, getpid());
 
-    pid_t child = clone(child_func, NULL, CLONE_NEWPID | SIGCHLD, &pid1);
+    void* stack = malloc(STACK_SIZE);
+    if (!stack) {
+        t_error("malloc failed %s \n", strerror(errno));
+    }
+
+    pid_t child = clone(child_func, (char *)stack + STACK_SIZE, CLONE_NEWPID | SIGCHLD, &pid1);
     EXPECT_EQ("getprocpid_0300", child > 0, true);
 
     int status = 0;
     int ret = waitpid(child, &status, 0);
     EXPECT_EQ("getprocpid_0300", ret, child);
     EXPECT_EQ("getprocpid_0300", WIFEXITED(status), true);
+
+    free(stack);
 }
 
 static void *pthread_func(void *arg)
@@ -181,13 +197,20 @@ void getproctid_0300(void)
     pid_t pid1 = getproctid();
     EXPECT_EQ("getproctid_0300", pid1, gettid());
 
-    pid_t child = clone(child_func_tid, NULL, CLONE_NEWPID | SIGCHLD, &pid1);
+    void* stack = malloc(STACK_SIZE);
+    if (!stack) {
+        t_error("malloc failed %s \n", strerror(errno));
+    }
+
+    pid_t child = clone(child_func_tid, (char *)stack + STACK_SIZE, CLONE_NEWPID | SIGCHLD, &pid1);
     EXPECT_EQ("getproctid_0300", child > 0, true);
 
     int status = 0;
     int ret = waitpid(child, &status, 0);
     EXPECT_EQ("getproctid_0300", ret, child);
     EXPECT_EQ("getproctid_0300", WIFEXITED(status), true);
+
+    free(stack);
 }
 
 int main(int argc, char *argv[])
