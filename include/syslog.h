@@ -1,6 +1,8 @@
 #ifndef _SYSLOG_H
 #define _SYSLOG_H
 
+#include <stdarg.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -60,7 +62,7 @@ void closelog (void);
 void openlog (const char *, int, int);
 int setlogmask (int);
 void syslog (int, const char *, ...);
-void __syslog_inter(int, unsigned int, const char *, ...);
+void __syslog_inter(int, const char *, va_list, unsigned int);
 #ifdef MUSL_EXTERNAL_FUNCTION
 void __syslog_chk(int, int, const char *, ...);
 #endif

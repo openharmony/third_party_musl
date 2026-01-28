@@ -15,6 +15,8 @@
 
 ​       The __syslog_chk() function is a fortified version of the syslog() function.
 
+​       By default, syslog() (and thus __syslog_chk()) writes log messages to "/dev/log". If writing to "/dev/log" fails, it may fall back to writing to "/dev/console" depending on the system configuration and error conditions.
+
 #### **PARAMETERS**
 
 ​       **priority**: The priority level of the message, which is a combination of
@@ -50,6 +52,8 @@
  #### NOTES
  	 
  ​       This feature is designed specifically for when musl_extended_function is true.
+ 
+ ​       **Recommendation for OpenHarmony Developers**: For better integration with the OpenHarmony ecosystem and more comprehensive logging capabilities, it is recommended to use the `hilog` API instead of directly calling `syslog()` or `__syslog_chk()`. The `hilog` API provides a more unified and powerful logging mechanism that is optimized for OpenHarmony devices.
      
 #### **CONFORMING TO**
 
