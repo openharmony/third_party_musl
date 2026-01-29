@@ -51,7 +51,7 @@ static PostDnsResult load_result_poster(void)
 
 void
 dns_set_addr_info_to_netsys_cache2(const int netid, const char *restrict host, const char *restrict serv,
-								   const struct addrinfo *restrict hint, struct addrinfo *res)
+								   const struct addrinfo *restrict hint, struct dns_ans *res, int num)
 {
 	SetCache func = load_cache_setter();
 	if (!func) {
@@ -60,7 +60,7 @@ dns_set_addr_info_to_netsys_cache2(const int netid, const char *restrict host, c
 	}
 
 	struct param_wrapper param = {(char *) host, (char *) serv, (struct addrinfo *) hint};
-	int ret = func(netid, param, res);
+	int ret = func(netid, param, res, num);
 	if (ret < 0) {
 		GETADDRINFO_PRINT_DEBUG("dns_set_addr_info_to_netsys_cache OHOS_SET_CACHE_FUNC_NAME err %d\n", ret);
 		return;
@@ -88,9 +88,9 @@ static int IsIpv6Enable(int netid)
 }
 
 void dns_set_addr_info_to_netsys_cache(const char *restrict host, const char *restrict serv,
-									   const struct addrinfo *restrict hint, struct addrinfo *res)
+									   const struct addrinfo *restrict hint, struct dns_ans *res, int num)
 {
-	dns_set_addr_info_to_netsys_cache2(0, host, serv, hint, res);
+	dns_set_addr_info_to_netsys_cache2(0, host, serv, hint, res, num);
 }
 
 int dns_get_addr_info_from_netsys_cache2(const int netid, const char *restrict host, const char *restrict serv,

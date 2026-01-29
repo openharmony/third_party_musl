@@ -133,7 +133,7 @@ static void reverse_services(char *buf, int port, int dgram)
 	}
 }
 
-static int dns_parse_callback(void *c, int rr, const void *data, int len, const void *packet, int plen)
+static int dns_parse_callback(void *c, int rr, const void *data, int len, const void *packet, int plen, int ttl)
 {
 	if (rr != RR_PTR) return 0;
 	if (__dn_expand(packet, (const unsigned char *)packet + plen,
