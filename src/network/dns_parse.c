@@ -1,11 +1,12 @@
 #include <string.h>
 #include "lookup.h"
 
-int __dns_parse(const unsigned char *r, int rlen, int (*callback)(void *, int, const void *, int, const void *, int), void *ctx)
+int __dns_parse(const unsigned char *r, int rlen, int (*callback)(void *, int, const void *, int, const void *, int, int), void *ctx)
 {
 	int qdcount, ancount;
 	const unsigned char *p;
 	int len;
+	int ttl;
 
 	if (rlen<12) return -1;
 	if ((r[3]&15)) return 0;
@@ -25,7 +26,8 @@ int __dns_parse(const unsigned char *r, int rlen, int (*callback)(void *, int, c
 		p += 1 + !!*p;
 		len = p[8]*256 + p[9];
 		if (len+10 > r+rlen-p) return -1;
-		if (callback(ctx, p[1], p+10, len, r, rlen) < 0) return -1;
+		ttl = (p[4] << 24) | (p[5] << 16) | (p[6] << 8) | p[7];
+		if (callback(ctx, p[1], p+10, len, r, rlen, ttl) < 0) return -1;
 		p += 10 + len;
 	}
 	return 0;
