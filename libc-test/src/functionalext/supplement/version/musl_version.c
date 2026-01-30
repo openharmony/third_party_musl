@@ -12,9 +12,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <pthread.h>
+#include <string.h>
 
-#include "musl_version.h"
 #include "functionalext.h"
+#include "musl_version.h"
 
 /**
  * @tc.name      : get_musl_version_0100
@@ -36,6 +38,7 @@ void get_musl_version_0100(void)
 void get_musl_version_0200(void)
 {
     const char *version = get_musl_version();
+    EXPECT_PTRNE("get_musl_version_0200", version, NULL);
     int major = 0, minor = 0, patch = 0;
     int count = 0;
     count = sscanf(version, "%d.%d.%d", &major, &minor, &patch);
@@ -57,15 +60,78 @@ void get_musl_version_0200(void)
 void get_musl_version_0300(void)
 {
     const char *version1 = get_musl_version();
+    EXPECT_PTRNE("get_musl_version_0300", version1, NULL);
     const char *version2 = get_musl_version();
+    EXPECT_PTRNE("get_musl_version_0300", version2, NULL);
     EXPECT_TRUE("get_musl_version_0300", strcmp(version1, version2) == 0);
 }
 
+#define NUM_THREADS 4
+#define ITERATIONS_PER_THREAD 100
+
+struct thread_arg {
+    int thread_id;
+    int *result;
+};
+
+static void *thread_func(void *arg) {
+    struct thread_arg *targ = (struct thread_arg *)arg;
+    int success_count = 0;
+
+    for (int i = 0; i < ITERATIONS_PER_THREAD; i++) {
+        const char *version = get_musl_version();
+        if (version != NULL && strlen(version) > 0) {
+            success_count++;
+        }
+    }
+
+    *(targ->result) = success_count;
+    return NULL;
+}
+
+/**
+ * @tc.name      : get_musl_version_0400
+ * @tc.desc      : Multi-thread concurrent get_musl_version operations test (thread safety)
+ * @tc.level     : Level 1
+ */
+void get_musl_version_0400(void)
+{
+    pthread_t threads[NUM_THREADS];
+    int thread_results[NUM_THREADS] = {0};
+
+    struct thread_arg args[NUM_THREADS];
+    for (int i = 0; i < NUM_THREADS; i++) {
+        args[i].thread_id = i;
+        args[i].result = &thread_results[i];
+
+        if (pthread_create(&threads[i], NULL, thread_func, &args[i]) != 0) {
+            t_error("get_musl_version_0400: Failed to create thread %d\n", i);
+            thread_results[i] = -1;
+        }
+    }
+
+    for (int i = 0; i < NUM_THREADS; i++) {
+        if (thread_results[i] != -1) {
+            pthread_join(threads[i], NULL);
+        }
+    }
+
+    int total_success = 0;
+    for (int i = 0; i < NUM_THREADS; i++) {
+        if (thread_results[i] > 0) {
+            total_success += thread_results[i];
+        }
+    }
+
+    int expected_min_success = NUM_THREADS * ITERATIONS_PER_THREAD;
+    EXPECT_GTE("get_musl_version_0400", total_success, expected_min_success);
+}
 
 int main(void)
 {
     get_musl_version_0100();
     get_musl_version_0200();
     get_musl_version_0300();
+    get_musl_version_0400();
     return t_status;
 }
