@@ -533,23 +533,32 @@ static int set_thread_affinity(struct pthread *new, const pthread_attr_t *attr, 
     int result = 0;
 #ifdef MUSL_EXTERNAL_FUNCTION
 #ifndef __LITEOS_A__
-    if (get_pthread_extended_function_policy()) {
-        struct pthread_attr_ext *target_ext = (struct pthread_attr_ext *)attr->_a_extension;
-        if (target_ext && target_ext->cpuset && target_ext->cpusetsize != 0) {
-            int ret = __syscall(SYS_sched_setaffinity, new->tid, target_ext->cpusetsize,
-                                (const cpu_set_t *)target_ext->cpuset);
-
-            if (a_swap(&args->control, ret ? 4 : 0) == 2) {
-                __wake(&args->control, 1, 1);
-            }
-
-            if (ret) {
-                MUSL_LOGW("pthread_create: sched_setaffinity failed, ret: %{public}d, err: %{public}s",
-                          ret, strerror(errno));
-                __wait(&args->control, 0, 4, 0);
-                result = ret;
-            }
+    if (new == NULL || attr == NULL || args == NULL) {
+        return result;
+    }
+    if (!get_pthread_extended_function_policy()) {
+        return result;
+    }
+    struct pthread_attr_ext *target_ext = (struct pthread_attr_ext *)attr->_a_extension;
+    if (target_ext == NULL || target_ext->cpuset == NULL || target_ext->cpusetsize == 0) {
+        return result;
+    }
+    int ret = __syscall(SYS_sched_setaffinity, new->tid, target_ext->cpusetsize,
+                        (const cpu_set_t *)target_ext->cpuset);
+    // When attr.a_sched is true, the thread affinity synchronization mechanism should not affect the thread
+    // scheduling synchronization mechanism
+    // If setting thread affinity fails, wake up the created thread to exit
+	int should_wake = (!attr->_a_sched || ret != 0);
+    if (should_wake) {
+        if (a_swap(&args->control, ret ? 4 : 0) == 2) {
+            __wake(&args->control, 1, 1);
         }
+    }
+    if (ret) {
+        MUSL_LOGW("pthread_create: sched_setaffinity failed for thread %d, ret: %d, error: %s",
+                  new->tid, ret, strerror(errno));
+        __wait(&args->control, 0, 4, 0);
+        result = ret;
     }
 #endif
 #endif
@@ -682,7 +691,14 @@ int __pthread_create(pthread_t *restrict res, const pthread_attr_t *restrict att
 	args->start_func = entry;
 	args->start_arg = arg;
 	args->control = attr._a_sched ? 1 : 0;
-
+#ifdef MUSL_EXTERNAL_FUNCTION
+    if (get_pthread_extended_function_policy() && !attr._a_sched && attr._a_extension) {
+        struct pthread_attr_ext *ext = (struct pthread_attr_ext *)attr._a_extension;
+        if (!ext) {
+            args->control = (ext->cpuset != NULL && ext->cpusetsize > 0);
+        }
+    }
+#endif
 	/* Application signals (but not the synccall signal) must be
 	 * blocked before the thread list lock can be taken, to ensure
 	 * that the lock is AS-safe. */
@@ -710,7 +726,9 @@ int __pthread_create(pthread_t *restrict res, const pthread_attr_t *restrict att
 		cloneErrno = ret;
 		ret = -EAGAIN;
     } else {
-        set_thread_affinity(new, &attr, args);
+#ifdef MUSL_EXTERNAL_FUNCTION
+        ret = set_thread_affinity(new, &attr, args);
+#endif
     }
 	if (ret >= 0) {
         if (attr._a_sched) {

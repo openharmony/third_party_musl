@@ -46,10 +46,8 @@ int pthread_attr_setaffinity_np(pthread_attr_t *attr, size_t cpusetsize, const c
         target_ext = (struct pthread_attr_ext *)attr->_a_extension;
     }
 
-    size_t required_bytes = (cpusetsize + 7) / 8;
-
     if (!target_ext->cpuset || target_ext->cpusetsize != cpusetsize) {
-        void *new_buffer = malloc(required_bytes);
+        void *new_buffer = malloc(cpusetsize);
         if (!new_buffer)
             return ENOMEM;
 
@@ -61,10 +59,7 @@ int pthread_attr_setaffinity_np(pthread_attr_t *attr, size_t cpusetsize, const c
         target_ext->cpusetsize = cpusetsize;
     }
 
-    if (required_bytes > 0) {
-        memcpy(target_ext->cpuset, cpuset, required_bytes);
-    }
-
+    memcpy(target_ext->cpuset, cpuset, cpusetsize);
     return 0;
 #else
     return EINVAL;
