@@ -161,6 +161,8 @@ struct adlt {
 	uint8_t *sym_dso_Idx_map;         // symbol index map to adlt_ndso_index 
 	uint32_t nsym;                    // symbol count
 	/* symbol section (.symtab) mapping for backtrace symbol lookup */
+	uint32_t sym_cache_status;
+	uint32_t sym_cache_idx;
 	unsigned char *bsl_syms_map;      // map address
 	size_t bsl_syms_map_len;          // map size
 	Sym *bsl_syms;                    // section address (symbols)
