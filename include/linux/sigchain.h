@@ -44,6 +44,8 @@ void add_special_handler_at_last(int signo, struct signal_chain_action* sa);
 void remove_special_signal_handler(int signo, bool (*fn)(int, siginfo_t*, void*));
 /* Remove all special the handler from the sigchain */
 void remove_all_special_handler(int signo);
+/* Set the pre_validation_ignore flag to control whether to validate SIG_IGN before calling user handler */
+void set_sigchain_pre_validation_ignore(int value);
 
 #ifdef __cplusplus
 }
