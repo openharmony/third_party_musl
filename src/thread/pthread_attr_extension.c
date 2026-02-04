@@ -64,11 +64,8 @@ int pthread_attr_extension_destroy(pthread_attr_t *attr)
         struct pthread_attr_ext *ext = (struct pthread_attr_ext *)attr->_a_extension;
         if (ext->cpuset != NULL) {
             free(ext->cpuset);
-            ext->cpuset = NULL;
-            ext->cpusetsize = 0;
         }
         free((void *)attr->_a_extension);
-        attr->_a_extension = 0;
     }
     return 0;
 #else

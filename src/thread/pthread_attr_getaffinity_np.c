@@ -30,16 +30,13 @@ int pthread_attr_getaffinity_np(pthread_attr_t *attr, size_t cpusetsize, cpu_set
 
     struct pthread_attr_ext *target_ext = (struct pthread_attr_ext *)attr->_a_extension;
     if (!target_ext || !target_ext->cpuset || target_ext->cpusetsize == 0) {
-        CPU_ZERO_S(cpusetsize, cpuset);
+        memset(cpuset, -1, cpusetsize);
         return 0;
     }
 
     if (cpusetsize < target_ext->cpusetsize) {
         const unsigned char *src_bytes = (const unsigned char *)target_ext->cpuset;
-        size_t check_start = (cpusetsize + 7) / 8;
-        size_t check_end = (target_ext->cpusetsize + 7) / 8;
-
-        for (size_t i = check_start; i < check_end; i++) {
+        for (size_t i = cpusetsize; i < target_ext->cpusetsize; i++) {
             if (src_bytes[i] != 0) {
                 return EINVAL;
             }
@@ -47,14 +44,12 @@ int pthread_attr_getaffinity_np(pthread_attr_t *attr, size_t cpusetsize, cpu_set
     }
 
     size_t copy_size = target_ext->cpusetsize < cpusetsize ? target_ext->cpusetsize : cpusetsize;
-    if (copy_size > 0) {
-        memcpy(cpuset, target_ext->cpuset, (copy_size + 7) / 8);
-    }
+    memcpy(cpuset, target_ext->cpuset, copy_size);
 
     if (cpusetsize > copy_size) {
         unsigned char *dst_bytes = (unsigned char *)cpuset;
         size_t pad_size = cpusetsize - copy_size;
-        memset(dst_bytes + (copy_size + 7) / 8, 0, (pad_size + 7) / 8);
+        memset(dst_bytes + copy_size, 0, pad_size);
     }
 
     return 0;
