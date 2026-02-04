@@ -49,6 +49,8 @@ __progname_full;
 
 __stack_chk_guard;
 
+DFX_SetCrashObj;
+
 exit;
 _Exit;
 };
