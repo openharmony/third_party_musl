@@ -27,7 +27,8 @@ int socketpair(int domain, int type, int protocol, int fd[2])
 	}
 #ifdef OHOS_FDTRACK_HOOK_ENABLE
 	if (!r) {
-		restrace(RES_FD_SOCKET, r, 2, TAG_RES_FD_SOCKET, true);
+		restraceFd(RES_FD_SOCKET, fd[0], TAG_RES_FD_SOCKET, true);
+		restraceFd(RES_FD_SOCKET, fd[1], TAG_RES_FD_SOCKET, true);
 		FDTRACK_START_HOOK(fd[0]);
 		FDTRACK_START_HOOK(fd[1]);
 	}

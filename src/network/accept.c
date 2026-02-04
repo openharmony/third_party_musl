@@ -8,8 +8,9 @@
 int accept(int fd, struct sockaddr *restrict addr, socklen_t *restrict len)
 {
 #ifdef OHOS_FDTRACK_HOOK_ENABLE
-	restrace(RES_FD_SOCKET, fd, FD_SIZE, TAG_RES_FD_SOCKET, true);
-	return FDTRACK_START_HOOK(socketcall_cp(accept, fd, addr, len, 0, 0, 0));
+	int fd_new = socketcall_cp(accept, fd, addr, len, 0, 0, 0);
+	restraceFd(RES_FD_SOCKET, fd_new, TAG_RES_FD_SOCKET, true);
+	return FDTRACK_START_HOOK(fd_new);
 #endif
 	return socketcall_cp(accept, fd, addr, len, 0, 0, 0);
 }

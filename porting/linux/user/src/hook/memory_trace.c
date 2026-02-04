@@ -44,6 +44,16 @@ void restrace(unsigned long long mask, void* addr, size_t size, const char* tag,
 #endif
 }
 
+void restraceFd(unsigned long long mask, int fd, const char* tag, bool is_using)
+{
+#ifdef HOOK_ENABLE
+	if (__predict_true(fd >= 0)) {
+		restrace(mask, fd, FD_SIZE, tag, is_using);
+	}
+    return;
+#endif
+}
+
 void restraceExt(unsigned long long mask, void* addr, size_t size, const char* tag, bool is_using, bool isWeakRef)
 {
 #ifdef HOOK_ENABLE
