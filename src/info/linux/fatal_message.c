@@ -20,13 +20,10 @@
 #include <string.h>
 #include <sys/mman.h>
 #include <sys/prctl.h>
-#include <errno.h>
 #include "musl_log.h"
 
 static pthread_mutex_t fatal_msg_lock = PTHREAD_MUTEX_INITIALIZER;
 static fatal_msg_t *fatal_message = NULL;
-
-extern uintptr_t DFX_SetCrashObj(uint8_t type, uintptr_t addr);
 
 void set_fatal_message(const char *msg)
 {
@@ -48,12 +45,9 @@ void set_fatal_message(const char *msg)
     size_t size = sizeof(fatal_msg_t) + strlen(msg) + 1;
     void *map = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_ANON | MAP_PRIVATE, -1, 0);
     if (map == MAP_FAILED) {
-        MUSL_LOGE("%{public}s:mmap failed,err:%{public}d:%{public}s", __FUNCTION__, errno, strerror(errno));
+        MUSL_LOGI("mmap failed");
         fatal_message = NULL;
         pthread_mutex_unlock(&fatal_msg_lock);
-        if (DFX_SetCrashObj != NULL) {
-            DFX_SetCrashObj(0, msg);
-        }
         return;
     }
 
