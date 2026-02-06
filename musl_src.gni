@@ -2392,6 +2392,7 @@ musl_src_files_ext = [
   "src/hook/linux/musl_socket_dispatch.h",
   "src/hook/linux/musl_socket_preinit_common.h",
   "src/hook/linux/musl_opt.h",
+  "src/hook/linux/musl_malloc_opt.h",
   "src/hook/linux/memory_trace.h",
   "src/hook/linux/musl_socket.h",
 ]
@@ -2414,6 +2415,7 @@ musl_src_linux_files = [
   "src/hook/memory_trace.h",
   "src/hook/musl_socket.h",
   "src/hook/musl_opt.h",
+  "src/hook/musl_malloc_opt.h",
   "src/internal/musl_log.c",
   "src/internal/vdso.c",
   "src/hook/malloc_common.c",
@@ -2550,7 +2552,8 @@ musl_inc_hook_files = [
   "src/hook/linux/musl_malloc_dispatch.h",
   "src/hook/linux/musl_preinit_common.h",
   "src/hook/linux/musl_socket_dispatch.h",
-  "src/hook/linux/musl_opt.h"
+  "src/hook/linux/musl_opt.h",
+  "src/hook/linux/musl_malloc_opt.h"
 ]
 
 freebsd_headers = [ "$FREEBSD_DIR/contrib/libexecinfo/execinfo.h" ]
