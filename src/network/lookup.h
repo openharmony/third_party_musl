@@ -109,6 +109,12 @@ hidden int revert_dns_fail_cause(int cause);
 #define MAX_CANON_NAME 256
 #define MACRO_MIN(a, b) ((a) < (b) ? (a) : (b))
 
+enum ipv4_invalid_type {
+	IPV4_VALID_TYPE = 0,
+	IPV4_INVALID_TYPE_ALLZERO,
+	IPV4_INVALID_TYPE_LOCAL
+};
+
 struct resolv_config {
 	int32_t error;
 	int32_t timeout_ms;
@@ -177,6 +183,8 @@ int dns_post_result_to_netsys_cache(int netid, char* name, int usedtime, int que
 									struct addrinfo *res, struct queryparam *param);
 
 int dns_get_default_network(int *currentnetid);
+
+hidden int get_ipv4_invalid_type(const void *);
 #endif
 
 #if OHOS_FWMARK_CLIENT_BY_NETSYS

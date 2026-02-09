@@ -244,7 +244,12 @@ static int name_from_dns(struct address buf[static MAXADDRS], char canon[static 
 	int qlens[2], alens[2], qtypes[2];
 	int queryNum = 2;
 	int dns_errno = 0;
+#if OHOS_DNS_PROXY_BY_NETSYS
+	struct address tempAddr[MAXADDRS];
+	struct dpc_ctx ctx = { .addrs = tempAddr, .canon = canon };
+#else
 	struct dpc_ctx ctx = { .addrs = buf, .canon = canon };
+#endif
 	static const struct { int af; int rr; } afrr_ipv6_enable[2] = {
 		{ .af = AF_INET, .rr = RR_AAAA },
 		{ .af = AF_INET6, .rr = RR_A },
@@ -283,6 +288,13 @@ static int name_from_dns(struct address buf[static MAXADDRS], char canon[static 
 	int cname_count = 0;
 	const char *queryName = name;
 	int checkBuf[MAX_ANSWER_TYPE] = {VALID_ANSWER, VALID_ANSWER};
+#if OHOS_DNS_PROXY_BY_NETSYS
+	struct address localAddrBuf[MAXADDRS];
+	int ipv4LocalAddrCnt = 0;
+	int validIpv4AddrCnt = 0;
+	int invalidAddrCnt = 0;
+	int validAddrCnt = 0;
+#endif
 	while (strnlen(queryName, MAX_NAME_LENGTH) != 0 && cname_count < MAX_QUERY_SIZE) {
 		int i, nq = 0;
 		for (i = 0; i < queryNum; i++) {
@@ -338,10 +350,49 @@ static int name_from_dns(struct address buf[static MAXADDRS], char canon[static 
 			if (alens[i] > sizeof(abuf[i])) alens[i] = sizeof abuf[i];
 			__dns_parse(abuf[i], alens[i], dns_parse_callback, &ctx);
 		}
+#if OHOS_DNS_PROXY_BY_NETSYS
+		for (i = 0;i < ctx.cnt; i++) {
+			struct address addrs = ctx.addrs[i];
+			int family =  ctx.addrs[i].family;
+			if (family != AF_INET && family != AF_INET6) {
+				continue;
+			}
+			int invalidType = IPV4_VALID_TYPE;
+			if (family == AF_INET) {
+				invalidType = get_ipv4_invalid_type(addrs.addr);
+			}
+			if (invalidType == IPV4_VALID_TYPE) {
+				validIpv4AddrCnt += ((family == AF_INET) ? 1 : 0);
+				memcpy(&buf[validAddrCnt++], &addrs, sizeof(struct address));
+				continue;
+			}
+			if (invalidType == IPV4_INVALID_TYPE_LOCAL) {
+				memcpy(&localAddrBuf[ipv4LocalAddrCnt++], &addrs, sizeof(struct address));
+			}
+			invalidAddrCnt++;
+		}
+
+		if (validIpv4AddrCnt <= 0) {
+			for (int j = 0; j < ipv4LocalAddrCnt; j++) {
+				buf[validAddrCnt].family = AF_INET;
+				buf[validAddrCnt].scopeid = 0;
+				memcpy(&buf[validAddrCnt++].addr, localAddrBuf[j].addr, 4);
+			}
+		}
+		ctx.cnt = validAddrCnt;
+#endif
 		if (ctx.cnt) return ctx.cnt;
+#if OHOS_DNS_PROXY_BY_NETSYS
+		if (queryName == ctx.canon) break;
+#endif
 		queryName = ctx.canon;
 		cname_count++;
 	}
+#if OHOS_DNS_PROXY_BY_NETSYS
+	if (validAddrCnt == 0 && invalidAddrCnt > 0) {
+		return DNS_FAIL_REASON_SERVER_NO_RESULT;
+	}
+#endif
 #ifndef __LITEOS__
 	MUSL_LOGW("failed to parse dns : %{public}d", cname_count);
 #endif
