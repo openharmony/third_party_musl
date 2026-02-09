@@ -2103,7 +2103,6 @@
     strtoull_l;
     __syslog_chk;
     timelocal;
-    __cmsg_nxthdr;
     pthread_attr_extension_init;
     pthread_attr_extension_destroy;
     set_pthread_extended_function_policy;
