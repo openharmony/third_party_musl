@@ -42,9 +42,7 @@ void __longjmp_chk_0100(void)
         __longjmp_chk(jb, RETURN_456);
         FAIL();
     } else {
-        if (value != RETURN_456) {
-            t_error("%s _longjmp failed\n", __func__);
-        }
+        EXPECT_EQ(__FUNCTION__, value, RETURN_456);
     }
 }
 
@@ -144,7 +142,7 @@ void __longjmp_chk_0500(void)
 
 void* mt_worker(void* arg)
 {
-    __longjmp_chk_0200();
+    __longjmp_chk_0100();
     return NULL;
 }
 
