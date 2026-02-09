@@ -3239,6 +3239,7 @@ static void reloc_all(struct dso *p, const dl_extinfo *extinfo)
 		p->relocated = 1;
 		free_reloc_can_search_dso(p);
 	}
+	adlt_do_relocs_munmap();
 }
 
 static void kernel_mapped_dso(struct dso *p)
