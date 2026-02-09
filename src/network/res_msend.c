@@ -24,6 +24,9 @@
 struct type_ctx {
 	int count_v4;
 	int count_v6;
+#if OHOS_DNS_PROXY_BY_NETSYS
+	int invalid_count_v4;
+#endif
 };
 
 static void cleanup(void *p)
@@ -101,6 +104,7 @@ static void step_mh(struct msghdr *mh, size_t n)
 
 static int type_parse_callback(void *c, int rr, const void *data, int len, const void *packet, int plen, int ttl)
 {
+	int family = 0;
 	struct type_ctx *ctx = c;
 
 	switch (rr) {
@@ -108,18 +112,29 @@ static int type_parse_callback(void *c, int rr, const void *data, int len, const
 		if (len != 4) {
 			return -1;
 		}
-		ctx->count_v4++;
+		family = AF_INET;
 		break;
 	case RR_AAAA:
 		if (len != 16) {
 			return -1;
 		}
-		ctx->count_v6++;
+		family = AF_INET6;
 		break;
 	default:
 		break;
 	}
 
+#if OHOS_DNS_PROXY_BY_NETSYS
+	if (family == AF_INET) {
+		int ipv4_valid_type = get_ipv4_invalid_type(data);
+		if (ipv4_valid_type != IPV4_VALID_TYPE) {
+			ctx->invalid_count_v4++;
+			return 0;
+		}
+	}
+#endif
+	ctx->count_v4 += family == AF_INET ? 1 : 0;
+	ctx->count_v6 += family == AF_INET6 ? 1 : 0;
 	return 0;
 }
 
@@ -169,6 +184,9 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 	int try_ns[MAXNS] = {0};
 	bool multiV4 = false;
 	int last_retry = 0;
+	int nres_v6 = 0;
+	bool no_valid_v4[2] = { false, false };
+	uint8_t nres_invalid_v4 = 0;
 #endif
 
 	pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &cs);
@@ -316,7 +334,11 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 #endif
 		/* This is the loop exit condition: that all queries
 		 * have an accepted answer. */
-		for (i=0; i<nqueries && alens[i]>0; i++);
+#if OHOS_DNS_PROXY_BY_NETSYS
+		for (i=0; i<nqueries && alens[i]>0 && !no_valid_v4[i]; i++);
+#else
+ 		for (i=0; i<nqueries && alens[i]>0; i++);
+#endif
 		if (i==nqueries) break;
 
 		/* if the temp_t timeout, return result immediately. */
@@ -337,9 +359,7 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 				if (multiV4) {
 					retry[i] = last_retry;
 				}
-#endif
-				if (!alens[i]) {
-#if OHOS_DNS_PROXY_BY_NETSYS
+				if (!alens[i] || no_valid_v4[i]) {
 					if (multiV4) {
 						if (retry_count <= 1) {
 							retry_limit = (nv6 > 0) ? (2 + nv6) : 4; // 2 v4 and all v6 or 4 v4
@@ -381,6 +401,7 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 						}
 					}
 #else
+				if (!alens[i]) {
                     for (j=0; j<nns; j++) {
 						if (sendto(fd, queries[i], qlens[i], MSG_NOSIGNAL, (void *)&ns[j], sl) == -1) {
 							int errno_code = errno;
@@ -400,6 +421,11 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 			servfail_retry = 2 * nqueries;
 		}
 
+#if OHOS_DNS_PROXY_BY_NETSYS
+		if (nres_v6 > 0 && nres_invalid_v4 > 0) {
+			goto out;
+		}
+#endif
 		unsigned long remaining_time = t1 + retry_interval - t2;
 		if (nres_v4 > 0) {
 			if (!temp_t) {
@@ -503,7 +529,11 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 				answers[next][0] != queries[i][0] ||
 				answers[next][1] != queries[i][1] ); i++);
 			if (i==nqueries) continue;
+#if OHOS_DNS_PROXY_BY_NETSYS
+			if (alens[i] && !no_valid_v4[i]) continue;
+#else
 			if (alens[i]) continue;
+#endif
 
 			/* Only accept positive or negative responses;
 			 * retry immediately on server failure, and ignore
@@ -546,12 +576,21 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 
 			ctx.count_v4 = 0;
 			ctx.count_v6 = 0;
+#if OHOS_DNS_PROXY_BY_NETSYS
+			ctx.invalid_count_v4 = 0;
+#endif
 			__dns_parse(answers[i], alens[i], type_parse_callback, &ctx);
 			nres_v4 += ctx.count_v4;
 #ifndef __LITEOS__
 			if (ctx.count_v4 == 0 && ctx.count_v6 == 0) {
 				MUSL_LOGW("%{public}s: %{public}d: response have no ip.", __func__, __LINE__);
 			}
+#endif
+
+#if OHOS_DNS_PROXY_BY_NETSYS
+			nres_v6 += ctx.count_v6;
+			nres_invalid_v4 += ctx.invalid_count_v4;
+			no_valid_v4[i] = ctx.invalid_count_v4 > 0 && ctx.count_v4 <= 0;
 #endif
 
 			/* If answer is truncated (TC bit), before fallback to TCP, restore the UDP answer*/

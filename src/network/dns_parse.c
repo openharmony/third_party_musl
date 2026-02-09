@@ -1,6 +1,25 @@
 #include <string.h>
 #include "lookup.h"
 
+#if OHOS_DNS_PROXY_BY_NETSYS
+int get_ipv4_invalid_type(const void *data)
+{
+	if (data == NULL) {
+		return IPV4_VALID_TYPE;
+	}
+	const unsigned char* addr = (const unsigned char *)data;
+	unsigned char all_zero_addr[4] = { 0, 0, 0, 0 };
+	if (memcmp(addr, all_zero_addr, 4) == 0) {
+		return IPV4_INVALID_TYPE_ALLZERO;
+	}
+
+	if (addr[0] == 127) {
+		return IPV4_INVALID_TYPE_LOCAL;
+	}
+	return IPV4_VALID_TYPE;
+}
+#endif
+
 int __dns_parse(const unsigned char *r, int rlen, int (*callback)(void *, int, const void *, int, const void *, int, int), void *ctx)
 {
 	int qdcount, ancount;
