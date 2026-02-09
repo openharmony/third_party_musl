@@ -836,6 +836,28 @@ static void adlt_do_android_relocs(
 	}
 }
 
+static inline void adlt_do_one_relocs_munmap(struct unpack_reloc *relocs)
+{
+	if (relocs->map != MAP_FAILED) {
+		munmap(relocs->map, relocs->map_len);
+		relocs->map_len = 0; 
+		relocs->map = MAP_FAILED;
+	}
+}
+
+static void adlt_do_relocs_munmap(void)
+{
+	struct adlt* adlt = g_adlt_ptr;
+	while (adlt) {
+		struct unpack_reloc *relocs = (void *)&(adlt->relr_rel);
+		adlt_do_one_relocs_munmap(relocs);
+		relocs = &(adlt->android_rel);
+		adlt_do_one_relocs_munmap(relocs);
+		relocs = &(adlt->android_rela);
+		adlt_do_one_relocs_munmap(relocs);
+		adlt = adlt->next;
+	}
+}
 
 static void adlt_reloc(struct dso *p, size_t dyn[],const dl_extinfo *extinfo, ssize_t *relro_fd_offset)
 {
@@ -1631,6 +1653,8 @@ static bool is_same_adlt(struct adlt* adlt, struct stat* st) {return false;};
 static struct adlt* find_adlt_by_fstat(struct stat* st) {return NULL;};
 static char *create_realpath_from_fd(int fd) {return NULL;};
 static void adlt_reclaim_gaps(struct dso *dso) {return ;};
+static inline void adlt_do_one_relocs_munmap(struct unpack_reloc *relocs) {return;};
+static void adlt_do_relocs_munmap(void) {return;};
 static void adlt_reloc(struct dso *p, size_t dyn[],const dl_extinfo *extinfo, ssize_t *relro_fd_offset) {return ;};
 static void adlt_find_and_set_bss_name(struct dso *p, Phdr *phdr) {return ;};
 void *bolt_remap_addr_func_adlt(size_t a) {return a;};
