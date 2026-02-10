@@ -86,6 +86,8 @@ struct pthread {
 
 	volatile int cancel;
 	volatile unsigned char canceldisable, cancelasync;
+	/* reserved_slots[0] is used by OH memory allocator.
+	 * reserved_slots[1] is not used.*/
 	void *reserved_slots[RESERVED_SLOTS_SIZE];
 	/* Part 3 -- the positions of these fields relative to
 	 * the end of the structure is external and internal ABI. */
