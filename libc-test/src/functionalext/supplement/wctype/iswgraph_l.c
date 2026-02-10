@@ -22,7 +22,7 @@
 
 const int COUNT = 94;
 const int SIZE = 128;
-#define ALNUM_WINT_COUNT 287092
+#define ALNUM_WINT_COUNT 287093
 #define UNICODE_SIZE 1114111
 #define MAX_VALUE 4294967295
 
