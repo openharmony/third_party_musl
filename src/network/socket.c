@@ -67,7 +67,7 @@ int socket(int domain, int type, int protocol)
 			__syscall(SYS_fcntl, s, F_SETFL, O_NONBLOCK);
 	}
 #ifdef OHOS_FDTRACK_HOOK_ENABLE
-	restrace(RES_FD_SOCKET, s, FD_SIZE, TAG_RES_FD_SOCKET, true);
+	restraceFd(RES_FD_SOCKET, s, TAG_RES_FD_SOCKET, true);
 	return FDTRACK_START_HOOK(__syscall_ret(s));
 #endif
 	return __syscall_ret(s);

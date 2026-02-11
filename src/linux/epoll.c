@@ -20,7 +20,7 @@ int epoll_create1(int flags)
 #endif
 
 #ifdef OHOS_FDTRACK_HOOK_ENABLE
-	restrace(RES_FD_EPOLL, r, FD_SIZE, TAG_RES_FD_EPOLL, true);
+	restraceFd(RES_FD_EPOLL, r, TAG_RES_FD_EPOLL, true);
 	return FDTRACK_START_HOOK(__syscall_ret(r));
 #endif
 	return __syscall_ret(r);

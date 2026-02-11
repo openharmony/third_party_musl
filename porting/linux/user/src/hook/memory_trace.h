@@ -73,6 +73,7 @@ extern "C" {
 
 void memtrace(void* addr, size_t size, const char* tag, bool is_using);
 void restrace(unsigned long long mask, void* addr, size_t size, const char* tag, bool is_using);
+void restraceFd(unsigned long long mask, int fd, const char* tag, bool is_using);
 void restraceExt(unsigned long long mask, void* addr, size_t size, const char* tag, bool is_using, bool isWeakRef);
 void resTraceMove(unsigned long long mask, void* oldAddr, void* newAddr, size_t newSize);
 void resTraceFreeRegion(unsigned long long mask, void* addr, size_t size);
