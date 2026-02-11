@@ -15,7 +15,7 @@ int eventfd(unsigned int count, int flags)
 #endif
 
 #ifdef OHOS_FDTRACK_HOOK_ENABLE
-	restrace(RES_FD_EVENTFD, r, FD_SIZE, TAG_RES_FD_EVENTFD, true);
+	restraceFd(RES_FD_EVENTFD, r, TAG_RES_FD_EVENTFD, true);
 	return FDTRACK_START_HOOK(__syscall_ret(r));
 #endif
 	return __syscall_ret(r);

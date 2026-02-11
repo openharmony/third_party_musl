@@ -24,7 +24,7 @@ int open(const char *filename, int flags, ...)
 #endif
 
 #ifdef OHOS_FDTRACK_HOOK_ENABLE
-	restrace(RES_FD_OPEN, fd, FD_SIZE, TAG_RES_FD_OPEN, true);
+	restraceFd(RES_FD_OPEN, fd, TAG_RES_FD_OPEN, true);
 	return FDTRACK_START_HOOK(__syscall_ret(fd));
 #endif
 	return __syscall_ret(fd);
