@@ -681,6 +681,8 @@ int __pthread_create(pthread_t *restrict res, const pthread_attr_t *restrict att
 	new->sysinfo = self->sysinfo;
 	/* This is for GWP_ASAN to copy the configure to child thread. */
 	new->gwp_asan_tls = self->gwp_asan_tls;
+	/* This is for the memory allocator to reset its TLS. */
+	new->reserved_slots[0] = 0;
 
 	/* Setup argument structure for the new thread on its stack.
 	 * It's safe to access from the caller only until the thread
