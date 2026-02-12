@@ -758,20 +758,44 @@ static void __install_memleak_tracker_hook(int32_t sigNum, siginfo_t *info, void
 	}
 }
 
+static struct sigaction g_old_hook;
+static struct sigaction g_old_unhook;
 
-static void __install_malloc_hook_signal_handler()
+static void hook_dispatch(int sig)
 {
-	struct sigaction actionInstallHook = {};
-	actionInstallHook.sa_handler = __install_malloc_hook;
-	sigemptyset(&actionInstallHook.sa_mask);
-	sigaddset(&actionInstallHook.sa_mask, MUSL_SIGNAL_UNHOOK);
-	sigaction(MUSL_SIGNAL_HOOK, &actionInstallHook, NULL);
+	__install_malloc_hook(sig);
+	if (g_old_hook.sa_handler &&
+		g_old_hook.sa_handler != SIG_DFL &&
+		g_old_hook.sa_handler != SIG_IGN) {
+		g_old_hook.sa_handler(sig);
+	}
+}
 
-	struct sigaction actionDef = {};
-	actionDef.sa_handler = __uninstal_malloc_hook;
-	sigemptyset(&actionDef.sa_mask);
-	sigaddset(&actionDef.sa_mask, MUSL_SIGNAL_HOOK);
-	sigaction(MUSL_SIGNAL_UNHOOK, &actionDef, NULL);
+static void unhook_dispatch(int sig)
+{
+	if (g_old_unhook.sa_handler &&
+		g_old_unhook.sa_handler != SIG_DFL &&
+		g_old_unhook.sa_handler != SIG_IGN) {
+		g_old_unhook.sa_handler(sig);
+	}
+	(void)sig;
+}
+
+static void __install_malloc_hook_signal_handler(void)
+{
+	struct sigaction a = {};
+	a.sa_handler = hook_dispatch;
+	sigemptyset(&a.sa_mask);
+	sigaddset(&a.sa_mask, MUSL_SIGNAL_UNHOOK);
+	g_old_hook.sa_handler = NULL;
+	sigaction(MUSL_SIGNAL_HOOK, &a, &g_old_hook);
+
+	struct sigaction b = {};
+	b.sa_handler = unhook_dispatch;
+	sigemptyset(&b.sa_mask);
+	sigaddset(&b.sa_mask, MUSL_SIGNAL_HOOK);
+	g_old_unhook.sa_handler = NULL;
+	sigaction(MUSL_SIGNAL_UNHOOK, &b, &g_old_unhook);
 
 	struct sigaction actionInstallMemleakHook = {};
 	actionInstallMemleakHook.sa_handler = NULL;
