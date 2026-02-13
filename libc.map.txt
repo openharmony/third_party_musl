@@ -2109,6 +2109,7 @@
     get_pthread_extended_function_policy;
     dladdr1;
     __sched_cpufree;
+    set_sigchain_pre_validation_ignore;
   local:
     *;
 };

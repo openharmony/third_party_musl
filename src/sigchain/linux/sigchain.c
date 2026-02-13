@@ -32,11 +32,14 @@
 extern int __libc_sigaction(int sig, const struct sigaction *restrict sa,
                             struct sigaction *restrict old);
 #ifdef HOOK_ENABLE
-/* true is custom hook enabled, otherwise false. It will take effect after the HOOK_ENABLE macro defined */                            
+/* true is custom hook enabled, otherwise false. It will take effect after the HOOK_ENABLE macro defined */
 extern volatile atomic_bool __custom_hook_flag;
 #else
 bool __custom_hook_flag = false;
 #endif
+
+/* Control whether to validate SIG_IGN before calling user handler. 1 means enable validation. */
+static int pre_validation_ignore = 0;
 
 
 #define SIG_CHAIN_KEY_VALUE_1 1
@@ -304,6 +307,16 @@ static void signal_chain_handler(int signo, siginfo_t* siginfo, void* ucontext_r
     }
 
     sigchain_sigmask(SIG_SETMASK, &mask, NULL);
+
+    /*
+     * Pre-validation check for SIG_IGN.
+     * If pre_validation_ignore is enabled and the signal handler is SIG_IGN,
+     * directly return without calling the user handler.
+     */
+    if (pre_validation_ignore &&
+        sig_chains[signo - 1].sig_action.sa_handler == SIG_IGN) {
+        return;
+    }
 
     if ((sa_flags & SA_SIGINFO)) {
         SIGCHAIN_PRINT_WARN("%{public}s call usr sigaction for signal: %{public}d sig_action.sa_sigaction=%{public}llx",
@@ -591,4 +604,15 @@ void intercept_pthread_sigmask(int how, sigset_t *restrict set)
     }
 
     return;
+}
+
+/**
+ * @brief Set the pre_validation_ignore flag to control whether to validate SIG_IGN
+ *        before calling user signal handler.
+ * @param[in] value, the value to set (0 or 1, non-zero values are treated as 1)
+ * @retval void
+ */
+void set_sigchain_pre_validation_ignore(int value)
+{
+    pre_validation_ignore = value;
 }

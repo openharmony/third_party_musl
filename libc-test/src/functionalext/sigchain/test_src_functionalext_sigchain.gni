@@ -17,4 +17,6 @@ functionalext_sigchain_list = [
   "sigchain_intercept_signal",
   "sigchain_intercept_pthread_sigmask",
   "sigchain_handler_call_order",
+  "sigchain_set_pre_validation_ignore",
+  "sigchain_set_pre_validation_ignore_thread_test",
 ]
