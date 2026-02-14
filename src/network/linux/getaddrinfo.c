@@ -25,6 +25,7 @@
 typedef struct {
     char host[KEY_MAX];
     char serv[KEY_MAX];
+	int netid;
     int family;
     int socktype;
     int protocol;
@@ -50,7 +51,7 @@ typedef struct SharedResult {
 static SharedResult *g_result_cache = NULL;
 static pthread_mutex_t g_cache_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-static void gen_query_key(QueryKey *key, const char *host, const char *serv, const struct addrinfo *hints) {
+static void gen_query_key(QueryKey *key, int netid, const char *host, const char *serv, const struct addrinfo *hints) {
     memset(key, 0, sizeof(QueryKey));
     if (host) {
         strncpy(key->host, host, KEY_MAX - 1);
@@ -60,6 +61,12 @@ static void gen_query_key(QueryKey *key, const char *host, const char *serv, con
         strncpy(key->serv, serv, KEY_MAX - 1);
         key->serv[KEY_MAX - 1] = '\0';
     }
+	key->netid = netid;
+#if OHOS_DNS_PROXY_BY_NETSYS
+	if (netid == 0) {
+		dns_get_default_network(&key->netid);
+	}
+#endif
     key->family = hints ? hints->ai_family : AF_UNSPEC;
     key->socktype = hints ? hints->ai_socktype : 0;
     key->protocol = hints ? hints->ai_protocol : 0;
@@ -69,7 +76,7 @@ static void gen_query_key(QueryKey *key, const char *host, const char *serv, con
 
 static int query_key_equal(const QueryKey *a, const QueryKey *b) {
     int64_t diff = llabs((int64_t)a->ts.tv_sec * 1e9 + a->ts.tv_nsec - ((int64_t)b->ts.tv_sec * 1e9 + b->ts.tv_nsec));
-    return strcmp(a->host, b->host) == 0 &&
+    return a->netid == b->netid && strcmp(a->host, b->host) == 0 &&
            strcmp(a->serv, b->serv) == 0 &&
            a->family == b->family &&
            a->socktype == b->socktype &&
@@ -325,7 +332,7 @@ int getaddrinfo_ext(const char *restrict host, const char *restrict serv, const 
 	}
 
     QueryKey key;
-    gen_query_key(&key, host, serv, hint);
+    gen_query_key(&key, netid, host, serv, hint);
 
 	int is_leader = 0;
     SharedResult *shared_res = get_shared_result(&key, &is_leader);
@@ -384,6 +391,7 @@ int getaddrinfo_ext(const char *restrict host, const char *restrict serv, const 
         pthread_mutex_unlock(&shared_res->mutex);
     } else {
         // other threads wait for the result
+		MUSL_LOGW("wait shared result");
         pthread_mutex_lock(&shared_res->mutex);
 		while (shared_res->is_done == 0) {
 			pthread_cond_wait(&shared_res->cond, &shared_res->mutex);
