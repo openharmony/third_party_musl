@@ -52,6 +52,8 @@ typedef struct unwind_info {
 
 size_t libc_gwp_asan_unwind_fast(size_t *frame_buf, size_t max_record_stack);
 size_t libc_gwp_asan_unwind_segv(size_t *frame_buf, size_t max_record_stack, void *signal_context);
+size_t libc_gwp_asan_collect_allocations_by_time_range(uint64_t timespan, uintptr_t *buffer,
+                                                       size_t max_count, size_t depth);
 
 bool libc_gwp_asan_has_free_mem();
 bool libc_gwp_asan_ptr_is_mine(void *addr);

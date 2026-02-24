@@ -128,6 +128,7 @@
     __iswxdigit_l;
     __isxdigit_l;
     __lgammal_r;
+    libc_gwp_asan_collect_allocations_by_time_range;
     libc_gwp_asan_unwind_fast;
     libc_gwp_asan_unwind_segv;
     libc_gwp_asan_has_free_mem;
