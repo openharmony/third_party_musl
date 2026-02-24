@@ -31,7 +31,7 @@
 */
 
 FuncType *dlopen_config_abs_path_policy_func = NULL;
-Dl_namespace ns1, ns2;
+Dl_namespace ns1, ns2, default_ns;
 
 bool InitDlopenConfigAbsPathPolicy()
 {
@@ -68,7 +68,12 @@ bool CheckPrerequisites()
     // init namespace
     dlns_init(&ns1, "ns1");
     dlns_init(&ns2, "ns2");
-    int res = dlns_create2(&ns1, "/data/test/invalid", OTHER_FLAG);
+    int res = dlns_get("default", &default_ns);
+    if (res) {
+        printf("dlns_get default failed res=%d errno=%d\n", res, errno);
+        return false;
+    }
+    res = dlns_create2(&ns1, "/data/test/invalid", OTHER_FLAG);
     if (res) {
         printf("dlns_create2 ns1 failed res=%d errno=%d\n", res, errno);
         return false;
@@ -81,6 +86,16 @@ bool CheckPrerequisites()
     res = dlns_inherit(&ns1, &ns2, HELLO_SO);
     if (res) {
         printf("dlns_inherit ns1 from ns2 failed res=%d errno=%d\n", res, errno);
+        return false;
+    }
+    res = dlns_inherit(&ns1, &default_ns, NULL);
+    if (res) {
+        printf("dlns_inherit ns1 from default failed res=%d errno=%d\n", res, errno);
+        return false;
+    }
+    res = dlns_inherit(&ns2, &default_ns, NULL);
+    if (res) {
+        printf("dlns_inherit ns2 from default failed res=%d errno=%d\n", res, errno);
         return false;
     }
     res = dlns_set_namespace_separated("ns1", true);
