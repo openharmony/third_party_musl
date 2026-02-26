@@ -70,6 +70,7 @@ static size_t get_frame_pointer(ucontext_t *context)
 
 static bool gwp_asan_initialized = false;
 static bool gwp_asan_thirdparty_telemetry = false;
+static bool gwp_asan_recoverable = false;
 static uint8_t process_sample_rate = 128;
 static uint8_t force_sample_alloctor = 0;
 static uint8_t previous_random_value = 0;
@@ -151,6 +152,40 @@ bool is_commercial()
     return false;
 }
 
+bool get_app_bool_parameter(const char *prefix, const char *path)
+{
+    char para_name[GWP_ASAN_NAME_LEN];
+
+    if (snprintf(para_name, sizeof(para_name), "%s%s", prefix, path) >= sizeof(para_name)) {
+        return false;
+    }
+
+    CachedHandle app_enable_handle = CachedParameterCreate(para_name, "false");
+    if (app_enable_handle == NULL) {
+        return false;
+    }
+
+    const char *param_value = CachedParameterGet(app_enable_handle);
+    bool result = false;
+    if (param_value != NULL) {
+        if (strcmp(param_value, "true") == 0) {
+            result = true;
+        }
+    }
+    CachedParameterDestroy(app_enable_handle);
+    return result;
+}
+
+bool is_gwp_asan_recoverable()
+{
+    char buf[GWP_ASAN_NAME_LEN];
+    char *path = get_process_short_name(buf, GWP_ASAN_NAME_LEN);
+    if (!path) {
+        return false;
+    }
+    return get_app_bool_parameter("gwp_asan.recoverable.app.", path);
+}
+
 bool force_sample_process_by_env()
 {
     char buf[GWP_ASAN_NAME_LEN];
@@ -158,20 +193,7 @@ bool force_sample_process_by_env()
     if (!path) {
         return false;
     }
-    char para_name[GWP_ASAN_NAME_LEN] = "gwp_asan.enable.app.";
-    strcat(para_name, path);
-    CachedHandle app_enable_handle = CachedParameterCreate(para_name, "false");
-    if (app_enable_handle == NULL) {
-        return false;
-    }
-    const char *param_value = CachedParameterGet(app_enable_handle);
-    CachedParameterDestroy(app_enable_handle);
-    if (param_value != NULL) {
-        if (strcmp(param_value, "true") == 0) {
-            return true;
-        }
-    }
-    return false;
+    return get_app_bool_parameter("gwp_asan.enable.app.", path);
 }
 
 bool force_sample_alloctor_by_env()
@@ -204,7 +226,12 @@ bool should_sample_process()
         previous_random_value = random_value;
     }
 
-    return (random_value % process_sample_rate) == 0 ? true : false;
+    if ((random_value % process_sample_rate) == 0) {
+        gwp_asan_recoverable = true;
+        return true;
+    }
+
+    return false;
 }
 
 /* This function is used for gwp_asan to get telemetry param to init gwp_asan.
@@ -530,8 +557,8 @@ GWP_ASAN_NO_ADDRESS size_t run_unwind(size_t *frame_buf,
         }
         if (num_frames < max_record_stack) {
             frame_buf[num_frames] = stripped_lr - 4;
+            ++num_frames;
         }
-        ++num_frames;
         if (frame->fp == prev_fp || frame->lr == prev_lr || frame->fp < current_frame_addr + sizeof(unwind_info) ||
             frame->fp >= stack_end || frame->fp % sizeof(void*) != 0) {
             break;
@@ -631,9 +658,10 @@ bool may_init_gwp_asan(bool force_init)
     force_sample_alloctor_by_env();
     init_gwp_asan_by_telemetry(&sample_rate, &max_simultaneous_allocations,
         &min_sample_size, &white_list_path);
+    gwp_asan_recoverable = (!force_init) && (is_gwp_asan_recoverable() || gwp_asan_recoverable);
     MUSL_LOGW("[gwp_asan]: sample_rate:%{public}d, slot:%{public}d, "\
-        "min_sample_size:%{public}d, white_list_path:%{public}s",
-        sample_rate, max_simultaneous_allocations, min_sample_size, white_list_path);
+        "min_sample_size:%{public}d, white_list_path:%{public}s, recoverable:%{public}d",
+        sample_rate, max_simultaneous_allocations, min_sample_size, white_list_path, gwp_asan_recoverable);
 #endif
 
     gwp_asan_option gwp_asan_option = {
@@ -647,7 +675,8 @@ bool may_init_gwp_asan(bool force_init)
         .printf_backtrace = gwp_asan_printf_backtrace,
         .segv_backtrace = libc_gwp_asan_unwind_segv,
         .min_sample_size = min_sample_size,
-        .white_list_path = white_list_path
+        .white_list_path = white_list_path,
+        .gwp_asan_recoverable = gwp_asan_recoverable
     };
 
     return init_gwp_asan_process(gwp_asan_option);

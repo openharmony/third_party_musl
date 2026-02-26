@@ -43,6 +43,7 @@ typedef struct gwp_asan_option {
     segv_backtrace_t segv_backtrace;
     int min_sample_size;
     const char *white_list_path;
+    bool gwp_asan_recoverable;
 } gwp_asan_option;
 
 typedef struct unwind_info {
