@@ -328,3 +328,23 @@ void musl_log_reset()
     musl_log_enable = true;
 #endif
 }
+
+HILOG_LOCAL_API
+void __hilog_atfork(int who)
+{
+    if (who != 1) {
+        return;
+    }
+
+    int socketFd = INVALID_SOCKET;
+#ifdef a_ll
+    socketFd = a_ll(&g_socketFd);
+#else
+    socketFd = g_socketFd;
+#endif
+
+    a_store(&g_socketFd, INVALID_SOCKET);
+    if (socketFd != INVALID_SOCKET) {
+        __close(socketFd);
+    }
+}
