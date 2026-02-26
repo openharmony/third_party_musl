@@ -9,9 +9,11 @@
 #include "proc_xid_impl.h"
 #endif
 #include "fork_impl.h"
+#include "hilog_adapter.h"
 
 static void dummy(int x) { }
 weak_alias(dummy, __aio_atfork);
+weak_alias(dummy, __hilog_atfork);
 
 void __post_Fork(int ret)
 {
@@ -44,6 +46,7 @@ void __post_Fork(int ret)
 	}
 	UNLOCK(__abort_lock);
 	if (!ret) __aio_atfork(1);
+	if (!ret) __hilog_atfork(1);
 }
 
 pid_t _Fork(void)
