@@ -166,8 +166,12 @@ bool get_app_bool_parameter(const char *prefix, const char *path)
     }
 
     const char *param_value = CachedParameterGet(app_enable_handle);
-    bool result = param_value && (strcmp(param_value, "true") == 0);
-    
+    bool result = false;
+    if (param_value != NULL) {
+        if (strcmp(param_value, "true") == 0) {
+            result = true;
+        }
+    }
     CachedParameterDestroy(app_enable_handle);
     return result;
 }
