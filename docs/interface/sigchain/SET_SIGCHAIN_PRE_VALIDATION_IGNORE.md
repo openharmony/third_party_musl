@@ -1,4 +1,4 @@
-## SET_PRE_VALIDATION_IGNORE &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; OHOS Programmer's Manual   
+## SET_SIGCHAIN_PRE_VALIDATION_IGNORE &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; OHOS Programmer's Manual   
 
 
 
@@ -30,9 +30,9 @@ Note: This function is not MT-Safe (multi-thread safe) and not signal-safe. It s
 **value**
        Control flag for SIG_IGN pre-validation.
        
-       **0**      Disable pre-validation (default behavior).
+       0      Disable pre-validation (default behavior).
        
-       **Non-zero** Enable pre-validation.
+       Non-zero    Enable pre-validation.
 
 ### RETURN VALUE
 
@@ -47,7 +47,7 @@ The `set_sigchain_pre_validation_ignore()` function does not return a value.
 
 ### HISTORY
 
-​       -- 2025
+​       -- 2026
 
 ### NOTES
 
