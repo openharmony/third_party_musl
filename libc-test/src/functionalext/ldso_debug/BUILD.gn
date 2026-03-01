@@ -28,6 +28,7 @@ group("functionalext_ldso_debug_test") {
     ":ldso_debug_test_lib_8",
     ":ldso_debug_test_lib_9",
     ":ldso_memleak_check",
+    ":ldso_debug_for_hisysevent_test",
   ]
 }
 
@@ -153,4 +154,14 @@ ohos_shared_library("ldso_debug_test_lib_10") {
   output_extension = "so"
   subsystem_name = "thirdparty"
   part_name = "musl"
+}
+
+ohos_shared_library("ldso_debug_for_hisysevent_test") {
+  include_dirs = [ "." ]
+  sources = [ "ldso_debug_test_lib_1.c" ]
+
+  output_name = "ldso_debug_for_hisysevent_test"
+  output_extension = "so"
+  subsystem_name = "musl"
+  part_name = "libc-test-lib"
 }

@@ -1843,6 +1843,11 @@ musl_src_ldso = [
   "ldso/dynlink_rand.c",
   "ldso/cfi.c",
   "ldso/ld_log.c",
+  "src/hisysevent_easy/easy_event_builder.c",
+  "src/hisysevent_easy/easy_event_encoder.c",
+  "src/hisysevent_easy/easy_socket_writer.c",
+  "src/hisysevent_easy/easy_util.c",
+  "src/hisysevent_easy/hisysevent_easy.c",
 ]
 
 if (musl_arch == "arm") {
@@ -2296,6 +2301,12 @@ musl_inc_root_files = [
   "include/wordexp.h",
   "include/syscall_hooks.h",
   "include/pthread_ffrt.h",
+  "include/easy_def.h",
+  "include/easy_event_builder.h",
+  "include/easy_event_encoder.h",
+  "include/easy_socket_writer.h",
+  "include/easy_util.h",
+  "include/hisysevent_easy.h",
 ]
 
 musl_src_files_ext = [
@@ -2394,6 +2405,11 @@ musl_src_files_ext = [
   "src/hook/linux/musl_opt.h",
   "src/hook/linux/memory_trace.h",
   "src/hook/linux/musl_socket.h",
+  "src/hisysevent_easy/easy_event_builder.c",
+  "src/hisysevent_easy/easy_event_encoder.c",
+  "src/hisysevent_easy/easy_socket_writer.c",
+  "src/hisysevent_easy/easy_util.c",
+  "src/hisysevent_easy/hisysevent_easy.c",
 ]
 
 musl_src_linux_files = [

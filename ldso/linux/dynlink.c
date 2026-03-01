@@ -43,6 +43,7 @@
 #include "info/device_api_version.h"
 #include "signal.h"
 #include "sigchain.h"
+#include "hisysevent_easy.h"
 
 #ifdef IS_ASAN
 #if defined (__arm__)
@@ -109,6 +110,11 @@ static void (*error)(const char *, ...) = error_noop;
 
 #define KPMD_SIZE (1UL << 21)
 #define HUGEPAGES_SUPPORTED_STR_SIZE (32)
+
+#define DLOPEN_REPORT_RATE 10000
+#define HISYSEVENT_BUF_LEN 512
+#define PROCESS_NAME_BUF_LEN 256
+#define HISYSEVENT_REPORT_THRESHOLD 5
 
 #ifdef UNIT_TEST_STATIC
     #define UT_STATIC
@@ -189,6 +195,10 @@ static struct fdpic_dummy_loadmap app_dummy_loadmap;
 static struct icall_item pac_items[PAC_MODIFIER_SIZE] = {0};
 static bool check_abs_path = true;
 static struct dso *libc_dso = NULL;
+static char *g_process_name_cache = NULL;
+static char g_dlopen_hisysevent_buf[HISYSEVENT_BUF_LEN];
+static char g_process_name_buf[PROCESS_NAME_BUF_LEN];
+static int g_dlopen_hisysevent_count;
 
 struct debug *_dl_debug_addr = &debug;
 
@@ -4428,6 +4438,49 @@ int dlns_add_plugin_default_ld_dictionary(char *path)
 	return 0;
 }
 
+char *get_process_name(char *buf, size_t length)
+{
+	if (g_process_name_cache) {
+		return g_process_name_cache;
+	}
+	
+	char *app = NULL;
+	int fd = open("/proc/self/cmdline", O_RDONLY);
+	if (fd != -1) {
+		ssize_t ret = read(fd, buf, length - 1);
+		if (ret != -1) {
+			buf[ret] = 0;
+			app = strrchr(buf, '/');
+			if (app) {
+				app++;
+			} else {
+				app = buf;
+			}
+			char *app_end = strchr(app, ':');
+			if (app_end) {
+				*app_end = 0;
+			}
+			
+			g_process_name_cache = ld_strdup(app);
+			if (g_process_name_cache) {
+				app = g_process_name_cache;
+			}
+		}
+		close(fd);
+	}
+	return app;
+}
+
+static inline bool is_system_path(const char *file) {
+    const char *prefixes[] = {"/system", "/lib64", "/lib", "/vendor", "/chip_prod", "/sys_prod", "/usr"};
+    for (int i = 0; i < sizeof(prefixes)/sizeof(prefixes[0]); i++) {
+        if (strncmp(file, prefixes[i], strlen(prefixes[i])) == 0) {
+            return true;
+        }
+    }
+    return false;
+}
+
 void *dlopen_impl(
 	const char *file, int mode, const char *namespace, const void *caller_addr, const dl_extinfo *extinfo)
 {
@@ -4502,6 +4555,27 @@ void *dlopen_impl(
 	__inhibit_ptc();
 	trace_marker_reset();
 	trace_marker_begin(HITRACE_TAG_MUSL, "dlopen: ", file);
+	
+	if (file[0] == '/') {
+		unsigned long long randValue = 0;
+		int randFd = open("/dev/random", O_RDONLY);
+		if (randFd > 0) {
+			read(randFd, &randValue, sizeof(unsigned long long));
+			if ((randValue % DLOPEN_REPORT_RATE == 0) && is_system_path(file)) {
+				if (!g_process_name_cache) {
+					get_process_name(g_process_name_buf, PROCESS_NAME_BUF_LEN);
+					g_dlopen_hisysevent_count = 0;
+				}
+				
+				if (g_dlopen_hisysevent_count < HISYSEVENT_REPORT_THRESHOLD) {
+					++g_dlopen_hisysevent_count;
+					snprintf(g_dlopen_hisysevent_buf, sizeof(g_dlopen_hisysevent_buf), "%s:%s", g_process_name_buf, file);
+					HiSysEventEasyWrite("MUSL", "DLOPEN_WITH_ABSOLUTE_PATH", EASY_EVENT_TYPE_STATISTIC, g_dlopen_hisysevent_buf);
+				}
+			}
+			close(randFd);
+		}
+	}
 
 	/* When namespace does not exist, use caller's namespce
 	 * and when caller does not exist, use default namespce. */
