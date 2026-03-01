@@ -14,6 +14,7 @@
  */
 
 #include "functionalext.h"
+#include <unistd.h>
 
 #define LIB_PATH_1 "/data/tests/libc-test/src/libldso_debug_test_lib_1.so"
 #define LIB_PATH_2 "/data/tests/libc-test/src/libldso_debug_test_lib_2.so"
@@ -22,6 +23,8 @@
 #define LIB_PATH_5 "/data/tests/libc-test/src/libldso_debug_test_lib_5.so"
 #define LIB_PATH_6 "/data/tests/libc-test/src/libldso_debug_test_lib_6.so"
 #define LIB_PATH_BAK "/data/tests/libc-test/src/libldso_debug_test_lib_bak.so"
+#define LIB_PATH_FOR_HISYSEVENT_TEST_0005 "/data/local/tmp/libldso_debug_for_hisysevent_test.so"
+#define LIB_PATH_FOR_HISYSEVENT_TEST_0006 "/lib/ld-musl-aarch64.so.1"
 
 #define TEST_LIB_LOADING_TIME 20
 
@@ -106,11 +109,103 @@ void ldso_debug_test_0004(void)
     printf("["__FILE__"][Line: %d][%s]: end\n", __LINE__, __func__);
 }
 
+/**
+ * @tc.name      : ldso_debug_test_0005
+ * @tc.desc      : Verify HiSysEvent is NOT triggered.
+ * @tc.level     : Level 0
+ */
+void ldso_debug_test_0005(void)
+{
+    printf("["__FILE__"][Line: %d][%s]: entry\n", __LINE__, __func__);
+
+    FILE *fp = NULL;
+    char line[512] = {0};
+    char expected_str[512] = {0};
+    int event_found = 0;
+    extern char *__progname;
+
+    void* handle = dlopen(LIB_PATH_FOR_HISYSEVENT_TEST_0005, RTLD_NOW);
+    EXPECT_PTRNE("ldso_debug_test_0005", handle, NULL);
+
+    usleep(100000);
+
+    fp = popen("hisysevent -l -n DLOPEN_WITH_ABSOLUTE_PATH 2>/dev/null", "r");
+    if (fp != NULL) {
+        snprintf(expected_str, sizeof(expected_str), "%s:%s", __progname, LIB_PATH_FOR_HISYSEVENT_TEST_0005);
+
+        // Search for the expected string in HiSysEvent output
+        while (fgets(line, sizeof(line), fp) != NULL) {
+            if (strstr(line, expected_str) != NULL) {
+                event_found = 1;
+                printf("["__FILE__"][Line: %d][%s] failed: data should NOT be found: %s", __LINE__, __func__, line);
+                break;
+            }
+        }
+        pclose(fp);
+        EXPECT_EQ("ldso_debug_test_0005_event_found", event_found, 0);
+    } else {
+        t_error("%s: failed to run hisysevent command\n", __func__);
+    }
+
+    if (handle) {
+        EXPECT_EQ("ldso_debug_test_0005_dlclose", dlclose(handle), 0);
+    }
+
+    printf("["__FILE__"][Line: %d][%s]: end\n", __LINE__, __func__);
+}
+
+/**
+ * @tc.name      : ldso_debug_test_0006
+ * @tc.desc      : Verify HiSysEvent is triggered when dlopen file path contains special headers.
+ * @tc.level     : Level 0
+ */
+void ldso_debug_test_0006(void)
+{
+    printf("["__FILE__"][Line: %d][%s]: entry\n", __LINE__, __func__);
+
+    FILE *fp = NULL;
+    char line[512] = {0};
+    char expected_str[512] = {0};
+    int event_found = 0;
+    extern char *__progname;
+
+    void* handle = dlopen(LIB_PATH_FOR_HISYSEVENT_TEST_0006, RTLD_NOW);
+    EXPECT_PTRNE("ldso_debug_test_0006", handle, NULL);
+
+    usleep(100000);
+
+    fp = popen("hisysevent -l -n DLOPEN_WITH_ABSOLUTE_PATH 2>/dev/null", "r");
+    if (fp != NULL) {
+        snprintf(expected_str, sizeof(expected_str), "%s:%s", __progname, LIB_PATH_FOR_HISYSEVENT_TEST_0006);
+
+        while (fgets(line, sizeof(line), fp) != NULL) {
+            if (strstr(line, expected_str) != NULL) {
+                event_found = 1;
+                printf("["__FILE__"][Line: %d][%s] success: HiSysEvent found: %s", __LINE__, __func__, line);
+                break;
+            }
+        }
+        pclose(fp);
+        EXPECT_EQ("ldso_debug_test_0006_event_found", event_found, 1);
+    } else {
+        printf("["__FILE__"][Line: %d][%s]: Warning - failed to run hisysevent command\n",
+               __LINE__, __func__);
+    }
+
+    if (handle) {
+        EXPECT_EQ("ldso_debug_test_0006_dlclose", dlclose(handle), 0);
+    }
+
+    printf("["__FILE__"][Line: %d][%s]: end\n", __LINE__, __func__);
+}
+
 TEST_FUN G_Fun_Array[] = {
     ldso_debug_test_0001,
     ldso_debug_test_0002,
     ldso_debug_test_0003,
     ldso_debug_test_0004,
+    ldso_debug_test_0005,
+    ldso_debug_test_0006,
 };
 
 int main(void)
