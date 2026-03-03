@@ -57,6 +57,14 @@ static const struct lconv posix_lconv = {
 
 static struct lconv g_lconv_icures;
 static volatile int g_localeconv_initialize = 0;
+static char g_decimal_point_buf[ICU_BUFFER_SIZE];
+static char g_thousands_sep_buf[ICU_BUFFER_SIZE];
+static char g_int_curr_symbol_buf[ICU_BUFFER_SIZE];
+static char g_currency_symbol_buf[ICU_BUFFER_SIZE];
+static char g_mon_decimal_point_buf[ICU_BUFFER_SIZE];
+static char g_mon_thousands_sep_buf[ICU_BUFFER_SIZE];
+static char g_positive_sign_buf[ICU_BUFFER_SIZE];
+static char g_negative_sign_buf[ICU_BUFFER_SIZE];
 
 typedef enum {
 	ICU_DECIMAL_POINT = 0,
@@ -110,15 +118,14 @@ static void refresh_lconv_icures(void)
 		g_lconv_icures.int_p_sign_posn = posix_lconv.int_p_sign_posn;
 		g_lconv_icures.int_n_sign_posn = posix_lconv.int_n_sign_posn;
 
-		g_lconv_icures.decimal_point = (char *)malloc(ICU_BUFFER_SIZE);
-		g_lconv_icures.thousands_sep = (char *)malloc(ICU_BUFFER_SIZE);
-		g_lconv_icures.int_curr_symbol = (char *)malloc(ICU_BUFFER_SIZE);
-		g_lconv_icures.currency_symbol = (char *)malloc(ICU_BUFFER_SIZE);
-		g_lconv_icures.mon_decimal_point = (char *)malloc(ICU_BUFFER_SIZE);
-		g_lconv_icures.mon_thousands_sep = (char *)malloc(ICU_BUFFER_SIZE);
-		g_lconv_icures.positive_sign = (char *)malloc(ICU_BUFFER_SIZE);
-		g_lconv_icures.negative_sign = (char *)malloc(ICU_BUFFER_SIZE);
-		// ignore cas result to avoid interrupted by signal or fork
+		g_lconv_icures.decimal_point = g_decimal_point_buf;
+		g_lconv_icures.thousands_sep = g_thousands_sep_buf;
+		g_lconv_icures.int_curr_symbol = g_int_curr_symbol_buf;
+		g_lconv_icures.currency_symbol = g_currency_symbol_buf;
+		g_lconv_icures.mon_decimal_point = g_mon_decimal_point_buf;
+		g_lconv_icures.mon_thousands_sep = g_mon_thousands_sep_buf;
+		g_lconv_icures.positive_sign = g_positive_sign_buf;
+		g_lconv_icures.negative_sign = g_negative_sign_buf;
 		(void)a_cas(&g_localeconv_initialize, 0, 1);
 		a_barrier();
 	}
