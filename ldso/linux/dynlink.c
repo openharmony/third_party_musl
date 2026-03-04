@@ -4659,7 +4659,8 @@ void *dlopen_impl(
 				"Library %s is not already loaded" :
 				"Error loading shared library %s: %m",
 				file);
-			LD_LOGW("dlopen_impl load library header failed for %{public}s caller namespace : %{public}s", task->name, ns->ns_name);
+			LD_LOGW("dlopen_impl load library header failed for %{public}s caller namespace : %{public}s",
+				task->name, ns->ns_name);
 			trace_marker_end(HITRACE_TAG_MUSL); // "loading: entry so" trace end.
 			goto end;
 		}
