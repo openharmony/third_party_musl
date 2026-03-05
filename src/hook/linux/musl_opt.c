@@ -27,6 +27,7 @@
 #include <pthread.h>
 #include "musl_log.h"
 #include "musl_opt.h"
+#include "musl_malloc_opt.h"
 #include "atomic.h"
 
 bool default_initialize_func()
@@ -40,21 +41,32 @@ void default_lock_func(pthread_mutex_t *restrict m)
     while (spins-- && m->_m_lock && !m->_m_waiters) a_spin();
 }
 
+void default_malloc_func(void *temp, size_t bytes)
+{
+    return;
+}
+
 static char *__musl_opt_hook_shared_lib = "lib_kccllockopt.so";
 long long __ohos_musl_opt_hook_shared_library = NULL;
+bool musl_malloc_opt_enable = false;
 typedef bool (*initialize_func_type)();
-initialize_func_type initialize_func = default_initialize_func;
+initialize_func_type initialize_lock_func = default_initialize_func;
+initialize_func_type initialize_malloc_func = default_initialize_func;
 lock_func_type lock_func = default_lock_func;
+malloc_func_type malloc_opt_func = default_malloc_func;
 
 static bool init_musl_opt_hook_shared_library(void *shared_library_handle)
 {
-    initialize_func_type pfunc_initialize = (initialize_func_type)dlsym(shared_library_handle, "musl_opt_initialize");
-    lock_func_type pfunc_lock = (lock_func_type)dlsym(shared_library_handle, "musl_opt_lock");
-    if (pfunc_initialize == NULL || pfunc_lock == NULL) {
+    initialize_func_type pfunc_lock_initialize = (initialize_func_type)dlsym(shared_library_handle, "musl_opt_initialize");
+    initialize_func_type pfunc_malloc_initialize = (initialize_func_type)dlsym(shared_library_handle, "musl_malloc_opt_initialize");
+
+    if (pfunc_lock_initialize == NULL || pfunc_malloc_initialize == NULL) {
+        MUSL_LOGE("dlsym musl_opt_initialize or musl_malloc_opt_initialize failed!");
         return false;
     }
-    initialize_func = pfunc_initialize;
-    lock_func = pfunc_lock;
+    initialize_lock_func = pfunc_lock_initialize;
+    initialize_malloc_func = pfunc_malloc_initialize;
+
     return true;
 }
 
@@ -75,11 +87,32 @@ static void* load_musl_opt_hook_shared_library()
     return shared_library_handle;
 }
 
-static void init_musl_opt_hook()
+static void init_musl_lock_opt_hook(void *shared_library_handle)
 {
-    bool enable = initialize_func();
-    if (!enable) {
-        lock_func = default_lock_func;
+    bool enable_lock_opt = initialize_lock_func();
+    if (enable_lock_opt) {
+        lock_func_type pfunc_lock = 
+            (lock_func_type)dlsym(shared_library_handle, "musl_opt_lock");
+        if (pfunc_lock == NULL) {
+            MUSL_LOGE("lock node enable but load symbol musl_opt_lock failed!");
+            return;
+        }
+        lock_func = pfunc_lock;
+    }
+}
+
+static void init_musl_malloc_opt_hook(void *shared_library_handle)
+{
+    bool enable_malloc_opt = initialize_malloc_func();
+    if (enable_malloc_opt) {
+        malloc_func_type pfunc_malloc = 
+            (malloc_func_type)dlsym(shared_library_handle, "musl_opt_malloc");
+        if (pfunc_malloc == NULL) {
+            MUSL_LOGE("malloc node enable but load symbol musl_opt_malloc failed!");
+            return;
+        }
+        malloc_opt_func = pfunc_malloc;
+        musl_malloc_opt_enable = true;
     }
 }
 
@@ -90,12 +123,11 @@ __attribute__((constructor())) static void __musl_opt_initialize()
         return;
     }
     shared_library_handle = load_musl_opt_hook_shared_library();
-    if (shared_library_handle == NULL) {
-        initialize_func = default_initialize_func;
-        lock_func = default_lock_func;
+    if (shared_library_handle != NULL) {
+        init_musl_lock_opt_hook(shared_library_handle);
+        init_musl_malloc_opt_hook(shared_library_handle);
     }
 
-    init_musl_opt_hook();
     __ohos_musl_opt_hook_shared_library = (long long)shared_library_handle;
 }
 
