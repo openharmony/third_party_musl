@@ -58,6 +58,7 @@ declare_args() {
   }
   # Macro for Mutex Lock Performance Optimization
   musl_use_mutex_wait_opt = false
+  musl_use_malloc_opt = false
   musl_use_jemalloc = false
   musl_use_encaps = false
   musl_malloc_plugin = ""

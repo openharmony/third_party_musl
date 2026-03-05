@@ -25,6 +25,9 @@
 #ifdef OHOS_FDTRACK_HOOK_ENABLE
 #include "musl_fdtrack.h"
 #endif
+#if defined(USE_MALLOC_OPT) && defined(USE_JEMALLOC)
+#include "musl_malloc_opt.h"
+#endif
 
 #define MALLOC_REPORT_LIMIT (300 * 1024 * 1024)
 
@@ -72,6 +75,14 @@ void* malloc(size_t bytes)
 		return dispatch_table->malloc(bytes);
 	}
 #ifdef USE_GWP_ASAN
+	/* Macro: Optimization for malloc */
+#if defined(USE_MALLOC_OPT) && defined(USE_JEMALLOC)
+	if (musl_malloc_opt_enable) {
+		void *raw_ptr = libc_gwp_asan_malloc(bytes);
+		malloc_opt_func(raw_ptr, bytes);
+		return raw_ptr;
+	}
+#endif
 	return libc_gwp_asan_malloc(bytes);
 #endif
 	return  MuslFunc(malloc)(bytes);
