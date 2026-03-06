@@ -93,7 +93,6 @@ functional_list = [
 if (musl_use_pthread_cancel) {
   functional_list += [
     "pthread_cancel-points",
-    "pthread_cancel",
   ]
 }
 

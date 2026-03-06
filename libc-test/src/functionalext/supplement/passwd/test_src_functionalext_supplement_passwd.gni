@@ -23,5 +23,4 @@ functionalext_supplement_passwd_test = [
   "getgrouplist",
   "getgrgid_r",
   "getgrnam_r",
-  "getspnam_r",
 ]
