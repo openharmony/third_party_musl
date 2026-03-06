@@ -96,7 +96,8 @@ extern void gwp_asan_disable();
 extern void gwp_asan_enable();
 extern void gwp_asan_iterate(void *base, size_t size,
                                   void (*callback)(void* base, size_t size, void *arg), void *arg);
-
+extern size_t gwp_asan_collect_allocations_by_time_range(uint64_t timespan, uintptr_t *buffer,
+                                                         size_t max_count, size_t depth);
 
 extern int dladdr(const void *addr, Dl_info *info);
 
@@ -846,6 +847,11 @@ bool libc_gwp_asan_ptr_is_mine(void *addr)
     }
 
     return gwp_asan_pointer_is_mine(addr);
+}
+size_t libc_gwp_asan_collect_allocations_by_time_range(uint64_t timespan, uintptr_t *buffer,
+                                                  size_t max_count, size_t depth)
+{
+    return gwp_asan_collect_allocations_by_time_range(timespan, buffer, max_count, depth);
 }
 #else
 #include <stdbool.h>
