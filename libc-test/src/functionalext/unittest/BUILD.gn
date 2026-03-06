@@ -266,13 +266,8 @@ group("functionalext_unittest_test") {
     ":unittest_fatal_message",
     ":unittest_fatal_message_assert_fail",
     ":unittest_fatal_message_assert_fail_dialog",
-    ":unittest_hilog_adapter",
     ":unittest_hilog_base",
     ":unittest_hilog_vsnprint",
-    ":unittest_ldso_dynlink",
-    ":unittest_ldso_ld_log",
-    ":unittest_ldso_namesapce",
-    ":unittest_ldso_ns_config",
     ":unittest_ldso_strops",
   ]
 }

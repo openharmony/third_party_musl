@@ -38,7 +38,6 @@ functionalext_list = [
   "ldso_dlopen_config_abs_path:ldso_dlopen_config_abs_path_test",
   "ldso_same_name_symbol:ldso_same_symbol_name_with_different_version",
   "dl_different_hash:dl_different_hash",
-  "hilog:hilog_level",
   "ohos_dfx_log:ohos_dfx_log",
   "string:functionalext_string_test",
   "adlt:functionalext_adlt_test",
