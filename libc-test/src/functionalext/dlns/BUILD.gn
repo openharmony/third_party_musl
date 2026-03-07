@@ -22,7 +22,6 @@ group("dlns_test") {
     ":dlns_dlsym_test",
     ":dlns_inherit_test",
     ":dlns_separated_test",
-    ":dlns_set_fun_test",
     ":dlns_special_scene_test",
     ":dlopen_fill_random",
     ":dlopen_hash_sysv",

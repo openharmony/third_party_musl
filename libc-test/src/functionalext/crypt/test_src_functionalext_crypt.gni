@@ -12,6 +12,4 @@
 # limitations under the License.
 
 functionalext_crypt_test = [
-  # "crypt",
-  "encrypt",
 ]

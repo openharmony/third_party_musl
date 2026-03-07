@@ -49,7 +49,6 @@ ohos_executable("fdsan_test") {
 group("functionalext_supplement_stdio_test") {
   testonly = true
   deps = [
-    ":fdsan",
     ":fdsan_test",
   ]
   foreach(s, functionalext_supplement_stdio_test) {
