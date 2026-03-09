@@ -1187,12 +1187,34 @@ static inline struct symdef find_sym2(struct dso *dso, struct verinfo *verinfo, 
 		if (!dso->is_preload && ns && !check_sym_accessible(dso, ns)) {
 			continue;
 		}
-		sym = __find_sym(dso, verinfo, need_def, &def, &s_info_g, &s_info_s, ght, ghm, gho, gh);
-		if (sym) {
-			break;
+		if ((ght = dso->ghashtab)) {
+			if (gnu_hash_filter(ght, ghm, gho, gh)) {
+				sym = gnu_lookup(s_info_g, ght, dso, verinfo);
+			}
+		} else {
+			if (!s_info_s.sym_h) s_info_s = sysv_hash(verinfo->s);
+			sym = sysv_lookup(verinfo, s_info_s, dso);
 		}
+
+		if (!sym) {
+			if (!dso->adlt) continue;
+			sym = adlt_lookup_unique_sym(dso, verinfo);
+			if (!sym) continue;
+		}
+		if (!sym->st_shndx)
+			if (need_def || (sym->st_info&0xf) == STT_TLS
+				|| ARCH_SYM_REJECT_UND(sym))
+				continue;
+		if (!sym->st_value)
+			if ((sym->st_info&0xf) != STT_TLS)
+				continue;
+		if (!(1<<(sym->st_info&0xf) & OK_TYPES)) continue;
+		if (!(1<<(sym->st_info>>4) & OK_BINDS)) continue;
+		def.sym = sym;
+		def.dso = dso;
+		break;
 	}
-	adlt_sym_cache_clean();
+
 	return def;
 }
 
@@ -1209,12 +1231,34 @@ static inline struct symdef find_sym_by_deps(struct dso *dso, struct verinfo *ve
 		if (!is_dso_accessible(dso, ns)) {
 			continue;
 		}
-		sym = __find_sym(dso, verinfo, need_def, &def, &s_info_g, &s_info_s, ght, ghm, gho, gh);
-		if (sym) {
-			break;
+		if ((ght = dso->ghashtab)) {
+			if (gnu_hash_filter(ght, ghm, gho, gh)){
+				sym = gnu_lookup(s_info_g, ght, dso, verinfo);
+			}
+		} else {
+			if (!s_info_s.sym_h) s_info_s = sysv_hash(verinfo->s);
+			sym = sysv_lookup(verinfo, s_info_s, dso);
 		}
+
+		if (!sym) {
+			if (!dso->adlt) continue;
+			sym = adlt_lookup_unique_sym(dso, verinfo);
+			if (!sym) continue;
+		}
+		if (!sym->st_shndx)
+			if (need_def || (sym->st_info&0xf) == STT_TLS
+				|| ARCH_SYM_REJECT_UND(sym))
+				continue;
+		if (!sym->st_value)
+			if ((sym->st_info&0xf) != STT_TLS)
+				continue;
+		if (!(1<<(sym->st_info&0xf) & OK_TYPES)) continue;
+		if (!(1<<(sym->st_info>>4) & OK_BINDS)) continue;
+		def.sym = sym;
+		def.dso = dso;
+		break;
 	}
-	adlt_sym_cache_clean();
+
 	return def;
 }
 
