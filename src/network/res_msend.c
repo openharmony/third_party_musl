@@ -591,6 +591,18 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 			nres_v6 += ctx.count_v6;
 			nres_invalid_v4 += ctx.invalid_count_v4;
 			no_valid_v4[i] = ctx.invalid_count_v4 > 0 && ctx.count_v4 <= 0;
+			if (no_valid_v4[i]) {
+				if (retry[i] + 1 < nns) {
+					retry[i]++;
+					if (multiV4) {
+						last_retry = retry[i];
+					}
+					if (next >= nqueries) {
+						next = i;
+					}
+					continue;
+				}
+			}
 #endif
 
 			/* If answer is truncated (TC bit), before fallback to TCP, restore the UDP answer*/
