@@ -76,7 +76,9 @@ static void gen_query_key(QueryKey *key, int netid, const char *host, const char
 
 static int query_key_equal(const QueryKey *a, const QueryKey *b) {
     int64_t diff = llabs((int64_t)a->ts.tv_sec * 1e9 + a->ts.tv_nsec - ((int64_t)b->ts.tv_sec * 1e9 + b->ts.tv_nsec));
-    return a->netid == b->netid && strcmp(a->host, b->host) == 0 &&
+    return a->netid != 0 && b->netid != 0 &&
+		   a->netid == b->netid &&
+		   strcmp(a->host, b->host) == 0 &&
            strcmp(a->serv, b->serv) == 0 &&
            a->family == b->family &&
            a->socktype == b->socktype &&
