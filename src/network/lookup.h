@@ -151,7 +151,7 @@ typedef int32_t (*GetCache)(uint16_t netId, struct param_wrapper param,
 							struct addr_info_wrapper addr_info[static MAX_RESULTS],
 							uint32_t *num);
 
-typedef int32_t (*SetCache)(uint16_t netId, struct param_wrapper param, struct addrinfo *res, int *ttl);
+typedef int32_t (*SetCache)(uint16_t netId, struct param_wrapper param, struct dns_ans *res, int num);
 
 typedef int (*JudgeIpv6)(uint16_t netId);
 typedef int (*JudgeIpv4)(uint16_t netId);
