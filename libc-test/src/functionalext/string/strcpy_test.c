@@ -364,6 +364,311 @@ void test_strcpy_different_sizes() {
     }
 }
 
+void test_strcpy_boundary_exact() {
+    char dest[5];
+    strcpy(dest, "test");
+    if (strcmp(dest, "test")) {
+        t_error("Boundary exact copy failed\n");
+    }
+}
+
+void test_strcpy_repeated_chars() {
+    char dest[20];
+    strcpy(dest, "aaaaaaaaaa");
+    if (strcmp(dest, "aaaaaaaaaa")) {
+        t_error("Repeated chars copy failed\n");
+    }
+}
+
+void test_strcpy_same_src_dest() {
+    char dest[20] = "original";
+    strcpy(dest, dest);
+    if (strcmp(dest, "original")) {
+        t_error("Same src/dest copy failed\n");
+    }
+}
+
+void test_strcpy_numeric_string() {
+    char dest[20];
+    strcpy(dest, "1234567890");
+    if (strcmp(dest, "1234567890")) {
+        t_error("Numeric string copy failed\n");
+    }
+}
+
+void test_strcpy_mixed_alphanumeric() {
+    char dest[20];
+    strcpy(dest, "abc123xyz");
+    if (strcmp(dest, "abc123xyz")) {
+        t_error("Mixed alphanumeric copy failed\n");
+    }
+}
+
+void test_strcpy_with_quotes() {
+    char dest[30];
+    strcpy(dest, "\"quoted\"");
+    if (strcmp(dest, "\"quoted\"")) {
+        t_error("Quotes copy failed\n");
+    }
+}
+
+void test_strcpy_path_string() {
+    char dest[50];
+    strcpy(dest, "/data/local/tmp");
+    if (strcmp(dest, "/data/local/tmp")) {
+        t_error("Path string copy failed\n");
+    }
+}
+
+void test_strcpy_url_string() {
+    char dest[50];
+    strcpy(dest, "https://example.com");
+    if (strcmp(dest, "https://example.com")) {
+        t_error("URL string copy failed\n");
+    }
+}
+
+void test_strcpy_email_string() {
+    char dest[30];
+    strcpy(dest, "user@example.com");
+    if (strcmp(dest, "user@example.com")) {
+        t_error("Email string copy failed\n");
+    }
+}
+
+void test_strcpy_hex_string() {
+    char dest[20];
+    strcpy(dest, "0x1234abcd");
+    if (strcmp(dest, "0x1234abcd")) {
+        t_error("Hex string copy failed\n");
+    }
+}
+
+void test_strcpy_brackets() {
+    char dest[20];
+    strcpy(dest, "[test]");
+    if (strcmp(dest, "[test]")) {
+        t_error("Brackets copy failed\n");
+    }
+}
+
+void test_strcpy_curly_braces() {
+    char dest[20];
+    strcpy(dest, "{test}");
+    if (strcmp(dest, "{test}")) {
+        t_error("Curly braces copy failed\n");
+    }
+}
+
+void test_strcpy_underscore() {
+    char dest[20];
+    strcpy(dest, "test_variable");
+    if (strcmp(dest, "test_variable")) {
+        t_error("Underscore copy failed\n");
+    }
+}
+
+void test_strcpy_dash() {
+    char dest[20];
+    strcpy(dest, "test-variable");
+    if (strcmp(dest, "test-variable")) {
+        t_error("Dash copy failed\n");
+    }
+}
+
+void test_strcpy_plus_sign() {
+    char dest[20];
+    strcpy(dest, "test+value");
+    if (strcmp(dest, "test+value")) {
+        t_error("Plus sign copy failed\n");
+    }
+}
+
+void test_strcpy_ampersand() {
+    char dest[20];
+    strcpy(dest, "test&value");
+    if (strcmp(dest, "test&value")) {
+        t_error("Ampersand copy failed\n");
+    }
+}
+
+void test_strcpy_pipe() {
+    char dest[20];
+    strcpy(dest, "test|value");
+    if (strcmp(dest, "test|value")) {
+        t_error("Pipe copy failed\n");
+    }
+}
+
+void test_strcpy_backslash() {
+    char dest[20];
+    strcpy(dest, "test\\path");
+    if (strcmp(dest, "test\\path")) {
+        t_error("Backslash copy failed\n");
+    }
+}
+
+void test_strcpy_colon() {
+    char dest[20];
+    strcpy(dest, "name:value");
+    if (strcmp(dest, "name:value")) {
+        t_error("Colon copy failed\n");
+    }
+}
+
+void test_strcpy_semicolon() {
+    char dest[20];
+    strcpy(dest, "test;value");
+    if (strcmp(dest, "test;value")) {
+        t_error("Semicolon copy failed\n");
+    }
+}
+
+void test_strcpy_double_space() {
+    char dest[20];
+    strcpy(dest, "test  value");
+    if (strcmp(dest, "test  value")) {
+        t_error("Double space copy failed\n");
+    }
+}
+
+void test_strcpy_leading_space() {
+    char dest[20];
+    strcpy(dest, "  test");
+    if (strcmp(dest, "  test")) {
+        t_error("Leading space copy failed\n");
+    }
+}
+
+void test_strcpy_trailing_space() {
+    char dest[20];
+    strcpy(dest, "test  ");
+    if (strcmp(dest, "test  ")) {
+        t_error("Trailing space copy failed\n");
+    }
+}
+
+void test_strcpy_cjk_characters() {
+    char dest[20];
+    strcpy(dest, "测试");
+    if (strcmp(dest, "测试")) {
+        t_error("CJK characters copy failed\n");
+    }
+}
+
+void test_strcpy_uuid() {
+    char dest[40];
+    strcpy(dest, "550e8400-e29b-41d4-a716-446655440000");
+    if (strcmp(dest, "550e8400-e29b-41d4-a716-446655440000")) {
+        t_error("UUID copy failed\n");
+    }
+}
+
+void test_strcpy_xml_tag() {
+    char dest[20];
+    strcpy(dest, "<tag>");
+    if (strcmp(dest, "<tag>")) {
+        t_error("XML tag copy failed\n");
+    }
+}
+
+void test_strcpy_regex_pattern() {
+    char dest[30];
+    strcpy(dest, "[a-z]+");
+    if (strcmp(dest, "[a-z]+")) {
+        t_error("Regex pattern copy failed\n");
+    }
+}
+
+void test_strcpy_sql_query() {
+    char dest[50];
+    strcpy(dest, "SELECT * FROM table");
+    if (strcmp(dest, "SELECT * FROM table")) {
+        t_error("SQL query copy failed\n");
+    }
+}
+
+void test_strcpy_shell_command() {
+    char dest[30];
+    strcpy(dest, "ls -la");
+    if (strcmp(dest, "ls -la")) {
+        t_error("Shell command copy failed\n");
+    }
+}
+
+void test_strcpy_http_header() {
+    char dest[50];
+    strcpy(dest, "Content-Type: text/html");
+    if (strcmp(dest, "Content-Type: text/html")) {
+        t_error("HTTP header copy failed\n");
+    }
+}
+
+void test_strcpy_time_format() {
+    char dest[20];
+    strcpy(dest, "12:30:45");
+    if (strcmp(dest, "12:30:45")) {
+        t_error("Time format copy failed\n");
+    }
+}
+
+void test_strcpy_datetime_format() {
+    char dest[30];
+    strcpy(dest, "2025-01-15T12:30:45Z");
+    if (strcmp(dest, "2025-01-15T12:30:45Z")) {
+        t_error("DateTime format copy failed\n");
+    }
+}
+
+void test_strcpy_mime_boundary() {
+    char dest[50];
+    strcpy(dest, "----=_Part_0_1234567890");
+    if (strcmp(dest, "----=_Part_0_1234567890")) {
+        t_error("MIME boundary copy failed\n");
+    }
+}
+
+void test_strcpy_content_disposition() {
+    char dest[50];
+    strcpy(dest, "attachment; filename=test.txt");
+    if (strcmp(dest, "attachment; filename=test.txt")) {
+        t_error("Content disposition copy failed\n");
+    }
+}
+
+void test_strcpy_emoji() {
+    char dest[20];
+    strcpy(dest, "👋");
+    if (strcmp(dest, "👋")) {
+        t_error("Emoji copy failed\n");
+    }
+}
+
+
+void test_strcpy_russian() {
+    char dest[20];
+    strcpy(dest, "Привет");
+    if (strcmp(dest, "Привет")) {
+        t_error("Russian copy failed\n");
+    }
+}
+
+void test_strcpy_greek() {
+    char dest[20];
+    strcpy(dest, "Γειά");
+    if (strcmp(dest, "Γειά")) {
+        t_error("Greek copy failed\n");
+    }
+}
+
+void test_strcpy_arabic() {
+    char dest[20];
+    strcpy(dest, "مرحبا");
+    if (strcmp(dest, "مرحبا")) {
+        t_error("Arabic copy failed\n");
+    }
+}
+
 int main() {
     test_strcpy_basic();
     test_strcpy_empty();
@@ -402,6 +707,44 @@ int main() {
     test_strcpy_very_long();
     test_strcpy_non_terminated_src();
     test_strcpy_different_sizes();
+    test_strcpy_boundary_exact();
+    test_strcpy_repeated_chars();
+    test_strcpy_same_src_dest();
+    test_strcpy_numeric_string();
+    test_strcpy_mixed_alphanumeric();
+    test_strcpy_with_quotes();
+    test_strcpy_path_string();
+    test_strcpy_url_string();
+    test_strcpy_email_string();
+    test_strcpy_hex_string();
+    test_strcpy_brackets();
+    test_strcpy_curly_braces();
+    test_strcpy_underscore();
+    test_strcpy_dash();
+    test_strcpy_plus_sign();
+    test_strcpy_ampersand();
+    test_strcpy_pipe();
+    test_strcpy_backslash();
+    test_strcpy_colon();
+    test_strcpy_semicolon();
+    test_strcpy_double_space();
+    test_strcpy_leading_space();
+    test_strcpy_trailing_space();
+    test_strcpy_cjk_characters();
+    test_strcpy_uuid();
+    test_strcpy_xml_tag();
+    test_strcpy_regex_pattern();
+    test_strcpy_sql_query();
+    test_strcpy_shell_command();
+    test_strcpy_http_header();
+    test_strcpy_time_format();
+    test_strcpy_datetime_format();
+    test_strcpy_mime_boundary();
+    test_strcpy_content_disposition();
+    test_strcpy_emoji();
+    test_strcpy_russian();
+    test_strcpy_greek();
+    test_strcpy_arabic();
 
     return 0;
 }
