@@ -27,6 +27,7 @@
 #include <time.h>
 #include <sys/prctl.h>
 #include <sys/queue.h>
+#include <sys/random.h>
 
 #include "cfi.h"
 #include "dlfcn_ext.h"
@@ -195,9 +196,8 @@ static struct fdpic_dummy_loadmap app_dummy_loadmap;
 static struct icall_item pac_items[PAC_MODIFIER_SIZE] = {0};
 static bool check_abs_path = true;
 static struct dso *libc_dso = NULL;
-static char *g_process_name_cache = NULL;
-static char g_dlopen_hisysevent_buf[HISYSEVENT_BUF_LEN];
 static char g_process_name_buf[PROCESS_NAME_BUF_LEN];
+static bool g_process_name_init_done;
 static int g_dlopen_hisysevent_count;
 
 struct debug *_dl_debug_addr = &debug;
@@ -4438,47 +4438,74 @@ int dlns_add_plugin_default_ld_dictionary(char *path)
 	return 0;
 }
 
-char *get_process_name(char *buf, size_t length)
+static const char *get_process_name(void)
 {
-	if (g_process_name_cache) {
-		return g_process_name_cache;
+	if (g_process_name_init_done) {
+		return g_process_name_buf;
 	}
-	
-	char *app = NULL;
+
+	g_process_name_init_done = true;
+	g_process_name_buf[0] = '\0';
+
 	int fd = open("/proc/self/cmdline", O_RDONLY);
 	if (fd != -1) {
-		ssize_t ret = read(fd, buf, length - 1);
-		if (ret != -1) {
-			buf[ret] = 0;
-			app = strrchr(buf, '/');
+		ssize_t ret = read(fd, g_process_name_buf, sizeof(g_process_name_buf) - 1);
+		if (ret > 0) {
+			g_process_name_buf[ret] = '\0';
+			char *app = strrchr(g_process_name_buf, '/');
 			if (app) {
 				app++;
 			} else {
-				app = buf;
+				app = g_process_name_buf;
 			}
 			char *app_end = strchr(app, ':');
 			if (app_end) {
-				*app_end = 0;
+				*app_end = '\0';
 			}
-			
-			g_process_name_cache = ld_strdup(app);
-			if (g_process_name_cache) {
-				app = g_process_name_cache;
+
+			if (app != g_process_name_buf) {
+				size_t app_len = strlen(app);
+				memmove(g_process_name_buf, app, app_len + 1);
 			}
 		}
 		close(fd);
 	}
-	return app;
+
+	if (g_process_name_buf[0] == '\0') {
+		snprintf(g_process_name_buf, sizeof(g_process_name_buf), "unknown");
+	}
+
+	return g_process_name_buf;
 }
 
-static inline bool is_system_path(const char *file) {
-    const char *prefixes[] = {"/system", "/lib64", "/lib", "/vendor", "/chip_prod", "/sys_prod", "/usr"};
-    for (int i = 0; i < sizeof(prefixes)/sizeof(prefixes[0]); i++) {
-        if (strncmp(file, prefixes[i], strlen(prefixes[i])) == 0) {
-            return true;
-        }
-    }
-    return false;
+static inline bool is_system_path(const char *file)
+{
+	const char *prefixes[] = {"/system", "/lib64", "/lib", "/vendor", "/chip_prod", "/sys_prod", "/usr"};
+
+	for (size_t i = 0; i < sizeof(prefixes) / sizeof(prefixes[0]); i++) {
+		size_t prefix_len = strlen(prefixes[i]);
+		if (strncmp(file, prefixes[i], prefix_len) == 0
+			&& (file[prefix_len] == '\0' || file[prefix_len] == '/')) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+static bool should_sample_dlopen_report(const char *file)
+{
+	unsigned long long rand_value = 0;
+
+	if (!file || file[0] != '/' || !is_system_path(file)) {
+		return false;
+	}
+
+	if (getrandom(&rand_value, sizeof(rand_value), GRND_NONBLOCK) != sizeof(rand_value)) {
+		return false;
+	}
+
+	return rand_value % DLOPEN_REPORT_RATE == 0;
 }
 
 void *dlopen_impl(
@@ -4501,6 +4528,9 @@ void *dlopen_impl(
 	struct dso *current_so = NULL;
 	struct notify_dso *list = NULL;
 	int volatile has_notifier = 0;
+	bool should_report_hisysevent = false;
+	bool should_sample_report = false;
+	char dlopen_hisysevent_buf[HISYSEVENT_BUF_LEN];
 	clock_gettime(CLOCK_MONOTONIC, &total_start);
 #ifdef LOAD_ORDER_RANDOMIZATION
 	struct loadtasks *tasks = NULL;
@@ -4533,6 +4563,8 @@ void *dlopen_impl(
 	}
 #endif
 
+	should_sample_report = should_sample_dlopen_report(file);
+
 	if (extinfo) {
 		reserved_address_recursive = extinfo->flag & DL_EXT_RESERVED_ADDRESS_RECURSIVE;
 		if (extinfo->flag & DL_EXT_RESERVED_ADDRESS) {
@@ -4555,25 +4587,13 @@ void *dlopen_impl(
 	__inhibit_ptc();
 	trace_marker_reset();
 	trace_marker_begin(HITRACE_TAG_MUSL, "dlopen: ", file);
-	
-	if (file[0] == '/') {
-		unsigned long long randValue = 0;
-		int randFd = open("/dev/random", O_RDONLY);
-		if (randFd > 0) {
-			read(randFd, &randValue, sizeof(unsigned long long));
-			if ((randValue % DLOPEN_REPORT_RATE == 0) && is_system_path(file)) {
-				if (!g_process_name_cache) {
-					get_process_name(g_process_name_buf, PROCESS_NAME_BUF_LEN);
-					g_dlopen_hisysevent_count = 0;
-				}
-				
-				if (g_dlopen_hisysevent_count < HISYSEVENT_REPORT_THRESHOLD) {
-					++g_dlopen_hisysevent_count;
-					snprintf(g_dlopen_hisysevent_buf, sizeof(g_dlopen_hisysevent_buf), "%s:%s", g_process_name_buf, file);
-					HiSysEventEasyWrite("MUSL", "DLOPEN_WITH_ABSOLUTE_PATH", EASY_EVENT_TYPE_STATISTIC, g_dlopen_hisysevent_buf);
-				}
-			}
-			close(randFd);
+
+	if (should_sample_report && g_dlopen_hisysevent_count < HISYSEVENT_REPORT_THRESHOLD) {
+		const char *process_name = get_process_name();
+		int ret = snprintf(dlopen_hisysevent_buf, sizeof(dlopen_hisysevent_buf), "%s:%s", process_name, file);
+		if (ret > 0 && ret < sizeof(dlopen_hisysevent_buf)) {
+			++g_dlopen_hisysevent_count;
+			should_report_hisysevent = true;
 		}
 	}
 
@@ -4849,6 +4869,12 @@ end:
 	pthread_setcancelstate(cs, 0);
 	trace_marker_end(HITRACE_TAG_MUSL); // "dlopen: " trace end.
 	clock_gettime(CLOCK_MONOTONIC, &total_end);
+
+	if (should_report_hisysevent) {
+		HiSysEventEasyWrite("MUSL", "DLOPEN_WITH_ABSOLUTE_PATH", EASY_EVENT_TYPE_STATISTIC,
+			dlopen_hisysevent_buf);
+	}
+	
 	dlopen_cost.total_time = (total_end.tv_sec - total_start.tv_sec) * CLOCK_SECOND_TO_MILLI
 		+ (total_end.tv_nsec - total_start.tv_nsec) / CLOCK_NANO_TO_MILLI;
 	if ((dlopen_cost.total_time > DLOPEN_TIME_THRESHOLD || is_dlopen_debug_enable()) && current_so) {
