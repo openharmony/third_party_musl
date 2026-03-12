@@ -180,6 +180,10 @@ struct prctl_mm_map {
 #define PR_SET_VMA 0x53564d41
 #define PR_SET_VMA_ANON_NAME 0
 
+#define HM_PR_PRELINK 0x2ace
+#define HM_PRELINK_USE_PRELINKER 1
+#define HM_PRELINK_SET_PRELINKER 2
+
 int prctl (int, ...);
 
 #ifdef __cplusplus

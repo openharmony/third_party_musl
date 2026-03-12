@@ -903,6 +903,9 @@ static void adlt_reloc(struct dso *p, size_t dyn[],const dl_extinfo *extinfo, ss
 	adlt_do_android_relocs(p, DT_ANDROID_REL, DT_ANDROID_RELSZ, rel_dyn_cnt, adlt_rel_dyn);
 	adlt_do_android_relocs(p, DT_ANDROID_RELA, DT_ANDROID_RELASZ, rel_dyn_cnt, adlt_rel_dyn);
 
+	/* Prelink after all relocs done and before relro mprotect. */
+	do_prelink(p);
+
 	if (head != &ldso && p->relro_start != p->relro_end &&
 		mprotect(laddr(p, p->relro_start), p->relro_end-p->relro_start, PROT_READ)
 		&& errno != ENOSYS) {

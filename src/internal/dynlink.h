@@ -274,6 +274,9 @@ struct dso {
 	bool is_global;
 	bool is_preload;
 	bool is_reloc_head_so_dep;
+	bool is_prelinked;
+	bool prelink_skip;
+	size_t relro_cache_index;
 	char relocated;
 	char constructed;
 	char kernel_mapped;
