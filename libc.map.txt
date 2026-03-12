@@ -552,6 +552,9 @@
     do_dlclose;
     dlopen_ext;
     dlopen_ns;
+    dlprelink_register;
+    dlprelink_record;
+    dlprelink_reserve_mem;
     dlsym;
     dlvsym;
     dn_comp;
