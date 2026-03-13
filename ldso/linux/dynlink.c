@@ -355,21 +355,6 @@ static bool check_acceptable(ns_inherit *inherit, const char *lib_name)
 	return is_sharable(inherit, last_slash);
 }
 
-#if defined(BTI_SUPPORT) && (!defined(__LITEOS__))
-struct gnu_property {
-	uint32_t pr_type;
-	uint32_t pr_datasz;
-};
-
-/* Security enhancement: add BTI releated constant*/
-#define GNU_PROPERTY_TYPE_0_NAME "GNU"
-#define GNU_PROPERTY_AARCH64_FEATURE_1_AND 0xc0000000
-#define GNU_PROPERTY_AARCH64_FEATURE_1_BTI (1U << 0)
-#define NOTE_NAME_SZ (sizeof(GNU_PROPERTY_TYPE_0_NAME))
-
-#define ELF_GNU_PROPERTY_ALIGN 8
-#define BUF_MAX 0x400
-
 static int prelinker_dso_cmp(const void *a, const void *b)
 {
 	const struct dso *pa = *(const struct dso * const *)a;
@@ -424,6 +409,21 @@ static void add_dso_prelink_info(struct dso *p)
 		}
 	}
 }
+
+#if defined(BTI_SUPPORT) && (!defined(__LITEOS__))
+struct gnu_property {
+	uint32_t pr_type;
+	uint32_t pr_datasz;
+};
+
+/* Security enhancement: add BTI releated constant*/
+#define GNU_PROPERTY_TYPE_0_NAME "GNU"
+#define GNU_PROPERTY_AARCH64_FEATURE_1_AND 0xc0000000
+#define GNU_PROPERTY_AARCH64_FEATURE_1_BTI (1U << 0)
+#define NOTE_NAME_SZ (sizeof(GNU_PROPERTY_TYPE_0_NAME))
+
+#define ELF_GNU_PROPERTY_ALIGN 8
+#define BUF_MAX 0x400
 
 /* Security enhancement: Traverse PT_GNU_PROPERTY and PT_NOTE in the ELF to check
  * whether GNU_PROPERTY_AARCH64_FEATURE_1_BTI exists.
@@ -4084,8 +4084,6 @@ static int do_dlprelink_record(int memfd, const char *list_path, size_t *auxv)
 	struct dso *prelink_tail = NULL;
 
 	ns_t *ns_default = get_default_ns();
-	ns_t *ns_passthrough = find_ns_by_name("passthrough");
-	if (ns_passthrough == NULL) ns_passthrough = ns_default;
 
 #ifdef LOAD_ORDER_RANDOMIZATION
 	struct loadtasks *tasks = create_loadtasks();
@@ -4105,8 +4103,12 @@ static int do_dlprelink_record(int memfd, const char *list_path, size_t *auxv)
 		} else {
 			p = end;
 		}
-		if (!strncmp(dso_path, "/vendor/lib64/passthrough/", strlen("/vendor/lib64/passthrough/"))) {
-			ns = ns_passthrough;
+		char *n2 = memchr(dso_path, ':', (size_t)(p - dso_path));
+		if (n2) {
+			*n2 = '\0';
+			ns_t *ns_tmp = find_ns_by_name(dso_path);
+			ns = ns_tmp ? ns_tmp : ns;
+			dso_path = n2 + 1;
 		}
 #ifdef LOAD_ORDER_RANDOMIZATION
 		struct loadtask *task = create_loadtask(dso_path, NULL, ns, true);
@@ -4227,15 +4229,29 @@ static int do_dlprelink_record(int memfd, const char *list_path, size_t *auxv)
 
 int dlprelink_record(int memfd, const char *list_path)
 {
-	if (!prelink_ns) {
-		prelink_ns = ns_alloc();
-		ns_set_name(prelink_ns, "prelink");
-	} else {
-		return -1;
-	}
-	is_prelinker = true;
+	int rc;
 
-	return do_dlprelink_record(memfd, list_path, NULL);
+	pthread_rwlock_wrlock(&lock);
+	if (!prelinking) {
+		if (!prelink_ns) {
+			prelink_ns = ns_alloc();
+			if (prelink_ns) {
+				ns_set_name(prelink_ns, "prelink");
+			}
+		}
+		if (prelink_ns) {
+			is_prelinker = true;
+			rc = do_dlprelink_record(memfd, list_path, NULL);
+			is_prelinker = false;
+		} else {
+			rc = -1;
+		}
+	} else {
+		rc = -1;
+	}
+	pthread_rwlock_unlock(&lock);
+
+	return rc;
 }
 
 static int fetch_prelink_memfd(void)
@@ -4288,24 +4304,20 @@ static void prelinker_main(size_t *auxv, const char *list_path)
 
 int dlprelink_reserve_mem(void)
 {
-	void *reserve_range = prelinker_get_reserve_area(NULL);
+	void *reserve_range;
+	pthread_rwlock_wrlock(&lock);
+	reserve_range = prelinker_get_reserve_area(NULL);
+	pthread_rwlock_unlock(&lock);
 	if (reserve_range == MAP_FAILED) {
 		return -1;
 	}
 	return 0;
 }
 
-int dlprelink_register(int fd)
+static int do_dlprelink_register(int fd)
 {
-	if (!prelink_ns) {
-		prelink_ns = ns_alloc();
-		ns_set_name(prelink_ns, "prelink");
-	} else {
-		return -1;
-	}
-
 	struct relro_cache_header tmp_hdr;
-	if (pread(fd, &tmp_hdr, sizeof(tmp_hdr), 0) < 0) {
+	if (pread(fd, &tmp_hdr, sizeof(tmp_hdr), 0) != sizeof(tmp_hdr)) {
 		return -1;
 	}
 	void *reserve_address = prelinker_get_reserve_area((void *)(uintptr_t)tmp_hdr.reserve_base);
@@ -4319,13 +4331,46 @@ int dlprelink_register(int fd)
 		return -1;
 	}
 
-	relro_cache_fd = fd;
-	prelinking = true;
-
 	struct relro_cache_header *header = (void *)relro_cache_base;
 	relro_cache_nr = header->dso_nr;
 	relro_cache_entries = (void *)(relro_cache_base + sizeof(*header));
+
+	/* validate relro cache before enable prelinking */
+	if (relro_cache_nr == 0 || cache_size <= sizeof(*header) ||
+	    (cache_size - sizeof(*header)) / relro_cache_nr <= sizeof(relro_cache_entries[0])) {
+		return -1;
+	}
+
+	if (!prelink_ns) {
+		prelink_ns = ns_alloc();
+		if (!prelink_ns) {
+			return -1;
+		}
+		ns_set_name(prelink_ns, "prelink");
+	}
+	relro_cache_fd = fd;
+	prelinking = true;
+
 	return 0;
+}
+
+#define RELRO_CACHE_SEALS (F_SEAL_SEAL | F_SEAL_GROW | F_SEAL_SHRINK | F_SEAL_FUTURE_WRITE)
+
+int dlprelink_register(int fd)
+{
+	int rc = -1;
+
+	if (fcntl(fd, F_GET_SEALS) != RELRO_CACHE_SEALS) {
+		return -1;
+	}
+
+	pthread_rwlock_wrlock(&lock);
+	if (!prelinking) {
+		rc = do_dlprelink_register(fd);
+	}
+	pthread_rwlock_unlock(&lock);
+
+	return rc;
 }
 
 static void init_relro_cache(size_t *auxv)
@@ -4335,33 +4380,25 @@ static void init_relro_cache(size_t *auxv)
 		prelinking = false;
 		return;
 	}
-	fcntl(relro_cache_fd, F_SETFD, FD_CLOEXEC);
-
-	if (dlprelink_register(relro_cache_fd) < 0) {
+	if (fcntl(relro_cache_fd, F_GET_SEALS) != RELRO_CACHE_SEALS ||
+	    fcntl(relro_cache_fd, F_SETFD, FD_CLOEXEC) < 0 ||
+	    do_dlprelink_register(relro_cache_fd) < 0) {
 		close(relro_cache_fd);
 		relro_cache_fd = -1;
 		prelinking = false;
 		return;
 	}
 
-	size_t tmp;
+	size_t interp_base, vdso_base;
 	struct relro_cache_header *header = (void *)relro_cache_base;
 	size_t cache_size = (size_t)header->cache_size;
-	search_vec(auxv, &tmp, AT_BASE);
-	if (tmp != header->interp_base) {
+	search_vec(auxv, &interp_base, AT_BASE);
+	search_vec(auxv, &vdso_base, AT_SYSINFO_EHDR);
+	if (interp_base != header->interp_base || vdso_base != header->vdso_base) {
 		munmap(relro_cache_base, cache_size);
 		close(relro_cache_fd);
 		relro_cache_fd = -1;
 		prelinking = false;
-		return;
-	}
-	search_vec(auxv, &tmp, AT_SYSINFO_EHDR);
-	if (tmp != header->vdso_base) {
-		munmap(relro_cache_base, cache_size);
-		close(relro_cache_fd);
-		relro_cache_fd = -1;
-		prelinking = false;
-		return;
 	}
 }
 
