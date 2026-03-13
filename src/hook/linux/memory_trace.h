@@ -57,6 +57,7 @@ extern "C" {
 #define TAG_RES_DMABUF_MASK        "RES_DMABUF_MASK"
 #define TAG_RES_ARK_GLOBAL_HANDLE  "RES_ARK_GLOBAL_HANDLE"
 #define TAG_RES_ARK_LOCAL_HANDLE   "RES_ARK_LOCAL_HANDLE"
+#define TAG_RES_VMA_ARKWEB         "RES_VMA_ARKWEB"
 
 /* each bit represents resource hook point.
  * |63 ... 32|31 ... 22|21 ... 12|11 - 10|9 ... 0|
@@ -94,6 +95,7 @@ extern "C" {
 #define RES_ARK_GLOBAL_HANDLE      (1 << 23)
 #define RES_ASHMEM_MASK            (1 << 24)
 #define RES_ARK_LOCAL_HANDLE       (1 << 25)
+#define RES_VMA_ARKWEB             (1 << 26)
 
 #define FD_SIZE                     1
 #define THREAD_SIZE                 1
