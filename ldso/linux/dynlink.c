@@ -4227,9 +4227,33 @@ static int do_dlprelink_record(int memfd, const char *list_path, size_t *auxv)
 	return 0;
 }
 
+#define RELRO_CACHE_NAME "/memfd:relro_cache (deleted)"
+
+static int check_prelink_memfd(int memfd)
+{
+	ssize_t rc;
+	char path[PATH_MAX], buf[PATH_MAX];
+
+	if (memfd < 0) {
+		return -1;
+	}
+
+	sprintf(path, "/proc/self/fd/%d", memfd);
+	rc = readlink(path, buf, sizeof(buf));
+	if (rc < 0 || strncmp(buf, RELRO_CACHE_NAME, (size_t)rc)) {
+		return -1;
+	}
+
+	return 0;
+}
+
 int dlprelink_record(int memfd, const char *list_path)
 {
 	int rc;
+
+	if (check_prelink_memfd(memfd) < 0) {
+		return -1;
+	}
 
 	pthread_rwlock_wrlock(&lock);
 	if (!prelinking) {
@@ -4275,7 +4299,7 @@ static int fetch_prelink_memfd(void)
 		if (rc < 0) {
 			continue;
 		}
-		if (!strncmp(buf, "/memfd:relro_cache (deleted)", (size_t)rc)) {
+		if (!strncmp(buf, RELRO_CACHE_NAME, (size_t)rc)) {
 			memfd = atoi(de->d_name);
 			break;
 		}
@@ -4360,7 +4384,8 @@ int dlprelink_register(int fd)
 {
 	int rc = -1;
 
-	if (fcntl(fd, F_GET_SEALS) != RELRO_CACHE_SEALS) {
+	if (fcntl(fd, F_GET_SEALS) != RELRO_CACHE_SEALS ||
+	    check_prelink_memfd(fd) < 0) {
 		return -1;
 	}
 
