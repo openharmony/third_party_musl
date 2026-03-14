@@ -5811,18 +5811,6 @@ int dl_iterate_phdr(int(*callback)(struct dl_phdr_info *info, size_t size, void 
 		info.dlpi_tls_data = !current->tls_id ? 0 :
 			__tls_get_addr((tls_mod_off_t[]){current->tls_id,0});
 
-		if (__predict_false(current->adlt)) {
-			if (!current->phdr_map) {
-				int adlt_phdr_ret = handle_adlt_phdr(current, &info);
-				if (adlt_phdr_ret != 0) {
-					break;
-				}
-			} else {
-				info.dlpi_phdr = current->phdr_map;
-				info.dlpi_phnum = current->phdr_count;
-			}
-		}
-
 		// FIXME: add dl_phdr_lock for unwind callback
 		pthread_mutex_lock(&dl_phdr_lock);
 		ret = (callback)(&info, sizeof (info), data);
@@ -6393,7 +6381,7 @@ static bool task_map_library(struct loadtask *task, struct reserved_address_para
 		task->p->phdr = task->adlt->phdr;
 		task->p->phnum = task->eh->e_phnum;
 		task->p->phentsize = task->eh->e_phentsize;
-		if (runtime && !adlt_init_rw_seg(task)) {
+		if (!adlt_init_rw_seg(task)) {
 			goto error;
 		}
 		goto done_mapping;
@@ -6603,6 +6591,11 @@ static bool task_map_library(struct loadtask *task, struct reserved_address_para
 	base = map - addr_min;
 	task->p->phdr = 0;
 	task->p->phnum = 0;
+	ssize_t ph_count = 0;
+	adlt_phindex_t *ph_indexes = NULL;
+	if (task->adlt) {
+		ph_count = get_adlt_library_ph(task->p->adlt, task->p->adlt_ndso_index, &ph_indexes);
+	}
 	for (ph = task->ph0, i = task->eh->e_phnum; i; i--, ph = (void *)((char *)ph + task->eh->e_phentsize)) {
 		if (ph->p_type == PT_OHOS_RANDOMDATA) {
 			fill_random_data((void *)(ph->p_vaddr + base), ph->p_memsz);
@@ -6646,7 +6639,13 @@ static bool task_map_library(struct loadtask *task, struct reserved_address_para
 			size_t brk = (size_t)base + ph->p_vaddr + ph->p_filesz;
 			size_t pgbrk = brk + PAGE_SIZE - 1 & -PAGE_SIZE;
 			size_t zeromap_size = (size_t)base + this_max - pgbrk;
-			memset((void *)brk, 0, pgbrk - brk & PAGE_SIZE - 1);
+			if (task->adlt) {
+				if (if_phtable_contains(ph_indexes, ph_count, task->eh->e_phnum - i)) {
+					memset((void *)brk, 0, pgbrk - brk & PAGE_SIZE - 1);
+				}
+			} else {
+				memset((void *)brk, 0, pgbrk - brk & PAGE_SIZE - 1);
+			}
 			if (pgbrk - (size_t)base < this_max && mmap_fixed(
 				(void *)pgbrk,
 				zeromap_size,

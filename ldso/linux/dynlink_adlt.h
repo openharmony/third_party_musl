@@ -1401,6 +1401,25 @@ static bool lookup_adlt_library(struct loadtask *task, Shdr *sh2, bool tls_appea
 	return true;
 }
 
+static bool if_phtable_contains(adlt_phindex_t *ph_indexes, ssize_t ph_count, adlt_phindex_t target)
+{
+	for (ssize_t i = 0; i < ph_count; i++) {
+        if (ph_indexes[i] == target) {
+            return true;
+        }
+    }
+    return false;
+}
+
+static void adlt_init_remain_page(const Phdr *ph, unsigned char *base)
+{
+	size_t brk = (size_t)base + ph->p_vaddr + ph->p_filesz;
+	size_t this_max = (ph->p_vaddr + ph->p_memsz + PAGE_SIZE - 1) & (-PAGE_SIZE);
+	size_t zeromap_size = (size_t)base + this_max - brk;
+	/* zeropadding the remaining memory with page size alignment*/
+	memset((void *)brk, 0, zeromap_size);
+}
+
 static bool adlt_init_rw_seg(struct loadtask *task)
 {
 	size_t off_start;
@@ -1426,6 +1445,9 @@ static bool adlt_init_rw_seg(struct loadtask *task)
 				continue;
 			}
 			relro_flag = ((p->relro_start) <= (ph)->p_vaddr)&&(((ph)->p_vaddr + (ph)->p_memsz) <= p->relro_end)? 1 : 0;
+			if (relro_flag && ph->p_filesz == 0) { // ohos.randomdata
+				continue;
+			}
 			if (relro_flag && mprotect((base + ph->p_vaddr), ph->p_memsz, PROT_READ | PROT_WRITE)
 				&& errno != ENOSYS) {
 				error("Error relocating %s: RELRO protection failed", p->name);
@@ -1439,20 +1461,15 @@ static bool adlt_init_rw_seg(struct loadtask *task)
 			map_len = addr_max - addr_min;
 			map = mmap((void*)NULL, map_len, PROT_READ, MAP_PRIVATE, task->fd, off_start + task->file_offset);
 			if (map == MAP_FAILED) {
-				error("Mapping loadtask %s failed , err = %d\n", task->name, errno);
+				error("Mapping loadtask %s failed , err = %d, len = %u\n", task->name, errno, map_len);
 				longjmp(*rtld_fail, 1);
 			}
 			/* load segment always page size align */
 			memcpy((base + addr_min), map, map_len);
-			if (ph->p_memsz > ph->p_filesz) {
-				size_t brk = (size_t)base + ph->p_vaddr + ph->p_filesz;
-				size_t this_max = (ph->p_vaddr + ph->p_memsz + PAGE_SIZE - 1) & (-PAGE_SIZE);
-				size_t zeromap_size = (size_t)base + this_max - brk;
-				/* zeropadding the remaining memory with page size alignment*/
-				memset((void *)brk, 0, zeromap_size);
-			}
 			munmap(map, map_len);
-
+			if (ph->p_memsz > ph->p_filesz) {
+				adlt_init_remain_page(ph, base);
+			}
 		}
 	}
 	return true;
@@ -1694,6 +1711,8 @@ static bool lookup_strtab_map(struct loadtask *task, Shdr *sh2) {return true;};
 static bool lookup_ndso(struct loadtask *task, Shdr *sh2) {return true;};
 static void lookup_tls(struct loadtask *task, bool tls_appeared) {return;};
 static bool lookup_adlt_library(struct loadtask *task, Shdr *sh2, bool tls_appeared) {return true;};
+static bool if_phtable_contains(adlt_phindex_t *ph_indexes, ssize_t ph_count, adlt_phindex_t target) {return false;};
+static void adlt_init_remain_page(const Phdr *ph, unsigned char *base);
 static bool adlt_init_rw_seg(struct loadtask *task) {return true;};
 static bool is_adlt_plus_merge_so(const char *so_name){return false;};
 static bool adlt_load_library_header_extra(struct loadtask *task, ns_t *namespace){return false;};
