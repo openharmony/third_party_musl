@@ -88,6 +88,8 @@ functional_list = [
   "iconv_test",
   "iconv_joint_icu_test",
   "dlopen_weaklink",
+  "dlprelink",
+  "dlopen_prelink"
 ]
 
 if (musl_use_pthread_cancel) {

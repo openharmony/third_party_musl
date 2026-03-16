@@ -16,6 +16,7 @@
 #include "constant.h"
 #include "sampledata.h"
 #include "errexit.h"
+#include "dlprelink.h"
 
 static int (*get_constant)() = nullptr;
 static size_t (*get_buflen)() = nullptr;
@@ -61,6 +62,8 @@ err:
 
 int main(int argc, char **argv)
 {
+	LdMuslDlOpenTests_Test0();
+	// dlprelink();
 	LdMuslDlOpenTests_Test0();
 	return t_status;
 }
