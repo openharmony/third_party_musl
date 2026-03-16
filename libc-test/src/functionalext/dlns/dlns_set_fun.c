@@ -108,6 +108,41 @@ void dlns_set_namespace_lib_path_0500(void)
 }
 
 /**
+ * @tc.name      : dlns_set_nonconfig_namespace_lib_path_0100
+ * @tc.desc      : When name is in the permitted namespace list, call dlns_set_module_namespace_lib_path
+ * @tc.level     : Level 2
+ */
+void dlns_set_nonconfig_namespace_lib_path_0100(void)
+{
+    EXPECT_EQ("dlns_set_nonconfig_namespace_lib_path_0100",
+        dlns_set_module_namespace_lib_path("default", path), EACCES);
+}
+
+/**
+ * @tc.name      : dlns_set_nonconfig_namespace_lib_path_0200
+ * @tc.desc      : When name is a created namespace not in the permitted namespace list,
+ *    call dlns_set_module_namespace_lib_path
+ * @tc.level     : Level 2
+ */
+void dlns_set_nonconfig_namespace_lib_path_0200(void)
+{
+    Dl_namespace dlns;
+    dlns_init(&dlns, "dlns_set_nonconfig_namespace_lib_path_0200");
+
+    EXPECT_EQ("dlns_set_nonconfig_namespace_lib_path_0200", dlns_create(&dlns, NULL), EOK);
+
+    void* handle = dlopen_ns(&dlns, dllName_set_002, RTLD_LAZY);
+    EXPECT_FALSE("dlns_set_nonconfig_namespace_lib_path_0200", handle);
+
+    EXPECT_EQ("dlns_set_nonconfig_namespace_lib_path_0200",
+        dlns_set_module_namespace_lib_path("dlns_set_nonconfig_namespace_lib_path_0200", path), EOK);
+
+    handle = dlopen_ns(&dlns, dllName_set_002, RTLD_LAZY);
+    EXPECT_TRUE("dlns_set_nonconfig_namespace_lib_path_0200", handle);
+    dlclose(handle);
+}
+
+/**
  * @tc.name      : dlns_set_namespace_separated_0100
  * @tc.desc      : When name is no namespace created, call dlns_set_namespace_separated
  * @tc.level     : Level 2
@@ -339,6 +374,8 @@ TEST_FUN G_Fun_Array[] = {
     dlns_set_namespace_lib_path_0300,
     dlns_set_namespace_lib_path_0400,
     dlns_set_namespace_lib_path_0500,
+    dlns_set_nonconfig_namespace_lib_path_0100,
+    dlns_set_nonconfig_namespace_lib_path_0200,
     dlns_set_namespace_separated_0100,
     dlns_set_namespace_separated_0200,
     dlns_set_namespace_separated_0300,

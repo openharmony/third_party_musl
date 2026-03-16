@@ -131,6 +131,19 @@ int dlns_inherit(Dl_namespace *, Dl_namespace *, const char *);
 int dlns_set_namespace_lib_path(const char *name, const char *lib_path);
 
 /**
+  * @brief Set non-config namespace lib_path.
+  * @param name namespace name, must not be in the built-in permitted namespace list.
+  * @param lib_path The lib path name that needs to be reset, it can be multiple, link with ":".
+  * @return Returns 0 on success, other on failure.
+  * @retval
+  *    EINVAL(22) Invalid argument.
+  *    EACCES(13) Access denied.
+  *    EPERM(1) Operation not permitted.
+  *    ENOKEY(126) Required key not available.
+  */
+int dlns_set_module_namespace_lib_path(const char *name, const char *lib_path);
+
+/**
   * @brief Set namespace separated.
   * @param name namespace name.
   * @param separated separated.
