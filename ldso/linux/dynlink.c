@@ -4103,6 +4103,9 @@ static int do_dlprelink_record(int memfd, const char *list_path, size_t *auxv)
 		} else {
 			p = end;
 		}
+		if (dso_path[0] == '#' || dso_path[0] == '\0') {
+			continue;
+		}
 		char *n2 = memchr(dso_path, ':', (size_t)(p - dso_path));
 		if (n2) {
 			*n2 = '\0';
@@ -4122,7 +4125,7 @@ static int do_dlprelink_record(int memfd, const char *list_path, size_t *auxv)
 			free_task(task);
 		}
 #else
-		struct dso *p = load_library(dso_path, head, ns, true, NULL);
+		load_library(dso_path, head, ns, true, NULL);
 #endif
 	}
 
