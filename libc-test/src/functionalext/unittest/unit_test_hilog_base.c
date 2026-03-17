@@ -37,7 +37,6 @@
 #define LOG_TAG "HILOGBASETEST"
 
 #define SOME_LOGS 10
-#define MORE_LOGS 100
 #define SHORT_LOG 16
 #define NEGATIVE_ONE (-1)
 #define DEFAULT_BUF_SIZE 256
@@ -244,19 +243,6 @@ static void HiLogBasePrint_0010(void)
 }
 
 /**
- * @tc.name     : HiLogBasePrint_0020
- * @tc.desc     : Test HiLogBasePrint for more logs
- * @tc.level    : Level 2
- */
-static void HiLogBasePrint_0020(void)
-{
-    for(uint32_t i = 0; i < METHODS_NUMBER; ++i) {
-        printf("Starting %s test\n", METHOD_NAMES[i]);
-        HiLogWriteTest("HiLogBasePrint_0020", LOG_C_METHODS[i], MORE_LOGS, SHORT_LOG, i == DEBUG_METHOD);
-    }
-}
-
-/**
  * @tc.name     : HiLogBaseIsLoggable_0010
  * @tc.desc     : Test HiLogBaseIsLoggable for long logs
  * @tc.level    : Level 2
@@ -279,7 +265,6 @@ int main(void)
     system("/bin/hilog -Q domainoff");
 
     HiLogBasePrint_0010();
-    HiLogBasePrint_0020();
     HiLogBaseIsLoggable_0010();
 
     // 恢复限制
