@@ -671,9 +671,10 @@ template("musl_libs") {
       "-ffreestanding",
       "-fno-stack-protector",
     ]
+    cflags_c = []
     if (musl_arch == "aarch64") {
-      cflags += [
-        "-mbranch-protection=bti",
+      cflags_c += [
+        "-mbranch-protection=pac-ret+b-key+bti",
         "-mmark-bti-property",
       ]
     }
@@ -681,6 +682,7 @@ template("musl_libs") {
     deps = porting_deps
 
     asmflags = cflags
+    asmflags += cflags_c
   }
 
   source_set("soft_musl_src_strncpy") {
