@@ -30,15 +30,21 @@
 #define SOLIST_PATH "/data/local/tmp/prelink_so_list"
 #define SOLIST_PATH_WRG "/data/local/tmp/prelink_so_list_empty"
 
+#define SO_FOR_DLOPEN_DSO "libdlopen_dso.so"
 #define SO_FOR_NO_DELETE "lib_for_no_delete.so"
-#define SO_FOR_DLOPEN "libdlopen_dso.so"
+#define SO_FOR_DLOPEN "lib_for_dlopen.so"
 #define SO_LOAD_BY_LOCAL "libdlopen_for_load_by_local_dso.so"
 #define SO_LOAD_BY_GLOBAL "libdlopen_for_load_by_global_dso.so"
 #define SO_CLOSE_RECURSIVE_OPEN_SO "libdlclose_recursive_dlopen_so.so"
+#define DLOPEN_WEAK "libdlopen_weak.so"
+#define DLOPEN_GLOBAL "libdlopen_global.so"
+#define DLOPEN_LOCAL "libdlopen_local.so"
+#define DLCLOSE_EXIT_DEAD_LOCK "libdl_multithread_test_dso.so"
+#define DLCLOSE_WITH_TLS "libdlclose_tls.so"
 
 static char *so_list[] = {
-	PATH_PREFIX "libfoo.so\n",
-	PATH_PREFIX SO_FOR_DLOPEN "\n",
+	PATH_PREFIX "libfoo.so\n"
+	PATH_PREFIX SO_FOR_NO_DELETE "\n",
 };
 
 static int prelink_memfd = -1;
@@ -261,7 +267,7 @@ static int dlprelink_for_proc_appspawn(void)
 	for (unsigned int i = 0; i < ARRAY_LENGTH(record_case) && err == 0; i++) {
 		err = dlprelink_fork(record_case[i], true, prelink_memfd, 0);
 		if (err != 0) {
-			t_error("[%s:%d]: err: %d, recod_case %d\n", __FUNCTION__, __LINE__, err, i + 1);
+			t_error("[%s:%d]: err: %d, record_case %d\n", __FUNCTION__, __LINE__, err, i + 1);
 		}
 	}
 

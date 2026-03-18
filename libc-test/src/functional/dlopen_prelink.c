@@ -3,6 +3,7 @@
 
 int main(int argc, char *argv[])
 {
+	set_prelink_chk_enable();
 	dlprelink();
 	
 	void *h, *g;

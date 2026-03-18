@@ -11,34 +11,7 @@
 #include "test.h"
 #include "dlprelink.h"
 
-#define PATH_PREFIX "/data/local/tmp/"
 #define SOLIST_PATH "/data/local/tmp/prelink_so_list"
-
-#define SO_FOR_DLOPEN_DSO "libdlopen_dso.so"
-#define SO_FOR_NO_DELETE "lib_for_no_delete.so"
-#define SO_FOR_DLOPEN "lib_for_dlopen.so"
-#define SO_LOAD_BY_LOCAL "libdlopen_for_load_by_local_dso.so"
-#define SO_LOAD_BY_GLOBAL "libdlopen_for_load_by_global_dso.so"
-#define SO_CLOSE_RECURSIVE_OPEN_SO "libdlclose_recursive_dlopen_so.so"
-#define DLOPEN_WEAK "libdlopen_weak.so"
-#define DLOPEN_GLOBAL "libdlopen_global.so"
-#define DLOPEN_LOCAL "libdlopen_local.so"
-#define DLCLOSE_EXIT_DEAD_LOCK "libdl_multithread_test_dso.so"
-#define DLCLOSE_WITH_TLS "libdlclose_tls.so"
-
-static char *so_list[] = {
-	PATH_PREFIX SO_FOR_DLOPEN_DSO "\n",
-	PATH_PREFIX SO_FOR_NO_DELETE "\n",
-	PATH_PREFIX SO_FOR_DLOPEN "\n",
-	PATH_PREFIX SO_LOAD_BY_LOCAL "\n",
-	PATH_PREFIX SO_LOAD_BY_GLOBAL "\n",
-	PATH_PREFIX SO_CLOSE_RECURSIVE_OPEN_SO "\n",
-	PATH_PREFIX DLOPEN_WEAK "\n",
-	PATH_PREFIX DLOPEN_GLOBAL "\n",
-	PATH_PREFIX DLOPEN_LOCAL "\n",
-	PATH_PREFIX DLCLOSE_EXIT_DEAD_LOCK "\n",
-	PATH_PREFIX DLCLOSE_WITH_TLS "\n",
-};
 
 static int prelink_memfd = -1;
 
@@ -98,7 +71,14 @@ int dlprelink(void)
 {
 	int err = 0;
 
-	err = prepare_memfd(&prelink_memfd);
+	err = dlprelink_reserve_mem();
+	if (err != 0) {
+		t_error("[%s:%d]: err: %d\n", __FUNCTION__, __LINE__, err);
+	}
+
+	if (err == 0) {
+		err = prepare_memfd(&prelink_memfd);
+	}
 
 	if (err == 0) {
 		err = dlprelink_fork(true, prelink_memfd, 0);

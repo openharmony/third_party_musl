@@ -203,31 +203,6 @@ adlt_executable("unittest_adlt_base_dlopen_c") {
     ]
 }
 
-adlt_executable("unittest_adlt_base_dlopen_c_prelink") {
-    lib_name = "base_dlopen_c_prelink"
-    lib_include_dirs = [ "dlopen_c" ]
-    lib_configs = [
-        {
-            name = "base_dlopen_c_lib_prelink"
-            sources = [ "dlopen_c/c-lib.c" ]
-        },
-        {
-            name = "base_dlopen_c_test_dlopen_prelink"
-            sources = [ "dlopen_c/testdlopen.cpp" ]
-        },
-        {
-            name = "base_dlopen_c_dlprelink"
-            sources = [ "adlt_dlprelink.cpp" ]
-        },
-    ]
-
-    include_dirs = [ "dlopen_c" ]
-    sources = [ "dlopen_c/main_prelink.cpp" ]
-    lib_common_configs = [
-        ":post_lib_configs"
-    ]
-}
-
 adlt_executable("unittest_adlt_base_dlopen_cpp") {
     lib_name = "base_dlopen_cpp"
     lib_include_dirs = [ "dlopen_cpp" ]
@@ -244,31 +219,6 @@ adlt_executable("unittest_adlt_base_dlopen_cpp") {
 
     include_dirs = [ "dlopen_cpp" ]
     sources = [ "dlopen_cpp/main.cpp" ]
-    lib_common_configs = [
-        ":post_lib_configs"
-    ]
-}
-
-adlt_executable("unittest_adlt_base_dlopen_cpp_prelink") {
-    lib_name = "base_dlopen_cpp_prelink"
-    lib_include_dirs = [ "dlopen_cpp" ]
-    lib_configs = [
-        {
-            name = "base_dlopen_cpp_lib_prelink"
-            sources = [ "dlopen_cpp/cpp-lib.cpp" ]
-        },
-        {
-            name = "base_dlopen_cpp_test_dlopen_prelink"
-            sources = [ "dlopen_cpp/testdlopen.cpp" ]
-        },
-        {
-            name = "base_dlopen_cpp_dlprelink"
-            sources = [ "adlt_dlprelink.cpp" ]
-        },
-    ]
-
-    include_dirs = [ "dlopen_cpp" ]
-    sources = [ "dlopen_cpp/main_prelink.cpp" ]
     lib_common_configs = [
         ":post_lib_configs"
     ]

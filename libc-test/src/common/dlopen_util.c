@@ -1,6 +1,8 @@
 #include <dlfcn.h>
 #include <pthread.h>
 #include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
 #include <sys/wait.h>
 #include "test.h"
 #include "global.h"
@@ -13,12 +15,61 @@
 #define SO_CLOSE_RECURSIVE_OPEN_SO "libdlclose_recursive_dlopen_so.so"
 #define NR_DLCLOSE_THREADS 10
 
+
+bool g_prelink_chk_enable = false;
+
+void set_prelink_chk_enable(void) {
+	g_prelink_chk_enable = true;
+}
+
+
+/*
+ * 对于通过prelink成功加载的so，在/proc/self/maps应有如下格式：（以"/lib/abc.so"为例）
+ * 59fcd40000-59fcd43000 r--p 00000000 1ff:00 95636710	/lib/abc.so
+ * 59fcd43000-59fcd4c000 r-xp 00002000 1ff:00 95636710	/lib/abc.so
+ * 59fcd4c000-59fcd4d000 r--p 0000a000 1ff:00 95636710	/memfd:relro_cache (deleted)
+ * 59fcd4d000-59fcd4e000 rw-p 0000a000 1ff:00 95636710	/lib/abc.so
+ */
+void check_load_by_prelink(const char *keyword)
+{
+	if (!g_prelink_chk_enable){
+		return;
+	}
+	FILE *fp;
+	char line[1024];
+	int count = 0;
+	static const char memfdName[] = "/memfd:relro_cache (deleted)";
+	fp = fopen("/proc/self/maps", "r");
+	if (!fp) {
+		t_error("cannot open /proc/self/maps");
+	}
+
+	while (fgets(line, sizeof(line), fp)) {
+		// 移除换行符
+		line[strcspn(line, "\n")] = 0;
+		if (strstr(line, count != 2 ? keyword : memfdName)) {
+			count++;
+			printf("match %d: %s\n", count, line);
+
+			if (count >= 4) {
+				printf("found line with '%s' \n", keyword);
+				fclose(fp);
+				return;
+			}
+		} else {
+			count = 0;  // 重置计数器
+		}
+	}
+
+	t_error("don't found 4 lines with '%s'\n", keyword);
+	fclose(fp);
+}
+
 typedef void(*TEST_PTR)(void);
 
 void do_dlopen(const char *name, int mode)
 {
 	void* handle = dlopen(name, mode);
-
 	if(!handle)
 		t_error("dlopen(name=%s, mode=%d) failed: %s\n", name, mode, dlerror());
 
@@ -79,7 +130,7 @@ void dlopen_so_used_by_dlsym()
 void dlopen_nodelete_and_noload()
 {
 	void* handle1 = dlopen(SO_FOR_NO_DELETE, RTLD_NODELETE);
-
+	check_load_by_prelink(SO_FOR_NO_DELETE);
 	if(!handle1)
 		t_error("dlopen(name=%s, mode=RTLD_NODELETE) failed: %s\n", SO_FOR_NO_DELETE, dlerror());
 
@@ -148,14 +199,13 @@ void dlopen_dlclose_weak()
 
 void dlclose_recursive()
 {
-    void *handle = dlopen(SO_CLOSE_RECURSIVE_OPEN_SO, RTLD_LAZY | RTLD_LOCAL);
-    if (!handle)
-        t_error("dlopen(name=%s, mode=%d) failed: %s\n", SO_CLOSE_RECURSIVE_OPEN_SO, RTLD_LAZY | RTLD_LOCAL, dlerror());
-
-    /* close handle normally, if libc doesn't support close .so file recursivly
-     * it will be deedlock, and timed out error will happen
-     */
-    dlclose(handle);
+	void *handle = dlopen(SO_CLOSE_RECURSIVE_OPEN_SO, RTLD_LAZY | RTLD_LOCAL);
+	if (!handle)
+		t_error("dlopen(name=%s, mode=%d) failed: %s\n", SO_CLOSE_RECURSIVE_OPEN_SO, RTLD_LAZY | RTLD_LOCAL, dlerror());
+	/* close handle normally, if libc doesn't support close .so file recursivly
+	* it will be deedlock, and timed out error will happen
+	*/
+	dlclose(handle);
 }
 
 void *dlclose_recursive_thread()

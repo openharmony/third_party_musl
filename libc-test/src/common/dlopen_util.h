@@ -4,6 +4,10 @@
 #include <sys/wait.h>
 #include "test.h"
 
+void check_load_by_prelink(const char *keyword);
+
+void set_prelink_chk_enable(void);
+
 void do_dlopen(const char *name, int mode);
 
 void dlopen_lazy();
