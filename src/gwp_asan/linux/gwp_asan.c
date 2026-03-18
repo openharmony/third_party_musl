@@ -545,13 +545,27 @@ GWP_ASAN_NO_ADDRESS size_t run_unwind(size_t *frame_buf,
                                       size_t max_record_stack,
                                       size_t current_frame_addr)
 {
+    if (!frame_buf || max_record_stack <= 0) return 0;
+
     size_t stack_end = (size_t)(__pthread_self()->stack);
+    size_t stack_size = __pthread_self()->stack_size;
+    /* Stop fast unwind if pthread stack metadata is unavailable. */
+    if (__pthread_self()->stack == NULL || stack_size == 0 || stack_end < stack_size) {
+        return num_frames;
+    }
+    size_t stack_start = stack_end - stack_size;
     size_t prev_fp = 0;
     size_t prev_lr = 0;
     while (true) {
+        if (current_frame_addr == 0 || (current_frame_addr % sizeof(void *) != 0))
+            break;
+        /* Only follow frame pointers that still stay inside the pthread stack. */
+        if (current_frame_addr < stack_start || current_frame_addr > stack_end - sizeof(unwind_info))
+            break;
+
         unwind_info *frame = (unwind_info*)(current_frame_addr);
-        GWP_ASAN_LOGD("[gwp_asan] unwind info:%{public}d cur:%{public}p, end:%{public}p fp:%{public}p lr:%{public}p \n",
-                      num_frames, current_frame_addr, stack_end, frame->fp, frame->lr);
+        GWP_ASAN_LOGD("[gwp_asan] unwind info:%{public}d cur:%{public}p, start:%{public}p end:%{public}p fp:%{public}p lr:%{public}p \n",
+            num_frames, current_frame_addr, stack_start, stack_end, frame->fp, frame->lr);
         size_t stripped_lr = strip_pac_pc(frame->lr);
         if (!stripped_lr) {
             break;
@@ -560,8 +574,7 @@ GWP_ASAN_NO_ADDRESS size_t run_unwind(size_t *frame_buf,
             frame_buf[num_frames] = stripped_lr - 4;
             ++num_frames;
         }
-        if (frame->fp == prev_fp || frame->lr == prev_lr || frame->fp < current_frame_addr + sizeof(unwind_info) ||
-            frame->fp >= stack_end || frame->fp % sizeof(void*) != 0) {
+        if (frame->fp == prev_fp || frame->lr == prev_lr || frame->fp < current_frame_addr + sizeof(unwind_info)) {
             break;
         }
         prev_fp = frame->fp;
