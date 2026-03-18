@@ -77,6 +77,7 @@ static size_t ldso_page_size;
 static void error_impl(const char *, ...);
 static void error_noop(const char *, ...);
 static void (*error)(const char *, ...) = error_noop;
+static void runtime_jumper(void);
 
 #define MAXP2(a,b) (-(-(a)&-(b)))
 #define ALIGN(x,y) ((x)+(y)-1 & -(y))
@@ -105,7 +106,7 @@ static void (*error)(const char *, ...) = error_noop;
 #define SEC_CHECK_HAS_ENCAPS 0x1
 #define HM_PR_CHECK_ENCAPS 0x6a6975
 #define HM_GOT_RO 0x70726f74
-#define HM_AT_FLAG_PRELINK 2
+#define HM_AT_FLAG_PRELINK (1 << 28)
 #define HM_PRELINK_RESERVE_RELRO 3
 #define PAC_MODIFIER_SIZE 4
 #define PAC_TARGET_ADDR_REGISTER 17
@@ -4032,48 +4033,56 @@ static void prelink_sort_loadtasks(struct loadtasks *tasks)
 }
 #endif
 
+#define PRELINK_DSO_LIST_SIZE 512
+
 static int do_dlprelink_record(int memfd, const char *list_path, size_t *auxv)
 {
 	struct stat list_stat = { 0 };
-
-	void *reserve_range = prelinker_get_reserve_area(NULL);
-	if (reserve_range == MAP_FAILED) {
-		error("get reserve area failed\n");
-		return -1;
-	}
+	jmp_buf jb;
+	volatile int retval = -1;
 
 	int list_fd = open(list_path, O_RDONLY);
 	if (list_fd < 0) {
-		error("open list file failed: path=%s, err=%s\n", list_path, strerror(errno));
+		error("open list file failed: path=%s, err=%m", list_path);
 		return -1;
 	}
 
 	if (fstat(list_fd, &list_stat) != 0) {
-		error("stat list file failed: path=%s, err=%s\n", list_path, strerror(errno));
+		error("stat list file failed: path=%s, err=%m", list_path);
+		close(list_fd);
 		return -1;
 	}
 
 	if (list_stat.st_size <= 0) {
-		error("list file size invalid: path=%s, size=%ld\n", list_path, list_stat.st_size);
+		error("list file size invalid: path=%s, size=%lld", list_path, (long long)list_stat.st_size);
+		close(list_fd);
 		return -1;
 	}
 
 	char *file_contents = malloc(list_stat.st_size + 1);
 	if (!file_contents) {
-		error("malloc file_contents failed: size=%ld\n", list_stat.st_size);
+		error("malloc file_contents failed: size=%lld", (long long)list_stat.st_size);
+		close(list_fd);
 		return -1;
 	}
 
 	file_contents[list_stat.st_size] = 0;
 
 	if (read(list_fd, file_contents, list_stat.st_size) != list_stat.st_size) {
-		error("read list file failed: path=%s, err=%s\n", list_path, strerror(errno));
+		error("read list file failed: path=%s, err=%m", list_path);
+		close(list_fd);
+		free(file_contents);
 		return -1;
 	}
 
 	close(list_fd);
 
-	error = error_impl;
+	void *reserve_range = prelinker_get_reserve_area(NULL);
+	if (reserve_range == MAP_FAILED) {
+		error("get reserve area failed, err=%m");
+		free(file_contents);
+		return -1;
+	}
 
 	uintptr_t addr = (uintptr_t)reserve_range;
 	uintptr_t aligned_addr = (addr + LIBRARY_ALIGNMENT - 1) & ~(LIBRARY_ALIGNMENT - 1);
@@ -4084,12 +4093,16 @@ static int do_dlprelink_record(int memfd, const char *list_path, size_t *auxv)
 	struct dso *prelink_tail = NULL;
 
 	ns_t *ns_default = get_default_ns();
+	noload = 0;
 
 #ifdef LOAD_ORDER_RANDOMIZATION
 	struct loadtasks *tasks = create_loadtasks();
 	if (!tasks) {
+		error("create loadtasks failed, err=%m");
+		free(file_contents);
 		return -1;
 	}
+	volatile bool need_free_tasks = true;
 #endif
 	char *p = file_contents;
 	char *end = file_contents + list_stat.st_size;
@@ -4129,8 +4142,13 @@ static int do_dlprelink_record(int memfd, const char *list_path, size_t *auxv)
 #endif
 	}
 
+	free(file_contents);
+
 	if (prelink_head == tail) {
-		error("prelink: No valid prelinkable SO exists.");
+		error("no valid prelinkable DSO");
+#ifdef LOAD_ORDER_RANDOMIZATION
+		free_loadtasks(tasks);
+#endif
 		return -1;
 	}
 	prelink_tail = tail;
@@ -4138,6 +4156,64 @@ static int do_dlprelink_record(int memfd, const char *list_path, size_t *auxv)
 		prelink_head = head;
 	} else {
 		prelink_head = prelink_head->next;
+	}
+
+	if (runtime) {
+		struct dso *next = NULL;
+		struct tls_module *orig_tls_tail = tls_tail;
+		size_t orig_tls_cnt = tls_cnt;
+		size_t orig_tls_offset = tls_offset;
+		size_t orig_tls_align = tls_align;
+		struct dso *orig_lazy_head = lazy_head;
+		struct dso *orig_syms_tail = syms_tail;
+		struct dso *orig_tail = tail;
+		rtld_fail = &jb;
+		if (setjmp(*rtld_fail)) {
+			revert_syms(orig_syms_tail);
+			for (struct dso *p = orig_tail->next; p; p = next) {
+				next = p->next;
+				while (p->td_index) {
+					void *tmp = p->td_index->next;
+					free(p->td_index);
+					p->td_index = tmp;
+				}
+				free(p->funcdescs);
+				free(p->rpath);
+				if (p->deps) {
+					for (int i = 0; i < p->ndeps_direct; i++) {
+						remove_dso_parent(p->deps[i], p);
+					}
+				}
+				free(p->deps);
+				dlclose_ns(p);
+				p->namespace = prelink_ns;
+				dlclose_ns(p);
+				unmap_library(p);
+				free_reloc_can_search_dso(p);
+			}
+			for (struct dso *p = orig_tail->next; p; p = next) {
+				next = p->next;
+				if (p->parents) {
+					free(p->parents);
+				}
+				free(p);
+			}
+			if (!orig_tls_tail) libc.tls_head = 0;
+			tls_tail = orig_tls_tail;
+			if (tls_tail) tls_tail->next = 0;
+			tls_cnt = orig_tls_cnt;
+			tls_offset = orig_tls_offset;
+			tls_align = orig_tls_align;
+			lazy_head = orig_lazy_head;
+			tail = orig_tail;
+			tail->next = 0;
+#ifdef LOAD_ORDER_RANDOMIZATION
+			if (need_free_tasks) {
+				free_loadtasks(tasks);
+			}
+#endif
+			return retval;
+		}
 	}
 
 #ifdef LOAD_ORDER_RANDOMIZATION
@@ -4151,25 +4227,34 @@ static int do_dlprelink_record(int memfd, const char *list_path, size_t *auxv)
 	prelink_sort_loadtasks(tasks);
 	run_loadtasks(tasks, NULL);
 	free_loadtasks(tasks);
-	assign_tls(head);
-	static_tls_cnt = tls_cnt;
+	need_free_tasks = false;
+	assign_tls(prelink_head);
+	if (!runtime) {
+		static_tls_cnt = tls_cnt;
+	}
 #else
 	if (prelink_head) load_deps(prelink_head, NULL);
 #endif
 
-	free(file_contents);
-
 	bool prelink_skip = true;
 	for (struct dso *p = head; p; p = p->next) {
+		p->is_reloc_head_so_dep = true;
+		add_syms(p);
 		if (prelink_skip && p == prelink_head) prelink_skip = false;
 		p->prelink_skip = prelink_skip;
+	}
+
+	reloc_all(head, NULL);
+
+	if (!runtime && ldso_fail) {
+		return -1;
 	}
 
 	struct relro_cache_header header;
 	struct relro_cache_entry entry;
 	size_t relro_sz = 0;
 	size_t tmp;
-	size_t sorted_dso_list_size = 512;
+	size_t sorted_dso_list_size = PRELINK_DSO_LIST_SIZE;
 	struct dso **sorted_dso_list = malloc(sizeof(struct dso *) * sorted_dso_list_size);
 	if (auxv) {
 		search_vec(auxv, &tmp, AT_BASE);
@@ -4179,19 +4264,22 @@ static int do_dlprelink_record(int memfd, const char *list_path, size_t *auxv)
 	}
 	header.reserve_base = (uint64_t)reserve_range;
 	header.dso_nr = 0;
+	if (prelink_head != &ldso) {
+		sorted_dso_list[0] = &ldso;
+		header.dso_nr++;
+		relro_sz += ldso.relro_end - ldso.relro_start;
+	}
 	for (struct dso *p = head; p; p = p->next) {
-		p->is_reloc_head_so_dep = true;
-		add_syms(p);
+		p->is_reloc_head_so_dep = false;
 		if (p->prelink_skip) continue;
 		if (header.dso_nr >= sorted_dso_list_size) {
-			sorted_dso_list_size += 512;
+			sorted_dso_list_size += PRELINK_DSO_LIST_SIZE;
 			sorted_dso_list = realloc(sorted_dso_list, sizeof(struct dso *) * sorted_dso_list_size);
 		}
 		sorted_dso_list[header.dso_nr] = p;
 		header.dso_nr++;
 		relro_sz += p->relro_end - p->relro_start;
 	}
-	reloc_all(head, NULL);
 
 	/* keep ldso first */
 	qsort(&sorted_dso_list[1], header.dso_nr - 1, sizeof(struct dso *), prelinker_dso_cmp);
@@ -4199,12 +4287,21 @@ static int do_dlprelink_record(int memfd, const char *list_path, size_t *auxv)
 	size_t meta_sz = (sizeof(header) + header.dso_nr * sizeof(entry) + PAGE_SIZE - 1) & -PAGE_SIZE;
 	header.cache_size = meta_sz + relro_sz;
 	if (ftruncate(memfd, meta_sz + relro_sz) < 0) {
+		error("ftruncate failed, err=%m");
+		free(sorted_dso_list);
+		runtime_jumper();
 		return -1;
 	}
 	if (lseek(memfd, 0, SEEK_SET)) {
+		error("lseek failed, err=%m");
+		free(sorted_dso_list);
+		runtime_jumper();
 		return -1;
 	}
 	if (write(memfd, &header, sizeof(header)) < 0) {
+		error("write header failed, err=%m");
+		free(sorted_dso_list);
+		runtime_jumper();
 		return -1;
 	}
 	relro_sz = 0;
@@ -4216,16 +4313,22 @@ static int do_dlprelink_record(int memfd, const char *list_path, size_t *auxv)
 		entry.offset = meta_sz + relro_sz;
 		relro_sz += p->relro_end - p->relro_start;
 		if (write(memfd, &entry, sizeof(entry)) < 0) {
-			error("prelink: failed to write entry to file\n");
+			error("prelink: failed to write entry to file, err=%m");
+			free(sorted_dso_list);
+			runtime_jumper();
 			return -1;
 		}
 		if (pwrite(memfd, laddr(p, p->relro_start), p->relro_end - p->relro_start, entry.offset) < 0) {
-			error("prelink: failed to write relro data to file\n");
+			error("prelink: failed to write relro data to file, err=%m");
+			free(sorted_dso_list);
+			runtime_jumper();
 			return -1;
 		}
 	}
 
 	free(sorted_dso_list);
+	retval = 0;
+	runtime_jumper();
 
 	return 0;
 }
@@ -4318,6 +4421,7 @@ static void prelinker_main(size_t *auxv, const char *list_path)
 		_exit(1);
 	}
 
+	error = error_impl;
 	is_prelinker = true;
 	head = tail = syms_tail = &ldso;
 	init_namespace(&ldso);
