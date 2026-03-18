@@ -1,8 +1,8 @@
 [
     {
         "Name"                  : "musl",
-        "License"               : "MIT License",
-        "License File"          : "COPYRIGHT",
+        "License"               : "MIT;BSD-2-Clause;BSD-3-Clause;CC0-1.0;MIT-0",
+        "License File"          : "COPYRIGHT;COPYRIGHT;COPYRIGHT;COPYRIGHT;COPYRIGHT",
         "Version Number"        : "1.2.5",
         "Owner"                 : "liyiming13@huawei.com",
         "Upstream URL"          : "https://musl.libc.org",
@@ -10,8 +10,8 @@
     },
     {
         "Name"                  : "OpenBSD",
-        "License"               : "BSD License",
-        "License File"          : "third_party/openbsd/LICENSE",
+        "License"               : "BSD-3-Clause;Spencer-94",
+        "License File"          : "third_party/openbsd/LICENSE;third_party/openbsd/LICENSE",
         "Version Number"        : "7.8",
         "Owner"                 : "liyiming13@huawei.com",
         "Upstream URL"          : "https://cvsweb.openbsd.org/src/lib/libc/string/",
