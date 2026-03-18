@@ -77,7 +77,6 @@ static size_t ldso_page_size;
 static void error_impl(const char *, ...);
 static void error_noop(const char *, ...);
 static void (*error)(const char *, ...) = error_noop;
-static void runtime_jumper(void);
 
 #define MAXP2(a,b) (-(-(a)&-(b)))
 #define ALIGN(x,y) ((x)+(y)-1 & -(y))
@@ -326,6 +325,13 @@ static inline bool gnu_hash_filter(uint32_t* ght, size_t ghm, uint32_t gho, uint
         return false;
     }
     return true;
+}
+
+static inline void runtime_jumper(void)
+{
+	if (runtime) {
+		longjmp(*rtld_fail, 1);
+	}
 }
 
 void dlopen_config_abs_path_policy(bool flag)
@@ -7889,13 +7895,6 @@ static void task_load_library(struct loadtask *task, struct reserved_address_par
 		libc.load_hook((long unsigned int)task->p->base, task->p->phdr, task->p->phnum);
 	}
 #endif
-}
-
-static void runtime_jumper()
-{
-	if (runtime) {
-		longjmp(*rtld_fail, 1);
-	}
 }
 
 static size_t get_step_size(struct dso *p, size_t *cnt, ssize_t adlt_dtneeded_cnt,

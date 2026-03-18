@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <pthread.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/wait.h>
 #include <link.h>
 #include <sys/mman.h>
@@ -11,9 +12,54 @@
 #include "test.h"
 #include "dlprelink.h"
 
+
+#define PATH_PREFIX "/data/local/tmp/"
 #define SOLIST_PATH "/data/local/tmp/prelink_so_list"
 
+#define SO_FOR_NO_DELETE "lib_for_no_delete.so"
+
+static char *so_list[] = {
+	PATH_PREFIX "libfoo.so\n"
+	PATH_PREFIX SO_FOR_NO_DELETE "\n",
+};
+
 static int prelink_memfd = -1;
+
+#define ARRAY_LENGTH(array) (sizeof((array)) / sizeof((array)[0]))
+
+static int prepare_file_and_reserve_mem(void)
+{
+	int err = 0;
+	remove(SOLIST_PATH);
+	int fd = open(SOLIST_PATH, O_RDWR | O_CREAT);
+	if (fd < 0) {
+		t_error("[%s:%d]: err: %d\n", __FUNCTION__, __LINE__, err);
+		err = -1;
+	}
+
+	for (unsigned int i = 0; i < ARRAY_LENGTH(so_list) && err == 0; i++) {
+		ssize_t sz = write(fd, so_list[i], strlen(so_list[i]));
+		if (sz <= 0) {
+			t_error("[%s:%d]: err: %d\n", __FUNCTION__, __LINE__, sz);
+			err = -1;
+		}
+	}
+
+	if (err == 0) {
+		err = close(fd);
+		if (err != 0) {
+			t_error("[%s:%d]: err: %d\n", __FUNCTION__, __LINE__, err);
+		}
+	}
+
+	if (err == 0) {
+		err = dlprelink_reserve_mem();
+		if (err != 0) {
+			t_error("[%s:%d]: err: %d\n", __FUNCTION__, __LINE__, err);
+		}
+	}
+	return err;
+}
 
 static int prepare_memfd(int *rfd)
 {
@@ -71,10 +117,7 @@ int dlprelink(void)
 {
 	int err = 0;
 
-	err = dlprelink_reserve_mem();
-	if (err != 0) {
-		t_error("[%s:%d]: err: %d\n", __FUNCTION__, __LINE__, err);
-	}
+	err = prepare_file_and_reserve_mem();
 
 	if (err == 0) {
 		err = prepare_memfd(&prelink_memfd);
