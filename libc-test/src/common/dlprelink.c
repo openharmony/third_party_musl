@@ -31,16 +31,17 @@ static int prepare_file_and_reserve_mem(void)
 {
 	int err = 0;
 	remove(SOLIST_PATH);
-	int fd = open(SOLIST_PATH, O_RDWR | O_CREAT);
+	int fd = open(SOLIST_PATH, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
 	if (fd < 0) {
 		t_error("[%s:%d]: err: %d\n", __FUNCTION__, __LINE__, err);
 		err = -1;
 	}
 
 	for (unsigned int i = 0; i < ARRAY_LENGTH(so_list) && err == 0; i++) {
-		ssize_t sz = write(fd, so_list[i], strlen(so_list[i]));
-		if (sz <= 0) {
-			t_error("[%s:%d]: err: %d\n", __FUNCTION__, __LINE__, sz);
+		size_t len = strlen(so_list[i]);
+		ssize_t sz = write(fd, so_list[i], len);
+		if ((size_t)sz != len) {
+			t_error("[%s:%d]: err: %zd\n", __FUNCTION__, __LINE__, sz);
 			err = -1;
 		}
 	}
