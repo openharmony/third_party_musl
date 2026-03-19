@@ -10,6 +10,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdint.h>
+#include <dirent.h>
 #include <elf.h>
 #include <sys/mman.h>
 #include <limits.h>
@@ -77,6 +78,7 @@ static size_t ldso_page_size;
 static void error_impl(const char *, ...);
 static void error_noop(const char *, ...);
 static void (*error)(const char *, ...) = error_noop;
+static bool is_permitted(const void *caller_addr, char *target);
 
 #define MAXP2(a,b) (-(-(a)&-(b)))
 #define ALIGN(x,y) ((x)+(y)-1 & -(y))
@@ -105,6 +107,8 @@ static void (*error)(const char *, ...) = error_noop;
 #define SEC_CHECK_HAS_ENCAPS 0x1
 #define HM_PR_CHECK_ENCAPS 0x6a6975
 #define HM_GOT_RO 0x70726f74
+#define HM_AT_FLAG_PRELINK (1 << 28)
+#define HM_PRELINK_RESERVE_RELRO 3
 #define PAC_MODIFIER_SIZE 4
 #define PAC_TARGET_ADDR_REGISTER 17
 #define PAC_MODIFIER_REGISTER 16
@@ -159,6 +163,28 @@ static struct builtin_tls {
 } builtin_tls[1];
 #define MIN_TLS_ALIGN offsetof(struct builtin_tls, pt)
 
+struct relro_cache_header {
+	uint64_t interp_base;
+	uint64_t vdso_base;
+	uint64_t reserve_base;
+	uint64_t dso_nr;
+	uint64_t cache_size;
+};
+
+struct relro_cache_entry {
+	dev_t dev;
+	ino_t ino;
+	void *base;
+	size_t offset;
+};
+
+static int relro_cache_fd = -1;
+static size_t relro_cache_nr;
+static struct relro_cache_entry *relro_cache_entries;
+static unsigned char *relro_cache_base;
+
+static void do_prelink(struct dso *p);
+
 #define ADDEND_LIMIT 4096
 static size_t *saved_addends, *apply_addends_to;
 static bool g_is_asan;
@@ -199,6 +225,14 @@ static struct dso *libc_dso = NULL;
 static char g_process_name_buf[PROCESS_NAME_BUF_LEN];
 static bool g_process_name_init_done;
 static int g_dlopen_hisysevent_count;
+
+static bool prelinking = false;
+static bool is_prelinker = false;
+static bool is_prelink_mmap_safe = true;
+#define PRELINKER_RESERVE_MEMORY_LENGTH (8ULL * 1024 * 1024 * 1024)
+static void *prelinker_reserve_area_address = NULL;
+static uintptr_t prelinker_reserve_address_base = 0;
+static uintptr_t prelinker_reserve_address_length = 0;
 
 struct debug *_dl_debug_addr = &debug;
 
@@ -292,6 +326,13 @@ static inline bool gnu_hash_filter(uint32_t* ght, size_t ghm, uint32_t gho, uint
     return true;
 }
 
+static inline void runtime_jumper(void)
+{
+	if (runtime) {
+		longjmp(*rtld_fail, 1);
+	}
+}
+
 void dlopen_config_abs_path_policy(bool flag)
 {
 	pthread_rwlock_wrlock(&lock);
@@ -318,6 +359,103 @@ static bool check_acceptable(ns_inherit *inherit, const char *lib_name)
 	}
 	last_slash++;
 	return is_sharable(inherit, last_slash);
+}
+
+static int prelinker_dso_cmp(const void *a, const void *b)
+{
+	const struct dso *pa = *(const struct dso * const *)a;
+	const struct dso *pb = *(const struct dso * const *)b;
+	if (pa->ino < pb->ino) return -1;
+	if (pa->ino > pb->ino) return 1;
+	if (pa->dev < pb->dev) return -1;
+	if (pa->dev > pb->dev) return 1;
+	return 0;
+}
+
+static int prelinker_relro_cmp(const void *a, const void *b)
+{
+	const struct relro_cache_entry *pa = (const struct relro_cache_entry *)a;
+	const struct relro_cache_entry *pb = (const struct relro_cache_entry *)b;
+	if (pa->ino < pb->ino) return -1;
+	if (pa->ino > pb->ino) return 1;
+	if (pa->dev < pb->dev) return -1;
+	if (pa->dev > pb->dev) return 1;
+	return 0;
+}
+
+static const struct relro_cache_entry *lookup_relro_cache(dev_t dev, ino_t ino)
+{
+	const struct relro_cache_entry dummy = {
+		.dev = dev,
+		.ino = ino
+	};
+	if (is_prelink_mmap_safe != true) {
+		/* someone is inside dlcose, they released global lock because they are running finit, */
+		/* they have unlinked a dso which was prelinked, but before doing so, they set is_prelink_mmap_safe */
+		/* while under the global lock (which we now own) */
+		/* we cannot remap overtop of them while they are running finit, so do not use prelinker in this case */
+		return NULL;
+	}
+	return bsearch(&dummy, &relro_cache_entries[1] /* skip ldso */, relro_cache_nr - 1,
+		sizeof(struct relro_cache_entry), prelinker_relro_cmp);
+}
+
+static void add_dso_prelink_info(struct dso *p)
+{
+	if (prelinking && relro_cache_entries) {
+		if (&ldso == p) {
+			ldso.is_prelinked = true;
+			ldso.relro_cache_index = 0;
+		} else if (relro_cache_nr > 1) {
+			const struct relro_cache_entry *entry = lookup_relro_cache(p->dev, p->ino);
+			if (entry) {
+				p->is_prelinked = true;
+				p->relro_cache_index = entry - relro_cache_entries;
+			}
+		}
+	}
+}
+
+#define PRELINK_DSO_LIST_SIZE 32
+static struct dso **prelinked_dso_list;
+static size_t prelinked_dso_nr, prelinked_dso_list_capacity;
+
+static void add_prelinked_dso(struct dso *p)
+{
+	if (!prelinked_dso_list) {
+		prelinked_dso_nr = 0;
+		prelinked_dso_list_capacity = PRELINK_DSO_LIST_SIZE;
+		prelinked_dso_list = malloc(sizeof(struct dso *) * prelinked_dso_list_capacity);
+		if (!prelinked_dso_list) {
+			LD_LOGE("prelinked DSO list malloc failed");
+			return;
+		}
+	}
+	if (prelinked_dso_nr >= prelinked_dso_list_capacity) {
+		size_t new_capacity = prelinked_dso_list_capacity << 1;
+		if (new_capacity <= prelinked_dso_list_capacity) {
+			LD_LOGE("prelinked DSO list size overflow");
+			return;
+		}
+		struct dso **new_list = realloc(prelinked_dso_list, sizeof(struct dso *) * new_capacity);
+		if (!new_list) {
+			LD_LOGE("prelinked DSO list realloc failed");
+			return;
+		}
+		prelinked_dso_list_capacity = new_capacity;
+		prelinked_dso_list = new_list;
+	}
+	prelinked_dso_list[prelinked_dso_nr++] = p;
+}
+
+static void del_prelinked_dso(struct dso *p)
+{
+	for (size_t i = 0; i < prelinked_dso_nr; ++i) {
+		if (p == prelinked_dso_list[i]) {
+			prelinked_dso_list[i] = prelinked_dso_list[--prelinked_dso_nr];
+			return;
+		}
+	}
 }
 
 #if defined(BTI_SUPPORT) && (!defined(__LITEOS__))
@@ -532,7 +670,9 @@ static void init_namespace(struct dso *app)
 	if (ret < 0) {
 		LD_LOGW("init_namespace ini file parse failed!");
 		/* Init_default_namespace is required even if the ini file parsing fails */
-		if (!sys_path) get_sys_path(conf);
+		if (sys_path) __libc_free(sys_path);
+		get_sys_path(conf);
+		sys_path = ld_strdup(sys_path);
 		init_default_namespace(app);
 		configor_free();
 		trace_marker_end(HITRACE_TAG_MUSL);
@@ -540,7 +680,9 @@ static void init_namespace(struct dso *app)
 	}
 
 	/* sys_path needs to be parsed through ini file */
-	if (!sys_path) get_sys_path(conf);
+	if (sys_path) __libc_free(sys_path);
+	get_sys_path(conf);
+	sys_path = ld_strdup(sys_path);
 	init_default_namespace(app);
 
 	/* Init default namespace */
@@ -1622,7 +1764,7 @@ static void do_relocs(struct dso *dso, size_t *rel, size_t rel_size, size_t stri
 			/* Save original addend in stage 2 where the dso
 			 * chain consists of just ldso; otherwise read back
 			 * saved addend since the inline one was clobbered. */
-			if (head==&ldso) {
+			if (head==&ldso && !is_prelinker) {
 				saved_addends[save_slot] = *reloc_addr;
 			}
 			addend = saved_addends[save_slot++];
@@ -1685,6 +1827,10 @@ static void reclaim_gaps(struct dso *dso)
 {
 	Phdr *ph = dso->phdr;
 	size_t phcnt = dso->phnum;
+
+	if (is_prelinker) {
+		return;
+	}
 
 	if (dso->adlt) {
 		adlt_reclaim_gaps(dso);
@@ -1749,7 +1895,15 @@ UT_STATIC void unmap_library(struct dso *dso)
 		if (__predict_false(dso->adlt)) {
 			unmap_adlt_library(dso);
 		} else if (!is_dlclose_debug_enable()) {
-			munmap(dso->map, dso->map_len);
+			if (dso->is_prelinked) {
+				/* With prctl reserved area, this shouldn't be needed */
+				/* As fallback, prelinker may use mmap to reserve, so we remap guard to protect this vma again */
+				if (mmap(dso->map, dso->map_len, PROT_NONE, MAP_FIXED|MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) == MAP_FAILED) {
+					munmap(dso->map, dso->map_len);
+				}
+			} else {
+				munmap(dso->map, dso->map_len);
+			}
 		} else {
 			mprotect(dso->map, dso->map_len, PROT_NONE);
 		}
@@ -1791,6 +1945,22 @@ UT_STATIC void fill_random_data(void *buf, size_t buflen)
 		}
 	}
 	return;
+}
+
+static void fill_ohos_random(const struct dso *dso, unsigned char *ohos_random_dest, size_t len, unsigned char *base)
+{
+	if (dso->is_prelinked && dso->relro_start && dso->relro_end) {
+		unsigned char *current_dso_relro_base = base + dso->relro_start;
+		unsigned char *current_dso_relro_end = base + dso->relro_end;
+		if (ohos_random_dest >= current_dso_relro_base && (ohos_random_dest + len) <= current_dso_relro_end) {
+			uintptr_t random_offset_in_relro = (uintptr_t)ohos_random_dest - (uintptr_t)current_dso_relro_base;
+			const struct relro_cache_entry *entry = &relro_cache_entries[dso->relro_cache_index];
+			const unsigned char *memfd_relro_base = relro_cache_base + entry->offset;
+			memcpy(ohos_random_dest, memfd_relro_base + random_offset_in_relro, len);
+			return;
+		}
+	}
+	fill_random_data(ohos_random_dest, len);
 }
 
 static bool get_transparent_hugepages_supported(void)
@@ -1915,6 +2085,9 @@ UT_STATIC void *map_library(int fd, struct dso *dso, struct reserved_address_par
 	if (!check_xpm(fd)) {
 		return 0;
 	}
+
+	/* Check dso in prelink relro cache */
+	add_dso_prelink_info(dso);
 
 	ssize_t l = read(fd, buf, sizeof buf);
 	eh = buf;
@@ -2043,7 +2216,20 @@ UT_STATIC void *map_library(int fd, struct dso *dso, struct reserved_address_par
 		start_alignment = maxinum_alignment == KPMD_SIZE ? KPMD_SIZE : PAGE_SIZE;
 	}
 
-	if (reserved_params) {
+	if (is_prelinker) {
+		if (map_len > prelinker_reserve_address_length) {
+			goto error;
+		}
+		start_addr = prelinker_reserve_address_base;
+		map_flags |= MAP_FIXED;
+		uintptr_t addr = (uintptr_t)(start_addr + map_len);
+		uintptr_t aligned_addr = (addr + LIBRARY_ALIGNMENT - 1) & ~(LIBRARY_ALIGNMENT - 1);
+		prelinker_reserve_address_length -= (aligned_addr - prelinker_reserve_address_base);
+		prelinker_reserve_address_base = aligned_addr;
+	} else if (dso->is_prelinked) {
+		start_addr = (size_t)relro_cache_entries[dso->relro_cache_index].base;
+		map_flags |= MAP_FIXED;
+	} else if (reserved_params) {
 		if (map_len > reserved_params->reserved_size) {
 			if (reserved_params->must_use_reserved) {
 				goto error;
@@ -2063,8 +2249,15 @@ UT_STATIC void *map_library(int fd, struct dso *dso, struct reserved_address_par
 	/* map the whole load segments with PROT_READ first for security consideration. */
 	prot = PROT_READ;
 
+	if (dso->is_prelinked || is_prelinker) {
+		map = DL_NOMMU_SUPPORT
+			? mmap((void *)start_addr, map_len, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0)
+			: mmap((void *)start_addr, map_len, prot, map_flags, fd, off_start);
+		if (map == MAP_FAILED) {
+			goto error;
+		}
 	/* if reserved_params exists, we should use start_addr as prefered result to do the mmap operation */
-	if (reserved_params) {
+	} else if (reserved_params) {
 		map = DL_NOMMU_SUPPORT
 			? mmap((void *)start_addr, map_len, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0)
 			: mmap((void *)start_addr, map_len, prot, map_flags, fd, off_start);
@@ -2130,7 +2323,7 @@ UT_STATIC void *map_library(int fd, struct dso *dso, struct reserved_address_par
 	dso->phnum = 0;
 	for (ph=ph0, i=eh->e_phnum; i; i--, ph=(void *)((char *)ph+eh->e_phentsize)) {
 		if (ph->p_type == PT_OHOS_RANDOMDATA) {
-			fill_random_data((void *)(ph->p_vaddr + base), ph->p_memsz);
+			fill_ohos_random(dso, (void *)(ph->p_vaddr + base), ph->p_memsz, base);
 			continue;
 		}
 		if (ph->p_type != PT_LOAD) continue;
@@ -2495,6 +2688,16 @@ UT_STATIC struct dso *find_library_by_fstat(const struct stat *st, const ns_t *n
 			if (p && is_sharable(inherit, p->shortname)) return p;
 		}
 	}
+	/* Avoid loading prelinked DSO multiple times. */
+	if (prelinking || is_prelinker) {
+		for (size_t i = 0; i < prelinked_dso_nr; ++i) {
+			p = prelinked_dso_list[i];
+			if (p->ino == st->st_ino && p->dev == st->st_dev && p->file_offset == file_offset &&
+			    (p->is_prelinked || is_prelinker)) {
+				return p;
+			}
+		}
+	}
 	return NULL;
 }
 
@@ -2552,6 +2755,7 @@ struct dso *load_library(
 			tail = &ldso;
 			ldso.namespace = namespace;
 			ns_add_dso(namespace, &ldso);
+			add_dso_prelink_info(&ldso);
 		}
 		return &ldso;
 	}
@@ -2634,6 +2838,8 @@ struct dso *load_library(
 		LD_LOGD("load_library find_library_by_fstat, found p and return it!");
 		return p;
 	}
+	temp_dso.dev = st.st_dev;
+	temp_dso.ino = st.st_ino;
 	map = noload ? 0 : map_library(fd, &temp_dso, reserved_params);
 	close(fd);
 	if (!map) return 0;
@@ -2677,6 +2883,7 @@ struct dso *load_library(
 	p->needed_by = needed_by;
 	p->name = p->buf;
 	p->runtime_loaded = runtime;
+	p->adlt_ndso_index = -1;
 	strcpy(p->name, pathname);
 	/* Add a shortname only if name arg was not an explicit pathname. */
 	if (pathname != name) p->shortname = strrchr(p->name, '/')+1;
@@ -2708,6 +2915,9 @@ struct dso *load_library(
 	/* Add dso to namespace */
 	p->namespace = namespace;
 	ns_add_dso(namespace, p);
+	if ((prelinking && p->is_prelinked) || is_prelinker) {
+		add_prelinked_dso(p);
+	}
 	if (runtime)
 		p->by_dlopen = 1;
 
@@ -3247,7 +3457,7 @@ static void reloc_all(struct dso *p, const dl_extinfo *extinfo)
 	ssize_t relro_fd_offset = 0;
 	size_t dyn[DYN_CNT];
 	for (; p; p=p->next) {
-		if (p->relocated) continue;
+		if (p->relocated || p->prelink_skip) continue;
 		if (p != &ldso) {
 			add_can_search_so_list_in_dso(p, head);
 		}
@@ -3270,7 +3480,8 @@ static void reloc_all(struct dso *p, const dl_extinfo *extinfo)
 #endif
 		do_android_relocs(p, DT_ANDROID_REL, DT_ANDROID_RELSZ);
 		do_android_relocs(p, DT_ANDROID_RELA, DT_ANDROID_RELASZ);
-
+		/* Prelink after all relocs done and before relro mprotect. */
+		do_prelink(p);
 		if (head != &ldso && p->relro_start != p->relro_end &&
 			mprotect(laddr(p, p->relro_start), p->relro_end-p->relro_start, PROT_READ)
 			&& errno != ENOSYS) {
@@ -3795,6 +4006,636 @@ void __dls2b(size_t *sp, size_t *auxv, size_t *aux)
 	else ((stage3_func)laddr(&ldso, dls3_def.sym->st_value))(sp, auxv, aux);
 }
 
+static void *prelinker_get_reserve_area(void *address)
+{
+	if (prelinker_reserve_area_address) {
+		if (address && prelinker_reserve_area_address != address) {
+			LD_LOGW("prelink: reserve address mismatch");
+			errno = EINVAL;
+			return MAP_FAILED;
+		}
+		return prelinker_reserve_area_address;
+	}
+	size_t reserve_area_length = PRELINKER_RESERVE_MEMORY_LENGTH;
+	unsigned long long relro_regn_request[2] = { (unsigned long long)(uintptr_t)address, reserve_area_length };
+	int err = prctl(HM_PR_PRELINK, HM_PRELINK_RESERVE_RELRO, relro_regn_request);
+	void *reserve_address = (void *)(uintptr_t)relro_regn_request[0];
+	if (err >= 0 && reserve_address) {
+		if (address) {
+			reserve_address = (reserve_address == address) ? reserve_address : MAP_FAILED;
+		}
+	} else {
+		if (!address) {
+			reserve_address = mmap(address, reserve_area_length, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+		} else {
+			reserve_address = mmap(address, reserve_area_length, PROT_NONE, MAP_FIXED | MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+		}
+	}
+	if (reserve_address == MAP_FAILED) {
+		LD_LOGW("prelink: reserve address mmap failed, errno=%{public}d", errno);
+		return reserve_address;
+	}
+	/* Set globally for fork relationship */
+	prelinker_reserve_area_address = reserve_address;
+	return reserve_address;
+}
+
+#ifdef LOAD_ORDER_RANDOMIZATION
+/* Sort prelinked DSOs by deps in BFS order. */
+static void prelink_sort_loadtasks(struct loadtasks *tasks)
+{
+	struct loadtask **n = __libc_calloc(tasks->length, sizeof(*n));
+	if (!n) {
+		return;
+	}
+	size_t cur = 0;
+	for (size_t i = 0; i < tasks->length; ++i) {
+		if (tasks->array[i]->visited) {
+			continue;
+		}
+
+		size_t pos = cur;
+		tasks->array[i]->visited = true;
+		n[cur++] = tasks->array[i];
+
+		while (pos < cur) {
+			struct loadtask *task = n[pos++];
+			for (int j = 0; j < task->p->ndeps_direct; ++j) {
+				struct loadtask *dep = NULL;
+				for (size_t k = 0; k < tasks->length; ++k) {
+					if (tasks->array[k]->p == task->p->deps[j]) {
+						dep = tasks->array[k];
+						break;
+					}
+				}
+				if (dep && !dep->visited) {
+					dep->visited = true;
+					n[cur++] = dep;
+				}
+			}
+		}
+	}
+
+	__libc_free(tasks->array);
+	tasks->array = n;
+	tasks->capacity = tasks->length;
+	tasks->length = cur;
+}
+#endif
+
+static int do_dlprelink_record(int memfd, const char *list_path, size_t *auxv)
+{
+	struct stat list_stat = { 0 };
+	jmp_buf jb;
+	volatile int retval = -1;
+
+	int list_fd = open(list_path, O_RDONLY);
+	if (list_fd < 0) {
+		error("open list file failed: path=%s, err=%m", list_path);
+		LD_LOGW("prelink: list open failed, errno=%{public}d", errno);
+		return -1;
+	}
+
+	if (fstat(list_fd, &list_stat) != 0) {
+		error("stat list file failed: path=%s, err=%m", list_path);
+		LD_LOGW("prelink: list stat failed, errno=%{public}d", errno);
+		close(list_fd);
+		return -1;
+	}
+
+	if (list_stat.st_size <= 0) {
+		error("list file size invalid: path=%s, size=%lld", list_path, (long long)list_stat.st_size);
+		LD_LOGW("prelink: empty list");
+		close(list_fd);
+		return -1;
+	}
+
+	char *file_contents = malloc(list_stat.st_size + 1);
+	if (!file_contents) {
+		error("malloc file_contents failed: size=%lld", (long long)list_stat.st_size);
+		LD_LOGW("prelink: list content malloc failed, errno=%{public}d", errno);
+		close(list_fd);
+		return -1;
+	}
+
+	file_contents[list_stat.st_size] = 0;
+
+	if (read(list_fd, file_contents, list_stat.st_size) != list_stat.st_size) {
+		error("read list file failed: path=%s, err=%m", list_path);
+		LD_LOGW("prelink: list read failed, errno=%{public}d", errno);
+		close(list_fd);
+		free(file_contents);
+		return -1;
+	}
+
+	close(list_fd);
+
+	void *reserve_range = prelinker_get_reserve_area(NULL);
+	if (reserve_range == MAP_FAILED) {
+		error("get reserve area failed, err=%m");
+		free(file_contents);
+		return -1;
+	}
+
+	uintptr_t addr = (uintptr_t)reserve_range;
+	uintptr_t aligned_addr = (addr + LIBRARY_ALIGNMENT - 1) & ~(LIBRARY_ALIGNMENT - 1);
+	prelinker_reserve_address_length = (addr + (uintptr_t)PRELINKER_RESERVE_MEMORY_LENGTH) - aligned_addr;
+	prelinker_reserve_address_base = aligned_addr;
+
+	struct dso *prelink_head = tail;
+
+	ns_t *ns_default = get_default_ns();
+	noload = 0;
+
+#ifdef LOAD_ORDER_RANDOMIZATION
+	struct loadtasks *tasks = create_loadtasks();
+	if (!tasks) {
+		error("create loadtasks failed, err=%m");
+		LD_LOGW("prelink: create_loadtasks failed, errno=%{public}d", errno);
+		free(file_contents);
+		return -1;
+	}
+	volatile bool need_free_tasks = true;
+#endif
+	char *p = file_contents;
+	char *end = file_contents + list_stat.st_size;
+	while (p < end) {
+		ns_t *ns = ns_default;
+		char *n1 = memchr(p, '\n', (size_t)(end - p));
+		char *dso_path = p;
+		if (n1) {
+			*n1 = '\0';
+			p = n1 + 1;
+		} else {
+			p = end;
+		}
+		if (dso_path[0] == '#' || dso_path[0] == '\0') {
+			continue;
+		}
+		char *n2 = memchr(dso_path, ':', (size_t)(p - dso_path));
+		if (n2) {
+			*n2 = '\0';
+			ns_t *ns_tmp = find_ns_by_name(dso_path);
+			ns = ns_tmp ? ns_tmp : ns;
+			dso_path = n2 + 1;
+		}
+#ifdef LOAD_ORDER_RANDOMIZATION
+		struct loadtask *task = create_loadtask(dso_path, NULL, ns, true);
+		if (task) {
+			if (load_library_header(task)) {
+				if (!task->isloaded) {
+					append_loadtasks(tasks, task);
+					task = NULL;
+				}
+			}
+			free_task(task);
+		}
+#else
+		load_library(dso_path, head, ns, true, NULL);
+#endif
+	}
+
+	free(file_contents);
+
+	if (head == &ldso) {
+		prelink_head = head;
+	} else {
+		prelink_head = prelink_head->next;
+	}
+	if (!prelink_head) {
+		error("no valid prelinkable DSO");
+		LD_LOGW("prelink: no valid prelinkable DSO");
+#ifdef LOAD_ORDER_RANDOMIZATION
+		free_loadtasks(tasks);
+#endif
+		return -1;
+	}
+
+	if (runtime) {
+		struct dso *next = NULL;
+		struct tls_module *orig_tls_tail = tls_tail;
+		size_t orig_tls_cnt = tls_cnt;
+		size_t orig_tls_offset = tls_offset;
+		size_t orig_tls_align = tls_align;
+		struct dso *orig_lazy_head = lazy_head;
+		struct dso *orig_syms_tail = syms_tail;
+		struct dso *orig_tail = tail;
+		rtld_fail = &jb;
+		if (setjmp(*rtld_fail)) {
+			revert_syms(orig_syms_tail);
+			for (struct dso *p = orig_tail->next; p; p = next) {
+				next = p->next;
+				while (p->td_index) {
+					void *tmp = p->td_index->next;
+					free(p->td_index);
+					p->td_index = tmp;
+				}
+				free(p->funcdescs);
+				free(p->rpath);
+				if (p->deps) {
+					for (int i = 0; i < p->ndeps_direct; i++) {
+						remove_dso_parent(p->deps[i], p);
+					}
+				}
+				free(p->deps);
+				dlclose_ns(p);
+				del_prelinked_dso(p);
+				unmap_library(p);
+				free_reloc_can_search_dso(p);
+			}
+			for (struct dso *p = orig_tail->next; p; p = next) {
+				next = p->next;
+				if (p->parents) {
+					free(p->parents);
+				}
+				free(p);
+			}
+			if (!orig_tls_tail) libc.tls_head = 0;
+			tls_tail = orig_tls_tail;
+			if (tls_tail) tls_tail->next = 0;
+			tls_cnt = orig_tls_cnt;
+			tls_offset = orig_tls_offset;
+			tls_align = orig_tls_align;
+			lazy_head = orig_lazy_head;
+			tail = orig_tail;
+			tail->next = 0;
+#ifdef LOAD_ORDER_RANDOMIZATION
+			if (need_free_tasks) {
+				free_loadtasks(tasks);
+			}
+#endif
+			return retval;
+		}
+	}
+
+#ifdef LOAD_ORDER_RANDOMIZATION
+	preload_deps(prelink_head, tasks);
+	unmap_preloaded_sections(tasks);
+	/*
+	 * Shuffling load-tasks in prelinker causes VM fragmentation in
+	 * prelinked services, which results in more page table usage.
+	 * Instead we sort load tasks by deps to reduce VM fragmentation.
+	 */
+	prelink_sort_loadtasks(tasks);
+	run_loadtasks(tasks, NULL);
+	free_loadtasks(tasks);
+	need_free_tasks = false;
+	assign_tls(prelink_head);
+	if (!runtime) {
+		static_tls_cnt = tls_cnt;
+	}
+#else
+	load_deps(prelink_head, NULL);
+#endif
+
+	bool prelink_skip = true;
+	for (struct dso *p = head; p; p = p->next) {
+		p->is_reloc_head_so_dep = true;
+		add_syms(p);
+		if (prelink_skip && p == prelink_head) {
+			prelink_skip = false;
+		}
+		p->prelink_skip = prelink_skip;
+	}
+
+	reloc_all(head, NULL);
+
+	if (!runtime && ldso_fail) {
+		return -1;
+	}
+
+	struct relro_cache_header header;
+	struct relro_cache_entry entry;
+	size_t relro_sz = 0;
+	size_t tmp;
+	size_t sorted_dso_list_size = PRELINK_DSO_LIST_SIZE;
+	struct dso **sorted_dso_list = malloc(sizeof(struct dso *) * sorted_dso_list_size);
+	if (!sorted_dso_list) {
+		error("sorted DSO list malloc failed, err=%m");
+		LD_LOGW("prelink: sorted DSO list malloc failed, errno=%{public}d", errno);
+		runtime_jumper();
+		return -1;
+	}
+	if (auxv) {
+		search_vec(auxv, &tmp, AT_BASE);
+		header.interp_base = tmp;
+		search_vec(auxv, &tmp, AT_SYSINFO_EHDR);
+		header.vdso_base = tmp;
+	}
+	header.reserve_base = (uint64_t)reserve_range;
+	header.dso_nr = 0;
+	if (prelink_head != &ldso) {
+		sorted_dso_list[0] = &ldso;
+		header.dso_nr++;
+		relro_sz += ldso.relro_end - ldso.relro_start;
+	}
+	for (struct dso *p = head; p; p = p->next) {
+		p->is_reloc_head_so_dep = false;
+		if (p->prelink_skip) {
+			continue;
+		}
+		if (header.dso_nr >= sorted_dso_list_size) {
+			size_t new_size = sorted_dso_list_size << 1;
+			if (new_size <= sorted_dso_list_size) {
+				error("sorted DSO list size overflow");
+				LD_LOGW("prelink: sorted DSO list size overflow");
+				free(sorted_dso_list);
+				runtime_jumper();
+				return -1;
+			}
+			struct dso **new_list = realloc(sorted_dso_list, sizeof(struct dso *) * new_size);
+			if (!new_list) {
+				error("sorted DSO list realloc failed, err=%m");
+				LD_LOGW("prelink: sorted DSO list realloc failed, errno=%{public}d", errno);
+				free(sorted_dso_list);
+				runtime_jumper();
+				return -1;
+			} else {
+				sorted_dso_list = new_list;
+				sorted_dso_list_size = new_size;
+			}
+		}
+		sorted_dso_list[header.dso_nr] = p;
+		header.dso_nr++;
+		relro_sz += p->relro_end - p->relro_start;
+	}
+
+	/* keep ldso first */
+	qsort(&sorted_dso_list[1], header.dso_nr - 1, sizeof(struct dso *), prelinker_dso_cmp);
+
+	size_t meta_sz = (sizeof(header) + header.dso_nr * sizeof(entry) + PAGE_SIZE - 1) & -PAGE_SIZE;
+	header.cache_size = meta_sz + relro_sz;
+	if (ftruncate(memfd, meta_sz + relro_sz) < 0) {
+		error("ftruncate failed, err=%m");
+		LD_LOGW("prelink: memfd ftruncate failed, errno=%{public}d", errno);
+		free(sorted_dso_list);
+		runtime_jumper();
+		return -1;
+	}
+	if (lseek(memfd, 0, SEEK_SET)) {
+		error("lseek failed, err=%m");
+		LD_LOGW("prelink: memfd lseek failed, errno=%{public}d", errno);
+		free(sorted_dso_list);
+		runtime_jumper();
+		return -1;
+	}
+	if (write(memfd, &header, sizeof(header)) < 0) {
+		error("write header failed, err=%m");
+		LD_LOGW("prelink: write header failed, errno=%{public}d", errno);
+		free(sorted_dso_list);
+		runtime_jumper();
+		return -1;
+	}
+	relro_sz = 0;
+	for (uint64_t i = 0; i < header.dso_nr; ++i) {
+		struct dso *p = sorted_dso_list[i];
+		entry.dev = p->dev;
+		entry.ino = p->ino;
+		entry.base = p->base;
+		entry.offset = meta_sz + relro_sz;
+		relro_sz += p->relro_end - p->relro_start;
+		if (write(memfd, &entry, sizeof(entry)) < 0) {
+			error("prelink: failed to write entry to file, err=%m");
+			LD_LOGW("prelink: write entry failed, errno=%{public}d", errno);
+			free(sorted_dso_list);
+			runtime_jumper();
+			return -1;
+		}
+		if (pwrite(memfd, laddr(p, p->relro_start), p->relro_end - p->relro_start, entry.offset) < 0) {
+			error("prelink: failed to write relro data to file, err=%m");
+			LD_LOGW("prelink: pwrite relro data failed, errno=%{public}d", errno);
+			free(sorted_dso_list);
+			runtime_jumper();
+			return -1;
+		}
+	}
+
+	free(sorted_dso_list);
+	retval = 0;
+	runtime_jumper();
+
+	return 0;
+}
+
+#define RELRO_CACHE_NAME "/memfd:relro_cache (deleted)"
+
+static int check_prelink_memfd(int memfd)
+{
+	ssize_t rc;
+	char path[PATH_MAX], buf[PATH_MAX];
+
+	if (memfd < 0) {
+		return -1;
+	}
+
+	sprintf(path, "/proc/self/fd/%d", memfd);
+	rc = readlink(path, buf, sizeof(buf));
+	if (rc < 0) {
+		LD_LOGW("prelink: memfd readlink failed, errno=%{public}d", errno);
+		return -1;
+	} else if (strncmp(buf, RELRO_CACHE_NAME, (size_t)rc)) {
+		LD_LOGW("prelink: invalid memfd name");
+		return -1;
+	}
+
+	return 0;
+}
+
+int dlprelink_record(int memfd, const char *list_path)
+{
+	int rc;
+	char dummy_target[] = "";
+
+	if (!is_permitted(__builtin_return_address(0), dummy_target)) {
+		error("not permitted caller");
+		return -1;
+	}
+
+	if (check_prelink_memfd(memfd) < 0) {
+		error("invalid memfd");
+		return -1;
+	}
+
+	pthread_rwlock_wrlock(&lock);
+	if (!prelinking) {
+		is_prelinker = true;
+		rc = do_dlprelink_record(memfd, list_path, NULL);
+		is_prelinker = false;
+	} else {
+		error("already prelinking");
+		rc = -1;
+	}
+	pthread_rwlock_unlock(&lock);
+
+	return rc;
+}
+
+static int fetch_prelink_memfd(void)
+{
+	int memfd = -1;
+	char path[PATH_MAX], buf[PATH_MAX];
+	DIR *dir = opendir("/proc/self/fd");
+	if (!dir) {
+		LD_LOGW("prelink: opendir failed, errno=%{public}d", errno);
+		return -1;
+	}
+	for (;;) {
+		struct dirent *de = readdir(dir);
+		if (!de) {
+			break;
+		}
+		if (de->d_type != DT_LNK || de->d_name[0] < '0' || de->d_name[0] > '9') {
+			continue;
+		}
+		sprintf(path, "/proc/self/fd/%s", de->d_name);
+		ssize_t rc = readlink(path, buf, sizeof(buf));
+		if (rc < 0) {
+			continue;
+		}
+		if (!strncmp(buf, RELRO_CACHE_NAME, (size_t)rc)) {
+			memfd = atoi(de->d_name);
+			break;
+		}
+	}
+	closedir(dir);
+	return memfd;
+}
+
+static void prelinker_main(size_t *auxv, const char *list_path)
+{
+	int memfd = fetch_prelink_memfd();
+	if (memfd < 0 || !list_path) {
+		_exit(1);
+	}
+
+	error = error_impl;
+	is_prelinker = true;
+	head = tail = syms_tail = &ldso;
+	init_namespace(&ldso);
+	/* avoid adding ldso again */
+	ldso.prev = &ldso;
+
+	int rc = do_dlprelink_record(memfd, list_path, auxv);
+
+	_exit(rc);
+}
+
+int dlprelink_reserve_mem(void)
+{
+	void *reserve_range;
+	char dummy_target[] = "";
+
+	if (!is_permitted(__builtin_return_address(0), dummy_target)) {
+		error("not permitted caller");
+		return -1;
+	}
+
+	pthread_rwlock_wrlock(&lock);
+	reserve_range = prelinker_get_reserve_area(NULL);
+	pthread_rwlock_unlock(&lock);
+	if (reserve_range == MAP_FAILED) {
+		error("get reserve area failed, err=%m");
+		return -1;
+	}
+	return 0;
+}
+
+static int do_dlprelink_register(int fd)
+{
+	struct relro_cache_header tmp_hdr;
+	if (pread(fd, &tmp_hdr, sizeof(tmp_hdr), 0) != sizeof(tmp_hdr)) {
+		error("relro cache pread failed, err=%m");
+		LD_LOGW("prelink: relro cache pread failed, errno=%{public}d", errno);
+		return -1;
+	}
+	void *reserve_address = prelinker_get_reserve_area((void *)(uintptr_t)tmp_hdr.reserve_base);
+	if (reserve_address == MAP_FAILED) {
+		error("get reserve area failed, err=%m");
+		return -1;
+	}
+
+	size_t cache_size = (size_t)tmp_hdr.cache_size;
+	relro_cache_base = mmap(NULL, cache_size, PROT_READ, MAP_SHARED, fd, 0);
+	if (relro_cache_base == MAP_FAILED) {
+		error("relro cache mmap failed, err=%m");
+		LD_LOGW("prelink: relro cache mmap failed, errno=%{public}d", errno);
+		return -1;
+	}
+
+	struct relro_cache_header *header = (void *)relro_cache_base;
+	relro_cache_nr = header->dso_nr;
+	relro_cache_entries = (void *)(relro_cache_base + sizeof(*header));
+
+	/* validate relro cache before enable prelinking */
+	if (relro_cache_nr == 0 || cache_size <= sizeof(*header) ||
+	    (cache_size - sizeof(*header)) / relro_cache_nr <= sizeof(relro_cache_entries[0])) {
+		error("invalid relro cache");
+		LD_LOGW("prelink: invalid relro cache, nr=%{public}zu, size=%{public}zu", relro_cache_nr, cache_size);
+		return -1;
+	}
+
+	relro_cache_fd = fd;
+	prelinking = true;
+
+	return 0;
+}
+
+#define RELRO_CACHE_SEALS (F_SEAL_SEAL | F_SEAL_GROW | F_SEAL_SHRINK | F_SEAL_FUTURE_WRITE)
+
+int dlprelink_register(int fd)
+{
+	int rc = -1;
+	char dummy_target[] = "";
+
+	if (!is_permitted(__builtin_return_address(0), dummy_target)) {
+		error("not permitted caller");
+		return -1;
+	}
+
+	if (fcntl(fd, F_GET_SEALS) != RELRO_CACHE_SEALS ||
+	    check_prelink_memfd(fd) < 0) {
+		error("invalid memfd");
+		return -1;
+	}
+
+	pthread_rwlock_wrlock(&lock);
+	if (!prelinking) {
+		rc = do_dlprelink_register(fd);
+	}
+	pthread_rwlock_unlock(&lock);
+
+	return rc;
+}
+
+static void init_relro_cache(size_t *auxv)
+{
+	relro_cache_fd = fetch_prelink_memfd();
+	if (relro_cache_fd < 0) {
+		prelinking = false;
+		return;
+	}
+	if (fcntl(relro_cache_fd, F_GET_SEALS) != RELRO_CACHE_SEALS ||
+	    fcntl(relro_cache_fd, F_SETFD, FD_CLOEXEC) < 0 ||
+	    do_dlprelink_register(relro_cache_fd) < 0) {
+		close(relro_cache_fd);
+		relro_cache_fd = -1;
+		prelinking = false;
+		return;
+	}
+
+	size_t interp_base, vdso_base;
+	struct relro_cache_header *header = (void *)relro_cache_base;
+	size_t cache_size = (size_t)header->cache_size;
+	search_vec(auxv, &interp_base, AT_BASE);
+	search_vec(auxv, &vdso_base, AT_SYSINFO_EHDR);
+	if (interp_base != header->interp_base || vdso_base != header->vdso_base) {
+		munmap(relro_cache_base, cache_size);
+		close(relro_cache_fd);
+		relro_cache_fd = -1;
+		prelinking = false;
+	}
+}
+
 /* Stage 3 of the dynamic linker is called with the dynamic linker/libc
  * fully functional. Its job is to load (if not already loaded) and
  * process dependencies and relocations for the main application and
@@ -3819,6 +4660,15 @@ void __dls3(size_t *sp, size_t *auxv, size_t *aux)
 	__pthread_self()->sysinfo = __sysinfo;
 	libc.secure = ((aux[0]&0x7800)!=0x7800 || aux[AT_UID]!=aux[AT_EUID]
 		|| aux[AT_GID]!=aux[AT_EGID] || aux[AT_SECURE]);
+
+	prelinking = ((aux[AT_FLAGS] & HM_AT_FLAG_PRELINK) == HM_AT_FLAG_PRELINK);
+	if (prelinking) {
+		init_relro_cache(auxv);
+	} else if (aux[AT_PHDR] == (size_t)ldso.phdr && argc > 1) {
+		if (!strcmp(argv[0], "prelinker")) {
+			prelinker_main(auxv, argv[1]);
+		}
+	}
 
 	/* Only trust user/env if kernel says we're not suid/sgid */
 	if (!libc.secure) {
@@ -4681,6 +5531,9 @@ void *dlopen_impl(
 			}
 			free(p->deps);
 			dlclose_ns(p);
+			if (prelinking && p->is_prelinked) {
+				del_prelinked_dso(p);
+			}
 			unmap_library(p);
 			if (p->parents) {
 				free(p->parents);
@@ -5355,6 +6208,9 @@ static int dlclose_impl(struct dso *p)
 
 	/* remove dso from namespace */
 	dlclose_ns(p);
+	if (prelinking && p->is_prelinked) {
+		del_prelinked_dso(p);
+	}
 
 	/* */
 	void* handle = find_handle_by_dso(p);
@@ -5552,12 +6408,21 @@ int do_dlclose(struct dso *p, bool check_deps_all)
 	}
 
 	TAILQ_FOREACH(ef, &need_unload_queue, entries) {
+		/* while under global lock, check if this dso was prelinked, */
+		/* if so, before we release global lock, make sure nobody can remap us */
+		/* this could be changed to instead publish a list of currently destructing dso ranges */
+		if (ef->dso->is_prelinked) {
+			is_prelink_mmap_safe = false;
+		}
 		dlclose_impl(ef->dso);
 	}
 
 	TAILQ_FOREACH(ef, &need_unload_queue, entries) {
 		dlclose_impl_post(ef->dso);
 	}
+	/* we have the global lock back, nobody would have MAP_FIXED over us */
+	is_prelink_mmap_safe = true;
+
 	// Unload all sos at the end because weak symbol may cause later unloaded so to access the previous so's function.
 	TAILQ_FOREACH(ef, &need_unload_queue, entries) {
 		dlclose_post(ef->dso);
@@ -6522,7 +7387,20 @@ static bool task_map_library(struct loadtask *task, struct reserved_address_para
 		start_alignment = maxinum_alignment == KPMD_SIZE ? KPMD_SIZE : PAGE_SIZE;
 	}
 
-	if (reserved_params) {
+	if (is_prelinker) {
+		if (map_len > prelinker_reserve_address_length) {
+			goto error;
+		}
+		start_addr = prelinker_reserve_address_base;
+		map_flags |= MAP_FIXED;
+		uintptr_t addr = (uintptr_t)(start_addr + map_len);
+		uintptr_t aligned_addr = (addr + LIBRARY_ALIGNMENT - 1) & ~(LIBRARY_ALIGNMENT - 1);
+		prelinker_reserve_address_length -= (aligned_addr - prelinker_reserve_address_base);
+		prelinker_reserve_address_base = aligned_addr;
+	} else if (task->p->is_prelinked) {
+		start_addr = (size_t)relro_cache_entries[task->p->relro_cache_index].base;
+		map_flags |= MAP_FIXED;
+	} else if (reserved_params) {
 		if (map_len > reserved_params->reserved_size) {
 			if (reserved_params->must_use_reserved) {
 				LD_LOGW("Error mapping library: map len is larger than reserved address task->name=%{public}s", task->name);
@@ -6543,8 +7421,15 @@ static bool task_map_library(struct loadtask *task, struct reserved_address_para
 	/* map the whole load segments with PROT_READ first for security consideration. */
 	prot = PROT_READ;
 
-	/* if reserved_params exists, we should use start_addr as prefered result to do the mmap operation */
-	if (reserved_params) {
+	if (task->p->is_prelinked || is_prelinker) {
+		map = DL_NOMMU_SUPPORT
+			? mmap((void *)start_addr, map_len, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0)
+			: mmap((void *)start_addr, map_len, prot, map_flags, task->fd, off_start + task->file_offset);
+		if (map == MAP_FAILED) {
+			goto error;
+		}
+		/* if reserved_params exists, we should use start_addr as prefered result to do the mmap operation */
+	} else if (reserved_params) {
 		map = DL_NOMMU_SUPPORT
 			? mmap((void *)start_addr, map_len, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0)
 			: mmap((void *)start_addr, map_len, prot, map_flags, task->fd, off_start + task->file_offset);
@@ -6624,7 +7509,7 @@ static bool task_map_library(struct loadtask *task, struct reserved_address_para
 	}
 	for (ph = task->ph0, i = task->eh->e_phnum; i; i--, ph = (void *)((char *)ph + task->eh->e_phentsize)) {
 		if (ph->p_type == PT_OHOS_RANDOMDATA) {
-			fill_random_data((void *)(ph->p_vaddr + base), ph->p_memsz);
+			fill_ohos_random(task->p, (void *)(ph->p_vaddr + base), ph->p_memsz, base);
 			continue;
 		}
 		if (ph->p_type != PT_LOAD) {
@@ -6821,6 +7706,7 @@ static bool load_library_header(struct loadtask *task)
 			tail = &ldso;
 			ldso.namespace = namespace;
 			ns_add_dso(namespace, &ldso);
+			add_dso_prelink_info(&ldso);
 		}
 		task->isloaded = true;
 		task->p = &ldso;
@@ -7054,9 +7940,15 @@ static bool load_library_header(struct loadtask *task)
 		task->p->adlt->npsod_load++;
 	}
 
+	/* Check dso in prelink relro cache */
+	add_dso_prelink_info(task->p);
+
 	/* Add dso to namespace */
 	task->p->namespace = namespace;
 	ns_add_dso(namespace, task->p);
+	if ((prelinking && task->p->is_prelinked) || is_prelinker) {
+		add_prelinked_dso(task->p);
+	}
 	return true;
 }
 
@@ -7122,13 +8014,6 @@ static void task_load_library(struct loadtask *task, struct reserved_address_par
 		libc.load_hook((long unsigned int)task->p->base, task->p->phdr, task->p->phnum);
 	}
 #endif
-}
-
-static void runtime_jumper()
-{
-	if (runtime) {
-		longjmp(*rtld_fail, 1);
-	}
 }
 
 static size_t get_step_size(struct dso *p, size_t *cnt, ssize_t adlt_dtneeded_cnt,
@@ -7459,6 +8344,62 @@ static int map_gnu_relro(int fd, struct dso *dso, ssize_t *file_offset)
 	*file_offset += size;
 	munmap(ext_temp_map, ext_fd_file_size);
 	return 0;
+}
+
+static void do_prelink(struct dso *p)
+{
+	if (!prelinking || !p->is_prelinked) {
+		return;
+	}
+
+	struct relro_cache_entry *entry = &relro_cache_entries[p->relro_cache_index];
+	size_t relro_size = p->relro_end - p->relro_start;
+	size_t relro_pages = relro_size / PAGE_SIZE;
+	size_t nr_diff = 0;
+	unsigned char *diff = calloc(relro_pages, 1);
+	if (diff == NULL) {
+		return;
+	}
+
+	for (size_t i = 0; i < relro_pages; ++i) {
+		if (memcmp(laddr(p, p->relro_start + i * PAGE_SIZE), relro_cache_base + entry->offset + i * PAGE_SIZE, PAGE_SIZE)) {
+			diff[i] = 1;
+			nr_diff++;
+		}
+	}
+
+	if (nr_diff == 0) {
+		if (mmap(laddr(p, p->relro_start), relro_size, PROT_READ, MAP_PRIVATE | MAP_FIXED, relro_cache_fd, entry->offset) == MAP_FAILED) {
+			LD_LOGW("prelink: relro sharing mmap failed, errno=%{public}d", errno);
+		}
+		free(diff);
+		return;
+	} else if (nr_diff >= relro_pages) {
+		free(diff);
+		return;
+	}
+
+	/* Partial relro sharing. */
+	unsigned char *tmp = mmap(NULL, relro_size, PROT_READ | PROT_WRITE, MAP_PRIVATE, relro_cache_fd, entry->offset);
+	if (tmp == MAP_FAILED) {
+		LD_LOGW("prelink: relro partial sharing mmap failed, errno=%{public}d", errno);
+		free(diff);
+		return;
+	}
+
+	for (size_t i = 0; i < relro_pages; ++i) {
+		if (diff[i]) {
+			memcpy(tmp + i * PAGE_SIZE, laddr(p, p->relro_start + i * PAGE_SIZE), PAGE_SIZE);
+		}
+	}
+	free(diff);
+
+	if (mremap(tmp, relro_size, relro_size, MREMAP_MAYMOVE | MREMAP_FIXED, laddr(p, p->relro_start)) == MAP_FAILED) {
+		LD_LOGW("prelink: relro partial sharing mremap failed, errno=%{public}d", errno);
+		if (munmap(tmp, relro_size) < 0) {
+			LD_LOGW("prelink: relro partial sharing munmap failed, errno=%{public}d", errno);
+		}
+	}
 }
 
 static void handle_relro_sharing(struct dso *p, const dl_extinfo *extinfo, ssize_t *relro_fd_offset)

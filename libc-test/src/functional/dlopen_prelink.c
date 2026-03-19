@@ -1,12 +1,11 @@
-#include <dlfcn.h>
-#include <pthread.h>
-#include <stdlib.h>
-#include <sys/wait.h>
-#include "test.h"
 #include "dlopen_util.h"
+#include "dlprelink.h"
 
 int main(int argc, char *argv[])
 {
+	set_prelink_chk_enable();
+	dlprelink();
+	
 	void *h, *g;
 	int *i, *i2;
 	char *s;
