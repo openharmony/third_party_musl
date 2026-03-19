@@ -48,6 +48,7 @@ struct loadtask {
     ns_t *namespace;
     bool check_inherited;
     bool isloaded;
+    bool visited;
 
     // variables for load library
     char buf[PATH_MAX + 1];

@@ -30,6 +30,10 @@ char  *dlerror(void);
 void  *dlopen(const char *, int);
 void  *dlsym(void *__restrict, const char *__restrict);
 
+int dlprelink_reserve_mem(void);
+int dlprelink_record(int memfd, const char *list_path);
+int dlprelink_register(int fd);
+
 /* namespace apis */
 #define NS_NAME_MAX 255
 typedef struct {
