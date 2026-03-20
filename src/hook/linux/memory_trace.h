@@ -50,7 +50,7 @@ extern "C" {
 
 #define TAG_RES_ARKTS_HEAP_MASK    "RES_ARKTS_HEAP_MASK"
 #define TAG_RES_JS_HEAP_MASK       "RES_JS_HEAP_MASK"
-#define TAG_RES_KMP_HEAP_MASK      "RES_KMP_HEAP_MASK"
+#define TAG_RES_KOTLIN_HEAP_MASK   "RES_KOTLIN_HEAP_MASK"
 #define TAG_RES_SO_MASK            "RES_SO_MASK"
 #define TAG_RES_ASHMEM_MASK        "RES_ASHMEM_MASK"
 #define TAG_RES_RN_HEAP_MASK       "RES_RN_HEAP_MASK"
@@ -58,7 +58,6 @@ extern "C" {
 #define TAG_RES_ARK_GLOBAL_HANDLE  "RES_ARK_GLOBAL_HANDLE"
 #define TAG_RES_ARK_LOCAL_HANDLE   "RES_ARK_LOCAL_HANDLE"
 #define TAG_RES_VMA_ARKWEB         "RES_VMA_ARKWEB"
-#define TAG_RES_VMA_KMP_MASK       "RES_VMA_KMP_MASK"
 
 /* each bit represents resource hook point.
  * |63 ... 32|31 ... 22|21 ... 12|11 - 10|9 ... 0|
@@ -89,7 +88,7 @@ extern "C" {
 #define RES_RESERVED_MASK          (0xFFFFFF << 32)
 #define RES_ARKTS_HEAP_MASK        (1 << 17)
 #define RES_JS_HEAP_MASK           (1 << 18)
-#define RES_KMP_HEAP_MASK          (1 << 19)
+#define RES_KOTLIN_HEAP_MASK       (1 << 19)
 #define RES_SO_MASK                (1 << 20)
 #define RES_RN_HEAP_MASK           (1 << 21)
 #define RES_DMABUF_MASK            (1 << 22)
@@ -97,7 +96,6 @@ extern "C" {
 #define RES_ASHMEM_MASK            (1 << 24)
 #define RES_ARK_LOCAL_HANDLE       (1 << 25)
 #define RES_VMA_ARKWEB             (1 << 26)
-#define RES_VMA_KMP_MASK           (1 << 27)
 
 #define FD_SIZE                     1
 #define THREAD_SIZE                 1
