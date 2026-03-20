@@ -23,6 +23,7 @@
 
 #include "gwp_asan.h"
 
+#include "libc.h"
 #include "musl_log.h"
 #include "musl_malloc.h"
 #include "pthread.h"
@@ -40,6 +41,9 @@
 #define SECONDS_PER_DAY (24ULL * 60 * 60)
 #define GWP_ASAN_PREDICT_TRUE(exp) __builtin_expect((exp) != 0, 1)
 #define GWP_ASAN_PREDICT_FALSE(exp) __builtin_expect((exp) != 0, 0)
+#define GWP_ASAN_MAIN_THREAD_GUARD_SIZE 4096
+#define GWP_ASAN_MAIN_STACK_FALLBACK_SIZE \
+    (DEFAULT_STACK_MAX - GWP_ASAN_MAIN_THREAD_GUARD_SIZE)
 #define GWP_ASAN_LOGD(...) // change it to MUSL_LOGD to get gwp_asan debug log.
 #define GWP_ASAN_NO_ADDRESS __attribute__((no_sanitize("address", "hwaddress")))
 
@@ -549,6 +553,7 @@ GWP_ASAN_NO_ADDRESS size_t run_unwind(size_t *frame_buf,
 
     size_t stack_end = (size_t)(__pthread_self()->stack);
     size_t stack_size = __pthread_self()->stack_size;
+    if (stack_size == 0) stack_size = GWP_ASAN_MAIN_STACK_FALLBACK_SIZE;
     /* Stop fast unwind if pthread stack metadata is unavailable. */
     if (__pthread_self()->stack == NULL || stack_size == 0 || stack_end < stack_size) {
         return num_frames;
@@ -564,8 +569,10 @@ GWP_ASAN_NO_ADDRESS size_t run_unwind(size_t *frame_buf,
             break;
 
         unwind_info *frame = (unwind_info*)(current_frame_addr);
-        GWP_ASAN_LOGD("[gwp_asan] unwind info:%{public}d cur:%{public}p, start:%{public}p end:%{public}p fp:%{public}p lr:%{public}p \n",
-            num_frames, current_frame_addr, stack_start, stack_end, frame->fp, frame->lr);
+        GWP_ASAN_LOGD("[gwp_asan] unwind info:%{public}d cur:%{public}p, start:%{public}p "
+            "end:%{public}p fp:%{public}p lr:%{public}p \n",
+            num_frames, current_frame_addr, stack_start,
+            stack_end, frame->fp, frame->lr);
         size_t stripped_lr = strip_pac_pc(frame->lr);
         if (!stripped_lr) {
             break;
