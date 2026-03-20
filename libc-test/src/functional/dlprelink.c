@@ -64,7 +64,7 @@ static int prepare_file_and_reserve_mem(void)
 
 	for (unsigned int i = 0; i < ARRAY_LENGTH(so_list) && err == 0; i++) {
 		size_t len = strlen(so_list[i]);
-		ssize_t sz = write(fd, so_list[i]);
+		ssize_t sz = write(fd, so_list[i], len);
 		if ((size_t)sz != len) {
 			t_error("[%s:%d]: err: %zd\n", __FUNCTION__, __LINE__, sz);
 			err = -1;
