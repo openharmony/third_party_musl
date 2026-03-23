@@ -225,6 +225,179 @@ void regexec_01000(void)
     EXPECT_NE("regexec_01000", ret, 0);
 }
 
+/**
+ * @tc.name      : regexec_01100
+ * @tc.desc      : Pattern with unescaped forward
+ * @tc.level     : Level 0
+ */
+void regexec_01100(void)
+{
+    regex_t reg;
+    const char *pattern = "[/]";
+    const char *str = "test/dev/data";
+    int ret = regcomp(&reg, pattern, REG_EXTENDED);
+    EXPECT_EQ("regexec_01100", ret, 0);
+    ret = regexec(&reg, str, 0, NULL, 0);
+    EXPECT_EQ("regexec_01100", ret, 0);
+    regfree(&reg);
+}
+
+/**
+ * @tc.name      : regexec_01200
+ * @tc.desc      : Empty character
+ * @tc.level     : Level 0
+ */
+void regexec_01200(void)
+{
+    regex_t reg;
+    const char *pattern = "[]";
+    int ret = regcomp(&reg, pattern, REG_EXTENDED);
+    EXPECT_NE("regexec_01200", ret, 0);
+}
+
+/**
+ * @tc.name      : regexec_01300
+ * @tc.desc      : Character class with range reversal
+ * @tc.level     : Level 0
+ */
+void regexec_01300(void)
+{
+    regex_t reg;
+    const char *pattern = "[s-m]";
+    int ret = regcomp(&reg, pattern, REG_EXTENDED);
+    EXPECT_NE("regexec_01300", ret, 0);
+}
+
+/**
+ * @tc.name      : regexec_01400
+ * @tc.desc      : Match number
+ * @tc.level     : Level 0
+ */
+void regexec_01400(void)
+{
+    regex_t reg;
+    const char *pattern = "[0-9]+";
+    const char *match_str = "musl123test";
+    const char *non_match_str = "musl";
+    int ret = regcomp(&reg, pattern, REG_EXTENDED);
+    EXPECT_EQ("regexec_01400", ret, 0);
+    ret = regexec(&reg, match_str, 0, NULL, 0);
+    EXPECT_EQ("regexec_01400", ret, 0);
+    ret = regexec(&reg, non_match_str, 0, NULL, 0);
+    EXPECT_NE("regexec_01400", ret, 0);
+    regfree(&reg);
+}
+
+/**
+ * @tc.name      : regexec_01500
+ * @tc.desc      : Match at end of string with "$" 
+ * @tc.level     : Level 0
+ */
+void regexec_01500(void)
+{
+    regex_t reg;
+    const char *pattern = "test$";
+    const char *str = "musltest";
+    int ret = regcomp(&reg, pattern, REG_EXTENDED);
+    EXPECT_EQ("regexec_01500", ret, 0);
+    ret = regexec(&reg, str, 0, NULL, 0);
+    EXPECT_EQ("regexec_01500", ret, 0);
+    regfree(&reg);
+}
+
+/**
+ * @tc.name      : regexec_01600
+ * @tc.desc      : Match empty string
+ * @tc.level     : Level 0
+ */
+void regexec_01600(void)
+{
+    regex_t reg;
+    const char pattern[] = "^";
+    const char str[] = "";
+    int ret = regcomp(&reg, pattern, REG_EXTENDED);
+    EXPECT_EQ("regexec_01600", ret, 0);
+    ret = regexec(&reg, str, 0, NULL, 0);
+    EXPECT_EQ("regexec_01600", ret, 0);
+    regfree(&reg);
+}
+
+/**
+ * @tc.name      : regexec_01700
+ * @tc.desc      : Match empty string
+ * @tc.level     : Level 0
+ */
+void regexec_01700(void)
+{
+    regex_t reg;
+    const char *pattern = "m*";
+    const char *str = "";
+    int ret = regcomp(&reg, pattern, REG_EXTENDED);
+    EXPECT_EQ("regexec_01700", ret, 0);
+    ret = regexec(&reg, str, 0, NULL, 0);
+    EXPECT_EQ("regexec_01700", ret, 0);
+    regfree(&reg);
+}
+
+/**
+ * @tc.name      : regexec_01800
+ * @tc.desc      : Use of escaped metacharacter
+ * @tc.level     : Level 0
+ */
+void regexec_01800(void)
+{
+    regex_t reg;
+    const char *pattern = "[\\^]";
+    const char *str = "musl ^ test";
+    int ret = regcomp(&reg, pattern, REG_EXTENDED);
+    EXPECT_EQ("regexec_01800", ret, 0);
+    ret = regexec(&reg, str, 0, NULL, 0);
+    EXPECT_EQ("regexec_01800", ret, 0);
+    regfree(&reg);
+}
+
+/**
+ * @tc.name      : regexec_01900
+ * @tc.desc      : Match empty string
+ * @tc.level     : Level 0
+ */
+void regexec_01900(void)
+{
+    regex_t reg;
+    const char *pattern = "^$";
+    const char *str = "";
+    int ret = regcomp(&reg, pattern, REG_EXTENDED);
+    EXPECT_EQ("regexec_01900", ret, 0);
+    ret = regexec(&reg, str, 0, NULL, 0);
+    EXPECT_EQ("regexec_01900", ret, 0);
+    regfree(&reg);
+}
+
+/**
+ * @tc.name      : regexec_02000
+ * @tc.desc      : Complex test
+ * @tc.level     : Level 0
+ */
+void regexec_02000(void)
+{
+    regex_t reg;
+    const char *pattern = "^((m|u)+s)*l$";
+    const char *str = "mussssl";
+    int ret = regcomp(&reg, pattern, REG_EXTENDED);
+    EXPECT_EQ("regexec_02000", ret, 0);
+    ret = regexec(&reg, str, 0, NULL, 0);
+    EXPECT_NE("regexec_02000", ret, 0);
+
+    const char *str2 = "muuussssl";
+    ret = regexec(&reg, str2, 0, NULL, 0);
+    EXPECT_NE("regexec_02000", ret, 0);
+    const char *str3 = "musl";
+    ret = regexec(&reg, str3, 0, NULL, 0);
+    EXPECT_EQ("regexec_02000", ret, 0);
+    regfree(&reg);
+}
+
+
 int main(void)
 {
     regexec_0100();
@@ -237,5 +410,15 @@ int main(void)
     regexec_0800();
     regexec_0900();
     regexec_01000();
+    regexec_01100();
+    regexec_01200();
+    regexec_01300();
+    regexec_01400();
+    regexec_01500();
+    regexec_01600();
+    regexec_01700();
+    regexec_01800();
+    regexec_01900();
+    regexec_02000();
     return t_status;
 }
