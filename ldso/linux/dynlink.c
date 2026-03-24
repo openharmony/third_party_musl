@@ -611,6 +611,10 @@ UT_STATIC void set_ns_inherits(ns_t *ns, ns_configor *conf)
 			if (inherited_ns) {
 				char *shared_libs = conf->get_inherit_shared_libs(ns->ns_name, inherited_ns->ns_name);
 				ns_add_inherit(ns, inherited_ns, shared_libs);
+				char* shared_paths = conf->get_inherit_shared_paths(ns->ns_name, inherited_ns->ns_name);
+				if (shared_libs && shared_paths && (strcmp("allow_all_shared_libs", shared_libs) != 0)) {
+					ns_add_inherit_path(ns, inherited_ns, shared_paths);
+				}
 				LD_LOGD("set_ns_inherits :"
 						"ns_name: %{public}s ,"
 						"separated:%{public}d ,"
