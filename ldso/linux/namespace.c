@@ -13,6 +13,12 @@
  * limitations under the License.
  */
 
+#include <stdio.h>
+#include <fcntl.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <limits.h>
+
 #include "namespace.h"
 
 #include "ld_log.h"
@@ -63,6 +69,7 @@ static void nsinherits_free(ns_inherit_list *nsinl)
     }
     for (size_t i = 0; i < nsinl->num; i++) {
         strlist_free(nsinl->inherits[i]->shared_libs);
+        strlist_free(nsinl->inherits[i]->shared_paths);
         __libc_free(nsinl->inherits[i]);
     }
     __libc_free(nsinl->inherits);
@@ -384,6 +391,31 @@ static ns_inherit *find_ns_inherit(ns_t *ns, ns_t *inherited)
     return NULL;
 }
 
+void ns_add_inherit_path(ns_t *ns, ns_t *ns_inherited, const char *shared_paths)
+{
+    if(!ns || !ns_inherited) {
+        return;
+    }
+    ns_inherit *inherit = find_ns_inherit(ns, ns_inherited);
+
+    if (!inherit) {
+        return;
+    }
+
+    if (inherit->shared_paths) {
+        strlist_free(inherit->shared_paths);
+        inherit->shared_paths = NULL;
+    }
+
+    if (shared_paths) {
+        char *s_paths = ld_strdup(shared_paths);
+        if (strtrim(s_paths) > 0) {
+            inherit->shared_paths = strsplit(shared_paths, ":");
+        }
+        __libc_free(s_paths);
+    }
+}
+
 void ns_add_inherit(ns_t *ns, ns_t *ns_inherited, const char *shared_libs)
 {
     bool need_add = false;
@@ -584,6 +616,17 @@ bool check_asan_path(ns_t *ns, const char *lib_pathname)
 
 bool is_sharable(ns_inherit *inherit, const char *lib_name)
 {
+    if (inherit && lib_name && inherit->shared_paths) {
+        char buf[PATH_MAX + 1] = "";
+        size_t buf_size = sizeof(buf);
+        for (size_t i = 0; i < inherit->shared_paths->num; i++) {
+            if (snprintf(buf, buf_size, "%s/%s", inherit->shared_paths->strs[i], lib_name) < buf_size) {
+                if (access(buf, F_OK) == 0) {
+                    return true;
+                }
+            }
+        }
+    }
     if (inherit && lib_name && inherit->shared_libs) {
         for (size_t i = 0; i < inherit->shared_libs->num; i++) {
             if (strcmp(inherit->shared_libs->strs[i], lib_name) == 0 ||
