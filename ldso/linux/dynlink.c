@@ -6767,6 +6767,48 @@ int dlns_set_namespace_lib_path(const char * name, const char * lib_path)
 	return 0;
 }
 
+int dlns_set_module_namespace_lib_path(const char * name, const char * lib_path)
+{
+	if (!name || !lib_path) {
+		LD_LOGE("dlns_set_module_namespace_lib_path name or lib_path is null.");
+		return EINVAL;
+	}
+
+	const size_t max_path_len = -1;
+	size_t len = strnlen(lib_path, max_path_len);
+	if (len == 0 || lib_path[len - 1] == ':' || lib_path[0] == ':' || len == max_path_len) {
+		LD_LOGE("dlns_set_module_namespace_lib_path input path is invalid len=%{public}zu path=%{public}s",
+			len, lib_path);
+		return EINVAL;
+	}
+
+	if (in_permitted_list((char *)name, (char *)name)) {
+		LD_LOGE("dlns_set_module_namespace_lib_path fail, input ns name:"
+			"[%{public}s] is in permitted list. Caller do not have permission to modify it",
+			name);
+		return EACCES;
+	}
+
+	pthread_rwlock_wrlock(&lock);
+	const void *caller_addr = __builtin_return_address(0);
+	if (is_permitted(caller_addr, (char *)name) == false) {
+		pthread_rwlock_unlock(&lock);
+		return EPERM;
+	}
+
+	ns_t* ns = find_ns_by_name(name);
+	if (!ns) {
+		pthread_rwlock_unlock(&lock);
+		LD_LOGE("dlns_set_module_namespace_lib_path fail, input ns name : [%{public}s] is not found.", name);
+		return ENOKEY;
+	}
+
+	LD_LOGW("dlns_set_module_namespace_lib_path succeed ns=%{public}s lib_path=%{public}s", name, lib_path);
+	ns_set_lib_paths(ns, lib_path);
+	pthread_rwlock_unlock(&lock);
+	return 0;
+}
+
 int dlns_set_namespace_separated(const char * name, const bool separated)
 {
 	if (!name) {
