@@ -65,6 +65,7 @@ typedef struct _ns_configor_ {
   strlist *(*get_inherits)(const char *ns_name);
   char *(*get_allowed_libs)(const char *ns_name);
   char *(*get_inherit_shared_libs)(const char *ns_name, const char *inherited_ns_name);
+  char *(*get_inherit_shared_paths)(const char *ns_name, const char *inherited_ns_name);
   char *(*get_sys_paths)(void);
   char *(*get_asan_sys_paths)(void);
 } ns_configor;

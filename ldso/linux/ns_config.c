@@ -371,6 +371,7 @@ static ns_configor g_configor;
 #define ATTR_NS_SYSTEMSCENCE "systemscence"           /* systemscence section name */
 #define ATTR_NS_ALLOWED_LIBS "allowed.libs"      /* when separated, allowed library names */
 #define ATTR_NS_INHERIT_SHARED_LIBS "shared.libs"      /* when inherited, shared library names */
+#define ATTR_NS_INHERIT_SHARED_PATHS "shared.paths"      /* when inherited, shared paths */
 #define SECTION_DIR_MAP_SYSTEM "system"      /* system path */
 #define SECTION_DIR_MAP_ASAN_SYSTEM "asan_system"      /* asan system path */
 
@@ -645,6 +646,21 @@ static char *config_get_inherit_shared_libs(const char *ns_name, const char *inh
     return config_get_value(key);
 }
 
+static char *config_get_inherit_shared_paths(const char *ns_name, const char *inherited_ns_name)
+{
+    if (ns_name == NULL || inherited_ns_name == NULL) {
+        return NULL;
+    }
+    config_key_join(ATTR_NS_PREFIX, true);
+    config_key_join(".", false);
+    config_key_join(ns_name, false);
+    config_key_join(".inherit.", false);
+    config_key_join(inherited_ns_name, false);
+    config_key_join(".", false);
+    char *key = config_key_join(ATTR_NS_INHERIT_SHARED_PATHS, false);
+    return config_get_value(key);
+}
+
 /* The call time is after parse */
 static char *config_get_sys_paths(void)
 {
@@ -668,6 +684,7 @@ ns_configor *configor_init()
     g_configor.get_inherits = config_get_inherits;
     g_configor.get_allowed_libs = config_get_allowed_libs;
     g_configor.get_inherit_shared_libs = config_get_inherit_shared_libs;
+    g_configor.get_inherit_shared_paths = config_get_inherit_shared_paths;
     g_configor.get_sys_paths = config_get_sys_paths;
     g_configor.get_asan_sys_paths = config_get_asan_sys_paths;
     g_configor.config_sys_path = NULL; // init it in config_parse.
