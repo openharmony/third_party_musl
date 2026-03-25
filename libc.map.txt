@@ -541,6 +541,7 @@
     dlns_get;
     dlns_inherit;
     dlns_init;
+    dlns_set_module_namespace_lib_path;
     dlns_set_namespace_allowed_libs;
     # dlns_set_namespace_lib_path;
     dlns_set_namespace_permitted_paths;
@@ -2117,4 +2118,3 @@
   local:
     *;
 };
-
