@@ -1,10 +1,60 @@
 #include "dlopen_util.h"
 #include "dlprelink.h"
 
+#include <sys/wait.h>
+
+#define FOO "/data/local/tmp/libfoo.so"
+#define FN "call"
+
+static void dlopen_prelinked_repeated(void)
+{
+	void *h = dlopen(FOO, RTLD_LOCAL);
+	if (!h) {
+		t_error("dlopen %s failed: %s\n", FOO, dlerror());
+		return;
+	}
+	void *f0 = dlsym(h, FN);
+	if (!f0) {
+		t_error("sym \"%s\" not found\n", FN);
+		return;
+	}
+	if (dlclose(h) < 0) {
+		t_error("dlclose %s failed\n", FOO);
+		return;
+	}
+	h = NULL;
+
+	pid_t pid = fork();
+	if (pid < 0) {
+		t_error("fork failed: %m\n");
+		return;
+	} else if (pid == 0) {
+		h = dlopen(FOO, RTLD_LOCAL);
+		if (!h) {
+			t_error("dlopen %s failed: %s\n", FOO, dlerror());
+			_exit(1);
+		}
+		void *f = dlsym(h, FN);
+		if (f != f0) {
+			t_error("function address mismatch\n");
+			_exit(1);
+		}
+		_exit(0);
+	}
+
+	int ws = -1;
+	if (waitpid(pid, &ws, 0) < 0) {
+		t_error("waitpid failed: %m\n");
+	} else if (!WIFEXITED(ws) || WEXITSTATUS(ws) != 0) {
+		t_error("invalid child exit status %d\n", ws);
+	}
+}
+
 int main(int argc, char *argv[])
 {
 	set_prelink_chk_enable();
 	dlprelink();
+	dlopen_prelinked_repeated();
 	
 	void *h, *g;
 	int *i, *i2;
