@@ -21,6 +21,28 @@
 #define RR_AAAA 28
 #define MIN_WAIT_V6 80
 
+static int get_query_type(const unsigned char *query, int qlen)
+{
+	if (!query) {
+		return 0;
+	}
+	if (qlen < 12) {
+		return 0;
+	}
+	int pos = 12;
+	while (pos < qlen && query[pos] != 0) {
+		if (query[pos] & 0xc0) {
+			pos += 2;
+			break;
+		}
+		pos += 1 + query[pos];
+	}
+	if (pos >= qlen - 4) {
+		return 0;
+	}
+	return (query[pos+1] << 8) | query[pos+2];
+}
+
 struct type_ctx {
 	int count_v4;
 	int count_v6;
@@ -187,6 +209,10 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 	int nres_v6 = 0;
 	bool no_valid_v4[2] = { false, false };
 	uint8_t nres_invalid_v4 = 0;
+	int v4_sent_this_round = 0;
+	int v4_recv_this_round = 0;
+	int v4_invalid_this_round = 0;
+	int query_round = 0;
 #endif
 
 	pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &cs);
@@ -346,12 +372,31 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 			goto out;
 		}
 
+#if OHOS_DNS_PROXY_BY_NETSYS
+		if (nres_v6 > 0 && nres_invalid_v4 > 0) {
+			goto out;
+		}
+		if (v4_sent_this_round > 0 && v4_recv_this_round >= v4_sent_this_round &&
+			v4_invalid_this_round == v4_recv_this_round) {
+			t1 = t2 - retry_interval;
+		}
+#endif
+
 		if (t2-t1 >= retry_interval) {
 			/* if the first query round timeout, determine whether
 			 * to return based on the num of answers. */
 			if (nres_v4 > 0) {
 				goto out;
 			}
+#if OHOS_DNS_PROXY_BY_NETSYS
+			if (query_round >= attempts) {
+				goto out;
+			}
+			v4_sent_this_round = 0;
+			v4_recv_this_round = 0;
+			v4_invalid_this_round = 0;
+			query_round++;
+#endif
 			/* Query all configured namservers in parallel */
 			for (i=0; i<nqueries; i++) {
 				retry[i] = 0;
@@ -360,6 +405,7 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 					retry[i] = last_retry;
 				}
 				if (!alens[i] || no_valid_v4[i]) {
+					bool is_v4_a_query = (get_query_type(queries[i], qlens[i]) == RR_A);
 					if (multiV4) {
 						if (retry_count <= 1) {
 							retry_limit = (nv6 > 0) ? (2 + nv6) : 4; // 2 v4 and all v6 or 4 v4
@@ -378,6 +424,8 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 								if (dns_errno) {
 									*dns_errno = errno_code;
 								}
+							} else if (is_v4_a_query) {
+								v4_sent_this_round++;
 							}
 						}
 					} else {
@@ -397,7 +445,9 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 							    if (dns_errno) {
 								    *dns_errno = errno_code;
 							    }
-						    }
+						    } else if (is_v4_a_query) {
+								v4_sent_this_round++;
+							}
 						}
 					}
 #else
@@ -421,11 +471,6 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 			servfail_retry = 2 * nqueries;
 		}
 
-#if OHOS_DNS_PROXY_BY_NETSYS
-		if (nres_v6 > 0 && nres_invalid_v4 > 0) {
-			goto out;
-		}
-#endif
 		unsigned long remaining_time = t1 + retry_interval - t2;
 		if (nres_v4 > 0) {
 			if (!temp_t) {
@@ -531,6 +576,10 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 			if (i==nqueries) continue;
 #if OHOS_DNS_PROXY_BY_NETSYS
 			if (alens[i] && !no_valid_v4[i]) continue;
+			bool is_v4_a_response = (get_query_type(queries[i], qlens[i]) == RR_A);
+			if (is_v4_a_response) {
+				v4_recv_this_round++;
+			}
 #else
 			if (alens[i]) continue;
 #endif
@@ -547,6 +596,9 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 #if OHOS_DNS_PROXY_BY_NETSYS
 					if (multiV4) {
 						last_retry = retry[i];
+					}
+					if (is_v4_a_response) {
+						v4_invalid_this_round++;
 					}
 #endif
 					continue;
@@ -588,6 +640,9 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 #endif
 
 #if OHOS_DNS_PROXY_BY_NETSYS
+			if (is_v4_a_response && ctx.count_v4 == 0) {
+				v4_invalid_this_round++;
+			}
 			nres_v6 += ctx.count_v6;
 			nres_invalid_v4 += ctx.invalid_count_v4;
 			no_valid_v4[i] = ctx.invalid_count_v4 > 0 && ctx.count_v4 <= 0;
