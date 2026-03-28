@@ -70,6 +70,11 @@ static size_t ldso_page_size;
 #define PAGE_SIZE ldso_page_size
 #endif
 
+#define DATA_NAMESPACE_CONFIG_DIR "/data/service/el0/public/for-all-app/musl_namespace_config/"
+#define DATA_NAMESPACE_CONFIG_FILE DATA_NAMESPACE_CONFIG_DIR "musl_namespace_config.ini"
+#define DATA_NAMESPACE_VERSION_FILE DATA_NAMESPACE_CONFIG_DIR "version.txt"
+#define SYSTEM_NAMESPACE_VERSION_FILE "/system/etc/MUSL/generic/version.txt"
+
 #define malloc __libc_malloc
 #define calloc __libc_calloc
 #define realloc __libc_realloc
@@ -630,6 +635,74 @@ UT_STATIC void set_ns_inherits(ns_t *ns, ns_configor *conf)
 	}
 }
 
+static bool read_version_file(const char *path, char *version, size_t version_size)
+{
+	int fd;
+	char buf[64];
+	ssize_t len;
+	const char *line_end;
+	size_t version_len;
+	static const char prefix[] = "version=";
+	static const char type_prefix[] = "type=MUSL";
+
+	fd = open(path, O_RDONLY | O_CLOEXEC);
+	if (fd < 0) {
+		return false;
+	}
+	len = read(fd, buf, sizeof(buf) - 1);
+	close(fd);
+	if (len <= 0) {
+		return false;
+	}
+	buf[len] = '\0';
+
+	/* The config type can appear on a later line. */
+	if (!strstr(buf, type_prefix)) {
+		return false;
+	}
+	/* The file is expected to start with "version=". */
+	if (strncmp(buf, prefix, sizeof(prefix) - 1) != 0) {
+		return false;
+	}
+	line_end = buf + sizeof(prefix) - 1;
+	if (!*line_end) {
+		return false;
+	}
+	/* Only parse the version text from the first line. */
+	version_len = strcspn(line_end, "\r\n");
+	if (version_len == 0 || version_len >= version_size) {
+		return false;
+	}
+	memcpy(version, line_end, version_len);
+	version[version_len] = '\0';
+	return true;
+}
+
+static bool data_namespace_version_is_newer(void)
+{
+	char data_version[32];
+	char system_version[32];
+	struct stat statbuf;
+
+	if (stat(DATA_NAMESPACE_CONFIG_FILE, &statbuf) != 0) {
+		return false;
+	}
+	if (stat(DATA_NAMESPACE_VERSION_FILE, &statbuf) != 0) {
+		return false;
+	}
+	if (stat(SYSTEM_NAMESPACE_VERSION_FILE, &statbuf) != 0) {
+		return false;
+	}
+	if (!read_version_file(DATA_NAMESPACE_VERSION_FILE, data_version, sizeof(data_version))) {
+		return false;
+	}
+	if (!read_version_file(SYSTEM_NAMESPACE_VERSION_FILE, system_version, sizeof(system_version))) {
+		return false;
+	}
+
+	return strverscmp(data_version, system_version) > 0;
+}
+
 static void init_namespace(struct dso *app)
 {
 	char app_path[PATH_MAX + 1];
@@ -648,7 +721,7 @@ static void init_namespace(struct dso *app)
 	ns_configor *conf = configor_init();
 
 	struct stat statbuf;
-	char file_path[sizeof "/etc/ld-musl-namespace-" + sizeof (LDSO_ARCH) + sizeof "flex" + sizeof ".ini" + 1] = {0};
+	char file_path[PATH_MAX + 1] = {0};
 #ifdef ENABLE_HWASAN
 	if (stat("/vendor/lib64/chipset-sdk-sp", &statbuf) == 0) {
 		(void)snprintf(file_path, sizeof file_path, "/etc/ld-musl-namespace-%s-flex.ini", LDSO_ARCH);
@@ -658,10 +731,12 @@ static void init_namespace(struct dso *app)
 #else
 	if (stat("/vendor/lib64/chipset-sdk-sp", &statbuf) == 0) {
 		(void)snprintf(file_path, sizeof file_path, "/etc/ld-musl-namespace-%s-flex.ini", LDSO_ARCH);
-	} else if (((stat("/sys_prod/etc/musl", &statbuf) == 0)
-		&& (stat("/data/service/el0/public/musl_namespace_config/musl_namespace_config", &statbuf) != 0))
-		|| (stat("/data/local/tmp/namespace_use_by_ALL", &statbuf) == 0)) {
-		(void)snprintf(file_path, sizeof file_path, "/etc/ld-musl-namespace-%s-New.ini", LDSO_ARCH);
+	} else if (stat("/sys_prod/etc/musl", &statbuf) == 0) {
+		if (data_namespace_version_is_newer()) {
+			(void)snprintf(file_path, sizeof file_path, "%s", DATA_NAMESPACE_CONFIG_FILE);
+		} else {
+			(void)snprintf(file_path, sizeof file_path, "/etc/ld-musl-namespace-%s-New.ini", LDSO_ARCH);
+		}
 	} else {
 		(void)snprintf(file_path, sizeof file_path, "/etc/ld-musl-namespace-%s.ini", LDSO_ARCH);
 	}
