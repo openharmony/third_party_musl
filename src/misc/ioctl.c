@@ -154,11 +154,13 @@ int ioctl(int fd, int req, ...)
 			break;
 		}
 	}
-	#ifdef OHOS_FDTRACK_HOOK_ENABLE
-	if(r ==0 && (unsigned long)(unsigned int)req == DMA_HEAP_IOCTL_ALLOC){
-		size_t size = ((struct dma_heap_allocation_data*)arg)->len;
-		restrace(RES_DMABUF_MASK, fd, size, TAG_RES_DMABUF_MASK, true);
-	}
+#ifdef OHOS_FDTRACK_HOOK_ENABLE
+    if (r == 0 && (unsigned long)(unsigned int)req == DMA_HEAP_IOCTL_ALLOC) {
+        struct dma_heap_allocation_data *data = (struct dma_heap_allocation_data*)arg;
+        int new_fd = data->fd;
+        size_t size = data->len;
+        restrace(RES_DMABUF_MASK, new_fd, size, TAG_RES_DMABUF_MASK, true);
+    }
 #endif
 	return __syscall_ret(r);
 }
