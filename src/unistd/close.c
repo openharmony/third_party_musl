@@ -18,7 +18,7 @@ int __close(int fd)
 	// Hook fd close
 #ifdef OHOS_FDTRACK_HOOK_ENABLE
 	restrace(RES_FD_MASK, fd, FD_SIZE, TAG_RES_FD_ALL, false);
-	restrace(RES_DMABUF_MASK, fd, FD_SIZE, TAG_RES_DMABUF, false);
+	restrace(RES_DMABUF_MASK, fd, FD_SIZE, TAG_RES_DMABUF_MASK, false);
 #endif
 	fd = __aio_close(fd);
 	int r = __syscall_cp(SYS_close, fd);
