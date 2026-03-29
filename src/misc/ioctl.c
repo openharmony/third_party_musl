@@ -138,12 +138,6 @@ int ioctl(int fd, int req, ...)
 	va_start(ap, req);
 	arg = va_arg(ap, void *);
 	va_end(ap);
-#ifdef OHOS_FDTRACK_HOOK_ENABLE
-	if((unsigned long)(unsigned int)req == DMA_HEAP_IOCTL_ALLOC){
-		size_t size = ((struct dma_heap_allocation_data*)arg)->len;
-		restrace(RES_DMABUF_MASK, fd, size, TAG_RES_DMABUF_MASK, true);
-	}
-#endif
 
 	int r = __syscall(SYS_ioctl, fd, req, arg);
 	if (SIOCGSTAMP != SIOCGSTAMP_OLD && req && r==-ENOTTY) {
@@ -160,5 +154,11 @@ int ioctl(int fd, int req, ...)
 			break;
 		}
 	}
+	#ifdef OHOS_FDTRACK_HOOK_ENABLE
+	if(r ==0 && (unsigned long)(unsigned int)req == DMA_HEAP_IOCTL_ALLOC){
+		size_t size = ((struct dma_heap_allocation_data*)arg)->len;
+		restrace(RES_DMABUF_MASK, fd, size, TAG_RES_DMABUF_MASK, true);
+	}
+#endif
 	return __syscall_ret(r);
 }
