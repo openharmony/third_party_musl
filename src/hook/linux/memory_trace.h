@@ -50,7 +50,7 @@ extern "C" {
 
 #define TAG_RES_ARKTS_HEAP_MASK    "RES_ARKTS_HEAP_MASK"
 #define TAG_RES_JS_HEAP_MASK       "RES_JS_HEAP_MASK"
-#define TAG_RES_KMP_HEAP_MASK      "RES_KMP_HEAP_MASK"
+#define TAG_RES_KOTLIN_HEAP_MASK   "RES_KOTLIN_HEAP_MASK"
 #define TAG_RES_SO_MASK            "RES_SO_MASK"
 #define TAG_RES_ASHMEM_MASK        "RES_ASHMEM_MASK"
 #define TAG_RES_RN_HEAP_MASK       "RES_RN_HEAP_MASK"
@@ -88,7 +88,7 @@ extern "C" {
 #define RES_RESERVED_MASK          (0xFFFFFF << 32)
 #define RES_ARKTS_HEAP_MASK        (1 << 17)
 #define RES_JS_HEAP_MASK           (1 << 18)
-#define RES_KMP_HEAP_MASK          (1 << 19)
+#define RES_KOTLIN_HEAP_MASK       (1 << 19)
 #define RES_SO_MASK                (1 << 20)
 #define RES_RN_HEAP_MASK           (1 << 21)
 #define RES_DMABUF_MASK            (1 << 22)
