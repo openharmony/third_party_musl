@@ -78,6 +78,9 @@ test_sharedlib("dlopen_register_c") {
 test_sharedlib("foo") {
 }
 
+test_sharedlib("ANI_Test") {
+}
+
 ohos_shared_library("dlopen_weaklink_a") {
   sources = [ "dlopen_weaklink_a.c" ]
 
@@ -219,6 +222,7 @@ group("dso_shared") {
     ":tls_align_dso",
     ":tls_init_dso",
     ":foo",
+    ":ANI_Test",
     ":dlopen_weaklink_a",
     ":dlopen_weaklink_b",
     ":dlopen_weaklink_c",
