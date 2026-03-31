@@ -12,6 +12,9 @@ int get_ipv4_invalid_type(const void *data)
 	if (memcmp(addr, all_zero_addr, 4) == 0) {
 		return IPV4_INVALID_TYPE_ALLZERO;
 	}
+	if (addr[0] == 127) {
+		return IPV4_INVALID_TYPE_LOCAL;
+	}
 	return IPV4_VALID_TYPE;
 }
 #endif
