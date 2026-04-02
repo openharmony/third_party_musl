@@ -83,6 +83,10 @@ int predefined_host_set_hosts(const char* host_ips);
 int predefined_host_clear_all_hosts(void);
 int predefined_host_remove_host(const char *host);
 
+int setcustomdnsresolver(custom_dns_resolver hookfunc);
+int removecustomdnsresolver();
+int getaddrinfo_custom(const char* host, const char* serv, const struct addrinfo* hint, struct addrinfo** res);
+
 /* Legacy functions follow (marked OBsolete in SUS) */
 
 struct netent {

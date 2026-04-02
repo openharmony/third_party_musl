@@ -163,7 +163,9 @@ int reportdnsresult(int netid, char* name, int usedtime, int queryret, struct ad
 }
 
 static custom_dns_resolver g_customdnsresolvehook;
+static custom_dns_resolver g_customdnsresolver;
 thread_local int recursive = 0;
+thread_local int customrecursive = 0;
 
 int setdnsresolvehook(custom_dns_resolver hookfunc)
 {
@@ -196,6 +198,37 @@ int getaddrinfo_hook(const char* host, const char* serv, const struct addrinfo* 
     return predefined_host_lookup_ip(host, serv, hints, res);
 }
 
+int setcustomdnsresolver(custom_dns_resolver hookfunc)
+{
+	int ret = -1;
+	if (g_customdnsresolver) {
+		return ret;
+	}
+	if (hookfunc) {
+		g_customdnsresolver = hookfunc;
+		ret = 0;
+	}
+	return ret;
+}
+
+int removecustomdnsresolver()
+{
+	g_customdnsresolver = NULL;
+	return 0;
+}
+
+int getaddrinfo_custom(const char* host, const char* serv, const struct addrinfo* hints,
+    struct addrinfo** res)
+{
+	int ret = -1;
+	if (g_customdnsresolver && customrecursive == 0) {
+		++customrecursive;
+		ret = g_customdnsresolver(host, serv, hints, res);
+		--customrecursive;
+	}
+	return ret;
+}
+
 int getaddrinfo(const char *restrict host, const char *restrict serv, const struct addrinfo *restrict hint, struct addrinfo **restrict res)
 {
 	struct queryparam param = {0, 0, 0, 0, NULL};
@@ -216,6 +249,15 @@ int getaddrinfo_ext(const char *restrict host, const char *restrict serv, const 
 	} else {
 		netid = param->qp_netid;
 		type = param->qp_type;
+	}
+
+	if (g_customdnsresolver) {
+		if (customrecursive == 0) {
+			++customrecursive;
+			int ret = g_customdnsresolver(host, serv, hint, res);
+			--customrecursive;
+			return ret;
+		}
 	}
 
 	if (g_customdnsresolvehook) {
