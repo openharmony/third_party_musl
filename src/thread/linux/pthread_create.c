@@ -697,7 +697,7 @@ int __pthread_create(pthread_t *restrict res, const pthread_attr_t *restrict att
 #ifdef MUSL_EXTERNAL_FUNCTION
     if (get_pthread_extended_function_policy() && !attr._a_sched && attr._a_extension) {
         struct pthread_attr_ext *ext = (struct pthread_attr_ext *)attr._a_extension;
-        if (!ext) {
+        if (ext) {
             args->control = (ext->cpuset != NULL && ext->cpusetsize > 0);
         }
     }
