@@ -222,11 +222,20 @@ int getaddrinfo_custom(const char* host, const char* serv, const struct addrinfo
 {
 	int ret = -1;
 	if (g_customdnsresolver && customrecursive == 0) {
+#ifndef __LITEOS__
+		MUSL_LOGI("getaddrinfo_custom enter");
+#endif
 		++customrecursive;
 		ret = g_customdnsresolver(host, serv, hints, res);
 		--customrecursive;
+#ifndef __LITEOS__
+		MUSL_LOGI("getaddrinfo_custom ret: %{public}d", ret);
+#endif
+		if (ret == 0) {
+			return ret;
+		}
 	}
-	return ret;
+	return predefined_host_lookup_ip(host, serv, hints, res);
 }
 
 int getaddrinfo(const char *restrict host, const char *restrict serv, const struct addrinfo *restrict hint, struct addrinfo **restrict res)
@@ -253,9 +262,15 @@ int getaddrinfo_ext(const char *restrict host, const char *restrict serv, const 
 
 	if (g_customdnsresolver) {
 		if (customrecursive == 0) {
+#ifndef __LITEOS__
+			MUSL_LOGI("getaddrinfo_ext g_customdnsresolver enter");
+#endif
 			++customrecursive;
 			int ret = g_customdnsresolver(host, serv, hint, res);
 			--customrecursive;
+#ifndef __LITEOS__
+			MUSL_LOGI("getaddrinfo_ext g_customdnsresolver ret: %{public}d", ret);
+#endif
 			return ret;
 		}
 	}
