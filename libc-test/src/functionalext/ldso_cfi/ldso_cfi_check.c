@@ -21,9 +21,15 @@
 #include "functionalext.h"
 
 #define LIB_PATH "/data/tests/libc-test/src/libldso_cfi_test_lib.so"
+#define DSO_MAP_INDEX_ARM32 104
+#define DSO_MAP_INDEX_ARM64 208
 
 struct dso {
-    char *mock;
+#ifdef __arm__
+    char buffer[DSO_MAP_INDEX_ARM32];
+#else
+    char buffer[DSO_MAP_INDEX_ARM64];
+#endif
     unsigned char *map;
     size_t map_len;
 };
