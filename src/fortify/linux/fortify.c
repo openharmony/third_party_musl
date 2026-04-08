@@ -25,6 +25,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <info/fatal_message.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -37,11 +38,27 @@
 #include <syslog.h>
 
 #define FILE_MODE_ALL (0777)
+#define FORTIFY_FATAL_MSG_SIZE (1024)
 
 void __fortify_error(const char* info, ...)
 {
     va_list ap;
     va_start(ap, info);
+
+    va_list ap_copy;
+    va_copy(ap_copy, ap);
+
+    char message[FORTIFY_FATAL_MSG_SIZE] = {0};
+    int prefix_len = snprintf(message, sizeof(message), "%s", FORTIFY_RUNTIME_ERROR_PREFIX);
+    if (prefix_len < 0) {
+        prefix_len = 0;
+    }
+    if ((size_t)prefix_len < sizeof(message)) {
+        (void)vsnprintf(message + prefix_len, sizeof(message) - (size_t)prefix_len, info, ap_copy);
+    }
+    va_end(ap_copy);
+
+    set_fatal_message(message);
     fprintf(stderr, FORTIFY_RUNTIME_ERROR_PREFIX);
     vfprintf(stderr, info, ap);
     va_end(ap);

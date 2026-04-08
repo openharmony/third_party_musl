@@ -260,12 +260,37 @@ ohos_executable("unittest_fatal_message") {
   deps = [ "//third_party/musl:create_porting_src" ]
 }
 
+ohos_executable("unittest_fortify_error") {
+  subsystem_name = "musl"
+  part_name = "libc-test"
+
+  sources = [ "unit_test_fortify_error.c" ]
+
+  include_dirs = [
+    "//${test_dir}/src/common",
+    "//${test_dir}/src/functionalext/common",
+    "${musl_src_base}/include",
+    "${musl_src_base}/include/fortify/linux",
+    "${musl_src_base}/include/info/linux",
+  ]
+
+  configs = [ "//third_party/musl/libc-test/src/common:config_unittest" ]
+
+  deps = [ "//third_party/musl:create_porting_src" ]
+
+  libs = [ "${musl_lib_dir}/libc.a" ]
+
+  ohos_test = true
+  test_output_dir = "${root_out_dir}/musl/libc-test"
+}
+
 group("functionalext_unittest_test") {
   testonly = true
   deps = [
     ":unittest_fatal_message",
     ":unittest_fatal_message_assert_fail",
     ":unittest_fatal_message_assert_fail_dialog",
+    ":unittest_fortify_error",
     ":unittest_hilog_base",
     ":unittest_hilog_vsnprint",
     ":unittest_ldso_strops",
