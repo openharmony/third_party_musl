@@ -199,6 +199,134 @@ void towlower_l_0400(void)
     freelocale(m_locale);
  }
 
+/**
+ * @tc.name      : towlower_l_0700
+ * @tc.desc      : Verify towlower_l process success when using NULL locale.
+ *                 Input parameters are Uppercase letters, verify conversion to Lowercase letters.
+ * @tc.level     : Level 2
+ */
+void towlower_l_0700(void)
+{
+    const char *upstr = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    const char *lowstr = "abcdefghijklmnopqrstuvwxyz";
+    const char *up = upstr;
+    const char *lp = lowstr;
+    wint_t res = 0;
+
+    while (up && *up != '\0' && lp && *lp != '\0') {
+        res = towlower_l(*up, NULL);
+        if (res != *lp) {
+            t_error("Test case %s failed, get result is %c but want get value %c\n", __FUNCTION__, (char)res, *lp);
+        }
+        up++;
+        lp++;
+    }
+}
+
+/**
+ * @tc.name      : towlower_l_0800
+ * @tc.desc      : Verify towlower_l process success when using the en_US.UTF-8 character set.
+ *                 Input parameters are special characters, verify they remain unchanged.
+ * @tc.level     : Level 1
+ */
+void towlower_l_0800(void)
+{
+    locale_t m_locale = newlocale(LC_ALL_MASK, "en_US.UTF-8", NULL);
+    const char *str = "@#$%^&*()";
+    const char *p = str;
+    wint_t res = 0;
+
+    if (!m_locale) {
+        t_error("Test case %s failed to call function newlocale\n", __FUNCTION__);
+        return;
+    }
+
+    while (p && *p != '\0') {
+        res = towlower_l(*p, m_locale);
+        if (res != *p) {
+            t_error("Test case %s failed, result is %c but want get value %c \n", __FUNCTION__, (char)res, *p);
+        }
+        p++;
+    }
+    freelocale(m_locale);
+}
+
+/**
+ * @tc.name      : towlower_l_0900
+ * @tc.desc      : Verify towlower_l process success when using the en_US.UTF-8 character set.
+ *                 Input parameters are whitespace characters, verify they remain unchanged.
+ * @tc.level     : Level 2
+ */
+void towlower_l_0900(void)
+{
+    locale_t m_locale = newlocale(LC_ALL_MASK, "en_US.UTF-8", NULL);
+    const char *str = " \t\n\r";
+    const char *p = str;
+    wint_t res = 0;
+
+    if (!m_locale) {
+        t_error("Test case %s failed to call function newlocale\n", __FUNCTION__);
+        return;
+    }
+
+    while (p && *p != '\0') {
+        res = towlower_l(*p, m_locale);
+        if (res != *p) {
+            t_error("Test case %s failed, whitespace should remain unchanged\n", __FUNCTION__);
+        }
+        p++;
+    }
+    freelocale(m_locale);
+}
+
+/**
+ * @tc.name      : towlower_l_1000
+ * @tc.desc      : Verify towlower_l process success when using the zh_CN character set.
+ *                 Input parameters are special characters, verify they remain unchanged.
+ * @tc.level     : Level 1
+ */
+void towlower_l_1000(void)
+{
+    locale_t m_locale = newlocale(LC_ALL_MASK, "zh_CN", NULL);
+    const char *str = "@#$%^&*()";
+    const char *p = str;
+    wint_t res = 0;
+
+    if (!m_locale) {
+        t_error("Test case %s failed to call function newlocale\n", __FUNCTION__);
+        return;
+    }
+
+    while (p && *p != '\0') {
+        res = towlower_l(*p, m_locale);
+        if (res != *p) {
+            t_error("Test case %s failed, result is %c but want get value %c \n", __FUNCTION__, (char)res, *p);
+        }
+        p++;
+    }
+    freelocale(m_locale);
+}
+
+/**
+ * @tc.name      : towlower_l_1100
+ * @tc.desc      : Verify towlower_l process success when using NULL locale.
+ *                 Input parameters are digits, verify they remain unchanged.
+ * @tc.level     : Level 2
+ */
+void towlower_l_1100(void)
+{
+    const char *str = "0123456789";
+    const char *p = str;
+    wint_t res = 0;
+
+    while (p && *p != '\0') {
+        res = towlower_l(*p, NULL);
+        if (res != *p) {
+            t_error("Test case %s failed, result is %c but want get value %c \n", __FUNCTION__, (char)res, *p);
+        }
+        p++;
+    }
+}
 
 int main(int argc, char *argv[])
 {
@@ -211,5 +339,10 @@ int main(int argc, char *argv[])
     towlower_l_0400();
     towlower_l_0500();
     towlower_l_0600();
+    towlower_l_0700();
+    towlower_l_0800();
+    towlower_l_0900();
+    towlower_l_1000();
+    towlower_l_1100();
     return t_status;
 }
