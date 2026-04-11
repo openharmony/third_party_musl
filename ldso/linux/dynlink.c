@@ -1972,6 +1972,7 @@ UT_STATIC void unmap_library(struct dso *dso)
 		free(dso->loadmap);
 	} else if (dso->map && dso->map_len) {
 		if (__predict_false(dso->adlt)) {
+			madvise_adlt_library(dso);
 			unmap_adlt_library(dso);
 		} else if (!is_dlclose_debug_enable()) {
 			if (dso->is_prelinked) {
