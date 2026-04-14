@@ -236,6 +236,31 @@ static int IsAnswerValid(const unsigned char *answer, int alen)
 	return VALID_ANSWER;
 }
 
+void copy_dnsserver_deep(struct dnsserver *dest, const struct dnsserver *src)
+{
+    if (!dest || !src) return;
+ 
+    dest->query_protocol = src->query_protocol;
+    dest->sa_next = NULL;
+    if (src->sa != NULL) {
+        size_t sa_len = 0;
+        if (src->sa->sa_family == AF_INET) {
+            sa_len = sizeof(struct sockaddr_in);
+        } else if (src->sa->sa_family == AF_INET6) {
+            sa_len = sizeof(struct sockaddr_in6);
+        } else {
+            return;
+        }
+        dest->sa = malloc(sa_len);
+        if (dest->sa == NULL) {
+            return;
+        }
+        memcpy(dest->sa, src->sa, sa_len);
+    } else {
+        dest->sa = NULL;
+    }
+}
+
 static int name_from_dns(struct address buf[static MAXADDRS], char canon[static 256], const char *name, int family, const struct resolvconf *conf, int netid,
 	struct dnsserver sabuf[static MAXADDRS])
 {
