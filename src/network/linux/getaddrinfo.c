@@ -152,10 +152,11 @@ static void release_shared_result(SharedResult *res) {
     pthread_mutex_unlock(&g_cache_mutex);
 }
 
-int reportdnsresult(int netid, char* name, int usedtime, int queryret, struct addrinfo *res, struct queryparam *param)
+int reportdnsresult(int netid, char* name, int usedtime, int queryret, struct addrinfo *res, struct queryparam *param,
+	struct recordinfo *storeinfo)
 {
 #if OHOS_DNS_PROXY_BY_NETSYS
-	if (dns_post_result_to_netsys_cache(netid, name, usedtime, queryret, res, param) == 0) {
+	if (dns_post_result_to_netsys_cache(netid, name, usedtime, queryret, res, param, storeinfo) == 0) {
 		GETADDRINFO_PRINT_DEBUG("getaddrinfo_ext reportdnsresult fail\n");
 	}
 #endif
@@ -196,6 +197,55 @@ int getaddrinfo_hook(const char* host, const char* serv, const struct addrinfo* 
     return predefined_host_lookup_ip(host, serv, hints, res);
 }
 
+static long long get_time_now()
+{
+  struct timeval tv;
+  gettimeofday(&tv, NULL);
+  long long timestamp = (long long)tv.tv_sec * 1000 + tv.tv_usec / 1000;
+  return timestamp;
+}
+
+void add_report_dnsserver(struct recordinfo *record, struct dnsserver sainfo[static MAXADDRS], int naddr)
+{
+	if (!record || naddr <= 0) {
+		return;
+	}
+	int loopSize  = naddr >= MAXADDRS ? MAXADDRS : naddr;
+	struct dnsserver *head = NULL;
+    struct dnsserver *current = NULL;
+	for (int i = 0; i < loopSize; i++) {
+		if (sainfo[i].sa == NULL) {
+			continue;
+		}
+		struct dnsserver *newNode = malloc(sizeof(struct dnsserver));
+		if (newNode == NULL) {
+			continue;
+		}
+		if (sainfo[i].sa->sa_family != AF_INET6 && sainfo[i].sa->sa_family != AF_INET) {
+			continue;
+		}
+		size_t len = (sainfo[i].sa->sa_family == AF_INET6) ?
+              sizeof(struct sockaddr_in6) : sizeof(struct sockaddr_in);
+		newNode->sa = malloc(len);
+		if (newNode->sa == NULL) {
+			continue;
+		}
+		newNode->query_protocol = sainfo[i].query_protocol;
+		newNode->sa_next = NULL;
+		memcpy(newNode->sa, sainfo[i].sa, len);
+		free(sainfo[i].sa);
+		sainfo[i].sa = NULL;
+        if (head == NULL) {
+            head = newNode;
+            current = head;
+        } else {
+            current->sa_next = newNode;
+            current = newNode;
+        }
+    }
+    record->sa = head;
+}
+
 int getaddrinfo(const char *restrict host, const char *restrict serv, const struct addrinfo *restrict hint, struct addrinfo **restrict res)
 {
 	struct queryparam param = {0, 0, 0, 0, NULL};
@@ -208,6 +258,9 @@ int getaddrinfo_ext(const char *restrict host, const char *restrict serv, const 
 	int netid = 0;
 	int type = 0;
 	struct timeval timeStart, timeEnd;
+	struct recordinfo record;
+	record.querytime = 0;
+	record.sa = NULL;
 
 	if (!host && !serv) return EAI_NONAME;
 	if (!param) {
@@ -232,7 +285,8 @@ int getaddrinfo_ext(const char *restrict host, const char *restrict serv, const 
 	if (type == QEURY_TYPE_NORMAL && predefined_host_is_contain_host(host) == 0) {
 		if (dns_get_addr_info_from_netsys_cache2(netid, host, serv, hint, res) == 0) {
 			GETADDRINFO_PRINT_DEBUG("getaddrinfo_ext get from netsys cache OK\n");
-			reportdnsresult(netid, (char *)host, 0, DNS_QUERY_SUCCESS, *res, param);
+			record.querytime = get_time_now();
+			reportdnsresult(netid, (char *)host, 0, DNS_QUERY_SUCCESS, *res, param, &record);
 			return 0;
 		}
 	}
@@ -240,6 +294,7 @@ int getaddrinfo_ext(const char *restrict host, const char *restrict serv, const 
 
 	struct service ports[MAXSERVS];
 	struct address addrs[MAXADDRS];
+	struct dnsserver sainfo[MAXADDRS] = {0};
 	char canon[256], *outcanon;
 	int nservs, naddrs, nais, canon_len, i, j, k;
 	int family = AF_UNSPEC, flags = 0, proto = 0, socktype = 0;
@@ -341,6 +396,7 @@ int getaddrinfo_ext(const char *restrict host, const char *restrict serv, const 
     if (!shared_res) return EAI_MEMORY;
 
 	int timeStartRet = gettimeofday(&timeStart, NULL);
+	record.querytime = get_time_now();
 	int t_cost = 0;
     if (is_leader) {
 		// first thread do the dns search
@@ -357,7 +413,7 @@ int getaddrinfo_ext(const char *restrict host, const char *restrict serv, const 
             return nservs;
         }
 
-        naddrs = lookup_name_ext(addrs, canon, host, family, flags, netid);
+        naddrs = lookup_name_ext(addrs, canon, host, family, flags, netid, sainfo);
 		int timeEndRet = gettimeofday(&timeEnd, NULL);
 		if (timeStartRet == 0 && timeEndRet == 0) {
 			t_cost = COST_FOR_NANOSEC * (timeEnd.tv_sec - timeStart.tv_sec) + (timeEnd.tv_usec - timeStart.tv_usec);
@@ -365,7 +421,7 @@ int getaddrinfo_ext(const char *restrict host, const char *restrict serv, const 
 		}
 
         if (naddrs < 0) {
-			reportdnsresult(netid, (char *)host, t_cost, naddrs, NULL, param);
+			reportdnsresult(netid, (char *)host, t_cost, naddrs, NULL, param, &record);
             naddrs = revert_dns_fail_cause(naddrs);
             pthread_mutex_lock(&shared_res->mutex);
             shared_res->rc = naddrs;
@@ -431,7 +487,7 @@ int getaddrinfo_ext(const char *restrict host, const char *restrict serv, const 
 	} else {
 		outcanon = 0;
 	}
-
+	add_report_dnsserver(&record, sainfo, naddrs);
 	for (k = i = 0; i < shared_res->naddrs; i++) for (j = 0; j < shared_res->nservs; j++, k++) {
 		out[k].slot = k;
 		out[k].ai = (struct addrinfo) {
@@ -463,7 +519,7 @@ int getaddrinfo_ext(const char *restrict host, const char *restrict serv, const 
 	out[0].ref = nais;
 	*res = &out->ai;
 	pthread_mutex_unlock(&shared_res->mutex);
-	reportdnsresult(netid, (char *)host, t_cost, DNS_QUERY_SUCCESS, *res, param);
+	reportdnsresult(netid, (char *)host, t_cost, DNS_QUERY_SUCCESS, *res, param, &record);
 	release_shared_result(shared_res);
 
 	int cnt = predefined_host_is_contain_host(host);
