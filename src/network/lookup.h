@@ -82,7 +82,6 @@ hidden int __lookup_serv(struct service buf[static MAXSERVS], const char *name, 
 hidden int lookup_name_ext(struct address buf[static MAXADDRS], char canon[static 256], const char *name,
 		int family, int flags, int netid, struct dns_nodata *nodata, struct dnsserver sabuf[static MAXADDRS]);
 hidden int __lookup_name(struct address buf[static MAXADDRS], char canon[static 256], const char *name, int family, int flags, struct dns_nodata *nodata);
->>>>>>> master
 hidden int __lookup_ipliteral(struct address buf[static 1], const char *name, int family);
 
 hidden int __get_resolv_conf(struct resolvconf *, char *, size_t);
