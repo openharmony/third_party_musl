@@ -220,4 +220,33 @@ int dns_get_default_network(int *currentnetid)
 	return 0;
 }
 
+static SetNodataCache load_nodata_cache_setter(void)
+{
+	static SetNodataCache nodata_cache_setter = NULL;
+	resolve_dns_sym((void **) &nodata_cache_setter, OHOS_SET_NODATA_CACHE_FUNC_NAME);
+	return nodata_cache_setter;
+}
+
+void dns_set_nodata_to_netsys_cache(const int netid, const char *host)
+{
+	if (host == NULL) {
+		return;
+	}
+
+	SetNodataCache func = load_nodata_cache_setter();
+	if (!func) {
+		DNS_CONFIG_PRINT("%s: loading %{public}s failed", __func__, OHOS_SET_NODATA_CACHE_FUNC_NAME);
+		return;
+	}
+
+	int ret = func(netid, host);
+	if (ret < 0) {
+		GETADDRINFO_PRINT_DEBUG("dns_set_nodata_to_netsys_cache %{public}s err %{public}d\n",
+			OHOS_SET_NODATA_CACHE_FUNC_NAME, ret);
+		return;
+	}
+
+	GETADDRINFO_PRINT_DEBUG("dns_set_nodata_to_netsys_cache OK\n");
+}
+
 #endif

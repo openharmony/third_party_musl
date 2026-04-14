@@ -208,6 +208,7 @@ int getaddrinfo_ext(const char *restrict host, const char *restrict serv, const 
 	int netid = 0;
 	int type = 0;
 	struct timeval timeStart, timeEnd;
+	struct dns_nodata nodata = { .v4_nodata = 0, .v6_nodata = 0 };
 
 	if (!host && !serv) return EAI_NONAME;
 	if (!param) {
@@ -357,15 +358,20 @@ int getaddrinfo_ext(const char *restrict host, const char *restrict serv, const 
             return nservs;
         }
 
-        naddrs = lookup_name_ext(addrs, canon, host, family, flags, netid);
+        naddrs = lookup_name_ext(addrs, canon, host, family, flags, netid, &nodata);
 		int timeEndRet = gettimeofday(&timeEnd, NULL);
 		if (timeStartRet == 0 && timeEndRet == 0) {
 			t_cost = COST_FOR_NANOSEC * (timeEnd.tv_sec - timeStart.tv_sec) + (timeEnd.tv_usec - timeStart.tv_usec);
 			t_cost /= COST_FOR_MS;
 		}
-
         if (naddrs < 0) {
 			reportdnsresult(netid, (char *)host, t_cost, naddrs, NULL, param);
+#if OHOS_DNS_PROXY_BY_NETSYS
+			if (nodata.v6_nodata == 1) {
+				dns_set_nodata_to_netsys_cache(netid, host);
+				MUSL_LOGW("%{public}s: %{public}d: naddrs < 0 response NODATA", __func__, __LINE__);
+			}
+#endif
             naddrs = revert_dns_fail_cause(naddrs);
             pthread_mutex_lock(&shared_res->mutex);
             shared_res->rc = naddrs;
@@ -470,6 +476,10 @@ int getaddrinfo_ext(const char *restrict host, const char *restrict serv, const 
 #if OHOS_DNS_PROXY_BY_NETSYS
 	if (type == QEURY_TYPE_NORMAL && cnt == 0) {
 		dns_set_addr_info_to_netsys_cache2(netid, host, serv, hint, ans, k);
+	}
+	if (nodata.v6_nodata == 1) {
+		dns_set_nodata_to_netsys_cache(netid, host);
+		MUSL_LOGW("%{public}s: %{public}d: response NODATA ", __func__, __LINE__);
 	}
 #endif
 	free(ans);
