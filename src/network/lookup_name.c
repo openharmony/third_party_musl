@@ -188,6 +188,13 @@ static JudgeIpv4 load_ipv4_judger(void)
 	resolve_dns_sym((void **) &ipv4_judger, OHOS_JUDGE_IPV4_FUNC_NAME);
 	return ipv4_judger;
 }
+
+static GetNodataCache load_nodata_cache_getter(void)
+{
+	static GetNodataCache nodata_cache_getter = NULL;
+	resolve_dns_sym((void **) &nodata_cache_getter, OHOS_GET_NODATA_CACHE_FUNC_NAME);
+	return nodata_cache_getter;
+}
 #endif
 
 static int IsIpv6Enable(int netid)
@@ -222,6 +229,27 @@ static int IsIpv4Enable(int netid)
 	}
 #endif
     return ret;
+}
+
+static int CheckAndSkipAAAAQuery(int netid, const char *host)
+{
+#if OHOS_DNS_PROXY_BY_NETSYS
+    GetNodataCache func = load_nodata_cache_getter();
+	if (!func) {
+		return 0;
+	}
+
+	int ret = func(netid, host);
+	if (ret < 0) {
+		return 0;
+	}
+	/* If return value is 1, it means AAAA nodata cache exists, skip AAAA query */
+	return ret;
+#else
+    (void)netid;
+    (void)host;
+    return 0;
+#endif
 }
 
 static int IsAnswerValid(const unsigned char *answer, int alen)
@@ -262,7 +290,7 @@ void copy_dnsserver_deep(struct dnsserver *dest, const struct dnsserver *src)
 }
 
 static int name_from_dns(struct address buf[static MAXADDRS], char canon[static 256], const char *name, int family, const struct resolvconf *conf, int netid,
-	struct dnsserver sabuf[static MAXADDRS])
+	struct dns_nodata *nodata, struct dnsserver sabuf[static MAXADDRS])
 {
 	unsigned char qbuf[2][280], abuf[2][ABUF_SIZE];
 	const unsigned char *qp[2] = { qbuf[0], qbuf[1] };
@@ -289,7 +317,9 @@ static int name_from_dns(struct address buf[static MAXADDRS], char canon[static 
 	};
 	struct {int af; int rr;} *afrr = afrr_ipv6_enable;
 
-	if ((!IsIpv6Enable(netid) && IsIpv4Enable(netid)) || (family == AF_INET)) {
+	/* Check if we should skip AAAA query based on nodata cache */
+	int skipAAAA = CheckAndSkipAAAAQuery(netid, name);
+	if (((!IsIpv6Enable(netid) || (skipAAAA > 0)) && IsIpv4Enable(netid)) || (family == AF_INET)) {
 		if (family == AF_INET6) {
 #ifndef __LITEOS__
 			MUSL_LOGW("Network scenario mismatch: %{public}d", EAI_SYSTEM);
@@ -343,7 +373,7 @@ static int name_from_dns(struct address buf[static MAXADDRS], char canon[static 
 			}
 		}
 
-		int res = res_msend_rc_ext(netid, nq, qp, qlens, ap, alens, sizeof *abuf, conf, &dns_errno, dnsServerBuf);
+		int res = res_msend_rc_ext(netid, nq, qp, qlens, ap, alens, sizeof *abuf, conf, &dns_errno, nodata, dnsServerBuf);
 		if (res < 0) return res;
 
 		for (i=0; i<nq; i++) {
@@ -433,7 +463,7 @@ static int name_from_dns(struct address buf[static MAXADDRS], char canon[static 
 	return DNS_FAIL_REASON_FAIL_TO_PARSE_DNS;
 }
 
-static int name_from_dns_search(struct address buf[static MAXADDRS], char canon[static 256], const char *name, int family, int netid,
+static int name_from_dns_search(struct address buf[static MAXADDRS], char canon[static 256], const char *name, int family, int netid, struct dns_nodata *nodata,
 	struct dnsserver sabuf[static MAXADDRS])
 {
 #if OHOS_PERMISSION_INTERNET
@@ -486,13 +516,13 @@ static int name_from_dns_search(struct address buf[static MAXADDRS], char canon[
 		if (z-p < 256 - l - 1) {
 			memcpy(canon+l+1, p, z-p);
 			canon[z-p+1+l] = 0;
-			int cnt = name_from_dns(buf, canon, canon, family, &conf, netid, sabuf);
+			int cnt = name_from_dns(buf, canon, canon, family, &conf, netid, nodata, sabuf);
 			if (cnt) return cnt;
 		}
 	}
 
 	canon[l] = 0;
-	return name_from_dns(buf, canon, name, family, &conf, netid, sabuf);
+	return name_from_dns(buf, canon, name, family, &conf, netid, nodata, sabuf);
 }
 
 static const struct policy {
@@ -570,7 +600,7 @@ static int addrcmp(const void *_a, const void *_b)
 }
 
 int lookup_name_ext(struct address buf[static MAXADDRS], char canon[static 256], const char *name,
-					int family, int flags, int netid, struct dnsserver sabuf[static MAXADDRS])
+				int family, int flags, int netid, struct dns_nodata *nodata, struct dnsserver sabuf[static MAXADDRS])
 {
 	int cnt = 0, i, j;
 
@@ -614,7 +644,7 @@ int lookup_name_ext(struct address buf[static MAXADDRS], char canon[static 256],
 	if (!cnt && !(flags & AI_NUMERICHOST)) {
 		cnt = predefined_host_name_from_hosts(buf, canon, name, family);
 		if (!cnt) cnt = name_from_hosts(buf, canon, name, family);
-		if (!cnt) cnt = name_from_dns_search(buf, canon, name, family, netid, sabuf);
+		if (!cnt) cnt = name_from_dns_search(buf, canon, name, family, netid, nodata, sabuf);
 	}
 	if (cnt<=0) return cnt ? cnt : DNS_FAIL_REASON_SERVER_NO_SUCH_NAME;
 
@@ -719,10 +749,11 @@ int lookup_name_ext(struct address buf[static MAXADDRS], char canon[static 256],
 	return cnt;
 }
 
-int __lookup_name(struct address buf[static MAXADDRS], char canon[static 256], const char *name, int family, int flags)
+int __lookup_name(struct address buf[static MAXADDRS], char canon[static 256], const char *name, int family,
+	int flags, struct dns_nodata *nodata)
 {
 	struct dnsserver sabuf[MAXADDRS] = {0};
-	int ret = lookup_name_ext(buf, canon, name, family, flags, 0, sabuf);
+	int ret = lookup_name_ext(buf, canon, name, family, flags, 0, nodata, sabuf);
 	free_dns_server_buf(sabuf);
 	return ret;
 }
