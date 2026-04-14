@@ -32,7 +32,7 @@ int pthread_attr_setaffinity_np(pthread_attr_t *attr, size_t cpusetsize, const c
     if (!cpuset || cpusetsize == 0) {
         target_ext = (struct pthread_attr_ext *)attr->_a_extension;
         if (target_ext && target_ext->cpuset) {
-            pthread_attr_extension_destroy(target_ext);
+            pthread_attr_extension_destroy(attr);
         }
         return 0;
     }

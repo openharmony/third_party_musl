@@ -66,6 +66,7 @@ int pthread_attr_extension_destroy(pthread_attr_t *attr)
             free(ext->cpuset);
         }
         free((void *)attr->_a_extension);
+        attr->_a_extension = 0;
     }
     return 0;
 #else
