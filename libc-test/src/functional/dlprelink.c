@@ -294,7 +294,13 @@ static int dlprelink_for_proc_appspawn(void)
 
 static int dlprelink_execl(void)
 {
+#if defined(__aarch64__)
 	int err = execl("/system/lib/ld-musl-aarch64.so.1", "prelinker", SOLIST_PATH, (char *)NULL);
+#elif defined(__arm__)
+	int err = execl("/system/lib/ld-musl-arm.so.1", "prelinker", SOLIST_PATH, (char *)NULL);
+#else
+	int err = -1;
+#endif
 	/* memfd is not opened, so it should fail. */
 	err = err == 0 ? -1 : 0;
 	return err;

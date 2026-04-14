@@ -234,7 +234,11 @@ static int g_dlopen_hisysevent_count;
 static bool prelinking = false;
 static bool is_prelinker = false;
 static bool is_prelink_mmap_safe = true;
+#if UINTPTR_MAX == UINT64_MAX
 #define PRELINKER_RESERVE_MEMORY_LENGTH (8ULL * 1024 * 1024 * 1024)
+#else
+#define PRELINKER_RESERVE_MEMORY_LENGTH (128ULL * 1024 * 1024)
+#endif
 static void *prelinker_reserve_area_address = NULL;
 static uintptr_t prelinker_reserve_address_base = 0;
 static uintptr_t prelinker_reserve_address_length = 0;
