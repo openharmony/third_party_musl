@@ -66,6 +66,12 @@ struct resolvconf {
 	unsigned timeout;
 };
 
+/* RFC 2308 NODATA response status */
+struct dns_nodata {
+	int v4_nodata;  /* RFC 2308: NOERROR but no A record */
+	int v6_nodata;  /* RFC 2308: NOERROR but no AAAA record */
+};
+
 /* The limit of 48 results is a non-sharp bound on the number of addresses
  * that can fit in one 512-byte DNS packet full of v4 results and a second
  * packet full of v6 results. Due to headers, the actual limit is lower. */
@@ -74,15 +80,15 @@ struct resolvconf {
 
 hidden int __lookup_serv(struct service buf[static MAXSERVS], const char *name, int proto, int socktype, int flags);
 hidden int lookup_name_ext(struct address buf[static MAXADDRS], char canon[static 256], const char *name,
-							 int family, int flags, int netid);
-hidden int __lookup_name(struct address buf[static MAXADDRS], char canon[static 256], const char *name, int family, int flags);
+							 int family, int flags, int netid, struct dns_nodata *nodata);
+hidden int __lookup_name(struct address buf[static MAXADDRS], char canon[static 256], const char *name, int family, int flags, struct dns_nodata *nodata);
 hidden int __lookup_ipliteral(struct address buf[static 1], const char *name, int family);
 
 hidden int __get_resolv_conf(struct resolvconf *, char *, size_t);
 hidden int get_resolv_conf_ext(struct resolvconf *, char *, size_t, int netid);
 hidden int __res_msend_rc(int, const unsigned char *const *, const int *, unsigned char *const *, int *, int, const struct resolvconf *);
 hidden int res_msend_rc_ext(int, int, const unsigned char *const *, const int *, unsigned char *const *,
-							int *, int, const struct resolvconf *, int *);
+							int *, int, const struct resolvconf *, int *, struct dns_nodata *);
 
 hidden int __dns_parse(const unsigned char *, int,
 					   int (*)(void *, int, const void *, int, const void *, int, int), void *);
@@ -105,6 +111,8 @@ hidden int revert_dns_fail_cause(int cause);
 #define OHOS_JUDGE_IPV4_FUNC_NAME "NetSysIsIpv4Enable"
 #define OHOS_POST_DNS_RESULT_FUNC_NAME "NetSysPostDnsResult"
 #define OHOS_GET_DEFAULT_NET_FUNC_NAME "NetSysGetDefaultNetwork"
+#define OHOS_SET_NODATA_CACHE_FUNC_NAME "NetSysSetNodataCache"
+#define OHOS_GET_NODATA_CACHE_FUNC_NAME "NetSysGetNodataCache"
 #define MAX_RESULTS 32
 #define MAX_CANON_NAME 256
 #define MACRO_MIN(a, b) ((a) < (b) ? (a) : (b))
@@ -161,6 +169,10 @@ typedef int (*PostDnsResult)(int netid, char* name, int usedtime, int queryfail,
 
 typedef int (*GetDefaultNet)(uint16_t netId, int32_t *currentnetid);
 
+typedef int32_t (*SetNodataCache)(uint16_t netId, const char *host);
+
+typedef int (*GetNodataCache)(uint16_t netId, const char *host);
+
 /* If the memory holder points to stores NULL value, try to load symbol from the
  * dns lib into holder; otherwise, it does nothing. */
 hidden void resolve_dns_sym(void **holder, const char *symbol);
@@ -184,7 +196,8 @@ int dns_post_result_to_netsys_cache(int netid, char* name, int usedtime, int que
 
 int dns_get_default_network(int *currentnetid);
 
-hidden int get_ipv4_invalid_type(const void *);
+void dns_set_nodata_to_netsys_cache(const int netid, const char *host);
+
 #endif
 
 #if OHOS_FWMARK_CLIENT_BY_NETSYS
@@ -221,5 +234,7 @@ enum DNS_FAIL_REASON {
 };
  
 #define FALLBACK_TCP_QUERY 200
+
+hidden int get_ipv4_invalid_type(const void *);
 
 #endif

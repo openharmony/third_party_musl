@@ -25,6 +25,7 @@ int getaddrinfo(const char *restrict host, const char *restrict serv, const stru
 	int family = AF_UNSPEC, flags = 0, proto = 0, socktype = 0;
 	struct aibuf *out;
 	struct dns_ans *ans;
+	struct dns_nodata nodata = {0, 0};
 
 	if (!host && !serv) return EAI_NONAME;
 
@@ -98,8 +99,15 @@ int getaddrinfo(const char *restrict host, const char *restrict serv, const stru
 	nservs = __lookup_serv(ports, serv, proto, socktype, flags);
 	if (nservs < 0) return nservs;
 
-	naddrs = __lookup_name(addrs, canon, host, family, flags);
+	naddrs = __lookup_name(addrs, canon, host, family, flags, &nodata);
 	if (naddrs < 0) return naddrs;
+
+#if OHOS_DNS_PROXY_BY_NETSYS
+	/* If we got NODATA for AAAA record, set the information to netsys cache for future use */
+	if (nodata.v6_nodata) {
+		dns_set_nodata_to_netsys_cache(0, host);
+	}
+#endif
 
 	nais = nservs * naddrs;
 	canon_len = strlen(canon);

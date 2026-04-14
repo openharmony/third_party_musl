@@ -48,6 +48,8 @@ struct type_ctx {
 	int count_v6;
 #if OHOS_DNS_PROXY_BY_NETSYS
 	int invalid_count_v4;
+	int v4_nodata;  /* RFC 2308: NOERROR but no A record */
+	int v6_nodata;  /* RFC 2308: NOERROR but no AAAA record */
 #endif
 };
 
@@ -135,11 +137,17 @@ static int type_parse_callback(void *c, int rr, const void *data, int len, const
 			return -1;
 		}
 		family = AF_INET;
+#if OHOS_DNS_PROXY_BY_NETSYS
+		ctx->v4_nodata = 0;  /* Has A record, clear nodata flag */
+#endif
 		break;
 	case RR_AAAA:
 		if (len != 16) {
 			return -1;
 		}
+#if OHOS_DNS_PROXY_BY_NETSYS
+		ctx->v6_nodata = 0;  /* Has AAAA record, clear nodata flag */
+#endif
 		family = AF_INET6;
 		break;
 	default:
@@ -160,6 +168,33 @@ static int type_parse_callback(void *c, int rr, const void *data, int len, const
 	return 0;
 }
 
+#if OHOS_DNS_PROXY_BY_NETSYS
+/* Check if response is NODATA (RFC 2308)
+ * NODATA: response code is 0 (NOERROR) but answer section is empty
+ * This function should be called after parsing the response */
+static void check_nodata(struct type_ctx *ctx, const unsigned char *packet, int plen)
+{
+	/* DNS header is 12 bytes, after that comes the question section */
+	if (plen < 12 || (packet[3] & 15)) {
+		return;
+	}
+
+	/* Get answer count from DNS header (bytes 6-7) */
+	int ancount = (packet[6] << 8) | packet[7];
+
+	/* If no answers, it's a NODATA response */
+	if (ancount == 0) {
+		/* Get query type to determine which record type got nodata */
+		int qtype = get_query_type(packet, plen);
+		if (qtype == RR_A) {
+			ctx->v4_nodata = 1;
+		} else if (qtype == RR_AAAA) {
+			ctx->v6_nodata = 1;
+		}
+	}
+}
+#endif
+
 /* Internal contract for __res_msend[_rc]: asize must be >=512, nqueries
  * must be sufficiently small to be safe as VLA size. In practice it's
  * either 1 or 2, anyway. */
@@ -168,12 +203,12 @@ int __res_msend_rc(int nqueries, const unsigned char *const *queries,
 	const int *qlens, unsigned char *const *answers, int *alens, int asize,
 	const struct resolvconf *conf)
 {
-	return res_msend_rc_ext(0, nqueries, queries, qlens, answers, alens, asize, conf, NULL);
+	return res_msend_rc_ext(0, nqueries, queries, qlens, answers, alens, asize, conf, NULL, NULL);
 }
 
 int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *queries,
 	const int *qlens, unsigned char *const *answers, int *alens, int asize,
-	const struct resolvconf *conf, int *dns_errno)
+	const struct resolvconf *conf, int *dns_errno, struct dns_nodata *nodata)
 {
 	int fd;
 	int timeout, attempts, retry_interval, servfail_retry;
@@ -193,7 +228,7 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 	unsigned char alen_buf[nqueries][2];
 	int r;
 	unsigned long t0, t1, t2, t3, temp_t;
-	struct type_ctx ctx;
+	struct type_ctx ctx = {0};
 	uint8_t nres_v4, end_query;
 	int blens[2] = {0};
 	unsigned char *bp[2] = { NULL, NULL };
@@ -632,6 +667,10 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 			ctx.invalid_count_v4 = 0;
 #endif
 			__dns_parse(answers[i], alens[i], type_parse_callback, &ctx);
+#if OHOS_DNS_PROXY_BY_NETSYS
+			/* Check for NODATA response (RFC 2308) */
+			check_nodata(&ctx, answers[i], alens[i]);
+#endif
 			nres_v4 += ctx.count_v4;
 #ifndef __LITEOS__
 			if (ctx.count_v4 == 0 && ctx.count_v6 == 0) {
@@ -759,7 +798,13 @@ out:
 			free(bp[i]);
 		}
 	}
-
+#if OHOS_DNS_PROXY_BY_NETSYS
+	/* Output NODATA status to caller */
+	if (nodata != NULL) {
+		nodata->v4_nodata = ctx.v4_nodata;
+		nodata->v6_nodata = ctx.v6_nodata;
+	}
+#endif
 	return 0;
 }
 
