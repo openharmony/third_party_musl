@@ -24,6 +24,17 @@ struct addrinfo {
 	struct addrinfo *ai_next;
 };
 
+struct dnsserver {
+	int query_protocol;
+	struct sockaddr *sa;
+	struct dnsserver *sa_next;
+};
+ 
+struct recordinfo {
+	long long querytime;
+	struct dnsserver *sa;
+};
+
 typedef int (*net_dnsquery_hook)(int, int, int);
 typedef int (*custom_dns_resolver)(const char *host, const char *serv,
 	const struct addrinfo *hint, struct addrinfo **res);
