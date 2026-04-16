@@ -679,7 +679,7 @@ bool may_init_gwp_asan(bool force_init)
     force_sample_alloctor_by_env();
     init_gwp_asan_by_telemetry(&sample_rate, &max_simultaneous_allocations,
         &min_sample_size, &white_list_path);
-    gwp_asan_recoverable = (!force_init) && (is_gwp_asan_recoverable() || gwp_asan_recoverable);
+    gwp_asan_recoverable = is_gwp_asan_recoverable() || gwp_asan_recoverable;
     MUSL_LOGW("[gwp_asan]: sample_rate:%{public}d, slot:%{public}d, "\
         "min_sample_size:%{public}d, white_list_path:%{public}s, recoverable:%{public}d",
         sample_rate, max_simultaneous_allocations, min_sample_size, white_list_path, gwp_asan_recoverable);
