@@ -264,7 +264,7 @@ static int IsAnswerValid(const unsigned char *answer, int alen)
 	return VALID_ANSWER;
 }
 
-void copy_dnsserver_deep(struct dnsserver *dest, const struct dnsserver *src)
+void copy_dnsserver(struct dnsserver *dest, struct dnsserver *src)
 {
     if (dest == NULL || src == NULL) {
 		return
@@ -407,7 +407,7 @@ static int name_from_dns(struct address buf[static MAXADDRS], char canon[static 
 			}
 			if (invalidType == IPV4_VALID_TYPE) {
 				validIpv4AddrCnt += ((family == AF_INET) ? 1 : 0);
-				copy_dnsserver_deep(&sabuf[validAddrCnt], &dnsServerBuf[validAddrCnt]);
+				copy_dnsserver(&sabuf[validAddrCnt], &dnsServerBuf[validAddrCnt]);
 				memcpy(&buf[validAddrCnt++], &addrs, sizeof(struct address));
 				continue;
 			}
@@ -421,7 +421,7 @@ static int name_from_dns(struct address buf[static MAXADDRS], char canon[static 
 			for (int j = 0; j < ipv4LocalAddrCnt; j++) {
 				buf[validAddrCnt].family = AF_INET;
 				buf[validAddrCnt].scopeid = 0;
-				copy_dnsserver_deep(&sabuf[validAddrCnt], &dnsServerBuf[validAddrCnt]);
+				copy_dnsserver(&sabuf[validAddrCnt], &dnsServerBuf[validAddrCnt]);
 				memcpy(&buf[validAddrCnt++].addr, localAddrBuf[j].addr, 4);
 			}
 			if (ipv4LocalAddrCnt > 0) {
