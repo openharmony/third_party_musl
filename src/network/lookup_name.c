@@ -267,7 +267,7 @@ static int IsAnswerValid(const unsigned char *answer, int alen)
 void copy_dnsserver(struct dnsserver *dest, struct dnsserver *src)
 {
     if (dest == NULL || src == NULL) {
-		return
+		return;
 	}
  
     dest->query_protocol = src->query_protocol;
