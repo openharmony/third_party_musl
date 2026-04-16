@@ -205,6 +205,31 @@ static long long get_time_now()
   return timestamp;
 }
 
+void free_recordinfo(struct recordinfo *record)
+{
+    if (record == NULL) {
+		return;
+	}
+    if (record->sa != NULL) {
+        if (record->sa->sa != NULL) {
+            free(record->sa->sa);
+            record->sa->sa = NULL;
+        }
+ 
+        struct dnsserver *curr = record->sa->sa_next;
+        while (curr != NULL) {
+            struct dnsserver *next = curr->sa_next;
+            if (curr->sa != NULL) {
+				free(curr->sa);
+			}
+			curr = next;
+            free(curr);
+        }
+        free(record->sa);
+        record->sa = NULL;
+    }
+}
+
 void add_report_dnsserver(struct recordinfo *record, struct dnsserver sainfo[static MAXADDRS], int naddr)
 {
 	if (!record || naddr <= 0) {
@@ -221,19 +246,9 @@ void add_report_dnsserver(struct recordinfo *record, struct dnsserver sainfo[sta
 		if (newNode == NULL) {
 			continue;
 		}
-		if (sainfo[i].sa->sa_family != AF_INET6 && sainfo[i].sa->sa_family != AF_INET) {
-			continue;
-		}
-		size_t len = (sainfo[i].sa->sa_family == AF_INET6) ?
-              sizeof(struct sockaddr_in6) : sizeof(struct sockaddr_in);
-		newNode->sa = malloc(len);
-		if (newNode->sa == NULL) {
-			continue;
-		}
 		newNode->query_protocol = sainfo[i].query_protocol;
 		newNode->sa_next = NULL;
-		memcpy(newNode->sa, sainfo[i].sa, len);
-		free(sainfo[i].sa);
+		newNode->sa = sainfo[i].sa;
 		sainfo[i].sa = NULL;
         if (head == NULL) {
             head = newNode;
@@ -422,6 +437,7 @@ int getaddrinfo_ext(const char *restrict host, const char *restrict serv, const 
 		}
         if (naddrs < 0) {
 			reportdnsresult(netid, (char *)host, t_cost, naddrs, NULL, param, &record);
+			free_dns_server_buf(sainfo);
 #if OHOS_DNS_PROXY_BY_NETSYS
 			if (nodata.v6_nodata == 1) {
 				dns_set_nodata_to_netsys_cache(netid, host);
@@ -479,11 +495,15 @@ int getaddrinfo_ext(const char *restrict host, const char *restrict serv, const 
 	nais = shared_res->nservs * shared_res->naddrs;
 	canon_len = strlen(shared_res->canon);
 	out = calloc(1, nais * sizeof(*out) + canon_len + 1);
-	if (!out) return EAI_MEMORY;
+	if (!out) {
+		free_dns_server_buf(sainfo);
+		return EAI_MEMORY;
+	}
 
 	ans = calloc(1, nais * sizeof(struct dns_ans));
 	if (!ans) {
 		free(out);
+		free_dns_server_buf(sainfo);
 		return EAI_MEMORY;
 	}
 
@@ -493,7 +513,6 @@ int getaddrinfo_ext(const char *restrict host, const char *restrict serv, const 
 	} else {
 		outcanon = 0;
 	}
-	add_report_dnsserver(&record, sainfo, naddrs);
 	for (k = i = 0; i < shared_res->naddrs; i++) for (j = 0; j < shared_res->nservs; j++, k++) {
 		out[k].slot = k;
 		out[k].ai = (struct addrinfo) {
@@ -524,8 +543,11 @@ int getaddrinfo_ext(const char *restrict host, const char *restrict serv, const 
 	}
 	out[0].ref = nais;
 	*res = &out->ai;
+	add_report_dnsserver(&record, sainfo, naddrs);
 	pthread_mutex_unlock(&shared_res->mutex);
 	reportdnsresult(netid, (char *)host, t_cost, DNS_QUERY_SUCCESS, *res, param, &record);
+	free_recordinfo(&record);
+	free_dns_server_buf(sainfo);
 	release_shared_result(shared_res);
 
 	int cnt = predefined_host_is_contain_host(host);
