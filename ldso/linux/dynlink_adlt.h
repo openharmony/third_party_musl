@@ -234,6 +234,29 @@ static void free_adlt(struct adlt *adlt)
 	free(adlt);
 }
 
+static void madvise_adlt_library(struct dso *p)
+{
+	LD_LOGD("[dlclose]: dlclose so in adlt, index: %{public}d, name: %{public}s", p->adlt_ndso_index, p->name);
+	adlt_phindex_t *ph_indexes = NULL;
+	ssize_t ph_count = get_adlt_library_ph(p->adlt, p->adlt_ndso_index, &ph_indexes);
+	if (ph_count > 0 && ph_indexes) {
+		unsigned char *base = p->adlt->base;
+		for (size_t i = 0; i < ph_count; i++) {
+			const Phdr *ph = &p->phdr[ph_indexes[i]];
+			unsigned int relro_flag = 
+				((p->relro_start) <= (ph)->p_vaddr)&&(((ph)->p_vaddr + (ph)->p_memsz) <= p->relro_end) ? 1 : 0;
+			if (relro_flag && ph->p_filesz == 0 && ph->p_type == PT_LOAD) { // ohos.randomdata
+				continue;
+			}
+			if (ph->p_type == PT_LOAD) {
+				size_t this_min = ph->p_vaddr & -PAGE_SIZE;
+				size_t this_max = (ph->p_vaddr + ph->p_memsz + PAGE_SIZE - 1) & -PAGE_SIZE;
+				madvise(base + this_min, this_max - this_min, MADV_DONTNEED);
+			}
+		}
+	}
+}
+
 static void unmap_adlt_library(struct dso *dso)
 {
 	if (!dso) {return;}
@@ -1634,6 +1657,7 @@ static struct dso *find_library_by_adlt_index(
     const struct adlt *adlt, const ns_t *ns, bool check_inherited, ssize_t library_index) {return NULL;};
 static void free_adlt(struct adlt *adlt) {return; };
 static void init_adlt(struct adlt *adlt){return ;};
+static void madvise_adlt_library(struct dso *p) {return ;};
 static void unmap_adlt_library(struct dso *dso) {return ;};
 ssize_t get_adlt_common_ph(struct adlt *adlt, adlt_phindex_t **ph_indexes) {return 0;};
 static ssize_t get_adlt_library_index(
