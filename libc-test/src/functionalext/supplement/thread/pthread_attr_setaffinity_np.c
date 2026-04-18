@@ -14,10 +14,7 @@
  */
 #include <pthread.h>
 #include <sched.h>
-#include <signal.h>
 #include <stdlib.h>
-#include <sys/wait.h>
-#include <unistd.h>
 #include "functionalext.h"
 
 static int get_cpu_count() {
@@ -125,7 +122,7 @@ void pthread_attr_setaffinity_np_0300(void)
     #ifdef MUSL_EXTERNAL_FUNCTION
     #ifndef __LITEOS_A__
     set_pthread_extended_function_policy(1);
-    EXPECT_EQ("pthread_attr_setaffinity_np_0100", get_pthread_extended_function_policy(), 1);
+    EXPECT_EQ("pthread_attr_setaffinity_np_0300", get_pthread_extended_function_policy(), 1);
 
     pthread_attr_t attr;
     cpu_set_t cpuset, cpuset_get;
@@ -141,42 +138,18 @@ void pthread_attr_setaffinity_np_0300(void)
     ret = pthread_attr_setaffinity_np(&attr, sizeof(cpu_set_t), &cpuset);
     EXPECT_EQ("pthread_attr_setaffinity_np_0300", ret, 0);
 
-    // Empty affinity set
     CPU_ZERO(&cpuset_get);
     ret = pthread_attr_getaffinity_np(&attr, sizeof(cpu_set_t), &cpuset_get);
     EXPECT_EQ("pthread_attr_setaffinity_np_0300", ret, 0);
     EXPECT_TRUE("pthread_attr_setaffinity_np_0300", CPU_ISSET(ncpus + 10, &cpuset_get));
 
-    pthread_attr_destroy(&attr);
+    ret = pthread_attr_destroy(&attr);
+    EXPECT_EQ("pthread_attr_setaffinity_np_0300", ret, 0);
 
-    // Test signal 11 handling when using destroyed attribute
-    pid_t pid = fork();
-    if (pid < 0) {
-        t_error("pthread_attr_setaffinity_np_0300: fork failed\n");
-    } else if (pid == 0) {
-        // Child process: intentionally trigger signal 11
-        CPU_ZERO(&cpuset);
-        CPU_SET(0, &cpuset);
-        ret = pthread_attr_setaffinity_np(&attr, sizeof(cpu_set_t), &cpuset);
-        // If we reach here, signal 11 was not triggered (unexpected)
-        exit(1);
-    } else {
-        // Parent process: wait and check for signal 11
-        int status;
-        waitpid(pid, &status, 0);
+    // The extension pointer is cleared on destroy, so repeated destroy should be a no-op.
+    ret = pthread_attr_destroy(&attr);
+    EXPECT_EQ("pthread_attr_setaffinity_np_0300", ret, 0);
 
-        if (WIFSIGNALED(status)) {
-            int sig = WTERMSIG(status);
-            if (sig == SIGSEGV) {
-                // Expected behavior: signal 11 was caught
-                EXPECT_TRUE("pthread_attr_setaffinity_np_0300", 1);
-            } else {
-                t_error("pthread_attr_setaffinity_np_0300: unexpected signal %d\n", sig);
-            }
-        } else if (WIFEXITED(status)) {
-            t_error("pthread_attr_setaffinity_np_0300: child exited normally (signal 11 not triggered)\n");
-        }
-    }
     set_pthread_extended_function_policy(0);
     #endif
     #endif
