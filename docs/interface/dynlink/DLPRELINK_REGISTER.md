@@ -4,7 +4,7 @@
 
 #### **NAME**
 
-​       dlprelink_register - register previouly recorded DSO relocation cache
+​       dlprelink_register - register previously recorded DSO relocation cache
 
 #### **SYNOPSIS**
 
