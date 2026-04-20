@@ -294,3 +294,10 @@ https://gitee.com/openharmony/third_party_musl/pulls/886
 - pututline: 将一个 struct utmp 结构体的内容写入 utmp 文件，用于记录用户登录和注销等系统事件
 - getutent: 从 utmp 文件中读取下一个记录，并返回一个指向 struct utmp 结构体的指针，以便获取记录中的信息
 - utmpname: 设置要在其中查找 utmp 文件的路径名。通过调用 utmpname 函数，可以更改默认的 utmp 文件路径
+
+### 与posix规范有所不同的函数
+这些接口在部分细节的表现形式上与标准posix规范有所不同。
+- fread: posix 规范上将 feof 和 ferror 用于区分文件是读完还是报错，当文件读完时 feof 为 true，报错时 ferror 为 true。
+  鸿蒙系统中 fread 文件读完时 feof 为 true 与 posix 一致，但报错时 feof 和 ferror 会同时为 true。在保证多平台兼容性
+  的情况下，建议在使用 fread 且对返回值进行判断时，先判断 ferror 再去判断 feof。
+  可参考 https:https://gitcode.com/openharmony/third_party_musl/blob/master/docs/interface/stdio/FREAD.md
