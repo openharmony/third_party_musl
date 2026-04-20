@@ -21,9 +21,9 @@ This function is only used for namespaces that are not in the built-in permitted
 
 For parameter `name`: The target namespace must already exist. This function does not create a namespace.
 
-For parameter `lib_path`: If there are multiple paths, you need to use `:` to separate them. It can not start with a `:`or end with a `:`. Every path can not end with a `/`. For example: `/a/b` is ok but `/a/b/` is not a correct param. The maximum length of each path cannot exceed [PATH_MAX](https://pubs.opengroup.org/onlinepubs/9799919799/functions/fpathconf.html). The total length is limited.
+For parameter `lib_path`: If there are multiple paths, you need to use `:` to separate them. It cannot start with a `:`or end with a `:`. Every path can not end with a `/`. For example: `/a/b` is ok but `/a/b/` is not a correct param. The maximum length of each path cannot exceed [PATH_MAX](https://pubs.opengroup.org/onlinepubs/9799919799/functions/fpathconf.html). The total length is limited.
 
-The caller so must have permission to modify namespace configuration. Otherwise, the operation will fail.
+The caller's SO must have permission to modify namespace configuration. Otherwise, the operation will fail.
 
 Note: This function is MT-Safe(multi-thread safe) and not signal-safe. This function is mutually exclusive with other namespaces and linker write operations.
 
@@ -36,7 +36,7 @@ On success, dlns_set_module_namespace_lib_path() return 0. Otherwise, an error c
 The following error codes may be returned:  
 1. **EINVAL**: `name` or `lib_path` is NULL or other invalid input.
 2. **EACCES**: `name` is in the built-in permitted namespace list, and this interface cannot modify it.
-3. **EPERM**: caller so is not permitted to perform this operation.
+3. **EPERM**: caller's SO is not permitted to perform this operation.
 4. **ENOKEY**: The specified namespace was not found.
 
 #### ATTRIBUTES

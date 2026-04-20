@@ -6,17 +6,17 @@
 
 ​       pthread_atfork_for_gwpasan - pthread_atfork specified for GWP sanitizer,
 <200b>       register fork handler for GWP sanitizer to make sure prepare handler of 
-<200b>       GWP sanitizer will be executed last after all the other registed prepare handler. 
+<200b>       GWP sanitizer will be executed last after all the other registered prepare handler. 
 <200b>       parent and child handler for GWP sanitizer will be executed first before 
-<200b>       before all the other registed parent and child handler.
+<200b>       all the other registered parent and child handler.
 
 #### **SYNOPSIS**
 
 ​       #include <pthread.h>
 
-       int pthread_atfork_for_gwpasan(typeof(void (void)) *prepare,
-                                      typeof(void (void)) *parent,
-                                      typeof(void (void)) *child);
+       int pthread_atfork_for_gwpasan(void (*prepare)(void),
+                                      void (*parent)(void),
+                                      void (*child)(void));
 
 #### **DESCRIPTION**
 
@@ -35,7 +35,7 @@
 <200b>       3. child specifies a handler that is executed in the child process
 <200b>          after fork() processing completes.
 
-<200b>       Any of the three arguments may be NULL is no handler is needed in<200b>       the corresponding phase of fork() processing.
+<200b>       Any of the three arguments may be NULL if no handler is needed in<200b>       the corresponding phase of fork() processing.
 
 <200b>       pthread_atfork() may be called multiple times
 <200b>       by a process to register additional handlers. The handlers for each
@@ -72,7 +72,7 @@ entry.
 #### NOTES
 
 ​      The pthread_atfork_for_gwpasan() is specified for GWP sanitizer.
-<200b>      The behavior will not be guranteed under other situations.
+<200b>      The behavior will not be guaranteed under other situations.
 <200b>      pthread_atfork() should be used to register fork handler. 
 
 #### EXAMPLES
@@ -97,7 +97,7 @@ entry.
 
  int main(void) {
      if (pthread_atfork_for_gwpasan(prepare, parent, child) != 0) {
-         perror("pthread_atfork_for_gwp_asan");
+         perror("pthread_atfork_for_gwpasan");
          exit(EXIT_FAILURE);
      }
 

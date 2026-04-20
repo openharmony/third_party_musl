@@ -17,7 +17,7 @@
 
 Set the directory permission path in the specified namespace. 
 
-For parameter `path`: If there are multiple paths, you need to use `:` to separate them. It can not start with a `:`or end with a `:`. Every path can not end with a `/`. For example: `/a/b` is ok but `/a/b/` is not a correct param. The maximum length of each path cannot exceed [PATH_MAX](https://pubs.opengroup.org/onlinepubs/9799919799/functions/fpathconf.html). The total length is limited.
+For parameter `path`: If there are multiple paths, you need to use `:` to separate them. It cannot start with a `:`or end with a `:`. Every path can not end with a `/`. For example: `/a/b` is ok but `/a/b/` is not a correct param. The maximum length of each path cannot exceed [PATH_MAX](https://pubs.opengroup.org/onlinepubs/9799919799/functions/fpathconf.html). The total length is limited.
 
 When the parameter `ns` points to **moduleNs_plugin_default_namespace**, this function can restrict the behavior of `dlns_add_plugin_default_ld_dictionary`.
 
@@ -30,7 +30,7 @@ On success, dlns_set_ld_permitted_path() return 0. Otherwise, -1 will be returne
 #### **ERRORS**
 
 The following error codes may be set in errno:  
-1. **EACCES**:  caller so is not permitted.  
+1. **EACCES**:  caller's SO is not permitted.  
 2. **EINVAL**:  path is invalid.
 3. **ENOMEM**:  Storage space available is insufficient.
 4. **ENOENT**:  The specified namespace was not found.
