@@ -163,7 +163,10 @@ int reportdnsresult(int netid, char* name, int usedtime, int queryret, struct ad
 }
 
 static custom_dns_resolver g_customdnsresolvehook;
+static custom_dns_resolver g_customdnsresolver;
+static pthread_mutex_t g_customdnsresolver_lock = PTHREAD_MUTEX_INITIALIZER;
 thread_local int recursive = 0;
+thread_local int customrecursive = 0;
 
 int setdnsresolvehook(custom_dns_resolver hookfunc)
 {
@@ -196,6 +199,57 @@ int getaddrinfo_hook(const char* host, const char* serv, const struct addrinfo* 
     return predefined_host_lookup_ip(host, serv, hints, res);
 }
 
+int setcustomdnsresolver(custom_dns_resolver hookfunc)
+{
+	int ret = -1;
+	pthread_mutex_lock(&g_customdnsresolver_lock);
+	if (g_customdnsresolver) {
+		pthread_mutex_unlock(&g_customdnsresolver_lock);
+		return ret;
+	}
+	if (hookfunc) {
+		g_customdnsresolver = hookfunc;
+		ret = 0;
+	}
+	pthread_mutex_unlock(&g_customdnsresolver_lock);
+	return ret;
+}
+
+int removecustomdnsresolver()
+{
+	pthread_mutex_lock(&g_customdnsresolver_lock);
+	g_customdnsresolver = NULL;
+	pthread_mutex_unlock(&g_customdnsresolver_lock);
+	return 0;
+}
+
+int getaddrinfo_custom(const char* host, const char* serv, const struct addrinfo* hints,
+    struct addrinfo** res)
+{
+	int ret = -1;
+	custom_dns_resolver resolver = NULL;
+
+	pthread_mutex_lock(&g_customdnsresolver_lock);
+	resolver = g_customdnsresolver;
+	pthread_mutex_unlock(&g_customdnsresolver_lock);
+
+	if (resolver && customrecursive == 0) {
+#ifndef __LITEOS__
+		MUSL_LOGI("getaddrinfo_custom enter");
+#endif
+		++customrecursive;
+		ret = resolver(host, serv, hints, res);
+		--customrecursive;
+#ifndef __LITEOS__
+		MUSL_LOGI("getaddrinfo_custom ret: %{public}d", ret);
+#endif
+		if (ret == 0) {
+			return ret;
+		}
+	}
+	return predefined_host_lookup_ip(host, serv, hints, res);
+}
+
 int getaddrinfo(const char *restrict host, const char *restrict serv, const struct addrinfo *restrict hint, struct addrinfo **restrict res)
 {
 	struct queryparam param = {0, 0, 0, 0, NULL};
@@ -217,6 +271,25 @@ int getaddrinfo_ext(const char *restrict host, const char *restrict serv, const 
 	} else {
 		netid = param->qp_netid;
 		type = param->qp_type;
+	}
+
+	custom_dns_resolver resolver = NULL;
+	pthread_mutex_lock(&g_customdnsresolver_lock);
+	resolver = g_customdnsresolver;
+	pthread_mutex_unlock(&g_customdnsresolver_lock);
+	if (resolver) {
+		if (customrecursive == 0) {
+#ifndef __LITEOS__
+			MUSL_LOGI("getaddrinfo_ext g_customdnsresolver enter");
+#endif
+			++customrecursive;
+			int ret = resolver(host, serv, hint, res);
+			--customrecursive;
+#ifndef __LITEOS__
+			MUSL_LOGI("getaddrinfo_ext g_customdnsresolver ret: %{public}d", ret);
+#endif
+			return ret;
+		}
 	}
 
 	if (g_customdnsresolvehook) {
