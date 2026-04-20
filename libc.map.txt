@@ -807,6 +807,7 @@
     get_nprocs_conf;
     get_phys_pages;
     getaddrinfo;
+    getaddrinfo_custom;
     getaddrinfo_ext;
     getaddrinfo_hook;
     getauxval;
@@ -1563,6 +1564,7 @@
     remove;
     remove_all_special_handler;
     remove_special_signal_handler;
+    removecustomdnsresolver;
     removednsresolvehook;
     removexattr;
     remque;
@@ -1641,6 +1643,7 @@
     set_assert_callback;
     setbuf;
     setbuffer;
+    setcustomdnsresolver;
     setdnsresolvehook;
     setdomainname;
     setegid;
