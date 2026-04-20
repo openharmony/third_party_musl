@@ -38,11 +38,11 @@ The fread() return value is a short item count (or zero)
 | ----------------------- | ------------- | -------- |
 | fread()       | Thread safety | MT-Safe  |
 
-STANDARDS
-       C11, POSIX.1-2008.
+#### STANDARDS
+ C11, POSIX.1-2008.
 
-HISTORY
-       POSIX.1-2001, C89.
+#### HISTORY
+ POSIX.1-2001, C89.
 
 #### EXAMPLES
 
