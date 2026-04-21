@@ -41,7 +41,7 @@
 
 #### NOTES
 
-​      These feature are designed specifically for when musl_extended_function is true.
+​      These features are designed specifically for when musl_extended_function is true.
 
 #### EXAMPLES
 

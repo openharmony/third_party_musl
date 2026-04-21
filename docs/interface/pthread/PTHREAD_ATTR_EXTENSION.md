@@ -51,7 +51,7 @@ The following error codes may be set in errno:
 
 #### NOTES
 
-​      These feature are designed specifically for when musl_extended_function is true. These interfaces can only be used when the flag for controlling thread affinity series interfaces at runtime is turned on.
+​      These features are designed specifically for when musl_extended_function is true. These interfaces can only be used when the flag for controlling thread affinity series interfaces at runtime is turned on.
 
 #### EXAMPLES
 
