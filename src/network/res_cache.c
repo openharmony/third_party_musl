@@ -175,7 +175,7 @@ int dns_get_addr_info_from_netsys_cache(const char *restrict host, const char *r
 }
 
 int dns_post_result_to_netsys_cache(int netid, char* name, int usedtime, int queryret,
-									struct addrinfo *res, struct queryparam *param)
+									struct addrinfo *res, struct queryparam *param, struct recordinfo *storeinfo)
 {
 	PostDnsResult func = load_result_poster();
 	if (!func) {
@@ -183,7 +183,7 @@ int dns_post_result_to_netsys_cache(int netid, char* name, int usedtime, int que
 		return -1;
 	}
 
-	int ret = func(netid, name, usedtime, queryret, res, param);
+	int ret = func(netid, name, usedtime, queryret, res, param, storeinfo);
 	if (ret < 0) {
 		GETADDRINFO_PRINT_DEBUG("dns_set_result_to_netsys_cache OHOS_POST_DNS_RESULT_FUNC_NAME err %d\n", ret);
 		return -1;
