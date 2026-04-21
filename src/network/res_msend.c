@@ -168,6 +168,15 @@ static int type_parse_callback(void *c, int rr, const void *data, int len, const
 	return 0;
 }
 
+void free_dns_server_buf(struct dnsserver dnsServerBuf[static MAXADDRS])
+{
+	for (int i = 0; i < MAXADDRS; i++) {
+		if (dnsServerBuf[i].sa != NULL) {
+			free(dnsServerBuf[i].sa);
+			dnsServerBuf[i].sa = NULL;
+		}
+	}
+}
 #if OHOS_DNS_PROXY_BY_NETSYS
 /* Check if response is NODATA (RFC 2308)
  * NODATA: response code is 0 (NOERROR) but answer section is empty
@@ -203,12 +212,31 @@ int __res_msend_rc(int nqueries, const unsigned char *const *queries,
 	const int *qlens, unsigned char *const *answers, int *alens, int asize,
 	const struct resolvconf *conf)
 {
-	return res_msend_rc_ext(0, nqueries, queries, qlens, answers, alens, asize, conf, NULL, NULL);
+	struct dnsserver dnsServerBuf[MAXADDRS] = {0};
+	int ret = res_msend_rc_ext(0, nqueries, queries, qlens, answers, alens, asize, conf, NULL, NULL, dnsServerBuf);
+	free_dns_server_buf(dnsServerBuf);
+	return ret;
+}
+
+void malloc_sockaddr(struct sockaddr *sa, struct dnsserver *ds)
+{
+	if (sa == NULL || ds == NULL) {
+		return;
+	}
+	ds->sa = NULL;
+	if (sa->sa_family != AF_INET && sa->sa_family != AF_INET6) {
+		return;
+	}
+	size_t len = sa->sa_family == AF_INET ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6);
+	ds->sa = malloc(len);
+    if (ds->sa != NULL) {
+        memcpy(ds->sa, sa, len);
+    }
 }
 
 int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *queries,
 	const int *qlens, unsigned char *const *answers, int *alens, int asize,
-	const struct resolvconf *conf, int *dns_errno, struct dns_nodata *nodata)
+	const struct resolvconf *conf, int *dns_errno, struct dns_nodata *nodata, struct dnsserver dnsServerBuf[static MAXADDRS])
 {
 	int fd;
 	int timeout, attempts, retry_interval, servfail_retry;
@@ -547,6 +575,7 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 		end_query = 0;
 
 		while (next < nqueries) {
+			int tcpSaIndex = -1;
 			struct msghdr mh = {
 				.msg_name = (void *)&sa,
 				.msg_namelen = sl,
@@ -677,6 +706,14 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 				MUSL_LOGW("%{public}s: %{public}d: response have no ip.", __func__, __LINE__);
 			}
 #endif
+			if (ctx.count_v4 != 0 || ctx.count_v6 != 0) {
+				if (tcpSaIndex == j) {
+					dnsServerBuf[i].query_protocol = SOCK_STREAM;
+				} else {
+					dnsServerBuf[i].query_protocol = SOCK_DGRAM;
+				}
+				malloc_sockaddr((struct sockaddr *)&sa, &dnsServerBuf[i]);
+			}
 
 #if OHOS_DNS_PROXY_BY_NETSYS
 			if (is_v4_a_response && ctx.count_v4 == 0) {
@@ -726,6 +763,7 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 					*dns_errno = FALLBACK_TCP_QUERY;
 				}
 				pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, 0);
+				tcpSaIndex = j;
 				r = start_tcp(pfd+i, family, ns+j, sl, queries[i], qlens[i], netid);
 				pthread_setcancelstate(cs, 0);
 				if (r >= 0) {

@@ -264,7 +264,20 @@ static int IsAnswerValid(const unsigned char *answer, int alen)
 	return VALID_ANSWER;
 }
 
-static int name_from_dns(struct address buf[static MAXADDRS], char canon[static 256], const char *name, int family, const struct resolvconf *conf, int netid, struct dns_nodata *nodata)
+void copy_dnsserver(struct dnsserver *dest, struct dnsserver *src)
+{
+    if (dest == NULL || src == NULL) {
+		return;
+	}
+ 
+    dest->query_protocol = src->query_protocol;
+    dest->sa_next = NULL;
+	dest->sa = src->sa;
+	src->sa = NULL;
+}
+
+static int name_from_dns(struct address buf[static MAXADDRS], char canon[static 256], const char *name, int family, const struct resolvconf *conf, int netid,
+	struct dns_nodata *nodata, struct dnsserver sabuf[static MAXADDRS])
 {
 	unsigned char qbuf[2][280], abuf[2][ABUF_SIZE];
 	const unsigned char *qp[2] = { qbuf[0], qbuf[1] };
@@ -272,6 +285,7 @@ static int name_from_dns(struct address buf[static MAXADDRS], char canon[static 
 	int qlens[2], alens[2], qtypes[2];
 	int queryNum = 2;
 	int dns_errno = 0;
+	struct dnsserver dnsServerBuf[MAXADDRS] = {0};
 #if OHOS_DNS_PROXY_BY_NETSYS
 	struct address tempAddr[MAXADDRS];
 	struct dpc_ctx ctx = { .addrs = tempAddr, .canon = canon };
@@ -346,7 +360,7 @@ static int name_from_dns(struct address buf[static MAXADDRS], char canon[static 
 			}
 		}
 
-		int res = res_msend_rc_ext(netid, nq, qp, qlens, ap, alens, sizeof *abuf, conf, &dns_errno, nodata);
+		int res = res_msend_rc_ext(netid, nq, qp, qlens, ap, alens, sizeof *abuf, conf, &dns_errno, nodata, dnsServerBuf);
 		if (res < 0) return res;
 
 		for (i=0; i<nq; i++) {
@@ -393,6 +407,7 @@ static int name_from_dns(struct address buf[static MAXADDRS], char canon[static 
 			}
 			if (invalidType == IPV4_VALID_TYPE) {
 				validIpv4AddrCnt += ((family == AF_INET) ? 1 : 0);
+				copy_dnsserver(&sabuf[validAddrCnt], &dnsServerBuf[validAddrCnt]);
 				memcpy(&buf[validAddrCnt++], &addrs, sizeof(struct address));
 				continue;
 			}
@@ -406,6 +421,7 @@ static int name_from_dns(struct address buf[static MAXADDRS], char canon[static 
 			for (int j = 0; j < ipv4LocalAddrCnt; j++) {
 				buf[validAddrCnt].family = AF_INET;
 				buf[validAddrCnt].scopeid = 0;
+				copy_dnsserver(&sabuf[validAddrCnt], &dnsServerBuf[validAddrCnt]);
 				memcpy(&buf[validAddrCnt++].addr, localAddrBuf[j].addr, 4);
 			}
 			if (ipv4LocalAddrCnt > 0) {
@@ -421,6 +437,7 @@ static int name_from_dns(struct address buf[static MAXADDRS], char canon[static 
 		queryName = ctx.canon;
 		cname_count++;
 	}
+	free_dns_server_buf(dnsServerBuf);
 #if OHOS_DNS_PROXY_BY_NETSYS
 	if (validAddrCnt == 0 && invalidAddrCnt > 0) {
 		MUSL_LOGW("dns ipv4 result: all zero");
@@ -433,7 +450,8 @@ static int name_from_dns(struct address buf[static MAXADDRS], char canon[static 
 	return DNS_FAIL_REASON_FAIL_TO_PARSE_DNS;
 }
 
-static int name_from_dns_search(struct address buf[static MAXADDRS], char canon[static 256], const char *name, int family, int netid, struct dns_nodata *nodata)
+static int name_from_dns_search(struct address buf[static MAXADDRS], char canon[static 256], const char *name, int family, int netid, struct dns_nodata *nodata,
+	struct dnsserver sabuf[static MAXADDRS])
 {
 #if OHOS_PERMISSION_INTERNET
 	if (is_allow_internet() == 0) {
@@ -485,13 +503,13 @@ static int name_from_dns_search(struct address buf[static MAXADDRS], char canon[
 		if (z-p < 256 - l - 1) {
 			memcpy(canon+l+1, p, z-p);
 			canon[z-p+1+l] = 0;
-			int cnt = name_from_dns(buf, canon, canon, family, &conf, netid, nodata);
+			int cnt = name_from_dns(buf, canon, canon, family, &conf, netid, nodata, sabuf);
 			if (cnt) return cnt;
 		}
 	}
 
 	canon[l] = 0;
-	return name_from_dns(buf, canon, name, family, &conf, netid, nodata);
+	return name_from_dns(buf, canon, name, family, &conf, netid, nodata, sabuf);
 }
 
 static const struct policy {
@@ -569,7 +587,7 @@ static int addrcmp(const void *_a, const void *_b)
 }
 
 int lookup_name_ext(struct address buf[static MAXADDRS], char canon[static 256], const char *name,
-					int family, int flags, int netid, struct dns_nodata *nodata)
+				int family, int flags, int netid, struct dns_nodata *nodata, struct dnsserver sabuf[static MAXADDRS])
 {
 	int cnt = 0, i, j;
 
@@ -613,7 +631,7 @@ int lookup_name_ext(struct address buf[static MAXADDRS], char canon[static 256],
 	if (!cnt && !(flags & AI_NUMERICHOST)) {
 		cnt = predefined_host_name_from_hosts(buf, canon, name, family);
 		if (!cnt) cnt = name_from_hosts(buf, canon, name, family);
-		if (!cnt) cnt = name_from_dns_search(buf, canon, name, family, netid, nodata);
+		if (!cnt) cnt = name_from_dns_search(buf, canon, name, family, netid, nodata, sabuf);
 	}
 	if (cnt<=0) return cnt ? cnt : DNS_FAIL_REASON_SERVER_NO_SUCH_NAME;
 
@@ -721,7 +739,10 @@ int lookup_name_ext(struct address buf[static MAXADDRS], char canon[static 256],
 int __lookup_name(struct address buf[static MAXADDRS], char canon[static 256], const char *name, int family,
 	int flags, struct dns_nodata *nodata)
 {
-	return lookup_name_ext(buf, canon, name, family, flags, 0, nodata);
+	struct dnsserver sabuf[MAXADDRS] = {0};
+	int ret = lookup_name_ext(buf, canon, name, family, flags, 0, nodata, sabuf);
+	free_dns_server_buf(sabuf);
+	return ret;
 }
 
 typedef struct _linknode {

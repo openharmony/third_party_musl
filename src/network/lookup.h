@@ -80,7 +80,7 @@ struct dns_nodata {
 
 hidden int __lookup_serv(struct service buf[static MAXSERVS], const char *name, int proto, int socktype, int flags);
 hidden int lookup_name_ext(struct address buf[static MAXADDRS], char canon[static 256], const char *name,
-							 int family, int flags, int netid, struct dns_nodata *nodata);
+		int family, int flags, int netid, struct dns_nodata *nodata, struct dnsserver sabuf[static MAXADDRS]);
 hidden int __lookup_name(struct address buf[static MAXADDRS], char canon[static 256], const char *name, int family, int flags, struct dns_nodata *nodata);
 hidden int __lookup_ipliteral(struct address buf[static 1], const char *name, int family);
 
@@ -88,7 +88,7 @@ hidden int __get_resolv_conf(struct resolvconf *, char *, size_t);
 hidden int get_resolv_conf_ext(struct resolvconf *, char *, size_t, int netid);
 hidden int __res_msend_rc(int, const unsigned char *const *, const int *, unsigned char *const *, int *, int, const struct resolvconf *);
 hidden int res_msend_rc_ext(int, int, const unsigned char *const *, const int *, unsigned char *const *,
-							int *, int, const struct resolvconf *, int *, struct dns_nodata *);
+		int *, int, const struct resolvconf *, int *, struct dns_nodata *, struct dnsserver dnsServerBuf[static MAXADDRS]);
 
 hidden int __dns_parse(const unsigned char *, int,
 					   int (*)(void *, int, const void *, int, const void *, int, int), void *);
@@ -99,6 +99,7 @@ hidden int predefined_host_lookup_ip(const char* host, const char* serv,
     const struct addrinfo* hint, struct addrinfo** res);
 hidden int res_bind_socket(int, int);
 hidden int revert_dns_fail_cause(int cause);
+hidden void free_dns_server_buf(struct dnsserver dnsServerBuf[static MAXADDRS]);
 
 #if OHOS_DNS_PROXY_BY_NETSYS
 #define DNS_SO_PATH "libnetsys_client.z.so"
@@ -165,7 +166,7 @@ typedef int (*JudgeIpv6)(uint16_t netId);
 typedef int (*JudgeIpv4)(uint16_t netId);
 
 typedef int (*PostDnsResult)(int netid, char* name, int usedtime, int queryfail,
-							 struct addrinfo *res, struct queryparam *param);
+							 struct addrinfo *res, struct queryparam *param, struct recordinfo *storeinfo);
 
 typedef int (*GetDefaultNet)(uint16_t netId, int32_t *currentnetid);
 
@@ -192,7 +193,7 @@ int dns_get_addr_info_from_netsys_cache2(const int netid, const char *__restrict
 										 const struct addrinfo *__restrict hint, struct addrinfo **__restrict res);
 
 int dns_post_result_to_netsys_cache(int netid, char* name, int usedtime, int querypass,
-									struct addrinfo *res, struct queryparam *param);
+									struct addrinfo *res, struct queryparam *param, struct recordinfo *storeinfo);
 
 int dns_get_default_network(int *currentnetid);
 
