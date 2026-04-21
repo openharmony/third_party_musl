@@ -19,10 +19,13 @@
 #### **RETURN VALUE**
 
 ​       On success, __getauxval() returns the value corresponding to type.  If type is not found, 0 is returned. 
+       Note: A return value of 0 may indicate either a valid auxiliary value or that the type was not found. Applications should check errno or use other means to distinguish these cases when necessary.
 
 #### **ERRORS**
 
-​       **ENOENT**: No entry corresponding to type could be found in the auxiliary vector.
+**ENOENT**: 
+
+No entry corresponding to type could be found in the auxiliary vector.
 
 #### ATTRIBUTES
 
@@ -35,9 +38,8 @@
 
 ​       -- 2026
 
-#### NOTES
-
-​       This feature is designed specifically for when musl_extended_function is true.
+#### **NOTES**
+**This interface is only available on PC devices when musl_extended_function is enabled. Mobile devices are not supported.**
 
 #### CONFORMING TO
 
@@ -46,6 +48,7 @@
 #### EXAMPLES
 
 ```c
+#include <elf.h>
 #include <sys/auxv.h>
 #include <stdio.h>
 

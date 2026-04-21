@@ -20,7 +20,7 @@ Note: This function is MT-Safe(multi-thread safe) and not signal-safe.
 
 | Interface               | Attribute     | Value    |
 | ----------------------- | ------------- | -------- |
-| int dlns_add_plugin_default_ld_dictionary(char *path) | Thread safety | MT-safe |
+| int dlopen_config_abs_path_policy(char *path) | Thread safety | MT-safe |
 |                         | Signal safety | Not Safe |
 
 #### HISTORY
@@ -29,7 +29,7 @@ Note: This function is MT-Safe(multi-thread safe) and not signal-safe.
 
 #### NOTES
 
-​      `false` flag is an unique valid param now. `true` flag is invalid now.
+​      Currently, only the `false` flag is a valid parameter， `true` is no longer valid.
 
 #### CONFORMING TO
 
@@ -48,6 +48,7 @@ int main()
     Func *func = dlsym(RTLD_NEXT, "dlopen_config_abs_path_policy");
     if (!func) {
         perror("can not find this symbol");
+        return -1;
     }
     func(false);
     // You can execute other operation here

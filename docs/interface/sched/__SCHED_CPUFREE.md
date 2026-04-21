@@ -23,7 +23,7 @@
 
 #### **RETURN VALUE**
 
-​       The __sched_cpufree() function do not return.
+​       The __sched_cpufree() function does not return.
 
 #### **ERRORS**
 
