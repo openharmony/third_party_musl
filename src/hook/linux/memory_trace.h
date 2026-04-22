@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2024-2026 Huawei Device Co., Ltd.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -50,6 +50,7 @@ extern "C" {
 
 #define TAG_RES_ARKTS_HEAP_MASK    "RES_ARKTS_HEAP_MASK"
 #define TAG_RES_JS_HEAP_MASK       "RES_JS_HEAP_MASK"
+#define TAG_RES_ARKTS_STATIC_HEAP  "RES_ARKTS_STATIC_HEAP"
 #define TAG_RES_KOTLIN_HEAP_MASK   "RES_KOTLIN_HEAP_MASK"
 #define TAG_RES_SO_MASK            "RES_SO_MASK"
 #define TAG_RES_ASHMEM_MASK        "RES_ASHMEM_MASK"
@@ -96,6 +97,7 @@ extern "C" {
 #define RES_ASHMEM_MASK            (1 << 24)
 #define RES_ARK_LOCAL_HANDLE       (1 << 25)
 #define RES_VMA_ARKWEB             (1 << 26)
+#define RES_ARKTS_STATIC_HEAP      (1 << 27)
 #define RES_RN_HERMES_HEAP         (1ULL << 31)
 #define RES_DART_HEAP              (1ULL << 34)
 
