@@ -203,3 +203,21 @@ ohos_shared_library("dlopen_fill_random") {
   subsystem_name = "musl"
   part_name = "libc-test-lib"
 }
+
+ohos_executable("dlns_set_module_namespace_lib_path_test") {
+  subsystem_name = "musl"
+  part_name = "libc-test"
+  include_dirs = [ "../common" ]
+
+  sources = [ "dlns_set_module_namespace_lib_path.c" ]
+  configs = [ "//third_party/musl/libc-test/src/common:config_runtest" ]
+}
+
+ohos_executable("dlns_set_module_namespace_lib_path_extended_test") {
+  subsystem_name = "musl"
+  part_name = "libc-test"
+  include_dirs = [ "../common" ]
+
+  sources = [ "dlns_set_module_namespace_lib_path_extended_test.c" ]
+  configs = [ "//third_party/musl/libc-test/src/common:config_runtest" ]
+}
