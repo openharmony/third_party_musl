@@ -13,6 +13,5 @@
 adlt_bugfix_test = [
     "unittest_adlt_bugfix_match_sofilename_diff",
     "unittest_adlt_bugfix_match_sofilename_same",
-    "unittest_adlt_bugfix_repeated_relocation",
     "unittest_adlt_bugfix_sym_conflict",
 ]

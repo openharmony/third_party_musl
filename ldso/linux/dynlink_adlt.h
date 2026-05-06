@@ -1646,7 +1646,11 @@ static Sym *adlt_find_sym(struct dso *dso, struct verinfo *verinfo,
 		default:
 			break;
 	}
-	return adlt_lookup_unique_sym(dso, verinfo);
+	/* There is a convention between the ADLT feature and the compiler that confilict
+		symbols are not allowed in a merged so during runtime.
+	   This constraint is also checked and reported by the compiler.
+	*/
+	return NULL;
 }
 
 #else
