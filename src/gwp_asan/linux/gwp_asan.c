@@ -16,7 +16,9 @@
 #ifdef USE_GWP_ASAN
 #define _GNU_SOURCE
 
+#include <dlfcn.h>
 #include <fcntl.h>
+#include <stdint.h>
 #include <unistd.h>
 #include <string.h>
 #include <sys/random.h>
@@ -44,6 +46,9 @@
 #define GWP_ASAN_MAIN_THREAD_GUARD_SIZE 4096
 #define GWP_ASAN_MAIN_STACK_FALLBACK_SIZE \
     (DEFAULT_STACK_MAX - GWP_ASAN_MAIN_THREAD_GUARD_SIZE)
+#define FFRT_LIB_NAME "libffrt.so"
+#define FFRT_LIB_PATH "/system/lib64/ndk/libffrt.so"
+#define FFRT_STACK_SYMBOL "ffrt_get_current_coroutine_stack"
 #define GWP_ASAN_LOGD(...) // change it to MUSL_LOGD to get gwp_asan debug log.
 #define GWP_ASAN_NO_ADDRESS __attribute__((no_sanitize("address", "hwaddress")))
 
@@ -104,6 +109,7 @@ extern size_t gwp_asan_collect_allocations_by_time_range(uint64_t timespan, uint
                                                          size_t max_count, size_t depth);
 
 extern int dladdr(const void *addr, Dl_info *info);
+typedef bool (*ffrt_get_current_coroutine_stack_fn)(void **stack_addr, size_t *size);
 
 static char *get_process_short_name(char *buf, size_t length)
 {
@@ -524,6 +530,121 @@ size_t strip_pac_pc(size_t ptr)
 #endif
 }
 
+static ffrt_get_current_coroutine_stack_fn cached_ffrt_get_current_coroutine_stack;
+static int ffrt_stack_resolve_in_progress;
+static int ffrt_stack_symbol_missing;
+
+// Resolve and cache the optional FFRT coroutine stack query function.
+GWP_ASAN_NO_ADDRESS static ffrt_get_current_coroutine_stack_fn resolve_ffrt_stack_func(bool allow_resolve)
+{
+    ffrt_get_current_coroutine_stack_fn fn =
+        __atomic_load_n(&cached_ffrt_get_current_coroutine_stack, __ATOMIC_ACQUIRE);
+    if (fn != NULL || !allow_resolve) {
+        return fn;
+    }
+    if (__atomic_load_n(&ffrt_stack_symbol_missing, __ATOMIC_ACQUIRE) != 0) {
+        return NULL;
+    }
+
+    if (__sync_lock_test_and_set(&ffrt_stack_resolve_in_progress, 1) != 0) {
+        return __atomic_load_n(&cached_ffrt_get_current_coroutine_stack, __ATOMIC_ACQUIRE);
+    }
+
+    fn = __atomic_load_n(&cached_ffrt_get_current_coroutine_stack, __ATOMIC_ACQUIRE);
+    if (fn == NULL && __atomic_load_n(&ffrt_stack_symbol_missing, __ATOMIC_RELAXED) == 0) {
+        void *handle = dlopen(FFRT_LIB_NAME, RTLD_LAZY | RTLD_NOLOAD);
+        if (handle == NULL) {
+            handle = dlopen(FFRT_LIB_PATH, RTLD_LAZY | RTLD_NOLOAD);
+        }
+        if (handle != NULL) {
+            void *symbol = dlsym(handle, FFRT_STACK_SYMBOL);
+            if (symbol != NULL) {
+                /* Keep this dlopen reference so the cached function pointer stays valid. */
+                *(void **)(&fn) = symbol;
+                __atomic_store_n(&cached_ffrt_get_current_coroutine_stack, fn, __ATOMIC_RELEASE);
+            } else {
+                dlclose(handle);
+                __atomic_store_n(&ffrt_stack_symbol_missing, 1, __ATOMIC_RELEASE);
+            }
+        }
+    }
+
+    __sync_lock_release(&ffrt_stack_resolve_in_progress);
+    return fn;
+}
+
+// Read the current pthread stack bounds from musl thread metadata.
+GWP_ASAN_NO_ADDRESS static bool get_pthread_stack_bounds(size_t *stack_start, size_t *stack_end)
+{
+    size_t end = (size_t)(__pthread_self()->stack);
+    size_t size = __pthread_self()->stack_size;
+    if (size == 0) {
+        size = GWP_ASAN_MAIN_STACK_FALLBACK_SIZE;
+    }
+    if (__pthread_self()->stack == NULL || size == 0 || end < size) {
+        return false;
+    }
+
+    *stack_start = end - size;
+    *stack_end = end;
+    return true;
+}
+
+// Resolve, query, and validate current FFRT coroutine stack bounds.
+GWP_ASAN_NO_ADDRESS static bool get_ffrt_stack_bounds(size_t *stack_start, size_t *stack_end, bool allow_resolve)
+{
+    void *stack_addr = NULL;
+    size_t stack_size = 0;
+    ffrt_get_current_coroutine_stack_fn fn = resolve_ffrt_stack_func(allow_resolve);
+    if (fn == NULL || !fn(&stack_addr, &stack_size) || stack_addr == NULL ||
+        stack_size < sizeof(unwind_info)) {
+        return false;
+    }
+
+    size_t start = (size_t)stack_addr;
+    if (start > SIZE_MAX - stack_size) {
+        return false;
+    }
+    size_t end = start + stack_size;
+    if (end <= start) {
+        return false;
+    }
+
+    *stack_start = start;
+    *stack_end = end;
+    return true;
+}
+
+// Check whether the frame pointer is compatible with a candidate stack.
+GWP_ASAN_NO_ADDRESS static bool is_frame_pointer_in_bounds(size_t fp, size_t stack_start, size_t stack_end)
+{
+    return fp != 0 && stack_start < stack_end && fp >= stack_start &&
+           fp < stack_end && (fp % sizeof(void *) == 0);
+}
+
+// Select pthread or FFRT stack bounds for the current unwind context.
+GWP_ASAN_NO_ADDRESS static bool select_stack_bounds(size_t fp, bool allow_resolve,
+                                                    size_t *stack_start, size_t *stack_end)
+{
+    size_t start = 0;
+    size_t end = 0;
+    if (get_pthread_stack_bounds(&start, &end) &&
+        is_frame_pointer_in_bounds(fp, start, end)) {
+        *stack_start = start;
+        *stack_end = end;
+        return true;
+    }
+
+    if (get_ffrt_stack_bounds(&start, &end, allow_resolve) &&
+        is_frame_pointer_in_bounds(fp, start, end)) {
+        *stack_start = start;
+        *stack_end = end;
+        return true;
+    }
+
+    return false;
+}
+
 /* This function is used for gwp_asan to record the call stack when allocate and deallocate.
  * So we implemented a fast unwind function by using fp.
  * The unwind process may stop because the value of fp is incorrect(fp was not saved on the stack due to optimization)
@@ -547,24 +668,20 @@ size_t strip_pac_pc(size_t ptr)
 GWP_ASAN_NO_ADDRESS size_t run_unwind(size_t *frame_buf,
                                       size_t num_frames,
                                       size_t max_record_stack,
-                                      size_t current_frame_addr)
+                                      size_t current_frame_addr,
+                                      size_t stack_start,
+                                      size_t stack_end)
 {
     if (!frame_buf || max_record_stack <= 0) return 0;
 
-    size_t stack_end = (size_t)(__pthread_self()->stack);
-    size_t stack_size = __pthread_self()->stack_size;
-    if (stack_size == 0) stack_size = GWP_ASAN_MAIN_STACK_FALLBACK_SIZE;
-    /* Stop fast unwind if pthread stack metadata is unavailable. */
-    if (__pthread_self()->stack == NULL || stack_size == 0 || stack_end < stack_size) {
+    if (stack_end <= stack_start || stack_end - stack_start < sizeof(unwind_info)) {
         return num_frames;
     }
-    size_t stack_start = stack_end - stack_size;
     size_t prev_fp = 0;
     size_t prev_lr = 0;
     while (true) {
         if (current_frame_addr == 0 || (current_frame_addr % sizeof(void *) != 0))
             break;
-        /* Only follow frame pointers that still stay inside the pthread stack. */
         if (current_frame_addr < stack_start || current_frame_addr > stack_end - sizeof(unwind_info))
             break;
 
@@ -594,10 +711,16 @@ GWP_ASAN_NO_ADDRESS size_t run_unwind(size_t *frame_buf,
 
 GWP_ASAN_NO_ADDRESS size_t libc_gwp_asan_unwind_fast(size_t *frame_buf, size_t max_record_stack)
 {
-    size_t current_frame_addr = __builtin_frame_address(0);
+    size_t current_frame_addr = (size_t)__builtin_frame_address(0);
     size_t num_frames = 0;
+    size_t stack_start = 0;
+    size_t stack_end = 0;
 
-    return run_unwind(frame_buf, num_frames, max_record_stack, current_frame_addr);
+    if (!select_stack_bounds(current_frame_addr, true, &stack_start, &stack_end)) {
+        return num_frames;
+    }
+
+    return run_unwind(frame_buf, num_frames, max_record_stack, current_frame_addr, stack_start, stack_end);
 }
 
 // Get fault address from sigchain in signal handler
@@ -607,12 +730,18 @@ GWP_ASAN_NO_ADDRESS size_t libc_gwp_asan_unwind_segv(size_t *frame_buf, size_t m
     size_t current_frame_addr = get_frame_pointer(context);
     size_t pc = get_pc(context);
     size_t num_frames = 0;
+    size_t stack_start = 0;
+    size_t stack_end = 0;
 
-    if (current_frame_addr && pc) {
+    if (frame_buf != NULL && pc != 0 && num_frames < max_record_stack) {
         frame_buf[num_frames] = strip_pac_pc(pc);
         ++num_frames;
     }
-    return run_unwind(frame_buf, num_frames, max_record_stack, current_frame_addr);
+    if (!select_stack_bounds(current_frame_addr, false, &stack_start, &stack_end)) {
+        return num_frames;
+    }
+
+    return run_unwind(frame_buf, num_frames, max_record_stack, current_frame_addr, stack_start, stack_end);
 }
 
 void init_gwp_asan_by_telemetry(int *sample_rate, int *max_simultaneous_allocations,
@@ -643,6 +772,7 @@ bool init_gwp_asan_process(gwp_asan_option gwp_asan_option)
     }
 
     MUSL_LOGW("[gwp_asan]: %{public}d %{public}s gwp_asan initializing.\n", getpid(), path);
+    (void)resolve_ffrt_stack_func(true);
     init_gwp_asan((void*)&gwp_asan_option);
     gwp_asan_initialized = true;
     MUSL_LOGW("[gwp_asan]: %{public}d %{public}s gwp_asan initialized.\n", getpid(), path);
