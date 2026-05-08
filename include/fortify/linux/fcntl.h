@@ -24,6 +24,7 @@ extern "C" {
 #endif
 
 int __open_chk(const char*, int);
+int __open_2(const char*, int);
 int __openat_chk(int, const char*, int);
 #if defined(_LARGEFILE64_SOURCE) || defined(_GNU_SOURCE)
 int __open64_chk(const char*, int);

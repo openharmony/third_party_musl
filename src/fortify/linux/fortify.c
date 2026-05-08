@@ -72,12 +72,39 @@ void __fd_chk(int fd)
 	}
 }
 
+long int __fdelt_chk(long int fd)
+{
+#ifdef MUSL_EXTERNAL_FUNCTION
+    if (fd < 0 || fd >= FD_SETSIZE) {
+        __fortify_error("bit out of range 0 - FD_SETSIZE on fd_set");
+    }
+    return fd / NFDBITS;
+#else
+    (void)fd;
+    errno = ENOSYS;
+    return -1;
+#endif
+}
+weak_alias(__fdelt_chk, __fdelt_warn);
+
 int __open_chk(const char* pathname, int flags)
 {
     if (__needs_mode(flags)) {
         __fortify_error("open: " OPEN_TOO_FEW_ARGS_ERROR);
     }
     return __DIAGNOSE_CALL_BYPASSING_FORTIFY(open)(pathname, __force_O_LARGEFILE(flags), 0);
+}
+
+int __open_2(const char* pathname, int flags)
+{
+#ifdef MUSL_EXTERNAL_FUNCTION
+    return __open_chk(pathname, flags);
+#else
+    (void)pathname;
+    (void)flags;
+    errno = ENOSYS;
+    return -1;
+#endif
 }
 
 int __openat_chk(int fd, const char* pathname, int flags)
@@ -136,6 +163,20 @@ static inline void __diagnose_buffer_access(const char* fn, const char* action,
     if (__DIAGNOSE_PREDICT_FALSE(claim > actual)) {
         __fortify_error("%s: avoid %zu-byte %s %zu-byte buffer\n", fn, claim, action, actual);
     }
+}
+
+void __explicit_bzero_chk(void *dest, size_t len, size_t dst_len)
+{
+#ifdef MUSL_EXTERNAL_FUNCTION
+    __diagnose_buffer_access("explicit_bzero", "write into", len, dst_len);
+    __DIAGNOSE_CALL_BYPASSING_FORTIFY(explicit_bzero)(dest, len);
+#else
+    (void)dest;
+    (void)len;
+    (void)dst_len;
+    errno = ENOSYS;
+    return;
+#endif
 }
 
 ssize_t __recvfrom_chk(int socket, void* buf, size_t len, size_t buf_size,

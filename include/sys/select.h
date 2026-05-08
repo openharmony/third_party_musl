@@ -30,6 +30,7 @@ typedef struct {
 #define FD_ISSET(d, s) !!((s)->fds_bits[(d)/(8*sizeof(long))] & (1UL<<((d)%(8*sizeof(long)))))
 #else
 void __fd_chk(int fd);
+long int __fdelt_chk(long int fd);
 
 #define FD_SET(d, s) do { __fd_chk(d); ((s)->fds_bits[(d)/(8*sizeof(long))] |= (1UL<<((d)%(8*sizeof(long))))); } while(0)
 #define FD_CLR(d, s) do { __fd_chk(d); ((s)->fds_bits[(d)/(8*sizeof(long))] &= ~(1UL<<((d)%(8*sizeof(long))))); } while(0)

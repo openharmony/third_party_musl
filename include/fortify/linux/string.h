@@ -25,6 +25,7 @@ extern "C" {
 
 void *__memchr_chk(const void* s, int c, size_t n, size_t actual_size);
 void *__memrchr_chk(const void*, int, size_t, size_t);
+void __explicit_bzero_chk(void *, size_t, size_t);
 size_t __strlcpy_chk(char*, const char*, size_t, size_t);
 size_t __strlcat_chk(char*, const char*, size_t, size_t);
 char *__strchr_chk(const char* p, int ch, size_t s_len);
