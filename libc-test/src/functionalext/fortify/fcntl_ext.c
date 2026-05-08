@@ -23,6 +23,7 @@
 #include "test.h"
 
 #define FILE_MODE_ALL (0777)
+#define STABILITY_LOOP_TIMES 100
 
 #ifdef open64
 #undef open64
@@ -127,6 +128,113 @@ static void open_0040(void)
 
     return;
 }
+
+#ifndef MUSL_EXTERNAL_FUNCTION
+/**
+ * @tc.name     : __open_2_0010
+ * @tc.desc     : test __open_2 stub return value and errno
+ * @tc.level    : Level 1
+ */
+static void __open_2_0010(void)
+{
+    errno = 0;
+    int fd = __open_2("/proc/version", O_RDWR);
+    EXPECT_EQ(__open_2_0010, fd, -1);
+    EXPECT_EQ(__open_2_0010, errno, ENOSYS);
+}
+#else
+/**
+ * @tc.name     : __open_2_0020
+ * @tc.desc     : test __open_2 normal condition
+ * @tc.level    : Level 1
+ */
+static void __open_2_0020(void)
+{
+    int fd = __open_2("/proc/version", O_RDWR);
+    EXPECT_NE(__open_2_0020, fd, -1);
+    close(fd);
+}
+
+/**
+ * @tc.name     : __open_2_0030
+ * @tc.desc     : test __open_2 O_CREAT without mode
+ * @tc.level    : Level 2
+ */
+static void __open_2_0030(void)
+{
+    struct sigaction sigabrt = {
+        .sa_handler = SignalHandler,
+    };
+    sigaction(SIGABRT, &sigabrt, NULL);
+
+    int status;
+    int pid = fork();
+    switch (pid) {
+        case -1:
+            t_error("fork failed: %s\n", strerror(errno));
+            break;
+        case 0:
+            __open_2("/proc/version", O_CREAT);
+            exit(0);
+        default:
+            waitpid(pid, &status, WUNTRACED);
+            TEST(WIFEXITED(status) == 0);
+            TEST(WIFSTOPPED(status) == 1);
+            TEST(WSTOPSIG(status) == SIGSTOP);
+            kill(pid, SIGCONT);
+            break;
+    }
+
+    return;
+}
+
+/**
+ * @tc.name     : __open_2_0040
+ * @tc.desc     : test __open_2 O_TMPFILE without mode
+ * @tc.level    : Level 2
+ */
+static void __open_2_0040(void)
+{
+    struct sigaction sigabrt = {
+        .sa_handler = SignalHandler,
+    };
+    sigaction(SIGABRT, &sigabrt, NULL);
+
+    int status;
+    int pid = fork();
+    switch (pid) {
+        case -1:
+            t_error("fork failed: %s\n", strerror(errno));
+            break;
+        case 0:
+            __open_2("/proc/version", O_TMPFILE);
+            exit(0);
+        default:
+            waitpid(pid, &status, WUNTRACED);
+            TEST(WIFEXITED(status) == 0);
+            TEST(WIFSTOPPED(status) == 1);
+            TEST(WSTOPSIG(status) == SIGSTOP);
+            kill(pid, SIGCONT);
+            break;
+    }
+
+    return;
+}
+
+/**
+ * @tc.name     : __open_2_0050
+ * @tc.desc     : test __open_2 stability with repeated valid calls
+ * @tc.level    : Level 1
+ */
+static void __open_2_0050(void)
+{
+    for (int i = 0; i < STABILITY_LOOP_TIMES; i++) {
+        int fd = __open_2("/dev/null", O_RDONLY);
+        EXPECT_NE(__open_2_0050, fd, -1);
+        close(fd);
+    }
+}
+#endif
 
 /**
  * @tc.name     : openat_0010
@@ -424,6 +532,14 @@ int main(int argc, char *argv[]) {
     open_0020();
     open_0030();
     open_0040();
+#ifndef MUSL_EXTERNAL_FUNCTION
+    __open_2_0010();
+#else
+    __open_2_0020();
+    __open_2_0030();
+    __open_2_0040();
+    __open_2_0050();
+#endif
     openat_0010();
     openat_0020();
     openat_0030();

@@ -23,6 +23,8 @@
 #include "functionalext.h"
 #include "test.h"
 
+#define STABILITY_LOOP_TIMES 10
+
 /**
  * @tc.name     : fd_set_0010
  * @tc.desc     : test FD_SET with normal fd
@@ -249,6 +251,110 @@ static void fd_isset_0030(void)
     return;
 }
 
+#ifndef MUSL_EXTERNAL_FUNCTION
+/**
+ * @tc.name     : __fdelt_chk_0010
+ * @tc.desc     : test __fdelt_chk stub return value and errno
+ * @tc.level    : Level 1
+ */
+static void __fdelt_chk_0010(void)
+{
+    errno = 0;
+    long int ret = __fdelt_chk(0);
+    EXPECT_LONGEQ(__fdelt_chk_0010, ret, -1);
+    EXPECT_EQ(__fdelt_chk_0010, errno, ENOSYS);
+}
+#else
+/**
+ * @tc.name     : __fdelt_chk_0020
+ * @tc.desc     : test __fdelt_chk with normal fd
+ * @tc.level    : Level 1
+ */
+static void __fdelt_chk_0020(void)
+{
+    EXPECT_EQ(__fdelt_chk_0020, __fdelt_chk(0), 0);
+    EXPECT_EQ(__fdelt_chk_0020, __fdelt_chk(NFDBITS - 1), 0);
+    EXPECT_EQ(__fdelt_chk_0020, __fdelt_chk(NFDBITS), 1);
+    EXPECT_EQ(__fdelt_chk_0020, __fdelt_chk(FD_SETSIZE - 1), (FD_SETSIZE - 1) / NFDBITS);
+}
+
+/**
+ * @tc.name     : __fdelt_chk_0030
+ * @tc.desc     : test __fdelt_chk with fd < 0
+ * @tc.level    : Level 2
+ */
+static void __fdelt_chk_0030(void)
+{
+    struct sigaction sigabrt = {
+        .sa_handler = SignalHandler,
+    };
+    sigaction(SIGABRT, &sigabrt, NULL);
+
+    int status;
+    int pid = fork();
+    switch (pid) {
+        case -1:
+            t_error("fork failed: %s\n", strerror(errno));
+            break;
+        case 0:
+            __fdelt_chk(-1);
+            exit(0);
+        default:
+            waitpid(pid, &status, WUNTRACED);
+            TEST(WIFEXITED(status) == 0);
+            TEST(WIFSTOPPED(status) == 1);
+            TEST(WSTOPSIG(status) == SIGSTOP);
+            kill(pid, SIGCONT);
+            break;
+    }
+}
+
+/**
+ * @tc.name     : __fdelt_chk_0040
+ * @tc.desc     : test __fdelt_chk with fd >= FD_SETSIZE
+ * @tc.level    : Level 2
+ */
+static void __fdelt_chk_0040(void)
+{
+    struct sigaction sigabrt = {
+        .sa_handler = SignalHandler,
+    };
+    sigaction(SIGABRT, &sigabrt, NULL);
+
+    int status;
+    int pid = fork();
+    switch (pid) {
+        case -1:
+            t_error("fork failed: %s\n", strerror(errno));
+            break;
+        case 0:
+            __fdelt_chk(FD_SETSIZE);
+            exit(0);
+        default:
+            waitpid(pid, &status, WUNTRACED);
+            TEST(WIFEXITED(status) == 0);
+            TEST(WIFSTOPPED(status) == 1);
+            TEST(WSTOPSIG(status) == SIGSTOP);
+            kill(pid, SIGCONT);
+            break;
+    }
+}
+
+/**
+ * @tc.name     : __fdelt_chk_0050
+ * @tc.desc     : test __fdelt_chk stability with repeated boundary checks
+ * @tc.level    : Level 1
+ */
+static void __fdelt_chk_0050(void)
+{
+    for (int round = 0; round < STABILITY_LOOP_TIMES; round++) {
+        for (int fd = 0; fd < FD_SETSIZE; fd++) {
+            EXPECT_EQ(__fdelt_chk_0050, __fdelt_chk(fd), fd / NFDBITS);
+        }
+    }
+}
+#endif
+
 int main(int argc, char *argv[])
 {
     remove_all_special_handler(SIGABRT);
@@ -261,5 +367,13 @@ int main(int argc, char *argv[])
     fd_isset_0010();
     fd_isset_0020();
     fd_isset_0030();
+#ifndef MUSL_EXTERNAL_FUNCTION
+    __fdelt_chk_0010();
+#else
+    __fdelt_chk_0020();
+    __fdelt_chk_0030();
+    __fdelt_chk_0040();
+    __fdelt_chk_0050();
+#endif
     return t_status;
 }
