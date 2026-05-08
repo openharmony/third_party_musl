@@ -2118,6 +2118,7 @@
     dladdr1;
     __sched_cpufree;
     set_sigchain_pre_validation_ignore;
+    mktime_noenv;
   local:
     *;
 };

@@ -91,9 +91,60 @@ static void tm2sec(struct tm *tm, int big, char *m)
 			m, tm_str(*tm), tm_str(*r));
 }
 
+time_t mktime_noenv(struct tm *tm);
+
+static void sec2tm_noenv(time_t t, char *m)
+{
+	struct tm tm_buf;
+	struct tm *tm;
+	time_t r;
+
+	errno = 0;
+	tm = localtime_noenv_r(&t, &tm_buf);
+	if (errno != 0)
+		t_error("%s: localtime_noenv_r((time_t)%lld) should not set errno, got %s\n",
+			m, (long long)t, strerror(errno));
+	errno = 0;
+	r = mktime_noenv(tm);
+	if (errno != 0)
+		t_error("%s: mktime_noenv(%s) should not set errno, got %s\n",
+			m, tm_str(*tm), strerror(errno));
+	if (t != r)
+		t_error("%s: mktime_noenv(localtime_noenv_r(%lld)) roundtrip failed: got %lld (localtime is %s)\n",
+			m, (long long)t, (long long)r, tm_str(*tm));
+}
+
+static void tm2sec_noenv(struct tm *tm, int big, char *m)
+{
+	struct tm tm_buf;
+	struct tm *r;
+	time_t t;
+	int overflow = big && (time_t)LLONG_MAX!=LLONG_MAX;
+
+	errno = 0;
+	t = mktime_noenv(tm);
+	if (overflow && t != -1)
+		t_error("%s: mktime_noenv(%s) expected -1, got (time_t)%ld\n",
+			m, tm_str(*tm), (long)t);
+	if (overflow && errno != EOVERFLOW)
+		t_error("%s: mktime_noenv(%s) expected EOVERFLOW (%s), got (%s)\n",
+			m, tm_str(*tm), strerror(EOVERFLOW), strerror(errno));
+	if (!overflow && t == -1)
+		t_error("%s: mktime_noenv(%s) expected success, got (time_t)-1\n",
+			m, tm_str(*tm));
+	if (!overflow && errno)
+		t_error("%s: mktime_noenv(%s) expected no error, got (%s)\n",
+			m, tm_str(*tm), strerror(errno));
+	r = localtime_noenv_r(&t, &tm_buf);
+	if (!overflow && tm_cmp(*r, *tm))
+		t_error("%s: localtime_noenv_r(mktime_noenv(%s)) roundtrip failed: got %s\n",
+			m, tm_str(*tm), tm_str(*r));
+}
+
 int main(void)
 {
 	time_t t;
+	struct tm tm;
 
 	putenv("TZ=GMT");
 	tzset();
@@ -106,5 +157,15 @@ int main(void)
 		sec2tm(t*100003, "EPOCH+eps");
 
 	/* FIXME: set a TZ var and check DST boundary conditions */
+
+	putenv("TZ=GMT");
+	tzset();
+	tm2sec_noenv(&TM_EPOCH, 0, "noenv_gmtime(0)");
+	tm2sec_noenv(&TM_Y2038_1S, 0, "noenv_2038-1s");
+	tm2sec_noenv(&TM_Y2038, 1, "noenv_2038");
+	sec2tm_noenv(0, "noenv_EPOCH");
+	for (t = 1; t < 1000; t++)
+		sec2tm_noenv(t*100003, "noenv_EPOCH+eps");
+
 	return t_status;
 }

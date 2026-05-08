@@ -55,6 +55,7 @@ clock_t clock (void);
 time_t time (time_t *);
 double difftime (time_t, time_t);
 time_t mktime (struct tm *);
+time_t mktime_noenv (struct tm *);
 size_t strftime (char *__restrict, size_t, const char *__restrict, const struct tm *__restrict);
 struct tm *gmtime (const time_t *);
 struct tm *localtime (const time_t *);
