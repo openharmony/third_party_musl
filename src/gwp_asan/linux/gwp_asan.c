@@ -47,7 +47,6 @@
 #define GWP_ASAN_MAIN_STACK_FALLBACK_SIZE \
     (DEFAULT_STACK_MAX - GWP_ASAN_MAIN_THREAD_GUARD_SIZE)
 #define FFRT_LIB_NAME "libffrt.so"
-#define FFRT_LIB_PATH "/system/lib64/ndk/libffrt.so"
 #define FFRT_STACK_SYMBOL "ffrt_get_current_coroutine_stack"
 #define GWP_ASAN_LOGD(...) // change it to MUSL_LOGD to get gwp_asan debug log.
 #define GWP_ASAN_NO_ADDRESS __attribute__((no_sanitize("address", "hwaddress")))
@@ -553,9 +552,6 @@ GWP_ASAN_NO_ADDRESS static ffrt_get_current_coroutine_stack_fn resolve_ffrt_stac
     fn = __atomic_load_n(&cached_ffrt_get_current_coroutine_stack, __ATOMIC_ACQUIRE);
     if (fn == NULL && __atomic_load_n(&ffrt_stack_symbol_missing, __ATOMIC_RELAXED) == 0) {
         void *handle = dlopen(FFRT_LIB_NAME, RTLD_LAZY | RTLD_NOLOAD);
-        if (handle == NULL) {
-            handle = dlopen(FFRT_LIB_PATH, RTLD_LAZY | RTLD_NOLOAD);
-        }
         if (handle != NULL) {
             void *symbol = dlsym(handle, FFRT_STACK_SYMBOL);
             if (symbol != NULL) {
