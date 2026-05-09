@@ -37,6 +37,8 @@ extern "C" {
 #define TAG_RES_FD_SOCKET          "RES_FD_SOCKET"
 #define TAG_RES_FD_PIPE            "RES_FD_PIPE"
 #define TAG_RES_FD_DUP             "RES_FD_DUP"
+#define TAG_RES_FD_DMABUF          "RES_FD_DMABUF"
+#define TAG_RES_FD_ASHMEM          "RES_FD_ASHMEM"
 #define TAG_RES_FD_ALL             "RES_FD_ALL"
 #define TAG_RES_THREAD_PTHREAD     "RES_THREAD_PTHREAD"
 #define TAG_RES_THREAD_ALL         "RES_THREAD_ALL"
@@ -73,7 +75,9 @@ extern "C" {
 #define RES_FD_SOCKET              (1 << 3)
 #define RES_FD_PIPE                (1 << 4)
 #define RES_FD_DUP                 (1 << 5)
-#define RES_FD_MASK                (0x3F)
+#define RES_FD_DMABUF              (1 << 6)
+#define RES_FD_ASHMEM              (1 << 7)
+#define RES_FD_MASK                (0xFF)
 //Thread
 #define RES_THREAD_PTHREAD         (1 << 10)
 #define RES_THREAD_MASK            (0x3 << 10)
