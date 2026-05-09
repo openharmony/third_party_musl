@@ -39,6 +39,7 @@
 #define WHITE_LIST_PATH ""
 #define GWP_ASAN_NAME_LEN 256
 #define GWP_ASAN_UID_LEN 32
+#define MIN_APP_UID 20000
 #define SECONDS_PER_DAY (24ULL * 60 * 60)
 #define GWP_ASAN_PREDICT_TRUE(exp) __builtin_expect((exp) != 0, 1)
 #define GWP_ASAN_PREDICT_FALSE(exp) __builtin_expect((exp) != 0, 0)
@@ -184,11 +185,19 @@ bool get_app_bool_parameter(const char *prefix, const char *path)
 
 bool is_force_sample()
 {
-    return get_app_bool_parameter("gwp_asan.sample.service.", "forcible");
+    uid_t uid = getuid();
+    return uid > 0 && uid < MIN_APP_UID && get_app_bool_parameter("gwp_asan.sample.service.", "forcible");
 }
 
 bool is_gwp_asan_recoverable()
 {
+    if (is_force_sample()) {
+        uid_t uid = getuid();
+        char processUid[GWP_ASAN_UID_LEN];
+        snprintf(processUid, GWP_ASAN_UID_LEN, "%d", uid);
+        return get_app_bool_parameter("gwp_asan.recoverable.app.", processUid);
+    }
+
     char buf[GWP_ASAN_NAME_LEN];
     char *path = get_process_short_name(buf, GWP_ASAN_NAME_LEN);
     if (!path) {
@@ -199,16 +208,19 @@ bool is_gwp_asan_recoverable()
 
 bool force_sample_process_by_env()
 {
+    if (is_force_sample()) {
+        uid_t uid = getuid();
+        char processUid[GWP_ASAN_UID_LEN];
+        snprintf(processUid, GWP_ASAN_UID_LEN, "%d", uid);
+        return get_app_bool_parameter("gwp_asan.enable.app.", processUid);
+    }
+    
     char buf[GWP_ASAN_NAME_LEN];
     char *path = get_process_short_name(buf, GWP_ASAN_NAME_LEN);
     if (!path) {
         return false;
     }
-    uid_t uid = getuid();
-    char processUid[GWP_ASAN_UID_LEN];
-    snprintf(processUid, GWP_ASAN_UID_LEN, "%d", uid);
-    return get_app_bool_parameter("gwp_asan.enable.app.", path) ||
-        get_app_bool_parameter("gwp_asan.enable.app.", processUid);
+    return get_app_bool_parameter("gwp_asan.enable.app.", path);
 }
 
 bool force_sample_alloctor_by_env()
@@ -271,6 +283,9 @@ const char *get_sample_parameter_by_uid()
  */
 const char *get_sample_parameter()
 {
+    if (is_force_sample()) {
+        return get_sample_parameter_by_uid();
+    }
     static char sample_param[GWP_ASAN_NAME_LEN];
     snprintf(sample_param, GWP_ASAN_NAME_LEN, "%d:%d", SAMPLE_RATE, MAX_SIMULTANEOUS_ALLOCATIONS);
     char buf[GWP_ASAN_NAME_LEN];
@@ -284,7 +299,7 @@ const char *get_sample_parameter()
     CachedHandle handle = CachedParameterCreate(para_name, "");
     const char *param_value = CachedParameterGet(handle);
     if (!param_value || strlen(param_value) == 0) {
-        return get_sample_parameter_by_uid();
+        return sample_param;
     }
     return param_value;
 }
@@ -381,7 +396,6 @@ uint64_t get_gray_begin_parameter_by_uid()
     uid_t uid = getuid();
     char processUid[GWP_ASAN_UID_LEN];
     snprintf(processUid, GWP_ASAN_UID_LEN, "%d", uid);
-
     char para_name[GWP_ASAN_NAME_LEN] = "gwp_asan.gray_begin.app.";
     strcat(para_name, processUid);
     CachedHandle handle = CachedParameterCreate(para_name, "");
@@ -403,6 +417,9 @@ uint64_t get_gray_begin_parameter_by_uid()
  */
 uint64_t get_gray_begin_parameter()
 {
+    if (is_force_sample()) {
+        return get_gray_begin_parameter_by_uid();
+    }
     char buf[GWP_ASAN_NAME_LEN];
     char *path = get_process_short_name(buf, GWP_ASAN_NAME_LEN);
     if (!path) {
@@ -414,7 +431,7 @@ uint64_t get_gray_begin_parameter()
     CachedHandle handle = CachedParameterCreate(para_name, "");
     const char *param_value = CachedParameterGet(handle);
     if (!param_value || strlen(param_value) == 0) {
-        return get_gray_begin_parameter_by_uid();
+        return 0;
     }
     char *endPtr = NULL;
     unsigned long long gray_begin = strtoull(param_value, &endPtr, 10);
@@ -427,7 +444,6 @@ uint64_t get_gray_begin_parameter()
 
 uint64_t get_gray_days_parameter_by_uid()
 {
-
     uid_t uid = getuid();
     char processUid[GWP_ASAN_UID_LEN];
     snprintf(processUid, GWP_ASAN_UID_LEN, "%d", uid);
@@ -452,6 +468,9 @@ uint64_t get_gray_days_parameter_by_uid()
  */
 uint64_t get_gray_days_parameter()
 {
+    if (is_force_sample()) {
+        return get_gray_days_parameter_by_uid();
+    }
     char buf[GWP_ASAN_NAME_LEN];
     char *path = get_process_short_name(buf, GWP_ASAN_NAME_LEN);
     if (!path) {
@@ -463,7 +482,7 @@ uint64_t get_gray_days_parameter()
     CachedHandle handle = CachedParameterCreate(para_name, "");
     const char *param_value = CachedParameterGet(handle);
     if (!param_value || strlen(param_value) == 0) {
-        return get_gray_days_parameter_by_uid();
+        return 0;
     }
     char *endPtr = NULL;
     unsigned long long gray_days = strtoull(param_value, &endPtr, 10);
