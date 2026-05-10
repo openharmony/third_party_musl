@@ -214,7 +214,7 @@ bool force_sample_process_by_env()
         snprintf(processUid, GWP_ASAN_UID_LEN, "%d", uid);
         return get_app_bool_parameter("gwp_asan.enable.app.", processUid);
     }
-    
+
     char buf[GWP_ASAN_NAME_LEN];
     char *path = get_process_short_name(buf, GWP_ASAN_NAME_LEN);
     if (!path) {
