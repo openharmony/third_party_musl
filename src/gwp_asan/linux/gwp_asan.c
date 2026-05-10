@@ -38,6 +38,8 @@
 #define MIN_SAMPLE_SIZE 0
 #define WHITE_LIST_PATH ""
 #define GWP_ASAN_NAME_LEN 256
+#define GWP_ASAN_UID_LEN 32
+#define MIN_APP_UID 20000
 #define SECONDS_PER_DAY (24ULL * 60 * 60)
 #define GWP_ASAN_PREDICT_TRUE(exp) __builtin_expect((exp) != 0, 1)
 #define GWP_ASAN_PREDICT_FALSE(exp) __builtin_expect((exp) != 0, 0)
@@ -181,8 +183,21 @@ bool get_app_bool_parameter(const char *prefix, const char *path)
     return result;
 }
 
+bool is_force_sample()
+{
+    uid_t uid = getuid();
+    return uid > 0 && uid < MIN_APP_UID && get_app_bool_parameter("gwp_asan.sample.service.", "forcible");
+}
+
 bool is_gwp_asan_recoverable()
 {
+    if (is_force_sample()) {
+        uid_t uid = getuid();
+        char processUid[GWP_ASAN_UID_LEN];
+        snprintf(processUid, GWP_ASAN_UID_LEN, "%d", uid);
+        return get_app_bool_parameter("gwp_asan.recoverable.app.", processUid);
+    }
+
     char buf[GWP_ASAN_NAME_LEN];
     char *path = get_process_short_name(buf, GWP_ASAN_NAME_LEN);
     if (!path) {
@@ -193,6 +208,13 @@ bool is_gwp_asan_recoverable()
 
 bool force_sample_process_by_env()
 {
+    if (is_force_sample()) {
+        uid_t uid = getuid();
+        char processUid[GWP_ASAN_UID_LEN];
+        snprintf(processUid, GWP_ASAN_UID_LEN, "%d", uid);
+        return get_app_bool_parameter("gwp_asan.enable.app.", processUid);
+    }
+
     char buf[GWP_ASAN_NAME_LEN];
     char *path = get_process_short_name(buf, GWP_ASAN_NAME_LEN);
     if (!path) {
@@ -239,11 +261,31 @@ bool should_sample_process()
     return false;
 }
 
+const char *get_sample_parameter_by_uid()
+{
+    static char sample_param[GWP_ASAN_NAME_LEN];
+    snprintf(sample_param, GWP_ASAN_NAME_LEN, "%d:%d", SAMPLE_RATE, MAX_SIMULTANEOUS_ALLOCATIONS);
+    uid_t uid = getuid();
+    char processUid[GWP_ASAN_UID_LEN];
+    snprintf(processUid, GWP_ASAN_UID_LEN, "%d", uid);
+    char para_name[GWP_ASAN_NAME_LEN] = "gwp_asan.sample.app.";
+    strcat(para_name, processUid);
+    CachedHandle handle = CachedParameterCreate(para_name, "");
+    const char *param_value = CachedParameterGet(handle);
+    if (!param_value || strlen(param_value) == 0) {
+        return sample_param;
+    }
+    return param_value;
+}
+
 /* This function is used for gwp_asan to get telemetry param to init gwp_asan.
  * It is not signal-safe, do not call from signal handlers.
  */
 const char *get_sample_parameter()
 {
+    if (is_force_sample()) {
+        return get_sample_parameter_by_uid();
+    }
     static char sample_param[GWP_ASAN_NAME_LEN];
     snprintf(sample_param, GWP_ASAN_NAME_LEN, "%d:%d", SAMPLE_RATE, MAX_SIMULTANEOUS_ALLOCATIONS);
     char buf[GWP_ASAN_NAME_LEN];
@@ -349,11 +391,35 @@ const char *get_library_parameter()
     return param_value;
 }
 
+uint64_t get_gray_begin_parameter_by_uid()
+{
+    uid_t uid = getuid();
+    char processUid[GWP_ASAN_UID_LEN];
+    snprintf(processUid, GWP_ASAN_UID_LEN, "%d", uid);
+    char para_name[GWP_ASAN_NAME_LEN] = "gwp_asan.gray_begin.app.";
+    strcat(para_name, processUid);
+    CachedHandle handle = CachedParameterCreate(para_name, "");
+    const char *param_value = CachedParameterGet(handle);
+    if (!param_value || strlen(param_value) == 0) {
+        return 0;
+    }
+    char *endPtr = NULL;
+    unsigned long long gray_begin = strtoull(param_value, &endPtr, 10);
+    if (*endPtr != '\0' || gray_begin < 0 || gray_begin > ULLONG_MAX) {
+        MUSL_LOGW("[gwp_asan]: invalid gray_begin value: %s", param_value);
+        return 0;
+    }
+    return (uint64_t)gray_begin;
+}
+
 /* This function is used for gwp_asan to get telemetry param to init gwp_asan.
  * It is not signal-safe, do not call from signal handlers.
  */
 uint64_t get_gray_begin_parameter()
 {
+    if (is_force_sample()) {
+        return get_gray_begin_parameter_by_uid();
+    }
     char buf[GWP_ASAN_NAME_LEN];
     char *path = get_process_short_name(buf, GWP_ASAN_NAME_LEN);
     if (!path) {
@@ -376,11 +442,35 @@ uint64_t get_gray_begin_parameter()
     return (uint64_t)gray_begin;
 }
 
+uint64_t get_gray_days_parameter_by_uid()
+{
+    uid_t uid = getuid();
+    char processUid[GWP_ASAN_UID_LEN];
+    snprintf(processUid, GWP_ASAN_UID_LEN, "%d", uid);
+    char para_name[GWP_ASAN_NAME_LEN] = "gwp_asan.gray_days.app.";
+    strcat(para_name, processUid);
+    CachedHandle handle = CachedParameterCreate(para_name, "");
+    const char *param_value = CachedParameterGet(handle);
+    if (!param_value || strlen(param_value) == 0) {
+        return 0;
+    }
+    char *endPtr = NULL;
+    unsigned long long gray_days = strtoull(param_value, &endPtr, 10);
+    if (*endPtr != '\0' || gray_days < 0 || gray_days > ULLONG_MAX) {
+        MUSL_LOGW("[gwp_asan]: invalid gray_days value: %s", param_value);
+        return 0;
+    }
+    return (uint64_t)gray_days * SECONDS_PER_DAY;
+}
+
 /* This function is used for gwp_asan to get telemetry param to init gwp_asan.
  * It is not signal-safe, do not call from signal handlers.
  */
 uint64_t get_gray_days_parameter()
 {
+    if (is_force_sample()) {
+        return get_gray_days_parameter_by_uid();
+    }
     char buf[GWP_ASAN_NAME_LEN];
     char *path = get_process_short_name(buf, GWP_ASAN_NAME_LEN);
     if (!path) {
@@ -706,7 +796,7 @@ bool may_init_gwp_asan(bool force_init)
 bool init_gwp_asan_by_libc(bool force_init)
 {
 #ifdef OHOS_ENABLE_PARAMETER
-    if (is_commercial()) {
+    if (is_commercial() && !is_force_sample()) {
         return false;
     }
 #endif
