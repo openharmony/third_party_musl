@@ -3,7 +3,7 @@
         "Name"                  : "musl",
         "License"               : "MIT;BSD-2-Clause;BSD-3-Clause;CC0-1.0;MIT-0",
         "License File"          : "COPYRIGHT;COPYRIGHT;COPYRIGHT;COPYRIGHT;COPYRIGHT",
-        "Version Number"        : "1.2.5",
+        "Version Number"        : "1.2.6",
         "Owner"                 : "liyiming13@huawei.com",
         "Upstream URL"          : "https://musl.libc.org",
         "Description"           : "musl is an MIT-licensed implementation of the standard C library"
