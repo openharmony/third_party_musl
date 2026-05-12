@@ -531,27 +531,27 @@ size_t strip_pac_pc(size_t ptr)
 
 static ffrt_get_current_coroutine_stack_fn cached_ffrt_get_current_coroutine_stack;
 static int ffrt_stack_resolve_in_progress;
-static int ffrt_stack_symbol_missing;
+static int ffrt_stack_func_unavailable;
 
-// Resolve and cache the optional FFRT coroutine stack query function.
-GWP_ASAN_NO_ADDRESS static ffrt_get_current_coroutine_stack_fn resolve_ffrt_stack_func(bool allow_resolve)
+// Actively load FFRT and cache the optional coroutine stack query function during init.
+GWP_ASAN_NO_ADDRESS static void init_ffrt_stack_func(void)
 {
     ffrt_get_current_coroutine_stack_fn fn =
         __atomic_load_n(&cached_ffrt_get_current_coroutine_stack, __ATOMIC_ACQUIRE);
-    if (fn != NULL || !allow_resolve) {
-        return fn;
+    if (fn != NULL) {
+        return;
     }
-    if (__atomic_load_n(&ffrt_stack_symbol_missing, __ATOMIC_ACQUIRE) != 0) {
-        return NULL;
+    if (__atomic_load_n(&ffrt_stack_func_unavailable, __ATOMIC_ACQUIRE) != 0) {
+        return;
     }
 
     if (__sync_lock_test_and_set(&ffrt_stack_resolve_in_progress, 1) != 0) {
-        return __atomic_load_n(&cached_ffrt_get_current_coroutine_stack, __ATOMIC_ACQUIRE);
+        return;
     }
 
     fn = __atomic_load_n(&cached_ffrt_get_current_coroutine_stack, __ATOMIC_ACQUIRE);
-    if (fn == NULL && __atomic_load_n(&ffrt_stack_symbol_missing, __ATOMIC_RELAXED) == 0) {
-        void *handle = dlopen(FFRT_LIB_NAME, RTLD_LAZY | RTLD_NOLOAD);
+    if (fn == NULL && __atomic_load_n(&ffrt_stack_func_unavailable, __ATOMIC_RELAXED) == 0) {
+        void *handle = dlopen(FFRT_LIB_NAME, RTLD_LAZY);
         if (handle != NULL) {
             void *symbol = dlsym(handle, FFRT_STACK_SYMBOL);
             if (symbol != NULL) {
@@ -560,13 +560,14 @@ GWP_ASAN_NO_ADDRESS static ffrt_get_current_coroutine_stack_fn resolve_ffrt_stac
                 __atomic_store_n(&cached_ffrt_get_current_coroutine_stack, fn, __ATOMIC_RELEASE);
             } else {
                 dlclose(handle);
-                __atomic_store_n(&ffrt_stack_symbol_missing, 1, __ATOMIC_RELEASE);
+                __atomic_store_n(&ffrt_stack_func_unavailable, 1, __ATOMIC_RELEASE);
             }
+        } else {
+            __atomic_store_n(&ffrt_stack_func_unavailable, 1, __ATOMIC_RELEASE);
         }
     }
 
     __sync_lock_release(&ffrt_stack_resolve_in_progress);
-    return fn;
 }
 
 // Read the current pthread stack bounds from musl thread metadata.
@@ -586,12 +587,13 @@ GWP_ASAN_NO_ADDRESS static bool get_pthread_stack_bounds(size_t *stack_start, si
     return true;
 }
 
-// Resolve, query, and validate current FFRT coroutine stack bounds.
-GWP_ASAN_NO_ADDRESS static bool get_ffrt_stack_bounds(size_t *stack_start, size_t *stack_end, bool allow_resolve)
+// Query and validate current FFRT coroutine stack bounds from the cached function.
+GWP_ASAN_NO_ADDRESS static bool get_ffrt_stack_bounds(size_t *stack_start, size_t *stack_end)
 {
     void *stack_addr = NULL;
     size_t stack_size = 0;
-    ffrt_get_current_coroutine_stack_fn fn = resolve_ffrt_stack_func(allow_resolve);
+    ffrt_get_current_coroutine_stack_fn fn =
+        __atomic_load_n(&cached_ffrt_get_current_coroutine_stack, __ATOMIC_ACQUIRE);
     if (fn == NULL || !fn(&stack_addr, &stack_size) || stack_addr == NULL ||
         stack_size < sizeof(unwind_info)) {
         return false;
@@ -602,9 +604,6 @@ GWP_ASAN_NO_ADDRESS static bool get_ffrt_stack_bounds(size_t *stack_start, size_
         return false;
     }
     size_t end = start + stack_size;
-    if (end <= start) {
-        return false;
-    }
 
     *stack_start = start;
     *stack_end = end;
@@ -619,8 +618,7 @@ GWP_ASAN_NO_ADDRESS static bool is_frame_pointer_in_bounds(size_t fp, size_t sta
 }
 
 // Select pthread or FFRT stack bounds for the current unwind context.
-GWP_ASAN_NO_ADDRESS static bool select_stack_bounds(size_t fp, bool allow_resolve,
-                                                    size_t *stack_start, size_t *stack_end)
+GWP_ASAN_NO_ADDRESS static bool select_stack_bounds(size_t fp, size_t *stack_start, size_t *stack_end)
 {
     size_t start = 0;
     size_t end = 0;
@@ -631,7 +629,7 @@ GWP_ASAN_NO_ADDRESS static bool select_stack_bounds(size_t fp, bool allow_resolv
         return true;
     }
 
-    if (get_ffrt_stack_bounds(&start, &end, allow_resolve) &&
+    if (get_ffrt_stack_bounds(&start, &end) &&
         is_frame_pointer_in_bounds(fp, start, end)) {
         *stack_start = start;
         *stack_end = end;
@@ -712,7 +710,7 @@ GWP_ASAN_NO_ADDRESS size_t libc_gwp_asan_unwind_fast(size_t *frame_buf, size_t m
     size_t stack_start = 0;
     size_t stack_end = 0;
 
-    if (!select_stack_bounds(current_frame_addr, true, &stack_start, &stack_end)) {
+    if (!select_stack_bounds(current_frame_addr, &stack_start, &stack_end)) {
         return num_frames;
     }
 
@@ -733,7 +731,7 @@ GWP_ASAN_NO_ADDRESS size_t libc_gwp_asan_unwind_segv(size_t *frame_buf, size_t m
         frame_buf[num_frames] = strip_pac_pc(pc);
         ++num_frames;
     }
-    if (!select_stack_bounds(current_frame_addr, false, &stack_start, &stack_end)) {
+    if (!select_stack_bounds(current_frame_addr, &stack_start, &stack_end)) {
         return num_frames;
     }
 
@@ -768,7 +766,7 @@ bool init_gwp_asan_process(gwp_asan_option gwp_asan_option)
     }
 
     MUSL_LOGW("[gwp_asan]: %{public}d %{public}s gwp_asan initializing.\n", getpid(), path);
-    (void)resolve_ffrt_stack_func(true);
+    init_ffrt_stack_func();
     init_gwp_asan((void*)&gwp_asan_option);
     gwp_asan_initialized = true;
     MUSL_LOGW("[gwp_asan]: %{public}d %{public}s gwp_asan initialized.\n", getpid(), path);
