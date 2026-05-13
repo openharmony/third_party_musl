@@ -759,14 +759,14 @@ struct __host_ip_node {
 	char *host;
 	char *ip;
 };
- 
+
 struct __host_ip_list {
 	struct __host_ip_node *head;
 	struct __host_ip_node *tail;
 	int count;
 	volatile int refcount;
 };
- 
+
 #define __HOST_IP_GROUP_SEP	"|"
 #define __HOST_IP_ENTRY_SEP	","
 
@@ -791,17 +791,17 @@ static char *__host_ip_strsep(char **s, const char *ct)
 {
 	char *sbegin;
 	char *end;
- 
+
 	if (!s || !*s) {
 		return NULL;
     }
- 
+
 	sbegin = *s;
 	end = strpbrk(sbegin, ct);
 	if (end) {
 		*end++ = '\0';
     }
- 
+
 	*s = end;
 	return sbegin;
 }
@@ -817,15 +817,15 @@ static struct __host_ip_node *__host_ip_node_alloc(const char *host, const char 
 	if (!node) {
 		return NULL;
     }
- 
+
 	/* host字符串紧跟结构体之后 */
 	node->host = (char *)(node + 1);
 	memcpy(node->host, host, host_len + 1);
- 
+
 	/* ip字符串紧跟host之后 */
 	node->ip = node->host + host_len + 1;
 	memcpy(node->ip, ip, ip_len + 1);
- 
+
 	node->next = NULL;
 	return node;
 }
@@ -835,7 +835,7 @@ static void __host_ip_node_free(struct __host_ip_node *node)
 {
 	free(node);
 }
- 
+
 /* 创建并初始化空链表 */
 static struct __host_ip_list *__host_ip_list_init(void)
 {
@@ -855,14 +855,14 @@ static void __host_ip_list_destroy(struct __host_ip_list *list)
 	if (!list) {
 		return;
     }
- 
+
 	struct __host_ip_node *cur = list->head;
 	while (cur) {
 		struct __host_ip_node *next = cur->next;
 		__host_ip_node_free(cur);
 		cur = next;
 	}
- 
+
 	list->head  = NULL;
 	list->tail  = NULL;
 	list->count = 0;
@@ -874,7 +874,7 @@ static int __host_ip_list_append(struct __host_ip_list *list, struct __host_ip_n
 	if (!list || !node) {
 		return -1;
     }
- 
+
 	if (!list->head) {
 		list->head = node;
 		list->tail = node;
@@ -890,7 +890,7 @@ static int __host_ip_list_append(struct __host_ip_list *list, struct __host_ip_n
 typedef int (*__host_ip_for_each_fn)(const struct __host_ip_node *node, void *user_data);
 static int __host_ip_list_for_each(const struct __host_ip_list *,
 		__host_ip_for_each_fn, void *);
- 
+
 /* contains 回调数据 */
 struct __host_ip_contains_data {
 	const char *host;
@@ -907,7 +907,7 @@ static int __host_ip_contains_cb(const struct __host_ip_node *node, void *user_d
 	}
 	return 0;
 }
- 
+
 /* 检查是否包含指定的host/ip组合 - O(n) */
 static int __host_ip_list_contains(const struct __host_ip_list *list,
 		const char *host, const char *ip)
@@ -927,7 +927,7 @@ static int __host_ip_add_record(struct __host_ip_list *list, const char *host, c
 	if (!node) {
 		return EAI_MEMORY;
     }
- 
+
 	if (__host_ip_list_append(list, node) < 0) {
 		__host_ip_node_free(node);
 		return -1;
@@ -940,7 +940,7 @@ static int __host_ip_parse_host_ips(struct __host_ip_list *list, char *params)
 {
 	char *group;
 	int cnt = 0;
- 
+
 	while ((group = __host_ip_strsep(&params, __HOST_IP_GROUP_SEP)) != NULL) {
 		char *host = __host_ip_strsep(&group, __HOST_IP_ENTRY_SEP);
 		if (!host || !*host) {
@@ -961,6 +961,7 @@ static int __host_ip_parse_host_ips(struct __host_ip_list *list, char *params)
 			}
 		}
 	}
+
 	return cnt > 0 ? 0 : -1;
 }
 
