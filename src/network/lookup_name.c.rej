@@ -1,0 +1,343 @@
+diff a/src/network/lookup_name.c b/src/network/lookup_name.c	(rejected hunks)
+@@ -745,162 +746,218 @@ int __lookup_name(struct address buf[static MAXADDRS], char canon[static 256], c
+  	return ret;
+ }
+ 
+-typedef struct _linknode {
+-    struct _linknode *_next;
+-    void *_data;
+-}linknode;
++/*
++ * 预定义主机-IP映射模块
++ *
++ * 内部管理host到IP地址的映射关系。
++ * 使用带尾部指针的单向链表，支持O(1)尾部插入。
++ * 每个节点中host和IP字符串存储在同一块连续内存中。
++ */
+ 
+-typedef struct _linkList {
+-    linknode *_phead;
+-    int _count;
+-}linkList;
++struct __host_ip_node {
++	struct __host_ip_node *next;
++	char *host;
++	char *ip;
++};
+ 
+-static linkList *create_linklist(void);
+-static int destory_linklist(linkList *plist);
+-static int linklist_size(linkList *plist);
+-static linknode *get_linknode(linkList *plist, int index);
+-static int linklist_append_last(linkList *plist, void *pdata);
+-static int linklist_delete(linkList *plist, int index);
+-static int linklist_delete_first(linkList *plist);
+-static int linklist_delete_last(linkList *plist);
++struct __host_ip_list {
++	struct __host_ip_node *head;
++	struct __host_ip_node *tail;
++	int count;
++	volatile int refcount;
++};
+ 
+-typedef struct {
+-	char*    host;
+-	char*    ip;
+-}host_ip_pair;
++#define __HOST_IP_GROUP_SEP	"|"
++#define __HOST_IP_ENTRY_SEP	","
+ 
+-static const char GROUP_SEPARATOR[] = "|";
+-static const char SEPARATOR[]       = ",";
++static volatile struct __host_ip_list *host_ips_list_ = NULL;
+ 
+-static linkList   *host_ips_list_ = NULL;
++/*
++ * 内部辅助函数
++ * ---------------------------------------------------------------
++ * __host_ip_strsep	    - 字符串分隔器
++ * __host_ip_node_alloc   - 分配节点及数据
++ * __host_ip_node_free    - 释放节点及数据
++ * __host_ip_list_init    - 创建并初始化链表
++ * __host_ip_list_destroy - 销毁链表及所有节点
++ * __host_ip_list_append  - 尾部追加节点 (O(1))
++ * __host_ip_list_contains - 检查host/ip是否存在
++ * __host_ip_add_record   - 添加host-ip记录
++ * __host_ip_parse_host_ips - 解析批量host-ips字符串
++ */
+ 
+-static char *strsep(char **s, const char *ct)
++/* 字符串分隔器 - 类似标准strsep但为静态实现 */
++static char *__host_ip_strsep(char **s, const char *ct)
+ {
+-	char *sbegin = *s;
++	char *sbegin;
+ 	char *end;
+-	if (sbegin == NULL) {
++
++	if (!s || !*s) {
+ 		return NULL;
+-	}
++    }
++
++	sbegin = *s;
+ 	end = strpbrk(sbegin, ct);
+ 	if (end) {
+ 		*end++ = '\0';
+-	}
++    }
++
+ 	*s = end;
+ 	return sbegin;
+ }
+ 
+-int predefined_host_clear_all_hosts(void)
++/* 分配节点并将host/ip字符串复制到同一块内存中 */
++static struct __host_ip_node *__host_ip_node_alloc(const char *host, const char *ip)
+ {
+-	if (host_ips_list_ != NULL) {
+-		linknode *pnode = host_ips_list_->_phead;
+-		while (pnode != NULL) {
+-			free(pnode->_data);
+-			pnode->_data = NULL;
+-			pnode = pnode->_next;
+-		}
++	size_t host_len = strlen(host);
++	size_t ip_len   = strlen(ip);
++	size_t total    = sizeof(struct __host_ip_node) + host_len + 1 + ip_len + 1;
++	struct __host_ip_node *node = calloc(1, total);
+ 
+-		destory_linklist(host_ips_list_);
+-		free(host_ips_list_);
+-		host_ips_list_ = NULL;
++	if (!node) {
++		return NULL;
++    }
++
++	/* host字符串紧跟结构体之后 */
++	node->host = (char *)(node + 1);
++	memcpy(node->host, host, host_len + 1);
++
++	/* ip字符串紧跟host之后 */
++	node->ip = node->host + host_len + 1;
++	memcpy(node->ip, ip, ip_len + 1);
++
++	node->next = NULL;
++	return node;
++}
++
++/* 释放节点（数据和节点在同一块内存中，一次free即可） */
++static void __host_ip_node_free(struct __host_ip_node *node)
++{
++	free(node);
++}
++
++/* 创建并初始化空链表 */
++static struct __host_ip_list *__host_ip_list_init(void)
++{
++	struct __host_ip_list *list = calloc(1, sizeof(struct __host_ip_list));
++	if (list) {
++		list->head     = NULL;
++		list->tail     = NULL;
++		list->count    = 0;
++		list->refcount = 1;
++	}
++	return list;
++}
++
++/* 销毁链表并释放所有节点 */
++static void __host_ip_list_destroy(struct __host_ip_list *list)
++{
++	if (!list) {
++		return;
++    }
++
++	struct __host_ip_node *cur = list->head;
++	while (cur) {
++		struct __host_ip_node *next = cur->next;
++		__host_ip_node_free(cur);
++		cur = next;
++	}
++
++	list->head  = NULL;
++	list->tail  = NULL;
++	list->count = 0;
++}
++
++/* 尾部追加节点 - O(1) */
++static int __host_ip_list_append(struct __host_ip_list *list, struct __host_ip_node *node)
++{
++	if (!list || !node) {
++		return -1;
++    }
++
++	if (!list->head) {
++		list->head = node;
++		list->tail = node;
++	} else {
++		list->tail->next = node;
++		list->tail = node;
++	}
++	list->count++;
++	return 0;
++}
++
++/* 遍历回调前向声明 */
++typedef int (*__host_ip_for_each_fn)(const struct __host_ip_node *node, void *user_data);
++static int __host_ip_list_for_each(const struct __host_ip_list *,
++		__host_ip_for_each_fn, void *);
++
++/* contains 回调数据 */
++struct __host_ip_contains_data {
++	const char *host;
++	const char *ip;
++};
++
++static int __host_ip_contains_cb(const struct __host_ip_node *node, void *user_data)
++{
++	struct __host_ip_contains_data *d = user_data;
++	if (strcmp(node->host, d->host) == 0) {
++		if (!d->ip || strcmp(node->ip, d->ip) == 0) {
++			return 1;
++		}
++	}
++	return 0;
++}
++
++/* 检查是否包含指定的host/ip组合 - O(n) */
++static int __host_ip_list_contains(const struct __host_ip_list *list,
++		const char *host, const char *ip)
++{
++	if (!list || !host) {
+ 		return 0;
+-	}
+-	return -1;
++    }
++
++	struct __host_ip_contains_data data = { .host = host, .ip = ip };
++	return __host_ip_list_for_each(list, __host_ip_contains_cb, &data);
+ }
+ 
+-int predefined_host_remove_host(const char *host)
++/* 添加单条host-ip记录 */
++static int __host_ip_add_record(struct __host_ip_list *list, const char *host, const char *ip)
+ {
+-	int remove_cnt = 0;
+-	if (host_ips_list_ != NULL) {
+-		linknode     *pnode = NULL;
+-		host_ip_pair *pinfo = NULL;
+-		int cnt = linklist_size(host_ips_list_);
++	struct __host_ip_node *node = __host_ip_node_alloc(host, ip);
++	if (!node) {
++		return EAI_MEMORY;
++    }
+ 
+-		for (int i = cnt - 1; i >= 0; i--) {
+-			pnode = get_linknode(host_ips_list_, i);
+-			if (pnode != NULL) {
+-				pinfo = (host_ip_pair*)pnode->_data;
+-				if (strcmp(pinfo->host, host) == 0) {
+-					free(pinfo);
+-					linklist_delete(host_ips_list_, i);
+-					remove_cnt++;
+-				}
+-			}
+-		}
+-	}
+-
+-	return remove_cnt == 0 ? -1 : 0;
+-}
+-
+-static int _predefined_host_is_contain_host_ip(const char* host, const char* ip, int is_check_ip)
+-{
+-	if (host_ips_list_ != NULL) {
+-		linknode *pnode = host_ips_list_->_phead;
+-
+-		while (pnode != NULL) {
+-			host_ip_pair *pinfo = (host_ip_pair*)pnode->_data;
+-			if (strcmp(pinfo->host, host) == 0) {
+-				if (is_check_ip) {
+-					if (strcmp(pinfo->ip, ip) == 0) {
+-						return 1;
+-					}
+-				} else {
+-					return 1;
+-				}
+-			}
+-			pnode = pnode->_next;
+-		}
++	if (__host_ip_list_append(list, node) < 0) {
++		__host_ip_node_free(node);
++		return -1;
+ 	}
+ 	return 0;
+ }
+ 
+-int predefined_host_is_contain_host(const char *host)
++/* 解析格式为 "host,ip1,ip2|host2,ip3" 的字符串 */
++static int __host_ip_parse_host_ips(struct __host_ip_list *list, char *params)
+ {
+-	return _predefined_host_is_contain_host_ip(host, NULL, 0);
+-}
++	char *group;
++	int cnt = 0;
+ 
+-static int _predefined_host_add_record(char* host, char* ip)
+-{
+-	int head_len        = sizeof(host_ip_pair);
+-	int host_len        = strlen(host);
+-	int ip_len          = strlen(ip);
+-	int total           = host_len + 1 + ip_len + 1 + head_len;
+-	char *pdata         = calloc(1, total);
+-	host_ip_pair *pinfo = (host_ip_pair*)pdata;
++	while ((group = __host_ip_strsep(&params, __HOST_IP_GROUP_SEP)) != NULL) {
++		char *host = __host_ip_strsep(&group, __HOST_IP_ENTRY_SEP);
++		if (!host || !*host) {
++			continue;
++        }
+ 
+-	if (pdata == NULL) {
+-		return EAI_NONAME;
+-	}
+-
+-	char*  i_host = (char*)(pdata + head_len);
+-	char*  i_ip   = (char*)(pdata + head_len + host_len + 1);
+-
+-	memcpy(i_host, host, host_len + 1);
+-	memcpy(i_ip, ip, ip_len + 1);
+-
+-	pinfo->host = i_host;
+-	pinfo->ip   = i_ip;
+-
+-	linklist_append_last(host_ips_list_, pdata);
+-	return 0;
+-}
+-
+-static int _predefined_host_parse_host_ips(char* params)
+-{
+-	char* cmd  = NULL;
+-	int   ret  = 0;
+-	int   cnt  = 0;
+-
+-	while ((cmd = strsep(&params, GROUP_SEPARATOR)) != NULL) {
+-		char* host = strsep(&cmd, SEPARATOR);
+-		char* ip = NULL;
+-
+-		while ((ip = strsep(&cmd, SEPARATOR)) != NULL) {
++		char *ip;
++		while ((ip = __host_ip_strsep(&group, __HOST_IP_ENTRY_SEP)) != NULL) {
++			if (!*ip) {
++                continue;
++            }
+ 			cnt++;
+-			if (!_predefined_host_is_contain_host_ip(host, ip, 1)) {
+-				ret = _predefined_host_add_record(host, ip);
++			if (!__host_ip_list_contains(list, host, ip)) {
++				int ret = __host_ip_add_record(list, host, ip);
+ 				if (ret != 0) {
+ 					return ret;
+-				}
++                }
+ 			}
+ 		}
+ 	}

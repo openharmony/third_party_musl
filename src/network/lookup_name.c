@@ -14,6 +14,7 @@
 #include "lookup.h"
 #include "stdio_impl.h"
 #include "syscall.h"
+#include "atomic.h"
 #include <dlfcn.h>
 #define BREAK 0
 #define CONTINUE 1
@@ -908,274 +909,449 @@ static int _predefined_host_parse_host_ips(char* params)
 	return cnt > 0 ? 0 : -1;
 }
 
-int predefined_host_lookup_ip(const char* host, const char* serv,
-    const struct addrinfo* hint, struct addrinfo** res)
+/* 链表通用遍历接口 */
+static int __host_ip_list_for_each(const struct __host_ip_list *list,
+		__host_ip_for_each_fn fn, void *user_data)
 {
-	int status = -1;
-    if (host_ips_list_ == NULL) {
+	if (!list || !fn) {
 		return -1;
-	}
-    linknode *pnode = host_ips_list_->_phead;
-    while (pnode != NULL) {
-        host_ip_pair *pinfo = (host_ip_pair*)pnode->_data;
-        if (strcmp(pinfo->host, host) == 0) {
-            status = getaddrinfo(pinfo->ip, NULL, hint, res);
-            if (status == 0) {
-                return status;
-            }
-        }
-        pnode = pnode->_next;
     }
-    return status;
+
+	const struct __host_ip_node *cur = list->head;
+	while (cur) {
+		int ret = fn(cur, user_data);
+		if (ret) {
+			return ret;
+        }
+		cur = cur->next;
+	}
+	return 0;
 }
 
-int predefined_host_set_hosts(const char* host_ips)
+/*
+ * COW + 引用计数核心实现
+ * ---------------------------------------------------------------
+ * 深拷贝、写端释放旧引用、读端获取/释放引用
+ */
+
+/* 深拷贝完整链表（CAS 发布前的构建用） */
+static struct __host_ip_list *__host_ip_list_deep_copy(const struct __host_ip_list *src)
 {
-	if (host_ips == NULL) {
-	    return EAI_NONAME;
-	}
+	if (!src) {
+		return __host_ip_list_init();
+    }
 
-	int len = strlen(host_ips);
-	if (len == 0) {
-		return EAI_NONAME;
-	}
+	struct __host_ip_list *dst = __host_ip_list_init();
+	if (!dst) {
+		return NULL;
+    }
 
-	if (host_ips_list_ == NULL) {
-		host_ips_list_ = create_linklist();
-		if (host_ips_list_ == NULL) {
-			return EAI_MEMORY;
+	const struct __host_ip_node *cur = src->head;
+	while (cur) {
+		struct __host_ip_node *node = __host_ip_node_alloc(cur->host, cur->ip);
+		if (!node) {
+			__host_ip_list_destroy(dst);
+			free(dst);
+			return NULL;
+		}
+		__host_ip_list_append(dst, node);
+		cur = cur->next;
+	}
+	return dst;
+}
+
+/* 深拷贝链表时过滤掉指定 host（用于 COW 删除） */
+static struct __host_ip_list *__host_ip_list_deep_copy_except(
+		const struct __host_ip_list *src, const char *host)
+{
+	if (!src) {
+		return __host_ip_list_init();
+    }
+
+	struct __host_ip_list *dst = __host_ip_list_init();
+	if (!dst) {
+		return NULL;
+    }
+
+	const struct __host_ip_node *cur = src->head;
+	while (cur) {
+		if (strcmp(cur->host, host) != 0) {
+			struct __host_ip_node *node = __host_ip_node_alloc(cur->host, cur->ip);
+			if (!node) {
+				__host_ip_list_destroy(dst);
+				free(dst);
+				return NULL;
+			}
+			__host_ip_list_append(dst, node);
+		}
+		cur = cur->next;
+	}
+	return dst;
+}
+
+/* 写端释放旧链表的全局引用，归零时触发释放 */
+static void __host_ip_release_ref(struct __host_ip_list *list)
+{
+	if (!list) {
+		return;
+    }
+
+	int val = a_fetch_add(&list->refcount, -1);
+	a_barrier();
+
+	if (val == 1) {
+		if (a_cas(&list->refcount, 0, -1) == 0) {
+			__host_ip_list_destroy(list);
+			free(list);
 		}
 	}
+}
 
-	char *host_ips_str = calloc(1, len + 1);
-	if (host_ips_str == NULL) {
-		return EAI_MEMORY;
+/* 读端获取遍历引用 */
+static struct __host_ip_list *__host_ip_list_acquire(void)
+{
+	struct __host_ip_list *list;
+	int val;
+
+	for (;;) {
+		list = (struct __host_ip_list *)host_ips_list_;
+		if (!list) {
+			return NULL;
+        }
+
+		val = a_fetch_add(&list->refcount, 1);
+		a_barrier();
+
+		if (val <= 0) {
+			int release = a_fetch_add(&list->refcount, -1);
+			if (release == 1) {
+				if (a_cas(&list->refcount, 0, -1) == 0) {
+					__host_ip_list_destroy(list);
+					free(list);
+				}
+			}
+			continue;
+		}
+
+		return list;
 	}
+}
 
-	memcpy(host_ips_str, host_ips, len + 1);
+/* 读端释放遍历引用 */
+static void __host_ip_list_dropref(struct __host_ip_list *list)
+{
+	if (!list) {
+		return;
+    }
 
-	int ret = _predefined_host_parse_host_ips(host_ips_str);
+	int val = a_fetch_add(&list->refcount, -1);
+	a_barrier();
 
-	free(host_ips_str);
+	if (val == 1) {
+		if (a_cas(&list->refcount, 0, -1) == 0) {
+			__host_ip_list_destroy(list);
+			free(list);
+		}
+	}
+}
 
+/*
+ * lookup_ip 回调数据
+ */
+struct __host_ip_lookup_data {
+	const char *host;
+	const struct addrinfo *hint;
+	struct addrinfo **res;
+	int last_status;
+};
+
+static int __host_ip_lookup_cb(const struct __host_ip_node *node, void *user_data)
+{
+	struct __host_ip_lookup_data *d = user_data;
+	if (strcmp(node->host, d->host) == 0) {
+		struct addrinfo *temp_res = NULL;
+		int status = getaddrinfo(node->ip, NULL, d->hint, &temp_res);
+		if (status == 0) {
+			if (*d->res) {
+				freeaddrinfo(*d->res);
+				*d->res = NULL;
+			}
+			*d->res = temp_res;
+			d->last_status = status;
+			return 1;
+		} else {
+			d->last_status = status;
+		}
+	}
+	return 0;
+}
+
+/*
+ * name_from_hosts 回调数据
+ */
+struct __host_ip_name_data {
+	struct address *buf;
+	const char *name;
+	int family;
+	int cnt;
+};
+
+static int __host_ip_name_from_hosts_cb(const struct __host_ip_node *node, void *user_data)
+{
+	struct __host_ip_name_data *d = user_data;
+	if (d->cnt >= MAXADDRS) {
+		return 1;
+    }
+	if (strcmp(node->host, d->name) == 0) {
+		if (__lookup_ipliteral(d->buf + d->cnt, node->ip, d->family) == 1) {
+			d->cnt++;
+        }
+	}
+	return 0;
+}
+
+/*
+ * 对外接口函数
+ * ---------------------------------------------------------------
+ * COW + a_cas_p + refcount 无锁并发安全实现
+ * 以下函数签名与原有接口保持一致，确保外部调用方兼容性。
+ */
+
+/* 清空所有预定义host记录 — COW 空链表 + CAS */
+int predefined_host_clear_all_hosts(void)
+{
+	struct __host_ip_list *old_list, *empty;
+
+	for (;;) {
+		empty = __host_ip_list_init();
+		if (!empty) {
+			return EAI_MEMORY;
+        }
+
+		old_list = __host_ip_list_acquire();
+		if (!old_list) {
+			free(empty);
+			return -1;
+		}
+
+		struct __host_ip_list *cas_old = a_cas_p(&host_ips_list_, old_list, empty);
+		if (cas_old == old_list) {
+			__host_ip_list_dropref(old_list);
+			__host_ip_release_ref(old_list);
+			return 0;
+		}
+
+		__host_ip_list_dropref(old_list);
+		free(empty);
+	}
+}
+
+/* 移除指定host的所有记录 — COW deep_copy_except + CAS */
+int predefined_host_remove_host(const char *host)
+{
+	struct __host_ip_list *old_list, *new_list;
+
+	for (;;) {
+		old_list = __host_ip_list_acquire();
+		if (!old_list) {
+			return -1;
+        }
+
+		new_list = __host_ip_list_deep_copy_except(old_list, host);
+		if (!new_list) {
+			__host_ip_list_dropref(old_list);
+			return EAI_MEMORY;
+		}
+
+		if (new_list->count == old_list->count) {
+			__host_ip_list_destroy(new_list);
+			free(new_list);
+			__host_ip_list_dropref(old_list);
+			return -1;
+		}
+
+		struct __host_ip_list *cas_old = a_cas_p(&host_ips_list_, old_list, new_list);
+		if (cas_old == old_list) {
+			__host_ip_list_dropref(old_list);
+			__host_ip_release_ref(old_list);
+			return 0;
+		}
+
+		__host_ip_list_destroy(new_list);
+		free(new_list);
+		__host_ip_list_dropref(old_list);
+	}
+}
+
+/* 检查是否包含指定host — acquire/release 包裹遍历 */
+int predefined_host_is_contain_host(const char *host)
+{
+	struct __host_ip_list *list = __host_ip_list_acquire();
+	if (!list) {
+		return 0;
+    }
+
+	int ret = __host_ip_list_contains(list, host, NULL);
+	__host_ip_list_dropref(list);
 	return ret;
 }
 
-int predefined_host_set_host(const char* host, const char* ip)
+/* 查询host对应的IP地址信息 — acquire/release 包裹遍历 */
+int predefined_host_lookup_ip(const char *host, const char *serv,
+		const struct addrinfo *hint, struct addrinfo **res)
 {
-	if (host == NULL || strlen(host) == 0 || ip == NULL || strlen(ip) == 0) {
+	(void)serv;
+
+	if (!host) {
 		return -1;
-	}
+    }
 
-	if (host_ips_list_ == NULL) {
-		host_ips_list_ = create_linklist();
-		if (host_ips_list_ == NULL) {
-			return EAI_NONAME;
-		}
-	}
+	struct __host_ip_list *list = __host_ip_list_acquire();
+	if (!list) {
+		return -1;
+    }
 
-	if (_predefined_host_is_contain_host_ip(host, ip, 1)) {
-		return 0;
-	}
-
-	return _predefined_host_add_record((char *)host, (char *)ip);
+	struct __host_ip_lookup_data data = {
+		.host = host, .hint = hint, .res = res, .last_status = -1
+	};
+	__host_ip_list_for_each(list, __host_ip_lookup_cb, &data);
+	__host_ip_list_dropref(list);
+	return data.last_status;
 }
 
+/* 从预定义列表中解析主机名为地址 — acquire/release 包裹遍历 */
 int predefined_host_name_from_hosts(
 		struct address buf[static MAXADDRS],
 		char canon[static 256], const char *name, int family)
 {
-	int size = 256;
-	int cnt = 0;
-	if (host_ips_list_ != NULL) {
-		linknode *pnode = host_ips_list_->_phead;
-
-		while (pnode != NULL && cnt < MAXADDRS) {
-			host_ip_pair *pinfo = (host_ip_pair*)pnode->_data;
-			if (strcmp(pinfo->host, name) == 0) {
-				if (__lookup_ipliteral(buf+cnt, pinfo->ip, family) == 1) {
-					cnt++;
-				}
-			}
-			pnode = pnode->_next;
-		}
-	}
-
-	if (cnt > 0) {
-		strncpy(canon, name, size - 1);
-		canon[size - 1] = '\0';
-	}
-	return cnt;
-}
-
-static inline void free_linknodedata(linknode *pnode)
-{
-	if (NULL != pnode) {
-		free(pnode);
-	}
-}
-
-static linknode *create_linknode(void *data)
-{
-	linknode *pnode = (linknode *)calloc(1, sizeof(linknode));
-	if (NULL == pnode) {
-		return NULL;
-	}
-	pnode->_data = data;
-	pnode->_next = NULL;
-
-	return pnode;
-}
-
-static linkList *create_linklist(void)
-{
-	linkList *plist = (linkList *)calloc(1, sizeof(linkList));
-	if (NULL == plist) {
-		return NULL;
-	}
-	plist->_phead = NULL;
-	plist->_count = 0;
-
-	return plist;
-}
-
-static int destory_linklist(linkList *plist)
-{
-	if (NULL == plist) {
-		return -1;
-	}
-
-	linknode *pnode = plist->_phead;
-	linknode *ptmp = NULL;
-	while (pnode != NULL) {
-		ptmp = pnode;
-		pnode = pnode->_next;
-		free_linknodedata(ptmp);
-	}
-
-	plist->_phead = NULL;
-	plist->_count = 0;
-
-	return 0;
-}
-
-static int linklist_size(linkList *plist)
-{
-	if (NULL == plist) {
+	if (!name) {
 		return 0;
-	}
+    }
 
-	return plist->_count;
+	struct __host_ip_list *list = __host_ip_list_acquire();
+	if (!list) {
+		return 0;
+    }
+
+	struct __host_ip_name_data data = {
+		.buf = buf, .name = name, .family = family, .cnt = 0
+	};
+	__host_ip_list_for_each(list, __host_ip_name_from_hosts_cb, &data);
+	__host_ip_list_dropref(list);
+
+	if (data.cnt > 0) {
+		strncpy(canon, name, 255);
+		canon[255] = '\0';
+	}
+	return data.cnt;
 }
 
-static linknode *get_linknode(linkList *plist, int index)
+/* 批量设置host-ip映射字符串 — COW + CAS */
+int predefined_host_set_hosts(const char *host_ips)
 {
-	if (index < 0 || index >= plist->_count) {
-		return NULL;
-	}
+	size_t len;
+	char *copy;
 
-	int i = 0;
-	linknode *pnode = plist->_phead;
-	if (NULL == pnode) {
-		return NULL;
-	}
-	while ((i++) < index && NULL != pnode) {
-		pnode = pnode->_next;
-	}
+	if (!host_ips || !*host_ips) {
+		return EAI_NONAME;
+    }
 
-	return pnode;
-}
+	len = strlen(host_ips);
+	copy = malloc(len + 1);
+	if (!copy) {
+		return EAI_MEMORY;
+    }
 
-static int linklist_append_last(linkList *plist, void *pdata)
-{
-	if (NULL == plist) {
-		return -1;
-	}
+	memcpy(copy, host_ips, len + 1);
 
-	linknode *pnode = create_linknode(pdata);
-	if (NULL == pnode) {
-		return -1;
-	}
+	for (;;) {
+		struct __host_ip_list *old_list = __host_ip_list_acquire();
+		struct __host_ip_list *new_list;
+		char *params;
+		int ret = 0;
 
-	if (NULL == plist->_phead) {
-		plist->_phead = pnode;
-		plist->_count++;
-	} else {
-		linknode *plastnode = get_linknode(plist, plist->_count - 1);
-		if (NULL == plastnode) {
-			return -1;
-		}
-		plastnode->_next = pnode;
-		plist->_count++;
-	}
-
-	return 0;
-}
-
-static int linklist_delete(linkList *plist, int index)
-{
-	if (NULL == plist || NULL == plist->_phead || plist->_count <= 0) {
-		return -1;
-	}
-
-	if (index == 0) {
-		return linklist_delete_first(plist);
-	} else if (index == (plist->_count - 1)) {
-		return linklist_delete_last(plist);
-	} else {
-		linknode *pindex = get_linknode(plist, index);
-		if (NULL == pindex) {
-			return -1;
-		}
-		linknode *preindex = get_linknode(plist, index - 1);
-		if (NULL == preindex) {
-			return -1;
+		new_list = __host_ip_list_deep_copy(old_list);
+		if (!new_list) {
+			__host_ip_list_dropref(old_list);
+			free(copy);
+			return EAI_MEMORY;
 		}
 
-		preindex->_next = pindex->_next;
+		params = malloc(len + 1);
+		if (!params) {
+			__host_ip_list_destroy(new_list);
+			free(new_list);
+			__host_ip_list_dropref(old_list);
+			free(copy);
+			return EAI_MEMORY;
+		}
+		memcpy(params, copy, len + 1);
+		ret = __host_ip_parse_host_ips(new_list, params);
+		free(params);
 
-		free_linknodedata(pindex);
-		plist->_count--;
+		if (ret != 0) {
+			__host_ip_list_destroy(new_list);
+			free(new_list);
+			__host_ip_list_dropref(old_list);
+			free(copy);
+			return ret;
+		}
+
+		struct __host_ip_list *cas_old = a_cas_p(&host_ips_list_, old_list, new_list);
+		if (cas_old == old_list) {
+			__host_ip_list_dropref(old_list);
+			__host_ip_release_ref(old_list);
+			free(copy);
+			return 0;
+		}
+
+		__host_ip_list_destroy(new_list);
+		free(new_list);
+		__host_ip_list_dropref(old_list);
 	}
-
-	return 0;
 }
 
-static int linklist_delete_first(linkList *plist)
+/* 添加单个host-ip映射 — COW + CAS */
+int predefined_host_set_host(const char *host, const char *ip)
 {
-	if (NULL == plist || NULL == plist->_phead || plist->_count <= 0) {
+	struct __host_ip_list *old_list, *new_list;
+
+	if (!host || !*host || !ip || !*ip) {
 		return -1;
+    }
+
+	for (;;) {
+		old_list = __host_ip_list_acquire();
+
+		new_list = __host_ip_list_deep_copy(old_list);
+		if (!new_list) {
+			__host_ip_list_dropref(old_list);
+			return EAI_MEMORY;
+		}
+
+		if (__host_ip_list_contains(new_list, host, ip)) {
+			__host_ip_list_destroy(new_list);
+			free(new_list);
+			__host_ip_list_dropref(old_list);
+			return 0;
+		}
+
+		if (__host_ip_add_record(new_list, host, ip) != 0) {
+			__host_ip_list_destroy(new_list);
+			free(new_list);
+			__host_ip_list_dropref(old_list);
+			return EAI_MEMORY;
+		}
+
+		struct __host_ip_list *cas_old = a_cas_p(&host_ips_list_, old_list, new_list);
+		if (cas_old == old_list) {
+			__host_ip_list_dropref(old_list);
+			__host_ip_release_ref(old_list);
+			return 0;
+		}
+
+		__host_ip_list_destroy(new_list);
+		free(new_list);
+		__host_ip_list_dropref(old_list);
 	}
-
-	linknode *phead = plist->_phead;
-	plist->_phead = plist->_phead->_next;
-
-	free_linknodedata(phead);
-	plist->_count--;
-
-	return 0;
-}
-
-static int linklist_delete_last(linkList *plist)
-{
-	if (NULL == plist || NULL == plist->_phead || plist->_count <= 0) {
-		return -1;
-	}
-
-	linknode *plastsecondnode = get_linknode(plist, plist->_count - 2);
-	if (NULL != plastsecondnode) {
-		linknode *plastnode = plastsecondnode->_next;
-		plastsecondnode->_next = NULL;
-
-		free_linknodedata(plastnode);
-		plist->_count--;
-	} else {
-		linknode *plastnode = get_linknode(plist, plist->_count - 1);
-		plist->_phead = NULL;
-		plist->_count = 0;
-
-		free_linknodedata(plastnode);
-	}
-
-	return 0;
 }
