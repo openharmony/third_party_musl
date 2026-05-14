@@ -34,7 +34,6 @@ weak_alias(__tzname, tzname);
 
 static char std_name[TZNAME_MAX+1];
 static char dst_name[TZNAME_MAX+1];
-const char __utc[] = "UTC";
 const char __gmt[] = "GMT";
 
 static int dst_off;

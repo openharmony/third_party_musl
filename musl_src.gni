@@ -242,6 +242,7 @@ if (musl_arch == "arm") {
   ]
 } else if (musl_arch == "loongarch64") {
   musl_src_arch_file = [
+    "src/fenv/loongarch64/fenv-sf.c",
     "src/fenv/loongarch64/fenv.S",
     "src/ldso/loongarch64/dlsym.s",
     "src/ldso/loongarch64/tlsdesc.s",
@@ -398,6 +399,7 @@ musl_src_file = [
   "src/dirent/seekdir.c",
   "src/dirent/telldir.c",
   "src/dirent/versionsort.c",
+  "src/dirent/posix_getdents.c",
   "src/env/__environ.c",
   "src/env/__init_tls.c",
   "src/env/__libc_start_main.c",
@@ -1506,6 +1508,7 @@ musl_src_file = [
   "src/time/__secs_to_tm.c",
   "src/time/__tm_to_secs.c",
   "src/time/__tz.c",
+  "src/time/__utc.c",
   "src/time/__year_to_secs.c",
   "src/time/asctime.c",
   "src/time/asctime_r.c",
@@ -1867,7 +1870,7 @@ if (musl_arch == "arm") {
     "arch/arm/bits/shm.h",
     "arch/arm/bits/signal.h",
     "arch/arm/bits/stat.h",
-    "arch/arm/bits/stdint.h",
+    "arch/generic/bits/stdint.h",
     "arch/arm/bits/user.h",
 
     "arch/generic/bits/dirent.h",
@@ -1898,7 +1901,7 @@ if (musl_arch == "arm") {
     "arch/aarch64/bits/setjmp.h",
     "arch/aarch64/bits/signal.h",
     "arch/aarch64/bits/stat.h",
-    "arch/aarch64/bits/stdint.h",
+    "arch/generic/bits/stdint.h",
     "arch/aarch64/bits/user.h",
 
     "arch/generic/bits/dirent.h",
@@ -1934,7 +1937,7 @@ if (musl_arch == "arm") {
     "arch/x86_64/bits/setjmp.h",
     "arch/x86_64/bits/signal.h",
     "arch/x86_64/bits/stat.h",
-    "arch/x86_64/bits/stdint.h",
+    "arch/generic/bits/stdint.h",
     "arch/x86_64/bits/user.h",
     "arch/generic/bits/dirent.h",
     "arch/generic/bits/errno.h",
@@ -1970,7 +1973,7 @@ if (musl_arch == "arm") {
     "arch/mips/bits/setjmp.h",
     "arch/mips/bits/signal.h",
     "arch/mips/bits/stat.h",
-    "arch/mips/bits/stdint.h",
+    "arch/generic/bits/stdint.h",
     "arch/mips/bits/user.h",
 
     "arch/generic/bits/dirent.h",
@@ -2007,7 +2010,7 @@ if (musl_arch == "arm") {
     "arch/riscv64/bits/setjmp.h",
     "arch/riscv64/bits/signal.h",
     "arch/riscv64/bits/stat.h",
-    "arch/riscv64/bits/stdint.h",
+    "arch/generic/bits/stdint.h",
     "arch/riscv64/bits/user.h",
 
     "arch/generic/bits/dirent.h",
@@ -2043,8 +2046,9 @@ if (musl_arch == "arm") {
     "arch/loongarch64/bits/setjmp.h",
     "arch/loongarch64/bits/signal.h",
     "arch/loongarch64/bits/stat.h",
-    "arch/loongarch64/bits/stdint.h",
+    "arch/generic/bits/stdint.h",
     "arch/loongarch64/bits/user.h",
+    "arch/loongarch64/bits/hwcap.h",
 
     "arch/generic/bits/dirent.h",
     "arch/generic/bits/errno.h",
