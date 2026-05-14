@@ -196,7 +196,6 @@ template("static_and_shared_libs_template") {
       "src/env/__init_tls.c",
       "src/env/__libc_start_main.c",
       "src/env/__stack_chk_fail.c",
-      "src/stdlib/qsort.c",
       "src/stdlib/qsort_nr.c",
       "src/string/strncpy.c",
     ]

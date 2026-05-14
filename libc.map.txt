@@ -2003,6 +2003,8 @@
     wcstod;
     wcstod_l;
     wcstof;
+    wcstof_l;
+    wcstold_l;
     wcstoimax;
     wcstok;
     wcstol;
