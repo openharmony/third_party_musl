@@ -46,8 +46,6 @@
 #define GWP_ASAN_MAIN_THREAD_GUARD_SIZE 4096
 #define GWP_ASAN_MAIN_STACK_FALLBACK_SIZE \
     (DEFAULT_STACK_MAX - GWP_ASAN_MAIN_THREAD_GUARD_SIZE)
-#define FFRT_LIB_NAME "libffrt.so"
-#define FFRT_STACK_SYMBOL "ffrt_get_current_coroutine_stack"
 #define GWP_ASAN_LOGD(...) // change it to MUSL_LOGD to get gwp_asan debug log.
 #define GWP_ASAN_NO_ADDRESS __attribute__((no_sanitize("address", "hwaddress")))
 
@@ -530,44 +528,11 @@ size_t strip_pac_pc(size_t ptr)
 }
 
 static ffrt_get_current_coroutine_stack_fn cached_ffrt_get_current_coroutine_stack;
-static int ffrt_stack_resolve_in_progress = 0;
-static int ffrt_stack_func_unavailable = 0;
 
-// Actively load FFRT and cache the optional coroutine stack query function during init.
-GWP_ASAN_NO_ADDRESS static void init_ffrt_stack_func(void)
+// Cache the FFRT coroutine stack query function registered by libffrt.
+GWP_ASAN_NO_ADDRESS void libc_gwp_asan_register_ffrt_stack_func(ffrt_get_current_coroutine_stack_fn fn)
 {
-    ffrt_get_current_coroutine_stack_fn fn =
-        __atomic_load_n(&cached_ffrt_get_current_coroutine_stack, __ATOMIC_ACQUIRE);
-    if (fn != NULL) {
-        return;
-    }
-    if (__atomic_load_n(&ffrt_stack_func_unavailable, __ATOMIC_ACQUIRE) != 0) {
-        return;
-    }
-
-    if (__sync_lock_test_and_set(&ffrt_stack_resolve_in_progress, 1) != 0) {
-        return;
-    }
-
-    fn = __atomic_load_n(&cached_ffrt_get_current_coroutine_stack, __ATOMIC_ACQUIRE);
-    if (fn == NULL && __atomic_load_n(&ffrt_stack_func_unavailable, __ATOMIC_RELAXED) == 0) {
-        void *handle = dlopen(FFRT_LIB_NAME, RTLD_LAZY);
-        if (handle != NULL) {
-            void *symbol = dlsym(handle, FFRT_STACK_SYMBOL);
-            if (symbol != NULL) {
-                /* Keep this dlopen reference so the cached function pointer stays valid. */
-                *(void **)(&fn) = symbol;
-                __atomic_store_n(&cached_ffrt_get_current_coroutine_stack, fn, __ATOMIC_RELEASE);
-            } else {
-                dlclose(handle);
-                __atomic_store_n(&ffrt_stack_func_unavailable, 1, __ATOMIC_RELEASE);
-            }
-        } else {
-            __atomic_store_n(&ffrt_stack_func_unavailable, 1, __ATOMIC_RELEASE);
-        }
-    }
-
-    __sync_lock_release(&ffrt_stack_resolve_in_progress);
+    __atomic_store_n(&cached_ffrt_get_current_coroutine_stack, fn, __ATOMIC_RELEASE);
 }
 
 // Read the current pthread stack bounds from musl thread metadata.
@@ -766,7 +731,6 @@ bool init_gwp_asan_process(gwp_asan_option gwp_asan_option)
     }
 
     MUSL_LOGW("[gwp_asan]: %{public}d %{public}s gwp_asan initializing.\n", getpid(), path);
-    init_ffrt_stack_func();
     init_gwp_asan((void*)&gwp_asan_option);
     gwp_asan_initialized = true;
     MUSL_LOGW("[gwp_asan]: %{public}d %{public}s gwp_asan initialized.\n", getpid(), path);
@@ -999,10 +963,18 @@ size_t libc_gwp_asan_collect_allocations_by_time_range(uint64_t timespan, uintpt
 }
 #else
 #include <stdbool.h>
+#include <stddef.h>
+
+typedef bool (*ffrt_get_current_coroutine_stack_fn)(void **stack_addr, size_t *size);
 
 // Used for appspawn.
 bool may_init_gwp_asan(bool force_init)
 {
     return false;
+}
+
+void libc_gwp_asan_register_ffrt_stack_func(ffrt_get_current_coroutine_stack_fn fn)
+{
+    (void)fn;
 }
 #endif

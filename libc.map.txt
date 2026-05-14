@@ -131,6 +131,7 @@
     libc_gwp_asan_collect_allocations_by_time_range;
     libc_gwp_asan_unwind_fast;
     libc_gwp_asan_unwind_segv;
+    libc_gwp_asan_register_ffrt_stack_func;
     libc_gwp_asan_has_free_mem;
     libc_gwp_asan_ptr_is_mine;
     may_init_gwp_asan;
