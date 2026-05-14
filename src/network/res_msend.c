@@ -241,8 +241,8 @@ int res_msend_rc_ext(int netid, int nqueries, const unsigned char *const *querie
 	int fd;
 	int timeout, attempts, retry_interval, servfail_retry;
 	union {
-		struct sockaddr_in sin;
 		struct sockaddr_in6 sin6;
+		struct sockaddr_in sin;
 	} sa = {0}, ns[MAXNS] = {{0}};
 	socklen_t sl = sizeof sa.sin;
 	int nns = 0;
