@@ -44,6 +44,7 @@
 #define STRLEN_9 "123456789"
 #define STRLEN_10 "0123456789"
 #define STRLEN_14 "01234567890123"
+#define STABILITY_LOOP_TIMES 100
 
 /**
  * @tc.name     : test_strcat_0010
@@ -59,6 +60,108 @@ static void test_strcat_0010()
     strcat(dst, src);
     TEST(dst[0] == EQ_0);
 }
+
+#ifndef MUSL_EXTERNAL_FUNCTION
+/**
+ * @tc.name     : __explicit_bzero_chk_0010
+ * @tc.desc     : test __explicit_bzero_chk stub errno and side effect
+ * @tc.level    : Level 1
+ */
+static void __explicit_bzero_chk_0010()
+{
+    char dst[SIZE_10];
+    char expected[SIZE_10];
+    memset(dst, EQ_1, sizeof(dst));
+    memset(expected, EQ_1, sizeof(expected));
+    errno = 0;
+    __explicit_bzero_chk(dst, SIZE_5, sizeof(dst));
+    TEST(memcmp(dst, expected, sizeof(dst)) == 0);
+    EXPECT_EQ(__explicit_bzero_chk_0010, errno, ENOSYS);
+}
+#else
+/**
+ * @tc.name     : __explicit_bzero_chk_0020
+ * @tc.desc     : test __explicit_bzero_chk with full clear length
+ * @tc.level    : Level 0
+ */
+static void __explicit_bzero_chk_0020()
+{
+    char dst[SIZE_10];
+    memset(dst, EQ_1, sizeof(dst));
+    __explicit_bzero_chk(dst, sizeof(dst), sizeof(dst));
+    TEST(memcmp(dst, (char[SIZE_10]) {0}, sizeof(dst)) == 0);
+}
+
+/**
+ * @tc.name     : __explicit_bzero_chk_0030
+ * @tc.desc     : test __explicit_bzero_chk with partial clear length
+ * @tc.level    : Level 0
+ */
+static void __explicit_bzero_chk_0030()
+{
+    char dst[SIZE_10];
+    memset(dst, EQ_1, sizeof(dst));
+    __explicit_bzero_chk(dst, SIZE_5, sizeof(dst));
+    TEST(memcmp(dst, (char[SIZE_10]) {0, 0, 0, 0, 0, EQ_1, EQ_1, EQ_1, EQ_1, EQ_1}, sizeof(dst)) == 0);
+}
+
+/**
+ * @tc.name     : __explicit_bzero_chk_0040
+ * @tc.desc     : test __explicit_bzero_chk with len greater than dst_len
+ * @tc.level    : Level 2
+ */
+static void __explicit_bzero_chk_0040()
+{
+    struct sigaction sigabrt = {
+        .sa_handler = SignalHandler,
+    };
+    sigaction(SIGABRT, &sigabrt, NULL);
+
+    char dst[SIZE_5];
+    memset(dst, EQ_1, sizeof(dst));
+    int status;
+    int pid = fork();
+    switch (pid) {
+        case -1:
+            t_error("fork failed: %s\n", strerror(errno));
+            break;
+        case 0:
+            __explicit_bzero_chk(dst, SIZE_10, sizeof(dst));
+            exit(0);
+        default:
+            waitpid(pid, &status, WUNTRACED);
+            TEST(WIFEXITED(status) == 0);
+            TEST(WIFSTOPPED(status) == 1);
+            TEST(WSTOPSIG(status) == SIGSTOP);
+            kill(pid, SIGCONT);
+            break;
+    }
+    return;
+}
+
+/**
+ * @tc.name     : __explicit_bzero_chk_0050
+ * @tc.desc     : test __explicit_bzero_chk stability with repeated clear operations
+ * @tc.level    : Level 1
+ */
+static void __explicit_bzero_chk_0050()
+{
+    const char partial_expected[SIZE_10] = {0, 0, 0, 0, 0, EQ_1, EQ_1, EQ_1, EQ_1, EQ_1};
+    const char cleared_expected[SIZE_10] = {0};
+
+    for (int i = 0; i < STABILITY_LOOP_TIMES; i++) {
+        char dst[SIZE_10];
+
+        memset(dst, EQ_1, sizeof(dst));
+        __explicit_bzero_chk(dst, SIZE_5, sizeof(dst));
+        TEST(memcmp(dst, partial_expected, sizeof(dst)) == 0);
+
+        memset(dst, EQ_1, sizeof(dst));
+        __explicit_bzero_chk(dst, sizeof(dst), sizeof(dst));
+        TEST(memcmp(dst, cleared_expected, sizeof(dst)) == 0);
+    }
+}
+#endif
 
 /**
  * @tc.name     : test_strcat_0020
@@ -922,6 +1025,14 @@ int main(int argc, char *argv[]) {
     remove_all_special_handler(SIGABRT);
     test_strcat_0010();
     test_strcat_0020();
+#ifndef MUSL_EXTERNAL_FUNCTION
+    __explicit_bzero_chk_0010();
+#else
+    __explicit_bzero_chk_0020();
+    __explicit_bzero_chk_0030();
+    __explicit_bzero_chk_0040();
+    __explicit_bzero_chk_0050();
+#endif
     test_strncat_0010();
     test_strncat_0020();
     test_strchr_0010();
