@@ -150,6 +150,8 @@
     __lutimes_time64;
     __lxstat;
     __lxstat64;
+    __fdelt_chk;
+    __explicit_bzero_chk;
     __memchr_chk;
     __memcpy_chk;
     # __memmove_aarch64;
@@ -166,6 +168,7 @@
     __newlocale;
     __nl_langinfo;
     __nl_langinfo_l;
+    __open_2;
     __open_chk;
     __open64_chk;
     __openat_chk;
