@@ -530,8 +530,8 @@ size_t strip_pac_pc(size_t ptr)
 }
 
 static ffrt_get_current_coroutine_stack_fn cached_ffrt_get_current_coroutine_stack;
-static int ffrt_stack_resolve_in_progress;
-static int ffrt_stack_func_unavailable;
+static int ffrt_stack_resolve_in_progress = 0;
+static int ffrt_stack_func_unavailable = 0;
 
 // Actively load FFRT and cache the optional coroutine stack query function during init.
 GWP_ASAN_NO_ADDRESS static void init_ffrt_stack_func(void)
