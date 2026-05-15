@@ -30,5 +30,6 @@ functionalext_supplement_stdlib_test = [
   "lldiv",
   "atoll",
   "bsearch",
+  "qsort_r",
   "functionalext_fcvt",
 ]
