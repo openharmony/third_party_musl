@@ -1647,9 +1647,12 @@ static Sym *adlt_find_sym(struct dso *dso, struct verinfo *verinfo,
 			break;
 	}
 	/* There is a convention between the ADLT feature and the compiler that confilict
-		symbols are not allowed in a merged so during runtime.
+		symbols are not allowed in a merged so during runtime(except __emutls_get_address, for version compatibility).
 	   This constraint is also checked and reported by the compiler.
 	*/
+	if (__predict_false(verinfo->s != NULL && strcmp(verinfo->s, "__emutls_get_address") == 0)) {
+		return adlt_lookup_unique_sym(dso, verinfo);
+	}
 	return NULL;
 }
 
