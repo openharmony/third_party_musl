@@ -542,7 +542,7 @@ GWP_ASAN_NO_ADDRESS static bool get_pthread_stack_bounds(size_t *stack_start, si
     if (size == 0) {
         size = GWP_ASAN_MAIN_STACK_FALLBACK_SIZE;
     }
-    if (__pthread_self()->stack == NULL || size == 0 || end < size) {
+    if (__pthread_self()->stack == NULL || end < size) {
         return false;
     }
 
