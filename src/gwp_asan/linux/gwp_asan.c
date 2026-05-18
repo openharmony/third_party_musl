@@ -16,7 +16,6 @@
 #ifdef USE_GWP_ASAN
 #define _GNU_SOURCE
 
-#include <dlfcn.h>
 #include <fcntl.h>
 #include <stdint.h>
 #include <unistd.h>
