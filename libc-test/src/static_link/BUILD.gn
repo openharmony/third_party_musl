@@ -18,7 +18,10 @@ ohos_executable("static_link_test") {
   subsystem_name = "musl"
   part_name = "libc-test"
   include_dirs = []
+  default_deps_musl = false
 
   sources = [ "link_libc_a_test.c" ]
   configs = [ "//third_party/musl/libc-test/src/common:config_runtest" ]
+
+  deps = [ "//third_party/musl:soft_libc_musl_static" ]
 }
