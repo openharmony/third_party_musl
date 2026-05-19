@@ -21,10 +21,33 @@ foreach(s, functionalext_time_test) {
   }
 }
 
+ohos_executable("mktime_noenv") {
+  subsystem_name = "musl"
+  part_name = "libc-test"
+
+  sources = [ "mktime_noenv.c" ]
+
+  include_dirs = [
+    "//third_party/musl/libc-test/src/common",
+    "//third_party/musl/libc-test/src/functionalext/common",
+    "//third_party/musl/porting/linux/user/src",
+    "//third_party/musl/porting/linux/user/include",
+    "//third_party/musl/libc-test/src/functionalext/hilog",
+  ]
+
+  configs = [ "//third_party/musl/libc-test/src/common:config_runtest" ]
+
+  defines = [ "OHOS_ENABLE_PARAMETER" ]
+
+  deps = [ "//third_party/musl:create_porting_src" ]
+  external_deps = [ "init:parameterbase" ]
+}
+
 group("functionalext_time_test") {
   testonly = true
   deps = []
   foreach(s, functionalext_time_test) {
     deps += [ ":${s}" ]
   }
+  deps += [ ":mktime_noenv" ]
 }
