@@ -25,6 +25,8 @@ ohos_executable("mktime_noenv") {
   subsystem_name = "musl"
   part_name = "libc-test"
 
+  testonly=true
+
   sources = [ "mktime_noenv.c" ]
 
   include_dirs = [
