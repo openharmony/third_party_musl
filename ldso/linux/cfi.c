@@ -272,10 +272,10 @@ static inline void cfi_slowpath_common(
         LD_LOGW("[CFI] Invalid shadow value of address:%{public}p, lr:%{public}p.\n",
                 func_ptr, __builtin_return_address(0));
 
-        dso = (struct dso *)addr2dso((size_t)__builtin_return_address(0));
+        dso = (struct dso *)addr2dso((size_t)func_ptr);
         if (dso == NULL) {
             LD_LOGE("[CFI] [%{public}s] can not find matched dso of %{public}p !\n",
-                    __FUNCTION__, __builtin_return_address(0));
+                    __FUNCTION__, func_ptr);
             __builtin_trap();
         }
         LD_LOGD("[CFI] [%{public}s] dso name[%{public}s]!\n", __FUNCTION__, dso->name);
