@@ -87,6 +87,7 @@
 
 int main(void)
 {
+    /* Expected output: no output. */
     int fd = __open_2("/dev/null", O_RDONLY);
     if (fd < 0) {
         perror("__open_2");

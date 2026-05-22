@@ -78,6 +78,11 @@
 
 int main(void)
 {
+    /*
+     * Expected output:
+     * word index for fd 0: 0
+     * word index for fd 1023: (FD_SETSIZE - 1) / NFDBITS
+     */
     long int first = __fdelt_chk(0);
     long int last = __fdelt_chk(FD_SETSIZE - 1);
 
