@@ -70,9 +70,19 @@ int main(void)
 {
     wchar_t *end = NULL;
     locale_t loc = newlocale(LC_ALL_MASK, "C", NULL);
+    
+    /* Check if newlocale succeeded. */
+    if (loc == NULL) {
+        wprintf(L"Failed to create locale\n");
+        return 1;
+    }
+
     long double value = wcstold_l(L"12.5tail", &end, loc);
 
+    /* Expected output: value=12.500000 rest=tail. */
     wprintf(L"value=%Lf rest=%ls\n", value, end);
+
+    /* Free the locale. */
     freelocale(loc);
     return 0;
 }

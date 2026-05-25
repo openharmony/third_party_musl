@@ -74,15 +74,19 @@ struct sort_ctx {
 
 static int compare_ints(const void *left, const void *right, void *arg)
 {
-    const int *lhs = left;
-    const int *rhs = right;
-    const struct sort_ctx *ctx = arg;
+    const int *lhs = (const int *)left;
+    const int *rhs = (const int *)right;
+    const struct sort_ctx *ctx = (const struct sort_ctx *)arg;
     int ret = (*lhs > *rhs) - (*lhs < *rhs);
     return ctx->descending ? -ret : ret;
 }
 
 int main(void)
 {
+    /*
+     * Expected output:
+     * 11 9 7 3 2
+     */
     int values[] = {9, 2, 7, 11, 3};
     struct sort_ctx ctx = { .descending = 1 };
     size_t i;

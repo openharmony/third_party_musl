@@ -86,20 +86,19 @@
 #include <stdio.h>
 #include <string.h>
 
-static void dump_bytes(const unsigned char *buf, size_t len)
-{
-    for (size_t i = 0; i < len; ++i) {
-        printf("%u ", buf[i]);
-    }
-    printf("\n");
-}
-
 int main(void)
 {
+    /*
+     * Expected output:
+     * 0 0 0 0 5 6 7 8
+     */
     unsigned char secret[8] = {1, 2, 3, 4, 5, 6, 7, 8};
 
     __explicit_bzero_chk(secret, 4, sizeof(secret));
-    dump_bytes(secret, sizeof(secret));
+    for (size_t i = 0; i < sizeof(secret); ++i) {
+        printf("%u ", secret[i]);
+    }
+    printf("\n");
 
     /*
      * Invalid usage.
