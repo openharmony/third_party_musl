@@ -7,7 +7,6 @@ qsort_r - sort an array with a user-supplied comparator context.
 #### **SYNOPSIS**
 
 ```c
-#define _GNU_SOURCE
 #include <stdlib.h>
 
 void qsort_r(void *base, size_t nel, size_t width,
