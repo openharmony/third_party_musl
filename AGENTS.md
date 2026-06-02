@@ -22,8 +22,6 @@
 
 高频修改路径：`src/malloc/`、`src/string/`、`src/stdio/`、`include/`、`ldso/linux/`
 
-子级规则：`ldso/linux/README.md` 描述 namespace 机制，修改 namespace 前必读。
-
 ## 2. 知识路由
 
 | 关键词 | 知识文件 |
@@ -69,7 +67,16 @@
 ./build.sh --product-name rk3568 --build-target libctest
 ```
 
-### 验证基本要求
+### 单点功能验证
+
+编译产物为可执行二进制，直接推送至设备运行：
+
+1. 在 `libc-test/src/` 对应目录下编写测试用例
+2. 在对应 `.gni` 文件中注册测试目标
+3. 构建单个测试目标，生成可执行二进制
+4. 推送至设备直接执行 `./<test_name>`
+
+### 代码上库验证要求
 
 | 验证项 | 说明 | 触发条件 |
 |---|---|---|
