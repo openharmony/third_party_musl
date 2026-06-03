@@ -181,6 +181,16 @@ if (is_lite_system && current_os == "ohos") {
         "crt/crti.c",
         "crt/crtn.c",
       ]
+    } else if (musl_arch == "riscv32") {
+      src_files += [
+        "crt/crti.c",
+        "crt/crtn.c",
+      ]
+    } else if (musl_arch == "cortex_m") {
+      src_files += [
+        "crt/crti.c",
+        "crt/crtn.c",
+      ]
     } else {
       src_files += [
         "crt/${musl_arch}/crti.s",
@@ -234,9 +244,12 @@ if (is_lite_system && current_os == "ohos") {
     sources = [ "${target_out_dir}/${musl_ported_dir}/tools/mkalltypes.sed" ]
     sources += [
       "${target_out_dir}/${musl_ported_dir}/arch/${musl_arch}/bits/alltypes.h.in",
-      "${target_out_dir}/${musl_ported_dir}/include/alltypes.h.in",
     ]
-
+    if ((musl_arch != "riscv32") && (musl_arch != "cortex_m")) {
+      sources += [
+        "${target_out_dir}/${musl_ported_dir}/include/alltypes.h.in",
+      ]
+    }
     args = [ "-o" ] + rebase_path(outputs, root_build_dir)
     args += rebase_path(sources, root_build_dir)
 
@@ -294,7 +307,7 @@ if (is_lite_system && current_os == "ohos") {
     deps = [ ":generate_uapi_h" ]
   }
 
-  # Generate a list of files in ${musl_uapi_dir}/scsi) dir
+  # Generate a list of files in ${musl_uapi_dir}/scsi dir
   action("generate_and_copy_scsi_files") {
     script = "scripts/generate_scsi_copy_targets.py"
     args = [ 
