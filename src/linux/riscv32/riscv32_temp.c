@@ -15,54 +15,67 @@
 /*
  * For riscv32 lite ndk link function
  */
- void update_register_count(void){}
+#include <stddef.h>
+#include <features.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
 
-void ___errno_location(void){}
+int *__errno_location(void)
+{
+    return NULL;
+}
+weak_alias(__errno_location, ___errno_location);
 
-void *__libc_calloc(void){}
+void __tl_lock(void)
+{
+}
 
-void *__dl_vseterr(void){}
+void __tl_unlock(void)
+{
+}
 
-void __tl_lock(void){}
+int __membarrier(int cmd, int flags)
+{
+    return 0;
+}
 
-void get_tl_lock_caller_count(void){}
+void __getopt_msg(const char *a, const char *b, const char *c, size_t l)
+{
+}
 
-void __membarrier(void){}
-void __tl_unlock(void){}
-void setDlcloseLockStatus(void){}
-void setDlcloseLockLastExitTid(void){}
-void pthread_reserve_signal_stack(void){}
-void __dl_seterr(void){}
-void __synccall(void){}
-void __getopt_msg(void){}
-void __lockfile(void){}
-void __unlockfile(void){}
-void __res_msend(void){}
-void res_msend_rc_ext(void){}
-void __register_locked_file(void){}
-void __randname(void){}
-void __private_cond_signal(void){}
-void __pthread_cond_timedwait(void){}
-void __pthread_mutex_timedlock(void){}
-void __pthread_mutex_trylock(void){}
-void __pthread_mutex_unlock(void){}
-void __pthread_create(void){}
+int __lockfile(FILE *f)
+{
+    return 0;
+}
 
-void __pthread_exit(void){}
-void __pthread_join(void){}
-void __pthread_key_create(void){}
-void __pthread_key_delete(void){}
-void __asctime_r(void){}
-void get_tl_lock_count(void){}
-void get_tl_lock_waiters(void){}
-void get_tl_lock_tid_fail(void){}
-void get_tl_lock_count_tid(void){}
-void get_tl_lock_count_fail(void){}
-void get_tl_lock_count_tid_sub(void){}
-void get_thread_list_lock_after_lock(void){}
-void get_thread_list_lock_pre_unlock(void){}
-void get_thread_list_lock_pthread_exit(void){}
-void get_thread_list_lock_tid_overlimit(void){}
-void get_register_count(void){}
-void getDlcloseLockStatus(void){}
-void getDlcloseLockLastExitTid(void){}
+void __unlockfile(FILE *f)
+{
+}
+
+char *__randname(char *template)
+{
+    return NULL;
+}
+
+char *__asctime_r(const struct tm *restrict tm, char *restrict buf)
+{
+    return NULL;
+}
+
+void __dl_seterr(const char *fmt, ...)
+{
+}
+
+int __dl_invalid_handle(void *h)
+{
+    return 0;
+}
+
+void __dl_vseterr(const char *fmt, va_list ap)
+{
+}
+
+void __vdsosym(const char *vername, const char *name)
+{
+}

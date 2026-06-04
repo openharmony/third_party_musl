@@ -24,9 +24,21 @@
 #define F_SETFD  2
 #define F_GETFL  3
 #define F_SETFL  4
-#define F_GETLK  5
-#define F_SETLK  6
+#if defined(__LITEOS__)
+#define F_GETLK 5
+#define F_SETLK 6
 #define F_SETLKW 7
+#else
+#if __LONG_MAX == 0x7fffffffL
+#define F_GETLK 12
+#define F_SETLK 13
+#define F_SETLKW 14
+#else
+#define F_GETLK 5
+#define F_SETLK 6
+#define F_SETLKW 7
+#endif
+#endif
 #define F_SETOWN 8
 #define F_GETOWN 9
 #define F_SETSIG 10

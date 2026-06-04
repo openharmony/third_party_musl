@@ -514,7 +514,9 @@ int getaddrinfo_ext(const char *restrict host, const char *restrict serv, const 
 #if OHOS_DNS_PROXY_BY_NETSYS
 			if (nodata.v6_nodata == 1) {
 				dns_set_nodata_to_netsys_cache(netid, host);
+#ifndef __LITEOS__
 				MUSL_LOGW("%{public}s: %{public}d: naddrs < 0 response NODATA", __func__, __LINE__);
+#endif
 			}
 #endif
             naddrs = revert_dns_fail_cause(naddrs);
@@ -544,7 +546,9 @@ int getaddrinfo_ext(const char *restrict host, const char *restrict serv, const 
         pthread_mutex_unlock(&shared_res->mutex);
     } else {
         // other threads wait for the result
+#ifndef __LITEOS__
 		MUSL_LOGW("wait shared result");
+#endif
         pthread_mutex_lock(&shared_res->mutex);
 		while (shared_res->is_done == 0) {
 			pthread_cond_wait(&shared_res->cond, &shared_res->mutex);
@@ -630,7 +634,9 @@ int getaddrinfo_ext(const char *restrict host, const char *restrict serv, const 
 	}
 	if (nodata.v6_nodata == 1) {
 		dns_set_nodata_to_netsys_cache(netid, host);
+#ifndef __LITEOS__
 		MUSL_LOGW("%{public}s: %{public}d: response NODATA ", __func__, __LINE__);
+#endif
 	}
 #endif
 	free(ans);

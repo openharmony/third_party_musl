@@ -73,9 +73,10 @@ if (is_lite_system && current_os == "ohos") {
         ":ld-musl-namespace-${musl_arch}.ini",
       ]
       if (musl_arch == "aarch64") {
-        deps += [ ":ld-musl-namespace-${musl_arch}-flex.ini",
-                  ":ld-musl-namespace-${musl_arch}-New.ini",
-                  ":musl_init.cfg",
+        deps += [
+          ":ld-musl-namespace-${musl_arch}-New.ini",
+          ":ld-musl-namespace-${musl_arch}-flex.ini",
+          ":musl_init.cfg",
         ]
       }
     }
@@ -171,8 +172,8 @@ if (is_lite_system && current_os == "ohos") {
       "scripts/create_vesion.sh",
       "scripts/create_syscall.sh",
     ]
-    if ((musl_arch == "riscv64") || (musl_arch == "loongarch64") ||
-        (musl_arch == "riscv32") || (musl_arch == "cortex_m")) {
+    if (musl_arch == "riscv64" || musl_arch == "loongarch64" ||
+        musl_arch == "riscv32" || musl_arch == "cortex_m") {
       src_files += [
         "crt/crti.c",
         "crt/crtn.c",
@@ -184,9 +185,7 @@ if (is_lite_system && current_os == "ohos") {
       ]
     }
     if (musl_arch == "cortex_m") {
-      src_files += [
-        "crt/cortex_m/crtplus.c",
-      ]
+      src_files += [ "crt/cortex_m/crtplus.c" ]
     }
 
     args = [ "-i" ] + rebase_path(sources_dir)
@@ -235,13 +234,10 @@ if (is_lite_system && current_os == "ohos") {
     outputs = [ "${target_out_dir}/${musl_inc_out_dir}/bits/alltypes.h" ]
 
     sources = [ "${target_out_dir}/${musl_ported_dir}/tools/mkalltypes.sed" ]
-    sources += [
-      "${target_out_dir}/${musl_ported_dir}/arch/${musl_arch}/bits/alltypes.h.in",
-    ]
-    if ((musl_arch != "riscv32") && (musl_arch != "cortex_m")) {
-      sources += [
-        "${target_out_dir}/${musl_ported_dir}/include/alltypes.h.in",
-      ]
+    sources += [ "${target_out_dir}/${musl_ported_dir}/arch/${musl_arch}/bits/alltypes.h.in" ]
+    if (musl_arch != "riscv32" && musl_arch != "cortex_m") {
+      sources +=
+          [ "${target_out_dir}/${musl_ported_dir}/include/alltypes.h.in" ]
     }
     args = [ "-o" ] + rebase_path(outputs, root_build_dir)
     args += rebase_path(sources, root_build_dir)
@@ -287,7 +283,8 @@ if (is_lite_system && current_os == "ohos") {
       rebase_path(musl_uapi_dir),
       "--musl-linux-kernel-dir",
       rebase_path(musl_linux_kernel_dir),
-      "--target-cpu", target_cpu,
+      "--target-cpu",
+      target_cpu,
       "--uapi-file-list",
       rebase_path("${target_gen_dir}/uapi_files.stamp"),
       "--output-uapi",
@@ -303,7 +300,7 @@ if (is_lite_system && current_os == "ohos") {
   # Generate a list of files in ${musl_uapi_dir}/scsi dir
   action("generate_and_copy_scsi_files") {
     script = "scripts/generate_scsi_copy_targets.py"
-    args = [ 
+    args = [
       "--src-dir",
       rebase_path("${musl_uapi_dir}/scsi"),
       "--out-dir",
@@ -311,6 +308,7 @@ if (is_lite_system && current_os == "ohos") {
       "--stamp-file",
       rebase_path("${target_gen_dir}/scsi_copy.stamp"),
     ]
+
     # Use stamp file to mark completion
     outputs = [ "${target_gen_dir}/scsi_copy.stamp" ]
   }
