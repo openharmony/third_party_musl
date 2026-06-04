@@ -171,22 +171,8 @@ if (is_lite_system && current_os == "ohos") {
       "scripts/create_vesion.sh",
       "scripts/create_syscall.sh",
     ]
-    if (musl_arch == "riscv64") {
-      src_files += [
-        "crt/crti.c",
-        "crt/crtn.c",
-      ]
-    } else if (musl_arch == "loongarch64") {
-      src_files += [
-        "crt/crti.c",
-        "crt/crtn.c",
-      ]
-    } else if (musl_arch == "riscv32") {
-      src_files += [
-        "crt/crti.c",
-        "crt/crtn.c",
-      ]
-    } else if (musl_arch == "cortex_m") {
+    if ((musl_arch == "riscv64") || (musl_arch == "loongarch64") ||
+        (musl_arch == "riscv32") || (musl_arch == "cortex_m")) {
       src_files += [
         "crt/crti.c",
         "crt/crtn.c",
@@ -197,11 +183,18 @@ if (is_lite_system && current_os == "ohos") {
         "crt/${musl_arch}/crtn.s",
       ]
     }
+    if (musl_arch == "cortex_m") {
+      src_files += [
+        "crt/cortex_m/crtplus.c",
+      ]
+    }
 
     args = [ "-i" ] + rebase_path(sources_dir)
     args += [ "-o" ] + rebase_path(outdir)
     args += [ "-p" ] + [ "${musl_target_os}" ]
-
+    if (musl_arch == "cortex_m") {
+      args += [ "-a" ] + [ "${musl_arch}" ]
+    }
     foreach(i, src_files) {
       foreach(s, musl_src_files_ext) {
         if (i == s) {

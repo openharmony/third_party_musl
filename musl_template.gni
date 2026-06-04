@@ -373,6 +373,7 @@ template("static_and_shared_libs_template") {
     if (musl_arch == "x86_64") {
       defines += [ "MUSL_X86_64_ARCH" ]
     }
+    # For lite ndk compile, syscall.h will generate error if not define __LITEOS__
     if ((musl_arch == "riscv32") || (musl_arch == "cortex_m")) {
       defines += [ "__LITEOS__" ]
     }
@@ -579,12 +580,8 @@ template("musl_libs") {
       ":soft_create_linker",
       ":soft_libc_musl_shared",
       ":soft_libc_musl_static",
+      ":soft_musl_crt_libs",
     ]
-    if ((musl_arch != "riscv32") && (musl_arch != "cortex_m")) {
-      deps += [
-        ":soft_musl_crt_libs",
-      ]
-    }
     if (musl_arch == "aarch64") {
       deps += [
         ":soft_create_linker_sp",
@@ -606,12 +603,8 @@ template("musl_libs") {
       ":soft_librt",
       ":soft_libutil",
       ":soft_libxnet",
+      ":soft_musl_crt_libs",
     ]
-    if ((musl_arch != "riscv32") && (musl_arch != "cortex_m")) {
-      deps += [
-        ":soft_musl_crt_libs",
-      ]
-    }
     if (musl_arch == "aarch64") {
       deps += [
         ":soft_libc_musl_shared_sp",
@@ -631,12 +624,8 @@ template("musl_libs") {
       ":soft_librt",
       ":soft_libutil",
       ":soft_libxnet",
+      ":soft_musl_crt_libs",
     ]
-    if ((musl_arch != "riscv32") && (musl_arch != "cortex_m")) {
-      deps += [
-        ":soft_musl_crt_libs",
-      ]
-    }
     if (musl_arch == "aarch64") {
       deps += [
         ":soft_libc_musl_shared_sp",
@@ -656,12 +645,8 @@ template("musl_libs") {
       ":soft_librt",
       ":soft_libutil",
       ":soft_libxnet",
+      ":soft_musl_crt_libs",
     ]
-    if ((musl_arch != "riscv32") && (musl_arch != "cortex_m")) {
-      deps += [
-        ":soft_musl_crt_libs",
-      ]
-    }
   }
 
   group("soft_musl_crt_libs") {
@@ -675,35 +660,23 @@ template("musl_libs") {
       "${target_out_dir}/${musl_ported_dir}/crt/crtplus.c",
       "${target_out_dir}/${musl_ported_dir}/crt/rcrt1.c",
     ]
-    if (musl_arch == "riscv64") {
+    if ((musl_arch == "riscv64") || (musl_arch == "loongarch64") ||
+        (musl_arch == "riscv32") || (musl_arch == "cortex_m")) {
       sources += [
         "${target_out_dir}/${musl_ported_dir}/crt/crti.c",
         "${target_out_dir}/${musl_ported_dir}/crt/crtn.c",
-      ]
-    } else if (musl_arch == "loongarch64") {
-      sources += [
-        "${target_out_dir}/${musl_ported_dir}/crt/crti.c",
-        "${target_out_dir}/${musl_ported_dir}/crt/crtn.c",
-      ]
-    } else if (musl_arch == "riscv32") {
-      sources += [
-        "${target_out_dir}/${musl_ported_dir}/crt/crti.c",
-        "${target_out_dir}/${musl_ported_dir}/crt/crtn.c",
-      ]
-    } else if (musl_arch == "cortex_m") {
-      sources += [
-        "${target_out_dir}/${musl_ported_dir}/crt/crti.c",
-        "${target_out_dir}/${musl_ported_dir}/crt/crtn.c",
-      ]
-      sources -= [
-        "${target_out_dir}/${musl_ported_dir}/crt/Scrt1.c",
-        "${target_out_dir}/${musl_ported_dir}/crt/crt1.c",
-        "${target_out_dir}/${musl_ported_dir}/crt/rcrt1.c",
       ]
     } else {
       sources += [
         "${target_out_dir}/${musl_ported_dir}/crt/${musl_arch}/crti.s",
         "${target_out_dir}/${musl_ported_dir}/crt/${musl_arch}/crtn.s",
+      ]
+    }
+    if (musl_arch == "cortex_m") {
+      sources -= [
+        "${target_out_dir}/${musl_ported_dir}/crt/Scrt1.c",
+        "${target_out_dir}/${musl_ported_dir}/crt/crt1.c",
+        "${target_out_dir}/${musl_ported_dir}/crt/rcrt1.c",
       ]
     }
 
@@ -1353,35 +1326,23 @@ template("musl_libs") {
       "${redir}/${target_out_dir}/${musl_ported_dir}/crt/soft_musl_crt/rcrt1.o",
     ]
 
-    if (musl_arch == "riscv64") {
+    if ((musl_arch == "riscv64") || (musl_arch == "loongarch64") ||
+        (musl_arch == "riscv32") || (musl_arch == "cortex_m")) {
       sources += [
         "${redir}/${target_out_dir}/${musl_ported_dir}/crt/soft_musl_crt/crti.o",
         "${redir}/${target_out_dir}/${musl_ported_dir}/crt/soft_musl_crt/crtn.o",
-      ]
-    } else if (musl_arch == "loongarch64") {
-      sources += [
-        "${redir}/${target_out_dir}/${musl_ported_dir}/crt/soft_musl_crt/crti.o",
-        "${redir}/${target_out_dir}/${musl_ported_dir}/crt/soft_musl_crt/crtn.o",
-      ]
-    } else if (musl_arch == "riscv32") {
-      sources += [
-        "${redir}/${target_out_dir}/${musl_ported_dir}/crt/soft_musl_crt/crti.o",
-        "${redir}/${target_out_dir}/${musl_ported_dir}/crt/soft_musl_crt/crtn.o",
-      ]
-    } else if (musl_arch == "cortex_m") {
-      sources += [
-        "${redir}/${target_out_dir}/${musl_ported_dir}/crt/soft_musl_crt/crti.o",
-        "${redir}/${target_out_dir}/${musl_ported_dir}/crt/soft_musl_crt/crtn.o",
-      ]
-      sources -= [
-        "${redir}/${target_out_dir}/${musl_ported_dir}/crt/soft_musl_crt/Scrt1.o",
-        "${redir}/${target_out_dir}/${musl_ported_dir}/crt/soft_musl_crt/crt1.o",
-        "${redir}/${target_out_dir}/${musl_ported_dir}/crt/soft_musl_crt/rcrt1.o",
       ]
     } else {
       sources += [
         "${redir}/${target_out_dir}/${musl_ported_dir}/crt/${musl_arch}/soft_musl_crt/crti.o",
         "${redir}/${target_out_dir}/${musl_ported_dir}/crt/${musl_arch}/soft_musl_crt/crtn.o",
+      ]
+    }
+    if (musl_arch == "cortex_m") {
+      sources -= [
+        "${redir}/${target_out_dir}/${musl_ported_dir}/crt/soft_musl_crt/Scrt1.o",
+        "${redir}/${target_out_dir}/${musl_ported_dir}/crt/soft_musl_crt/crt1.o",
+        "${redir}/${target_out_dir}/${musl_ported_dir}/crt/soft_musl_crt/rcrt1.o",
       ]
     }
 

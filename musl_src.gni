@@ -1999,12 +1999,12 @@ if (musl_arch == "arm") {
       "src/sigchain/sigchain.c",
     ]
     musl_src_file += [
-      "src/cortex_m_temp.c",
+      "src/linux/cortex_m/cortex_m_temp.c",
     ]
   }
   if (musl_arch == "riscv32") {
     musl_src_file += [
-      "src/riscv32_temp.c",
+      "src/linux/riscv32/riscv32_temp.c",
     ]
   }
 }
@@ -2248,28 +2248,25 @@ if (musl_arch == "arm") {
   ]
 } else if ((musl_arch == "riscv32") || (musl_arch == "cortex_m")) {
   musl_inc_bits_files = [
-    "arch/riscv32/bits/posix.h",
-    "arch/riscv32/bits/signal.h",
-    "arch/riscv32/bits/pthread_adapt.h",
-    "arch/riscv32/bits/fcntl.h",
+    "arch/$musl_arch/bits/fcntl.h",
+    "arch/$musl_arch/bits/fenv.h",
+    "arch/$musl_arch/bits/float.h",
+    "arch/$musl_arch/bits/ipcstat.h",
+    "arch/$musl_arch/bits/msg.h",
+    "arch/$musl_arch/bits/posix.h",
+    "arch/$musl_arch/bits/pthread_adapt.h",
+    "arch/$musl_arch/bits/reg.h",
+    "arch/$musl_arch/bits/sem.h",
+    "arch/$musl_arch/bits/setjmp.h",
+    "arch/$musl_arch/bits/shm.h",
+    "arch/$musl_arch/bits/signal.h",
+    "arch/$musl_arch/bits/stat.h",
+    "arch/$musl_arch/bits/stdint.h",
+    "arch/$musl_arch/bits/user.h",
 
-    "arch/arm/bits/fenv.h",
-    "arch/arm/bits/float.h",
-    "arch/arm/bits/hwcap.h",
-    "arch/arm/bits/ioctl_fix.h",
-    "arch/arm/bits/ipcstat.h",
-    "arch/arm/bits/msg.h",
-
-    "arch/arm/bits/ptrace.h",
-    "arch/arm/bits/reg.h",
-    "arch/arm/bits/sem.h",
-    "arch/arm/bits/setjmp.h",
-    "arch/arm/bits/shm.h",
-
-    "arch/arm/bits/stat.h",
-    "arch/arm/bits/stdint.h",
-    "arch/arm/bits/user.h",
-
+    "arch/generic/bits/hwcap.h",
+    "arch/generic/bits/ioctl_fix.h",
+    "arch/generic/bits/ptrace.h",
     "arch/generic/bits/dirent.h",
     "arch/generic/bits/errno.h",
     "arch/generic/bits/ioctl.h",

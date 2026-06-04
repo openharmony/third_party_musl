@@ -12,7 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef __LITEOS__
+
 __attribute__((weak, visibility("hidden")))
 void __emutls_unregister_key(void)
 {
@@ -23,4 +23,3 @@ static void __on_dlclose_late(void)
 {
     __emutls_unregister_key();
 }
-#endif
