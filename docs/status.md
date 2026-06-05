@@ -8,6 +8,22 @@ https://gitcode.com/openharmony/third_party_musl/blob/master/libc.map.txt
 https://gitcode.com/openharmony/interface_sdk_c/blob/master/third_party/musl/ndk_script/adapter/libc.ndk.json
 
 ## 系统侧libc新的变化
+2026/5/14 <wchar.h>
+- 新增`wcstof_l`: 将宽字符字符串转换为float类型数值，当前locale参数仅用于兼容并不参与解析
+- 新增`wcstold_l`: 将宽字符字符串转换为long double类型数值，当前locale参数仅用于兼容并不参与解析
+
+2026/5/14 <stdlib.h>
+- 新增`qsort_r`: 带用户自定义上下文参数的数组排序函数，提供可重入的qsort接口
+
+2026/5/8 <fcntl.h>
+- 新增`__open_2`: open函数双参数形式的fortify检查辅助接口，用于在缺少mode参数时拦截O_CREAT或O_TMPFILE等非法调用
+
+2026/5/8 <string.h>
+- 新增`__explicit_bzero_chk`: 带目标缓冲区大小检查的显式清零接口，用于防止清零长度超过目标对象大小
+
+2026/5/8 <sys/select.h>
+- 新增`__fdelt_chk`: 检查文件描述符是否处于fd_set有效范围内，并返回该描述符在fd_set内部fds_bits数组中的元素下标
+
 2026/1/7 <math.h>  
 新增以下接口专为musl_extended_function为true设计使用：
 - 新增`__acosf_finite`: 计算有限单精度浮点数值的反余弦函数值
