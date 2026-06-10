@@ -58,9 +58,9 @@ build_ext_component("build_sysroot") {
       command += " BUILD_DEBUG=true"
     }
     if (ohos_kernel_type == "linux") {
-      command += " LINUXDIR=" + rebase_path("$root_out_dir/kernel/linux-4.19")
+      command += " LINUXDIR=" + rebase_path("$root_out_dir/kernel/linux-6.6")
       command += " PREBUILTLINUXHDRDIR=" + rebase_path(
-                     "//kernel/linux/patches/linux-4.19/prebuilts/usr/include")
+                     "//kernel/linux/patches/linux-6.6/prebuilts/usr/include")
     }
   } else {
     command = "true"
@@ -115,9 +115,9 @@ build_ext_component("build_sysroot_header") {
     }
     if (ohos_kernel_type == "linux") {
       deps += [ "//kernel/linux/build:linux_kernel" ]
-      command += " LINUXDIR=" + rebase_path("$root_out_dir/kernel/linux-4.19")
+      command += " LINUXDIR=" + rebase_path("$root_out_dir/kernel/linux-6.6")
       command += " PREBUILTLINUXHDRDIR=" + rebase_path(
-                     "//kernel/linux/patches/linux-4.19/prebuilts/usr/include")
+                     "//kernel/linux/patches/linux-6.6/prebuilts/usr/include")
     }
   } else {
     command = "true"
