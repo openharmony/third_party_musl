@@ -18,6 +18,8 @@ declare_args() {
     musl_arch = "riscv32"
   } else if (current_cpu == "loongarch64") {
     musl_arch = "loongarch64"
+  } else if (current_cpu == "cortex_m") {
+    musl_arch = "cortex_m"
   }
   # musl_root = "$root_out_dir/obj/third_party/musl"
   # musl_sub_arch = ""
@@ -31,6 +33,8 @@ declare_args() {
     musl_target_os = "linux"
     if (musl_arch == "mips") {
       musl_target_triple = "mipsel-linux-ohos"
+    } else if (musl_arch == "cortex_m") {
+      musl_target_triple = "arm-liteos-ohos"
     } else {
       musl_target_triple = "${musl_arch}-linux-ohos"
     }
@@ -56,6 +60,7 @@ declare_args() {
   if (!is_llvm_build && current_cpu == "arm64") {
     musl_use_gwp_asan = true
   }
+
   # Macro for Mutex Lock Performance Optimization
   musl_use_mutex_wait_opt = false
   musl_use_malloc_opt = false

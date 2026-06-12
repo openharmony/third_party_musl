@@ -1,8 +1,9 @@
 SRC_DIR=
 DST_DIR=
 PORTING=
+ARCH=
 
-while getopts "i:o:p:h" arg
+while getopts "i:o:p:a:h" arg
 do 
     case "${arg}" in
         "i")
@@ -12,15 +13,18 @@ do
             DST_DIR=${OPTARG}
 	    ;;
         "p")
-	    PORTING=${OPTARG}
-	    ;;
+            PORTING=${OPTARG}
+        ;;
+        "a")
+            ARCH=${OPTARG}
+        ;;
         "h")
-	    echo "help"
-	    ;;
-	?)
-	    echo "unkonw argument"
-	    exit 1
-	    ;;
+            echo "help"
+        ;;
+        ?)
+            echo "unkonw argument"
+            exit 1
+        ;;
     esac
 done
 
@@ -31,6 +35,9 @@ cp -rfp ${SRC_DIR}/* ${DST_DIR}
 cp -rfp ${SRC_DIR}/src/internal/linux/* ${DST_DIR}/src/internal
 cp -rfp ${SRC_DIR}/src/hook/linux/* ${DST_DIR}/src/hook
 cp -rfp ${SRC_DIR}/crt/linux/* ${DST_DIR}/crt
+if [ "${ARCH}" == "cortex_m" ]; then
+    cp -rfp ${SRC_DIR}/crt/cortex_m/crtplus.c ${DST_DIR}/crt/crtplus.c
+fi
 cp -rfp ${SRC_DIR}/src/linux/arm/linux/* ${DST_DIR}/src/linux/arm
 cp -rfp ${SRC_DIR}/src/linux/aarch64/linux/* ${DST_DIR}/src/linux/aarch64
 cp -rfp ${SRC_DIR}/src/linux/x86_64/linux/* ${DST_DIR}/src/linux/x86_64

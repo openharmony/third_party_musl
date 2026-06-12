@@ -426,7 +426,9 @@ static int name_from_dns(struct address buf[static MAXADDRS], char canon[static 
 				memcpy(&buf[validAddrCnt++].addr, localAddrBuf[j].addr, 4);
 			}
 			if (ipv4LocalAddrCnt > 0) {
+#ifndef __LITEOS__
 				MUSL_LOGW("dns ipv4 result: only local addr");
+#endif
 			}
 		}
 		ctx.cnt = validAddrCnt;
@@ -441,7 +443,9 @@ static int name_from_dns(struct address buf[static MAXADDRS], char canon[static 
 	free_dns_server_buf(dnsServerBuf);
 #if OHOS_DNS_PROXY_BY_NETSYS
 	if (validAddrCnt == 0 && invalidAddrCnt > 0) {
+#ifndef __LITEOS__
 		MUSL_LOGW("dns ipv4 result: all zero");
+#endif
 		return DNS_FAIL_REASON_SERVER_NO_RESULT;
 	}
 #endif
