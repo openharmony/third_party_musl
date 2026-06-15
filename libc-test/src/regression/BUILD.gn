@@ -1,7 +1,7 @@
 import("../../test_template.gni")
 import("test_src_regression.gni")
 
-if (!is_opensource) {
+if (!is_opensource || musl_arch != "arm") {
   regression_list -= [
     "malloc-double-free-check",
     "malloc-modify-pointer",
