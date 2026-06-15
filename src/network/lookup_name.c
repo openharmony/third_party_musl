@@ -305,8 +305,8 @@ static int name_from_dns(struct address buf[static MAXADDRS], char canon[static 
 	};
 	struct {int af; int rr;} *afrr = afrr_ipv6_enable;
 
-	/* Check if we should skip AAAA query based on nodata cache */
-	int skipAAAA = CheckAndSkipAAAAQuery(netid, name);
+	/* Check if we should skip AAAA query based on nodata cache or ipv6 uid black list*/
+	int skipAAAA = family == AF_UNSPEC ? CheckAndSkipAAAAQuery(netid, name) : 0;
 	if (((!IsIpv6Enable(netid) || (skipAAAA > 0)) && IsIpv4Enable(netid)) || (family == AF_INET)) {
 		if (family == AF_INET6) {
 #ifndef __LITEOS__
