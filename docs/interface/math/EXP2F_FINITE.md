@@ -1,19 +1,19 @@
-## __EXP2F_FINITE &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; OHOS Programmer's Manual
+## EXP2F_FINITE &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; OHOS Programmer's Manual
 
 
 #### **NAME**
 
-​       __exp2f_finite - Compute 2 raised to the power of finite single-precision input value.
+​       exp2f_finite - Compute 2 raised to the power of finite single-precision input value.
 
 #### **SYNOPSIS**
 
        #include <math.h>
 
-       float __exp2f_finite(float x);
+       float exp2f_finite(float x);
 
 #### **DESCRIPTION**
 
-​       The __exp2f_finite() function computes the value of 2 raised to the power of x (2^x) using single-precision floating-point arithmetic. This function is specifically designed to handle finite input values and provides optimized implementation for finite domain calculations with single-precision accuracy.
+​       The exp2f_finite() function computes the value of 2 raised to the power of x (2^x) using single-precision floating-point arithmetic. This function is specifically designed to handle finite input values and provides optimized implementation for finite domain calculations with single-precision accuracy.
 
 ​       This function returns the exponential value of 2 raised to the power of x. For finite input values, the result is well-defined and accurate.
 
@@ -35,7 +35,7 @@
 
 | Interface               | Attribute     | Value    |
 | ----------------------- | ------------- | -------- |
-|  __exp2f_finite() | Thread safety | MT-safe |
+|  exp2f_finite() | Thread safety | MT-safe |
 |                         | Signal safety | Not Safe     |
 
 #### HISTORY
@@ -59,12 +59,12 @@
 int main()
 {
     float x = 3.0f;
-    float result = __exp2f_finite(x);
-    printf("__exp2f_finite(%f) = %f\n", x, result);
+    float result = exp2f_finite(x);
+    printf("exp2f_finite(%f) = %f\n", x, result);
     
     x = -1.5f;
-    result = __exp2f_finite(x);
-    printf("__exp2f_finite(%f) = %f\n", x, result);
+    result = exp2f_finite(x);
+    printf("exp2f_finite(%f) = %f\n", x, result);
     
     return 0;
 }
