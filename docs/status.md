@@ -30,7 +30,7 @@ https://gitcode.com/openharmony/interface_sdk_c/blob/master/third_party/musl/ndk
 - 新增`__atan2_finite`: 计算有限数值的反正切函数atan2值
 - 新增`__exp_finite`: 计算有限数值的自然指数函数值
 - 新增`__exp2_finite`: 计算有限数值的以2为底的指数函数值
-- 新增`__exp2f_finite`: 计算有限单精度浮点数值的以2为底的指数函数值
+- 新增`exp2f_finite`: 计算有限单精度浮点数值的以2为底的指数函数值
 - 新增`__finite`: 判断一个浮点数是否为有限值，检查该数值是否既不是无穷大（inf）也不是NaN（非数字）
 - 新增`__finitef`: 判断一个单精度浮点数float 类型是否为有限值
 - 新增`__isinf`: 判断一个双精度浮点数是否为无穷大（正无穷或负无穷）
