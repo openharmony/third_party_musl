@@ -1498,8 +1498,10 @@ static inline struct symdef find_sym_by_saved_so_list(
 	// skip head dso.
 	int start_search_index = sym_type==REL_COPY ? 1 : 0;
 	struct dso *dso_searching = 0;
-	for (int i = start_search_index; i < dso_relocating->reloc_can_search_dso_count; i++) {
-		dso_searching = dso_relocating->reloc_can_search_dso_list[i];
+	size_t search_count = dso_relocating->reloc_can_search_dso_count;
+	struct dso **search_list = dso_relocating->reloc_can_search_dso_list;
+	for (int i = start_search_index; i < search_count; i++) {
+        dso_searching = search_list[i];
 		Sym *sym = NULL;
 		sym = __find_sym(dso_searching, verinfo, need_def, &def, &s_info_g, &s_info_s, ght, ghm, gho, gh);
 		if (sym) {
