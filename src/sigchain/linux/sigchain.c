@@ -369,7 +369,10 @@ static void sigchain_register(int signo)
 static void unregister_sigchain(int signo)
 {
     SIGCHAIN_PRINT_INFO("%{public}s signo: %{public}d", __func__, signo);
-    __libc_sigaction(signo, &sig_chains[signo - 1].sig_action, NULL);
+    int result = __libc_sigaction(signo, &sig_chains[signo - 1].sig_action, NULL);
+    if (result == -1) {
+        SIGCHAIN_PRINT_ERROR("unregister_sigchain __libc_sigaction result=%{public}d errno=%{public}d", result, errno);
+    }
     sig_chains[signo - 1].marked = false;
 }
 
