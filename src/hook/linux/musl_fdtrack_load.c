@@ -37,15 +37,6 @@ int FDTRACK_START_HOOK(int fd_value)
 
 __attribute__((constructor())) static void __musl_fdtrack_initialize()
 {
-	if (!check_beta_develop_before()) {
-		return;
-	}
-	void* shared_library_handle = NULL;
-	shared_library_handle = dlopen(__fdtrack_hook_shared_lib, RTLD_NOW | RTLD_LOCAL);
-	if (shared_library_handle == NULL) {
-		MUSL_LOGI("FdTrack, Unable to open shared library %s: %s.\n", __fdtrack_hook_shared_lib, dlerror());
-		return;
-	}
 }
 
 #endif
