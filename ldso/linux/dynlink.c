@@ -3419,6 +3419,7 @@ static void do_relr_relocs(struct dso *dso, size_t *relr, size_t relr_size, size
 		rel_addr = (size_t *)relocs->map;
 		for (; rel_cnt; --rel_cnt) {
 			if (has_relocation(dso, (size_t)(rel_addr[*rel_index]) - base)) {
+				rel_index++;
 				continue;
 			}
 			*(size_t *)(rel_addr[*rel_index++]) += base;
