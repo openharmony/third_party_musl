@@ -18,19 +18,11 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <sys/wait.h>
+#include "cfi.h"
 #include "functionalext.h"
 
 #define LIB_PATH "/data/tests/libc-test/src/libldso_cfi_test_lib.so"
 
-struct dso {
-    char *mock;
-    unsigned char *map;
-    size_t map_len;
-};
-
-extern int init_cfi_shadow(struct dso *dso_list, struct dso *ldso);
-extern int map_dso_to_cfi_shadow(struct dso *dso);
-extern void unmap_dso_from_cfi_shadow(struct dso *dso);
 extern void __cfi_slowpath(uint64_t CallSiteTypeId, void *Ptr);
 extern void __cfi_slowpath_diag(uint64_t CallSiteTypeId, void *Ptr, void *DiagData);
 
@@ -61,7 +53,7 @@ static void test_func() {}
 void cfi_init_test_0001(void)
 {
     printf("["__FILE__"][Line: %d][%s]: entry\n", __LINE__, __func__);
-    EXPECT_EQ("cfi_init_test_0001", init_cfi_shadow(NULL, NULL), 0);
+    EXPECT_EQ("cfi_init_test_0001", init_cfi_shadow(NULL, NULL, NULL, NULL), 0);
 }
 
 /**
@@ -342,7 +334,9 @@ void cfi_slowpath_diag_function_test_0001(void)
 void cfi_unmap_dso_from_cfi_shadow_001(void)
 {
     printf("["__FILE__"][Line: %d][%s]: entry\n", __LINE__, __func__);
-    struct dso test_dso = {};
+    struct dso test_dso = {0};
+    test_dso.name = "test_dso";
+    test_dso.adlt_ndso_index = -1;
     test_dso.map = 0;
     test_dso.map_len = 1;
     unmap_dso_from_cfi_shadow(&test_dso);
@@ -357,8 +351,10 @@ void cfi_unmap_dso_from_cfi_shadow_001(void)
 void cfi_unmap_dso_from_cfi_shadow_002(void)
 {
     printf("["__FILE__"][Line: %d][%s]: entry\n", __LINE__, __func__);
-    struct dso test_dso = {};
+    struct dso test_dso = {0};
     unsigned char a = 'S';
+    test_dso.name = "test_dso";
+    test_dso.adlt_ndso_index = -1;
     test_dso.map = &a;
     test_dso.map_len = 0;
     unmap_dso_from_cfi_shadow(&test_dso);

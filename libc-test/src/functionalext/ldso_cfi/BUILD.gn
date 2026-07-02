@@ -44,8 +44,10 @@ ohos_executable("ldso_cfi_check") {
   part_name = "libc-test"
   include_dirs = [
     "../common",
-    "//third_party/musl/porting/linux/user/include",
-    "//third_party/musl/porting/linux/user/ldso",
+    "//third_party/musl/src/include",
+    "//third_party/musl/include",
+    "//third_party/musl/src/internal",
+    "//third_party/musl/ldso/linux",
     "//third_party/musl/libc-test/src/common",
   ]
 
