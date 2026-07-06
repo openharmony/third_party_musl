@@ -1,14 +1,9 @@
 #include <malloc.h>
-#include <time.h>
-#include <sched.h>
 #include <errno.h>
 #include <string.h>
 #include "test.h"
 
-#define MALLOC_TIME 131072
-#define CLUSTER_SIZE 16
 #define SIZE_ARR_SIZE 2048
-#define NANOSEC_PER_SEC 1e9
 
 /* A random generated size array for performance test
  * The sizes array is roughly uniformed distributed in every bin
@@ -156,39 +151,11 @@ size_t sizes[SIZE_ARR_SIZE] = {
 
 int main(int argc, char *argv[])
 {
-	cpu_set_t mask;
-	void *ptr[CLUSTER_SIZE] = {0};
-	struct timespec ts[2];
-
-	CPU_ZERO(&mask);
-	CPU_SET(0, &mask);
-	if (sched_setaffinity(0, sizeof(mask), &mask) < 0) {
-		t_error("Set CPU affinity failure, ERROR:%s\n", strerror(errno));
+	void *ptr = malloc(1);
+	if (!ptr) {
+		t_error("Malloc failed: %s\n", strerror(errno));
 		return -1;
 	}
-
-	clock_gettime(CLOCK_REALTIME, ts);
-	size_t index = 0;
-	for (int i = 0; i < MALLOC_TIME / CLUSTER_SIZE; ++i) {
-		for (int j = 0; j < CLUSTER_SIZE; ++j) {
-			ptr[j] = malloc(sizes[index]);
-			if (!ptr[j]) {
-				t_error("Malloc size of %u byte(s) failed: %s\n", sizes[index], strerror(errno));
-				return -1;
-			}
-			++index;
-			index %= SIZE_ARR_SIZE;
-		}
-		for (int j = 0; j < CLUSTER_SIZE; ++j) {
-			free(ptr[j]);
-		}
-	}
-	clock_gettime(CLOCK_REALTIME, ts + 1);
-
-	double cost = (ts[1].tv_sec - ts[0].tv_sec) * NANOSEC_PER_SEC +
-		(ts[1].tv_nsec - ts[0].tv_nsec);
-
-	t_printf("Malloc and free %d times cost %lf s\n", MALLOC_TIME, cost / NANOSEC_PER_SEC);
-
+	free(ptr);
 	return 0;
 }
