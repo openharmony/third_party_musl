@@ -14,7 +14,7 @@
 
 #### **DESCRIPTION**
 
-​       This function return the natural logarithm of x.
+​       The __log_finite() function returns the natural logarithm of x.
 
 #### **RETURN VALUE**
 
@@ -31,16 +31,17 @@
 ​       If x is negative (including negative infinity), then a domain error occurs, and a NaN (not a number) is returned.
 
 #### **ERRORS**
+​       See math_errhandling for information on how to determine whether an error has occurred when calling this function.
 
 ​       The following errors can occur:
 
 ​       **Domain error**: x is negative
 
-​       errno is set to EDOM.  An invalid floating-point exception (FE_INVALID) is raised.
+​       An invalid floating-point exception (FE_INVALID) is raised. This implementation does not set errno for this case.
 
 ​       **Pole error**: x is zero
 
-​       errno is set to ERANGE.  A divide-by-zero floating-point exception (FE_DIVBYZERO) is raised.
+​       A divide-by-zero floating-point exception (FE_DIVBYZERO) is raised. This implementation does not set errno for this case.
 
 #### ATTRIBUTES
 
@@ -59,16 +60,13 @@
 
 #### CONFORMING TO
 
-​       C99, POSIX.1-2001, POSIX.1-2008.
-
-​       The variant returning double also conforms to SVr4, 4.3BSD, C89.
+​       This is a platform-specific extension and is not part of any C standard.
 
 #### EXAMPLES
 
 ```c
 #include <stdio.h>
 #include <math.h>
-#include <errno.h>
 #include <fenv.h>
 
 int main()
@@ -78,20 +76,21 @@ int main()
     double result = __log_finite(x);
     printf("__log_finite(%.1lf) = %.6lf\n", x, result);
 
-    double x = 0.0;
-    errno = 0;
+    x = 0.0;
+    feclearexcept(FE_ALL_EXCEPT);
     result = __log_finite(x);
-    printf("__log_finite(%.1lf) = %.6lf | errno: %d (ERANGE=%d)\n", 
-           x, result, errno, ERANGE);
+    printf("__log_finite(%.1lf) = %.6lf | FE_DIVBYZERO: %d\n",
+           x, result, fetestexcept(FE_DIVBYZERO) != 0);
 
-    double x = -2.0;
-    errno = 0;
+    x = -2.0;
+    feclearexcept(FE_ALL_EXCEPT);
     result = __log_finite(x);
-    printf("__log_finite(%.1lf) = %.6lf | errno: %d (EDOM=%d)\n", 
-           x, result, errno, EDOM);
+    printf("__log_finite(%.1lf) = %.6lf | FE_INVALID: %d\n",
+           x, result, fetestexcept(FE_INVALID) != 0);
     
     return 0;
 }
+```
 
 #### COLOPHON
 

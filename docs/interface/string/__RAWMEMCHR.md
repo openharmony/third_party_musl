@@ -51,18 +51,14 @@
 #include <string.h>
 
 int main(void) {
-    char *src = "hello world";
+    const char *src = "hello world";
     char target = 'w';
+
+    /* The caller must ensure that target exists in src;
+       otherwise the result is unpredictable. */
     char *ret = __rawmemchr(src, target);
-    if (ret == NULL) {
-        printf("Fail to carry out __rawmemchr().\n");
-        return 1;
-    } else {
-        if (ret > src + strlen(src) + 1) {
-            printf("'Invalid search results.\n");
-            return 1;
-        }
-    }
+
+    printf("Found '%c' at offset: %td\n", target, ret - src);
     return 0;
 }
 ```

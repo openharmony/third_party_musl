@@ -13,9 +13,9 @@
 
 #### **DESCRIPTION**
 
-​       The __acosf_finite() function computes the principal value of the arc cosine of x in the range [0, π] radians. This function is specifically designed to handle finite input values within the valid domain [-1, 1].
+​       The __acosf_finite() function computes the principal value of the arc cosine of x in the range [0, π] radians.
 
-​       If x is outside the range [-1, 1], the behavior is undefined. 
+​       The valid finite input domain is [-1, 1]. If x is outside this range, a NaN is returned and an invalid floating-point exception is raised.
 
 #### **RETURN VALUE**
 ​       On success, this function return the arc cosine of x in radians, the return value is in the range [0, π].
@@ -24,17 +24,16 @@
 
 ​       If x is +1, +0 is returned.
 
-​       If x is positive infinity or negative infinity, a domain error occurs, and a NaN is returned.
+​       If x is positive infinity or negative infinity, an invalid floating-point exception is raised, and a NaN is returned.
 
-​       If x is outside the range [-1, 1], a domain error occurs, and a NaN is returned.
+​       If x is outside the range [-1, 1], an invalid floating-point exception is raised, and a NaN is returned.
 
 #### **ERRORS**
-​       See math_error for information on how to determine whether an error has occurred when calling this function.
+​       See math_errhandling for information on how to determine whether an error has occurred when calling this function.
 
 ​       The following errors can occur:
 
-​       **Domain error**: x is outside the range [-1, 1]
-              errno is set to EDOM.  An invalid floating-point exception (FE_INVALID) is raised.
+​       **Domain error**: x is outside the range [-1, 1]. An invalid floating-point exception (FE_INVALID) is raised. This implementation does not set errno for this case.
 
 #### ATTRIBUTES
 
