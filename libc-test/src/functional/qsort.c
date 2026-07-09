@@ -25,6 +25,18 @@ static int cmp64(const void *a, const void *b)
 	return *ua < *ub ? -1 : *ua != *ub;
 }
 
+static int lcmp(const void *a, const void *b)
+{
+    const long *la = a, *lb = b;
+    return (*la > *lb) - (*la < *lb);
+}
+
+static int dcmp(const void *a, const void *b)
+{
+    const double *da = a, *db = b;
+    return (*da > *db) - (*da < *db);
+}
+
 /* 26 items -- even */
 static const char *s[] = {
 	"Bob", "Alice", "John", "Ceres",
@@ -403,6 +415,323 @@ static void test_leonardo_boundaries(void)
     }
 }
 
+/* Test already-sorted arrays at Leonardo sizes.
+ * Sorted input exercises trinkle's "trusty" path and pntz with p[0]==1
+ * (single heap), which is the exact condition that triggered the bug.
+ * With sorted input, smoothsort is adaptive and the heap restructuring
+ * differs from reverse-sorted input, producing different p bit patterns.
+ */
+static void test_sorted_leonardo(void)
+{
+    int i, j, len;
+    int *arr;
+    int leo_sizes[] = {1, 3, 5, 9, 15, 25, 41, 67, 109, 177, 287, 465, 753,
+                       1219, 1973, 3193, 5167, 8361, 13529, 21891, 35421};
+    int num_sizes = sizeof(leo_sizes) / sizeof(leo_sizes[0]);
+
+    for (j = 0; j < num_sizes; j++) {
+        len = leo_sizes[j];
+        arr = malloc(len * sizeof(int));
+        if (!arr) {
+            t_error("malloc failed for sorted Leonardo size %d\n", len);
+            continue;
+        }
+
+        for (i = 0; i < len; i++) {
+            arr[i] = i;
+        }
+
+        qsort(arr, len, sizeof(int), icmp);
+
+        for (i = 0; i < len; i++) {
+            if (arr[i] != i) {
+                t_error("sorted Leonardo size %d failed at index %d: got %d, want %d\n",
+                    len, i, arr[i], i);
+                break;
+            }
+        }
+
+        free(arr);
+    }
+}
+
+/* Test different element widths at Leonardo sizes.
+ * The smoothsort algorithm scales Leonardo numbers by element width (lp[]).
+ * Different widths produce different scaled values and affect how
+ * pshift evolves, which directly impacts pntz and shl/shr calls.
+ */
+static void test_width_char(void)
+{
+    int i, j, len;
+    char *arr;
+    int leo_sizes[] = {1, 3, 5, 9, 15, 25, 41, 67, 109};
+    int num_sizes = sizeof(leo_sizes) / sizeof(leo_sizes[0]);
+
+    for (j = 0; j < num_sizes; j++) {
+        len = leo_sizes[j];
+        arr = malloc(len * sizeof(char));
+        if (!arr) {
+            t_error("malloc failed for char Leonardo size %d\n", len);
+            continue;
+        }
+
+        for (i = 0; i < len; i++) {
+            arr[i] = (char)(len - i);
+        }
+
+        qsort(arr, len, sizeof(char), ccmp);
+
+        for (i = 0; i < len; i++) {
+            if (arr[i] != (char)(i + 1)) {
+                t_error("char Leonardo size %d failed at index %d\n", len, i);
+                break;
+            }
+        }
+
+        free(arr);
+    }
+}
+
+static void test_width_long(void)
+{
+    int i, j, len;
+    long *arr;
+    int leo_sizes[] = {1, 3, 5, 9, 15, 25, 41, 67, 109, 177, 287, 465, 753,
+                       1219, 1973, 3193, 5167, 8361};
+    int num_sizes = sizeof(leo_sizes) / sizeof(leo_sizes[0]);
+
+    for (j = 0; j < num_sizes; j++) {
+        len = leo_sizes[j];
+        arr = malloc(len * sizeof(long));
+        if (!arr) {
+            t_error("malloc failed for long Leonardo size %d\n", len);
+            continue;
+        }
+
+        for (i = 0; i < len; i++) {
+            arr[i] = len - i;
+        }
+
+        qsort(arr, len, sizeof(long), lcmp);
+
+        for (i = 0; i < len; i++) {
+            if (arr[i] != i + 1) {
+                t_error("long Leonardo size %d failed at index %d\n", len, i);
+                break;
+            }
+        }
+
+        free(arr);
+    }
+}
+
+static void test_width_double(void)
+{
+    int i, j, len;
+    double *arr;
+    int leo_sizes[] = {1, 3, 5, 9, 15, 25, 41, 67, 109, 177, 287, 465, 753,
+                       1219, 1973};
+    int num_sizes = sizeof(leo_sizes) / sizeof(leo_sizes[0]);
+
+    for (j = 0; j < num_sizes; j++) {
+        len = leo_sizes[j];
+        arr = malloc(len * sizeof(double));
+        if (!arr) {
+            t_error("malloc failed for double Leonardo size %d\n", len);
+            continue;
+        }
+
+        for (i = 0; i < len; i++) {
+            arr[i] = (double)(len - i);
+        }
+
+        qsort(arr, len, sizeof(double), dcmp);
+
+        for (i = 0; i < len; i++) {
+            if (arr[i] != (double)(i + 1)) {
+                t_error("double Leonardo size %d failed at index %d\n", len, i);
+                break;
+            }
+        }
+
+        free(arr);
+    }
+}
+
+/* Test sawtooth patterns.
+ * Sawtooth (repeated up-then-down) forces many heap merges and splits,
+ * exercising pntz with diverse p[0] values including p[0]==1 states.
+ */
+static void test_sawtooth(void)
+{
+    int i, j, len, tooth;
+    int *arr;
+    int sizes[] = {9, 15, 25, 41, 67, 109, 177, 287, 465, 753, 1219, 1973};
+    int num_sizes = sizeof(sizes) / sizeof(sizes[0]);
+
+    for (j = 0; j < num_sizes; j++) {
+        len = sizes[j];
+        tooth = len / 4;
+        if (tooth < 2) {
+            tooth = 2;
+        }
+        arr = malloc(len * sizeof(int));
+        if (!arr) {
+            t_error("malloc failed for sawtooth size %d\n", len);
+            continue;
+        }
+
+        for (i = 0; i < len; i++) {
+            int group = i / tooth;
+            int pos_in_group = i % tooth;
+            int group_start = group * tooth;
+            int group_end = group_start + tooth;
+            if (group_end > len) {
+                group_end = len;
+            }
+            int group_size = group_end - group_start;
+            arr[i] = group_start + (group_size - 1 - pos_in_group);
+        }
+
+        qsort(arr, len, sizeof(int), icmp);
+
+        for (i = 0; i < len; i++) {
+            if (arr[i] != i) {
+                t_error("sawtooth size %d failed at index %d: got %d, want %d\n",
+                    len, i, arr[i], i);
+                break;
+            }
+        }
+
+        free(arr);
+    }
+}
+
+/* Test sizes that are sums of consecutive Leonardo numbers.
+ * These produce multi-bit p patterns (p[0] has several bits set),
+ * exercising pntz with p[0]-1 values that have various trailing zero counts.
+ * Sums of consecutive L numbers: L(k)+L(k-1)+...+L(1)
+ */
+static void test_leonardo_sums(void)
+{
+    int i, j, len, total;
+    int *arr;
+    int leo[] = {1, 1, 3, 5, 9, 15, 25, 41, 67, 109, 177, 287, 465, 753,
+                 1219, 1973, 3193, 5167, 8361, 13529, 21891, 35421};
+    int numleo = sizeof(leo) / sizeof(leo[0]);
+    int sum_sizes[8];
+    int num_sums = 0;
+
+    total = 0;
+    for (j = 0; j < numleo && num_sums < 8; j++) {
+        total += leo[j];
+        if (total >= 3) {
+            sum_sizes[num_sums++] = total;
+        }
+    }
+
+    for (j = 0; j < num_sums; j++) {
+        len = sum_sizes[j];
+        arr = malloc(len * sizeof(int));
+        if (!arr) {
+            t_error("malloc failed for Leonardo sum size %d\n", len);
+            continue;
+        }
+
+        for (i = 0; i < len; i++) {
+            arr[i] = len - i;
+        }
+
+        qsort(arr, len, sizeof(int), icmp);
+
+        for (i = 0; i < len; i++) {
+            if (arr[i] != i + 1) {
+                t_error("Leonardo sum size %d failed at index %d\n", len, i);
+                break;
+            }
+        }
+
+        free(arr);
+    }
+}
+
+/* Test larger sizes to exercise deeper pshift values.
+ * Larger pshift means more Leonardo heaps tracked in p, which produces
+ * wider bit patterns in p[0] and stresses the trinkle loop more.
+ */
+static void test_large_sizes(void)
+{
+    int i, len;
+    int *arr;
+    int sizes[] = {10000, 50000, 100000};
+    int num_sizes = sizeof(sizes) / sizeof(sizes[0]);
+    int j;
+
+    for (j = 0; j < num_sizes; j++) {
+        len = sizes[j];
+        arr = malloc(len * sizeof(int));
+        if (!arr) {
+            t_error("malloc failed for large size %d\n", len);
+            continue;
+        }
+
+        for (i = 0; i < len; i++) {
+            arr[i] = len - i;
+        }
+
+        qsort(arr, len, sizeof(int), icmp);
+
+        for (i = 0; i < len; i++) {
+            if (arr[i] != i + 1) {
+                t_error("large size %d sort failed at index %d\n", len, i);
+                break;
+            }
+        }
+
+        free(arr);
+    }
+}
+
+/* Test cyclically shifted sorted arrays.
+ * A rotated sorted array (e.g. [4,5,6,7,1,2,3]) exercises the trinkle
+ * function's trusty detection differently, as elements appear mostly
+ * in order but with a discontinuity.
+ */
+static void test_cyclic_sorted(void)
+{
+    int i, j, k, len, shift;
+    int *arr;
+    int sizes[] = {9, 15, 25, 41, 67, 109, 177, 287, 465, 753};
+    int num_sizes = sizeof(sizes) / sizeof(sizes[0]);
+
+    for (j = 0; j < num_sizes; j++) {
+        len = sizes[j];
+        shift = len / 3;
+        arr = malloc(len * sizeof(int));
+        if (!arr) {
+            t_error("malloc failed for cyclic size %d\n", len);
+            continue;
+        }
+
+        for (i = 0; i < len; i++) {
+            k = (i + shift) % len;
+            arr[i] = k;
+        }
+
+        qsort(arr, len, sizeof(int), icmp);
+
+        for (i = 0; i < len; i++) {
+            if (arr[i] != i) {
+                t_error("cyclic size %d shift %d failed at index %d: got %d, want %d\n",
+                    len, shift, i, arr[i], i);
+                break;
+            }
+        }
+
+        free(arr);
+    }
+}
+
 int main(void)
 {
 	int i;
@@ -422,6 +751,14 @@ int main(void)
     test_pow2_minus_one();
     test_partial_sorted();
     test_leonardo_boundaries();
+    test_sorted_leonardo();
+    test_width_char();
+    test_width_long();
+    test_width_double();
+    test_sawtooth();
+    test_leonardo_sums();
+    test_large_sizes();
+    test_cyclic_sorted();
 
 	return t_status;
 }
