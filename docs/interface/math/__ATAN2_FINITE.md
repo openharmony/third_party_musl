@@ -14,7 +14,7 @@
 
 #### **DESCRIPTION**
 
-​       This function calculate the principal value of the arc tangent of y/x, using the signs of the two arguments to determine the quadrant of the result.
+​       The __atan2_finite() function calculates the principal value of the arc tangent of y/x, using the signs of the two arguments to determine the quadrant of the result.
 
 #### **RETURN VALUE**
 
@@ -35,6 +35,12 @@
        If y is a non-zero finite value and x is -∞, +π (-π) is returned for y > 0 (y < 0); 
        
        If x is +∞, +0 (-0) is returned for y > 0 (y < 0).
+
+       If y is +∞ (-∞) and x is a finite value, +π/2 (-π/2) is returned.
+
+       If y is +∞ (-∞) and x is +∞, +π/4 (-π/4) is returned.
+
+       If y is +∞ (-∞) and x is -∞, +3π/4 (-3π/4) is returned.
 
 #### **ERRORS**
 
@@ -57,9 +63,7 @@
 
 #### CONFORMING TO
 
-​       C99, POSIX.1-2001, POSIX.1-2008.
-
-​       The variant returning double also conforms to SVr4, 4.3BSD, C89.
+​       This is a platform-specific extension and is not part of any C standard.
 
 #### EXAMPLES
 
@@ -69,15 +73,15 @@
 
 int main()
 {
-    double x = 2.0f;
-    double y = 3.0f;
-    double result = __atan2_finite(x, y);
-    printf("log(%.1lf) = %.6lf\n", x, result);
+    double y = 3.0;
+    double x = 2.0;
+    double result = __atan2_finite(y, x);
+    printf("__atan2_finite(%.1lf, %.1lf) = %.6lf\n", y, x, result);
     
-    x = 4.0f;
-    y = 0.5f;
-    result = __atan2_finite(x, y);
-    printf("log(%.1lf) = %.6lf\n", x, result);
+    y = 0.5;
+    x = 4.0;
+    result = __atan2_finite(y, x);
+    printf("__atan2_finite(%.1lf, %.1lf) = %.6lf\n", y, x, result);
     
     return 0;
 }

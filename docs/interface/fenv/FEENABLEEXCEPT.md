@@ -14,21 +14,19 @@
 
 #### **DESCRIPTION**
 
-​       This function enables(unmasks) specified floating-point exceptions, meaning the processor will raise hardware-level exceptions/signals for these exceptions instead of only setting status bits silently. The exceptions include FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW | FE_UNDERFLOW | FE_INEXACT. The function takes a bitmask parameter specifying the exceptions to be enabled, and returns the previous FP exception mask.
-​       Essentially, "enable" and "unmask" mean setting corresponding bits in exception mask to 0.
+​       This function enables specified floating-point exception traps on aarch64, meaning the processor may raise hardware-level exceptions/signals for these exceptions instead of only setting status bits silently. The exceptions include FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW | FE_UNDERFLOW | FE_INEXACT. The function takes a bitmask parameter specifying the exceptions to be enabled. Bits outside FE_ALL_EXCEPT are ignored.
+​       In this implementation, enabling an exception sets the corresponding FPCR exception trap bit to 1.
 
 ​       Note: 
         This function is NOT MT-Safe and NOT signal-safe. Currently, the function has aarch64 implementation only.
 
 #### **RETURN VALUE**
 
-​      This function returns the value of fpcr register before modification.
+​      On success, this function returns the floating-point exception trap mask that was enabled before modification. If the requested trap bits cannot be enabled, it returns -1.
 
 #### **ERRORS**
 
-​      The following error codes may be set in errno:
-
-​      **EUNAVAIL**：trap mechanism not available.
+​      This function does not set errno. If the requested trap bits cannot be enabled, it returns -1.
 
 #### ATTRIBUTES
  
@@ -57,7 +55,6 @@
 #include <fenv.h>
 
 #define FE_CUSTOM_EXCEPT 26 // 0b'11010
-#define FE_ALL_EXCEPT 31 // 0b'11111
 
 int main() {
     int old_fpcr, new_fpcr, ret;

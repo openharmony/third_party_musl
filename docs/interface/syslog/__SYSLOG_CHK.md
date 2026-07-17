@@ -23,7 +23,7 @@
 ​                    a facility value and a level value. The valid range depends on
 ​                    the system implementation.
 
-​       **flags**:    Fortify protection flags. If flags is set to 0, verification is not enabled; if greater than 0, verification is enabled.
+​       **flags**:    Fortify protection flags. If flags is set to 0 or a negative value, verification is not enabled; if flags is greater than 0, verification is enabled. When enabled, format string validation is performed: if positional parameter references (e.g., %n$d) are non-contiguous, the program will abort with a "Musl Fortify runtime error: invalid specified parameter" message.
 
 ​       **message**:  The format string for the message, similar to printf() format.
 
@@ -36,7 +36,9 @@
 
 #### **ERRORS**
 
-​       If the message pointer is NULL, the function will set errno to EINVAL and return immediately without logging the message.
+​       **EINVAL**: message is NULL. The function sets errno to EINVAL and returns without logging the message.
+
+​       When flags is greater than 0 (fortify mode), if the format string contains positional parameter references that are non-contiguous (e.g., "%3$d" skips positions 1 and 2), the program will abort with the message "Musl Fortify runtime error: invalid specified parameter".
 
 #### **ATTRIBUTES**
 
@@ -65,19 +67,17 @@
 #include <syslog.h>
 
 int main(void) {
-    // Example 1: flags=0 (no fortify protection)
-    const char* module = "network";
-    int error_code = 1001;
-    __syslog_chk(LOG_ERR, 0, "Error in %s module: code %d", module, error_code);
-    
-    // Example 2: flags=2 (fortify protection enabled, expected: validation passes)
-    const char* service = "webserver";
-    int port = 8080;
-    __syslog_chk(LOG_INFO, 2, "Service %s started on port %d", service, port);
-    
-    // Example 3: flags=2 with invalid parameters (expected: Musl Fortify runtime error: invalid specified parameter)
-     __syslog_chk(LOG_INFO, 2, "%3$d", 0);
-    
+    /* flags=0: no fortify protection */
+    __syslog_chk(LOG_ERR, 0, "Error in %s module: code %d", "network", 1001);
+
+    /* flags=2: fortify protection enabled, format string is valid */
+    __syslog_chk(LOG_INFO, 2, "Service %s started on port %d", "webserver", 8080);
+
+    /* WARNING: the following call causes abort when flags>0.
+       "%3$d" references position 3 while positions 1 and 2 are missing,
+       which triggers "Musl Fortify runtime error: invalid specified parameter". */
+    /* __syslog_chk(LOG_INFO, 2, "%3$d", 0); */
+
     return 0;
 }
 ```

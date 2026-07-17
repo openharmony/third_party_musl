@@ -16,13 +16,13 @@
 
 ​      The strtoull_l() function converts the initial part of the string in nptr to an unsigned long long integer value according to the given base, which must be between 2 and 36 inclusive, or be the special value 0.
 
-​      The string may begin with an arbitrary amount of white space (as determined by isspace()). If base is zero or 16, the string may then include a "0x" or "0X" prefix, and the number will be read in base 16; otherwise, a zero base is taken as 10 (decimal) unless the next character is '0', in which case it is taken as 8 (octal).
+​      The string may begin with an arbitrary amount of white space (as determined by isspace()) followed by a single optional '+' or '-' sign. If base is zero or 16, the string may then include a "0x" or "0X" prefix, and the number will be read in base 16; otherwise, a zero base is taken as 10 (decimal) unless the next character is '0', in which case it is taken as 8 (octal).
 
 ​      The remainder of the string is converted to an unsigned long long value in the obvious manner, stopping at the first character which is not a valid digit in the given base. (In bases above 10, the letter 'A' in either uppercase or lowercase represents 10, 'B' represents 11, and so forth, with 'Z' representing 35.)
 
 ​      If endptr is not NULL, strtoull_l() stores the address of the first invalid character in *endptr. If there were no digits at all, strtoull_l() stores the original value of nptr in *endptr (and returns 0). In particular, if *nptr is not '\0' but **endptr is '\0' on return, the entire string is valid. If endptr is NULL, the function does not store the address of the first invalid character.
 
-​      Locale object (locale_t) specifying the locale for parsing (e.g., handling localized thousands separators like , or .).
+​      The loc parameter is accepted for source compatibility but is not used by this implementation. Parsing is the same as strtoull(); localized thousands separators, grouping characters, and alternative digits are not recognized.
 
 #### **RETURN VALUE**
 
@@ -30,15 +30,15 @@
 
 ​      If nptr is NULL, the behavior is undefined. If no valid conversion is possible (e.g. no digits were found), returns 0 and sets errno to EINVAL.
 
-​      If the value overflows ULLONG_MAX/ULLONG_MIN, returns ULLONG_MAX/ULLONG_MIN and sets errno to ERANGE.
+​      If the converted value overflows unsigned long long, returns ULLONG_MAX and sets errno to ERANGE. A leading '-' sign is accepted and the result is negated in unsigned arithmetic unless overflow occurs.
 
 #### **ERRORS**
 
 ​      The following error codes may be set in errno:
 
-​      ​**​EINVAL**：The given base contains an unsupported value.
+​      **EINVAL**: The given base contains an unsupported value, or no valid conversion is possible.
 
-​      **ERANGE**：The resulting value was out of range.
+​      **ERANGE**: The resulting value was out of range.
 
 #### ATTRIBUTES
 
@@ -76,6 +76,7 @@ int main() {
         perror("newlocale failed");
         return 1;
     }
+    /* loc is accepted for source compatibility; this implementation parses as strtoull(). */
     unsigned long long num = strtoull_l(str, &endptr, 0, loc);
 
     // num = 1234, endptr points to the end of the string
@@ -88,5 +89,5 @@ int main() {
 
 #### COLOPHON
 
-​      this page is part of the C library user-space interface documentation.
+​      This page is part of the C library user-space interface documentation.
 ​      Information about the project can be found at (https://gitcode.com/openharmony/third_party_musl/blob/master/docs/).

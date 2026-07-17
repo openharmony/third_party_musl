@@ -14,14 +14,14 @@
  
 #### **DESCRIPTION**
 
-​       This function retrieves current floating-point exception mask. The return value is a bitmask where each bits corresponds to a type of floating-point exception (FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW | FE_UNDERFLOW | FE_INEXACT). A bit set to 1 indicates the corresponding exception is masked, in which condition the processor will not raise a hardware exception but set the status bits. And a bit set to 0 indicates the exception is unmasked (the processor will raise a hardware exception/signal).
+​       This function retrieves the current floating-point exception trap mask on aarch64. The return value is a bitmask where each bit corresponds to a type of floating-point exception (FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW | FE_UNDERFLOW | FE_INEXACT). A bit set to 1 indicates that the corresponding trap is enabled, and a bit set to 0 indicates that the corresponding trap is disabled.
 
 ​       Note: 
         This function is NOT MT-Safe and NOT signal-safe. Currently, the function has aarch64 implementation only.
 
 #### **RETURN VALUE**
 
-​      This function returns current value of fpcr register.
+​      This function returns the current floating-point exception trap mask.
 
 #### **ERRORS**
 

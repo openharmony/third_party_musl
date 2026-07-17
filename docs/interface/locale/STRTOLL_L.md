@@ -22,7 +22,7 @@
 
 ​      If endptr is not NULL, strtoll_l() stores the address of the first invalid character in *endptr. If there were no digits at all, strtoll_l() stores the original value of nptr in *endptr (and returns 0). In particular, if *nptr is not '\0' but **endptr is '\0' on return, the entire string is valid. If endptr is NULL, the function does not store the address of the first invalid character.
 
-​      Locale object (locale_t) specifying the locale for parsing (e.g., handling localized thousands separators like , or .).    
+​      The loc parameter is accepted for source compatibility but is not used by this implementation. Parsing is the same as strtoll(); localized thousands separators, grouping characters, and alternative digits are not recognized.
 
 #### **RETURN VALUE**
 
@@ -36,9 +36,9 @@
 
 ​      The following error codes may be set in errno:
 
-​      **​EINVAL**：The given base contains an unsupported value.
+​      **EINVAL**: The given base contains an unsupported value, or no valid conversion is possible.
 
-​      **ERANGE**：The resulting value was out of range.
+​      **ERANGE**: The resulting value was out of range.
 
 #### ATTRIBUTES
 
@@ -76,6 +76,7 @@ int main() {
         perror("newlocale failed");
         return 1;
     }
+    /* loc is accepted for source compatibility; this implementation parses as strtoll(). */
     long long num = strtoll_l(str, &endptr, 0, loc);
 
     // num = 1234, endptr points to the end of the string
@@ -88,5 +89,5 @@ int main() {
 
 #### COLOPHON
 
-​      this page is part of the C library user-space interface documentation.
+​      This page is part of the C library user-space interface documentation.
 ​      Information about the project can be found at (https://gitcode.com/openharmony/third_party_musl/blob/master/docs/).
