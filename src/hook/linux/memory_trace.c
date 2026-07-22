@@ -21,6 +21,7 @@
 #include <stdlib.h>
 #include "common_def.h"
 #include "musl_preinit_common.h"
+#include "musl_malloc.h"
 
 struct ResTraceTls {
     uint32_t traceType;
@@ -51,7 +52,7 @@ static struct ResTraceTls* getOrCreateResTraceTls(void)
     
     struct ResTraceTls* tls = (struct ResTraceTls*)pthread_getspecific(g_resTraceKey);
     if (tls == NULL) {
-        tls = (struct ResTraceTls*)calloc(1, sizeof(struct ResTraceTls));
+        tls = (struct ResTraceTls*)MuslFunc(calloc)(1, sizeof(struct ResTraceTls));
         if (tls == NULL) {
             return NULL;
         }
