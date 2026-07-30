@@ -566,6 +566,7 @@ int getaddrinfo_ext(const char *restrict host, const char *restrict serv, const 
 		int rc = shared_res->rc;
 		pthread_mutex_unlock(&shared_res->mutex);
 		release_shared_result(shared_res);
+		free_dns_server_buf(sainfo);
 		return rc;
 	}
 
