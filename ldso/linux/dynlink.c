@@ -976,6 +976,52 @@ static int search_vec(size_t *v, size_t *r, size_t key)
 	return 1;
 }
 
+static void compute_reloc_table_range(struct dso *dso, size_t *dyn)
+{
+	size_t reloc_start = 0, reloc_end = 0;
+
+	if (dyn[DT_REL]) {
+		size_t start = dyn[DT_REL];
+		size_t end = start + dyn[DT_RELSZ];
+		if (!reloc_start || start < reloc_start)
+			reloc_start = start;
+		if (end > reloc_end)
+			reloc_end = end;
+	}
+
+	if (dyn[DT_RELA]) {
+		size_t start = dyn[DT_RELA];
+		size_t end = start + dyn[DT_RELASZ];
+		if (!reloc_start || start < reloc_start)
+			reloc_start = start;
+		if (end > reloc_end)
+			reloc_end = end;
+	}
+
+	if (dyn[DT_RELR]) {
+		size_t start = dyn[DT_RELR];
+		size_t end = start + dyn[DT_RELRSZ];
+		if (!reloc_start || start < reloc_start)
+			reloc_start = start;
+		if (end > reloc_end)
+			reloc_end = end;
+	}
+
+	if (dyn[DT_JMPREL] && !dso->lazy) {
+		size_t start = dyn[DT_JMPREL];
+		size_t end = start + dyn[DT_PLTRELSZ];
+		if (!reloc_start || start < reloc_start)
+			reloc_start = start;
+		if (end > reloc_end)
+			reloc_end = end;
+	}
+
+	if (reloc_start && reloc_end) {
+		dso->reloc_table_start = reloc_start & -PAGE_SIZE;
+		dso->reloc_table_end = (reloc_end + PAGE_SIZE - 1) & -PAGE_SIZE;
+	}
+}
+
 #include "dynlink_adlt.h"
 
 UT_STATIC int check_vna_hash(Verdef *def, int16_t vsym, uint32_t vna_hash)
@@ -2168,6 +2214,7 @@ UT_STATIC void *map_library(int fd, struct dso *dso, struct reserved_address_par
 	size_t start_addr;
 	size_t start_alignment = PAGE_SIZE;
 	bool hugepage_enabled = false;
+	size_t dynv_off = 0, dynv_size = 0;
 	if (!check_xpm(fd)) {
 		return 0;
 	}
@@ -2199,6 +2246,8 @@ UT_STATIC void *map_library(int fd, struct dso *dso, struct reserved_address_par
 	for (i=eh->e_phnum; i; i--, ph=(void *)((char *)ph+eh->e_phentsize)) {
 		if (ph->p_type == PT_DYNAMIC) {
 			dyn = ph->p_vaddr;
+			dynv_off = ph->p_offset;
+			dynv_size = ph->p_memsz;
 		} else if (ph->p_type == PT_TLS) {
 			tls_image = ph->p_vaddr;
 			dso->tls.align = ph->p_align;
@@ -2240,6 +2289,14 @@ UT_STATIC void *map_library(int fd, struct dso *dso, struct reserved_address_par
 		}
 		if (ph->p_vaddr+ph->p_memsz > addr_max) {
 			addr_max = ph->p_vaddr+ph->p_memsz;
+		}
+	}
+	if (dynv_off && dynv_size && dynv_size < 8192) {
+		size_t *dynv_buf = __builtin_alloca(dynv_size);
+		if (pread(fd, dynv_buf, dynv_size, dynv_off) == dynv_size) {
+			size_t dyn_parsed[DYN_CNT] = {0};
+			decode_vec(dynv_buf, dyn_parsed, DYN_CNT);
+			compute_reloc_table_range(dso, dyn_parsed);
 		}
 	}
 	if (!dyn) goto noexec;
@@ -2434,14 +2491,58 @@ UT_STATIC void *map_library(int fd, struct dso *dso, struct reserved_address_par
 		}
 #endif
 		/* Reuse the existing mapping for the lowest-address LOAD */
-		if (mmap_fixed(
-				base + this_min,
-				this_max - this_min,
-				prot, MAP_PRIVATE | MAP_FIXED,
-				fd,
-				off_start) == MAP_FAILED) {
-			LD_LOGW("Error mapping library: mmap fix failed errno=%{public}d", errno);
-			goto error;
+		{
+			// Check if overlapping with relocation table region
+			if (dso->reloc_table_start != dso->reloc_table_end &&
+				this_min < dso->reloc_table_end && this_max > dso->reloc_table_start) {
+				
+				size_t reloc_min = dso->reloc_table_start;
+				size_t reloc_max = dso->reloc_table_end;
+
+				if (reloc_min < this_min) reloc_min = this_min;
+				if (reloc_max > this_max) reloc_max = this_max;
+
+				dso->reloc_table_start = reloc_min;
+				dso->reloc_table_end = reloc_max;
+
+				// First segment: from segment start to relocation table start
+				if (this_min < reloc_min) {
+					if (mmap_fixed(base + this_min, reloc_min - this_min, prot,
+								   MAP_PRIVATE | MAP_FIXED, fd, off_start) == MAP_FAILED) {
+						LD_LOGW("Error mapping library: mmap fix failed errno=%{public}d", errno);
+						goto error;
+					}
+				}
+			
+				// Second segment: relocation table region (MAP_POPULATE)
+				if (mmap_fixed(base + reloc_min, reloc_max - reloc_min, prot,
+							   MAP_PRIVATE | MAP_FIXED | MAP_POPULATE, fd,
+							   off_start + (reloc_min - this_min)) == MAP_FAILED) {
+					LD_LOGW("Error mapping library: mmap fix failed errno=%{public}d", errno);
+					goto error;
+				}
+
+				// Third segment: from relocation table end to segment end
+				if (reloc_max < this_max) {
+					if (mmap_fixed(base + reloc_max, this_max - reloc_max, prot,
+								   MAP_PRIVATE | MAP_FIXED, fd,
+								   off_start + (reloc_max - this_min)) == MAP_FAILED) {
+						LD_LOGW("Error mapping library: mmap fix failed errno=%{public}d", errno);
+						goto error;
+					}
+				}
+			} else {
+				// Normal mapping for entire segment
+				if (mmap_fixed(
+						base + this_min,
+						this_max - this_min,
+						prot, MAP_PRIVATE | MAP_FIXED,
+						fd,
+						off_start) == MAP_FAILED) {
+					LD_LOGW("Error mapping library: mmap fix failed errno=%{public}d", errno);
+					goto error;
+				}
+			}
 		}
 		if ((ph->p_flags & PF_X) && (ph->p_align == KPMD_SIZE) && hugepage_enabled)
 			madvise(base + this_min, this_max - this_min, MADV_HUGEPAGE);
@@ -3594,13 +3695,28 @@ static void reloc_all(struct dso *p, const dl_extinfo *extinfo)
 	adlt_do_relocs_munmap();
 }
 
+static void release_ldso_temp(struct dso *p)
+{
+	for (; p; p = p->next) {
+		if (p->reloc_table_start != p->reloc_table_end && !p->lazy) {
+			madvise(laddr(p, p->reloc_table_start),
+				p->reloc_table_end - p->reloc_table_start,
+				MADV_DONTNEED);
+			p->reloc_table_start = p->reloc_table_end = 0;
+		}
+	}
+}
+
 static void kernel_mapped_dso(struct dso *p)
 {
 	size_t min_addr = -1, max_addr = 0, cnt;
 	Phdr *ph = p->phdr;
+	size_t dynv_addr = 0;
+
 	for (cnt = p->phnum; cnt--; ph = (void *)((char *)ph + p->phentsize)) {
 		if (ph->p_type == PT_DYNAMIC) {
 			p->dynv = laddr(p, ph->p_vaddr);
+			dynv_addr = ph->p_vaddr;
 		} else if (ph->p_type == PT_GNU_RELRO) {
 			p->relro_start = ph->p_vaddr & -PAGE_SIZE;
 			p->relro_end = (ph->p_vaddr + ph->p_memsz) & -PAGE_SIZE;
@@ -3621,6 +3737,11 @@ static void kernel_mapped_dso(struct dso *p)
 	max_addr = (max_addr + PAGE_SIZE-1) & -PAGE_SIZE;
 	p->map = p->base + min_addr;
 	p->map_len = max_addr - min_addr;
+	if (dynv_addr) {
+		size_t dyn[DYN_CNT] = {0};
+		decode_vec(laddr(p, dynv_addr), dyn, DYN_CNT);
+		compute_reloc_table_range(p, dyn);
+	}
 	p->kernel_mapped = 1;
 }
 
@@ -4386,6 +4507,7 @@ static int do_dlprelink_record(int memfd, const char *list_path, size_t *auxv)
 	}
 
 	reloc_all(head, NULL);
+	release_ldso_temp(head);
 
 	if (!runtime && ldso_fail) {
 		return -1;
@@ -5028,6 +5150,7 @@ void __dls3(size_t *sp, size_t *auxv, size_t *aux)
 	 * copy relocations which depend on libraries' relocations. */
 	reloc_all(app.next, NULL);
 	reloc_all(&app, NULL);
+	release_ldso_temp(head);
 	for (struct dso *q = head; q; q = q->next) {
 		q->is_reloc_head_so_dep = false;
 	}
@@ -5756,6 +5879,7 @@ void *dlopen_impl(
 	if (!p->relocated) {
 		reloc_all(p, extinfo);
 	}
+	release_ldso_temp(p);
 	clock_gettime(CLOCK_MONOTONIC, &time_end);
 	dlopen_cost.reloc_time = (time_end.tv_sec - time_start.tv_sec) * CLOCK_SECOND_TO_MILLI
 		+ (time_end.tv_nsec - time_start.tv_nsec) / CLOCK_NANO_TO_MILLI;
@@ -7391,6 +7515,7 @@ static bool task_map_library(struct loadtask *task, struct reserved_address_para
 	size_t start_alignment = PAGE_SIZE;
 	bool hugepage_enabled = false;
 	bool need_map = !(task->adlt && (task->adlt->map != MAP_FAILED));
+	size_t dynv_off = 0, dynv_size = 0;
  
 	if (!need_map) {
 		base = task->adlt->base;
@@ -7420,6 +7545,9 @@ static bool task_map_library(struct loadtask *task, struct reserved_address_para
 		} else if (ph->p_type == PT_OHOS_CFI_MODIFIER) {
 			task->p->modifier_begin = ph->p_vaddr;
 			task->p->modifier_end = ph->p_vaddr + ph->p_memsz;
+		} else if (ph->p_type == PT_DYNAMIC) {
+			dynv_off = ph->p_offset;
+			dynv_size = ph->p_memsz;
 		}
 #if defined(BTI_SUPPORT) && (!defined(__LITEOS__))
 		/* Security enhancement: parse extra PROT in ELF.
@@ -7448,6 +7576,14 @@ static bool task_map_library(struct loadtask *task, struct reserved_address_para
 			addr_max = ph->p_vaddr + ph->p_memsz;
 		}
 	}
+	if (dynv_off && dynv_size && dynv_size < 8192) {
+		size_t *dynv_buf = __builtin_alloca(dynv_size);
+		if (pread(task->fd, dynv_buf, dynv_size, dynv_off + task->file_offset) == dynv_size) {
+			size_t dyn_parsed[DYN_CNT] = {0};
+			decode_vec(dynv_buf, dyn_parsed, DYN_CNT);
+			compute_reloc_table_range(task->p, dyn_parsed);
+		}
+	}	
 	if (!task->dyn) {
 		LD_LOGW("Error mapping library: !task->dyn dynamic section not found task->name=%{public}s", task->name);
 		goto noexec;
@@ -7664,14 +7800,58 @@ static bool task_map_library(struct loadtask *task, struct reserved_address_para
 		}
 #endif
 		/* Reuse the existing mapping for the lowest-address LOAD */
-		if (mmap_fixed(
-				base + this_min,
-				this_max - this_min,
-				prot, MAP_PRIVATE | MAP_FIXED,
-				task->fd,
-				off_start + task->file_offset) == MAP_FAILED) {
-			LD_LOGW("Error mapping library: mmap fix failed task->name=%{public}s errno=%{public}d", task->name, errno);
-			goto error;
+		{
+			// Check if overlapping with relocation table region
+			if (task->p->reloc_table_start != task->p->reloc_table_end &&
+				this_min < task->p->reloc_table_end && this_max > task->p->reloc_table_start) {
+				
+				size_t reloc_min = task->p->reloc_table_start;
+				size_t reloc_max = task->p->reloc_table_end;
+
+				if (reloc_min < this_min) reloc_min = this_min;
+				if (reloc_max > this_max) reloc_max = this_max;
+
+				task->p->reloc_table_start = reloc_min;
+				task->p->reloc_table_end = reloc_max;
+
+				// First segment: from segment start to relocation table start
+				if (this_min < reloc_min) {
+					if (mmap_fixed(base + this_min, reloc_min - this_min, prot,
+								   MAP_PRIVATE | MAP_FIXED, task->fd, off_start + task->file_offset) == MAP_FAILED) {
+						LD_LOGW("Error mapping library: mmap fix failed task->name=%{public}s errno=%{public}d", task->name, errno);
+						goto error;
+					}
+				}
+			
+				// Second segment: relocation table region (MAP_POPULATE)
+				if (mmap_fixed(base + reloc_min, reloc_max - reloc_min, prot,
+							   MAP_PRIVATE | MAP_FIXED | MAP_POPULATE, task->fd,
+							   off_start + (reloc_min - this_min) + task->file_offset) == MAP_FAILED) {
+					LD_LOGW("Error mapping library: mmap fix failed task->name=%{public}s errno=%{public}d", task->name, errno);
+					goto error;
+				}
+
+				// Third segment: from relocation table end to segment end
+				if (reloc_max < this_max) {
+					if (mmap_fixed(base + reloc_max, this_max - reloc_max, prot,
+								   MAP_PRIVATE | MAP_FIXED, task->fd,
+								   off_start + (reloc_max - this_min) + task->file_offset) == MAP_FAILED) {
+						LD_LOGW("Error mapping library: mmap fix failed task->name=%{public}s errno=%{public}d", task->name, errno);
+						goto error;
+					}
+				}
+			} else {
+				// Normal mapping for entire segment
+				if (mmap_fixed(
+						base + this_min,
+						this_max - this_min,
+						prot, MAP_PRIVATE | MAP_FIXED,
+						task->fd,
+						off_start + task->file_offset) == MAP_FAILED) {
+					LD_LOGW("Error mapping library: mmap fix failed task->name=%{public}s errno=%{public}d", task->name, errno);
+					goto error;
+				}
+			}
 		}
 		if ((ph->p_flags & PF_X) && (ph->p_align == KPMD_SIZE) && hugepage_enabled)
 			madvise(base + this_min, this_max - this_min, MADV_HUGEPAGE);
