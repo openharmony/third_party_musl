@@ -883,9 +883,11 @@ bool may_init_gwp_asan(bool force_init)
 bool init_gwp_asan_by_libc(bool force_init)
 {
 #ifdef OHOS_ENABLE_PARAMETER
-    if (is_commercial() && !is_force_sample()) {
+    if (!is_force_sample()) {
         return false;
     }
+#else
+    return false;
 #endif
     char buf[GWP_ASAN_NAME_LEN];
     char *path = get_process_short_name(buf, GWP_ASAN_NAME_LEN);
