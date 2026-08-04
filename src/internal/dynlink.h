@@ -158,6 +158,7 @@ struct adlt {
 	struct unpack_reloc android_rela; // unpacked android rela relocs (SHT_ANDROID_RELA type section)
 	struct unpack_reloc relr_rel;     // unpacked relr relocs (SHT_RELR type section)
 	size_t relro_start, relro_end;    // remove
+	size_t reloc_table_start, reloc_table_end;
 	uint8_t *sym_dso_Idx_map;         // symbol index map to adlt_ndso_index 
 	uint32_t nsym;                    // symbol count
 	/* symbol section (.symtab) mapping for backtrace symbol lookup */
@@ -230,6 +231,7 @@ struct dso {
 	struct tls_module tls;
 	size_t tls_id;
 	size_t relro_start, relro_end;
+	size_t reloc_table_start, reloc_table_end;
 	uintptr_t *new_dtv;
 	unsigned char *new_tls;
 	struct td_index *td_index;
