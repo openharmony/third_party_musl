@@ -2490,59 +2490,23 @@ UT_STATIC void *map_library(int fd, struct dso *dso, struct reserved_address_par
 			prot |= ext_prot;
 		}
 #endif
+		// Check if overlapping with relocation table region
+		if (dso->reloc_table_start != dso->reloc_table_end &&
+			this_min < dso->reloc_table_end && this_max > dso->reloc_table_start) {
+			if (dso->reloc_table_start < this_min)
+				dso->reloc_table_start = this_min;
+			if (dso->reloc_table_end > this_max)
+				dso->reloc_table_end = this_max;
+		}
 		/* Reuse the existing mapping for the lowest-address LOAD */
-		{
-			// Check if overlapping with relocation table region
-			if (dso->reloc_table_start != dso->reloc_table_end &&
-				this_min < dso->reloc_table_end && this_max > dso->reloc_table_start) {
-				
-				size_t reloc_min = dso->reloc_table_start;
-				size_t reloc_max = dso->reloc_table_end;
-
-				if (reloc_min < this_min) reloc_min = this_min;
-				if (reloc_max > this_max) reloc_max = this_max;
-
-				dso->reloc_table_start = reloc_min;
-				dso->reloc_table_end = reloc_max;
-
-				// First segment: from segment start to relocation table start
-				if (this_min < reloc_min) {
-					if (mmap_fixed(base + this_min, reloc_min - this_min, prot,
-								   MAP_PRIVATE | MAP_FIXED, fd, off_start) == MAP_FAILED) {
-						LD_LOGW("Error mapping library: mmap fix failed errno=%{public}d", errno);
-						goto error;
-					}
-				}
-			
-				// Second segment: relocation table region (MAP_POPULATE)
-				if (mmap_fixed(base + reloc_min, reloc_max - reloc_min, prot,
-							   MAP_PRIVATE | MAP_FIXED | MAP_POPULATE, fd,
-							   off_start + (reloc_min - this_min)) == MAP_FAILED) {
-					LD_LOGW("Error mapping library: mmap fix failed errno=%{public}d", errno);
-					goto error;
-				}
-
-				// Third segment: from relocation table end to segment end
-				if (reloc_max < this_max) {
-					if (mmap_fixed(base + reloc_max, this_max - reloc_max, prot,
-								   MAP_PRIVATE | MAP_FIXED, fd,
-								   off_start + (reloc_max - this_min)) == MAP_FAILED) {
-						LD_LOGW("Error mapping library: mmap fix failed errno=%{public}d", errno);
-						goto error;
-					}
-				}
-			} else {
-				// Normal mapping for entire segment
-				if (mmap_fixed(
-						base + this_min,
-						this_max - this_min,
-						prot, MAP_PRIVATE | MAP_FIXED,
-						fd,
-						off_start) == MAP_FAILED) {
-					LD_LOGW("Error mapping library: mmap fix failed errno=%{public}d", errno);
-					goto error;
-				}
-			}
+		if (mmap_fixed(
+				base + this_min,
+				this_max - this_min,
+				prot, MAP_PRIVATE | MAP_FIXED,
+				fd,
+				off_start) == MAP_FAILED) {
+			LD_LOGW("Error mapping library: mmap fix failed errno=%{public}d", errno);
+			goto error;
 		}
 		if ((ph->p_flags & PF_X) && (ph->p_align == KPMD_SIZE) && hugepage_enabled)
 			madvise(base + this_min, this_max - this_min, MADV_HUGEPAGE);
@@ -7583,7 +7547,7 @@ static bool task_map_library(struct loadtask *task, struct reserved_address_para
 			decode_vec(dynv_buf, dyn_parsed, DYN_CNT);
 			compute_reloc_table_range(task->p, dyn_parsed);
 		}
-	}	
+	}
 	if (!task->dyn) {
 		LD_LOGW("Error mapping library: !task->dyn dynamic section not found task->name=%{public}s", task->name);
 		goto noexec;
@@ -7799,59 +7763,23 @@ static bool task_map_library(struct loadtask *task, struct reserved_address_para
 			prot |= ext_prot;
 		}
 #endif
+		// Check if overlapping with relocation table region
+		if (task->p->reloc_table_start != task->p->reloc_table_end &&
+			this_min < task->p->reloc_table_end && this_max > task->p->reloc_table_start) {
+			if (task->p->reloc_table_start < this_min)
+				task->p->reloc_table_start = this_min;
+			if (task->p->reloc_table_end > this_max)
+				task->p->reloc_table_end = this_max;
+		}
 		/* Reuse the existing mapping for the lowest-address LOAD */
-		{
-			// Check if overlapping with relocation table region
-			if (task->p->reloc_table_start != task->p->reloc_table_end &&
-				this_min < task->p->reloc_table_end && this_max > task->p->reloc_table_start) {
-				
-				size_t reloc_min = task->p->reloc_table_start;
-				size_t reloc_max = task->p->reloc_table_end;
-
-				if (reloc_min < this_min) reloc_min = this_min;
-				if (reloc_max > this_max) reloc_max = this_max;
-
-				task->p->reloc_table_start = reloc_min;
-				task->p->reloc_table_end = reloc_max;
-
-				// First segment: from segment start to relocation table start
-				if (this_min < reloc_min) {
-					if (mmap_fixed(base + this_min, reloc_min - this_min, prot,
-								   MAP_PRIVATE | MAP_FIXED, task->fd, off_start + task->file_offset) == MAP_FAILED) {
-						LD_LOGW("Error mapping library: mmap fix failed task->name=%{public}s errno=%{public}d", task->name, errno);
-						goto error;
-					}
-				}
-			
-				// Second segment: relocation table region (MAP_POPULATE)
-				if (mmap_fixed(base + reloc_min, reloc_max - reloc_min, prot,
-							   MAP_PRIVATE | MAP_FIXED | MAP_POPULATE, task->fd,
-							   off_start + (reloc_min - this_min) + task->file_offset) == MAP_FAILED) {
-					LD_LOGW("Error mapping library: mmap fix failed task->name=%{public}s errno=%{public}d", task->name, errno);
-					goto error;
-				}
-
-				// Third segment: from relocation table end to segment end
-				if (reloc_max < this_max) {
-					if (mmap_fixed(base + reloc_max, this_max - reloc_max, prot,
-								   MAP_PRIVATE | MAP_FIXED, task->fd,
-								   off_start + (reloc_max - this_min) + task->file_offset) == MAP_FAILED) {
-						LD_LOGW("Error mapping library: mmap fix failed task->name=%{public}s errno=%{public}d", task->name, errno);
-						goto error;
-					}
-				}
-			} else {
-				// Normal mapping for entire segment
-				if (mmap_fixed(
-						base + this_min,
-						this_max - this_min,
-						prot, MAP_PRIVATE | MAP_FIXED,
-						task->fd,
-						off_start + task->file_offset) == MAP_FAILED) {
-					LD_LOGW("Error mapping library: mmap fix failed task->name=%{public}s errno=%{public}d", task->name, errno);
-					goto error;
-				}
-			}
+		if (mmap_fixed(
+				base + this_min,
+				this_max - this_min,
+				prot, MAP_PRIVATE | MAP_FIXED,
+				task->fd,
+				off_start + task->file_offset) == MAP_FAILED) {
+			LD_LOGW("Error mapping library: mmap fix failed task->name=%{public}s errno=%{public}d", task->name, errno);
+			goto error;
 		}
 		if ((ph->p_flags & PF_X) && (ph->p_align == KPMD_SIZE) && hugepage_enabled)
 			madvise(base + this_min, this_max - this_min, MADV_HUGEPAGE);
