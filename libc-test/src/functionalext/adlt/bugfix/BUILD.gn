@@ -242,3 +242,31 @@ adlt_executable("unittest_adlt_bugfix_sym_conflict") {
     sources = [ "sym_conflict/main.cpp" ]
     custom_deps = [ ":bugfix_sym_conflict", ":bugfix_sym_conflict_sub", ":bugfix_sym_conflict_add" ]
 }
+
+adlt_executable("unittest_adlt_bugfix_dlsym_rtld_default_cross_ndso") {
+    lib_name = "bugfix_dlsym_rtld_default_cross_ndso"
+    lib_include_dirs = [ "dlsym_rtld_default_cross_ndso" ]
+    lib_configs = [
+        {
+            # caller nDSO: no dependency on provider, simulates libasymc_stack
+            name = "bugfix_dlsym_default_caller"
+            sources = [ "dlsym_rtld_default_cross_ndso/caller.c" ]
+        },
+        {
+            # provider nDSO: simulates libuv, NOT a dependency of caller or main exe
+            name = "bugfix_dlsym_default_provider"
+            sources = [ "dlsym_rtld_default_cross_ndso/provider.c" ]
+        },
+    ]
+
+    include_dirs = [ "dlsym_rtld_default_cross_ndso" ]
+    sources = [ "dlsym_rtld_default_cross_ndso/main.cpp" ]
+
+    # Only link against caller nDSO (NOT provider), so provider symbols are
+    # not naturally visible. Provider SO is still built (for ADLT merge) but
+    # not added to DT_NEEDED of the main executable.
+    custom_deps = [
+        ":bugfix_dlsym_rtld_default_cross_ndso",
+        ":bugfix_dlsym_default_caller",
+    ]
+}
