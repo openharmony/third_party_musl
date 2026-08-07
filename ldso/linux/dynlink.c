@@ -976,9 +976,15 @@ static int search_vec(size_t *v, size_t *r, size_t key)
 	return 1;
 }
 
-static void compute_reloc_table_range(struct dso *dso, size_t *dyn)
+static void compute_reloc_table_range(struct dso *dso, size_t *dyn, size_t *dynv)
 {
 	size_t reloc_start = 0, reloc_end = 0;
+
+	if (dyn[DT_SYMTAB]) {
+		size_t start = dyn[DT_SYMTAB];
+		if (!reloc_start || start < reloc_start)
+			reloc_start = start;
+	}
 
 	if (dyn[DT_REL]) {
 		size_t start = dyn[DT_REL];
@@ -1014,6 +1020,43 @@ static void compute_reloc_table_range(struct dso *dso, size_t *dyn)
 			reloc_start = start;
 		if (end > reloc_end)
 			reloc_end = end;
+	}
+
+	/* DT_ANDROID_REL/RELA and DT_AARCH64_AUTH_RELR use OS/PROC-range tags
+	 * (DT_LOOS / DT_LOPROC) which decode_vec skips (only tags < DYN_CNT are
+	 * stored into dyn[]). Read them directly from the raw dynamic section
+	 * via search_vec, the same way do_android_relocs / do_auth_relr_relocs
+	 * do. Otherwise dyn[DT_ANDROID_*] would be an out-of-bounds access.
+	 * dynv is the raw dynamic section passed in by the caller, since
+	 * dso->dynv is not yet assigned at any of the call sites. When dynv is
+	 * NULL (no raw dynamic section available), only the standard reloc
+	 * tables from dyn[] above are covered; the Android/AUTH tables are
+	 * skipped. search_vec dereferences its first argument, so it must not
+	 * be called with NULL. */
+	if (dynv) {
+		size_t android_rel_addr = 0, android_rel_size = 0;
+		if (search_vec(dynv, &android_rel_addr, DT_ANDROID_REL) &&
+			search_vec(dynv, &android_rel_size, DT_ANDROID_RELSZ) &&
+			android_rel_addr && android_rel_size) {
+			size_t start = android_rel_addr;
+			size_t end = start + android_rel_size;
+			if (!reloc_start || start < reloc_start)
+				reloc_start = start;
+			if (end > reloc_end)
+				reloc_end = end;
+		}
+
+		size_t android_rela_addr = 0, android_rela_size = 0;
+		if (search_vec(dynv, &android_rela_addr, DT_ANDROID_RELA) &&
+			search_vec(dynv, &android_rela_size, DT_ANDROID_RELASZ) &&
+			android_rela_addr && android_rela_size) {
+			size_t start = android_rela_addr;
+			size_t end = start + android_rela_size;
+			if (!reloc_start || start < reloc_start)
+				reloc_start = start;
+			if (end > reloc_end)
+				reloc_end = end;
+		}
 	}
 
 	if (reloc_start && reloc_end) {
@@ -2296,7 +2339,7 @@ UT_STATIC void *map_library(int fd, struct dso *dso, struct reserved_address_par
 		if (pread(fd, dynv_buf, dynv_size, dynv_off) == dynv_size) {
 			size_t dyn_parsed[DYN_CNT] = {0};
 			decode_vec(dynv_buf, dyn_parsed, DYN_CNT);
-			compute_reloc_table_range(dso, dyn_parsed);
+			compute_reloc_table_range(dso, dyn_parsed, dynv_buf);
 		}
 	}
 	if (!dyn) goto noexec;
@@ -3703,8 +3746,9 @@ static void kernel_mapped_dso(struct dso *p)
 	p->map_len = max_addr - min_addr;
 	if (dynv_addr) {
 		size_t dyn[DYN_CNT] = {0};
-		decode_vec(laddr(p, dynv_addr), dyn, DYN_CNT);
-		compute_reloc_table_range(p, dyn);
+		size_t *raw_dynv = laddr(p, dynv_addr);
+		decode_vec(raw_dynv, dyn, DYN_CNT);
+		compute_reloc_table_range(p, dyn, raw_dynv);
 	}
 	p->kernel_mapped = 1;
 }
@@ -7545,7 +7589,7 @@ static bool task_map_library(struct loadtask *task, struct reserved_address_para
 		if (pread(task->fd, dynv_buf, dynv_size, dynv_off + task->file_offset) == dynv_size) {
 			size_t dyn_parsed[DYN_CNT] = {0};
 			decode_vec(dynv_buf, dyn_parsed, DYN_CNT);
-			compute_reloc_table_range(task->p, dyn_parsed);
+			compute_reloc_table_range(task->p, dyn_parsed, dynv_buf);
 		}
 	}
 	if (!task->dyn) {
