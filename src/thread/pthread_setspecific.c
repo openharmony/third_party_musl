@@ -19,4 +19,7 @@ void pthread_settsd(void** tsd)
 {
 	struct pthread *self = __pthread_self();
 	self->tsd = tsd;
+	if (self->tsd == NULL) {
+		abort();
+	}
 }
