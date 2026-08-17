@@ -1486,35 +1486,43 @@ static inline Sym *__find_sym(struct dso *dso, struct verinfo *verinfo, int need
 	return NULL;
 
 }
-
-static inline struct symdef find_sym2(struct dso *dso, struct verinfo *verinfo, int need_def, int use_deps, ns_t *ns)
+static inline Sym *lookup_sym_in_dso(struct dso *dso, struct verinfo *verinfo)
 {
 	struct sym_info_pair s_info_g = gnu_hash(verinfo->s);
 	struct sym_info_pair s_info_s = {0, 0};
 	uint32_t gh = s_info_g.sym_h, gho = gh / (8 * sizeof(size_t)), *ght;
 	size_t ghm = 1ul << gh % (8*sizeof(size_t));
+	Sym *sym = NULL;
+	if ((ght = dso->ghashtab)) {
+		if (gnu_hash_filter(ght, ghm, gho, gh)) {
+			sym = gnu_lookup(s_info_g, ght, dso, verinfo);
+		}
+	} else {
+		if (!s_info_s.sym_h) s_info_s = sysv_hash(verinfo->s);
+		sym = sysv_lookup(verinfo, s_info_s, dso);
+	}
+	// for global syms, there is no "__XX" suffix，
+	// the sym is found if and only if the symbol actually originates from this .so file.
+	if (dso->adlt && sym && !is_adlt_dso_sym(dso, sym - dso->syms)) {
+		sym = NULL;
+	}
+	if (!sym && dso->adlt) {
+		sym = adlt_lookup_unique_sym(dso, verinfo);
+	}
+	return sym;
+}
+static inline struct symdef find_sym2(struct dso *dso, struct verinfo *verinfo, int need_def, int use_deps, ns_t *ns)
+{
 	struct symdef def = {0};
 	struct dso **deps = use_deps ? dso->deps : 0;
 	for (; dso; dso=use_deps ? *deps++ : dso->syms_next) {
-		Sym *sym = NULL;
 		// for ldso, app, preload so which is global, should be accessible in all exist namespaces
 		if (!dso->is_preload && ns && !check_sym_accessible(dso, ns)) {
 			continue;
 		}
-		if ((ght = dso->ghashtab)) {
-			if (gnu_hash_filter(ght, ghm, gho, gh)) {
-				sym = gnu_lookup(s_info_g, ght, dso, verinfo);
-			}
-		} else {
-			if (!s_info_s.sym_h) s_info_s = sysv_hash(verinfo->s);
-			sym = sysv_lookup(verinfo, s_info_s, dso);
-		}
+		Sym *sym = lookup_sym_in_dso(dso, verinfo);
+		if (!sym) continue;
 
-		if (!sym) {
-			if (!dso->adlt) continue;
-			sym = adlt_lookup_unique_sym(dso, verinfo);
-			if (!sym) continue;
-		}
 		if (!sym->st_shndx)
 			if (need_def || (sym->st_info&0xf) == STT_TLS
 				|| ARCH_SYM_REJECT_UND(sym))
@@ -1541,24 +1549,12 @@ static inline struct symdef find_sym_by_deps(struct dso *dso, struct verinfo *ve
 	struct symdef def = {0};
 	struct dso **deps = dso->deps;
 	for (; dso; dso = *deps++) {
-		Sym *sym = NULL;
 		if (!is_dso_accessible(dso, ns)) {
 			continue;
 		}
-		if ((ght = dso->ghashtab)) {
-			if (gnu_hash_filter(ght, ghm, gho, gh)){
-				sym = gnu_lookup(s_info_g, ght, dso, verinfo);
-			}
-		} else {
-			if (!s_info_s.sym_h) s_info_s = sysv_hash(verinfo->s);
-			sym = sysv_lookup(verinfo, s_info_s, dso);
-		}
+		Sym *sym = lookup_sym_in_dso(dso, verinfo);
+		if (!sym) continue;
 
-		if (!sym) {
-			if (!dso->adlt) continue;
-			sym = adlt_lookup_unique_sym(dso, verinfo);
-			if (!sym) continue;
-		}
 		if (!sym->st_shndx)
 			if (need_def || (sym->st_info&0xf) == STT_TLS
 				|| ARCH_SYM_REJECT_UND(sym))
