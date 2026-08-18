@@ -11,6 +11,9 @@ void memtrace(void* addr, size_t size, const char* tag, bool is_using)
 	volatile const struct MallocDispatchType* dispatch_table = (struct MallocDispatchType *)atomic_load_explicit(
 		&__musl_libc_globals.current_dispatch_table, memory_order_acquire);
 	if (__predict_false(dispatch_table != NULL)) {
+		if (__get_custom_hook_flag()) {
+			return;
+		}
 		if (__get_memleak_hook_flag()) {
 			return;
 		}
@@ -32,6 +35,9 @@ void restrace(unsigned long long mask, void* addr, size_t size, const char* tag,
 	volatile const struct MallocDispatchType* dispatch_table = (struct MallocDispatchType *)atomic_load_explicit(
 		&__musl_libc_globals.current_dispatch_table, memory_order_acquire);
 	if (__predict_false(dispatch_table != NULL)) {
+		if (__get_custom_hook_flag()) {
+			return;
+		}
 		if (!__get_global_hook_flag()) {
 			return;
 		}
@@ -60,6 +66,9 @@ void restraceExt(unsigned long long mask, void* addr, size_t size, const char* t
 	volatile const struct MallocDispatchType* dispatch_table = (struct MallocDispatchType *)atomic_load_explicit(
 		&__musl_libc_globals.current_dispatch_table, memory_order_acquire);
 	if (__predict_false(dispatch_table != NULL)) {
+		if (__get_custom_hook_flag()) {
+			return;
+		}
 		if (isWeakRef || (!__get_global_hook_flag())) {
 			return;
 		}
@@ -78,6 +87,9 @@ void resTraceMove(unsigned long long mask, void* oldAddr, void* newAddr, size_t 
 	volatile const struct MallocDispatchType* dispatch_table = (struct MallocDispatchType *)atomic_load_explicit(
 		&__musl_libc_globals.current_dispatch_table, memory_order_acquire);
 	if (__predict_false(dispatch_table != NULL)) {
+		if (__get_custom_hook_flag()) {
+			return;
+		}
 		if (!__get_global_hook_flag()) {
 			return;
 		}
@@ -96,6 +108,9 @@ void resTraceFreeRegion(unsigned long long mask, void* addr, size_t size){
 	volatile const struct MallocDispatchType* dispatch_table = (struct MallocDispatchType *)atomic_load_explicit(
 		&__musl_libc_globals.current_dispatch_table, memory_order_acquire);
 	if (__predict_false(dispatch_table != NULL)) {
+		if (__get_custom_hook_flag()) {
+			return;
+		}
 		if (!__get_global_hook_flag()) {
 			return;
 		}
