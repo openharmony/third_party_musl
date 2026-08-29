@@ -35,6 +35,7 @@ extern "C" {
 #define TAG_RES_VMA_ARKWEB         "RES_VMA_ARKWEB"
 #define TAG_RES_RN_HERMES_HEAP     "RES_RN_HERMES_HEAP"
 #define TAG_RES_DART_HEAP          "RES_DART_HEAP"
+#define TAG_RES_COMPOSITE_HEAP     "RES_COMPOSITE_HEAP"
 
 /* each bit represents resource hook point.
  * |63 ... 32|31 ... 22|21 ... 12|11 - 10|9 ... 0|
@@ -74,6 +75,7 @@ extern "C" {
 #define RES_VMA_ARKWEB             (1 << 26)
 #define RES_RN_HERMES_HEAP         (1ULL << 31)
 #define RES_DART_HEAP              (1ULL << 34)
+#define RES_COMPOSITE_HEAP         (1ULL << 35)
 
 #define FD_SIZE                     1
 #define THREAD_SIZE                 1
