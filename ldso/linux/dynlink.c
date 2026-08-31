@@ -6678,8 +6678,10 @@ hidden int __dlclose(void *p)
 		pthread_mutex_unlock(&dlclose_lock);
 		return -1;
 	}
+	setDlcloseLockLastExitSoName(dso->name);
 	rc = do_dlclose(dso, 0);
 #else
+	setDlcloseLockLastExitSoName(((struct dso *)p)->name);
 	rc = do_dlclose(p, 0);
 #endif
 	pthread_rwlock_unlock(&lock);

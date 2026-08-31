@@ -259,7 +259,8 @@ static void signal_chain_handler(int signo, siginfo_t* siginfo, void* ucontext_r
                 "register_count=%{public}d "
                 "__custom_hook_flag=%{public}d"
                 "g_dlcloseLockStatus=%{public}d"
-                "g_dlcloseLockLastExitTid=%{public}d",
+                "g_dlcloseLockLastExitTid=%{public}d"
+                "g_dlcloseLockLastExitSoName=%{public}s",
                 __func__, idx, signo, (unsigned long long)sig_chains[signo - 1].sca_special_actions[idx].sca_sigaction,
                 noreturn, signo, thread_list_lock_status,
                 get_tl_lock_count(), get_tl_lock_waiters(), get_tl_lock_tid_fail(), get_tl_lock_count_tid(),
@@ -280,7 +281,8 @@ static void signal_chain_handler(int signo, siginfo_t* siginfo, void* ucontext_r
                 get_register_count(),
                 __custom_hook_flag,
                 getDlcloseLockStatus(),
-                getDlcloseLockLastExitTid());
+                getDlcloseLockLastExitTid(),
+                getDlcloseLockLastExitSoName());
             if (sig_chains[signo - 1].sca_special_actions[idx].sca_sigaction(signo,
                                                             siginfo, ucontext_raw)) {
                 set_handling_signal(previous_value);

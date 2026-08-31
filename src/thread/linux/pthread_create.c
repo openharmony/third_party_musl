@@ -8,6 +8,7 @@
 #include <sys/mman.h>
 #include <sys/prctl.h>
 #include <string.h>
+#include <limits.h>
 #include <stddef.h>
 #include <stdarg.h>
 #include "assert.h"
@@ -129,6 +130,7 @@ static int thread_list_lock_pthread_exit = TID_ERROR_INIT;
 static int thread_list_lock_tid_overlimit = TID_ERROR_INIT;
 static int register_count = 0;
 static pid_t g_dlcloseLockStatus = TID_ERROR_0, g_dlcloseLockLastExitTid = TID_ERROR_0;
+static char g_dlcloseLockLastExitSoName[NAME_MAX + 1] = { [NAME_MAX] = '\0' };
 
 struct call_tl_lock tl_lock_caller_count = { 0 };
 
@@ -215,6 +217,26 @@ void setDlcloseLockStatus(pid_t value)
 void setDlcloseLockLastExitTid(pid_t value)
 {
 	g_dlcloseLockLastExitTid = value;
+}
+
+const char *getDlcloseLockLastExitSoName()
+{
+	return g_dlcloseLockLastExitSoName;
+}
+
+void setDlcloseLockLastExitSoName(const char *name)
+{
+	if (name == NULL) {
+		g_dlcloseLockLastExitSoName[0] = '\0';
+		return;
+	}
+	size_t len = strlen(name);
+	if (len > NAME_MAX) {
+		name = name + (len - NAME_MAX);
+		len = NAME_MAX;
+	}
+	g_dlcloseLockLastExitSoName[len] = '\0';
+	memcpy(g_dlcloseLockLastExitSoName, name, len);
 }
 
 #ifdef ENABLE_HWASAN
