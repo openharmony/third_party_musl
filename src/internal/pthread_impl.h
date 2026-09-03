@@ -364,6 +364,8 @@ extern hidden pid_t getDlcloseLockStatus();
 extern hidden pid_t getDlcloseLockLastExitTid();
 extern hidden void setDlcloseLockStatus(pid_t);
 extern hidden void setDlcloseLockLastExitTid(pid_t);
+extern hidden const char *getDlcloseLockLastExitSoName();
+extern hidden void setDlcloseLockLastExitSoName(const char *);
 
 #ifdef _GNU_SOURCE
 #ifdef MUSL_EXTERNAL_FUNCTION
