@@ -54,7 +54,15 @@ typedef struct {
   Elf64_Off offset; // from section start
   Elf64_Xword size; // size in bytes
 } adlt_cross_section_array_t;
- 
+
+typedef struct {
+  adlt_phindex_t phIndex; // program header index
+  Elf64_Addr vaddr;       // vaddr of this section
+  Elf64_Off offset; // offset in the file
+  Elf64_Xword filesz;     // file size in bytes
+  Elf64_Xword memsz;      // mem size in bytes
+} adlt_section_entry_t;
+
 typedef struct {
   Elf64_Off offset; // relative to header.blobStart
   Elf64_Xword size; // size in bytes, make convertions for data type
@@ -66,7 +74,8 @@ typedef adlt_blob_array_t adlt_blob_u16_array_t;     // uint16_t[]
 typedef adlt_blob_array_t adlt_blob_u32_array_t;     // uint32_t[]
 typedef adlt_blob_array_t adlt_blob_u64_array_t;     // uint64_t[]
 typedef adlt_blob_u32_array_t adlt_blob_rel_array_t; // uint32_t[] (adlt_relindex_t[])
- 
+typedef adlt_blob_array_t adlt_section_entry_array_t;     // adlt_section_entry_t[]
+
 typedef struct {
   Elf64_Half major : 6;
   Elf64_Half minor : 6;
@@ -109,7 +118,7 @@ typedef struct {
   adlt_blob_array_t dtNeeded; // array of adlt_dt_needed_index_t[] elems
   adlt_cross_section_ref_t sharedLocalSymbolIndex;
   adlt_cross_section_ref_t sharedGlobalSymbolIndex;
-  adlt_blob_u16_array_t phIndexes;    // program header indexes, typeof(e_phnum)
+  adlt_section_entry_array_t sections;          // section info array (adlt_section_entry_t array)
   adlt_blob_rel_array_t relaDynIndx;  // .rela.dyn dependent indexes, raw list
   adlt_blob_rel_array_t relaPltIndx;  // .rela.plt dependent indexes, raw list
   adlt_blob_rel_array_t relrDynIndx;  // .relr.dyn dependent indexes, raw list
@@ -127,7 +136,7 @@ typedef struct {
   Elf64_Off blobStart;             // offset of binary blob start relative to .adlt
   Elf64_Xword blobSize;
   Elf64_Xword overallMappedSize;   // bytes, required to map the whole ADLT image
-  adlt_blob_u16_array_t phIndexes; // program header indexes, typeof(e_phnum)
+  adlt_section_entry_array_t sections;          // section info array (adlt_section_entry_t array)
   adlt_blob_u8_array_t symIdxToSoIdx;
   adlt_cross_section_ref_t
       sharedEndLocalSymbolIndex;   // .symtab's end (after last) local symbol
@@ -140,7 +149,7 @@ typedef struct {
  
 static const char adltBlobStartMark[4] = {0xA, 0xD, 0x1, 0x7};
  
-static const adlt_semver_t adltSchemaVersion = {1, 5, 0};
+static const adlt_semver_t adltSchemaVersion = {1, 5, 2};
  
 #ifdef __cplusplus
 } // namespace adlt
