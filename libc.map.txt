@@ -2125,6 +2125,9 @@
     __sched_cpufree;
     set_sigchain_pre_validation_ignore;
     mktime_noenv;
+    register_printf_specifier;
+    register_printf_type;
+    register_printf_modifier;
   local:
     *;
 };

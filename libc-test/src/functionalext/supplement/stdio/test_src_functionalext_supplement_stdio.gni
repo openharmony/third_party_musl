@@ -104,5 +104,10 @@ if (musl_extended_function) {
     "__printf_chk",
     "__vfprintf_chk",
     "__vasprintf_chk",
+    "register_printf_specifier",
+    "register_printf_type",
+    "register_printf_modifier",
+    "tst_vfprintf_user_type",
+    "tst_printfsz",
   ]
 }

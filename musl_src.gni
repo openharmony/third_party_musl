@@ -3225,6 +3225,12 @@ if (musl_arch == "arm") {
       "src/thread/pthread_attr_setaffinity_np.c",
       "src/thread/pthread_extended_function_policy.c",
       "src/sched/sched_cpufree.c",
+      "src/stdio/reg-printf.c",
+      "src/stdio/reg-type.c",
+      "src/stdio/reg-modifier.c",
+    ]
+    musl_inc_root_files += [
+      "include/printf.h",
     ]
   }
 } else if (musl_arch == "loongarch64") {
