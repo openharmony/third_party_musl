@@ -15,6 +15,7 @@
 
 #include <stdio.h>
 #include <pthread.h>
+#include <semaphore.h>
 #include "test.h"
 #include "functionalext.h"
 
@@ -25,6 +26,16 @@ void *threadfunc(void *arg)
 {
     sleep(2);
     flag++;
+    return 0;
+}
+
+static sem_t g_detachBlockSem;
+static sem_t g_detachDoneSem;
+
+void *threadfunc_detach_block(void *arg)
+{
+    sem_wait(&g_detachBlockSem);
+    sem_post(&g_detachDoneSem);
     return 0;
 }
 
@@ -61,9 +72,82 @@ void pthread_join_0200(void)
     }
 }
 
+/**
+ * @tc.name      : pthread_join_0300
+ * @tc.desc      : A detached thread is passed to pthread_join(), which returns EINVAL
+ * @tc.level     : Level 0
+ */
+void pthread_join_0300(void)
+{
+    sem_init(&g_detachBlockSem, 0, 0);
+    sem_init(&g_detachDoneSem, 0, 0);
+    pthread_t t;
+    int createResult = pthread_create(&t, NULL, threadfunc_detach_block, NULL);
+    if (createResult != 0) {
+        t_error("%s pthread_create error get result is %d are not want 0\n", __func__, createResult);
+        sem_destroy(&g_detachBlockSem);
+        sem_destroy(&g_detachDoneSem);
+        return;
+    }
+    int detachResult = pthread_detach(t);
+    if (detachResult != 0) {
+        t_error("%s pthread_detach error get result is %d are not want 0\n", __func__, detachResult);
+        sem_post(&g_detachBlockSem);
+        pthread_join(t, NULL);
+        sem_destroy(&g_detachBlockSem);
+        sem_destroy(&g_detachDoneSem);
+        return;
+    }
+    int result = pthread_join(t, NULL);
+    if (result != EINVAL) {
+        t_error("%s pthread_join error get result is %d are not want EINVAL\n", __func__, result);
+    }
+    sem_post(&g_detachBlockSem);
+    sem_wait(&g_detachDoneSem);
+    sem_destroy(&g_detachBlockSem);
+    sem_destroy(&g_detachDoneSem);
+}
+
+/**
+ * @tc.name      : pthread_join_0400
+ * @tc.desc      : A thread created with detached attribute is passed to pthread_join(), which returns EINVAL
+ * @tc.level     : Level 0
+ */
+void pthread_join_0400(void)
+{
+    sem_init(&g_detachBlockSem, 0, 0);
+    sem_init(&g_detachDoneSem, 0, 0);
+    pthread_attr_t attr;
+    pthread_t t;
+    pthread_attr_init(&attr);
+    int setResult = pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+    if (setResult != 0) {
+        t_error("%s pthread_attr_setdetachstate error get result is %d are not want 0\n", __func__, setResult);
+    }
+    int createResult = pthread_create(&t, &attr, threadfunc_detach_block, NULL);
+    if (createResult != 0) {
+        t_error("%s pthread_create error get result is %d are not want 0\n", __func__, createResult);
+        pthread_attr_destroy(&attr);
+        sem_destroy(&g_detachBlockSem);
+        sem_destroy(&g_detachDoneSem);
+        return;
+    }
+    pthread_attr_destroy(&attr);
+    int result = pthread_join(t, NULL);
+    if (result != EINVAL) {
+        t_error("%s pthread_join error get result is %d are not want EINVAL\n", __func__, result);
+    }
+    sem_post(&g_detachBlockSem);
+    sem_wait(&g_detachDoneSem);
+    sem_destroy(&g_detachBlockSem);
+    sem_destroy(&g_detachDoneSem);
+}
+
 int main(int argc, char *argv[])
 {
     pthread_join_0100();
     pthread_join_0200();
+    pthread_join_0300();
+    pthread_join_0400();
     return t_status;
 }

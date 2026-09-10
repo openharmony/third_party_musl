@@ -48,7 +48,10 @@ out:
 	return __syscall(SYS_pthread_deatch, tid);
 #else
 	while ((state = t->detach_state) && r != ETIMEDOUT && r != EINVAL) {
-		if (state >= DT_DETACHED) a_crash();
+		if (state >= DT_DETACHED) {
+			r = EINVAL;
+			break;
+		}
 		r = __timedwait_cp(&t->detach_state, state, CLOCK_REALTIME, at, 1);
 	}
 	__pthread_setcancelstate(cs, 0);
