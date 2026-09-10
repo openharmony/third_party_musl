@@ -51,7 +51,6 @@ static_library(libc) {
   include_dirs += [
     "//kernel/liteos_m/kernel/arch/include",
     "//kernel/liteos_m/kernel/include",
-    "//kernel/liteos_m/utils",
   ]
 
   cflags = [

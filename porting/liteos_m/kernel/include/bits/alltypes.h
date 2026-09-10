@@ -285,7 +285,7 @@ typedef int pthread_spinlock_t;
 #endif
 
 #if defined(__NEED_pthread_mutexattr_t) && !defined(__DEFINED_pthread_mutexattr_t)
-typedef struct { unsigned type; } pthread_mutexattr_t;
+typedef struct { unsigned char protocol; unsigned char prioceiling; unsigned char type; unsigned char reserved; } pthread_mutexattr_t;
 #define __DEFINED_pthread_mutexattr_t
 #endif
 
@@ -403,6 +403,11 @@ struct sched_param {
 #define __DEFINED_sched_param
 #endif
 
+#if defined(__NEED_cpu_set_t) && !defined(__DEFINED_cpu_set_t)
+typedef struct cpu_set_t { unsigned long __bits[128/sizeof(long)]; } cpu_set_t;
+#define __DEFINED_cpu_set_t
+#endif
+
 #if defined(__NEED_pthread_attr_t) && !defined(__DEFINED_pthread_attr_t)
 typedef struct {
     unsigned int detachstate;
@@ -414,6 +419,9 @@ typedef struct {
     void *stackaddr;
     unsigned int stacksize_set;
     size_t stacksize;
+#ifdef LOSCFG_KERNEL_SMP
+    cpu_set_t cpuset;
+#endif
 } pthread_attr_t;
 #define __DEFINED_pthread_attr_t
 #endif
@@ -446,7 +454,21 @@ typedef struct { union { int __i[12]; volatile int __vi[12]; void *__p[12*sizeof
 #endif
 
 #if defined(__NEED_pthread_rwlock_t) && !defined(__DEFINED_pthread_rwlock_t)
-typedef struct { union { int __i[sizeof(long)==8?14:8]; volatile int __vi[sizeof(long)==8?14:8]; void *__p[sizeof(long)==8?7:8]; } __u; } pthread_rwlock_t;
+typedef struct rwlock_node {
+    void *ptr;
+    void *next;
+} rwlock_node_t;
+
+typedef struct {
+  unsigned int magic;
+  pthread_mutex_t mutex;
+  pthread_cond_t read_cond;
+  pthread_cond_t write_cond;
+  volatile int pending_writers;
+  volatile int readers;
+  volatile int writer;
+  rwlock_node_t owner;
+} pthread_rwlock_t;
 #define __DEFINED_pthread_rwlock_t
 #endif
 
