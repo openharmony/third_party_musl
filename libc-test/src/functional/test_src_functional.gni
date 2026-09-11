@@ -40,6 +40,8 @@ functional_list = [
   "search_tsearch",
   "sem_init",
   "sem_open",
+  "group_shm_sem",
+  "group_shm_sem_stress",
   "setjmp",
   "snprintf",
   "socket",

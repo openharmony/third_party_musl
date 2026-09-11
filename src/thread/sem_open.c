@@ -1,4 +1,5 @@
 #include <semaphore.h>
+#include <sys/group_ipc.h>
 #include <sys/mman.h>
 #include <limits.h>
 #include <fcntl.h>
@@ -11,6 +12,7 @@
 #include <sys/stat.h>
 #include <stdlib.h>
 #include <pthread.h>
+#include <unsupported_api.h>
 #include "lock.h"
 #include "fork_impl.h"
 
@@ -187,4 +189,152 @@ int sem_close(sem_t *sem)
 	UNLOCK(lock);
 	munmap(sem, sizeof *sem);
 	return 0;
+}
+
+sem_t *group_sem_open(const char *name, int flags, gid_t gid, ...)
+{
+	UNSUPPORTED_API_VOID(LITEOS_A);
+	va_list ap;
+	mode_t mode;
+	unsigned value;
+	int fd, i, e, slot, first=1, cnt, cs;
+	sem_t newsem;
+	void *map;
+	char tmp[64];
+	struct timespec ts;
+	struct stat st;
+	char buf[__GROUP_SHM_PATH_MAX];
+
+	if (!(name = __group_shm_mapname(name, gid, buf))) {
+		return SEM_FAILED;
+	}
+
+	LOCK(lock);
+	/* Allocate table if we don't have one yet */
+	if (!semtab && !(semtab = calloc(sizeof *semtab, SEM_NSEMS_MAX))) {
+		UNLOCK(lock);
+		return SEM_FAILED;
+	}
+
+	/* Reserve a slot in case this semaphore is not mapped yet;
+	 * this is necessary because there is no way to handle
+	 * failures after creation of the file. */
+	slot = -1;
+	for (cnt=i=0; i<SEM_NSEMS_MAX; i++) {
+		cnt += semtab[i].refcnt;
+		if (!semtab[i].sem && slot < 0) {
+			slot = i;
+		}
+	}
+	/* Avoid possibility of overflow later */
+	if (cnt == INT_MAX || slot < 0) {
+		errno = EMFILE;
+		UNLOCK(lock);
+		return SEM_FAILED;
+	}
+	/* Dummy pointer to make a reservation */
+	semtab[slot].sem = (sem_t *)-1;
+	UNLOCK(lock);
+
+	flags &= (O_CREAT|O_EXCL);
+
+	(void)pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &cs);
+
+	/* Early failure check for exclusive open; otherwise the case
+	 * where the semaphore already exists is expensive. */
+	if (flags == (O_CREAT|O_EXCL) && access(name, F_OK) == 0) {
+		errno = EEXIST;
+		goto fail;
+	}
+
+	for (;;) {
+		/* If exclusive mode is not requested, try opening an
+		 * existing file first and fall back to creation. */
+		if (flags != (O_CREAT|O_EXCL)) {
+			fd = open(name, FLAGS);
+			if (fd >= 0) {
+				if (fstat(fd, &st) < 0 ||
+				    (map = mmap(0, sizeof(sem_t), PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0)) == MAP_FAILED) {
+					(void)close(fd);
+					goto fail;
+				}
+				(void)close(fd);
+				break;
+			}
+			if (errno != ENOENT) {
+				goto fail;
+			}
+		}
+		if (!(flags & O_CREAT)) {
+			goto fail;
+		}
+		if (first) {
+			first = 0;
+			va_start(ap, gid);
+			mode = va_arg(ap, mode_t) & 0666;
+			value = va_arg(ap, unsigned);
+			va_end(ap);
+			if (value > SEM_VALUE_MAX) {
+				errno = EINVAL;
+				goto fail;
+			}
+			(void)sem_init(&newsem, 1, value);
+		}
+		/* Create a temp file with the new semaphore contents
+		 * and attempt to atomically link it as the new name */
+		(void)clock_gettime(CLOCK_REALTIME, &ts);
+		(void)snprintf(tmp, sizeof(tmp), "/dev/group/shm/%u/tmp-%d", (unsigned)gid, (int)ts.tv_nsec);
+		fd = open(tmp, O_CREAT|O_EXCL|FLAGS, mode);
+		if (fd < 0) {
+			if (errno == EEXIST) {
+				continue;
+			}
+			goto fail;
+		}
+		if (write(fd, &newsem, sizeof newsem) != sizeof newsem || fstat(fd, &st) < 0 ||
+		    (map = mmap(0, sizeof(sem_t), PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0)) == MAP_FAILED) {
+			(void)close(fd);
+			(void)unlink(tmp);
+			goto fail;
+		}
+		(void)close(fd);
+		e = link(tmp, name) ? errno : 0;
+		(void)unlink(tmp);
+		if (!e) {
+			break;
+		}
+		(void)munmap(map, sizeof(sem_t));
+		/* Failure is only fatal when doing an exclusive open;
+		 * otherwise, next iteration will try to open the
+		 * existing file. */
+		if (e != EEXIST || flags == (O_CREAT|O_EXCL)) {
+			goto fail;
+		}
+	}
+
+	/* See if the newly mapped semaphore is already mapped. If
+	 * so, unmap the new mapping and use the existing one. Otherwise,
+	 * add it to the table of mapped semaphores. */
+	LOCK(lock);
+	for (i=0; i<SEM_NSEMS_MAX && semtab[i].ino != st.st_ino; i++) {
+	}
+	if (i<SEM_NSEMS_MAX) {
+		(void)munmap(map, sizeof(sem_t));
+		semtab[slot].sem = 0;
+		slot = i;
+		map = semtab[i].sem;
+	}
+	semtab[slot].refcnt++;
+	semtab[slot].sem = map;
+	semtab[slot].ino = st.st_ino;
+	UNLOCK(lock);
+	(void)pthread_setcancelstate(cs, 0);
+	return map;
+
+fail:
+	(void)pthread_setcancelstate(cs, 0);
+	LOCK(lock);
+	semtab[slot].sem = 0;
+	UNLOCK(lock);
+	return SEM_FAILED;
 }
