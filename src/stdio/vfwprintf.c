@@ -8,6 +8,9 @@
 #include <stdlib.h>
 #include <wchar.h>
 #include <inttypes.h>
+#ifdef MUSL_EXTERNAL_FUNCTION
+#include "printf_ext.h"
+#endif
 
 /* Convenient bit representation for modifier flags, which all fall
  * within 31 codepoints of the space character. */
@@ -123,6 +126,252 @@ static void pop_arg(union arg *arg, int type, va_list *ap)
 	}
 }
 
+#ifdef MUSL_EXTERNAL_FUNCTION
+/* Translate PA_* arginfo types to internal pop_arg types.
+ * Returns the internal type, or -1 for an unknown type. */
+static int pa_to_st(int at)
+{
+	/* ABI contract: any type carrying PA_FLAG_PTR is passed as a
+	 * plain pointer (e.g. PA_INT|PA_FLAG_PTR is an int *). */
+	if (at & PA_FLAG_PTR) {
+		return PTR;
+	}
+	switch (at & ~PA_FLAG_MASK) {
+	case PA_INT:
+		if (at & PA_FLAG_LONG_LONG) {
+			return LLONG;
+		}
+		if (at & PA_FLAG_LONG) {
+			return LONG;
+		}
+		if (at & PA_FLAG_SHORT) {
+			return SHORT;
+		}
+		return INT;
+	case PA_CHAR:
+		return CHAR;
+	case PA_WCHAR:
+		return INT;
+	case PA_STRING:
+	case PA_WSTRING:
+	case PA_POINTER:
+		return PTR;
+	case PA_FLOAT:
+	case PA_DOUBLE:
+		if (at & PA_FLAG_LONG_DOUBLE) {
+			return LDBL;
+		}
+		return DBL;
+	default:
+		return -1;
+	}
+}
+
+/* Build the printf_info passed to the handler (wide stream). */
+static void fill_printf_info(struct printf_info *info, unsigned char ch,
+                             unsigned fl, int w, int p,
+                             unsigned int user_mod, unsigned ps)
+{
+	__builtin_memset(info, 0, sizeof(*info));
+	/* ABI contract: -1 means "no precision"; a negative precision
+	 * from a '.*' argument is normalized to -1. */
+	info->prec = p < 0 ? -1 : p;
+	info->width = w;
+	info->left = (fl & LEFT_ADJ) != 0;
+	info->showsign = (fl & MARK_POS) != 0;
+	info->space = (fl & PAD_POS) != 0;
+	info->alt = (fl & ALT_FORM) != 0;
+	info->group = (fl & GROUPED) != 0;
+	/* Zero-padding is cleared when the '-' flag is present. */
+	info->pad = ((fl & ZERO_PAD) && !(fl & LEFT_ADJ)) ? '0' : ' ';
+	info->spec = (wchar_t)ch;
+	info->user = user_mod;
+	info->wide = 1;
+	/* Map the length-modifier state to the printf_info flags.
+	 * printf_info has no dedicated field for "ll" and treats
+	 * a double 'l' like 'L'. */
+	switch (ps) {
+	case LPRE:
+		info->is_long = 1;
+		break;
+	case LLPRE:
+		info->is_long_double = 1;
+		break;
+	case BIGLPRE:
+		info->is_long_double = 1;
+		break;
+	case HPRE:
+		info->is_short = 1;
+		break;
+	case HHPRE:
+		info->is_char = 1;
+		break;
+	case ZTPRE:
+	case JPRE:
+		info->is_long = 1;
+		break;
+	default:
+		break;
+	}
+}
+
+/* Validate one arginfo type. Fills the internal pop_arg type for
+ * basic types (ast), leaves -1 for user-defined types. Returns 0 if
+ * the type is usable, -1 otherwise. */
+static int check_one_argtype(int at, int *ast)
+{
+	if (at & PA_FLAG_MASK) {
+		/* Basic type with length flags. */
+		*ast = pa_to_st(at);
+	} else if (at < PA_LAST) {
+		*ast = pa_to_st(at);
+	} else {
+		*ast = -1;
+		int ok = at < PA_TYPE_MAX &&
+		         __printf_va_arg_table != NULL &&
+		         __printf_va_arg_table[at - PA_LAST] != NULL;
+		if (!ok) {
+			return -1;
+		}
+		return 0;
+	}
+	if (*ast < 0) {
+		return -1;
+	}
+	return 0;
+}
+
+/* Query arginfo_fn and validate every requested type before any
+ * argument is consumed. Returns the argument count, or -1 if the
+ * arginfo callback misbehaves. */
+static int validate_arg_types(printf_arginfo_size_function *arginfo_fn,
+                              const struct printf_info *info,
+                              int *atypes, int *asizes, int *ast)
+{
+	int ndata = arginfo_fn ? arginfo_fn(info, 0, 0, 0) : 0;
+	if (ndata < 0 || ndata > 32) {
+		return -1;
+	}
+	if (ndata > 0) {
+		ndata = arginfo_fn(info, (size_t)ndata, atypes, asizes);
+		if (ndata < 0 || ndata > 32) {
+			return -1;
+		}
+	}
+
+	/* Validate all types before consuming any argument, so a bogus
+	 * arginfo cannot leave the va_list half way through on error. */
+	for (int j = 0; j < ndata; j++) {
+		if (check_one_argtype(atypes[j], &ast[j]) != 0) {
+			return -1;
+		}
+	}
+	return ndata;
+}
+
+/* Collect the arguments described by atypes/asizes/ast from the
+ * va_list. Returns 0 on success, -1 if memory allocation failed
+ * (already-collected user buffers are freed). */
+static int collect_reg_args(va_list *ap, const int *atypes, const int *asizes,
+                            const int *ast, int ndata,
+                            void **args_ptr, union arg *a, void **user_mem)
+{
+	for (int j = 0; j < ndata; j++) {
+		user_mem[j] = 0;
+		/* Basic types carrying length flags must go through pop_arg;
+		 * only flag-free ids at/above PA_LAST are user-registered
+		 * types (kept consistent with check_one_argtype). */
+		if ((atypes[j] & PA_FLAG_MASK) == 0 && atypes[j] >= PA_LAST) {
+			user_mem[j] = malloc(asizes[j] ? asizes[j] : sizeof(void *));
+			if (!user_mem[j]) {
+				for (int k = 0; k < j; k++) {
+					if (user_mem[k]) {
+						free(user_mem[k]);
+					}
+				}
+				return -1;
+			}
+			__printf_va_arg_table[atypes[j] - PA_LAST](user_mem[j], ap);
+			/* ABI contract: args[j] points to a slot holding a
+			 * POINTER to the user data, so handlers dereference
+			 * one extra level. */
+			a[j].p = user_mem[j];
+			args_ptr[j] = &a[j];
+		} else {
+			if (ast[j] == DBL) {
+				/* The handler ABI expects raw double bits at
+				 * offset 0; the internal union stores doubles
+				 * as long double, so store the raw bits here. */
+				double dv = va_arg(*ap, double);
+				__builtin_memcpy(&a[j], &dv, sizeof(dv));
+			} else {
+				pop_arg(&a[j], ast[j], ap);
+			}
+			args_ptr[j] = &a[j];
+		}
+	}
+	return 0;
+}
+
+/* Handle a registered (user-defined) conversion specifier on a wide
+ * stream. Must be called with *s pointing at the specifier character,
+ * in the real (non-pre-pass) round.
+ * Returns the number of characters written, -1 for an invalid format,
+ * -2 if memory allocation failed, -3 if the handler reported an
+ * error (errno preserved), or -4 if the handler declined the
+ * conversion (falling back to the builtin, which for a
+ * non-builtin character is an invalid format). */
+static int wprintf_registered(FILE *f, const wchar_t **s, va_list *ap,
+                               unsigned fl, int w, int p,
+                               unsigned int user_mod, unsigned ps)
+{
+	printf_function *handler;
+	struct printf_info info;
+	int atypes[32];
+	int asizes[32];
+	int ast[32];
+	void *args_ptr[32];
+	union arg a[32];
+	void *user_mem[32];
+	int ndata;
+	int ret;
+	unsigned char ch = (unsigned char)**s;
+
+	handler = __printf_function_table[ch];
+	fill_printf_info(&info, ch, fl, w, p, user_mod, ps);
+
+	ndata = validate_arg_types(__printf_arginfo_table[ch], &info,
+	                           atypes, asizes, ast);
+	if (ndata < 0) {
+		return -1;
+	}
+
+	if (collect_reg_args(ap, atypes, asizes, ast, ndata,
+	                     args_ptr, a, user_mem) != 0) {
+		return -2;
+	}
+
+	(*s)++;
+	ret = handler(f, &info, (const void *const *)args_ptr);
+
+	for (int j = 0; j < ndata; j++) {
+		if (user_mem[j]) {
+			free(user_mem[j]);
+		}
+	}
+	if (ret == -2) {
+		/* The handler declined this conversion; skip it and
+		 * continue with the rest of the format. */
+		return -4;
+	}
+	if (ret < 0) {
+		/* Handler error; preserve errno for the caller. */
+		return -3;
+	}
+	return ret;
+}
+#endif
+
 static void out(FILE *f, const wchar_t *s, size_t l)
 {
 	while (l-- && !ferror(f)) fputwc(*s++, f);
@@ -163,6 +412,9 @@ static int wprintf_core(FILE *f, const wchar_t *fmt, va_list *ap, union arg *nl_
 	char *bs;
 	char charfmt[16];
 	wchar_t wc;
+#ifdef MUSL_EXTERNAL_FUNCTION
+	int saw_reg = 0;
+#endif
 
 	for (;;) {
 		/* This error is only specified for snprintf, but since it's
@@ -229,6 +481,15 @@ static int wprintf_core(FILE *f, const wchar_t *fmt, va_list *ap, union arg *nl_
 			xp = 0;
 		}
 
+#ifdef MUSL_EXTERNAL_FUNCTION
+		unsigned int user_mod = 0;
+		if (__printf_modifier_table) {
+			/* Match a registered wide modifier and record its bit;
+			 * parsing then continues with the conversion specifier. */
+			__handle_registered_modifier_wc((const wchar_t **)&s, &user_mod);
+		}
+#endif
+
 		/* Format specifier state machine */
 		st=0;
 		do {
@@ -236,7 +497,36 @@ static int wprintf_core(FILE *f, const wchar_t *fmt, va_list *ap, union arg *nl_
 			ps=st;
 			st=states[st]S(*s++);
 		} while (st-1<STOP);
-		if (!st) goto inval;
+		if (!st) {
+#ifdef MUSL_EXTERNAL_FUNCTION
+			if (!f && __printf_function_table) {
+				s--;
+				unsigned char ch = (unsigned char)*s;
+				if (ch <= UCHAR_MAX && __printf_function_table[ch]) {
+					/* Pre-pass: a registered specifier contributes
+					 * no nl_type entry. Skip it and keep scanning;
+					 * mixing positional arguments with registered
+					 * specifiers is rejected below. */
+					saw_reg = 1;
+					s++;
+					continue;
+				}
+			}
+			if (f && __printf_function_table) {
+				s--;
+				unsigned char ch = (unsigned char)*s;
+				if (ch <= UCHAR_MAX && __printf_function_table[ch]) {
+					int ret = wprintf_registered(f, &s, ap, fl, w, p,
+					                             user_mod, ps);
+					if (ret >= 0) { l = ret; continue; }
+					if (ret == -1 || ret == -4) goto inval;
+					if (ret == -2) goto user_ovf;
+					return -1;
+				}
+			}
+#endif
+			goto inval;
+		}
 
 		/* Check validity of argument type (nl/normal) */
 		if (st==NOARG) {
@@ -328,6 +618,11 @@ static int wprintf_core(FILE *f, const wchar_t *fmt, va_list *ap, union arg *nl_
 	}
 
 	if (f) return cnt;
+#ifdef MUSL_EXTERNAL_FUNCTION
+	/* Mixing positional arguments with registered specifiers is not
+	 * supported: the pre-pass cannot type the registered arguments. */
+	if (saw_reg && l10n) goto inval;
+#endif
 	if (!l10n) return 0;
 
 	for (i=1; i<=NL_ARGMAX && nl_type[i]; i++)
@@ -342,6 +637,11 @@ inval:
 overflow:
 	errno = EOVERFLOW;
 	return -1;
+#ifdef MUSL_EXTERNAL_FUNCTION
+user_ovf:
+	errno = ENOMEM;
+	return -1;
+#endif
 }
 
 int vfwprintf(FILE *restrict f, const wchar_t *restrict fmt, va_list ap)
