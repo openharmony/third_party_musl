@@ -87,6 +87,7 @@ functional_list = [
   "fopencookie_test",
   "iconv_test",
   "iconv_joint_icu_test",
+  "iconv_big5_test",
   "dlopen_weaklink",
   "dlprelink",
   "dlopen_prelink",

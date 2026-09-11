@@ -49,7 +49,10 @@ volatile int __locale_lock[1];
 volatile int *const __locale_lockptr = __locale_lock;
 
 #ifdef FEATURE_ICU_LOCALE
-static const char *g_valid_locale_table[] = {"zh_CN", "zh_CN.UTF-8", "en_US.UTF-8"};
+static const char *g_valid_locale_table[] = {
+	"zh_CN", "zh_CN.UTF-8", "en_US.UTF-8",
+	"zh_HK.Big5", "zh_HK.Big5-HKSCS",
+};
 static int g_locale_table_size = sizeof(g_valid_locale_table) / sizeof(g_valid_locale_table[0]);
 #endif
 
@@ -166,7 +169,7 @@ const struct __locale_map *__get_locale(int cat, const char *val)
 			}
 		}
 	}
-    /* Use ICU_VALID flag to indicate that other icu-related functions can use icu methods */
+	/* Use ICU_VALID flag to indicate that other icu-related functions can use icu methods */
 	if (new->flag == ICU_VALID) {
 		/* ICU function: u_setDataDirectory, Load ICU data to memory */
 		set_icu_directory();

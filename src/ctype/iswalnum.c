@@ -18,7 +18,7 @@ int __iswalnum_l(wint_t c, locale_t l)
 	if (icu_locale_wctype_enable && l && l->cat[LC_CTYPE]
 		&& l->cat[LC_CTYPE]->flag == ICU_VALID) {
 		char* type_name = (char*)(l->cat[LC_CTYPE]->name);
-		if (!strcmp(type_name, "zh_CN") || !strcmp(type_name, "en_US.UTF-8")) {
+		if (is_icu_wctype_locale(type_name)) {
 			return g_icu_opt_func.u_isalnum(c);
 		}
 	}

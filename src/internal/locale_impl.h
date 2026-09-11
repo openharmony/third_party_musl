@@ -162,6 +162,10 @@ extern hidden struct icu_opt_func g_icu_opt_func;
 
 #define CURRENT_UTF8 (!!__pthread_self()->locale->cat[LC_CTYPE])
 
+#ifdef FEATURE_ICU_LOCALE
+hidden int is_icu_wctype_locale(const char *name);
+#endif
+
 #undef MB_CUR_MAX
 #define MB_CUR_MAX (CURRENT_UTF8 ? 4 : 1)
 
