@@ -108,6 +108,23 @@ void get_valid_icu_locale_name(const char *name, const char *icu_name, int icu_n
 	}
 }
 
+static const char *const g_icu_wctype_locales[] = {
+	"zh_CN", "en_US.UTF-8",
+	"zh_HK.Big5", "zh_HK.Big5-HKSCS",
+};
+static const size_t g_icu_wctype_locale_count =
+	sizeof(g_icu_wctype_locales) / sizeof(g_icu_wctype_locales[0]);
+
+int is_icu_wctype_locale(const char *name)
+{
+	for (size_t i = 0; i < g_icu_wctype_locale_count; i++) {
+		if (!strcmp(name, g_icu_wctype_locales[i])) {
+			return 1;
+		}
+	}
+	return 0;
+}
+
 int set_wctype_icu_enable()
 {
     pthread_mutex_lock(&icu_wctype_init_mutex);
