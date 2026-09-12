@@ -24,6 +24,7 @@ extern "C" {
 #define __NEED_pthread_key_t
 #define __NEED_pthread_once_t
 #define __NEED_size_t
+#define __NEED_cpu_set_t
 
 #include <bits/alltypes.h>
 
@@ -58,7 +59,7 @@ extern "C" {
 #define _MUX_MAGIC 0xEBCFDEA0
 #define _MUX_INVALID_HANDLE 0xEEEEEEEF
 
-#define PTHREAD_MUTEXATTR_INITIALIZER { PTHREAD_MUTEX_RECURSIVE }
+#define PTHREAD_MUTEXATTR_INITIALIZER { 0, 0, PTHREAD_MUTEX_RECURSIVE, 0 }
 #define PTHREAD_MUTEX_INITIALIZER  { _MUX_MAGIC, _MUX_INVALID_HANDLE, PTHREAD_MUTEXATTR_INITIALIZER }
 #ifdef _GNU_SOURCE
 #define PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP { _MUX_MAGIC, _MUX_INVALID_HANDLE, PTHREAD_MUTEXATTR_INITIALIZER }
@@ -207,22 +208,24 @@ int pthread_setconcurrency(int);
 
 int pthread_getcpuclockid(pthread_t, clockid_t *);
 
-struct __ptcb {
-	void (*__f)(void *);
-	void *__x;
-	struct __ptcb *__next;
+struct pthread_cleanup_buffer {
+	void (*routine)(void *);
+	void *arg;
+	struct pthread_cleanup_buffer *next;
 };
 
-void _pthread_cleanup_push(struct __ptcb *, void (*)(void *), void *);
-void _pthread_cleanup_pop(struct __ptcb *, int);
+void pthread_cleanup_push_inner(struct pthread_cleanup_buffer *, void (*)(void *), void *);
+void pthread_cleanup_pop_inner(struct pthread_cleanup_buffer *, int);
 
-#define pthread_cleanup_push(f, x) do { struct __ptcb __cb; _pthread_cleanup_push(&__cb, f, x);
-#define pthread_cleanup_pop(r) _pthread_cleanup_pop(&__cb, (r)); } while(0)
+#define pthread_cleanup_push(f, x) do { struct pthread_cleanup_buffer __cb; pthread_cleanup_push_inner(&__cb, f, x);
+#define pthread_cleanup_pop(r) pthread_cleanup_pop_inner(&__cb, (r)); } while(0)
 
 #ifdef _GNU_SOURCE
 struct cpu_set_t;
 int pthread_getaffinity_np(pthread_t, size_t, struct cpu_set_t *);
 int pthread_setaffinity_np(pthread_t, size_t, const struct cpu_set_t *);
+int pthread_attr_setaffinity_np(pthread_attr_t *, size_t, const cpu_set_t *);
+int pthread_attr_getaffinity_np(const pthread_attr_t *, size_t, cpu_set_t *);
 int pthread_getattr_np(pthread_t, pthread_attr_t *);
 int pthread_setname_np(pthread_t, const char *);
 int pthread_getname_np(pthread_t, char *, size_t);
