@@ -2805,6 +2805,7 @@ musl_inc_sys_files = [
   "include/sys/fcntl.h",
   "include/sys/file.h",
   "include/sys/fsuid.h",
+  "include/sys/group_ipc.h",
   "include/sys/inotify.h",
   "include/sys/ioctl.h",
   "include/sys/io.h",

@@ -932,6 +932,10 @@
     gmtime;
     gmtime_r;
     grantpt;
+    group_sem_open;
+    group_sem_unlink;
+    group_shm_open;
+    group_shm_unlink;
     h_errno;
     # handle_asan_path_open;
     HashMapAdd;
