@@ -63,6 +63,8 @@ extern "C" {
 #define TAG_RES_RN_HERMES_HEAP     "RES_RN_HERMES_HEAP"
 #define TAG_RES_DART_HEAP          "RES_DART_HEAP"
 #define TAG_RES_COMPOSITE_HEAP     "RES_COMPOSITE_HEAP"
+#define TAG_RES_CHROMIUM_HEAP      "RES_CHROMIUM_HEAP"
+#define TAG_RES_VMA_CHROMIUM       "RES_VMA_CHROMIUM"
 
 /* each bit represents resource hook point.
  * |63 ... 32|31 ... 22|21 ... 12|11 - 10|9 ... 0|
@@ -106,6 +108,8 @@ extern "C" {
 #define RES_RN_HERMES_HEAP         (1ULL << 31)
 #define RES_DART_HEAP              (1ULL << 34)
 #define RES_COMPOSITE_HEAP         (1ULL << 35)
+#define RES_CHROMIUM_HEAP          (1ULL << 36)
+#define RES_VMA_CHROMIUM           (1ULL << 37)
 
 #define FD_SIZE                     1
 #define THREAD_SIZE                 1
