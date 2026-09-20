@@ -20,6 +20,8 @@
 #include "cfi.h"
 #include "ld_log.h"
 #include "namespace.h"
+#include <fcntl.h>
+#include <unistd.h>
 
 /* This module provides support for LLVM CFI Cross-DSO by implementing the __cfi_slowpath() and __cfi_slowpath_diag()
  * functions. These two functions will be called before visiting other dso's resources. The responsibility is to
@@ -503,6 +505,43 @@ static int add_dso_to_cfi_shadow(struct dso *dso)
     return CFI_SUCCESS;
 }
 
+static int fill_adlt_dso_to_cfi_shadow(struct dso *p, uintptr_t cfi_check, uint16_t type, uintptr_t base)
+{
+    LD_LOGD("[CFI] [%{public}s] fill ADLT %{public}s to cfi shadow: ndso index %{public}d!\n",
+            __FUNCTION__, p->name, p->adlt_ndso_index);
+    adlt_section_entry_t *ph_section_indexes = NULL;
+    ssize_t ph_section_count = get_adlt_library_ph(p->adlt, p->adlt_ndso_index, &ph_section_indexes);
+    if (ph_section_count < 0 || !ph_section_indexes) {
+        return CFI_FAILED;
+    }
+    for (size_t i = 0; i < ph_section_count; i++) {
+        adlt_phindex_t cur_phindex = ph_section_indexes[i].phIndex;
+        if (cur_phindex < 0 || (size_t)cur_phindex >= p->phnum) {
+            return CFI_FAILED;
+        }
+        const Phdr *phdr = &p->phdr[cur_phindex];
+        if (phdr->p_type == PT_LOAD) {
+            uintptr_t cur_beg = base + phdr->p_vaddr;
+            uintptr_t cur_end = cur_beg + phdr->p_memsz;
+            // for so with cfi_check sym and also PF_X segments, fill sv_valid_min,; otherwise, fill uncheck
+            uintptr_t tmp_cfi_check = 0;
+            uint16_t tmp_type = sv_uncheck;
+            bool force_fill = false;
+            if (type == sv_valid_min && (phdr->p_flags & PF_X)) {
+                tmp_cfi_check = cfi_check;
+                tmp_type = sv_valid_min;
+                force_fill = true;
+            }
+            if (fill_shadow_value_to_shadow(cur_beg, cur_end, tmp_cfi_check, tmp_type, force_fill) == CFI_FAILED) {
+                LD_LOGE("[CFI] [%{public}s] fill %{public}s to cfi shadow failed!\n", __FUNCTION__, p->name);
+                return CFI_FAILED;
+            }
+        }
+    }
+ 
+    return CFI_SUCCESS;
+}
+
 static int fill_dso_to_cfi_shadow(struct dso *p, uintptr_t cfi_check, uint16_t type) {
     if (!p->adlt) {
         if (fill_shadow_value_to_shadow(p->map, p->map + p->map_len, cfi_check, type, false) == CFI_FAILED) {
@@ -512,15 +551,19 @@ static int fill_dso_to_cfi_shadow(struct dso *p, uintptr_t cfi_check, uint16_t t
         return CFI_SUCCESS;
     }
 
-    adlt_phindex_t *pc_indexes = NULL;
-    ssize_t pc_count = get_adlt_common_ph(p->adlt, &pc_indexes);
-    if (pc_count <= 0 || !pc_indexes) {
+    adlt_section_entry_t *pc_section_indexes = NULL;
+    ssize_t phc_section_count = get_adlt_common_ph(p->adlt, &pc_section_indexes);
+    if (phc_section_count <= 0 || !pc_section_indexes) {
         return CFI_FAILED;
     }
-    for (int i = 0; i < pc_count; ++i) {
-        const Phdr *phdr = &p->phdr[pc_indexes[i]];
+    uintptr_t base = p->adlt->map - p->adlt->addr_min;
+    for (int i = 0; i < phc_section_count; ++i) {
+        adlt_phindex_t cur_phindex = pc_section_indexes[i].phIndex;
+        if (cur_phindex < 0 || (size_t)cur_phindex >= p->phnum) {
+            return CFI_FAILED;
+        }
+        const Phdr *phdr = &p->phdr[cur_phindex];
         if (phdr->p_type == PT_LOAD && (phdr->p_flags & PF_X)) {
-            uintptr_t base = p->adlt->map - p->adlt->addr_min;
             uintptr_t cur_beg = base + phdr->p_vaddr;
             uintptr_t cur_end = cur_beg + phdr->p_memsz;
             if (fill_shadow_value_to_shadow(cur_beg, cur_end, 0, sv_uncheck, false) == CFI_FAILED) {
@@ -529,38 +572,7 @@ static int fill_dso_to_cfi_shadow(struct dso *p, uintptr_t cfi_check, uint16_t t
             }
         }
     }
-
-    adlt_phindex_t *ph_indexes;
-    LD_LOGD("[CFI] [%{public}s] fill ADLT %{public}s to cfi shadow: ndso index %{public}d!\n",
-            __FUNCTION__, p->name, p->adlt_ndso_index);
-    ssize_t ph_count = get_adlt_library_ph(p->adlt, p->adlt_ndso_index, &ph_indexes);
-    if (ph_count < 0 || !ph_indexes) {
-        LD_LOGE("[CFI] [%{public}s] fill ADLT %{public}s to cfi shadow failed!\n", __FUNCTION__, p->name);
-        return CFI_FAILED;
-    }
-    for (size_t i = 0; i < ph_count; i++) {
-        const Phdr *phdr = &p->phdr[ph_indexes[i]];
-        if (phdr->p_type == PT_LOAD) {
-            uintptr_t base = p->adlt->map - p->adlt->addr_min;
-            uintptr_t cur_beg = base + phdr->p_vaddr;
-            uintptr_t cur_end = cur_beg + phdr->p_memsz;
-            LD_LOGD("[CFI] [%{public}s] fill ADLT %{public}s header "
-                    "%{public}d [%{public}p; %{public}p) to cfi shadow!\n",
-                    __FUNCTION__, p->name, ph_indexes[i], cur_beg, cur_end);
-            if (cfi_check >= cur_end && type == sv_valid_min) {
-                LD_LOGD("[CFI] [%{public}s] ADLT %{public}s header "
-                        "%{public}d is before __cfi_check, ignore\n",
-                        __FUNCTION__, p->name, ph_indexes[i]);
-                continue;
-            }
-            if (fill_shadow_value_to_shadow(cur_beg, cur_end, cfi_check, type, true) == CFI_FAILED) {
-                LD_LOGE("[CFI] [%{public}s] fill %{public}s to cfi shadow failed!\n", __FUNCTION__, p->name);
-                return CFI_FAILED;
-            }
-        }
-    }
- 
-    return CFI_SUCCESS;
+    return fill_adlt_dso_to_cfi_shadow(p, cfi_check, type, base);
 }
 
 static int fill_shadow_value_to_shadow(

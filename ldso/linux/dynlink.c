@@ -2007,7 +2007,6 @@ static void reclaim_gaps(struct dso *dso)
 	}
 
 	if (dso->adlt) {
-		adlt_reclaim_gaps(dso);
 		return;
 	}
 
@@ -7777,11 +7776,6 @@ static bool task_map_library(struct loadtask *task, struct reserved_address_para
 	base = map - addr_min;
 	task->p->phdr = 0;
 	task->p->phnum = 0;
-	ssize_t ph_count = 0;
-	adlt_phindex_t *ph_indexes = NULL;
-	if (task->adlt) {
-		ph_count = get_adlt_library_ph(task->p->adlt, task->p->adlt_ndso_index, &ph_indexes);
-	}
 	for (ph = task->ph0, i = task->eh->e_phnum; i; i--, ph = (void *)((char *)ph + task->eh->e_phentsize)) {
 		if (ph->p_type == PT_OHOS_RANDOMDATA) {
 			fill_ohos_random(task->p, (void *)(ph->p_vaddr + base), ph->p_memsz, base);
@@ -7833,13 +7827,7 @@ static bool task_map_library(struct loadtask *task, struct reserved_address_para
 			size_t brk = (size_t)base + ph->p_vaddr + ph->p_filesz;
 			size_t pgbrk = brk + PAGE_SIZE - 1 & -PAGE_SIZE;
 			size_t zeromap_size = (size_t)base + this_max - pgbrk;
-			if (task->adlt) {
-				if (if_phtable_contains(ph_indexes, ph_count, task->eh->e_phnum - i)) {
-					memset((void *)brk, 0, pgbrk - brk & PAGE_SIZE - 1);
-				}
-			} else {
-				memset((void *)brk, 0, pgbrk - brk & PAGE_SIZE - 1);
-			}
+			memset((void *)brk, 0, pgbrk - brk & PAGE_SIZE - 1);
 			if (pgbrk - (size_t)base < this_max && mmap_fixed(
 				(void *)pgbrk,
 				zeromap_size,

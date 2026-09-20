@@ -129,7 +129,7 @@ struct bolt_remap_data{
  
 struct adlt {
 	unsigned char *base;
-	char *name;                       // real path
+	char *name;                       // real path, adlt so's name
 	uint64_t file_offset;             // > 0 when opening library from zip file; PAGE_SIZE aligned
 	bool partly_load;                 // true when nDSOs are loaded separately
 	unsigned char *map;               // map address
@@ -432,8 +432,8 @@ hidden void *__dlsym(void *restrict, const char *restrict, void *restrict);
 hidden void *__dlvsym(void *restrict, const char *restrict, const char *restrict, void *restrict);
 hidden int __dlclose(void *p);
 
-hidden ssize_t get_adlt_library_ph(struct adlt *adlt, ssize_t library_index, adlt_phindex_t **ph_indexes);
-hidden ssize_t get_adlt_common_ph(struct adlt *adlt, adlt_phindex_t **ph_indexes);
+hidden ssize_t get_adlt_library_ph(struct adlt *adlt, ssize_t library_index, adlt_section_entry_t **section_indexes);
+hidden ssize_t get_adlt_common_ph(struct adlt *adlt, adlt_section_entry_t **section_indexes);
 
 #else
 #define DYN_CNT 37

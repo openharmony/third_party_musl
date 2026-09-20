@@ -58,12 +58,12 @@ static struct dso *find_library_by_adlt_index(
 static void free_adlt(struct adlt *adlt);
 static void init_adlt(struct adlt *adlt);
 static void unmap_adlt_library(struct dso *dso);
-ssize_t get_adlt_common_ph(struct adlt *adlt, adlt_phindex_t **ph_indexes);
+ssize_t get_adlt_common_ph(struct adlt *adlt, adlt_section_entry_t **section_indexes);
 ssize_t get_adlt_sym_dso_map(struct adlt *adlt, uint8_t **sym_dso_idx_map);
 static ssize_t get_adlt_library_index(unsigned char *strtab_addr, unsigned char *sa_addr, const char *pathname);
 static ssize_t get_adlt_library_index2(struct adlt *adlt, const char *pathname);
 static adlt_psod_t *get_adlt_library_entry(struct adlt *adlt, ssize_t library_index, char **blob);
-ssize_t get_adlt_library_ph(struct adlt *adlt, ssize_t library_index, adlt_phindex_t **ph_indexes);
+ssize_t get_adlt_library_ph(struct adlt *adlt, ssize_t library_index, adlt_section_entry_t **section_indexes);
 static ssize_t get_adlt_library_dt_needed(struct adlt *adlt, ssize_t library_index, adlt_dt_needed_index_t **dt_needed);
 static ssize_t get_adlt_library_rela_dyn(struct adlt *adlt, ssize_t library_index, adlt_relindex_t **rela_dyn);
 static ssize_t get_adlt_library_rela_plt(struct adlt *adlt, ssize_t library_index, adlt_relindex_t **rela_plt);
@@ -234,27 +234,81 @@ static void free_adlt(struct adlt *adlt)
 	free(adlt);
 }
 
+static void madvise_adlt_comm_ph(struct dso *p, unsigned char *base)
+{
+	adlt_section_entry_t *pc_section_indexes = NULL;
+	ssize_t phc_section_count = get_adlt_common_ph(p->adlt, &pc_section_indexes);
+	if (phc_section_count < 1 || !pc_section_indexes) {
+		return;
+	}
+	adlt_phindex_t first_phindex = pc_section_indexes[0].phIndex;
+	if (first_phindex < 0 || (size_t)first_phindex >= p->phnum) {
+		return;
+	}
+	const Phdr *ph = &p->phdr[first_phindex];
+	if (ph->p_type != PT_LOAD) {
+		return;
+	}
+	size_t begin = (pc_section_indexes[0].vaddr + PAGE_SIZE - 1) & -PAGE_SIZE;
+	size_t end = ph->p_vaddr + ph->p_memsz;
+	int err_no = madvise(base + begin, end - begin, MADV_DONTNEED);
+	if (err_no != 0) {
+		LD_LOGE("[madvise_adlt_library]: comm phindex: %{public}zd, begin: 0x%{public}llx,"
+		 "end: 0x%{public}llx, errno:%{public}d", first_phindex, begin, end, err_no);
+	}
+}
+
 static void madvise_adlt_library(struct dso *p)
 {
-	LD_LOGD("[dlclose]: dlclose so in adlt, index: %{public}d, name: %{public}s", p->adlt_ndso_index, p->name);
-	adlt_phindex_t *ph_indexes = NULL;
-	ssize_t ph_count = get_adlt_library_ph(p->adlt, p->adlt_ndso_index, &ph_indexes);
-	if (ph_count > 0 && ph_indexes) {
-		unsigned char *base = p->adlt->base;
-		for (size_t i = 0; i < ph_count; i++) {
-			const Phdr *ph = &p->phdr[ph_indexes[i]];
-			unsigned int relro_flag = 
-				((p->relro_start) <= (ph)->p_vaddr)&&(((ph)->p_vaddr + (ph)->p_memsz) <= p->relro_end) ? 1 : 0;
-			if (relro_flag && ph->p_filesz == 0 && ph->p_type == PT_LOAD) { // ohos.randomdata
-				continue;
-			}
-			if (ph->p_type == PT_LOAD) {
-				size_t this_min = ph->p_vaddr & -PAGE_SIZE;
-				size_t this_max = (ph->p_vaddr + ph->p_memsz + PAGE_SIZE - 1) & -PAGE_SIZE;
-				madvise(base + this_min, this_max - this_min, MADV_DONTNEED);
-			}
-		}
+	LD_LOGD("[dlclose]: dlclose so in adlt, index: %{public}d, name: %{public}s",
+		p->adlt_ndso_index, p->name);
+	adlt_section_entry_t *section_indexes = NULL;
+	ssize_t section_count = get_adlt_library_ph(p->adlt, p->adlt_ndso_index, &section_indexes);
+	if (!(section_count > 0 && section_indexes)) {
+		return;
 	}
+	unsigned char *base = p->adlt->base;
+	size_t i = 0;
+	while (i < section_count) {
+		adlt_phindex_t cur_phindex = section_indexes[i].phIndex;
+		if (cur_phindex < 0 || (size_t)cur_phindex >= p->phnum) {
+			i++;
+			continue;
+		}
+
+		const Phdr *ph = &p->phdr[cur_phindex];
+		if (ph->p_type != PT_LOAD) {
+			i++;
+			continue;
+		}
+		size_t ph_vaddr = ph->p_vaddr;
+		size_t ph_end = ph_vaddr + ph->p_memsz;
+		size_t min_vaddr = section_indexes[i].vaddr;
+		size_t max_end = section_indexes[i].vaddr + section_indexes[i].memsz;
+
+		size_t j = i + 1;
+		while (j < section_count && section_indexes[j].phIndex == cur_phindex) {
+			size_t cur_end = section_indexes[j].vaddr + section_indexes[j].memsz;
+			if (cur_end > max_end) {
+				max_end = cur_end;
+			}
+			j++;
+		}
+		if (min_vaddr == ph_vaddr && max_end == ph_end) {
+			// all sections in this phdr belong to the same .so file, madvise the phdr memory
+			size_t this_min = min_vaddr & -PAGE_SIZE;
+			size_t this_max = (max_end + PAGE_SIZE - 1) & -PAGE_SIZE;
+			madvise(base + this_min, this_max - this_min, MADV_DONTNEED);
+		} else {
+			// the sections belong to diff .so file, only madvise the page aligned memory include the so sections
+			size_t this_min = (min_vaddr + PAGE_SIZE - 1) & -PAGE_SIZE;
+			size_t this_max = max_end & -PAGE_SIZE;
+			madvise(base + this_min, this_max - this_min, MADV_DONTNEED);
+		}
+		i = j;
+	}
+
+	madvise_adlt_comm_ph(p, base);
 }
 
 static void unmap_adlt_library(struct dso *dso)
@@ -404,35 +458,34 @@ static adlt_psod_t *get_adlt_library_entry(struct adlt *adlt, ssize_t library_in
     return (void *)((char *)adlt->sa_addr + sah->schemaHeaderSize + library_index * sah->schemaPSODSize);
 }
 
-ssize_t get_adlt_common_ph(struct adlt *adlt, adlt_phindex_t **ph_indexes)
+ssize_t get_adlt_common_ph(struct adlt *adlt, adlt_section_entry_t **section_indexes)
 {
 	if (!adlt) {
-		if (ph_indexes) *ph_indexes = NULL;
+		if (section_indexes) *section_indexes = NULL;
 		return -1;
 	}
 	adlt_section_header_t *sah = (void *)adlt->sa_addr;
 	if (!sah) {
-		if (ph_indexes) *ph_indexes = NULL;
+		if (section_indexes) *section_indexes = NULL;
 		return -1;
 	}
 	char *blob = (void *)((char *)adlt->sa_addr + sah->blobStart);
-	if (ph_indexes)
-		*ph_indexes = (void *)((char *)blob + sah->phIndexes.offset);
-	return sah->phIndexes.size / sizeof(adlt_phindex_t);
+	if (section_indexes)
+		*section_indexes = (void *)((char *)blob + sah->sections.offset);
+	return sah->sections.size / sizeof(adlt_section_entry_t);
 }
 
-ssize_t get_adlt_library_ph(struct adlt *adlt, ssize_t library_index, adlt_phindex_t **ph_indexes)
+ssize_t get_adlt_library_ph(struct adlt *adlt, ssize_t library_index, adlt_section_entry_t **section_indexes)
 {
 	char *blob;
 	adlt_psod_t *psod = get_adlt_library_entry(adlt, library_index, &blob);
 	if (!psod) {
-		if (ph_indexes) *ph_indexes = NULL;
-		return -1;			
+		if (section_indexes) *section_indexes = NULL;
+		return -1;
 	}
-	if (ph_indexes) {
-		*ph_indexes = (void *)((char *)blob + psod->phIndexes.offset);
-	}
-	return psod->phIndexes.size / sizeof(adlt_phindex_t);
+	if (section_indexes)
+		*section_indexes = (void *)((char *)blob + psod->sections.offset);
+	return psod->sections.size / sizeof(adlt_section_entry_t);
 }
 
 ssize_t get_adlt_sym_dso_map(struct adlt *adlt, uint8_t **sym_dso_idx_map) {
@@ -591,52 +644,6 @@ static size_t get_adlt_library_fini_array(
     }
 
     return psod->finiArray.size / sizeof(size_t);
-}
-
-static void adlt_reclaim_gaps(struct dso *dso)
-{
-	Phdr *phdr = dso->phdr;
-	if (!phdr) {
-		return;
-	}
-	size_t entsz = dso->phentsize;
-	adlt_phindex_t *ph_indexes;
-	adlt_phindex_t *phc_indexes;
-	adlt_phindex_t *phl_indexes;
-	ssize_t phl_count = get_adlt_library_ph(dso->adlt, dso->adlt_ndso_index, &phl_indexes);
-	ssize_t phc_count = get_adlt_common_ph(dso->adlt, &phc_indexes);
-	int loop = 2;
-	Phdr *ph;
-	ssize_t ph_num;
-	size_t i;
-	size_t q;
-	while(loop--) {
-		if (loop) {
-			if (phc_count <= 0 || !phc_indexes) {
-				continue;
-			}
-			ph_indexes = phc_indexes;
-			ph_num = phc_count;
-			i = ph_indexes[0];
-		} else {
-			if (phl_count < 0 || !phl_indexes) {
-				continue;
-			}
-			ph_indexes = phl_indexes;
-			ph_num = phl_count;
-			i = ph_indexes[0];
-		}
-
-		q = 0;
-		for (ph = (void *)((char *)phdr + i * entsz); ph_num;
-	  	  ph_num--, i = (size_t)ph_indexes[++q], ph = (void *)((char *)phdr + i * entsz)) {
-			if (ph->p_type != PT_LOAD) continue;
-			if ((ph->p_flags & (PF_R | PF_W)) != (PF_R | PF_W)) continue;
-			reclaim(dso, ph->p_vaddr & -PAGE_SIZE, ph->p_vaddr);
-			reclaim(dso, ph->p_vaddr + ph->p_memsz,
-			  (ph->p_vaddr + ph->p_memsz + PAGE_SIZE - 1) & (-PAGE_SIZE));
-		}
-	}
 }
 
 static void get_adlt_symindex_map_to_library(struct dso *p)
@@ -999,106 +1006,27 @@ void *bolt_remap_addr_func_adlt(size_t a)
 
 static bool adlt_find_in_dso(struct dso *p, Phdr *phdr, struct adlt *adlt, size_t entsz, size_t addr)
 {
-	Phdr *ph;
-	adlt_phindex_t *phc_indexes;
-	adlt_phindex_t *phl_indexes;
-	ssize_t phl_count = get_adlt_library_ph(p->adlt, p->adlt_ndso_index, &phl_indexes);
-	ssize_t phc_count = get_adlt_common_ph(p->adlt, &phc_indexes);
-
-	if (p->adlt != adlt && phc_indexes) {
-		while(phc_count-- > 0) {
-			ph = (void *)((char *)phdr + (size_t)(*phc_indexes++) * entsz);
-			if (ph->p_type != PT_LOAD) continue;
-			if (addr - ph->p_vaddr < ph->p_memsz) {
-				return true;
-			}
+	// Check if this is a common phdr
+	adlt_section_entry_t *phc_section_indexes = NULL;
+	ssize_t phc_section_count = get_adlt_common_ph(p->adlt, &phc_section_indexes);
+	for (ssize_t i = 0; i < phc_section_count; i++) {
+		Phdr *ph = (void *)((char *)phdr + (size_t)(phc_section_indexes[i].phIndex) * entsz);
+		if (ph->p_type != PT_LOAD) continue;
+		if (addr - phc_section_indexes[i].vaddr < phc_section_indexes[i].memsz) {
+			return true;
 		}
-		adlt = p->adlt;
 	}
-	if (phl_indexes) {
-		while(phl_count-- > 0) {
-			ph = (void *)((char *)phdr + (size_t)(*phl_indexes++) * entsz);
-			if (ph->p_type != PT_LOAD) continue;
-			if (addr - ph->p_vaddr < ph->p_memsz){
-				return true;
-			}
+	// Only process library phdr
+	adlt_section_entry_t *phl_section_indexes = NULL;
+	ssize_t phl_section_count = get_adlt_library_ph(p->adlt, p->adlt_ndso_index, &phl_section_indexes);
+	for (ssize_t i = 0; i < phl_section_count; i++) {
+		Phdr *ph = (void *)((char *)phdr + (size_t)(phl_section_indexes[i].phIndex) * entsz);
+		if (ph->p_type != PT_LOAD) continue;
+		if (addr - phl_section_indexes[i].vaddr < phl_section_indexes[i].memsz) {
+			return true;
 		}
 	}
 	return false;
-}
-
-static int relloc_adlt_phdr(struct dso *current, struct dl_phdr_info *info, size_t adlt_ndso, size_t entsz)
-{
-	char *ph_addr;
-    adlt_phindex_t *ph_indexes_common;
-	adlt_phindex_t *ph_indexes_library;
-    ssize_t ph_count = 0;
-    ssize_t ph_count_common = get_adlt_common_ph(current->adlt, &ph_indexes_common);
-	if (ph_count_common > 0 && ph_indexes_common) {
-		ph_count = ph_count_common;
-    }
-	ssize_t ph_count_library = get_adlt_library_ph(current->adlt, current->adlt_ndso_index, &ph_indexes_library);
-	if (ph_count_library > 0 && ph_indexes_library) {
-		ph_count += ph_count_library;
-    }
-	char* temp = realloc(current->phdr_map, entsz * (adlt_ndso + ph_count));
-	if (temp == NULL) {
-		LD_LOGW("realloc error at adlt_cpy_ph ! dso name: %{public}s.", current->name);
-		return -1;
-	}
-	current->phdr_map = temp;
-	info->dlpi_phdr = current->phdr_map;
-	info->dlpi_phnum = adlt_ndso + (size_t)ph_count;
-	current->phdr_count = info->dlpi_phnum;
-	if (ph_count > 0) {
-		ph_addr = current->phdr_map + (adlt_ndso) * entsz;
-		while (ph_count_common--) {
-			memcpy(ph_addr, (char *)current->phdr + (*ph_indexes_common) * entsz, entsz);
-			ph_addr += entsz;
-			++ph_indexes_common;
-		}
-		while (ph_count_library--) {
-			memcpy(ph_addr, (char *)current->phdr + (*ph_indexes_library) * entsz, entsz);
-			ph_addr += entsz;
-			++ph_indexes_library;
-		}
-	}
-    return 0;
-}
-static int handle_adlt_phdr(struct dso *current, struct dl_phdr_info *info)
-{
-    Phdr *ph;
-    char *ph_addr;
-    size_t entsz = current->phentsize;
-    Phdr *phdr = current->phdr;
-	current->phdr_map = NULL;
-	size_t adlt_ndso = 0;
-
-	if (!phdr) {
-		return -1;
-	}
-	size_t cnt = current->phnum;
-	current->phdr_map = malloc(entsz * cnt);
-	info->dlpi_phdr = current->phdr_map;
-	if (current->phdr_map == NULL) {
-		LD_LOGW("malloc error at handle_adlt_phdr ! dso name: %{public}s.", current->name);
-		return -1;
-	}
-	ph_addr = current->phdr_map;
-	for (ph = phdr; cnt--; ph = (void *)((char *)ph + entsz)) {
-        switch (ph->p_type) {
-            case PT_LOAD:
-            case PT_TLS:
-            case PT_GNU_EH_FRAME:
-                continue;
-            default:
-                break;
-        }
-        memcpy(ph_addr, ph, entsz);
-        ph_addr += entsz;
-        ++adlt_ndso;
-    }
-	return relloc_adlt_phdr(current, info, adlt_ndso, entsz);
 }
 
 void init_entry(struct adlt_got_entry *entry, Shdr *sh, struct loadtask *task)
@@ -1390,30 +1318,20 @@ static void lookup_tls(struct loadtask *task, bool tls_appeared)
 	task->tls.len = 0;
 	task->tls.size = 0;
 
-	adlt_phindex_t *ph_indexes;
-	adlt_phindex_t *phc_indexes;
-	adlt_phindex_t *phl_indexes;
-	ssize_t phl_count = get_adlt_library_ph(task->adlt, task->adlt_ndso_index, &phl_indexes);
-	ssize_t phc_count = get_adlt_common_ph(task->adlt, &phc_indexes);
-	ssize_t ph_count;
-
-	size_t z = 2;
-	while(z--) {
-		ph_count = z > 0 ? phc_count : phl_count;
-		ph_indexes = z > 0 ? phc_indexes : phl_indexes;
-		if (ph_count <= 0 || ph_indexes <= 0) {
-			continue;
-		}
-		for (ph = (void *)((char *)task->ph0 + (*ph_indexes) * task->eh->e_phentsize); ph_count;
-			ph_count--, ph_indexes++, ph = (void *)((char *)task->ph0 + (*ph_indexes) * task->eh->e_phentsize)) {
-			if (ph->p_type == PT_TLS) {
-				task->tls_image = ph->p_vaddr;
-				task->tls.align = ph->p_align;
-				task->tls.len = ph->p_filesz;
-				task->tls.size = ph->p_memsz;
-				z = 0;
-				break;
-			}
+	// tls section only in some so's phdr
+	adlt_section_entry_t *ph_section_indexes = NULL;
+	ssize_t ph_count = get_adlt_library_ph(task->adlt, task->adlt_ndso_index, &ph_section_indexes);
+	if (ph_count <= 0 || !ph_section_indexes) {
+		return;
+	}
+	for (ssize_t i = 0; i < ph_count; i++) {
+		ph = (void *)((char *)task->ph0 + ph_section_indexes[i].phIndex * task->eh->e_phentsize);
+		if (ph->p_type == PT_TLS) {
+			task->tls_image = ph->p_vaddr;
+			task->tls.align = ph->p_align;
+			task->tls.len = ph->p_filesz;
+			task->tls.size = ph->p_memsz;
+			break;
 		}
 	}
 }
@@ -1437,15 +1355,6 @@ static bool if_phtable_contains(adlt_phindex_t *ph_indexes, ssize_t ph_count, ad
     return false;
 }
 
-static void adlt_init_remain_page(const Phdr *ph, unsigned char *base)
-{
-	size_t brk = (size_t)base + ph->p_vaddr + ph->p_filesz;
-	size_t this_max = (ph->p_vaddr + ph->p_memsz + PAGE_SIZE - 1) & (-PAGE_SIZE);
-	size_t zeromap_size = (size_t)base + this_max - brk;
-	/* zeropadding the remaining memory with page size alignment*/
-	memset((void *)brk, 0, zeromap_size);
-}
-
 static bool adlt_init_rw_seg(struct loadtask *task)
 {
 	size_t off_start;
@@ -1456,46 +1365,54 @@ static bool adlt_init_rw_seg(struct loadtask *task)
 	unsigned int relro_flag;
 	struct dso *p = task->p;
 	unsigned char *base = NULL;
-	adlt_phindex_t *ph_indexes = NULL;
-	ssize_t ph_count = get_adlt_library_ph(p->adlt, p->adlt_ndso_index, &ph_indexes);
-	if (ph_count < 0 || !ph_indexes) {
+	adlt_section_entry_t *ph_section_indexes = NULL;
+	ssize_t ph_section_count = get_adlt_library_ph(p->adlt, p->adlt_ndso_index, &ph_section_indexes);
+	if (ph_section_count < 0 || !ph_section_indexes) {
 		return false;
 	}
 	base = p->adlt->base;
-	for (size_t i = 0; i < ph_count; i++) {
-		const Phdr *ph = &p->phdr[ph_indexes[i]];
-		if (ph->p_type == PT_LOAD && (ph->p_flags & PF_W)) {
-			unsigned char *cur_beg = base + ph->p_vaddr;
-			if (DL_NOMMU_SUPPORT) {
-				memset((void *)cur_beg, 0, ph->p_memsz);
-				continue;
-			}
-			relro_flag = ((p->relro_start) <= (ph)->p_vaddr)&&(((ph)->p_vaddr + (ph)->p_memsz) <= p->relro_end)? 1 : 0;
-			if (relro_flag && ph->p_filesz == 0) { // ohos.randomdata
-				continue;
-			}
-			if (relro_flag && mprotect((base + ph->p_vaddr), ph->p_memsz, PROT_READ | PROT_WRITE)
-				&& errno != ENOSYS) {
-				error("Error relocating %s: RELRO protection failed", p->name);
-				longjmp(*rtld_fail, 1);
-			}
-			off_start = ph->p_offset & -PAGE_SIZE;
-			/* align up page size */
-			addr_max = (ph->p_vaddr + ph->p_filesz + PAGE_SIZE - 1) & (-PAGE_SIZE);
-			/* align down page size */
-			addr_min = ph->p_vaddr & -PAGE_SIZE;
-			map_len = addr_max - addr_min;
+	for (size_t i = 0; i < ph_section_count; i++) {
+		adlt_phindex_t cur_phindex = ph_section_indexes[i].phIndex;
+		if (cur_phindex < 0 || cur_phindex >= p->phnum) continue;
+		const Phdr *ph = &p->phdr[cur_phindex];
+		size_t sec_offset = ph->p_offset;
+		if (ph->p_type != PT_LOAD || !(ph->p_flags & PF_W)) {
+			continue;
+		}
+		unsigned char *cur_beg = base + ph_section_indexes[i].vaddr;
+		if (DL_NOMMU_SUPPORT) {
+			memset((void *)cur_beg, 0, ph_section_indexes[i].memsz);
+			continue;
+		}
+		relro_flag = ((p->relro_start) <= ph_section_indexes[i].vaddr) &&
+			((ph_section_indexes[i].vaddr + ph_section_indexes[i].memsz) <= p->relro_end)? 1 : 0;
+		if (relro_flag && mprotect((base + ph_section_indexes[i].vaddr), ph_section_indexes[i].memsz, PROT_READ | PROT_WRITE)
+			&& errno != ENOSYS) {
+			error("Error relocating %s: RELRO protection failed", p->name);
+			longjmp(*rtld_fail, 1);
+		}
+		sec_offset = ph_section_indexes[i].offset;
+		off_start = sec_offset & -PAGE_SIZE;
+		/* align up page size */
+		addr_max = (ph_section_indexes[i].vaddr + ph_section_indexes[i].filesz + PAGE_SIZE - 1) & (-PAGE_SIZE);
+		/* align down page size */
+		addr_min = ph_section_indexes[i].vaddr & -PAGE_SIZE;
+		map_len = addr_max - addr_min;
+		if (ph_section_indexes[i].filesz > 0 && map_len > 0) {
+			
 			map = mmap((void*)NULL, map_len, PROT_READ, MAP_PRIVATE, task->fd, off_start + task->file_offset);
 			if (map == MAP_FAILED) {
 				error("Mapping loadtask %s failed , err = %d, len = %u\n", task->name, errno, map_len);
 				longjmp(*rtld_fail, 1);
 			}
 			/* load segment always page size align */
-			memcpy((base + addr_min), map, map_len);
+			memcpy((base + ph_section_indexes[i].vaddr), map + sec_offset - off_start, ph_section_indexes[i].filesz);
 			munmap(map, map_len);
-			if (ph->p_memsz > ph->p_filesz) {
-				adlt_init_remain_page(ph, base);
-			}
+		}
+		
+		if (ph_section_indexes[i].memsz > ph_section_indexes[i].filesz) {
+			size_t brk = (size_t)base + ph_section_indexes[i].vaddr + ph_section_indexes[i].filesz;
+			memset((void *)brk, 0, ph_section_indexes[i].memsz);
 		}
 	}
 	return true;
@@ -1521,44 +1438,25 @@ static char *create_realpath_from_fd(int fd)
 static void adlt_find_and_set_bss_name(struct dso *p, Phdr *phdr)
 {
 	size_t entsz = p->phentsize;
-	adlt_phindex_t *ph_indexes;
-	adlt_phindex_t *phc_indexes;
-	adlt_phindex_t *phl_indexes;
-	ssize_t phl_count = get_adlt_library_ph(p->adlt, p->adlt_ndso_index, &phl_indexes);
-	ssize_t phc_count = get_adlt_common_ph(p->adlt, &phc_indexes);
-	int loop = 2;
-	ssize_t ph_num;
-	size_t i;
-	size_t q;
-	Phdr *ph;
-	while(loop--) {
-		if (loop) {
-			if (phc_count <= 0 || !phc_indexes) {
-				continue;
-			}
-			ph_indexes = phc_indexes;
-			ph_num = phc_count;
-			i = ph_indexes[0];
-		} else {
-			if (phl_count < 0 || !phl_indexes) {
-				continue;
-			}
-			ph_indexes = phl_indexes;
-			ph_num = phl_count;
-			i = ph_indexes[0];
-		}
-
-		q = 0;
-		for (ph = (void *)((char *)phdr + i * entsz); ph_num;
-	  	  ph_num--, i = ph_indexes ? (size_t)ph_indexes[++q] : i + 1, ph = (void *)((char *)phdr + i * entsz)) {
-			if (ph->p_type != PT_LOAD) continue;
-			size_t seg_start = p->base + ph->p_vaddr;
-			size_t seg_file_end = (seg_start + ph->p_filesz + PAGE_SIZE - 1) & (-PAGE_SIZE);
-			size_t seg_max_addr = (seg_start + ph->p_memsz + PAGE_SIZE - 1) & (-PAGE_SIZE);
-			size_t zeromap_size = seg_max_addr - seg_file_end;
-			if (zeromap_size > 0 && (ph->p_flags & PF_W)) {
-				set_bss_vma_name(p->name, (void *)seg_file_end, zeromap_size);
-			}
+	adlt_section_entry_t *phl_section_indexes = NULL;
+	// .bss__xx only in so's phdrs, not in comm phdr
+	ssize_t phl_section_count = get_adlt_library_ph(p->adlt, p->adlt_ndso_index, &phl_section_indexes);
+	ssize_t ph_num = phl_section_count;
+	adlt_section_entry_t *ph_section_indexes = phl_section_indexes;
+	if (ph_num <= 0 || !ph_section_indexes) {
+		return;
+	}
+	for (ssize_t i = 0; i < ph_num; i++) {
+		Phdr *ph = (void *)((char *)phdr + ph_section_indexes[i].phIndex * entsz);
+		if (ph->p_type != PT_LOAD || !(ph->p_flags & PF_W)) continue;
+		size_t seg_start = p->base + ph->p_vaddr;
+		size_t seg_file_end = (seg_start + ph->p_filesz + PAGE_SIZE - 1) & (-PAGE_SIZE);
+		size_t seg_max_addr = (seg_start + ph->p_memsz + PAGE_SIZE - 1) & (-PAGE_SIZE);
+		size_t zeromap_size = seg_max_addr - seg_file_end;
+		if (zeromap_size > 0) {
+			// use adlt so's name for the bss segment(include all bss sections)
+			set_bss_vma_name(p->adlt->name, (void *)seg_file_end, zeromap_size);
+			break;
 		}
 	}
 }
@@ -1666,12 +1564,13 @@ static void free_adlt(struct adlt *adlt) {return; };
 static void init_adlt(struct adlt *adlt){return ;};
 static void madvise_adlt_library(struct dso *p) {return ;};
 static void unmap_adlt_library(struct dso *dso) {return ;};
-ssize_t get_adlt_common_ph(struct adlt *adlt, adlt_phindex_t **ph_indexes) {return 0;};
+ssize_t get_adlt_common_ph(struct adlt *adlt, adlt_section_entry_t **section_indexes) {return 0;};
 static ssize_t get_adlt_library_index(
 	unsigned char *strtab_addr, unsigned char *sa_addr, const char *pathname) {return 0;};
 static ssize_t get_adlt_library_index2(struct adlt *adlt, const char *pathname) {return 0;};
 static adlt_psod_t *get_adlt_library_entry(struct adlt *adlt, ssize_t library_index, char **blob) {return NULL;};
-ssize_t get_adlt_library_ph(struct adlt *adlt, ssize_t library_index, adlt_phindex_t **ph_indexes) {return 0;};
+ssize_t get_adlt_library_ph(
+	struct adlt *adlt, ssize_t library_index, adlt_section_entry_t **section_indexes) {return 0;};
 ssize_t get_adlt_sym_dso_map(struct adlt *adlt, uint8_t **sym_dso_idx_map) {return 0;};
 static ssize_t get_adlt_library_dt_needed(
 	struct adlt *adlt, ssize_t library_index, adlt_dt_needed_index_t **dt_needed) {return 0;};
@@ -1703,14 +1602,12 @@ static void del_adlt_from_gadlt(struct adlt* adlt) {return ;};
 static bool is_same_adlt(struct adlt* adlt, struct stat* st) {return false;};
 static struct adlt* find_adlt_by_fstat(struct stat* st) {return NULL;};
 static char *create_realpath_from_fd(int fd) {return NULL;};
-static void adlt_reclaim_gaps(struct dso *dso) {return ;};
 static inline void adlt_do_one_relocs_munmap(struct unpack_reloc *relocs) {return;};
 static void adlt_do_relocs_munmap(void) {return;};
 static void adlt_reloc(struct dso *p, size_t dyn[],const dl_extinfo *extinfo, ssize_t *relro_fd_offset) {return ;};
 static void adlt_find_and_set_bss_name(struct dso *p, Phdr *phdr) {return ;};
 void *bolt_remap_addr_func_adlt(size_t a) {return a;};
 static bool adlt_find_in_dso(struct dso *p, Phdr *phdr, struct adlt *adlt, size_t entsz, size_t addr) {return false;};
-static int handle_adlt_phdr(struct dso *current, struct dl_phdr_info *info){return 0;};
 static struct dso *search_dso_by_adlt_lstat(const struct stat *st, const ns_t *ns, uint64_t file_offset) {return NULL;};
 static struct dso *search_dso_by_adlt_index(
 	const struct adlt *adlt, const ns_t *ns, ssize_t library_index) {return NULL;};
@@ -1746,7 +1643,6 @@ static bool lookup_ndso(struct loadtask *task, Shdr *sh2) {return true;};
 static void lookup_tls(struct loadtask *task, bool tls_appeared) {return;};
 static bool lookup_adlt_library(struct loadtask *task, Shdr *sh2, bool tls_appeared) {return true;};
 static bool if_phtable_contains(adlt_phindex_t *ph_indexes, ssize_t ph_count, adlt_phindex_t target) {return false;};
-static void adlt_init_remain_page(const Phdr *ph, unsigned char *base);
 static bool adlt_init_rw_seg(struct loadtask *task) {return true;};
 static bool is_adlt_plus_merge_so(const char *so_name){return false;};
 static bool adlt_load_library_header_extra(struct loadtask *task, ns_t *namespace){return false;};
