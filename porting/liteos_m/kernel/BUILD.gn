@@ -58,6 +58,10 @@ static_library(libc) {
     "$LITEOS_MENUCONFIG_H",
   ]
 
+  if (ohos_build_compiler == "clang") {
+    cflags += [ "-Wno-int-conversion" ]
+  }
+
   if (defined(LOSCFG_ARCH_ARM_AARCH32)) {
     sources += MUSL_LIBC_OPT_SRC_FOR_ARM
     if (LOSCFG_ARCH_ARM_VER == "armv7-m" || LOSCFG_ARCH_ARM_VER == "armv8-m") {
@@ -85,6 +89,13 @@ static_library(libc) {
     }
   }
 
+  # gcov coverage for musl libc sources. This static_library does not go
+  # through kernel_module's set_defaults (which would otherwise thread
+  # los_config's coverage flags to it), so the coverage config has to be
+  # pulled in explicitly. The config itself no-ops when
+  # LOSCFG_TEST_KERNEL_COVERAGE is off.
+  configs += [ "//kernel/liteos_m/testsuites:kernel_test_coverage" ]
+
   public_configs = [ ":include" ]
 }
 
@@ -95,6 +106,8 @@ static_library(libm) {
     "src/include",
     "src/internal",
   ]
+
+  configs += [ "//kernel/liteos_m/testsuites:kernel_test_coverage" ]
 
   public_configs = [ ":include" ]
 }
