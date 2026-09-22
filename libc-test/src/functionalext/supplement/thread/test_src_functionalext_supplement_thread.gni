@@ -81,6 +81,8 @@ functionalext_supplement_thread_test = [
   "pthread_equal",
   "pthread_rwlock_rdlock_sup",
   "cnd_broadcast",
+  "pthread_yield",
+  "pthread_setcanceltype",
 ]
 
 if (musl_extended_function) {

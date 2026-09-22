@@ -1489,6 +1489,7 @@ musl_src_file = [
   "src/thread/pthread_spin_trylock.c",
   "src/thread/pthread_spin_unlock.c",
   "src/thread/pthread_testcancel.c",
+  "src/thread/pthread_yield.c",
   "src/thread/sem_destroy.c",
   "src/thread/sem_getvalue.c",
   "src/thread/sem_init.c",
