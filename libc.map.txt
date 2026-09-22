@@ -1495,7 +1495,7 @@
     pthread_setaffinity_np;
     pthread_setattr_default_np;
     pthread_setcancelstate;
-    # pthread_setcanceltype;
+    pthread_setcanceltype;
     pthread_setconcurrency;
     pthread_setname_np;
     pthread_setschedparam;
@@ -1510,6 +1510,7 @@
     pthread_testcancel;
     # pthread_timedjoin_np;
     # pthread_tryjoin_np;
+    pthread_yield;
     ptrace;
     ptsname;
     ptsname_r;

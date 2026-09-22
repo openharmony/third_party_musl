@@ -13,21 +13,16 @@
  * limitations under the License.
  */
 
-#include "pthread_impl.h"
+#include <errno.h>
+#include <pthread.h>
+#include <sched.h>
 
-int pthread_setcanceltype(int new, int *old)
+
+int pthread_yield(void)
 {
-#if (defined(__LITEOS__) || defined(__HISPARK_LINUX__) || defined(MUSL_EXTERNAL_FUNCTION)) && \
-	defined(FEATURE_PTHREAD_CANCEL)
-	struct pthread *self = __pthread_self();
-	if (new > 1U) return EINVAL;
-	if (old) *old = self->cancelasync;
-	self->cancelasync = new;
-	if (new) pthread_testcancel();
-	return 0;
+#ifdef MUSL_EXTERNAL_FUNCTION
+	return sched_yield();
 #else
-	(void)new;
-	(void)old;
 	return ENOSYS;
 #endif
 }
